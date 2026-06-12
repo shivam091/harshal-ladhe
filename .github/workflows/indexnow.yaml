@@ -1,0 +1,63 @@
+name: Submit changed URLs to IndexNow
+
+on:
+  # Vercel reports each deployment back to GitHub, so this runs once the new pages are actually live.
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "Submit URLs whose lastmod is after this ISO date (leave blank to submit every URL)"
+        required: false
+
+permissions:
+  contents: read
+  deployments: read
+
+jobs:
+  submit:
+    # Vercel names production environments "Production – <project>", so match the prefix.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       startsWith(github.event.deployment.environment, 'Production'))
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: https://harshal-ladhe.vercel.app
+      # Public by design, not a secret: IndexNow proves ownership by fetching the same key back
+      # from public/949710c9160e02230adfe37c9e01d795.txt at the site root. Rotate both together.
+      INDEXNOW_KEY: 949710c9160e02230adfe37c9e01d795
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+
+      # Anything modified after the previous production deployment is new to crawlers. Compared by the
+      # author date of that deployment's commit, not when it was deployed: lastmod is a git author date,
+      # and commits whose dates are rewritten to before the deploy would otherwise never count as changed.
+      - name: Find the previous production deployment
+        id: previous
+        if: github.event_name == 'deployment_status'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ENVIRONMENT: ${{ github.event.deployment.environment }}
+          CURRENT_CREATED_AT: ${{ github.event.deployment.created_at }}
+          CURRENT_SHA: ${{ github.event.deployment.sha }}
+        run: |
+          sha=$(gh api -X GET "repos/${{ github.repository }}/deployments" \
+            -f environment="$ENVIRONMENT" -f per_page=20 \
+            --jq "[.[] | select(.created_at < \"$CURRENT_CREATED_AT\" and .sha != \"$CURRENT_SHA\")] | .[0].sha // \"\"")
+          since=""
+          if [ -n "$sha" ]; then
+            since=$(gh api "repos/${{ github.repository }}/commits/$sha" --jq .commit.author.date)
+          fi
+          echo "since=$since" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Submit to IndexNow
+        env:
+          SINCE: ${{ steps.previous.outputs.since || inputs.since }}
+        run: node .github/scripts/indexnow.mjs
