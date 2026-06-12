@@ -1,0 +1,39 @@
+import type { JSX } from "react";
+import { createElement, forwardRef } from "react";
+import { hyphenate } from "@/utils/string";
+import defaultAttributes from "@/components/Icon/defaultAttributes";
+import type { IconDefinition } from "@/icons/icons";
+import { icons } from "@/icons/icons";
+import type { IconProps } from "@/components/Icon/Icon.types";
+
+// One registry-driven SVG renderer, so adding an icon means adding data rather than a new component.
+const Icon = forwardRef<SVGSVGElement, IconProps>(function Icon(
+  { size, className, iconNode, name, ...props },
+  ref
+): JSX.Element {
+  const iconClass = `icon-${hyphenate(name)}`;
+
+  // Cast to IconDefinition so svgProps (which is optional) is visible to TS.
+  const def = icons[name] as IconDefinition | undefined;
+  const resolvedNode = iconNode ?? <>{def?.children}</>;
+  const defProps = def?.svgProps ?? {};
+  const viewBox = (props.viewBox ?? def?.viewBox) || defaultAttributes.viewBox;
+
+  return createElement(
+    "svg",
+    {
+      ref,
+      ...defaultAttributes,
+      ...defProps,
+      viewBox,
+      width: size || defaultAttributes.width,
+      height: size || defaultAttributes.height,
+      className: `${iconClass} ${className || ""}`.trim(),
+      ...props
+    },
+    resolvedNode
+  );
+});
+
+Icon.displayName = "Icon";
+export default Icon;

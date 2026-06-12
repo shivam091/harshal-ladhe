@@ -1,0 +1,127 @@
+// Outside @layer on purpose — layered rules would lose to unlayered component (Linaria) styles.
+@media print {
+  // A4 portrait with generous margins so content doesn't crowd the gutter.
+  @page {
+    size: A4 portrait;
+    margin: 2cm 2.5cm;
+  }
+
+  // Black-on-white regardless of theme saves ink and stays legible on any printer.
+  *,
+  *::before,
+  *::after {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  // 12pt / 1.5 is the conventional print baseline for body text.
+  body {
+    font-family: 'Alan Sans', 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', 'Liberation Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  // Interactive chrome serves no purpose on paper and would clutter the printed layout.
+  header nav,
+  header [aria-label="Search"],
+  header [aria-label="Toggle sounds"],
+  header [aria-label="Toggle color scheme"],
+  header [aria-label="Toggle menu"],
+  [data-mobile-only],
+  [role="dialog"],
+  .skip-link,
+  [aria-label="Scroll to top"] {
+    display: none !important;
+  }
+
+  // Paper can't be clicked, so printed links need their destination spelled out.
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #444 !important;
+    word-break: break-all;
+  }
+
+  // Skip expanding anchors and javascript: pseudo-URIs — they're meaningless on paper.
+  a[href^="#"]::after,
+  a[href^="javascript:"]::after,
+  a[href^="mailto:"]::after {
+    content: "";
+  }
+
+  // Stops a heading from being stranded at the foot of a page with no body below it.
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    break-after: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+
+  // Classic typographic minimum: at least 3 lines either side of a page break.
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  // Keeps images within the page and stops a break from splitting one in half.
+  img {
+    max-inline-size: 100% !important;
+    break-inside: avoid;
+  }
+
+  // A caption separated from its figure onto another page loses its meaning.
+  figure {
+    break-inside: avoid;
+  }
+
+  // Scrollbars don't exist on paper, so long lines must wrap and blocks stay on one page.
+  pre,
+  code,
+  kbd,
+  samp {
+    font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-size: 10pt;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+    break-inside: avoid;
+    border: 1pt solid #ccc;
+    padding: 0.5cm;
+  }
+
+  // Neutral rule in place of the theme accent, which would print as an unpredictable grey.
+  blockquote {
+    border-inline-start: 3pt solid #888;
+    padding-inline-start: 0.5cm;
+    break-inside: avoid;
+  }
+
+  // Full width with a clean grid so tables read like tables on paper, not scroll containers.
+  table {
+    border-collapse: collapse;
+    inline-size: 100%;
+  }
+
+  thead {
+    display: table-header-group; // repeats on every printed page
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  th,
+  td {
+    border: 1pt solid #ccc;
+    padding: 4pt 6pt;
+    text-align: start;
+  }
+}

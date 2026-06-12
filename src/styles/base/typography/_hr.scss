@@ -1,0 +1,11 @@
+// Kept thin and muted so section breaks separate content without shouting.
+@layer base {
+  hr {
+    border: none;
+    border-block-start: 0.0625rem solid var(--color-border-muted);
+    margin-block: clamp(1.5rem, 2vw, 2rem);
+    block-size: 0;
+    overflow: visible;
+    color: inherit;
+  }
+}
