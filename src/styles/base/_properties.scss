@@ -1,0 +1,49 @@
+/*
+ * Sky gradient stops, typed as <color> so theme swaps can transition them —
+ * gradients themselves can't be interpolated and would snap instantly.
+ * initial-value mirrors the light theme's tokens.
+ */
+@property --color-bg-sky-from {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 70% 78%);
+}
+
+// Bottom stop of the sky gradient — typed so it can transition independently of --color-bg-sky-from.
+@property --color-bg-sky-to {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 70% 70%);
+}
+
+// Pale sky tint — typed so gradients painted with it fade on a theme swap instead of snapping.
+@property --color-bg-sky-subtle {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 90% 88%);
+}
+
+/*
+ * Typed so the scroll-driven glass effect interpolates smoothly — untyped custom
+ * properties animate discretely, jumping at 50% of the animation range.
+ * initial-value must be a concrete literal; CSS variables are not allowed here.
+ */
+@property --glass-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+// Typed as <length> so the header blur eases in with scroll instead of snapping.
+@property --blur-amount {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+// Inherits so the scroll-driven animation on :root can move the sticky header; 0px keeps it flush-top by default.
+@property --header-top-offset {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}

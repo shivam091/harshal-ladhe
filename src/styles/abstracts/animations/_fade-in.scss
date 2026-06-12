@@ -1,0 +1,6 @@
+// Defined once so fade-ins stay consistent across components.
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}

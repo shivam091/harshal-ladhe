@@ -1,0 +1,68 @@
+// Distinct markers and tighter spacing per level so nested lists stay easy to follow.
+@layer base {
+  ul,
+  ol {
+    padding-inline-start: 1.5em;
+    margin-block: clamp(0.5rem, 0.8vw, 0.75rem);
+  }
+
+  li {
+    margin-block-end: 0.5em;
+    line-height: 1.625;
+  }
+
+  // A different marker per depth so nesting is visible even without indentation cues.
+  ul {
+    list-style-type: disc;
+  }
+
+  ul ul {
+    list-style-type: circle;
+  }
+
+  ul ul ul {
+    list-style-type: square;
+  }
+
+  // Varying numbering per depth lets readers cite "step 2.b.iii" unambiguously.
+  ol {
+    list-style-type: decimal;
+  }
+
+  ol ol {
+    list-style-type: lower-alpha;
+  }
+
+  ol ol ol {
+    list-style-type: lower-roman;
+  }
+
+  // Tighten vertical spacing on nested lists so they read as sub-content.
+  ul ul,
+  ol ul,
+  ul ol,
+  ol ol {
+    margin-block: 0.25em;
+  }
+
+  // Spaced per group so each term reads as the start of a new entry.
+  dl {
+    margin-block: clamp(0.5rem, 0.8vw, 0.75rem);
+  }
+
+  dt {
+    font-weight: 600;
+    margin-block-start: clamp(0.5rem, 0.8vw, 0.75rem);
+
+    // The list's own margin already provides the leading gap.
+    &:first-child {
+      margin-block-start: 0;
+    }
+  }
+
+  dd {
+    margin-inline-start: 1.5em;
+    margin-block-end: 0.25rem;
+    color: var(--color-fg-muted);
+  }
+}

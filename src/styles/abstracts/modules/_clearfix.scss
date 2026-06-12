@@ -1,0 +1,8 @@
+// Placeholder so float containers share one clearfix rule via @extend instead of duplicating it.
+%clearfix {
+  &:after {
+    content: " ";
+    display: table;
+    clear: both;
+  }
+}
