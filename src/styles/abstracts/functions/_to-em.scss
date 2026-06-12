@@ -1,0 +1,4 @@
+// em-based media queries respond to browser zoom consistently, so rem values need an em equivalent.
+@function to-em($rem) {
+  @return $rem * 1em / 1rem;
+}
