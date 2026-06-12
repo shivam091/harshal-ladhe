@@ -1,0 +1,14 @@
+// Order matters — base rendering first, then structural, inline and decorative, so later concerns can refine earlier ones.
+@forward "@/styles/base/typography/base";
+@forward "@/styles/base/typography/headings";
+@forward "@/styles/base/typography/paragraphs";
+@forward "@/styles/base/typography/links";
+@forward "@/styles/base/typography/lists";
+@forward "@/styles/base/typography/blockquotes";
+@forward "@/styles/base/typography/code";
+@forward "@/styles/base/typography/inline";
+@forward "@/styles/base/typography/tables";
+@forward "@/styles/base/typography/figures";
+@forward "@/styles/base/typography/hr";
+@forward "@/styles/base/typography/selection";
+@forward "@/styles/base/typography/print";
