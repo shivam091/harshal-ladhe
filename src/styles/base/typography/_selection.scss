@@ -1,0 +1,7 @@
+// Themed so selected text keeps contrast in every colour scheme.
+@layer base {
+  ::selection {
+    background: var(--color-bg-selection);
+    color: var(--color-fg-selection);
+  }
+}
