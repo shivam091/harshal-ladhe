@@ -6,3 +6,24 @@ export const hyphenate = (value: string) =>
     .replace(/([A-Z])/g, "-$1")
     .replace(/([a-z])(\d)/g, "$1-$2")
     .toLowerCase();
+
+
+// Converts a heading text to a URL-safe lowercase slug for use as an HTML id or anchor href.
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+// Recursively extracts plain text from a React node tree; used to derive anchor slugs from heading children.
+export function extractText(children: React.ReactNode): string {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) return children.map(extractText).join("");
+  if (children !== null && typeof children === "object") {
+    const el = children as React.ReactElement<{ children?: React.ReactNode }>;
+    if (el.props?.children !== undefined) return extractText(el.props.children);
+  }
+  return "";
+}
