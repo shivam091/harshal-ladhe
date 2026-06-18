@@ -2,6 +2,7 @@ import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
 import { PublishedAt, LastModifiedAt, ContentDates } from "@/components/ContentDates";
 import MDXHeadingAnchor from "@/components/MDXHeadingAnchor";
+import CoreStack from "@/app/(site)/(internal)/how-did-i-build-my-blog/CoreStack";
 import SocialLinks from "@/components/SocialLinks";
 import PageSignOff from "@/components/SignOff/PageSignOff";
 import RainbowDivider from "@/components/RainbowDivider";
@@ -18,6 +19,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PublishedAt,
     LastModifiedAt,
     ContentDates,
+    CoreStack,
     SocialLinks,
     PageSignOff,
     a: MDXLink,

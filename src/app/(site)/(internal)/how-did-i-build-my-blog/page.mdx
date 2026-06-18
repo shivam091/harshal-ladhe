@@ -1,0 +1,234 @@
+export const metadata = {
+  title: "How Did I Build My Blog",
+  description: "A technical deep-dive into the core stack, architecture decisions, and tooling behind this Next.js blog — from MDX content management to zero-runtime CSS and beyond.",
+  alternates: { canonical: "/how-did-i-build-my-blog" },
+  openGraph: {
+    title: "How Did I Build My Blog",
+    description: "A technical deep-dive into the core stack, architecture decisions, and tooling behind this Next.js blog — from MDX content management to zero-runtime CSS and beyond.",
+    url: "/how-did-i-build-my-blog",
+    type: "article",
+  },
+  twitter: {
+    card: "summary",
+    title: "How Did I Build My Blog",
+    description: "A technical deep-dive into the core stack, architecture decisions, and tooling behind this Next.js blog — from MDX content management to zero-runtime CSS and beyond.",
+  },
+};
+
+<LastModifiedAt />
+
+Over the past few months, I've been designing and building this blog from scratch. I wanted a space that felt truly mine — not a template, not a hosted platform, but a hand-crafted site with full control over every pixel and interaction.
+
+This post walks through the core stack powering this blog, the trade-offs I made, and some of the interesting details hiding under the hood. If you're building your own blog or evaluating some of these technologies, I hope this is useful.
+
+<RainbowDivider />
+
+## The core stack
+
+Let's start with a quick overview of the major technologies used:
+
+<CoreStack />
+
+This list may look like overkill for a personal blog, and a few people have asked me why I didn't just use a CMS or a hosted solution. A few reasons:
+
+- All of my content is written in **MDX**, which gives me the full power of React inside my posts.
+- I already work with **Next.js** day-to-day, so I wanted to reduce context-switching friction.
+- I wanted first-hand experience with the latest **React Server Components** and the **App Router** in a real project.
+
+If it wasn't for those constraints, I would have been very tempted by **Astro** — it's tailor-made for content-heavy sites.
+
+<RainbowDivider />
+
+## Framework: Next.js with App Router
+
+This blog is built on **Next.js**, using the modern **App Router** introduced in Next.js 13+. The App Router is a fundamental reimagining of routing and rendering in React — built around Server Components, streaming, and nested layouts.
+
+The previous generation of Next.js projects used the **Pages Router**, which was excellent but had limitations around layout composition and server-side logic. The App Router solves many of those problems cleanly.
+
+Key decisions:
+
+- **Server Components by default** — content pages render entirely on the server; no unnecessary hydration.
+- **Route Groups** — I use `(site)` and `(internal)` groupings to share layouts without affecting URLs.
+- **Nested Layouts** — each level of the hierarchy gets its own layout, making the site easy to extend.
+- **TypeScript throughout** — strict mode, no `any`, fully typed configuration and components.
+
+<RainbowDivider />
+
+## Content: MDX
+
+MDX is the most critical part of this stack. Every page you're reading is written in MDX.
+
+If you haven't used it before: MDX is a superset of Markdown that lets you embed React components directly in your content. You get the ergonomics of plain Markdown — no `<p>` tags, clean heading syntax — plus the full power of React when you need it.
+
+This is essential for the kind of content I want to create. I can drop in interactive demos, styled callouts, custom date components, or anything else I can build as a React component, right in the middle of prose.
+
+* **Why not pure React?** I tried it. Every paragraph wrapped in a `<p>`, every link as a JSX expression — the writing experience was genuinely awful. MDX solves this cleanly.
+
+* **Why not a CMS?** I edit MDX files directly in VS Code and commit them as code. It keeps everything in one place, benefits from version control, and removes the overhead of a separate system. The trade-off: I have to redeploy to fix a typo. That's fine with me.
+
+I'm using Next.js's **built-in MDX support** via `@next/mdx`, with a custom `remark` plugin to automatically pull `publishedAt` and `lastModifiedAt` dates from git history. No manual frontmatter dates needed.
+
+<RainbowDivider />
+
+## Styling: Linaria
+
+The entire site is styled with **Linaria**, a zero-runtime CSS-in-JS library. It offers a `styled` API identical to styled-components, but instead of injecting styles at runtime it compiles them to static CSS modules at build time. A thin SCSS layer sits underneath for global concerns — resets, CSS custom properties, base layout — things that describe the page as a whole rather than any one component, so they don't belong inside a `styled` call.
+
+```ts
+import { styled } from "@linaria/react;
+
+export const PageTitle = styled.h1`
+  font-size: var(--h1-size);
+  letter-spacing: 0.5px;
+  text-shadow: var(--text-shadow-contrast-soft, none);
+`;
+```
+
+The result: **zero JavaScript overhead for styles**, full compatibility with React Server Components, and a familiar developer experience.
+
+The integration uses `next-with-linaria` to wire Linaria into the Next.js build pipeline.
+
+**Why not Tailwind?** Linaria's `styled` API was a more natural migration path from what I had before, and I find the explicit named components easier to read and maintain. Tailwind is great — just not the right fit for this project.
+
+<RainbowDivider />
+
+## Design Tokens & Theming
+
+Rather than hardcoding colors or sizes anywhere, everything flows through **CSS custom properties**. The site has a layered token system:
+
+- **Design tokens** — space, type scale, radius, motion timing — defined once at `:root`.
+- **Color themes** — `light`, `dark`, and `soft-dark` — each a complete set of semantic color variables.
+- **Anti-FOUC** — a tiny inline `<script>` in `<head>` reads the saved theme from `localStorage` and applies `data-theme` to `<html>` synchronously before the first paint, eliminating any flash.
+
+Colors are defined as HSL tuples, making it easy to derive variants (muted, subtle, on-color) with predictable lightness relationships.
+
+<RainbowDivider />
+
+## Typography
+
+Type carries most of the visual personality of a text-heavy site, so it got real attention. It's set in two faces from the same superfamily, which keeps the prose and code feeling like they belong together:
+
+- **Source Sans 3** — the primary reading typeface. Humanist, comfortable for long prose, with a wide weight range that lets headings and body text share one font without feeling monotonous.
+- **Source Code Pro** — a monospace companion from the same family, used for all inline code and code blocks. Its proportions echo Source Sans, so switching between prose and code never feels jarring.
+
+Both are loaded from **Google Fonts**, with `font-display: swap` so text is readable immediately rather than blocking on the font download. Every size and weight uses **fluid typography** via CSS `clamp()`, scaling smoothly between a minimum and maximum viewport instead of jumping at breakpoints — so a heading is never awkwardly oversized on a phone or undersized on a wide monitor. Line length, line height, and vertical rhythm are all tuned for sustained reading rather than raw density.
+
+<RainbowDivider />
+
+## Code Highlighting: Shiki
+
+Every code block you see on this site is highlighted by **Shiki**. Unlike runtime highlighters that ship a tokenizer to the browser, Shiki uses the same TextMate grammars and tokenizer as VS Code, and it runs **on the server** — the page arrives already coloured, with zero highlighting JavaScript on the client.
+
+The interesting part is theming. I didn't want a stock Shiki theme that ignores my carefully tuned light/dark/soft-dark palettes. So instead of a fixed theme, Shiki is fed a **custom theme that maps each syntax scope to one of my own CSS variables** — `--color-code-syntax-keyword`, `--color-code-syntax-string`, and so on, the same tokens defined per theme alongside every other colour.
+
+Shiki can only emit literal hex colours, not `var(...)`, so the trick is a two-step dance: each token gets a unique sentinel hex, and a tiny post-processing pass rewrites those sentinels into the matching `var(--color-code-syntax-*)`:
+
+```ts
+export const SHIKI_THEME = {
+  name: "code-syntax-vars",
+  tokenColors: [
+    {
+      scope: ["keyword", "keyword.control", "storage.type"],
+      settings: { foreground: "var(--color-code-syntax-keyword)" },
+    },
+    {
+      scope: ["string", "string.quoted", "string.template"],
+      settings: { foreground: "var(--color-code-syntax-string)" },
+    },
+    // …one entry per syntax category
+  ],
+};
+```
+
+The payoff: switch the theme and **every code block re-colours instantly**, with no re-highlighting and no flash — because the actual colours live in CSS variables the browser re-evaluates on the spot.
+
+<RainbowDivider />
+
+## Animations
+
+Subtle motion is provided by **Framer Motion**. Interactions — button hovers, drawer open/close, theme transitions — use a small set of spring presets defined in a central constants file, so the motion always feels consistent.
+
+The flashlight overlay effect (visible on 404 and error pages) is pure CSS: a `radial-gradient` on `::before` that follows the cursor via two `--cursorX` / `--cursorY` custom properties updated on `pointermove`. No canvas, no WebGL, no JavaScript animation loop.
+
+<RainbowDivider />
+
+## Analytics
+
+This blog uses **Google Analytics 4** for basic traffic insights — which posts get read, where visitors come from, and how people move through the site. It's deliberately lightweight: I'm curious what resonates, not building a profile of anyone.
+
+The wiring is intentionally boring. The measurement ID lives in `siteConfig` — one source of truth — and the GA script is injected once into `<head>` via the root layout, so every route is covered without per-page setup. Loading it through Next.js's `<Script>` with a deferred strategy keeps it off the critical path, so analytics never blocks the first paint.
+
+Beyond page views, a few key interactions are tracked with custom events — for example, each card in the core-stack grid above fires a `core_stack_click` event via `data-analytics-*` attributes, so I can see which technologies readers are curious about. No cookies beyond what GA sets itself, no third-party tracking otherwise, and the whole thing is documented on the [Privacy Policy](/privacy-policy) page — including how to opt out.
+
+<RainbowDivider />
+
+## Spam Protection: reCAPTCHA v3
+
+The contact form is the one place on this site that accepts user input, so it needed protection against bots and spam — without the friction of a "click the traffic lights" challenge. **Google reCAPTCHA v3** is a perfect fit: it's completely invisible, scoring each interaction from `0.0` (likely a bot) to `1.0` (likely human) based on behavioral signals, with no puzzle to solve.
+
+The integration has two halves:
+
+- **Client side** — a thin `RecaptchaProvider` wraps the form using `react-google-recaptcha-v3`. When the form is submitted, it silently generates a token tied to the action and the public site key (`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`).
+
+```ts
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+
+export default function RecaptchaProvider({ children }) {
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
+  return (
+    <GoogleReCaptchaProvider reCaptchaKey={siteKey}>
+      {children}
+    </GoogleReCaptchaProvider>
+  );
+}
+```
+
+- **Server side** — the `POST /api/contact` route never trusts the client. It forwards the token to Google's `siteverify` endpoint using the server-only secret key, then rejects anything that fails verification or scores below the `0.5` threshold Google recommends:
+
+```ts
+const verifyData = await verifyRes.json();
+
+if (!verifyData.success || verifyData.score < MIN_SCORE) {
+  return NextResponse.json(
+    { error: "reCAPTCHA verification failed." },
+    { status: 422 },
+  );
+}
+```
+
+Keeping the secret key strictly server-side (in a Route Handler, never shipped to the browser) means the scoring decision can't be tampered with from the client. The result is a form that's frictionless for real people but quietly hostile to bots. Note that reCAPTCHA does load Google's script and analyze page interactions — that's documented in the [Privacy Policy](/privacy-policy) and [Terms of Use](/terms-of-use).
+
+<RainbowDivider />
+
+## Accessibility
+
+Accessibility isn't an afterthought here — it's baked into the component design:
+
+- A **skip link** is the first focusable element on every page.
+- All interactive components use correct ARIA roles and attributes.
+- The theme toggle is a `<button>` with `aria-pressed`.
+- Media queries use `rem` units so they respect the user's browser font size preference.
+- Flashlight and animation effects respect `prefers-reduced-motion`.
+- Color contrast meets WCAG AA across all three themes.
+
+<RainbowDivider />
+
+## Data: MongoDB
+
+Most of this site is static, but a few features need to persist data between visits — view counts, and contact-form submissions. For that I reach for **MongoDB**.
+
+A document database is a natural fit here. The shapes I'm storing are small and loosely related — a view counter keyed by post, a contact message with a timestamp — and a schema-less, JSON-native model means I can evolve those shapes without migrations getting in the way. There's no relational complexity to justify the ceremony of a SQL schema.
+
+All of this lives on the server side, so the database credentials never touch the browser. What gets stored, and for how long, is spelled out on the [Privacy Policy](/privacy-policy) page.
+
+<RainbowDivider />
+
+## Deployment
+
+The site is deployed on **Vercel**, which pairs naturally with Next.js — zero-config builds, automatic preview deployments per branch, and Edge Network CDN. The domain points to Vercel via a simple CNAME.
+
+Source lives on **GitHub**. Every push to `main` triggers a production deployment automatically.
+
+<RainbowDivider />
+
+If you have any questions or doubts regarding the core stack, feel free to drop me a message via the **[contact page](/contact)** or use the social links in the **footer**.
