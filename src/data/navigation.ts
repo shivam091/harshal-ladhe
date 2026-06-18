@@ -34,6 +34,7 @@ export const mainNav: NavItem[] = [
 
 // Useful but secondary destinations, kept out of the primary nav to keep it focused.
 export const quickLinks: NavItem[] = [
+  { href: "/how-did-i-build-my-blog", title: "About This Blog" },
 ];
 
 // Grouped apart so policy pages stay findable without competing with content links.
