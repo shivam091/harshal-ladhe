@@ -28,7 +28,14 @@ function pageDate(relativePath: string): Date {
   changeFrequency/priority by how often that kind of page changes so crawlers revisit
   what actually moves: home weekly/1.0, listings weekly/0.9, other monthly/0.6, legal yearly/0.3.
 */
-const staticPages: MetadataRoute.Sitemap = [];
+const staticPages: MetadataRoute.Sitemap = [
+  {
+    url: `${base}/how-did-i-build-my-blog`,
+    lastModified: pageDate("(site)/(internal)/how-did-i-build-my-blog/page.mdx"),
+    changeFrequency: "monthly",
+    priority: 0.6
+  }
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
