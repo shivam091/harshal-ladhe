@@ -1,0 +1,100 @@
+export const metadata = {
+  title: "Privacy Policy",
+  description: "Review the privacy policy explaining how user data is handled, stored, and protected with transparency and care.",
+  alternates: { canonical: "/privacy-policy" },
+  openGraph: {
+    title: "Privacy Policy",
+    description: "Review the privacy policy explaining how user data is handled, stored, and protected with transparency and care.",
+    url: "/privacy-policy",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Privacy Policy",
+    description: "Review the privacy policy explaining how user data is handled, stored, and protected with transparency and care.",
+  },
+};
+
+<LastModifiedAt />
+
+This Privacy Policy describes what information is collected when you use this website, how it is used, and your choices.
+
+<RainbowDivider />
+
+## Information Collected
+
+* **Server Infrastructure (Vercel)**: Standard deployment logs capturing non-identifiable technical properties (like generalized IP addresses and request timestamps) are processed at the hosting layer to ensure site security and mitigation against network attacks.
+
+* **Analytics**: Google Analytics tracks visitor behavior (pages visited, browser type, approximate location). Google may place cookies and collect anonymized usage data. See [Google’s Privacy Policy](https://policies.google.com/privacy).
+
+* **reCAPTCHA**: The contact form is protected by Google reCAPTCHA to prevent spam. reCAPTCHA works by analyzing your interaction with the page (such as mouse movements and clicks) to determine if you are human. Use of reCAPTCHA is subject to [Google’s Privacy Policy](https://policies.google.com/privacy) and [Terms of Service](https://policies.google.com/terms).
+
+* **Site Analytics & Metrics**: Page views and post likes are recorded anonymously and stored securely in a dedicated MongoDB database. This records minimal, non-identifiable technical properties (like timestamps or specific routed posts visited) purely to increment view and like metrics. To prevent a single visitor from being counted twice or liking the same content more than once, a one-way cryptographic hash of your IP address is stored alongside these records — the raw IP address itself is never stored, and the hash cannot be reversed to recover it.
+
+* **Preferences**: Your customized preferences (such as light/dark mode theme configurations or sound toggles) are retained locally inside your browser's local storage environment. This configuration schema resides solely on your client device.
+
+* **Form Drafts**: To improve your experience, unsubmitted contact form data (such as your name, email, or message in progress) may be saved in your browser’s local storage. This data is stored **only on your device**, is not transmitted to me, and is cleared when you manually remove it or complete the submission.
+
+* **Contact Form Submissions**: When you actively submit a message via the website contact form, the provided data payload (name, email address, message string, and submission timestamp) is safely transferred and persisted securely into my self-hosted MongoDB deployment. This database structure is utilized exclusively to respond to incoming questions. No collected contact logs are ever sold or shared with third-party networks.
+
+* **Embedded Code Playgrounds**: Interactive technical exercises run directly inside your client browser using Sandpack frames. Running or parsing code logic triggers processing dependencies pulled from `sandpack.codesandbox.io`. CodeSandbox handles execution mechanics under [CodeSandbox’s Privacy Policy](https://codesandbox.io/legal/privacy).
+
+* **Newsletter Subscriptions**: If you voluntarily subscribe to the newsletter using the form in the site footer, your email address is stored securely in a self-hosted MongoDB database. It is used exclusively to notify you when new content is published on this site. Your email is never shared with or sold to third parties. You may request removal from the subscriber list at any time by [reaching out through the contact page](/contact).
+
+<RainbowDivider />
+
+## How Information Is Used
+
+* To operate, secure, and improve the site.
+
+* To process and reply to valid inbound communication inquiries.
+
+* To notify newsletter subscribers when new content is published.
+
+* To analyze basic site traffic patterns and specific post popularity.
+
+* To comply with applicable legal obligations.
+
+<RainbowDivider />
+
+## Security & Retention
+
+Reasonable measures are taken to protect your information, though no method is 100% secure.
+
+* Google Analytics data is retained by Google under their policies.
+
+* Local configurations, preferences, and form drafts remain contextually stored within your client browser until explicitly wiped.
+
+* Message history logs and traffic counts securely structured inside the MongoDB layer remain saved until they are no longer required to fulfill their administrative purpose.
+
+<RainbowDivider />
+
+## Third-Party Services
+
+* **Vercel**: Provides the hosting infrastructure and global Edge Network CDN that serves this website. Vercel automatically collects standard server access logs, which include basic, non-identifiable technical metrics (such as IP addresses, browser types, and request timestamps) strictly to ensure network security, performance optimization, and DDoS mitigation. This processing is subject to [Vercel’s Privacy Policy](https://vercel.com/legal/privacy-policy).
+
+* **Google Analytics**: Used to measure traffic. You can opt out via the [Google Analytics Opt-out Browser Add-on](https://tools.google.com/dlpage/gaoptout).
+
+* **Google reCAPTCHA v3**: Used to protect the contact form against spam and abuse. Its use is governed by [Google’s Privacy Policy](https://policies.google.com/privacy) and [Terms of Service](https://policies.google.com/terms).
+
+* **Sandpack Engine**: Compiles interactive live sandboxes inside content structures using client engines running from CodeSandbox assets.
+
+I do not sell or trade personal information to outside marketing entities.
+
+<RainbowDivider />
+
+## Your Choices
+
+You may disable cookies or JavaScript in your browser configurations, though some interactive elements or validation parameters may break. You may also opt out of Google Analytics tracing configurations using the tool highlighted above.
+
+<RainbowDivider />
+
+## Changes
+
+This policy may be updated periodically. The “Last updated” date reflects the latest version.
+
+<RainbowDivider />
+
+## Contact
+
+For questions about this Privacy Policy, please [reach out through the contact page](/contact).
