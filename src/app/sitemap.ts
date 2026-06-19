@@ -40,6 +40,12 @@ const staticPages: MetadataRoute.Sitemap = [
     lastModified: pageDate("(site)/(internal)/how-did-i-build-my-blog/page.mdx"),
     changeFrequency: "monthly",
     priority: 0.6
+  },
+  {
+    url: `${base}/code-of-conduct`,
+    lastModified: pageDate("(site)/(internal)/code-of-conduct/page.mdx"),
+    changeFrequency: "yearly",
+    priority: 0.3
   }
 ];
 
