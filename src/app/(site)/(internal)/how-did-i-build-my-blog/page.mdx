@@ -158,7 +158,7 @@ This blog uses **Google Analytics 4** for basic traffic insights — which posts
 
 The wiring is intentionally boring. The measurement ID lives in `siteConfig` — one source of truth — and the GA script is injected once into `<head>` via the root layout, so every route is covered without per-page setup. Loading it through Next.js's `<Script>` with a deferred strategy keeps it off the critical path, so analytics never blocks the first paint.
 
-Beyond page views, a few key interactions are tracked with custom events — for example, each card in the core-stack grid above fires a `core_stack_click` event via `data-analytics-*` attributes, so I can see which technologies readers are curious about. No cookies beyond what GA sets itself, no third-party tracking otherwise, and the whole thing is documented on the Privacy Policy page — including how to opt out.
+Beyond page views, a few key interactions are tracked with custom events — for example, each card in the core-stack grid above fires a `core_stack_click` event via `data-analytics-*` attributes, so I can see which technologies readers are curious about. No cookies beyond what GA sets itself, no third-party tracking otherwise, and the whole thing is documented on the [Privacy Policy](/privacy-policy) page — including how to opt out.
 
 <RainbowDivider />
 
@@ -196,7 +196,7 @@ if (!verifyData.success || verifyData.score < MIN_SCORE) {
 }
 ```
 
-Keeping the secret key strictly server-side (in a Route Handler, never shipped to the browser) means the scoring decision can't be tampered with from the client. The result is a form that's frictionless for real people but quietly hostile to bots. Note that reCAPTCHA does load Google's script and analyze page interactions — that's documented in the Privacy Policy and Terms of Use.
+Keeping the secret key strictly server-side (in a Route Handler, never shipped to the browser) means the scoring decision can't be tampered with from the client. The result is a form that's frictionless for real people but quietly hostile to bots. Note that reCAPTCHA does load Google's script and analyze page interactions — that's documented in the [Privacy Policy](/privacy-policy) and Terms of Use.
 
 <RainbowDivider />
 
@@ -219,7 +219,7 @@ Most of this site is static, but a few features need to persist data between vis
 
 A document database is a natural fit here. The shapes I'm storing are small and loosely related — a view counter keyed by post, a contact message with a timestamp — and a schema-less, JSON-native model means I can evolve those shapes without migrations getting in the way. There's no relational complexity to justify the ceremony of a SQL schema.
 
-All of this lives on the server side, so the database credentials never touch the browser. What gets stored, and for how long, is spelled out on the Privacy Policy page.
+All of this lives on the server side, so the database credentials never touch the browser. What gets stored, and for how long, is spelled out on the [Privacy Policy](/privacy-policy) page.
 
 <RainbowDivider />
 
