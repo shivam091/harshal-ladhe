@@ -1,7 +1,8 @@
-import { JSX } from "react";
+import type { JSX } from "react";
 import type {Metadata } from "next";
 import ContactForm from "./ContactForm";
 import ContactFAQ from "./ContactFAQ";
+import RecaptchaProvider from "@/components/RecaptchaProvider";
 import { faqs } from "@/data/faqs";
 import {
   ContactFormSection,
@@ -18,13 +19,13 @@ export const metadata: Metadata = {
     title: "Contact Harshal",
     description: "Have questions or feedback? Browse FAQs or reach out directly through the contact form. Let's connect and collaborate on web development ideas.",
     url: "/contact",
-    type: "website",
+    type: "website"
   },
   twitter: {
     card: "summary",
     title: "Contact Harshal",
-    description: "Have questions or feedback? Browse FAQs or reach out directly through the contact form. Let's connect and collaborate on web development ideas.",
-  },
+    description: "Have questions or feedback? Browse FAQs or reach out directly through the contact form. Let's connect and collaborate on web development ideas."
+  }
 };
 
 export default function ContactPage(): JSX.Element {
@@ -48,7 +49,9 @@ export default function ContactPage(): JSX.Element {
         <ContactFAQ faqs={faqs} />
 
         <ContactFormSection>
-          <ContactForm />
+          <RecaptchaProvider>
+            <ContactForm />
+          </RecaptchaProvider>
         </ContactFormSection>
       </ContactLayout>
     </>
