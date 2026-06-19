@@ -77,12 +77,6 @@ const staticPages: MetadataRoute.Sitemap = [
     changeFrequency: "yearly",
     priority: 0.3
   },
-  {
-    url: `${base}/how-did-i-build-my-blog`,
-    lastModified: new Date(),
-    changeFrequency: "monthly",
-    priority: 0.6
-  }
 ];
 
 // Dynamic post pages
