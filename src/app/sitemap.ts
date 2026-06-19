@@ -30,6 +30,12 @@ function pageDate(relativePath: string): Date {
 */
 const staticPages: MetadataRoute.Sitemap = [
   {
+    url: `${base}/about`,
+    lastModified: pageDate("(site)/(internal)/about/page.mdx"),
+    changeFrequency: "monthly",
+    priority: 0.6
+  },
+  {
     url: `${base}/how-did-i-build-my-blog`,
     lastModified: pageDate("(site)/(internal)/how-did-i-build-my-blog/page.mdx"),
     changeFrequency: "monthly",
