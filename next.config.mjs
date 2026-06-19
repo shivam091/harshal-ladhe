@@ -21,18 +21,18 @@ const ENFORCED_CSP = [
 ].join("; ");
 
 /*
-  Report-only until it has run in production without violations: gtag and the Sandpack
-  bundler iframes each pull from hosts that change over time, and an enforced miss would
-  silently break analytics or every sandbox.
+  Report-only until it has run in production without violations: gtag, reCAPTCHA and the
+  Sandpack bundler iframes each pull from hosts that change over time, and an enforced miss
+  would silently break analytics, the contact form or every sandbox.
 */
 const REPORT_ONLY_CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://www.googletagmanager.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://*.google-analytics.com https://*.googletagmanager.com https://www.google.com",
   "font-src 'self' data:",
-  `connect-src 'self'${isDev ? " ws:" : ""} https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com`,
-  "frame-src https://*.codesandbox.io https://*.csb.app",
+  `connect-src 'self'${isDev ? " ws:" : ""} https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com/recaptcha/`,
+  "frame-src https://*.codesandbox.io https://*.csb.app https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/",
   "worker-src 'self' blob:",
   "media-src 'self'",
   "manifest-src 'self'",
