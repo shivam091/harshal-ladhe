@@ -48,3 +48,15 @@ export const random = (
 
   return rounded ? Math.floor(partialVal) + min : partialVal + min;
 };
+
+// Character set generateId samples from.
+const ID_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+// Short random string, decoration-only (not cryptographically unique) — good enough for React list keys.
+export function generateId(length: number = 8): string {
+  let id = "";
+  for (let i = 0; i < length; i++) {
+    id += ID_CHARS[Math.floor(Math.random() * ID_CHARS.length)];
+  }
+  return id;
+}
