@@ -2,6 +2,7 @@ import type { JSX } from "react";
 import type {Metadata } from "next";
 import ContactForm from "./ContactForm";
 import ContactFAQ from "./ContactFAQ";
+import RecaptchaProvider from "@/components/RecaptchaProvider";
 import { faqs } from "@/data/faqs";
 import {
   ContactFormSection,
@@ -48,7 +49,9 @@ export default function ContactPage(): JSX.Element {
         <ContactFAQ faqs={faqs} />
 
         <ContactFormSection>
-          <ContactForm />
+          <RecaptchaProvider siteKey={process.env.RECAPTCHA_SITE_KEY ?? ""}>
+            <ContactForm />
+          </RecaptchaProvider>
         </ContactFormSection>
       </ContactLayout>
     </>
