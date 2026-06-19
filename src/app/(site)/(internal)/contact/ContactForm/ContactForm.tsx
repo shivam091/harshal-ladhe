@@ -1,12 +1,14 @@
 "use client";
 
-import { JSX, useEffect, useState } from "react";
+import type { JSX} from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { useBoop } from "@/hooks/use-boop";
 import Button from "@/components/Button";
 import IconArrowRight from "@/icons/IconArrowRight";
 import { generateEmailFromName, generateFullName } from "@/helpers/fake-data";
 import type { ContactFormSubmitStatus } from "@/types/contact-form-submit-status";
-import { ContactFormData } from "@/interfaces/contact-form-data";
+import type { ContactFormData } from "@/interfaces/contact-form-data";
 import {
   FormBorder,
   FormControl,
@@ -16,35 +18,38 @@ import {
   FormRoot,
   FormTextarea,
   RecaptchaDisclaimer
-} from "@/app/(site)/(internal)/contact/ContactForm.styles";
+} from "@/app/(site)/(internal)/contact/ContactForm/ContactForm.styles";
 
-/** localStorage key used to persist unsaved form data across page reloads. */
+// localStorage key used to persist unsaved form data across page reloads.
 const STORAGE_KEY = "contact-form-data";
 
-/** Shape of the controlled form fields. */
-interface FormData {
-  name: string;
-  email: string;
-  message: string;
-}
+const EMPTY_FORM: ContactFormData = { name: "", email: "", message: "" };
 
-/** Reads persisted form data from localStorage, returning empty strings on parse failure or SSR. */
-function readStorage(): FormData {
-  if (typeof window === "undefined") return { name: "", email: "", message: "" };
+// Reads persisted form data from localStorage, merging with empty defaults to guarantee all keys are strings.
+function readStorage(): ContactFormData {
+  if (typeof window === "undefined") return EMPTY_FORM;
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as FormData;
+    const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as Partial<ContactFormData>;
+    return {
+      name:    parsed.name    ?? "",
+      email:   parsed.email   ?? "",
+      message: parsed.message ?? ""
+    };
   } catch {
-    return { name: "", email: "", message: "" };
+    return EMPTY_FORM;
   }
 }
 
-/** Contact form with localStorage persistence, random sample placeholders, and a booping submit arrow. */
+// Contact form with reCAPTCHA v3, localStorage persistence, random sample placeholders, and a booping submit arrow.
 export default function ContactForm(): JSX.Element {
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [isBooped, triggerBoop] = useBoop();
 
   const [namePlaceholder,  setNamePlaceholder]  = useState("");
   const [emailPlaceholder, setEmailPlaceholder] = useState("");
-  const [fields, setFields] = useState<FormData>({ name: "", email: "", message: "" });
+  const [fields,     setFields]     = useState<ContactFormData>(EMPTY_FORM);
+  const [status,     setStatus]     = useState<ContactFormSubmitStatus>("idle");
+  const [errorMsg,   setErrorMsg]   = useState("");
 
   // Hydrate saved values and generate fresh random placeholders on first render.
   useEffect(() => {
@@ -56,7 +61,7 @@ export default function ContactForm(): JSX.Element {
     setEmailPlaceholder(generateEmailFromName(fullName));
   }, []);
 
-  /** Writes the updated field to state and immediately persists the full form to localStorage. */
+  // Writes the updated field to state and immediately persists the full form to localStorage.
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { name, value } = e.target;
     setFields(prev => {
@@ -66,15 +71,45 @@ export default function ContactForm(): JSX.Element {
     });
   }
 
+  // Executes reCAPTCHA, then POSTs the form data + token to the API route.
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!executeRecaptcha) return;
+
+    setStatus("submitting");
+    setErrorMsg("");
+
+    try {
+      const recaptchaToken = await executeRecaptcha("contact_form");
+
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...fields, recaptchaToken })
+      });
+
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        throw new Error(data.error ?? "Submission failed.");
+      }
+
+      setStatus("success");
+      setFields(EMPTY_FORM);
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  }, [executeRecaptcha, fields]);
+
   return (
     <>
       <FormBorder>
         <FormRoot
           id="contact-form"
-          name="contact"
-          method="POST"
-          action="#"
           aria-label="Contact form"
+          onSubmit={handleSubmit}
         >
           <FormGroup>
             <FormLabel htmlFor="name" data-required>
@@ -90,6 +125,7 @@ export default function ContactForm(): JSX.Element {
               onChange={handleChange}
               required
               aria-required="true"
+              disabled={status === "submitting"}
             />
           </FormGroup>
 
@@ -107,6 +143,7 @@ export default function ContactForm(): JSX.Element {
               onChange={handleChange}
               required
               aria-required="true"
+              disabled={status === "submitting"}
             />
           </FormGroup>
 
@@ -118,13 +155,26 @@ export default function ContactForm(): JSX.Element {
               id="message"
               name="message"
               rows={6}
-              placeholder="Hi Harshal, I wanted to reach out about\u2026"
+              placeholder="Hi Harshal, I wanted to reach out about..."
               value={fields.message}
               onChange={handleChange}
               required
               aria-required="true"
+              disabled={status === "submitting"}
             />
           </FormGroup>
+
+          {status === "error" && (
+            <p role="alert" aria-live="assertive" style={{ color: "var(--color-fg-danger)", fontSize: "var(--font-size-sm)" }}>
+              {errorMsg}
+            </p>
+          )}
+
+          {status === "success" && (
+            <p role="status" aria-live="polite" style={{ color: "var(--color-fg-success)", fontSize: "var(--font-size-sm)" }}>
+              Message sent! I'll get back to you soon.
+            </p>
+          )}
 
           <FormFooter>
             <Button
@@ -134,9 +184,10 @@ export default function ContactForm(): JSX.Element {
               iconAlign="split"
               iconRight={<IconArrowRight size={18} isBooped={isBooped} />}
               onPointerEnter={triggerBoop}
-              onFocus={triggerBoop}
+              loading={status === "submitting"}
+              disabled={status === "submitting"}
             >
-              Send Message
+              {status === "submitting" ? "Sending…" : "Send Message"}
             </Button>
           </FormFooter>
         </FormRoot>
