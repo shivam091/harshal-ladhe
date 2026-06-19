@@ -2,5 +2,6 @@
 // Paths not listed fall back to the last URL segment, de-hyphenated.
 export const pageNames: Record<string, string> = {
   "/about": "About",
+  "/code-of-conduct": "Code of Conduct",
   "/how-did-i-build-my-blog": "How Did I Build My Blog"
 };
