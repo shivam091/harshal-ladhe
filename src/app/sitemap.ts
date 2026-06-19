@@ -60,6 +60,12 @@ const staticPages: MetadataRoute.Sitemap = [
     priority: 0.6
   },
   {
+    url: `${base}/privacy-policy`,
+    lastModified: pageDate("(site)/(internal)/privacy-policy/page.mdx"),
+    changeFrequency: "yearly",
+    priority: 0.3
+  },
+  {
     url: `${base}/code-of-conduct`,
     lastModified: pageDate("(site)/(internal)/code-of-conduct/page.mdx"),
     changeFrequency: "yearly",
