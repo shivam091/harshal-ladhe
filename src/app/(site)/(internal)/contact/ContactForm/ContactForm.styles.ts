@@ -2,8 +2,8 @@ import { styled } from "@linaria/react";
 
 // Decorative diagonal-stripe border wrapper — clips the background gradient to padding-box.
 export const FormBorder = styled.div`
-  border: var(--border-width-extra-thick) solid transparent;
-  border-radius: var(--border-radius-xl);
+  border: 0.5rem solid transparent;
+  border-radius: 1rem;
   background:
     linear-gradient(var(--color-bg-muted), var(--color-bg-muted)) padding-box,
     repeating-linear-gradient(
@@ -19,10 +19,10 @@ export const FormBorder = styled.div`
 export const FormRoot = styled.form`
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: 1.5rem;
   background: var(--color-bg-default);
-  padding: var(--space-md);
-  border-radius: var(--border-radius-lg);
+  padding: 0.75rem;
+  border-radius: 0.75rem;
 `;
 
 // Single form field group — stacks label above the input.
@@ -34,16 +34,16 @@ export const FormGroup = styled.div`
 // Field label — semi-bold; appends a red asterisk for required fields via ::after.
 export const FormLabel = styled.label`
   position: relative;
-  font-weight: var(--font-weight-semi-bold);
+  font-weight: 600;
   vertical-align: middle;
-  margin-block-end: var(--space-sm);
+  margin-block-end: 0.5rem;
   color: var(--color-fg-default);
 
   &[data-required]::after {
     content: "*";
     color: var(--color-fg-danger);
-    margin-inline-start: var(--space-xs);
-    font-weight: var(--font-weight-bold);
+    margin-inline-start: 0.25rem;
+    font-weight: 700;
     position: relative;
     inset-block-start: -2px;
   }
@@ -52,18 +52,18 @@ export const FormLabel = styled.label`
 const sharedInputStyles = `
   appearance: none;
   inline-size: 100%;
-  padding: var(--space-md) var(--space-base);
+  padding: 0.75rem 1rem;
   font-family: inherit;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-base);
+  font-size: 0.875rem;
+  font-weight: 400;
   color: var(--color-fg-default);
   background: transparent;
   border: 1px solid var(--color-border-default);
-  border-radius: var(--border-radius-default);
+  border-radius: 0.375rem;
   outline: none;
   transition:
-    border-color var(--motion-duration-fast) var(--motion-easing-ease),
-    box-shadow var(--motion-duration-fast) var(--motion-easing-ease);
+    border-color 150ms cubic-bezier(0.25, 0.1, 0.25, 1),
+    box-shadow 150ms cubic-bezier(0.25, 0.1, 0.25, 1);
 
   &::placeholder {
     color: var(--color-fg-muted);
@@ -91,29 +91,29 @@ export const FormTextarea = styled.textarea`
   ${sharedInputStyles}
   resize: block;
   min-block-size: 150px;
-  line-height: var(--line-height-paragraph);
+  line-height: 1.75;
 `;
 
 // Bottom row — stacks the submit button and disclaimer text vertically.
 export const FormFooter = styled.div`
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: 0.5rem;
 `;
 
 // reCAPTCHA branding disclaimer — muted xs text with accent-coloured links.
 export const RecaptchaDisclaimer = styled.p`
-  font-size: var(--font-size-xs);
+  font-size: 0.75rem;
   color: var(--color-fg-muted);
-  line-height: var(--line-height-relaxed);
-  margin-block-start: var(--space-sm);
+  line-height: 1.625;
+  margin-block-start: 0.5rem;
   opacity: 0.75;
 
   a {
     color: var(--color-fg-accent-muted);
     text-decoration-line: underline;
     text-underline-offset: 2px;
-    transition: color var(--motion-duration-fast) ease;
+    transition: color 150ms ease;
 
     &:hover {
       color: var(--color-fg-accent);
