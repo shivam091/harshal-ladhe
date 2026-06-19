@@ -54,6 +54,12 @@ const staticPages: MetadataRoute.Sitemap = [
     priority: 0.6
   },
   {
+    url: `${base}/contact`,
+    lastModified: pageDate("(site)/(internal)/contact/page.tsx"),
+    changeFrequency: "monthly",
+    priority: 0.6
+  },
+  {
     url: `${base}/how-did-i-build-my-blog`,
     lastModified: pageDate("(site)/(internal)/how-did-i-build-my-blog/page.mdx"),
     changeFrequency: "monthly",
