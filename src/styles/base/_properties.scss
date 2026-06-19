@@ -60,6 +60,34 @@
   initial-value: hsl(212 92% 43%);
 }
 
+// Inner fill of the contact form's striped frame.
+@property --color-bg-muted {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(210 29% 97%);
+}
+
+// Red airmail stripe on the contact form frame.
+@property --color-bg-danger-emphasis {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(356 71% 47%);
+}
+
+// Blue airmail stripe on the contact form frame.
+@property --color-bg-accent-emphasis {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(212 92% 43%);
+}
+
+// Paper-colored gaps between the airmail stripes; the form fill inside inherits the fade too.
+@property --color-bg-default {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(0 0% 100%);
+}
+
 /*
  * Typed so the scroll-driven glass effect interpolates smoothly — untyped custom
  * properties animate discretely, jumping at 50% of the animation range.
