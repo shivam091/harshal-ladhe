@@ -40,6 +40,7 @@ export const quickLinks: NavItem[] = [
 
 // Grouped apart so policy pages stay findable without competing with content links.
 export const legalLinks: NavItem[] = [
+  { href: "/terms-of-use",    title: "Terms of Use"    },
   { href: "/privacy-policy",  title: "Privacy Policy"  },
   { href: "/code-of-conduct", title: "Code of Conduct" }
 ];
