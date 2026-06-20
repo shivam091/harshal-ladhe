@@ -1,23 +1,24 @@
-import { JSX } from "react";
+import type { JSX } from "react";
 import SiteBanner from "@/components/SiteBanner";
 import SkyBannerBottom from "@/components/SkyBanners/SkyBannerBottom";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-import PageSignOff from "@/components/SignOff/PageSignOff";
 import PageViewTracker from "@/components/PageViewTracker";
 import { Container, PageWrapper } from "@/app/(site)/layout.styles";
+import FooterDivider from "@/components/FooterDivider";
 
 // Shared layout for every content route — composes banner, container, footer, and bottom sky ornament.
 export default function SiteLayout({ children }: { children: React.ReactNode; }): JSX.Element {
   return (
     <>
+      <PageViewTracker />
       <SiteBanner />
 
       <Container>
         <PageWrapper>
           <SiteHeader />
           {children}
-          <PageSignOff />
+          <FooterDivider />
           <SiteFooter />
         </PageWrapper>
       </Container>
