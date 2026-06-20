@@ -10,6 +10,7 @@ import { Container, PageWrapper } from "@/app/(site)/layout.styles";
 export default function SiteLayout({ children }: { children: React.ReactNode; }): JSX.Element {
   return (
     <>
+      <PageViewTracker />
       <SiteBanner />
 
       <Container>
