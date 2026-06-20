@@ -6,6 +6,7 @@ import SkyBannerBottom from "@/components/SkyBanners/SkyBannerBottom";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Container, PageWrapper } from "@/app/(site)/layout.styles";
+import PageViewTracker from "@/components/PageViewTracker";
 import FooterDivider from "@/components/FooterDivider";
 import ConnectivityBanner from "@/components/ConnectivityBanner";
 
@@ -13,6 +14,7 @@ import ConnectivityBanner from "@/components/ConnectivityBanner";
 export default function SiteLayout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
     <>
+      <PageViewTracker />
       <SiteBanner />
 
       <Container>
