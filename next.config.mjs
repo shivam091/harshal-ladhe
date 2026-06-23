@@ -18,14 +18,21 @@ const nextConfig = {
   sassOptions: {
     // Tell Sass to look inside these folders by default
     includePaths: [path.join(__dirname, "src/styles")],
-  }
+  },
+  webpack: (config) => {
+    config.cache = { type: "filesystem" }
+    return config
+  },
 }
 
-// Pass plugin as an absolute path string — Turbopack requires serializable (non-function) loader
+// Pass plugins as absolute path strings — Turbopack requires serialisable (non-function) loader
 // options, and mdx-js-loader resolves string entries via require.resolve at compile time.
 const withMDX = createMDX({
   options: {
     remarkPlugins: [path.join(__dirname, "src/lib/remark-git-dates.mjs")],
+    // rehype-shiki runs Shiki at build time and injects highlighted HAST using
+    // CSS-variable token colours so that theming works without client JS.
+    rehypePlugins: [path.join(__dirname, "src/lib/shiki/rehype-shiki.mjs")],
   },
 });
 export default withLinaria(withMDX(nextConfig));
