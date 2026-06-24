@@ -6,6 +6,7 @@ import MDXHeadingAnchor from "@/components/MDXHeadingAnchor";
 import CoreStack from "@/app/(site)/(internal)/how-did-i-build-my-blog/CoreStack";
 import SocialLinks from "@/components/SocialLinks";
 import PageSignOff from "@/components/SignOff/PageSignOff";
+import CodeBlock from "@/components/CodeBlock";
 import RainbowDivider from "@/components/RainbowDivider";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
@@ -23,6 +24,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     CoreStack,
     SocialLinks,
     PageSignOff,
+    CodeBlock,
     a: MDXLink,
     RainbowDivider,
     /*

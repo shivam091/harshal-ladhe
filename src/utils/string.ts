@@ -26,6 +26,14 @@ export function extractText(children: React.ReactNode): string {
   return "";
 }
 
+// Untrusted text must be neutralized before it's injected as HTML, or it could run as markup or script.
+export const escapeHTML = (str: string) => String(str)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&#039;");
+
 // Post text can contain &, < and quotes, which would break the feed's XML unescaped.
 export const escapeXml = (str: string) => String(str)
   .replace(/&/g, "&amp;")
