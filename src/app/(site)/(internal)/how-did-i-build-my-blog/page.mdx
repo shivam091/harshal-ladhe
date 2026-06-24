@@ -74,15 +74,17 @@ I'm using Next.js's **built-in MDX support** via `@next/mdx`, with a custom `rem
 
 The entire site is styled with **Linaria**, a zero-runtime CSS-in-JS library. It offers a `styled` API identical to styled-components, but instead of injecting styles at runtime it compiles them to static CSS modules at build time. A thin SCSS layer sits underneath for global concerns — resets, CSS custom properties, base layout — things that describe the page as a whole rather than any one component, so they don't belong inside a `styled` call.
 
-```ts
-import { styled } from "@linaria/react;
+<CodeBlock language="ts" showCopyButton={false}>
+{`
+  import { styled } from "@linaria/react;
 
-export const PageTitle = styled.h1`
-  font-size: var(--h1-size);
-  letter-spacing: 0.5px;
-  text-shadow: var(--text-shadow-contrast-soft, none);
-`;
-```
+  export const PageTitle = styled.h1\`
+    font-size: var(--h1-size);
+    letter-spacing: 0.5px;
+    text-shadow: var(--text-shadow-contrast-soft, none);
+  \`;
+`}
+</CodeBlock>
 
 The result: **zero JavaScript overhead for styles**, full compatibility with React Server Components, and a familiar developer experience.
 
@@ -119,26 +121,28 @@ Both are loaded from **Google Fonts**, with `font-display: swap` so text is read
 
 Every code block you see on this site is highlighted by **Shiki**. Unlike runtime highlighters that ship a tokenizer to the browser, Shiki uses the same TextMate grammars and tokenizer as VS Code, and it runs **on the server** — the page arrives already coloured, with zero highlighting JavaScript on the client.
 
-The interesting part is theming. I didn't want a stock Shiki theme that ignores my carefully tuned light/dark/soft-dark palettes. So instead of a fixed theme, Shiki is fed a **custom theme that maps each syntax scope to one of my own CSS variables** — `--color-code-syntax-keyword`, `--color-code-syntax-string`, and so on, the same tokens defined per theme alongside every other colour.
+The interesting part is theming. I didn't want a stock Shiki theme that ignores my carefully tuned light/dark/soft-dark palettes. So instead of a fixed theme, Shiki is fed a **custom theme that maps each TextMate grammar scope directly to one of my CSS variable tokens** — `--color-code-syntax-keyword`, `--color-code-syntax-string`, and so on, the same tokens defined per theme alongside every other colour.
 
-Shiki can only emit literal hex colours, not `var(...)`, so the trick is a two-step dance: each token gets a unique sentinel hex, and a tiny post-processing pass rewrites those sentinels into the matching `var(--color-code-syntax-*)`:
+Shiki accepts CSS variable strings directly as `foreground` values, so the theme is just a plain mapping — no post-processing or sentinel tricks required:
 
-```ts
-export const SHIKI_THEME = {
-  name: "code-syntax-vars",
-  tokenColors: [
-    {
-      scope: ["keyword", "keyword.control", "storage.type"],
-      settings: { foreground: "var(--color-code-syntax-keyword)" },
-    },
-    {
-      scope: ["string", "string.quoted", "string.template"],
-      settings: { foreground: "var(--color-code-syntax-string)" },
-    },
-    // …one entry per syntax category
-  ],
-};
-```
+<CodeBlock language="ts" showCopyButton={false}>
+{`
+  export const SHIKI_THEME = {
+    name: "code-syntax-vars",
+    tokenColors: [
+      {
+        scope: ["keyword", "keyword.control", "storage.type"],
+        settings: { foreground: "var(--color-code-syntax-keyword)" },
+      },
+      {
+        scope: ["string", "string.quoted", "string.template"],
+        settings: { foreground: "var(--color-code-syntax-string)" },
+      },
+      // …one entry per syntax category
+    ],
+  };
+`}
+</CodeBlock>
 
 The payoff: switch the theme and **every code block re-colours instantly**, with no re-highlighting and no flash — because the actual colours live in CSS variables the browser re-evaluates on the spot.
 
@@ -170,31 +174,35 @@ The integration has two halves:
 
 - **Client side** — a thin `RecaptchaProvider` wraps the form using `react-google-recaptcha-v3`. When the form is submitted, it silently generates a token tied to the action and the public site key (`NEXT_PUBLIC_RECAPTCHA_SITE_KEY`).
 
-```ts
-import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
+<CodeBlock language="ts" showCopyButton={false}>
+{`
+  import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 
-export default function RecaptchaProvider({ children }) {
-  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
-  return (
-    <GoogleReCaptchaProvider reCaptchaKey={siteKey}>
-      {children}
-    </GoogleReCaptchaProvider>
-  );
-}
-```
+  export default function RecaptchaProvider({ children }) {
+    const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? "";
+    return (
+      <GoogleReCaptchaProvider reCaptchaKey={siteKey}>
+        {children}
+      </GoogleReCaptchaProvider>
+    );
+  }
+`}
+</CodeBlock>
 
 - **Server side** — the `POST /api/contact` route never trusts the client. It forwards the token to Google's `siteverify` endpoint using the server-only secret key, then rejects anything that fails verification or scores below the `0.5` threshold Google recommends:
 
-```ts
-const verifyData = await verifyRes.json();
+<CodeBlock language="ts" showCopyButton={false}>
+{`
+  const verifyData = await verifyRes.json();
 
-if (!verifyData.success || verifyData.score < MIN_SCORE) {
-  return NextResponse.json(
-    { error: "reCAPTCHA verification failed." },
-    { status: 422 },
-  );
-}
-```
+  if (!verifyData.success || verifyData.score < MIN_SCORE) {
+    return NextResponse.json(
+      { error: "reCAPTCHA verification failed." },
+      { status: 422 },
+    );
+  }
+`}
+</CodeBlock>
 
 Keeping the secret key strictly server-side (in a Route Handler, never shipped to the browser) means the scoring decision can't be tampered with from the client. The result is a form that's frictionless for real people but quietly hostile to bots. Note that reCAPTCHA does load Google's script and analyze page interactions — that's documented in the [Privacy Policy](/privacy-policy) and [Terms of Use](/terms-of-use).
 
