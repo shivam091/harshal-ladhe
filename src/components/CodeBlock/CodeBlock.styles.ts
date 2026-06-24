@@ -1,0 +1,55 @@
+import { styled } from "@linaria/react";
+
+/*
+  z-index is explicit (rather than left at auto) so other floating widgets can be deliberately
+  layered below code blocks via a lower z-index of their own.
+*/
+export const CodeBlockWrapper = styled.div`
+  position: relative;
+  isolation: isolate;
+  z-index: 2;
+  border-radius: 0.5rem;
+  /*
+    clip instead of hidden: visually clips at border-radius but does NOT
+    create a scroll container, so position:sticky on the copy button works.
+  */
+  overflow: clip;
+  background: var(--color-bg-muted);
+  border: 1px solid var(--color-border-muted);
+  margin-block: clamp(0.75rem, 1vw, 1rem);
+
+  &:hover .copy-btn,
+  &:focus-within .copy-btn {
+    opacity: 1;
+    transition-delay: 0ms;
+  }
+`;
+
+// Scrolls horizontally on its own so long lines never widen the article.
+export const Pre = styled.div`
+  /*
+    Absorb the vertical space the sticky button occupies (36px height + 8px top + 8px bottom margin)
+    so the code content starts flush at the top of the block.
+  */
+  margin-block-start: -52px;
+  overflow-inline: auto;
+  scrollbar-width: thin;
+
+  // No button occupying flow space above, so there's nothing to compensate for.
+  &[data-has-copy-button="false"] {
+    margin-block-start: 0;
+  }
+
+  pre.shiki {
+    margin: 0;
+    border-radius: 0;
+    border: none;
+    background: transparent !important;
+    tab-size: 2;
+  }
+
+  code {
+    font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-feature-settings: "kern" 0, "liga" 0;
+  }
+`;
