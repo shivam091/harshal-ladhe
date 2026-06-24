@@ -27,3 +27,15 @@ export function extractText(children: React.ReactNode): string {
   }
   return "";
 }
+
+/*
+  Escapes special HTML characters (&, <, >, ", ') in a string to their
+  corresponding HTML entities. This prevents the browser from interpreting the characters
+  as markup or script, making the string safe for rendering in an HTML context.
+*/
+export const escapeHTML = (str: string) => String(str)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&#039;");
