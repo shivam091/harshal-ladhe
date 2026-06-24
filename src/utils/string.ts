@@ -25,3 +25,11 @@ export function extractText(children: React.ReactNode): string {
   }
   return "";
 }
+
+// Untrusted text must be neutralized before it's injected as HTML, or it could run as markup or script.
+export const escapeHTML = (str: string) => String(str)
+  .replace(/&/g, "&amp;")
+  .replace(/</g, "&lt;")
+  .replace(/>/g, "&gt;")
+  .replace(/"/g, "&quot;")
+  .replace(/'/g, "&#039;");
