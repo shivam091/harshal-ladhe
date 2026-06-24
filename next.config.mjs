@@ -30,14 +30,20 @@ const nextConfig = {
   sassOptions: {
     // Lets SCSS files import shared partials by bare name instead of fragile relative paths.
     includePaths: [path.join(__dirname, "src/styles")],
+  },
+  webpack: (config) => {
+    config.cache = { type: "filesystem" };
+    return config;
   }
 };
 
-// Pass plugin as an absolute path string — Turbopack requires serializable (non-function) loader
+// Pass plugins as absolute path strings — Turbopack requires serialisable (non-function) loader
 // options, and mdx-js-loader resolves string entries via require.resolve at compile time.
 const withMDX = createMDX({
   options: {
     remarkPlugins: [path.join(__dirname, "src/lib/remark-git-dates.mjs")],
+    // Highlighting at build time with CSS-variable token colours lets theming work without client JS.
+    rehypePlugins: [path.join(__dirname, "src/lib/shiki/rehype-shiki.mjs")],
   },
 });
 export default withLinaria(withMDX(nextConfig));
