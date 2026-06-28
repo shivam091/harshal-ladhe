@@ -5,5 +5,6 @@ export const pageNames: Record<string, string> = {
   "/privacy-policy": "Privacy Policy",
   "/terms-of-use": "Terms of Use",
   "/contact": "Contact Harshal",
-  "/how-did-i-build-my-blog": "How Did I Build My Blog"
+  "/how-did-i-build-my-blog": "How Did I Build My Blog",
+  "/goodies": "Goodies"
 };
