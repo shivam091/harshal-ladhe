@@ -19,3 +19,12 @@ export function fullTimestamp(iso: string): string {
     timeZone: "UTC"
   });
 }
+
+// UTC so the month never shifts by timezone.
+export function formatMonthYear(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC"
+  });
+}
