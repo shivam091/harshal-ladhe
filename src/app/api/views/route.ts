@@ -148,6 +148,25 @@ async function isNewUniqueVisitor(
   }
 }
 
+// Answers `{ views: 0 }` on any failure so the client always gets a valid shape without leaking internals.
+export async function GET(req: NextRequest) {
+  const slug = req.nextUrl.searchParams.get("slug");
+
+  if (!slug || slug.length > 256 || !SLUG_PATTERN.test(slug)) {
+    return NextResponse.json({ views: 0 });
+  }
+
+  try {
+    const db = await getDb();
+    const doc = await db
+      .collection<PageView>(COLLECTION)
+      .findOne({ _id: slug } as never, { projection: { visitorCount: 1 } });
+    return NextResponse.json({ views: doc?.visitorCount ?? 0 });
+  } catch {
+    return NextResponse.json({ views: 0 });
+  }
+}
+
 /*
   Counters use atomic `$inc` so concurrent visits never lose a count, and the
   response is always 204 so the beacon never surfaces an error to the visitor.
