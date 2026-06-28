@@ -6,7 +6,7 @@
   `SOFT_DARK_COLORS_CSS` — serialised declaration block, injected into
                            `[data-theme="soft-dark"]` by `app/layout.tsx`.
 */
-import type { ColorMapRaw } from "@/types/color";
+import type { ColorMapRaw } from "@/utils/color";
 import { createStyleObject, createCssString } from "@/utils/color";
 
 export const SOFT_DARK_COLORS_RAW: ColorMapRaw = {
@@ -116,10 +116,13 @@ export const SOFT_DARK_COLORS_RAW: ColorMapRaw = {
   colorBgScrollbarThumb:       [220, 21,  30],
   colorBgScrollbarThumbHover:  [220, 20,  38],
 
-  // Retro counter
-  colorBgRetroCounter:                  [220, 23, 13],
-  colorRetroCounterSegmentActive:       [209, 18, 70],
-  colorRetroCounterSegmentInactive:     [220, 25, 24],
+  // Hit counter
+  colorBgHitCounter:                  [220, 23, 13],
+  colorHitCounterSegmentActive:       [209, 18, 70],
+  colorHitCounterSegmentInactive:     [220, 25, 24],
+  colorBgHitCounterOn:                [212, 18, 16],
+  colorHitCounterSegmentActiveOn:     [123, 48, 52],
+  colorHitCounterSegmentInactiveOn:   [123, 18, 24],
 
   // Sky / clouds
   colorBgCloud100:             [212, 18,  16],
@@ -142,7 +145,7 @@ export const SOFT_DARK_COLORS_RAW: ColorMapRaw = {
   boxShadowXxl:            "0 0 35px 6px hsl(0 0% 100% / 0.2)",
 
   // Text shadows
-  textShadowContrastSoft:  "0 1px 1px hsl(0 0% 100% / 0.1)",
+  textShadowContrastSoft:  "0 1px 1px hsl(0 0% 100% / 0.1)"
 };
 
 export const SOFT_DARK_COLORS     = createStyleObject(SOFT_DARK_COLORS_RAW);
