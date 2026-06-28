@@ -8,6 +8,4 @@ export interface Goodie {
   icon: IconName;
   // Destination route for the card link.
   href: string;
-  // Extra pathname prefixes that should also mark this goodie as active (e.g. singular sub-routes).
-  activePatterns?: string[];
 }

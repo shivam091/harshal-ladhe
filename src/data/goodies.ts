@@ -6,8 +6,6 @@ export const goodies: Goodie[] = [
     name: "Snippets",
     description: "Concise code fragments to solve discrete challenges.",
     icon: "codeBlock",
-    href: "/snippets",
-    // Individual snippet pages live under /snippet/ (singular), not /snippets/.
-    activePatterns: ["/snippet/"],
-  },
+    href: "/snippets"
+  }
 ];
