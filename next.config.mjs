@@ -29,7 +29,11 @@ const nextConfig = {
 // options, and mdx-js-loader resolves string entries via require.resolve at compile time.
 const withMDX = createMDX({
   options: {
-    remarkPlugins: [path.join(__dirname, "src/lib/remark-git-dates.mjs")],
+    remarkPlugins: [
+      path.join(__dirname, "src/lib/remark-git-dates.mjs"),
+      // Injects <SnippetMeta> (git dates + read time) into snippet content at build.
+      path.join(__dirname, "src/lib/remark-snippet-meta.mjs"),
+    ],
     // rehype-shiki runs Shiki at build time and injects highlighted HAST using
     // CSS-variable token colours so that theming works without client JS.
     rehypePlugins: [path.join(__dirname, "src/lib/shiki/rehype-shiki.mjs")],
