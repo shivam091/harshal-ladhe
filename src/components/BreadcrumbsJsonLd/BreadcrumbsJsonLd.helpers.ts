@@ -1,3 +1,4 @@
+import { getSnippetBySlug } from "@/data/snippets";
 import { pageNames } from "@/config/page-names";
 import type { Crumb } from "@/components/BreadcrumbsJsonLd/BreadcrumbsJsonLd.types";
 
@@ -8,12 +9,20 @@ function slugFromPath(pathname: string, prefix: string): string {
 
 /*
   Constructs the ordered breadcrumb trail for the current pathname.
-  Every page gets a flat two-item trail (Home → page title).
+  Detail pages (snippet) get a two-step trail (Home → index → title);
+  all other pages get a flat two-item trail (Home → page title).
 */
 export function buildCrumbs(pathname: string): Crumb[] {
   const crumbs: Crumb[] = [{ title: "Home", url: "/" }];
 
   if (pathname === "/") return crumbs;
+
+  if (pathname.startsWith("/snippet/")) {
+    const snippet = getSnippetBySlug(slugFromPath(pathname, "/snippet/"));
+    crumbs.push({ title: "Snippets", url: "/snippets" });
+    if (snippet) crumbs.push({ title: snippet.title, url: pathname });
+    return crumbs;
+  }
 
   const title =
     pageNames[pathname] ??
