@@ -1,3 +1,4 @@
+import { getSnippetBySlug } from "@/data/snippets";
 import { pageNames } from "@/config/page-names";
 import type { Crumb } from "@/components/BreadcrumbsJsonLd/BreadcrumbsJsonLd.types";
 
@@ -14,6 +15,13 @@ export function buildCrumbs(pathname: string): Crumb[] {
   const crumbs: Crumb[] = [{ title: "Home", url: "/" }];
 
   if (pathname === "/") return crumbs;
+
+  if (pathname.startsWith("/snippet/")) {
+    const snippet = getSnippetBySlug(slugFromPath(pathname, "/snippet/"));
+    crumbs.push({ title: "Snippets", url: "/snippets" });
+    if (snippet) crumbs.push({ title: snippet.title, url: pathname });
+    return crumbs;
+  }
 
   const title =
     pageNames[pathname] ??
