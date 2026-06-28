@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import { getClientIp, hashIp } from "@/lib/client-ip";
 
@@ -113,6 +114,25 @@ async function isNewUniqueVisitor(
     if (err && typeof err === "object" && "code" in err && err.code === 11000) return false;
     // Other errors count as not-new, since a missed unique visitor beats a double count.
     return false;
+  }
+}
+
+// Answers `{ views: 0 }` on any failure so the client always gets a valid shape without leaking internals.
+export async function GET(req: NextRequest) {
+  const slug = req.nextUrl.searchParams.get("slug");
+
+  if (!slug || slug.length > 256 || !SLUG_PATTERN.test(slug)) {
+    return NextResponse.json({ views: 0 });
+  }
+
+  try {
+    const db = await getDb();
+    const doc = await db
+      .collection<PageView>(COLLECTION)
+      .findOne({ _id: slug } as never, { projection: { visitorCount: 1 } });
+    return NextResponse.json({ views: doc?.visitorCount ?? 0 });
+  } catch {
+    return NextResponse.json({ views: 0 });
   }
 }
 
