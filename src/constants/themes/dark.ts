@@ -114,10 +114,13 @@ export const DARK_COLORS_RAW: ColorMapRaw = {
   colorBgScrollbarThumb:       [215, 23,  20],
   colorBgScrollbarThumbHover:  [215, 23,  35],
 
-  // Retro counter
-  colorBgRetroCounter:                  [210, 15, 12],
-  colorRetroCounterSegmentActive:       [209, 18, 70],
-  colorRetroCounterSegmentInactive:     [214, 29, 20],
+  // Hit counter
+  colorBgHitCounter:                  [210, 15, 12],
+  colorHitCounterSegmentActive:       [209, 18, 70],
+  colorHitCounterSegmentInactive:     [214, 29, 20],
+  colorBgHitCounterOn:                [210, 15, 6],
+  colorHitCounterSegmentActiveOn:     [140, 60, 55],
+  colorHitCounterSegmentInactiveOn:   [140, 22, 14],
 
   // Sky / clouds
   colorBgCloud100:             [210, 15,  6],
