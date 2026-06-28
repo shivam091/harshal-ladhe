@@ -1,3 +1,4 @@
+import { getSnippetBySlug } from "@/data/snippets";
 import { pageNames } from "@/config/page-names";
 import type { Crumb } from "@/components/BreadcrumbsJsonLd/BreadcrumbsJsonLd.types";
 
@@ -6,11 +7,21 @@ function slugFromPath(pathname: string, prefix: string): string {
   return pathname.slice(prefix.length).replace(/\/$/, "");
 }
 
-// Kept flat (Home → page) since the site has no deeper hierarchy worth exposing to search results.
+/*
+  Detail pages get a Home → index → title trail so search results show which section they
+  belong to; every other page stays flat.
+*/
 export function buildCrumbs(pathname: string): Crumb[] {
   const crumbs: Crumb[] = [{ title: "Home", url: "/" }];
 
   if (pathname === "/") return crumbs;
+
+  if (pathname.startsWith("/snippet/")) {
+    const snippet = getSnippetBySlug(slugFromPath(pathname, "/snippet/"));
+    crumbs.push({ title: "Snippets", url: "/snippets" });
+    if (snippet) crumbs.push({ title: snippet.title, url: pathname });
+    return crumbs;
+  }
 
   const title =
     pageNames[pathname] ??
