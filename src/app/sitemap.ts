@@ -3,6 +3,8 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 import { join } from "node:path";
+import { snippets } from "@/data/snippets";
+import { getSnippetDates } from "@/lib/snippets";
 import { gitLastModified } from "@/lib/git-dates.mjs";
 
 // Required for `output: "export"` — tells Next.js this route is fully static.
@@ -71,10 +73,31 @@ const staticPages: MetadataRoute.Sitemap = [
     changeFrequency: "weekly",
     priority: 0.9
   },
+  {
+    url: `${base}/snippets`,
+    lastModified: pageDate("(site)/(internal)/snippets/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
+  }
 ];
+
+// Git dates so lastModified tracks real snippet edits rather than the build time.
+const snippetDates = snippets.map(({ slug }) => ({
+  slug,
+  lastModified: getSnippetDates(slug).lastModifiedAt
+}));
+
+// Detail pages only, so the index isn't listed twice.
+const snippetPages: MetadataRoute.Sitemap = snippetDates.map(({ slug, lastModified }) => ({
+  url: `${base}/snippet/${slug}`,
+  lastModified: lastModified ? new Date(lastModified) : new Date(),
+  changeFrequency: "monthly" as const,
+  priority: 0.7
+}));
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
-    ...staticPages
+    ...staticPages,
+    ...snippetPages
   ];
 }
