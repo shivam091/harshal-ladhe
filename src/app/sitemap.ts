@@ -89,6 +89,12 @@ const staticPages: MetadataRoute.Sitemap = [
     changeFrequency: "weekly",
     priority: 0.9
   },
+  {
+    url: `${base}/snippets`,
+    lastModified: pageDate("(site)/(internal)/snippets/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
+  }
 ];
 
 // Dynamic post pages
