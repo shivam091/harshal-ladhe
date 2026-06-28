@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import type { IconBoopProps } from "@/icons/icons";
+import IconCodeBlock from "@/icons/IconCodeBlock";
 
 // Every goodie is a card linking to a section, so each needs an icon, a blurb, and a route.
 export interface Goodie {
@@ -12,4 +13,10 @@ export interface Goodie {
 
 // Hand-curated rather than derived so the page controls order and wording.
 export const goodies: Goodie[] = [
+  {
+    name: "Snippets",
+    description: "Concise code fragments to solve discrete challenges.",
+    iconComponent: IconCodeBlock,
+    href: "/snippets"
+  }
 ];
