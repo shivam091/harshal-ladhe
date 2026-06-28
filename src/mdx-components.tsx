@@ -6,6 +6,7 @@ import SocialLinks from "@/components/SocialLinks";
 import PageSignOff from "@/components/SignOff/PageSignOff";
 import PostSignOff from "@/components/SignOff/PostSignOff";
 import CodeBlock from "@/components/CodeBlock";
+import SnippetMeta from "@/components/SnippetMeta";
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
   return {
@@ -18,6 +19,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PageSignOff,
     PostSignOff,
     CodeBlock,
+    SnippetMeta,
     h1: (props) => <MDXHeadingAnchor as="h1" {...props} />,
     h2: (props) => <MDXHeadingAnchor as="h2" {...props} />,
     h3: (props) => <MDXHeadingAnchor as="h3" {...props} />,
