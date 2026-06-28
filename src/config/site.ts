@@ -44,6 +44,11 @@ export const siteConfig = {
     googleMeasurementId: "G-R5EZ91PMYX"
   },
 
+  readTime: {
+    // Below the typical prose pace because code-heavy content is read more slowly.
+    wordsPerMinute: 180
+  },
+
   // Tunable here so related-entry ranking can change without touching code.
   relatedEntries: {
     // Set false to hide the related-entries section site-wide.
