@@ -1,0 +1,117 @@
+"use client";
+
+import type { JSX} from "react";
+import { useEffect, useRef, useState } from "react";
+import * as Radix from "@radix-ui/react-tooltip";
+import Trigger from "@/components/Trigger";
+import Tip from "@/components/Tip";
+import { useHoverDevice } from "@/hooks/use-hover-device";
+import type { TooltipProps } from "@/components/Tooltip/Tooltip.types";
+import { contentClass } from "@/components/Tooltip/Tooltip.styles";
+
+/*
+  Radix shows tooltips on hover/focus only and suppresses them on touch, so on
+  coarse-pointer devices open state is controlled here — tap the trigger to toggle,
+  tap outside to dismiss — while pointer devices keep Radix's behaviour as-is.
+*/
+export default function Tooltip({
+  children,
+  content,
+  side = "top",
+  align = "center",
+  sideOffset = 8,
+  delayDuration = 200,
+  forceOpen = false
+}: TooltipProps): JSX.Element {
+  const isHoverDevice = useHoverDevice();
+  const isTouch = isHoverDevice === false;
+  const hasContent = content !== undefined && content !== null && content !== "";
+
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  /*
+    Some callers toggle `content` itself (string ↔ undefined) to drive a programmatic hint rather
+    than static hover text. Keeping the last real content around while it's closing gives the close
+    animation something to fade out; otherwise the text (and the whole Radix tree, via the early
+    return below) would disappear on the same render `content` goes empty, before Presence ever
+    gets a chance to animate anything out.
+  */
+  const [lastContent, setLastContent] = useState(content);
+  useEffect(() => {
+    if (hasContent) setLastContent(content);
+  }, [content, hasContent]);
+
+  const isOpen = forceOpen || (hasContent && open);
+
+  /*
+    On pointer devices let Radix (hover/focus/escape) drive open; on touch ignore
+    Radix's auto open/close and rely on the tap handlers below.
+  */
+  const handleOpenChange = (next: boolean): void => {
+    if (isTouch) return;
+    setOpen(next);
+  };
+
+  // Touch has no hover, so a tap on the trigger stands in for it.
+  const handleTriggerClick = (): void => {
+    if (!isTouch) return;
+    setOpen(!open);
+  };
+
+  // Touch has no pointer-leave, so an outside tap is the only natural way to dismiss.
+  useEffect(() => {
+    if (!isTouch || !open) return;
+
+    const onPointerDown = (event: PointerEvent): void => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (triggerRef.current?.contains(target)) return;
+      if (contentRef.current?.contains(target)) return;
+      setOpen(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [isTouch, open]);
+
+  /*
+    Content has never been provided → render the trigger untouched (no tooltip wiring).
+    `lastContent`, not `content`, so a caller merely toggling content closed keeps the Radix
+    tree (and its close animation) mounted instead of unmounting it outright.
+  */
+  if (lastContent === undefined || lastContent === null || lastContent === "") {
+    return (
+      <>
+        {children}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Radix.Provider delayDuration={delayDuration}>
+        <Radix.Root open={isOpen} onOpenChange={handleOpenChange} disableHoverableContent={isTouch}>
+          <Trigger primitive={Radix.Trigger} triggerRef={triggerRef} onClick={handleTriggerClick}>
+            {children}
+          </Trigger>
+          <Radix.Portal>
+            <Radix.Content
+              ref={contentRef}
+              side={side}
+              align={align}
+              sideOffset={sideOffset}
+              className={contentClass}
+            >
+              {lastContent}
+              <Tip arrow={Radix.Arrow} isOpen={isOpen} />
+            </Radix.Content>
+          </Radix.Portal>
+        </Radix.Root>
+      </Radix.Provider>
+    </>
+  );
+}
+
+Tooltip.displayName = "Tooltip";
