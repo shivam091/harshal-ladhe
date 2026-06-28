@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest} from "next/server";
+import { NextResponse } from "next/server";
 import { getDb } from "@/lib/mongodb";
 import { getClientIp, hashIp } from "@/lib/client-ip";
 
@@ -50,7 +51,7 @@ function ensureSeenIndexes(db: Awaited<ReturnType<typeof getDb>>): Promise<unkno
     const coll = db.collection(SEEN_COLLECTION);
     seenIndexReady = Promise.all([
       coll.createIndex({ slug: 1, day: 1, ipHash: 1 }, { unique: true }),
-      coll.createIndex({ at: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 2 }),
+      coll.createIndex({ at: 1 }, { expireAfterSeconds: 60 * 60 * 24 * 2 })
     ]).catch(() => {
       // Reset so a transient failure can be retried on the next request.
       seenIndexReady = undefined;
@@ -116,6 +117,25 @@ async function isNewUniqueVisitor(
   }
 }
 
+// Answers `{ views: 0 }` on any failure so the client always gets a valid shape without leaking internals.
+export async function GET(req: NextRequest) {
+  const slug = req.nextUrl.searchParams.get("slug");
+
+  if (!slug || slug.length > 256 || !SLUG_PATTERN.test(slug)) {
+    return NextResponse.json({ views: 0 });
+  }
+
+  try {
+    const db = await getDb();
+    const doc = await db
+      .collection<PageView>(COLLECTION)
+      .findOne({ _id: slug } as never, { projection: { visitorCount: 1 } });
+    return NextResponse.json({ views: doc?.visitorCount ?? 0 });
+  } catch {
+    return NextResponse.json({ views: 0 });
+  }
+}
+
 /*
   Counters use atomic `$inc` so concurrent visits never lose a count, and the
   response is always 204 so the beacon never surfaces an error to the visitor.
@@ -147,7 +167,7 @@ export async function POST(req: NextRequest) {
         {
           $inc: { botCount: 1 },
           $set: { slug, updatedAt: now },
-          $setOnInsert: { createdAt: now },
+          $setOnInsert: { createdAt: now }
         },
         { upsert: true }
       );
@@ -165,7 +185,7 @@ export async function POST(req: NextRequest) {
       [`referrers.${referrer}`]: 1,
       [`countries.${country}`]: 1,
       [`devices.${device}`]: 1,
-      [`viewsByDay.${day}`]: 1,
+      [`viewsByDay.${day}`]: 1
     };
     if (isNew) inc.uniqueVisitorCount = 1;
 
@@ -174,7 +194,7 @@ export async function POST(req: NextRequest) {
       {
         $inc: inc,
         $set: { slug, updatedAt: now },
-        $setOnInsert: { createdAt: now },
+        $setOnInsert: { createdAt: now }
       },
       { upsert: true }
     );
