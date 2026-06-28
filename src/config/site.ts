@@ -44,6 +44,11 @@ export const siteConfig = {
     googleMeasurementId: "G-R5EZ91PMYX"
   },
 
+  readTime: {
+    // Below the typical prose pace because code-heavy content is read more slowly.
+    wordsPerMinute: 180
+  },
+
   // Site-wide switch so the decorative hit counter can be dropped without touching page layouts.
   hitCounter: true
 };
