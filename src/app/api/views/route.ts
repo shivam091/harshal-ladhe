@@ -108,6 +108,29 @@ async function isNewUniqueVisitor(
 }
 
 /*
+  GET /api/views?slug=<path> — returns the human visitor count for a slug.
+  Returns `{ views: 0 }` on any error or missing document so the client always
+  gets a valid shape without leaking internals.
+*/
+export async function GET(req: NextRequest) {
+  const slug = req.nextUrl.searchParams.get("slug");
+
+  if (!slug || slug.length > 256 || !SLUG_PATTERN.test(slug)) {
+    return NextResponse.json({ views: 0 });
+  }
+
+  try {
+    const db = await getDb();
+    const doc = await db
+      .collection<PageView>(COLLECTION)
+      .findOne({ _id: slug } as never, { projection: { visitorCount: 1 } });
+    return NextResponse.json({ views: doc?.visitorCount ?? 0 });
+  } catch {
+    return NextResponse.json({ views: 0 });
+  }
+}
+
+/*
   POST /api/views — silently increments the visit counters for a page slug.
 
   One document per slug (`_id` = slug). All counters use atomic `$inc`, so
