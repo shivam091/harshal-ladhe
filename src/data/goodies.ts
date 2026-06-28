@@ -11,4 +11,10 @@ interface Goodie {
 
 // Hand-curated rather than derived so the page controls order and wording.
 export const goodies: Goodie[] = [
+  {
+    name: "Snippets",
+    description: "Concise code fragments to solve discrete challenges.",
+    icon: "codeBlock",
+    href: "/snippets"
+  }
 ];
