@@ -4,8 +4,9 @@
   SiteBanner — thin "use client" boundary for the full-bleed sky banner.
 
   Reads usePathname() to decide which banner to render:
-    /               → HeroBanner   (star-field + multi-layer clouds)
-    everything else → SkyBannerTop (simpler gradient sky)
+    /                           → HeroBanner            (star-field + multi-layer clouds)
+    /snippet/*, /post/*, /series/* → SkyBannerTop inner (taller cloud variant for detail pages)
+    everything else             → SkyBannerTop          (simpler gradient sky)
 
   Why a separate component?
     The parent (site)/layout.tsx is a server component. Importing usePathname()
@@ -22,10 +23,21 @@ import { usePathname } from "next/navigation";
 import HeroBanner from "@/components/HeroBanner";
 import SkyBannerTop from "@/components/SkyBanners/SkyBannerTop";
 
-// Picks HeroBanner on the homepage, SkyBannerTop everywhere else.
+// Content-detail path segments that should show the taller inner banner variant.
+const INNER_PATH_SEGMENTS = ["/snippet/", "/post/", "/series/"];
+
+// Picks HeroBanner on the homepage and the inner SkyBannerTop variant on content
+// detail pages (/snippet/, /post/, /series/), falling back to the default SkyBannerTop.
 export default function SiteBanner(): JSX.Element {
   const pathname = usePathname();
-  return pathname === "/" ? <HeroBanner /> : <SkyBannerTop />;
+
+  if (pathname === "/") return <HeroBanner />;
+
+  return (
+    <>
+      <SkyBannerTop inner={INNER_PATH_SEGMENTS.some((seg) => pathname.includes(seg))} />
+    </>
+  );
 }
 
 SiteBanner.displayName = "SiteBanner";
