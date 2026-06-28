@@ -116,10 +116,13 @@ export const LIGHT_COLORS_RAW: ColorMapRaw = {
   colorBgScrollbarThumb:       [210, 30,  55],
   colorBgScrollbarThumbHover:  [225, 7,   60],
 
-  // Retro counter
-  colorBgRetroCounter:                  [213, 80, 95],
-  colorRetroCounterSegmentActive:       [225, 27, 40],
-  colorRetroCounterSegmentInactive:     [212, 39, 87],
+  // Hit counter
+  colorBgHitCounter:                  [213, 80, 95],
+  colorHitCounterSegmentActive:       [225, 27, 40],
+  colorHitCounterSegmentInactive:     [212, 39, 87],
+  colorBgHitCounterOn:                [212, 9,  39],
+  colorHitCounterSegmentActiveOn:     [136, 60, 50],
+  colorHitCounterSegmentInactiveOn:   [136, 15, 45],
 
   // Sky / clouds
   colorBgCloud100:             [203, 60,  95],
@@ -142,7 +145,7 @@ export const LIGHT_COLORS_RAW: ColorMapRaw = {
   boxShadowXxl:            "0 0 35px 6px hsl(0 0% 0% / 0.25)",
 
   // Text shadows
-  textShadowContrastSoft:  "0 1px 1px hsl(0 0% 0% / 0.2)",
+  textShadowContrastSoft:  "0 1px 1px hsl(0 0% 0% / 0.2)"
 };
 
 export const LIGHT_COLORS     = createStyleObject(LIGHT_COLORS_RAW);
