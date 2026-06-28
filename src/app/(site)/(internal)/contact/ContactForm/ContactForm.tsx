@@ -6,6 +6,8 @@ import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import Button from "@/components/Button";
 import IconArrowRight from "@/icons/IconArrowRight";
 import { generateEmailFromName, generateFullName } from "@/helpers/fake-data";
+import { siteConfig } from "@/config/site";
+import { isEntryPath } from "@/utils/correction";
 // One status union rather than booleans so contradictory states like submitting + success can't occur.
 type ContactFormSubmitStatus = "idle" | "submitting" | "success" | "error";
 
@@ -55,10 +57,19 @@ export default function ContactForm(): JSX.Element {
   const [fields,     setFields]     = useState<ContactFormData>(EMPTY_FORM);
   const [status,     setStatus]     = useState<ContactFormSubmitStatus>("idle");
   const [errorMsg,   setErrorMsg]   = useState("");
+  // Set when the visitor arrived from an entry's "Suggest a correction" link.
+  const [entry,      setEntry]      = useState<string | null>(null);
 
   // Runs after mount because localStorage and random placeholders would otherwise mismatch the server render.
   useEffect(() => {
     const saved = readStorage();
+    const entryParam = new URLSearchParams(window.location.search).get("entry");
+
+    if (isEntryPath(entryParam)) {
+      setEntry(entryParam);
+      // Never overwrites a draft the visitor already started.
+      if (!saved.message) saved.message = `Correction for ${siteConfig.url}${entryParam}:\n\n`;
+    }
     setFields(saved);
 
     const fullName = generateFullName();
@@ -91,7 +102,7 @@ export default function ContactForm(): JSX.Element {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...fields, recaptchaToken })
+        body: JSON.stringify({ ...fields, entry, recaptchaToken })
       });
 
       if (!res.ok) {
@@ -101,12 +112,13 @@ export default function ContactForm(): JSX.Element {
 
       setStatus("success");
       setFields(EMPTY_FORM);
+      setEntry(null);
       localStorage.removeItem(STORAGE_KEY);
     } catch (err) {
       setStatus("error");
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong.");
     }
-  }, [executeRecaptcha, fields]);
+  }, [executeRecaptcha, fields, entry]);
 
   return (
     <>

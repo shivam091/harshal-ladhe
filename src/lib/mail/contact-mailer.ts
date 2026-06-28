@@ -6,6 +6,7 @@ export type ContactEmailDetails = {
   name: string;
   email: string;
   message: string;
+  entry?: string;
   recaptchaScore: number;
   country: string;
   createdAt: Date;
@@ -59,15 +60,18 @@ function sendContactReceived(contact: ContactEmailDetails): Promise<void> {
       ? chip(`✓ reCAPTCHA ${contact.recaptchaScore.toFixed(1)} · likely human`, { background: "#ecfdf5", color: "#047857", border: "#a7f3d0" })
       : chip(`⚠ reCAPTCHA ${contact.recaptchaScore.toFixed(1)} · borderline`, { background: "#fffbeb", color: "#b45309", border: "#fde68a" });
     const replyUrl = `mailto:${contact.email}?subject=${encodeURIComponent("Re: your message")}`;
+    // Corrections get their own subject so they can be filtered and fixed ahead of general mail.
+    const entryUrl = contact.entry ? `${siteConfig.url}${contact.entry}` : null;
+    const subject = entryUrl ? `Correction for ${contact.entry} from ${contact.name}` : `New message from ${contact.name}`;
 
     return {
       to: [{ email: process.env.MAIL_ADMIN_EMAIL || siteConfig.author.email, name: siteConfig.author.name }],
       replyTo: { email: contact.email, name: contact.name },
-      subject: `New message from ${contact.name}`,
+      subject,
       html: layout({
-        title: `New message from ${contact.name}`,
+        title: subject,
         preheader: `${contact.name} wrote: ${contact.message.slice(0, 90)}`,
-        hero: "📬 New message from the contact form",
+        hero: entryUrl ? "🛠️ Correction suggested for an entry" : "📬 New message from the contact form",
         body: `
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 18px;">
             <tr>
@@ -81,18 +85,19 @@ function sendContactReceived(contact: ContactEmailDetails): Promise<void> {
             </tr>
           </table>
           <p style="margin:0 0 20px;">${chip(`🕒 ${sent}`)}${chip(countryLabel(contact.country))}${scoreChip}</p>
+          ${entryUrl ? `<p style="margin:0 0 20px;font-size:14px;">Reported on <a href="${escapeHtml(entryUrl)}" style="color:${COLORS.accent};word-break:break-all;">${escapeHtml(contact.entry!)}</a></p>` : ""}
           ${quote(contact.message)}
           ${button(replyUrl, `Reply to ${firstName(contact.name)} →`)}
           <p style="margin:0;font-size:13px;color:${COLORS.faint};text-align:center;">Or just hit reply: it goes straight to ${escapeHtml(firstName(contact.name))}.</p>`,
         footerNote: `Sent because someone used the contact form on ${siteLink()}.`
       }),
       text: textLayout(`
-New message from the contact form
+${entryUrl ? "Correction suggested for an entry" : "New message from the contact form"}
 
 From: ${contact.name} <${contact.email}>
 Sent: ${sent}
 Country: ${countryLabel(contact.country)}
-reCAPTCHA: ${contact.recaptchaScore.toFixed(1)} (${human ? "likely human" : "borderline"})
+${entryUrl ? `Entry: ${entryUrl}\n` : ""}reCAPTCHA: ${contact.recaptchaScore.toFixed(1)} (${human ? "likely human" : "borderline"})
 
 ${quoteText(contact.message)}
 

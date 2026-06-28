@@ -5,12 +5,15 @@ import { getCountry } from "@/lib/visit-keys";
 import { getClientIp } from "@/lib/client-ip";
 import { sendContactEmails } from "@/lib/mail/contact-mailer";
 import { gaVisitor, sendGaEvent } from "@/lib/ga-measurement";
+import { isEntryPath } from "@/utils/correction";
 
 // Stores the reCAPTCHA score alongside the message so borderline submissions can be reviewed later.
 type ContactSubmission = {
   name: string;
   email: string;
   message: string;
+  // Path of the entry a correction was reported from; absent for ordinary messages.
+  entry?: string;
   recaptchaScore: number;
   // reCAPTCHA Enterprise's name for the check ("projects/p/assessments/a"), so the admin can later tell Google
   // whether the message was genuine or spam. Absent when checked through siteverify, which keeps none.
@@ -53,10 +56,11 @@ const MIN_SCORE = 0.5;
 // Gates every write behind a server-side reCAPTCHA check so bots can't fill the database.
 export async function POST(req: NextRequest) {
   try {
-    const { name, email, message, recaptchaToken } = await req.json() as {
+    const { name, email, message, entry, recaptchaToken } = await req.json() as {
       name: string;
       email: string;
       message: string;
+      entry?: string | null;
       recaptchaToken: string;
     };
 
@@ -86,6 +90,8 @@ export async function POST(req: NextRequest) {
       name: trimmedName,
       email: trimmedEmail,
       message: trimmedMessage,
+      // Dropped rather than refused when malformed, so a tampered link never costs the visitor their message.
+      ...(isEntryPath(entry) ? { entry } : {}),
       recaptchaScore: verdict.score,
       ...(verdict.assessment ? { recaptchaAssessment: verdict.assessment } : {}),
       country: await getCountry(req),
