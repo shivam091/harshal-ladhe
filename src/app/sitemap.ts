@@ -3,6 +3,8 @@
 import type { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 import { join } from "node:path";
+import { snippets } from "@/data/snippets";
+import { getSnippetDates } from "@/lib/snippets";
 import { gitLastModified } from "@/lib/git-dates.mjs";
 
 // Required for `output: "export"` — tells Next.js this route is fully static.
@@ -21,6 +23,15 @@ const APP_DIR = join(process.cwd(), "src", "app");
 function pageDate(relativePath: string): Date {
   const raw = gitLastModified(join(APP_DIR, relativePath));
   return raw ? new Date(raw) : new Date();
+}
+
+/*
+  Cover images are hosted on Vercel Blob, a different host from the pages, so listing them here
+  is how Google ties each image to the page it belongs to. Spread in only when an entry has one,
+  so pages without a cover never emit an empty <image:image>.
+*/
+function coverImages(image?: { path: string }): Pick<MetadataRoute.Sitemap[number], "images"> {
+  return image ? { images: [new URL(image.path, base).href] } : {};
 }
 
 /*
@@ -71,10 +82,33 @@ const staticPages: MetadataRoute.Sitemap = [
     changeFrequency: "weekly",
     priority: 0.9
   },
+  {
+    url: `${base}/snippets`,
+    lastModified: pageDate("(site)/(internal)/snippets/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
+  }
 ];
+
+// Git dates so lastModified tracks real snippet edits rather than the build time.
+const snippetDates = snippets.map(({ slug, image }) => ({
+  slug,
+  image,
+  lastModified: getSnippetDates(slug).lastModifiedAt
+}));
+
+// Detail pages only, so the index isn't listed twice.
+const snippetPages: MetadataRoute.Sitemap = snippetDates.map(({ slug, image, lastModified }) => ({
+  url: `${base}/snippet/${slug}`,
+  lastModified: lastModified ? new Date(lastModified) : new Date(),
+  changeFrequency: "monthly" as const,
+  priority: 0.7,
+  ...coverImages(image)
+}));
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
-    ...staticPages
+    ...staticPages,
+    ...snippetPages
   ];
 }

@@ -6,10 +6,13 @@ import { formatDate, fullTimestamp } from "@/utils/date";
 import type { ContentMetaProps } from "@/components/ContentMeta/ContentMeta.types";
 import { PageMetaPrimary, PageMetaItem } from "@/components/PageMeta/PageMeta.styles";
 import CoverImage from "@/components/CoverImage";
+import { getSnippetBySlug } from "@/data/snippets";
 import type { ContentEntry } from "@/data/content";
 
 // Keyed by route segment so a new content type only needs its registry lookup added here.
-const ENTRY_LOOKUPS: Record<string, (slug: string) => ContentEntry | undefined> = {};
+const ENTRY_LOOKUPS: Record<string, (slug: string) => ContentEntry | undefined> = {
+  snippet: getSnippetBySlug
+};
 
 // Filled at build from git history and a word count so dates and read time never need hand upkeep.
 export default function ContentMeta({
