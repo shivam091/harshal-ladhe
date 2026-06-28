@@ -42,7 +42,10 @@ export const siteConfig = {
   analytics: {
     // Measurement IDs are public by design, so committing it is safe.
     googleMeasurementId: "G-R5EZ91PMYX"
-  }
+  },
+
+  // Site-wide switch so the decorative hit counter can be dropped without touching page layouts.
+  hitCounter: true
 };
 
 // Derived from the object so the type can never drift from the actual config.
