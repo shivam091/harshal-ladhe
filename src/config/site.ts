@@ -45,7 +45,15 @@ export const siteConfig = {
   analytics: {
     // Google Analytics 4 measurement ID injected by the Analytics component.
     googleMeasurementId: "G-R5EZ91PMYX"
-  }
+  },
+
+  readTime: {
+    // Average adult silent reading speed used to estimate snippet read times.
+    wordsPerMinute: 180
+  },
+
+  // When true, renders the retro LED hit counter at the bottom of each post/snippet/series page.
+  hitCounter: true
 };
 
 // Inferred type of siteConfig — use when a function parameter needs the full config shape.
