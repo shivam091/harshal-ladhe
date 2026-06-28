@@ -44,6 +44,20 @@ export const siteConfig = {
     googleMeasurementId: "G-R5EZ91PMYX"
   },
 
+  // Tunable here so related-entry ranking can change without touching code.
+  relatedEntries: {
+    // Set false to hide the related-entries section site-wide.
+    enabled: true,
+    // Maximum number of related entries to surface.
+    limit: 3,
+    // Weight applied to the shared-tags similarity score.
+    tagWeight: 1.0,
+    // Weight applied to the shared-categories similarity score.
+    categoryWeight: 0.5,
+    // Top up with recent entries (registry order) when too few share tags/categories.
+    fallbackToRecent: true
+  },
+
   // Site-wide switch so the decorative hit counter can be dropped without touching page layouts.
   hitCounter: true
 };
