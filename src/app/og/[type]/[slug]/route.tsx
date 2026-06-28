@@ -1,3 +1,4 @@
+import { snippets } from "@/data/snippets";
 import { renderOgImage } from "@/lib/og-image";
 
 /*
@@ -9,7 +10,9 @@ export const dynamic = "force-static";
 export const dynamicParams = false;
 
 // Keyed by the first segment of each type's route, which is how content-metadata.ts builds the URL.
-const SOURCES: Record<string, { label: string; entries: { slug: string; title: string; image?: unknown }[] }> = {};
+const SOURCES: Record<string, { label: string; entries: { slug: string; title: string; image?: unknown }[] }> = {
+  snippet: { label: "Snippet", entries: snippets }
+};
 
 export function generateStaticParams(): { type: string; slug: string }[] {
   return Object.entries(SOURCES).flatMap(([type, { entries }]) =>
