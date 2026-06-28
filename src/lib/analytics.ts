@@ -31,7 +31,7 @@ export type ContentParams = {
 
 const NONE = "(none)";
 
-const LISTING_PATTERN = /^\/$/;
+const LISTING_PATTERN = /^\/(goodies)?$/;
 
 // Path-derived rather than passed from each page, so client-side navigations can be tagged without the page's help.
 export function getContentParams(pathname: string): ContentParams {

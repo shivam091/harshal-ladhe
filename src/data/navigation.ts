@@ -31,6 +31,7 @@ export type SocialLink = {
 // Kept short so the primary nav fits the header without collapsing on mid-size screens.
 export const mainNav: NavItem[] = [
   { href: "/about",   title: "About",   icon: "infoCircle" },
+  { href: "/goodies", title: "Goodies", icon: "candy"      }
 ];
 
 // Useful but secondary destinations, kept out of the primary nav to keep it focused.
