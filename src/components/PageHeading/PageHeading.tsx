@@ -9,7 +9,7 @@ import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
   Content-detail path segments whose pages render their own <h1> inside the
   [slug] layout — returning null here prevents a duplicate heading.
 */
-const SELF_TITLED_SEGMENTS: string[] = ["/snippet/"];
+const SELF_TITLED_SEGMENTS: string[] = ["/snippet/", "/tutorial/"];
 
 /*
   Derives and renders the current page's <h1> from the pathname.

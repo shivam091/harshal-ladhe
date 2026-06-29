@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { snippets } from "@/data/snippets";
 import { getSnippetDates } from "@/lib/snippets";
 import { gitLastModified } from "@/lib/git-dates.mjs";
+import { tutorials } from "@/data/tutorials";
+import { getTutorialDates } from "@/lib/tutorials";
 
 // Required for `output: "export"` — tells Next.js this route is fully static.
 export const dynamic = "force-static";
@@ -78,6 +80,12 @@ const staticPages: MetadataRoute.Sitemap = [
     lastModified: pageDate("(site)/(internal)/snippets/page.tsx"),
     changeFrequency: "weekly",
     priority: 0.9
+  },
+  {
+    url: `${base}/tutorials`,
+    lastModified: pageDate("(site)/(internal)/tutorials/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
   }
 ];
 
@@ -85,6 +93,12 @@ const staticPages: MetadataRoute.Sitemap = [
 const snippetDates = snippets.map(({ slug }) => ({
   slug,
   lastModified: getSnippetDates(slug).lastModifiedAt
+}));
+
+// Resolve git last-modified dates for every tutorial at build time.
+const tutorialDates = tutorials.map(({ slug }) => ({
+  slug,
+  lastModified: getTutorialDates(slug).lastModifiedAt
 }));
 
 // Individual snippet pages only — the /snippets index lives in staticPages above.
@@ -95,9 +109,20 @@ const snippetPages: MetadataRoute.Sitemap = snippetDates.map(({ slug, lastModifi
   priority: 0.7
 }));
 
+/*
+  Individual tutorial pages only — the /tutorials index lives in staticPages above.
+*/
+const tutorialPages: MetadataRoute.Sitemap = tutorialDates.map(({ slug, lastModified }) => ({
+  url: `${base}/tutorial/${slug}`,
+  lastModified: lastModified ? new Date(lastModified) : new Date(),
+  changeFrequency: "monthly" as const,
+  priority: 0.7
+}));
+
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     ...staticPages,
-    ...snippetPages
+    ...snippetPages,
+    ...tutorialPages
   ];
 }
