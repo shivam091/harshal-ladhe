@@ -13,7 +13,7 @@ const CONTENT_TYPES = {
 };
 
 // Derived from CONTENT_TYPES so adding a type there is all it takes to enable it.
-const CONTENT_FILE = new RegExp(`[\\\\/](${Object.keys(CONTENT_TYPES).join("|")})[\\\\/][^\\\\/]+[\\\\/]page\\.mdx$`);
+const CONTENT_FILE = new RegExp(`[\\\\/](${Object.keys(CONTENT_TYPES).join("|")})[\\\\/]([^\\\\/]+)[\\\\/]page\\.mdx$`);
 
 // Skips any file outside CONTENT_TYPES so other MDX pages compile untouched.
 export default function remarkContentMetadata() {
@@ -31,6 +31,9 @@ export default function remarkContentMetadata() {
     // MDX attributes must be strings here, so numbers are coerced back on the receiving end.
     const attributes = [
       { type: "mdxJsxAttribute", name: "contentType", value: contentType },
+      // Route segment and slug let the meta row look the entry up for its structured data.
+      { type: "mdxJsxAttribute", name: "routeSegment", value: match[1] },
+      { type: "mdxJsxAttribute", name: "slug", value: match[2] },
       { type: "mdxJsxAttribute", name: "readingMinutes", value: String(readingMinutes) },
       { type: "mdxJsxAttribute", name: "words", value: String(words) },
     ];
