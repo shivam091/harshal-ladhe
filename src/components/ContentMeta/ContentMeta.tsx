@@ -5,6 +5,7 @@ import { CalendarIcon, HistoryIcon, ClockIcon } from "@/components/Icon";
 import { formatDate, fullTimestamp } from "@/utils/date";
 import type { ContentMetaProps } from "@/components/ContentMeta/ContentMeta.types";
 import { PageMetaPrimary, PageMetaItem } from "@/components/PageMeta/PageMeta.styles";
+import ArticleJsonLd from "@/components/ArticleJsonLd";
 import CoverImage from "@/components/CoverImage";
 import { getTutorialBySlug } from "@/data/tutorials";
 import { getSnippetBySlug } from "@/data/snippets";
@@ -33,6 +34,20 @@ export default function ContentMeta({
 
   return (
     <>
+      {entry && (
+        <ArticleJsonLd
+          type="TechArticle"
+          title={entry.title}
+          description={entry.description}
+          url={`/${routeSegment}/${entry.slug}`}
+          image={entry.image}
+          publishedAt={publishedAt}
+          lastModifiedAt={lastModifiedAt}
+          tags={entry.tags}
+          words={words}
+        />
+      )}
+
       <PageMetaPrimary role="group" aria-label={`${contentType} metadata`}>
         {publishedAt && (
           <PageMetaItem className="page-published-date">
