@@ -5,10 +5,22 @@ import { CalendarIcon, HistoryIcon, ClockIcon } from "@/components/Icon";
 import { formatDate, fullTimestamp } from "@/utils/date";
 import type { ContentMetaProps } from "@/components/ContentMeta/ContentMeta.types";
 import { PageMetaPrimary, PageMetaItem } from "@/components/PageMeta/PageMeta.styles";
+import ArticleJsonLd from "@/components/ArticleJsonLd";
+import { getTutorialBySlug } from "@/data/tutorials";
+import { getSnippetBySlug } from "@/data/snippets";
+import type { ContentEntry } from "@/data/content";
+
+// Keyed by route segment so a new content type only needs its registry lookup added here.
+const ENTRY_LOOKUPS: Record<string, (slug: string) => ContentEntry | undefined> = {
+  tutorial: getTutorialBySlug,
+  snippet: getSnippetBySlug
+};
 
 // Filled at build from git history and a word count so dates and read time never need hand upkeep.
 export default function ContentMeta({
   contentType,
+  routeSegment,
+  slug,
   publishedAt,
   lastModifiedAt,
   readingMinutes,
@@ -17,9 +29,24 @@ export default function ContentMeta({
   // MDX hands these over as strings; the fallbacks cover NaN and keep "0 min read" from ever showing.
   const minutes = Number(readingMinutes) || 1;
   const wordCount = Number(words) || 0;
+  const entry = routeSegment && slug ? ENTRY_LOOKUPS[routeSegment]?.(slug) : undefined;
 
   return (
     <>
+      {entry && (
+        <ArticleJsonLd
+          type="TechArticle"
+          title={entry.title}
+          description={entry.description}
+          url={`/${routeSegment}/${entry.slug}`}
+          image={entry.image}
+          publishedAt={publishedAt}
+          lastModifiedAt={lastModifiedAt}
+          tags={entry.tags}
+          words={words}
+        />
+      )}
+
       <PageMetaPrimary role="group" aria-label={`${contentType} metadata`}>
         {publishedAt && (
           <PageMetaItem className="page-published-date">

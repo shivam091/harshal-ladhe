@@ -2,6 +2,9 @@
 export interface ContentMetaProps {
   // Names the meta group for screen readers.
   contentType: string;
+  // Together these find the registry entry the structured data is built from.
+  routeSegment?: string;
+  slug?: string;
   publishedAt?: string;
   lastModifiedAt?: string;
   readingMinutes?: string | number;
