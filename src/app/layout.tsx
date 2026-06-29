@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { siteConfig } from "@/config/site";
 import SkipLink from "@/components/SkipLink";
 import ScrollToTop from "@/components/ScrollToTop";
+import BreadcrumbsJsonLd from "@/components/BreadcrumbsJsonLd";
 import { ThemeProvider } from "@/context/ThemeContext";
 import AnalyticsProvider from "@/components/AnalyticsProvider";
 import { themeRule } from "@/utils/color";
@@ -127,6 +128,7 @@ export default function RootLayout({
         </head>
         <body>
 
+          <BreadcrumbsJsonLd />
           <SkipLink />
 
           <ThemeProvider>

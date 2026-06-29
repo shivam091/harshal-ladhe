@@ -1,0 +1,25 @@
+import { pageNames } from "@/config/page-names";
+import type { Crumb } from "@/components/BreadcrumbsJsonLd/BreadcrumbsJsonLd.types";
+
+// Strips the detail-route prefix and any trailing slash to get the bare slug.
+function slugFromPath(pathname: string, prefix: string): string {
+  return pathname.slice(prefix.length).replace(/\/$/, "");
+}
+
+/*
+  Constructs the ordered breadcrumb trail for the current pathname.
+  Every page gets a flat two-item trail (Home → page title).
+*/
+export function buildCrumbs(pathname: string): Crumb[] {
+  const crumbs: Crumb[] = [{ title: "Home", url: "/" }];
+
+  if (pathname === "/") return crumbs;
+
+  const title =
+    pageNames[pathname] ??
+    pathname.split("/").pop()?.replace(/-/g, " ") ??
+    "Page";
+
+  crumbs.push({ title, url: pathname });
+  return crumbs;
+}
