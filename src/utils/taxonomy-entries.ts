@@ -4,17 +4,18 @@
 */
 
 // Series have no tags or categories of their own — their parts already appear under them.
-export type TaxonomyEntryType = "snippet";
+export type TaxonomyEntryType = "snippet" | "tutorial";
 
 // Fixed order so count summaries and filter chips list content types the same way.
-export const TAXONOMY_ENTRY_TYPES: TaxonomyEntryType[] = ["snippet"];
+export const TAXONOMY_ENTRY_TYPES: TaxonomyEntryType[] = ["tutorial", "snippet"];
 
 // One lookup so cards, counts, and accessible labels name a content type identically.
 export const TAXONOMY_ENTRY_LABELS: Record<TaxonomyEntryType, { singular: string; plural: string }> = {
-  snippet: { singular: "Snippet", plural: "Snippets" }
+  snippet: { singular: "Snippet", plural: "Snippets" },
+  tutorial: { singular: "Tutorial", plural: "Tutorials" }
 };
 
-// Snippets sit at a flat /<type>/<slug>, so the URL follows from the type alone.
+// Snippets and tutorials sit at a flat /<type>/<slug>, so the URL follows from the type alone.
 export function getTaxonomyEntryUrl(entry: { type: TaxonomyEntryType; slug: string }): string {
   return `/${entry.type}/${entry.slug}`;
 }
