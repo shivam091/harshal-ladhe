@@ -39,6 +39,7 @@ export const mainNav: NavItem[] = [
 // Useful but secondary destinations, kept out of the primary nav to keep it focused.
 export const quickLinks: NavItem[] = [
   { href: "/how-did-i-build-my-blog", title: "About This Blog" },
+  { href: "/tags",                    title: "Tags"            },
   { href: "/contact",                 title: "Contact"         }
 ];
 
