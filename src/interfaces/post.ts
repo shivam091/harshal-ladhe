@@ -69,8 +69,8 @@ export interface Post {
   image?: PostImage;
   // Table-of-contents display options; omit to use defaults.
   toc?: PostTocConfig;
-  // Per-post closing message; overrides the built-in PostSignOff default.
-  // Set to `false` to suppress the closing text — renders a bare PageSignOff instead.
+  // Per-post closing message; overrides the built-in PageSignOff default.
+  // Set to `false` to suppress the closing text — renders a bare divider instead.
   signoff?: string | false;
   // Surface this post in pinned / featured sections.
   pinned?: boolean;
@@ -89,4 +89,15 @@ export interface PostNavLink {
 export interface PostNavigation {
   previous: PostNavLink | null;
   next: PostNavLink | null;
+}
+
+// One post as surfaced in the list — trimmed to what a row renders.
+interface RecentlyUpdatedPost {
+  slug: string;
+  title: string;
+}
+
+// Props for the home page's RecentlyUpdatedPosts block.
+export interface RecentlyUpdatedPostsProps {
+  posts: RecentlyUpdatedPost[];
 }
