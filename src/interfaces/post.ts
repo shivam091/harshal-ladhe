@@ -13,12 +13,34 @@ export interface PostListProps {
   posts: DatedPost[];
 }
 
+/*
+  Props for the PostMeta row. Values are injected at build by the
+  remark-post-meta plugin (string attributes from the MDX AST).
+*/
+export interface PostMetaProps {
+  // Post slug (injected by the plugin) — used to resolve the post's series for
+  // the primary-meta series badge.
+  slug?: string;
+  publishedAt?: string;
+  lastModifiedAt?: string;
+  // Read time in minutes, passed as a string attribute from the remark plugin.
+  readingMinutes?: string | number;
+  // Total word count, shown as the read-time tooltip.
+  words?: string | number;
+}
+
 // Per-post table-of-contents configuration.
 export interface PostTocConfig {
   // Set false to hide the ToC sidebar entirely for this post. Defaults to true.
   show?: boolean;
   // Deepest heading level to include (2 = h2 only, 3 = h2+h3, 4 = h2+h3+h4). Defaults to 3.
   maxLevel?: 2 | 3 | 4;
+}
+
+// Props for the related-posts block shown at the foot of a post.
+export interface RelatedPostsProps {
+  // Ranked related posts to render as cards, in the order given.
+  posts: Post[];
 }
 
 // Cover image used for social share previews and OG metadata.
