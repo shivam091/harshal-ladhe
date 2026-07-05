@@ -10,7 +10,7 @@ import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
   [slug] layout — returning null here prevents a duplicate heading. /tag/<slug>
    archive pages render their own "#tag" heading, so they belong here too.
 */
-const SELF_TITLED_SEGMENTS: string[] = ["/snippet/", "/post/", "/series/", "/tag/", "/tutorial/"];
+const SELF_TITLED_SEGMENTS: string[] = ["/snippet/", "/post/", "/series/", "/tag/", "/category/", "/tutorial/"];
 
 /*
   Derives and renders the current page's <h1> from the pathname.

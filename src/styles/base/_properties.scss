@@ -60,6 +60,13 @@
   initial-value: hsl(212 92% 43%);
 }
 
+// Category accordion headers paint this via opaqueBgCss, a gradient, so it must be typed to fade.
+@property --color-bg-accent-muted {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(203 100% 94%);
+}
+
 // Inner fill of the contact form's striped frame.
 @property --color-bg-muted {
   syntax: "<color>";
