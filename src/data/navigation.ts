@@ -41,6 +41,7 @@ export const quickLinks: NavItem[] = [
   { href: "/how-did-i-build-my-blog", title: "About This Blog" },
   { href: "/categories",              title: "Categories"      },
   { href: "/tags",                    title: "Tags"            },
+  { href: "/archives",                title: "Archives"        },
   { href: "/contact",                 title: "Contact"         }
 ];
 
