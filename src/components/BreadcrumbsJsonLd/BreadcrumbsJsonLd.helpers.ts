@@ -1,6 +1,7 @@
 import { getSnippetBySlug } from "@/data/snippets";
 import { getTutorialBySlug } from "@/data/tutorials";
 import { getPostBySlug } from "@/data/posts";
+import { getSeriesBySlug } from "@/data/series";
 import { pageNames } from "@/config/page-names";
 import type { Crumb } from "@/components/BreadcrumbsJsonLd/BreadcrumbsJsonLd.types";
 
@@ -11,9 +12,9 @@ function slugFromPath(pathname: string, prefix: string): string {
 
 /*
   Constructs the ordered breadcrumb trail for the current pathname.
-  Detail pages (post, snippet, tutorial) get a two-step trail (Home →
-  index → title); all other pages get a flat two-item trail (Home → page
-  title).
+  Detail pages (post, snippet, tutorial, series) get a two-step trail
+  (Home → index → title); all other pages get a flat two-item trail
+  (Home → page title).
 */
 export function buildCrumbs(pathname: string): Crumb[] {
   const crumbs: Crumb[] = [{ title: "Home", url: "/" }];
@@ -40,6 +41,13 @@ export function buildCrumbs(pathname: string): Crumb[] {
     const tutorial = getTutorialBySlug(slugFromPath(pathname, "/tutorial/"));
     crumbs.push({ title: "Tutorials", url: "/tutorials" });
     if (tutorial) crumbs.push({ title: tutorial.title, url: pathname });
+    return crumbs;
+  }
+
+  if (pathname.startsWith("/series/")) {
+    const series = getSeriesBySlug(slugFromPath(pathname, "/series/"));
+    crumbs.push({ title: "Series", url: "/series" });
+    if (series) crumbs.push({ title: series.title, url: pathname });
     return crumbs;
   }
 
