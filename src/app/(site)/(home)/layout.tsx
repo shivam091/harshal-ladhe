@@ -1,4 +1,4 @@
-import { JSX } from "react";
+import type { JSX } from "react";
 import Hero from "@/components/Hero";
 import { Main, PageHeading } from "@/app/(site)/route-shell.styles";
 
@@ -6,11 +6,12 @@ import { Main, PageHeading } from "@/app/(site)/route-shell.styles";
 export default function HomeLayout({ children }: { children: React.ReactNode; }): JSX.Element {
   return (
     <>
-      <PageHeading aria-label="Introduction">
-        <Hero />
-      </PageHeading>
-
+      {/* Hero renders inside <Main> — it carries the page's only <h1>, so it must live inside the main landmark to be reachable via the skip link. */}
       <Main id="main-content" tabIndex={-1}>
+        <PageHeading aria-label="Introduction">
+          <Hero />
+        </PageHeading>
+
         {children}
       </Main>
     </>
