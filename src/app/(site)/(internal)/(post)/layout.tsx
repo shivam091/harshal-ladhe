@@ -14,6 +14,7 @@ import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { PageMetaSecondary } from "@/components/PageMeta/PageMeta.styles";
 import { getPostBySlug, getPostNavigation } from "@/data/posts";
 import { getPostUrl } from "@/utils/post-url";
+import { getSeriesForPost } from "@/data/series";
 import { getPublishedDate, getRelatedPosts } from "@/lib/related-entries";
 import RelatedContent from "@/components/RelatedContent";
 import HitCounter from "@/components/HitCounter";
@@ -27,6 +28,7 @@ import {
   PostTOC,
   PostFooter
 } from "@/app/(site)/(internal)/(post)/layout.styles";
+import SeriesPostNav from "@/app/(site)/(internal)/(series)/SeriesPostNav";
 
 /*
   Registry-driven chrome so each post's page.mdx stays pure prose; the slug comes from the
@@ -41,6 +43,7 @@ export default function PostLayout({ children }: { children: ReactNode }): JSX.E
 
   const { previous, next } = getPostNavigation(slug);
   const relatedPosts = getRelatedPosts(slug);
+  const series = getSeriesForPost(slug);
 
   return (
     <>
@@ -61,6 +64,8 @@ export default function PostLayout({ children }: { children: ReactNode }): JSX.E
         </PostGrid>
 
         <PageSignOff showText metadata={post} />
+
+        {series && <SeriesPostNav series={series} />}
 
         <PostFooter>
           <PageMetaSecondary role="group" aria-label="Post metadata">

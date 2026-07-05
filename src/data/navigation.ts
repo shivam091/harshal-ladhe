@@ -32,6 +32,7 @@ export type SocialLink = {
 export const mainNav: NavItem[] = [
   { href: "/about",   title: "About",   icon: "infoCircle" },
   { href: "/posts",   title: "Posts",   icon: "list"       },
+  { href: "/series",  title: "Series",  icon: "book"       },
   { href: "/goodies", title: "Goodies", icon: "candy"      }
 ];
 
