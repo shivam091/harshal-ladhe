@@ -7,6 +7,7 @@ import SocialLinks from "@/components/SocialLinks";
 import PageSignOff from "@/components/SignOff/PageSignOff";
 import CodeBlock from "@/components/CodeBlock";
 import ContentMeta from "@/components/ContentMeta";
+import PostMeta from "@/components/PostMeta";
 import Details from "@/components/Details";
 import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/Aside";
 import RainbowDivider from "@/components/RainbowDivider";
@@ -28,6 +29,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PageSignOff,
     CodeBlock,
     ContentMeta,
+    PostMeta,
     Details,
     Info: AsideInfo,
     Success: AsideSuccess,
