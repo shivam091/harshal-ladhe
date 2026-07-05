@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import type { ChangelogEntry } from "@/interfaces/changelog";
+import type { Post } from "@/interfaces/post";
 
 // Props for the series indicator badge.
 export interface SeriesBadgeProps {
@@ -15,6 +17,22 @@ export interface SeriesImage {
   width?: number;
   height?: number;
   alt: string;
+}
+
+// Props for the series parts list.
+export interface SeriesPartListProps {
+  // Posts belonging to the series, in part order.
+  posts: Post[];
+  // Read time (minutes) by post slug — computed server-side via git history
+  // (see lib/posts.ts) and threaded down from the layout, since this list
+  // itself renders inside a "use client" tree and can't compute it directly.
+  readingMinutesBySlug: Record<string, number>;
+}
+
+// Props for the in-series wayfinding block.
+export interface SeriesPostNavProps {
+  // The series this post belongs to — title, url, position, and previous/next neighbours.
+  series: PostSeriesInfo;
 }
 
 // Registry record describing one series — drives the /series list, the detail
@@ -53,10 +71,19 @@ export interface SeriesNavigation {
   next: SeriesNavLink | null;
 }
 
+// Props for the client half of the /series section layout.
+export interface SeriesDetailLayoutClientProps {
+  children: ReactNode;
+  // Read time (minutes) by post slug — computed server-side by layout.tsx via
+  // lib/posts.ts (git history), since this component can't do that itself.
+  readingMinutesBySlug: Record<string, number>;
+}
+
 // A neighbouring post within a series, carrying its 1-based part number.
 export interface SeriesPostLink {
   slug: string;
   title: string;
+  category: string[];
   // 1-based position of this post within the series (e.g. Part 2).
   index: number;
 }
