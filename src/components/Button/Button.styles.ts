@@ -136,8 +136,8 @@ export const ButtonRoot = styled.button`
 
   // Sizes — redefine the --button-* custom properties consumed by the base above.
   &[data-size="sm"] {
-    --button-padding-block: 0.3125rem;
-    --button-padding-inline: 0.625rem;
+    --button-padding-block: 0.25rem;
+    --button-padding-inline: 0.5rem;
     --button-radius: 0.375rem;
     --button-gap: 0.5rem;
     --icon-box-size: 1.375rem;
@@ -145,16 +145,16 @@ export const ButtonRoot = styled.button`
   }
 
   &[data-size="md"] {
-    --button-padding-block: 0.5rem;
-    --button-padding-inline: 1rem;
+    --button-padding-block: 0.375rem;
+    --button-padding-inline: 0.75rem;
     --button-gap: 0.5em;
     --icon-box-size: 1.75rem;
     font-size: 0.875rem;
   }
 
   &[data-size="lg"] {
-    --button-padding-block: 0.75rem;
-    --button-padding-inline: 1.5rem;
+    --button-padding-block: 0.5625rem;
+    --button-padding-inline: 1.125rem;
     --button-radius: 0.625rem;
     --button-gap: 0.5em;
     --icon-box-size: 2.25rem;
@@ -367,8 +367,8 @@ export const ButtonLink = styled(Link)`
   }
 
   &[data-size="sm"] {
-    --button-padding-block: 0.3125rem;
-    --button-padding-inline: 0.625rem;
+    --button-padding-block: 0.25rem;
+    --button-padding-inline: 0.5rem;
     --button-radius: 0.375rem;
     --button-gap: 0.375em;
     --icon-box-size: 1.375rem;
@@ -376,16 +376,16 @@ export const ButtonLink = styled(Link)`
   }
 
   &[data-size="md"] {
-    --button-padding-block: 0.5rem;
-    --button-padding-inline: 1rem;
+    --button-padding-block: 0.375rem;
+    --button-padding-inline: 0.75rem;
     --button-gap: 0.5em;
     --icon-box-size: 1.75rem;
     font-size: 0.875rem;
   }
 
   &[data-size="lg"] {
-    --button-padding-block: 0.75rem;
-    --button-padding-inline: 1.5rem;
+    --button-padding-block: 0.5625rem;
+    --button-padding-inline: 1.125rem;
     --button-radius: 0.625rem;
     --button-gap: 0.5em;
     --icon-box-size: 2.25rem;
