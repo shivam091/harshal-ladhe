@@ -1,0 +1,84 @@
+import type { JSX } from "react";
+import type {Metadata } from "next";
+import { notFound } from "next/navigation";
+import VisuallyHidden from "@/components/VisuallyHidden";
+import TaxonomyFeed from "@/components/TaxonomyFeed";
+import {
+  getAllCategories,
+  getEntriesByCategory,
+  getCategoryBySlug,
+  getCategoryMeta
+} from "@/lib/categories";
+// Props for the /category/[slug] page and its generateMetadata — params are async per Next.js's dynamic APIs.
+interface CategoryPageProps {
+  params: Promise<{ slug: string }>;
+}
+import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
+import {
+  CategoryArchiveSection,
+  CategoryDescription
+} from "@/app/(site)/(internal)/category/[slug]/category.styles";
+
+// Fully static: one page per category, generated at build time; unknown slugs 404.
+export const dynamic = "force-static";
+export const dynamicParams = false;
+
+// One route per unique category so every category gets a static archive page.
+export function generateStaticParams(): { slug: string }[] {
+  return getAllCategories().map(({ slug }) => ({ slug }));
+}
+
+// Builds SEO/OG/Twitter metadata for a category archive; empty for an unknown slug (404s in the page itself).
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const category = getCategoryBySlug(slug);
+  if (!category) return {};
+
+  // Registry copy wins, with a fallback so unlisted categories still get sensible metadata.
+  const { title, description } = getCategoryMeta(slug, category);
+
+  const url = `/category/${slug}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: "website"
+    },
+    twitter: {
+      card: "summary",
+      title,
+      description
+    }
+  };
+}
+
+// Reuses the shared post feed so category archives look like the main post list.
+export default async function CategoryPage({ params }: CategoryPageProps): Promise<JSX.Element> {
+  const { slug } = await params;
+  const category = getCategoryBySlug(slug);
+  if (!category) notFound();
+
+  const entries = getEntriesByCategory(slug);
+  const { title, description } = getCategoryMeta(slug, category);
+
+  return (
+    <>
+      <CategoryArchiveSection aria-labelledby="page-title">
+        <PageTitle id="page-title">{title}</PageTitle>
+
+        <CategoryDescription>{description}</CategoryDescription>
+
+        <VisuallyHidden as="h2" id="category-posts-title">
+          Content in {category}
+        </VisuallyHidden>
+
+        <TaxonomyFeed entries={entries} />
+      </CategoryArchiveSection>
+    </>
+  );
+}
