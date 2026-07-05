@@ -13,18 +13,7 @@ import { getSortedPosts, type DatedPost } from "@/lib/posts";
 import { getAllTaxonomyTerms, getPostsByTaxonomyTerm, getTaxonomyTermBySlug } from "@/lib/taxonomy";
 import { siteConfig } from "@/config/site";
 import { slugify } from "@/utils/string";
-import type { TagMeta } from "@/interfaces/tag";
-
-/*
-  One aggregated tag: its display name, URL slug, post count, and the newest
-  last-modified date across its posts (used for the sitemap `lastmod`).
-*/
-export interface TagSummary {
-  tag: string;
-  slug: string;
-  count: number;
-  lastModifiedAt: string | null;
-}
+import type { TagMeta, TagSummary, TrendingTag } from "@/interfaces/tag";
 
 /*
   Every unique tag across all posts, keyed by slug, sorted alphabetically by
@@ -32,17 +21,6 @@ export interface TagSummary {
 */
 export function getAllTags(): TagSummary[] {
   return getAllTaxonomyTerms((post) => post.tags).map(({ name, ...rest }) => ({ tag: name, ...rest }));
-}
-
-/*
-  One trending tag: display name, slug, raw post count within the ranking
-  window, and the (optionally normalized) recency-weighted score used to rank.
-*/
-export interface TrendingTag {
-  tag: string;
-  slug: string;
-  count: number;
-  score: number;
 }
 
 /*

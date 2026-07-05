@@ -90,3 +90,14 @@ export interface PostNavigation {
   previous: PostNavLink | null;
   next: PostNavLink | null;
 }
+
+// One post as surfaced in the list — trimmed to what a row renders.
+interface RecentlyUpdatedPost {
+  slug: string;
+  title: string;
+}
+
+// Props for the home page's RecentlyUpdatedPosts block.
+export interface RecentlyUpdatedPostsProps {
+  posts: RecentlyUpdatedPost[];
+}
