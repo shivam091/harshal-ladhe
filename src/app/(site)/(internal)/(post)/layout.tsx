@@ -14,7 +14,7 @@ import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { PageMetaSecondary } from "@/components/PageMeta/PageMeta.styles";
 import { getPostBySlug, getPostNavigation } from "@/data/posts";
 import { getSeriesForPost } from "@/data/series";
-import SeriesPostNav from "@/components/SeriesPostNav";
+import SeriesPostNav from "@/app/(site)/(internal)/(series)/SeriesPostNav";
 import { getRelatedPosts } from "@/lib/related-posts";
 import RelatedPosts from "@/app/(site)/(internal)/(post)/RelatedPosts";
 import HitCounter from "@/components/HitCounter";
