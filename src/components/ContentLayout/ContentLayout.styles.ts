@@ -37,9 +37,10 @@ export const ContentCtaLink = styled(Link)`
 `;
 
 /*
-  Collapses to one column when the body has no linkable headings, so such entries aren't left
-  beside an empty sidebar; checked against the server-rendered headings rather than the TOC,
-  which only fills in after hydration and would shift the layout.
+  Mirrors the post grid's breakpoints so every content type reads alike. Collapses to one column
+  when the body has no linkable headings, so such entries aren't left beside an empty sidebar;
+  checked against the server-rendered headings rather than the TOC, which only fills in after
+  hydration and would shift the layout.
 */
 export const ContentGrid = styled.div`
   display: grid;
@@ -84,7 +85,7 @@ export const ContentBody = styled.div`
   }
 `;
 
-// A flex column so the TOC's own list does the scrolling, not the whole sidebar.
+// A flex column so the TOC's own list does the scrolling, matching the post sidebar.
 export const ContentTOC = styled.aside`
   grid-area: toc;
   display: flex;
