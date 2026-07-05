@@ -7,6 +7,7 @@ import SocialLinks from "@/components/SocialLinks";
 import PostSignOff from "@/components/SignOff/PostSignOff";
 import CodeBlock from "@/components/CodeBlock";
 import SnippetMeta from "@/components/SnippetMeta";
+import PostMeta from "@/components/PostMeta";
 import Details from "@/components/Details";
 import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/Aside";
 
@@ -27,13 +28,20 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PostSignOff,
     CodeBlock,
     SnippetMeta,
+    PostMeta,
     Details,
     Info: AsideInfo,
     Success: AsideSuccess,
     Warning: AsideWarning,
     Quote: AsideQuote,
     a: MDXLink,
-    h1: (props) => <MDXHeadingAnchor as="h1" {...props} />,
+    /*
+      Demoted to h2, not h1: every post/snippet/series/tag/category layout already
+      renders its own page <h1> via PageHeading. No current .mdx content starts with
+      `# `, but mapping h1 straight through would produce a duplicate page <h1> the
+      moment one did.
+    */
+    h1: (props) => <MDXHeadingAnchor as="h2" {...props} />,
     h2: (props) => <MDXHeadingAnchor as="h2" {...props} />,
     h3: (props) => <MDXHeadingAnchor as="h3" {...props} />,
     h4: (props) => <MDXHeadingAnchor as="h4" {...props} />,
