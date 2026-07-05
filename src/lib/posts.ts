@@ -78,3 +78,15 @@ export function getSortedPosts(): DatedPost[] {
     }))
     .sort(compareByDateDesc());
 }
+
+// Empty when the block is disabled so the section hides itself without extra checks.
+export function getPinnedPosts(): DatedPost[] {
+  if (!siteConfig.home.pinnedPosts.enabled) return [];
+  return getSortedPosts().filter((post) => post.pinned);
+}
+
+// Empty when the block is disabled so the section hides itself without extra checks.
+export function getFeaturedPosts(): DatedPost[] {
+  if (!siteConfig.home.featuredPosts.enabled) return [];
+  return getSortedPosts().filter((post) => post.featured);
+}
