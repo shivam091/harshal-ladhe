@@ -1,0 +1,42 @@
+import { JSX } from "react";
+import Link from "next/link";
+import type { PopularCategoriesProps } from "@/interfaces/category";
+import {
+  PopularCategoriesList,
+  PopularCategoryItem,
+  DottedSeparator
+} from "@/app/(site)/(home)/PopularCategories/PopularCategories.styles";
+
+/*
+  Most-populated categories for the home page — each row links to the
+  /category/<slug> archive and shows its post count. Renders nothing when
+  there are no categories.
+*/
+export default function PopularCategories({ categories }: PopularCategoriesProps): JSX.Element | null {
+  if (categories.length === 0) return null;
+
+  return (
+    <>
+      <PopularCategoriesList>
+        {categories.map(({ category, slug, count }) => (
+          <PopularCategoryItem key={slug}>
+            <Link
+              href={`/category/${slug}`}
+              className="category-link"
+              rel="category"
+              aria-label={`Category: ${category}`}
+            >
+              {category}
+            </Link>
+            <DottedSeparator aria-hidden="true" />
+            <span className="posts-count">
+              {count} post{count === 1 ? "" : "s"}
+            </span>
+          </PopularCategoryItem>
+        ))}
+      </PopularCategoriesList>
+    </>
+  );
+}
+
+PopularCategories.displayName = "PopularCategories";

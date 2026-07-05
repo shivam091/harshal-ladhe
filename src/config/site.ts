@@ -68,7 +68,44 @@ export const siteConfig = {
   },
 
   // When true, renders the retro LED hit counter at the bottom of each post/snippet/series page.
-  hitCounter: true
+  hitCounter: true,
+
+  // Home page sections. Each block can be toggled off, and empty sections hide
+  // themselves regardless. Port of the Jekyll home generators' `_config.yml`.
+  home: {
+    // Posts flagged `pinned: true` in the registry, surfaced first.
+    pinnedPosts: {
+      enabled: true,
+    },
+    // Posts flagged `featured: true` in the registry.
+    featuredPosts: {
+      enabled: true,
+    },
+    // Tags ranked by recency-weighted frequency across recently-updated posts.
+    trendingTags: {
+      enabled: true,
+      // Maximum number of tags to surface.
+      limit: 10,
+      // How many recently-updated posts feed the ranking window.
+      maxPosts: 15,
+      // Recency decay applied to each post's contribution: "exponential", "log", or "linear".
+      decayStrategy: "exponential" as "exponential" | "log" | "linear",
+      // Scale scores to 0–100 so the top tag always reads 100.
+      normalization: true,
+    },
+    // Categories ranked by total post count.
+    popularCategories: {
+      enabled: true,
+      // Maximum number of categories to surface.
+      limit: 5,
+    },
+    // Posts ordered by last-modified date, newest first.
+    recentlyUpdatedPosts: {
+      enabled: true,
+      // Maximum number of posts to surface.
+      limit: 5,
+    },
+  }
 };
 
 // Inferred type of siteConfig — use when a function parameter needs the full config shape.
