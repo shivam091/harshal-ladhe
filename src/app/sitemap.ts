@@ -49,6 +49,12 @@ function coverImages(image?: { path: string }): Pick<MetadataRoute.Sitemap[numbe
 */
 const staticPages: MetadataRoute.Sitemap = [
   {
+    url: base,
+    lastModified: pageDate("(site)/(home)/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 1.0
+  },
+  {
     url: `${base}/about`,
     lastModified: pageDate("(site)/(internal)/about/page.mdx"),
     changeFrequency: "monthly",
