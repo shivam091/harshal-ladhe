@@ -1,8 +1,10 @@
 /*
-  Reads only the static registries so it can run in the browser inside the content layouts;
-  the recent-entries fallback relies on registry order since git dates aren't available there.
+  Reads only the static registry so it can run in the browser inside the post layout; the
+  recent-posts fallback relies on registry order since git dates aren't available there.
 */
+import { posts } from "@/data/posts";
 import { siteConfig } from "@/config/site";
+import type { Post } from "@/data/posts";
 
 /*
   Derived from the changelog because git dates aren't available in the browser; its earliest
@@ -67,4 +69,8 @@ export function getRelatedEntries<T extends RankableEntry>(slug: string, entries
   }
 
   return related.slice(0, config.limit);
+}
+
+export function getRelatedPosts(slug: string): Post[] {
+  return getRelatedEntries(slug, posts);
 }
