@@ -10,6 +10,7 @@ import { getSortedSnippets, type DatedSnippet } from "@/lib/snippets";
 import { getSortedTutorials, type DatedTutorial } from "@/lib/tutorials";
 import { compareByDateDesc, createContentFilePath } from "@/lib/content-dates";
 import { slugify } from "@/utils/string";
+import { siteConfig } from "@/config/site";
 
 export interface TaxonomyTerm {
   name: string;
@@ -80,6 +81,20 @@ export function getEntriesByTaxonomyTerm(getValues: TaxonomyValues, slug: string
   return getSortedTaxonomyEntries().filter((entry) =>
     getValues(entry).some((value) => slugify(value) === slug)
   );
+}
+
+/*
+  Spans posts, tutorials, and snippets so a revised snippet surfaces as readily as a post;
+  undated (uncommitted) entries are left out since they have no update to report.
+*/
+export function getRecentlyUpdatedEntries(): TaxonomyEntry[] {
+  const config = siteConfig.home.recentlyUpdatedEntries;
+  if (!config.enabled) return [];
+
+  return getSortedTaxonomyEntries()
+    .filter((entry) => entry.lastModifiedAt)
+    .sort(compareByDateDesc("lastModifiedAt"))
+    .slice(0, config.limit);
 }
 
 // Display name for a slug within `getValues`, or null when nothing uses it (→ 404); skips git so metadata stays cheap.
