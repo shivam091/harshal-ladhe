@@ -6,8 +6,9 @@ import { pageNames } from "@/config/page-names";
 import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 
 // Content-detail path segments whose pages render their own <h1> inside the
-// [slug] layout — returning null here prevents a duplicate heading.
-const SELF_TITLED_SEGMENTS = ["/snippet/", "/post/", "/series/"];
+// [slug] layout — returning null here prevents a duplicate heading. /tag/<slug>
+// archive pages render their own "#tag" heading, so they belong here too.
+const SELF_TITLED_SEGMENTS = ["/snippet/", "/post/", "/series/", "/tag/"];
 
 // Derives and renders the current page's <h1> from the pathname.
 // Detail pages for snippets, posts, and series return null because those
