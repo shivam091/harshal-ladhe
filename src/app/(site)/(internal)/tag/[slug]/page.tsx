@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import PostList from "@/components/PostList";
 import { getAllTags, getPostsByTag, getTagBySlug, getTagMeta } from "@/lib/tags";
-import type { TagPageProps } from "@/interfaces/tag";
 import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
 import {
@@ -25,6 +24,11 @@ function postsLabel(count: number): string {
 // Emit one route per unique tag slug — the Next.js port of Jekyll's TagGenerator.
 export function generateStaticParams(): { slug: string }[] {
   return getAllTags().map(({ slug }) => ({ slug }));
+}
+
+// Props for the /tag/[slug] page and its generateMetadata — params are async per Next.js's dynamic APIs.
+interface TagPageProps {
+  params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
