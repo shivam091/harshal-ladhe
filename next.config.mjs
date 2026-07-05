@@ -100,7 +100,7 @@ const nextConfig = {
       { source: "/:path*", headers: SECURITY_HEADERS },
       { source: "/assets/:path*", headers: [{ key: "Cache-Control", value: PUBLIC_ASSET_CACHE }] },
       { source: "/sounds/:path*", headers: [{ key: "Cache-Control", value: PUBLIC_ASSET_CACHE }] },
-      ...["/sitemap.xml", "/robots.txt", "/search-index.json", "/manifest.webmanifest"].map((source) => ({
+      ...["/atom.xml", "/sitemap.xml", "/robots.txt", "/search-index.json", "/manifest.webmanifest"].map((source) => ({
         source,
         headers: [{ key: "Cache-Control", value: GENERATED_FILE_CACHE }]
       }))
