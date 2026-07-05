@@ -17,7 +17,7 @@ import { series, getSortedSeries, type Series } from "@/data/series";
 
 // Directory holding one sub-folder per series slug, each with a page.mdx intro.
 const SERIES_DIR = join(
-  process.cwd(), "src", "app", "(site)", "(internal)", "series", "(series)",
+  process.cwd(), "src", "app", "(site)", "(internal)", "(series)", "series"
 );
 
 // Resolves the MDX intro path for a slug — the file git-dates reads for a series.
