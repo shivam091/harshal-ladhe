@@ -1,4 +1,4 @@
-import { JSX } from "react";
+import type { JSX } from "react";
 import type {Metadata } from "next";
 import Link from "next/link";
 import VisuallyHidden from "@/components/VisuallyHidden";
@@ -6,7 +6,7 @@ import { getAllTags } from "@/lib/tags";
 import {
   TagsSection,
   TagsList,
-  TagItem,
+  TagItem
 } from "@/app/(site)/(internal)/tags/tags.styles";
 
 export const metadata: Metadata = {
@@ -17,13 +17,13 @@ export const metadata: Metadata = {
     title: "Tags",
     description: "Discover posts by tags for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily.",
     url: "/tags",
-    type: "website",
+    type: "website"
   },
   twitter: {
     card: "summary",
     title: "Tags",
-    description: "Discover posts by tags for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily.",
-  },
+    description: "Discover posts by tags for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily."
+  }
 };
 
 // Tag cloud index — links out to every /tag/<slug> archive with its post count.
