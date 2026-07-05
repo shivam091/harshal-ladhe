@@ -10,5 +10,6 @@ export const pageNames: Record<string, string> = {
   "/goodies": "Goodies",
   "/snippets": "Snippets",
   "/tutorials": "Tutorials",
-  "/posts": "Posts"
+  "/posts": "Posts",
+  "/series": "Series"
 };
