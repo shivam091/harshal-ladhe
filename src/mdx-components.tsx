@@ -8,6 +8,7 @@ import PageSignOff from "@/components/SignOff/PageSignOff";
 import PostSignOff from "@/components/SignOff/PostSignOff";
 import CodeBlock from "@/components/CodeBlock";
 import SnippetMeta from "@/components/SnippetMeta";
+import Details from "@/components/Details";
 import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/Aside";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
@@ -28,6 +29,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PostSignOff,
     CodeBlock,
     SnippetMeta,
+    Details,
     Info: AsideInfo,
     Success: AsideSuccess,
     Warning: AsideWarning,
