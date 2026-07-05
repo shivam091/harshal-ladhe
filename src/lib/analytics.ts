@@ -1,6 +1,7 @@
 import { getPostBySlug } from "@/data/posts";
 import { getTutorialBySlug } from "@/data/tutorials";
 import { getSnippetBySlug } from "@/data/snippets";
+import { getSeriesBySlug } from "@/data/series";
 import { getPostCategorySlug } from "@/utils/post-url";
 
 export type GaParams = Record<string, string | number | boolean>;
@@ -26,7 +27,7 @@ export function trackEvent(name: string, params: GaParams = {}): void {
   window.gtag("event", name, params);
 }
 
-export type ContentGroup = "post" | "tutorial" | "snippet" | "listing" | "page";
+export type ContentGroup = "post" | "tutorial" | "snippet" | "series" | "listing" | "page";
 
 export type ContentParams = {
   content_group: ContentGroup;
@@ -39,7 +40,7 @@ const MAX_TAGS_LENGTH = 100;
 
 const NONE = "(none)";
 
-const LISTING_PATTERN = /^\/(posts|tutorials|snippets|goodies)?$/;
+const LISTING_PATTERN = /^\/(posts|tutorials|snippets|series|goodies)?$/;
 
 function joinTags(tags: string[]): string {
   let joined = "";
@@ -71,6 +72,10 @@ export function getContentParams(pathname: string): ContentParams {
   if (segment === "snippet" && first) {
     const snippet = getSnippetBySlug(first);
     if (snippet) return { content_group: "snippet", content_category: NONE, content_tags: joinTags(snippet.tags) };
+  }
+
+  if (segment === "series" && first && getSeriesBySlug(first)) {
+    return { content_group: "series", content_category: NONE, content_tags: NONE };
   }
 
   return { content_group: LISTING_PATTERN.test(path) ? "listing" : "page", content_category: NONE, content_tags: NONE };
