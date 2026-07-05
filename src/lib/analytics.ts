@@ -40,7 +40,7 @@ const MAX_TAGS_LENGTH = 100;
 
 const NONE = "(none)";
 
-const LISTING_PATTERN = /^\/(posts|tutorials|snippets|series|tags|tag\/[^/]+|goodies)?$/;
+const LISTING_PATTERN = /^\/(posts|tutorials|snippets|series|categories|category\/[^/]+|tags|tag\/[^/]+|goodies)?$/;
 
 function joinTags(tags: string[]): string {
   let joined = "";
