@@ -6,6 +6,7 @@ import { categoryMeta } from "@/data/categories";
 import type { CategoryMeta } from "@/data/categories";
 import { getAllTaxonomyTerms, getEntriesByTaxonomyTerm, getTaxonomyTermBySlug, type TaxonomyEntry } from "@/lib/taxonomy";
 import { getEntryCountParts } from "@/utils/taxonomy-entries";
+import { siteConfig } from "@/config/site";
 
 // Carries the newest last-modified date so the sitemap can report when an archive changed.
 export interface CategorySummary {
@@ -21,6 +22,16 @@ export function getAllCategories(): CategorySummary[] {
     category: name,
     ...rest
   }));
+}
+
+// Empty when the block is disabled so the section hides itself without extra checks.
+export function getPopularCategories(): CategorySummary[] {
+  const config = siteConfig.home.popularCategories;
+  if (!config.enabled) return [];
+
+  return [...getAllCategories()]
+    .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category))
+    .slice(0, config.limit);
 }
 
 // Newest-first across posts, snippets, and tutorials so a topic reads as one timeline.
