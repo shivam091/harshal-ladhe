@@ -6,7 +6,7 @@ import { getAllTags } from "@/lib/tags";
 import {
   TagsSection,
   TagsList,
-  TagItem,
+  TagItem
 } from "@/app/(site)/(internal)/tags/tags.styles";
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "Tags",
     description: "Discover posts by tags for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily.",
-  },
+  }
 };
 
 // Tag cloud index — links out to every /tag/<slug> archive with its post count.
