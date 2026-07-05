@@ -8,6 +8,7 @@ import { getSnippetDates } from "@/lib/snippets";
 import { gitLastModified } from "@/lib/git-dates.mjs";
 import { getSeriesDates } from "@/lib/series";
 import { getAllTags } from "@/lib/tags";
+import { getAllCategories } from "@/lib/categories";
 import { tutorials } from "@/data/tutorials";
 import { getTutorialDates } from "@/lib/tutorials";
 import { getSortedPosts } from "@/lib/posts";
@@ -109,6 +110,12 @@ const staticPages: MetadataRoute.Sitemap = [
     lastModified: pageDate("(site)/(internal)/tags/page.tsx"),
     changeFrequency: "weekly",
     priority: 0.9
+  },
+  {
+    url: `${base}/categories`,
+    lastModified: pageDate("(site)/(internal)/categories/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
   }
 ];
 
@@ -167,6 +174,14 @@ const tagPages: MetadataRoute.Sitemap = getAllTags().map(({ slug, lastModifiedAt
   priority: 0.7
 }));
 
+// lastModified tracks the newest post in the category, so crawlers revisit archives when they change.
+const categoryPages: MetadataRoute.Sitemap = getAllCategories().map(({ slug, lastModifiedAt }) => ({
+  url: `${base}/category/${slug}`,
+  lastModified: lastModifiedAt ? new Date(lastModifiedAt) : new Date(),
+  changeFrequency: "weekly" as const,
+  priority: 0.7
+}));
+
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     ...staticPages,
@@ -174,6 +189,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...tutorialPages,
     ...postPages,
     ...seriesPages,
-    ...tagPages
+    ...tagPages,
+    ...categoryPages
   ];
 }
