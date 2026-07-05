@@ -7,6 +7,7 @@ export const ArrowDownIcon = createIcon("arrowDown");
 export const ArrowRightIcon = createIcon("arrowRight");
 export const ArrowUpIcon = createIcon("arrowUp");
 export const BookIcon = createIcon("book");
+export const BookOpenIcon = createIcon("bookOpen");
 export const BulbIcon = createIcon("bulb");
 export const CalendarIcon = createIcon("calendar");
 export const CandyIcon = createIcon("candy");
