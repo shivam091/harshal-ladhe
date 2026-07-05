@@ -33,3 +33,17 @@ export const escapeHTML = (str: string) => String(str)
   .replace(/>/g, "&gt;")
   .replace(/"/g, "&quot;")
   .replace(/'/g, "&#039;");
+
+// Post text can contain &, < and quotes, which would break the feed's XML unescaped.
+export const escapeXml = (str: string) => String(str)
+  .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+
+// Keeps feed summaries short and on one line regardless of source formatting.
+export function truncate(value: string, max: number): string {
+  const text = value.replace(/\s+/g, " ").trim();
+  return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+}
