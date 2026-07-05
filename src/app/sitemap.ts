@@ -6,10 +6,12 @@ import { join } from "node:path";
 import { snippets } from "@/data/snippets";
 import { getSnippetDates } from "@/lib/snippets";
 import { gitLastModified } from "@/lib/git-dates.mjs";
+import { getSeriesDates } from "@/lib/series";
 import { tutorials } from "@/data/tutorials";
 import { getTutorialDates } from "@/lib/tutorials";
 import { getSortedPosts } from "@/lib/posts";
 import { getPostUrl } from "@/utils/post-url";
+import { getSortedSeries } from "@/data/series";
 
 // Required for `output: "export"` — tells Next.js this route is fully static.
 export const dynamic = "force-static";
@@ -94,6 +96,12 @@ const staticPages: MetadataRoute.Sitemap = [
     lastModified: pageDate("(site)/(internal)/posts/page.tsx"),
     changeFrequency: "weekly",
     priority: 0.9
+  },
+  {
+    url: `${base}/series`,
+    lastModified: pageDate("(site)/(internal)/series/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
   }
 ];
 
@@ -133,11 +141,23 @@ const postPages: MetadataRoute.Sitemap = getSortedPosts().map((post) => ({
   priority: 0.7
 }));
 
+// Detail pages only, so the index isn't listed twice.
+const seriesPages: MetadataRoute.Sitemap = getSortedSeries().map(({ slug }) => {
+  const { lastModifiedAt } = getSeriesDates(slug);
+  return {
+    url: `${base}/series/${slug}`,
+    lastModified: lastModifiedAt ? new Date(lastModifiedAt) : new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7
+  };
+});
+
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     ...staticPages,
     ...snippetPages,
     ...tutorialPages,
-    ...postPages
+    ...postPages,
+    ...seriesPages
   ];
 }
