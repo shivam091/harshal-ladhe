@@ -8,6 +8,15 @@ export function formatDate(dateStr: string): string {
   });
 }
 
+// Compact "DD Mon" (e.g. "09 Jul") so the date fits beside each timeline row.
+export function formatDayMonth(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    day: "2-digit",
+    month: "short",
+    timeZone: "UTC"
+  });
+}
+
 // Spelled out in full so the compact on-page date can reveal the exact moment on hover.
 export function fullTimestamp(iso: string): string {
   return new Date(iso).toLocaleString("en-US", {
