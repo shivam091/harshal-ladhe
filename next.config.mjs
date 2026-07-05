@@ -45,6 +45,10 @@ const withMDX = createMDX({
       path.join(__dirname, "src/lib/remark-git-dates.mjs"),
       // Build-time injection keeps snippet/tutorial meta in step with git history, no hand-kept frontmatter.
       path.join(__dirname, "src/lib/remark-content-metadata.mjs"),
+      // Same for posts — dates and read time come from git and the text, never from frontmatter.
+      path.join(__dirname, "src/lib/remark-post-meta.mjs"),
+      // Plain MDX is CommonMark only — without GFM, pipe tables render as literal text.
+      "remark-gfm",
     ],
     // Highlighting at build time with CSS-variable token colours lets theming work without client JS.
     rehypePlugins: [path.join(__dirname, "src/lib/shiki/rehype-shiki.mjs")],
