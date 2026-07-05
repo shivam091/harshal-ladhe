@@ -67,7 +67,43 @@ export const siteConfig = {
   },
 
   // Site-wide switch so the decorative hit counter can be dropped without touching page layouts.
-  hitCounter: true
+  hitCounter: true,
+
+  // Each block can be toggled off here; empty sections hide themselves regardless.
+  home: {
+    // Posts flagged `pinned: true` in the registry, surfaced first.
+    pinnedPosts: {
+      enabled: true
+    },
+    // Posts flagged `featured: true` in the registry.
+    featuredPosts: {
+      enabled: true
+    },
+    // Tags ranked by recency-weighted frequency across recently-updated posts.
+    trendingTags: {
+      enabled: true,
+      // Maximum number of tags to surface.
+      limit: 10,
+      // How many recently-updated posts feed the ranking window.
+      maxPosts: 30,
+      // Recency decay applied to each post's contribution: "exponential", "log", or "linear".
+      decayStrategy: "exponential" as "exponential" | "log" | "linear",
+      // Scale scores to 0–100 so the top tag always reads 100.
+      normalization: true
+    },
+    // Categories ranked by total post count.
+    popularCategories: {
+      enabled: true,
+      // Maximum number of categories to surface.
+      limit: 5
+    },
+    // Posts ordered by last-modified date, newest first.
+    recentlyUpdatedPosts: {
+      enabled: true,
+      // Maximum number of posts to surface.
+      limit: 5
+    }
+  }
 };
 
 // Derived from the object so the type can never drift from the actual config.
