@@ -2,8 +2,10 @@ import type { JSX } from "react";
 import Link from "next/link";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import Categories from "@/components/Categories";
+import SeriesBadge from "@/components/SeriesBadge";
 import { CalendarIcon, ClockIcon } from "@/components/Icon";
 import { PageMetaItem } from "@/components/PageMeta/PageMeta.styles";
+import { getSeriesForPost } from "@/data/series";
 import { CONTENT_TYPE_ICONS } from "@/constants/content-type-icons";
 import { getTaxonomyEntryUrl, TAXONOMY_ENTRY_LABELS } from "@/utils/taxonomy-entries";
 import { formatDate } from "@/utils/date";
@@ -22,6 +24,8 @@ import {
 // One card markup so a post looks identical whether or not its list can filter.
 export default function PostCard({ post, index, showTypeIcon = false, as = "li" }: PostCardProps): JSX.Element {
   const type = post.type ?? "post";
+  // Slugs are only unique per content type, so series lookups stay with posts.
+  const series = type === "post" ? getSeriesForPost(post.slug) : null;
   const TypeIcon = CONTENT_TYPE_ICONS[type];
 
   return (
@@ -38,6 +42,8 @@ export default function PostCard({ post, index, showTypeIcon = false, as = "li" 
             <span dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(post.title) }} />
           </Link>
         </PostCardTitle>
+
+        {series && <SeriesBadge series={series} />}
 
         {post.excerpt && <PostCardExcerpt>{post.excerpt}</PostCardExcerpt>}
       </PostCardHeader>
