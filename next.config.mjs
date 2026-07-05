@@ -28,10 +28,10 @@ const nextConfig = {
     includePaths: [path.join(__dirname, "src/styles")],
   },
   webpack: (config) => {
-    config.cache = { type: "filesystem" }
-    return config
+    config.cache = { type: "filesystem" };
+    return config;
   },
-}
+};
 
 // Pass plugins as absolute path strings — Turbopack requires serialisable (non-function) loader
 // options, and mdx-js-loader resolves string entries via require.resolve at compile time.
@@ -41,6 +41,11 @@ const withMDX = createMDX({
       path.join(__dirname, "src/lib/remark-git-dates.mjs"),
       // Injects <SnippetMeta> (git dates + read time) into snippet content at build.
       path.join(__dirname, "src/lib/remark-snippet-meta.mjs"),
+      // Injects <PostMeta> (git dates + read time) into post content at build.
+      path.join(__dirname, "src/lib/remark-post-meta.mjs"),
+      // GFM support (pipe tables, strikethrough, task lists, autolinks) — plain MDX is
+      // CommonMark only, so table syntax renders as literal text without this.
+      "remark-gfm",
     ],
     // rehype-shiki runs Shiki at build time and injects highlighted HAST using
     // CSS-variable token colours so that theming works without client JS.
