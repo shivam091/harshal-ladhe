@@ -15,6 +15,7 @@ import HitCounter from "@/components/HitCounter";
 import IconExternalLink from "@/icons/IconExternalLink";
 import { useToggleIconStatus } from "@/hooks/use-toggle-icon-status";
 import { siteConfig } from "@/config/site";
+import TableOfContents from "@/components/TableOfContents";
 import RelatedContent from "@/components/RelatedContent";
 import { getPublishedDate } from "@/lib/related-entries";
 import type { ContentLayoutProps } from "@/components/ContentLayout/ContentLayout.types";
@@ -73,7 +74,9 @@ export default function ContentLayout({
         {/* The id is what the table of contents scans for headings. */}
         <ContentGrid>
           <ContentBody id="post-content">{children}</ContentBody>
-          <ContentTOC />
+          <ContentTOC>
+            <TableOfContents />
+          </ContentTOC>
         </ContentGrid>
 
         <PageSignOff />
