@@ -104,6 +104,12 @@ const staticPages: MetadataRoute.Sitemap = [
     lastModified: pageDate("(site)/(internal)/series/page.tsx"),
     changeFrequency: "weekly",
     priority: 0.9
+  },
+  {
+    url: `${base}/tags`,
+    lastModified: pageDate("(site)/(internal)/tags/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
   }
 ];
 
