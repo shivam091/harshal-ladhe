@@ -1,0 +1,14 @@
+// SEO/display metadata for a single category archive page, keyed by category slug in data/categories.ts.
+export interface CategoryMeta {
+  // Descriptive <h1> and <title> for the /category/<slug> archive.
+  title: string;
+  // Meta description shown in <head> and as the archive's intro paragraph.
+  description: string;
+}
+
+/*
+  Keyed by slug so casing variants share one entry. Unlisted slugs still get an archive with
+  fallback copy, and entries may exist ahead of the posts that use them.
+*/
+export const categoryMeta: Record<string, CategoryMeta> = {
+};

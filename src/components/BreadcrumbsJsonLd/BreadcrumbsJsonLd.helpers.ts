@@ -70,6 +70,13 @@ export function buildCrumbs(pathname: string): Crumb[] {
     return crumbs;
   }
 
+  if (pathname.startsWith("/category/")) {
+    const category = findTermBySlug((post) => post.category, slugFromPath(pathname, "/category/"));
+    crumbs.push({ title: "Categories", url: "/categories" });
+    if (category) crumbs.push({ title: category, url: pathname });
+    return crumbs;
+  }
+
   const title =
     pageNames[pathname] ??
     pathname.split("/").pop()?.replace(/-/g, " ") ??

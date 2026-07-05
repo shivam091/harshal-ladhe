@@ -56,6 +56,13 @@
 }
 
 // Also painted inside gradients, so typed to fade with the theme.
+@property --color-bg-accent-muted {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(203 100% 94%);
+}
+
+// Also painted inside gradients, so typed to fade with the theme.
 @property --color-bg-muted {
   syntax: "<color>";
   inherits: true;
