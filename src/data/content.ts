@@ -30,8 +30,8 @@ export interface ContentEntry {
   link?: ContentLink;
   category: string[];
   tags: string[];
-  // Required so every entry gets a proper share-preview card.
-  image: ContentImage;
+  // Entries without one get a generated card from app/og/[type]/[slug].
+  image?: ContentImage;
   changelog: ContentChangelogEntry[];
 }
 
