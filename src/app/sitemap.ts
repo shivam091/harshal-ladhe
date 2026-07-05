@@ -11,7 +11,7 @@ import { siteConfig } from "@/config/site";
 import { join } from "node:path";
 import { snippets } from "@/data/snippets";
 import { getSnippetDates } from "@/lib/snippets";
-import { gitLastModified } from "@/lib/git-dates.mjs";
+import { gitLastModified } from "@/lib/git-dates";
 
 // Required for `output: "export"` — tells Next.js this route is fully static.
 export const dynamic = "force-static";
@@ -94,6 +94,12 @@ const staticPages: MetadataRoute.Sitemap = [
   {
     url: `${base}/snippets`,
     lastModified: pageDate("(site)/(internal)/snippets/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
+  },
+  {
+    url: `${base}/series`,
+    lastModified: pageDate("(site)/(internal)/series/page.tsx"),
     changeFrequency: "weekly",
     priority: 0.9
   }
