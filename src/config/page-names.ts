@@ -13,4 +13,5 @@ export const pageNames: Record<string, string> = {
   "/series": "Series",
   "/tags": "Tags",
   "/categories": "Categories",
+  "/archives": "Archives"
 };
