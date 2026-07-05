@@ -10,7 +10,20 @@ import IconChevronDown from "@/icons/IconChevronDown";
 import { useBoop } from "@/hooks/use-boop";
 import { formatDate } from "@/utils/date";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
-import type { CategoryAccordionItem } from "@/interfaces/category";
+// One post as surfaced under a category — trimmed to what the accordion renders.
+interface CategoryAccordionPost {
+  slug: string;
+  title: string;
+  publishedAt: string | null;
+}
+
+// One category group: its display name, slug, post count, and its posts.
+export interface CategoryAccordionItem {
+  category: string;
+  slug: string;
+  count: number;
+  posts: CategoryAccordionPost[];
+}
 import {
   AccordionList,
   AccordionItem,
