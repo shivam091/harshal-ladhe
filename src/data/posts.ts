@@ -1,0 +1,96 @@
+import type { ChangelogEntry } from "@/components/Changelog/Changelog.types";
+
+// Cover image used for social share previews and OG metadata.
+export interface PostImage {
+  // Relative or absolute image path.
+  path: string;
+  width: number;
+  height: number;
+  type?: string;
+  // Required alt text for the share-preview image.
+  alt: string;
+}
+
+// Per-post table-of-contents configuration.
+export interface PostTocConfig {
+  // Set false to hide the ToC sidebar entirely for this post. Defaults to true.
+  show?: boolean;
+  // Deepest heading level to include (2 = h2 only, 3 = h2+h3, 4 = h2+h3+h4). Defaults to 3.
+  maxLevel?: 2 | 3 | 4;
+}
+
+// Registry record describing one post — drives the /posts list, prev/next nav, and the detail layout.
+export interface Post {
+  slug: string;
+  title: string;
+  // Short lead shown in the post header and list cards.
+  excerpt?: string;
+  // Longer SEO description shown in list cards and OG metadata.
+  description: string;
+  // Category slugs this post belongs to.
+  category: string[];
+  // Freeform tag slugs for this post.
+  tags: string[];
+  // Social share / OG cover image.
+  image?: PostImage;
+  // Table-of-contents display options; omit to use defaults.
+  toc?: PostTocConfig;
+  // Per-post closing message; overrides the built-in PageSignOff default.
+  // Set to `false` to suppress the closing text — renders a bare divider instead.
+  signoff?: string | false;
+  // Surface this post in pinned / featured sections.
+  pinned?: boolean;
+  featured?: boolean;
+  // History of substantive edits after initial publish; drives the "last modified" date shown to readers.
+  changelog?: ChangelogEntry[];
+}
+
+// Minimal shape used for prev/next navigation links.
+export interface PostNavLink {
+  slug: string;
+  title: string;
+  category: string[];
+}
+
+// Previous (older) and next (newer) neighbours for a given post.
+export interface PostNavigation {
+  previous: PostNavLink | null;
+  next: PostNavLink | null;
+}
+
+/*
+  Registry of every post. Each entry has a matching content file at
+  app/(site)/(internal)/(post)/post/<slug>/page.mdx. This drives the /posts list,
+  the detail chrome, and prev/next nav.
+
+  Dates come from git history at build time (lib/posts.ts for the list;
+  remark-post-meta for the detail). New posts are appended to the end, so the
+  registry reads oldest-first: "previous" is the entry just before (older),
+  "next" is the one just after (newer).
+*/
+export const posts: Post[] = [
+];
+
+// Look up a single post by its slug.
+export function getPostBySlug(slug: string): Post | undefined {
+  return posts.find((post) => post.slug === slug);
+}
+
+/*
+  Previous/next neighbours by this array's order (client-safe — used by the
+  post layout, which can't read git dates in the browser). The registry is
+  oldest-first (new posts appended to the end), so "previous" is the entry
+  just before (older) and "next" is the one just after (newer).
+*/
+export function getPostNavigation(slug: string): PostNavigation {
+  const index = posts.findIndex((post) => post.slug === slug);
+  if (index === -1) return { previous: null, next: null };
+
+  const previous = index > 0 ? posts[index - 1] : null;
+  const next = index < posts.length - 1 ? posts[index + 1] : null;
+
+  return {
+    previous: previous ? { slug: previous.slug, title: previous.title, category: previous.category } : null,
+    next: next ? { slug: next.slug, title: next.title, category: next.category } : null
+  };
+}
