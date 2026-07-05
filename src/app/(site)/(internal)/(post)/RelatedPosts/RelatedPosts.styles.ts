@@ -1,23 +1,28 @@
 import { styled } from "@linaria/react";
+import {
+  focusRingCss,
+  stretchedCardLinkCss,
+  clampedDescriptionCss,
+} from "@/components/common.styles";
 
 // Section wrapper for the related-posts block at the foot of a post.
 export const RelatedPostsSection = styled.section`
-  margin-block-start: var(--fluid-space-xl);
+  margin-block-start: clamp(2rem, 3vw, 3rem);
 `;
 
 // Section heading — "Related Posts".
 export const RelatedPostsHeading = styled.h2`
-  font-size: var(--font-size-xl);
-  margin-block: var(--space-none) var(--fluid-space-md);
+  font-size: 1.5rem;
+  margin-block: 0 clamp(0.75rem, 1vw, 1rem);
 `;
 
 // Responsive 3-up grid, collapsing to a single column below the md breakpoint.
 export const RelatedPostsGrid = styled.ul`
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--fluid-space-md);
-  margin: var(--space-none);
-  padding: var(--space-none);
+  gap: clamp(0.75rem, 1vw, 1rem);
+  margin: 0;
+  padding: 0;
   list-style: none;
 
   @media (width <= 48rem) {
@@ -34,12 +39,12 @@ export const RelatedPost = styled.li`
   display: flex;
   flex-direction: column;
   background: var(--color-bg-default);
-  border: var(--border-width-default) solid var(--color-border-default);
-  border-radius: var(--border-radius-default);
-  padding: var(--fluid-space-base);
-  margin-block-end: var(--space-none);
+  border: 0.0625rem solid var(--color-border-default);
+  border-radius: 0.375rem;
+  padding: clamp(1rem, 1.25vw, 1.5rem);
+  margin-block-end: 0;
   box-shadow: var(--box-shadow-sm);
-  transition: box-shadow var(--motion-duration-medium) var(--motion-easing-out);
+  transition: box-shadow 300ms cubic-bezier(0.3, 0.8, 0.6, 1);
 
   // Lifts to the accent border + a deeper shadow on hover, matching the post/series card treatment.
   &:hover {
@@ -50,8 +55,7 @@ export const RelatedPost = styled.li`
 
   // Keyboard-focus ring around the whole card when the title link inside is focused.
   &:focus-within {
-    outline: var(--outline-focus-width) solid var(--color-outline-focus);
-    outline-offset: var(--outline-focus-offset);
+    ${focusRingCss}
   }
 `;
 
@@ -59,45 +63,30 @@ export const RelatedPost = styled.li`
 export const RelatedPostHeader = styled.header`
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-  margin-block-end: var(--space-sm);
+  gap: 0.5rem;
+  margin-block-end: 0.5rem;
 `;
 
 // Card title link — accent colour, no underline, stretched overlay for whole-card click.
 export const RelatedPostTitle = styled.h3`
-  font-size: var(--font-size-lg);
-  margin-block: var(--space-none);
+  font-size: 1.25rem;
+  margin-block: 0;
 
-  a {
-    color: var(--color-fg-default);
-    text-decoration: none;
-
-    &::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      z-index: 0;
-    }
-  }
+  ${stretchedCardLinkCss}
 `;
 
 // Short lead line under the title — muted, medium weight.
 export const RelatedPostExcerpt = styled.div`
   color: var(--color-fg-muted);
-  font-weight: var(--font-weight-medium);
-  font-size: var(--font-size-base);
+  font-weight: 500;
+  font-size: 1rem;
 `;
 
 // Card body — description with a 2-line clamp to keep card heights even.
 export const RelatedPostBody = styled.div``;
 
 export const RelatedPostDescription = styled.div`
-  color: var(--color-fg-muted);
-  display: -webkit-box;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  ${clampedDescriptionCss}
 `;
 
 // Card footer — published-date meta row, pushed to the bottom of the card.
@@ -105,7 +94,7 @@ export const RelatedPostFooter = styled.footer`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm) var(--space-base);
+  gap: 0.5rem 1rem;
   margin-block-start: auto;
-  padding-block-start: var(--space-base);
+  padding-block-start: 1rem;
 `;

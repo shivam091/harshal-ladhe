@@ -9,11 +9,16 @@ import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { createDatedLookup, type ContentDates } from "@/lib/content-dates";
 import { posts } from "@/data/posts";
+import type { Post } from "@/data/posts";
 import { siteConfig } from "@/config/site";
 import { getPostCategorySlug } from "@/utils/post-url";
-import type { DatedPost } from "@/interfaces/post";
 
-export type { DatedPost };
+// Post registry entry merged with git-derived dates and estimated reading time.
+export interface DatedPost extends Post {
+  publishedAt: string | null;
+  lastModifiedAt: string | null;
+  readingMinutes: number;
+}
 
 // Directory containing each post's route folder (slug) and its page.mdx source.
 const POST_DIR = join(process.cwd(), "src", "app", "(site)", "(internal)", "(post)", "post");

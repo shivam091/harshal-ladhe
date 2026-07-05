@@ -1,11 +1,12 @@
-import { JSX } from "react";
+import type { JSX } from "react";
 import Link from "next/link";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import { CalendarIcon } from "@/components/Icon";
 import { PageMetaItem } from "@/components/PageMeta/PageMeta.styles";
 import { getPublishedDate } from "@/lib/related-posts";
+import { getPostUrl } from "@/utils/post-url";
 import { formatDate } from "@/utils/date";
-import type { RelatedPostsProps } from "@/interfaces/post";
+import type { Post } from "@/data/posts";
 import {
   RelatedPostsSection,
   RelatedPostsHeading,
@@ -17,7 +18,8 @@ import {
   RelatedPostBody,
   RelatedPostDescription,
   RelatedPostFooter
-} from "@/app/(site)/(internal)/(post)/RelatedPosts.styles";
+} from "@/app/(site)/(internal)/(post)/RelatedPosts/RelatedPosts.styles";
+import { inlineMarkdownToHtml } from "@/utils/markdown";
 
 /*
   Related-posts block rendered at the foot of a post. Ranking comes from
@@ -26,6 +28,12 @@ import {
   title, excerpt, description, and published date. Renders nothing when there
   are no related posts.
 */
+// Props for the related-posts block shown at the foot of a post.
+interface RelatedPostsProps {
+  // Ranked related posts to render as cards, in the order given.
+  posts: Post[];
+}
+
 export default function RelatedPosts({ posts }: RelatedPostsProps): JSX.Element | null {
   if (posts.length === 0) return null;
 
@@ -43,12 +51,11 @@ export default function RelatedPosts({ posts }: RelatedPostsProps): JSX.Element 
                 <RelatedPostHeader>
                   <RelatedPostTitle>
                     <Link
-                      href={`/post/${post.slug}`}
+                      href={getPostUrl(post)}
                       title={post.title}
                       aria-label={`Read post: ${post.title}`}
-                    >
-                      {post.title}
-                    </Link>
+                      dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(post.title) }}
+                    />
                   </RelatedPostTitle>
 
                   {post.excerpt && <RelatedPostExcerpt>{post.excerpt}</RelatedPostExcerpt>}
