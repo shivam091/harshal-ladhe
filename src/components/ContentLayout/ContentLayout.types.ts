@@ -10,4 +10,5 @@ export interface ContentLayoutProps {
   label: string;
   getBySlug: (slug: string) => ContentEntry | undefined;
   getNavigation: (slug: string) => ContentNavigation;
+  getRelated: (slug: string) => ContentEntry[];
 }
