@@ -13,6 +13,7 @@ import { snippets } from "@/data/snippets";
 import { getSnippetDates } from "@/lib/snippets";
 import { getSortedSeries } from "@/data/series";
 import { getSeriesDates } from "@/lib/series";
+import { getAllTags } from "@/lib/tags";
 import { gitLastModified } from "@/lib/git-dates";
 
 // Required for `output: "export"` — tells Next.js this route is fully static.
@@ -141,6 +142,17 @@ const seriesPages: MetadataRoute.Sitemap = getSortedSeries().map(({ slug }) => {
   };
 });
 
+/*
+  One archive page per unique tag — mirrors the /tag/<slug> routes generated
+  by generateStaticParams. lastModified tracks the newest post carrying the tag.
+*/
+const tagPages: MetadataRoute.Sitemap = getAllTags().map(({ slug, lastModifiedAt }) => ({
+  url: `${base}/tag/${slug}`,
+  lastModified: lastModifiedAt ? new Date(lastModifiedAt) : new Date(),
+  changeFrequency: "weekly" as const,
+  priority: 0.7
+}));
+
 // Dynamic post pages
 // Uncomment and adapt when the posts route is ready:
 //
@@ -168,7 +180,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
   return [
     ...staticPages,
     ...snippetPages,
-    ...seriesPages
+    ...seriesPages,
+    ...tagPages
     // ...postPages,   // ← uncomment when posts are live
   ];
 }
