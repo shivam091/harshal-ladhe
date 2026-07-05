@@ -9,11 +9,12 @@
   Reads git-derived dates via getSortedPosts, so this runs at build time only.
 */
 import { tagMeta } from "@/data/tags";
+import type { TagMeta } from "@/data/tags";
 import { getSortedPosts, type DatedPost } from "@/lib/posts";
 import { getAllTaxonomyTerms, getPostsByTaxonomyTerm, getTaxonomyTermBySlug } from "@/lib/taxonomy";
 import { siteConfig } from "@/config/site";
 import { slugify } from "@/utils/string";
-import type { TagMeta } from "@/interfaces/tag";
+import type { TrendingTag } from "@/lib/trending-tags";
 
 /*
   One aggregated tag: its display name, URL slug, post count, and the newest
@@ -32,17 +33,6 @@ export interface TagSummary {
 */
 export function getAllTags(): TagSummary[] {
   return getAllTaxonomyTerms((post) => post.tags).map(({ name, ...rest }) => ({ tag: name, ...rest }));
-}
-
-/*
-  One trending tag: display name, slug, raw post count within the ranking
-  window, and the (optionally normalized) recency-weighted score used to rank.
-*/
-export interface TrendingTag {
-  tag: string;
-  slug: string;
-  count: number;
-  score: number;
 }
 
 /*
@@ -136,6 +126,6 @@ export function getTagMeta(slug: string, tag: string): TagMeta {
   const count = getPostsByTag(slug).length;
   return {
     title: `#${tag}`,
-    description: `Browse ${count} post${count === 1 ? "" : "s"} tagged "${tag}" — quick topic navigation across the blog.`,
+    description: `Browse ${count} post${count === 1 ? "" : "s"} tagged "${tag}" — quick topic navigation across the blog.`
   };
 }
