@@ -1,4 +1,4 @@
-import { JSX } from "react";
+import type { JSX } from "react";
 import Link from "next/link";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import { CalendarIcon } from "@/components/Icon";
@@ -17,7 +17,8 @@ import {
   RelatedPostBody,
   RelatedPostDescription,
   RelatedPostFooter
-} from "@/app/(site)/(internal)/(post)/RelatedPosts.styles";
+} from "@/app/(site)/(internal)/(post)/RelatedPosts/RelatedPosts.styles";
+import { inlineMarkdownToHtml } from "@/utils/markdown";
 
 /*
   Related-posts block rendered at the foot of a post. Ranking comes from
@@ -46,9 +47,8 @@ export default function RelatedPosts({ posts }: RelatedPostsProps): JSX.Element 
                       href={`/post/${post.slug}`}
                       title={post.title}
                       aria-label={`Read post: ${post.title}`}
-                    >
-                      {post.title}
-                    </Link>
+                      dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(post.title) }}
+                    />
                   </RelatedPostTitle>
 
                   {post.excerpt && <RelatedPostExcerpt>{post.excerpt}</RelatedPostExcerpt>}
