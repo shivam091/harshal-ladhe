@@ -52,6 +52,21 @@ export const siteConfig = {
     wordsPerMinute: 180
   },
 
+  // Related-posts block shown at the end of each post. Posts are ranked by
+  // tag/category overlap (Jaccard similarity), weighted per the scores below.
+  relatedPosts: {
+    // Set false to hide the related-posts section site-wide.
+    enabled: true,
+    // Maximum number of related posts to surface.
+    limit: 3,
+    // Weight applied to the shared-tags similarity score.
+    tagWeight: 1.0,
+    // Weight applied to the shared-categories similarity score.
+    categoryWeight: 0.5,
+    // Top up with recent posts (registry order) when too few share tags/categories.
+    fallbackToRecent: true
+  },
+
   // When true, renders the retro LED hit counter at the bottom of each post/snippet/series page.
   hitCounter: true
 };
