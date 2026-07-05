@@ -2,6 +2,7 @@ import type { JSX } from "react";
 import { EmojiSadIcon } from "@/components/Icon";
 import Button from "@/components/Button";
 import FlashlightOverlay from "@/components/FlashlightOverlay";
+import PageNotFoundTracker from "@/components/PageNotFoundTracker";
 import { ErrorWrapper, ErrorIconCircle, ErrorHeading, ErrorMessage, ErrorButtonRow, ErrorPage } from "@/app/error-page.styles";
 
 export const metadata = {
@@ -24,6 +25,7 @@ export const metadata = {
 export default function NotFound(): JSX.Element {
   return (
     <>
+      <PageNotFoundTracker />
       <FlashlightOverlay showToggle />
       <ErrorWrapper
         id="main-content"

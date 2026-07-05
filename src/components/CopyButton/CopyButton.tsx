@@ -8,11 +8,12 @@ import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { SPRINGS } from "@/constants/springs";
 import { ClipboardIcon, CheckIcon } from "@/components/Icon";
 import VisuallyHidden from "@/components/VisuallyHidden";
+import { trackEvent } from "@/lib/analytics";
 import type { CopyButtonProps } from "@/components/CopyButton/CopyButton.types";
 import { Btn, IconOuterWrapper, IconWrapper, CheckMark } from "@/components/CopyButton/CopyButton.styles";
 
 // Motion and sound confirm a clipboard write that would otherwise be invisible.
-export default function CopyButton({ code, onCopy }: CopyButtonProps) {
+export default function CopyButton({ code, language = "text", onCopy }: CopyButtonProps) {
   const [isCopied, setIsCopied] = React.useState(false);
   // Ref so the cleanup effect always cancels the latest timer, not a stale closure copy
   const resetRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -44,6 +45,7 @@ export default function CopyButton({ code, onCopy }: CopyButtonProps) {
 
     setRotation(-10);
     rotationResetRef.current = setTimeout(() => setRotation(0), 150);
+    trackEvent("copy_code", { event_label: language, event_category: "engagement" });
     onCopy();
     setIsCopied(true);
 

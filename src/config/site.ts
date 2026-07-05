@@ -49,8 +49,58 @@ export const siteConfig = {
     wordsPerMinute: 180
   },
 
+  // Tunable here so related-post ranking can change without touching code.
+  relatedPosts: {
+    // Set false to hide the related-posts section site-wide.
+    enabled: true,
+    // Maximum number of related posts to surface.
+    limit: 3,
+    // Weight applied to the shared-tags similarity score.
+    tagWeight: 1.0,
+    // Weight applied to the shared-categories similarity score.
+    categoryWeight: 0.5,
+    // Top up with recent posts (registry order) when too few share tags/categories.
+    fallbackToRecent: true
+  },
+
   // Site-wide switch so the decorative hit counter can be dropped without touching page layouts.
-  hitCounter: true
+  hitCounter: true,
+
+  // Each block can be toggled off here; empty sections hide themselves regardless.
+  home: {
+    // Posts flagged `pinned: true` in the registry, surfaced first.
+    pinnedPosts: {
+      enabled: true
+    },
+    // Posts flagged `featured: true` in the registry.
+    featuredPosts: {
+      enabled: true
+    },
+    // Tags ranked by recency-weighted frequency across recently-updated posts, tutorials, and snippets.
+    trendingTags: {
+      enabled: true,
+      // Maximum number of tags to surface.
+      limit: 10,
+      // How many recently-updated entries (of any type) feed the ranking window.
+      maxEntries: 30,
+      // Recency decay applied to each entry's contribution: "exponential", "log", or "linear".
+      decayStrategy: "exponential" as "exponential" | "log" | "linear",
+      // Scale scores to 0–100 so the top tag always reads 100.
+      normalization: true
+    },
+    // Categories ranked by total entry count across posts, tutorials, and snippets.
+    popularCategories: {
+      enabled: true,
+      // Maximum number of categories to surface.
+      limit: 5
+    },
+    // Posts, tutorials, and snippets ordered by last-modified date, newest first.
+    recentlyUpdatedEntries: {
+      enabled: true,
+      // Maximum number of entries to surface.
+      limit: 10
+    }
+  }
 };
 
 // Derived from the object so the type can never drift from the actual config.

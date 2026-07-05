@@ -15,13 +15,18 @@ import HitCounter from "@/components/HitCounter";
 import IconExternalLink from "@/icons/IconExternalLink";
 import { useToggleIconStatus } from "@/hooks/use-toggle-icon-status";
 import { siteConfig } from "@/config/site";
+import TableOfContents from "@/components/TableOfContents";
+import RelatedContent from "@/components/RelatedContent";
+import { getPublishedDate } from "@/lib/related-posts";
 import type { ContentLayoutProps } from "@/components/ContentLayout/ContentLayout.types";
 import {
   Article,
   ContentHeader,
   ContentExcerpt,
   ContentCtaLink,
-  ContentBody
+  ContentGrid,
+  ContentBody,
+  ContentTOC
 } from "@/components/ContentLayout/ContentLayout.styles";
 
 /*
@@ -33,7 +38,8 @@ export default function ContentLayout({
   routeSegment,
   label,
   getBySlug,
-  getNavigation
+  getNavigation,
+  getRelated
 }: ContentLayoutProps): JSX.Element {
   const pathname = usePathname();
   const slug = pathname.replace(new RegExp(`^/${routeSegment}/`), "").replace(/\/$/, "");
@@ -65,7 +71,13 @@ export default function ContentLayout({
           )}
         </ContentHeader>
 
-        <ContentBody>{children}</ContentBody>
+        {/* The id is what the table of contents scans for headings, shared with the post layout. */}
+        <ContentGrid>
+          <ContentBody id="post-content">{children}</ContentBody>
+          <ContentTOC>
+            <TableOfContents />
+          </ContentTOC>
+        </ContentGrid>
 
         <PageSignOff />
 
@@ -88,6 +100,19 @@ export default function ContentLayout({
           next={next ? { href: `/${routeSegment}/${next.slug}`, title: next.title } : null}
         />
       </Article>
+
+      <RelatedContent
+        label={`${label}s`}
+        itemLabel={routeSegment}
+        items={getRelated(slug).map((related) => ({
+          slug: related.slug,
+          href: `/${routeSegment}/${related.slug}`,
+          title: related.title,
+          excerpt: related.excerpt,
+          description: related.description,
+          publishedAt: getPublishedDate(related)
+        }))}
+      />
     </>
   );
 }

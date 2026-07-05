@@ -32,7 +32,7 @@ export default async function CodeBlock({ language, children, showCopyButton = t
 
   return (
     <>
-      <CodeBlockClient code={code} html={html} showCopyButton={showCopyButton} />
+      <CodeBlockClient code={code} html={html} language={lang === "plaintext" ? "text" : lang} showCopyButton={showCopyButton} />
     </>
   );
 }

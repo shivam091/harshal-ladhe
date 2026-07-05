@@ -2,6 +2,8 @@
 export interface CodeBlockClientProps {
   code: string;
   html: string;
+  // Normalised Shiki language, passed on so a copy can be attributed to it.
+  language: string;
   showCopyButton?: boolean;
 }
 
