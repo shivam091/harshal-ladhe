@@ -5,7 +5,7 @@
 
   Reads usePathname() to decide which banner to render:
     /                           → HeroBanner            (star-field + multi-layer clouds)
-    /snippet/*                  → SkyBannerTop inner (taller cloud variant for detail pages)
+    /snippet/*, /post/*         → SkyBannerTop inner (taller cloud variant for detail pages)
     everything else             → SkyBannerTop          (simpler gradient sky)
 
   Why a separate component?
@@ -24,7 +24,7 @@ import HeroBanner from "@/components/HeroBanner";
 import SkyBannerTop from "@/components/SkyBanners/SkyBannerTop";
 
 // Content-detail path segments that should show the taller inner banner variant.
-const INNER_PATH_SEGMENTS = ["/snippet/"];
+const INNER_PATH_SEGMENTS = ["/snippet/", "/post/"];
 
 // Varies the banner by route so only the homepage carries the heavier hero scene.
 export default function SiteBanner(): JSX.Element {
