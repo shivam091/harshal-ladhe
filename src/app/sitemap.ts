@@ -11,7 +11,7 @@ import { siteConfig } from "@/config/site";
 import { join } from "node:path";
 import { snippets } from "@/data/snippets";
 import { getSnippetDates } from "@/lib/snippets";
-import { gitLastModified } from "@/lib/git-dates.mjs";
+import { gitLastModified } from "@/lib/git-dates";
 import { tutorials } from "@/data/tutorials";
 import { getTutorialDates } from "@/lib/tutorials";
 
@@ -102,6 +102,12 @@ const staticPages: MetadataRoute.Sitemap = [
   {
     url: `${base}/tutorials`,
     lastModified: pageDate("(site)/(internal)/tutorials/page.tsx"),
+    changeFrequency: "weekly",
+    priority: 0.9
+  },
+  {
+    url: `${base}/series`,
+    lastModified: pageDate("(site)/(internal)/series/page.tsx"),
     changeFrequency: "weekly",
     priority: 0.9
   }
