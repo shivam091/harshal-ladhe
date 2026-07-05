@@ -62,6 +62,21 @@ If you haven't used it before: MDX is a superset of Markdown that lets you embed
 
 This is essential for the kind of content I want to create. I can drop in interactive demos, styled callouts, custom date components, or anything else I can build as a React component, right in the middle of prose.
 
+<Info title="See it in action">
+  This box is exactly that — a styled aside component dropped straight into the
+  Markdown. It even supports progressive disclosure: longer asides can tuck the
+  deep-dive details behind a **Show more** toggle.
+
+  <p data-hide-on-expand>Try it — click **Show more** below.</p>
+
+  <expanded>
+    Anything wrapped in a raw `<expanded>` tag stays hidden until you ask for
+    it. The content drops in with a small animation, and the hint line above
+    disappears once it's open — keeping the main reading flow tight while still
+    letting curious readers dig in.
+  </expanded>
+</Info>
+
 * **Why not pure React?** I tried it. Every paragraph wrapped in a `<p>`, every link as a JSX expression — the writing experience was genuinely awful. MDX solves this cleanly.
 
 * **Why not a CMS?** I edit MDX files directly in VS Code and commit them as code. It keeps everything in one place, benefits from version control, and removes the overhead of a separate system. The trade-off: I have to redeploy to fix a typo. That's fine with me.
