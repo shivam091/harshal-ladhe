@@ -1,8 +1,10 @@
 import type { JSX } from "react";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import Tooltip from "@/components/Tooltip";
+import SeriesBadge from "@/components/SeriesBadge";
 import { CalendarIcon, HistoryIcon, ClockIcon } from "@/components/Icon";
 import { formatDate, fullTimestamp } from "@/utils/date";
+import { getSeriesForPost } from "@/data/series";
 import { getPostBySlug } from "@/data/posts";
 import { getPostUrl } from "@/utils/post-url";
 import ArticleJsonLd from "@/components/ArticleJsonLd";
@@ -20,6 +22,7 @@ export default function PostMeta({
 }: PostMetaProps): JSX.Element {
   const minutes = Number(readingMinutes) || 1;
   const wordCount = Number(words) || 0;
+  const series = slug ? getSeriesForPost(slug) : null;
   const post = slug ? getPostBySlug(slug) : undefined;
 
   return (
@@ -35,6 +38,7 @@ export default function PostMeta({
           lastModifiedAt={lastModifiedAt}
           tags={post.tags}
           words={words}
+          series={series ?? undefined}
         />
       )}
 
@@ -70,6 +74,8 @@ export default function PostMeta({
             <span tabIndex={0}>{minutes} min read</span>
           </Tooltip>
         </PageMetaItem>
+
+        {series && <SeriesBadge series={series} />}
       </PageMetaPrimary>
 
       {post?.image && <CoverImage image={post.image} />}

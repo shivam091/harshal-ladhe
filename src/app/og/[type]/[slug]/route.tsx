@@ -1,6 +1,7 @@
 import { posts } from "@/data/posts";
 import { snippets } from "@/data/snippets";
 import { tutorials } from "@/data/tutorials";
+import { series } from "@/data/series";
 import { renderOgImage } from "@/lib/og-image";
 
 /*
@@ -15,7 +16,8 @@ export const dynamicParams = false;
 const SOURCES: Record<string, { label: string; entries: { slug: string; title: string; image?: unknown }[] }> = {
   post: { label: "Post", entries: posts },
   snippet: { label: "Snippet", entries: snippets },
-  tutorial: { label: "Tutorial", entries: tutorials }
+  tutorial: { label: "Tutorial", entries: tutorials },
+  series: { label: "Series", entries: series }
 };
 
 export function generateStaticParams(): { type: string; slug: string }[] {
