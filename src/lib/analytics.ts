@@ -1,5 +1,7 @@
+import { getPostBySlug } from "@/data/posts";
 import { getTutorialBySlug } from "@/data/tutorials";
 import { getSnippetBySlug } from "@/data/snippets";
+import { getPostCategorySlug } from "@/utils/post-url";
 
 export type GaParams = Record<string, string | number | boolean>;
 
@@ -24,7 +26,7 @@ export function trackEvent(name: string, params: GaParams = {}): void {
   window.gtag("event", name, params);
 }
 
-export type ContentGroup = "tutorial" | "snippet" | "listing" | "page";
+export type ContentGroup = "post" | "tutorial" | "snippet" | "listing" | "page";
 
 export type ContentParams = {
   content_group: ContentGroup;
@@ -37,7 +39,7 @@ const MAX_TAGS_LENGTH = 100;
 
 const NONE = "(none)";
 
-const LISTING_PATTERN = /^\/(tutorials|snippets|goodies)?$/;
+const LISTING_PATTERN = /^\/(posts|tutorials|snippets|goodies)?$/;
 
 function joinTags(tags: string[]): string {
   let joined = "";
@@ -52,7 +54,14 @@ function joinTags(tags: string[]): string {
 // Path-derived rather than passed from each page, so client-side navigations can be tagged without the page's help.
 export function getContentParams(pathname: string): ContentParams {
   const path = pathname.replace(/\/$/, "") || "/";
-  const [, segment, first] = path.split("/");
+  const [, segment, first, second] = path.split("/");
+
+  if (segment === "post" && second) {
+    const post = getPostBySlug(second);
+    if (post) {
+      return { content_group: "post", content_category: getPostCategorySlug(post.category), content_tags: joinTags(post.tags) };
+    }
+  }
 
   if (segment === "tutorial" && first) {
     const tutorial = getTutorialBySlug(first);

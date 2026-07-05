@@ -71,7 +71,7 @@ export default function ContentLayout({
           )}
         </ContentHeader>
 
-        {/* The id is what the table of contents scans for headings. */}
+        {/* The id is what the table of contents scans for headings, shared with the post layout. */}
         <ContentGrid>
           <ContentBody id="post-content">{children}</ContentBody>
           <ContentTOC>
