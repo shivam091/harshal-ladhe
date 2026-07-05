@@ -7,6 +7,7 @@ import SocialLinks from "@/components/SocialLinks";
 import PageSignOff from "@/components/SignOff/PageSignOff";
 import CodeBlock from "@/components/CodeBlock";
 import ContentMeta from "@/components/ContentMeta";
+import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/Aside";
 import RainbowDivider from "@/components/RainbowDivider";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
@@ -26,6 +27,10 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PageSignOff,
     CodeBlock,
     ContentMeta,
+    Info: AsideInfo,
+    Success: AsideSuccess,
+    Warning: AsideWarning,
+    Quote: AsideQuote,
     a: MDXLink,
     RainbowDivider,
     /*
