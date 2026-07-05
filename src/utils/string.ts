@@ -33,3 +33,17 @@ export const escapeHTML = (str: string) => String(str)
   .replace(/>/g, "&gt;")
   .replace(/"/g, "&quot;")
   .replace(/'/g, "&#039;");
+
+// Escape the five XML predefined entities for use in element text / attributes.
+export const escapeXml = (str: string) => String(str)
+  .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+
+// Collapse whitespace and hard-truncate to `max` chars for the entry summary.
+export function truncate(value: string, max: number): string {
+  const text = value.replace(/\s+/g, " ").trim();
+  return text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`;
+}
