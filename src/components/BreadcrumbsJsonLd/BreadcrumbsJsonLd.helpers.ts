@@ -4,8 +4,8 @@ import { getPostBySlug, posts } from "@/data/posts";
 import { getSeriesBySlug } from "@/data/series";
 import { pageNames } from "@/config/page-names";
 import { slugify } from "@/utils/string";
-import { Crumb } from "@/types/breadcrumb";
-import type { Post } from "@/interfaces/post";
+import type { Crumb } from "@/components/BreadcrumbsJsonLd/BreadcrumbsJsonLd.types";
+import type { Post } from "@/data/posts";
 
 // Strips the detail-route prefix and any trailing slash to get the bare slug.
 function slugFromPath(pathname: string, prefix: string): string {
@@ -28,9 +28,9 @@ function findTermBySlug(getValues: (post: Post) => string[], slug: string): stri
 
 /*
   Constructs the ordered breadcrumb trail for the current pathname.
-  Detail pages (post, snippet, series, tag) get a two-step trail
-  (Home → index → title); all other pages get a flat two-item trail
-  (Home → page title).
+  Detail pages (post, snippet, tutorial, series, tag, category) get a
+  two-step trail (Home → index → title); all other pages get a flat
+  two-item trail (Home → page title).
 */
 export function buildCrumbs(pathname: string): Crumb[] {
   const crumbs: Crumb[] = [{ title: "Home", url: "/" }];
@@ -38,7 +38,9 @@ export function buildCrumbs(pathname: string): Crumb[] {
   if (pathname === "/") return crumbs;
 
   if (pathname.startsWith("/post/")) {
-    const post = getPostBySlug(slugFromPath(pathname, "/post/"));
+    // /post/<category>/<slug> — the post's own slug is the last path segment.
+    const postSlug = pathname.replace(/\/$/, "").split("/").pop() ?? "";
+    const post = getPostBySlug(postSlug);
     crumbs.push({ title: "Posts", url: "/posts" });
     if (post) crumbs.push({ title: post.title, url: pathname });
     return crumbs;
@@ -69,6 +71,13 @@ export function buildCrumbs(pathname: string): Crumb[] {
     const tag = findTermBySlug((post) => post.tags, slugFromPath(pathname, "/tag/"));
     crumbs.push({ title: "Tags", url: "/tags" });
     if (tag) crumbs.push({ title: tag, url: pathname });
+    return crumbs;
+  }
+
+  if (pathname.startsWith("/category/")) {
+    const category = findTermBySlug((post) => post.category, slugFromPath(pathname, "/category/"));
+    crumbs.push({ title: "Categories", url: "/categories" });
+    if (category) crumbs.push({ title: category, url: pathname });
     return crumbs;
   }
 
