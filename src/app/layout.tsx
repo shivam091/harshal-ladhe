@@ -1,11 +1,14 @@
-import { JSX, type ReactNode } from "react";
+import { JSX, Suspense, type ReactNode } from "react";
 import type { Metadata } from "next";
+import Script from "next/script";
+import { MotionConfig } from "motion/react";
 import { siteConfig } from "@/config/site";
 import SkipLink from "@/components/SkipLink";
 import ScrollToTop from "@/components/ScrollToTop";
 import BreadcrumbsJsonLd from "@/components/BreadcrumbsJsonLd";
 import { ThemeProvider } from "@/context/ThemeContext";
 import AnalyticsProvider from "@/components/AnalyticsProvider";
+import NavigationProgress from "@/components/NavigationProgress";
 import { themeRule } from "@/utils/color";
 import { LIGHT_COLORS_CSS } from "@/constants/themes/light";
 import { DARK_COLORS_CSS } from "@/constants/themes/dark";
@@ -124,13 +127,23 @@ export default function RootLayout({
           <BreadcrumbsJsonLd />
           <SkipLink />
 
-          <ThemeProvider>
-            <AnalyticsProvider>
-              {children}
-            </AnalyticsProvider>
-          </ThemeProvider>
+          {/*
+            reducedMotion="user" makes every Framer Motion animation honour the OS reduced-motion
+            setting without each component checking it.
+          */}
+          <MotionConfig reducedMotion="user">
+            <ThemeProvider>
+              <AnalyticsProvider>
+                {/* Suspense required because usePathname() reads from the router context */}
+                <Suspense fallback={null}>
+                  <NavigationProgress />
+                </Suspense>
+                {children}
+              </AnalyticsProvider>
+            </ThemeProvider>
 
-          <ScrollToTop />
+            <ScrollToTop />
+          </MotionConfig>
         </body>
       </html>
     </>
