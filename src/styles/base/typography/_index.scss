@@ -1,0 +1,17 @@
+/*
+ * Typography sub-system — each file covers one typographic concern.
+ * Load order follows the cascade: base rendering → structural → inline → decorative.
+ */
+@forward "@/styles/base/typography/base"; // html: rendering, font-features
+@forward "@/styles/base/typography/headings"; // h1–h6, .h1–.h6
+@forward "@/styles/base/typography/paragraphs"; // p, .lead
+@forward "@/styles/base/typography/links"; // a, :hover, :visited, :focus-visible
+@forward "@/styles/base/typography/lists"; // ul, ol, dl/dt/dd, nesting
+@forward "@/styles/base/typography/blockquotes"; // blockquote, cite
+@forward "@/styles/base/typography/code"; // code, kbd, samp, pre
+@forward "@/styles/base/typography/inline"; // strong, em, small, mark, abbr, sub, sup, del, ins
+@forward "@/styles/base/typography/tables"; // table, th, td, caption
+@forward "@/styles/base/typography/figures"; // figure, figcaption, images, pictures, svg
+@forward "@/styles/base/typography/hr"; // hr
+@forward "@/styles/base/typography/selection"; // ::selection
+@forward "@/styles/base/typography/print"; // @media print

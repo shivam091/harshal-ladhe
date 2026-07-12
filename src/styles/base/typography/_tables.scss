@@ -1,0 +1,75 @@
+/*
+ * Table layout — collapsed borders, zebra-striped + hoverable rows, muted
+ * header row, and caption. Wide tables scroll horizontally (block + auto
+ * overflow) instead of squeezing columns, so column content is never forced
+ * to wrap awkwardly.
+ */
+table {
+  display: block;
+  margin-block-end: var(--space-base);
+  inline-size: max-content;
+  max-inline-size: 100%;
+  border-collapse: collapse;
+  overflow: auto;
+
+  th {
+    background-color: var(--color-bg-muted);
+    font-weight: var(--font-weight-semi-bold);
+    line-height: var(--line-height-tight);
+    white-space: nowrap;
+
+    /*
+     * Browser UA stylesheets center <th> text by default — reset it to
+     * `inherit` so headers line up with the (already start-aligned) body
+     * cells below them. `td` needs no equivalent rule: it has no such
+     * default to undo, so it already inherits start-alignment for free.
+     * The [data-align="right"] rule below still wins for numeric columns,
+     * since an attribute selector out-specifies this bare type selector.
+     */
+    text-align: inherit;
+  }
+
+  td {
+    line-height: var(--line-height-snug);
+  }
+
+  th,
+  td {
+    padding: var(--space-sm) var(--space-md);
+    border: var(--border-width-default) solid var(--color-border-default);
+  }
+
+  tr {
+    background-color: var(--color-bg-default);
+    border-block-start: var(--border-width-default) solid var(--color-border-muted);
+
+    &:nth-child(2n) {
+      background-color: var(--color-bg-muted);
+    }
+
+    /*
+     * Translucent overlay (not a flat color) so the highlight reads
+     * correctly whether it lands on a default or zebra-striped row.
+     */
+    &:hover {
+      background-color: var(--color-bg-control-transparent-hover);
+    }
+  }
+}
+
+// Numeric data reads better right-aligned; wins over the plain th/td rules above via specificity.
+td[data-align="right"],
+th[data-align="right"] {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+// Caption sits above the table; acts as a visible label.
+caption {
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+  // UA stylesheets center <caption> text by default — reset to start, matching the table body.
+  text-align: start;
+  margin-block-end: var(--space-xs);
+  caption-side: top;
+}

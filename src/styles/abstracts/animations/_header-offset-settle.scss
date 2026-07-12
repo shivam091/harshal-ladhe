@@ -1,0 +1,19 @@
+/*
+ * Collapses the home-page header gap to zero as the user begins scrolling.
+ *
+ * Animates --header-top-offset (a typed @property registered in _global.scss)
+ * from fluid-space-base → 0px so the sticky header eases flush to the viewport
+ * top instead of snapping there instantly.
+ *
+ * Applied only on the home page via :root:has([data-banner="hero"]) in _global.scss,
+ * scoped to scroll(root block) over the first --header-height of scroll travel.
+ */
+@keyframes header-offset-settle {
+  from {
+    --header-top-offset: var(--space-base);
+  }
+
+  to {
+    --header-top-offset: 0px;
+  }
+}
