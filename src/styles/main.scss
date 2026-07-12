@@ -1,0 +1,4 @@
+// Entry point that assembles the full stylesheet by forwarding abstracts, base, and layout layers.
+@use "@/styles/abstracts";
+@use "@/styles/base";
+@use "@/styles/layout";
