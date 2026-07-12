@@ -123,4 +123,32 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "JavaScript Strict Mode",
     description: "How `\"use strict\"` changes JavaScript's behaviour, turning silent failures such as writes to frozen objects into thrown errors."
   },
+  "closures": {
+    title: "Understanding JavaScript Closures",
+    description: "How closures capture their lexical scope, and how to use them for private state, factories, and encapsulated behaviour."
+  },
+  "encapsulation": {
+    title: "Encapsulation Techniques in JavaScript",
+    description: "Ways to hide internal state in JavaScript, from closure-based modules to native private class fields."
+  },
+  "design-patterns": {
+    title: "Software Design Patterns",
+    description: "Reusable solutions to recurring design problems, shown with practical JavaScript and front-end examples."
+  },
+  "functional-programming": {
+    title: "Functional Programming in JavaScript",
+    description: "Functional techniques in JavaScript — pure functions, closures, and composition — for writing predictable, testable code."
+  },
+  "private-state": {
+    title: "Managing Private State",
+    description: "Techniques for keeping internal state private so it can only change through a deliberate public interface."
+  },
+  "clean-code": {
+    title: "Writing Clean, Maintainable Code",
+    description: "Practices for writing readable, well-structured code that stays easy to change, test, and reason about."
+  },
+  "factory-pattern": {
+    title: "The Factory Pattern in JavaScript",
+    description: "Using factory functions to create objects with private state and shared behaviour, without classes or `new`."
+  },
 };
