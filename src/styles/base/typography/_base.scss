@@ -1,0 +1,32 @@
+/*
+ * HTML-level typographic rendering — font smoothing, feature settings, optical sizing,
+ * and hanging punctuation. Body-level font/size/weight live in layout/_base.scss.
+ */
+@layer base {
+  html {
+    // Respect the user's browser root font-size preference.
+    font-size: 100%;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+
+    // Sub-pixel antialiasing on macOS/iOS, grayscale elsewhere.
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    // Let the font engine adjust glyph sizes to the optical size axis.
+    font-optical-sizing: auto;
+
+    // Ligatures, kerning, contextual alternates — on by default for system fonts.
+    font-feature-settings:
+      "kern" 1, // pair kerning
+      "liga" 1, // standard ligatures
+      "clig" 1, // contextual ligatures
+      "calt" 1; // contextual alternates
+
+    // Align leading punctuation (open quotes, em dashes) to the block edge.
+    hanging-punctuation: first last;
+
+    // Prevent long words from overflowing narrow containers.
+    overflow-wrap: break-word;
+  }
+}

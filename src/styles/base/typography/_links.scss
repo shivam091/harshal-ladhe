@@ -1,0 +1,24 @@
+// Anchor element styles — default, hover, visited, focus, and active states.
+@use "@/styles/abstracts/mixins/text-underline" as *;
+
+@layer base {
+  a {
+    color: var(--color-fg-link);
+    text-decoration: none;
+
+    &:hover {
+      // Hover-only: on touch devices tapping can leave :hover "stuck" with no
+      // mouseleave to clear it, so a bare hover rule would underline links
+      // after a single tap and never let go. Guarding it here matches the
+      // same @media (hover: hover) pattern already used for header/drawer
+      // nav-link hover overrides.
+      @media (hover: hover) {
+        @include text-underline;
+      }
+    }
+
+    // &:visited {
+    //   color: var(--color-fg-link-visited);
+    // }
+  }
+}
