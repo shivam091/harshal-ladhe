@@ -1,0 +1,35 @@
+// Figures sit in the text flow, so they share its vertical rhythm and never break the column width.
+@layer base {
+  // UA figures carry a 40px side margin that would indent them off the text column.
+  figure {
+    margin-block: clamp(0.75rem, 1vw, 1rem);
+    margin-inline: 0;
+
+    // Keeps large images inside narrow columns without distorting them.
+    img {
+      display: block;
+      max-inline-size: 100%;
+      block-size: auto;
+    }
+  }
+
+  // Muted and smaller so captions support the image rather than compete with body text.
+  figcaption {
+    margin-block-start: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.375;
+    color: var(--color-fg-muted);
+    text-align: center;
+  }
+
+  svg {
+    display: block;
+    text-decoration: inherit;
+    text-rendering: auto;
+    text-transform: none;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    overflow: visible;
+    pointer-events: none;
+  }
+}

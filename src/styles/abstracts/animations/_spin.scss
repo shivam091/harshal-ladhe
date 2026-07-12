@@ -1,0 +1,6 @@
+// Shared so spinners don't each redefine their own rotation keyframe.
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

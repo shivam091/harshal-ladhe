@@ -1,0 +1,29 @@
+// Rendering defaults set once on <html> so every descendant inherits the same crisp, legible text.
+@layer base {
+  html {
+    // Respect the user's browser root font-size preference.
+    font-size: 100%;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+
+    // macOS subpixel smoothing renders light-on-dark text heavy; antialiased keeps it crisp.
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    // Let the font engine adjust glyph sizes to the optical size axis.
+    font-optical-sizing: auto;
+
+    // Enabled explicitly since not every font or browser turns these on by default.
+    font-feature-settings:
+      "kern" 1, // pair kerning
+      "liga" 1, // standard ligatures
+      "clig" 1, // contextual ligatures
+      "calt" 1; // contextual alternates
+
+    // Align leading punctuation (open quotes, em dashes) to the block edge.
+    hanging-punctuation: first last;
+
+    // Prevent long words from overflowing narrow containers.
+    overflow-wrap: break-word;
+  }
+}
