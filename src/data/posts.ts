@@ -50,6 +50,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-07-05", change: "Initial publication" },
     ],
+  },
+  {
+    slug: "responsive-css-grid-layouts",
+    title: "Responsive CSS Grid Layouts: `fr` Units, `minmax()`, `auto-fill`, and `auto-fit` Explained",
+    excerpt: "Smarter layouts without rigid breakpoints.",
+    description: 'Learn how to build truly responsive CSS Grid layouts using "fr" units, "minmax()", "auto-fit", "auto-fill", and modern media & container queries.',
+    category: ["CSS"],
+    tags: ["css", "grid", "beginner", "responsive", "layout", "fr-units", "minmax", "media-queries", "container-queries", "auto-fit", "auto-fill"],
+    image: {
+      path: "/assets/img/posts/css/responsive-css-grid-layouts/cover.webp",
+      width: 1200,
+      height: 630,
+      type: "image/webp",
+      alt: "Colorful flat-design illustration showcasing responsive CSS Grid techniques, including fr units, minmax(), auto-fit, media queries, and container queries.",
+    },
+    signoff: "This one took a fair amount of work to put together — from fr units and minmax() to auto-fit, auto-fill, and container queries — and I hope it makes your layouts hold up wherever they're viewed. Really glad you stuck around for this one — go make your grids bend without breaking. 🎉",
+    pinned: true,
+    featured: true,
+    changelog: [
+      { date: "2026-07-05", change: "Initial publication" },
+    ],
   }
 ];
 
