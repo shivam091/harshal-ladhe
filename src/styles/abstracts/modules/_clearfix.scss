@@ -1,0 +1,8 @@
+// Placeholder selector that applies a pseudo-element clearfix for float-based layouts.
+%clearfix {
+  &:after {
+    content: " ";
+    display: table;
+    clear: both;
+  }
+}

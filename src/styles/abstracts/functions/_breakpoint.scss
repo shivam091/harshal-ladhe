@@ -1,0 +1,28 @@
+// Returns the rem (or em) value for a named breakpoint key.
+@use "sass:map";
+@use "@/styles/abstracts/functions/to-em" as *;
+
+// Named breakpoint widths in rem — keys: xs, sm, md, lg, xl, xxl; consumed by the breakpoint() function.
+$breakpoints: (
+  xs:  20rem,
+  sm:  30rem,
+  md:  48rem,
+  lg:  64rem,
+  xl:  80rem,
+  xxl: 90rem,
+);
+
+// Looks up a named breakpoint width; returns the rem value by default, or em when $use-em is true.
+@function breakpoint($key, $use-em: false) {
+  @if map.has-key($breakpoints, $key) {
+    $value: map.get($breakpoints, $key);
+
+    @if $use-em {
+      @return to-em($value);
+    }
+
+    @return $value;
+  } @else {
+    @error "No breakpoint found for `#{$key}`. Available keys: #{map.keys($breakpoints)}.";
+  }
+}

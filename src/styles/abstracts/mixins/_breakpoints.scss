@@ -1,0 +1,66 @@
+// Responsive mixins: min/max/between media queries and container query equivalents.
+@use "@/styles/abstracts/functions/breakpoint" as *;
+
+// Media query mixin for min-width breakpoints — wraps content at the given breakpoint.
+@mixin min($key, $use-em: false) {
+  @media (min-width: breakpoint($key, $use-em)) {
+    @content;
+  }
+}
+
+// Media query mixin for max-width breakpoints — wraps content below the given breakpoint.
+@mixin max($key, $use-em: false) {
+  @media (max-width: breakpoint($key, $use-em)) {
+    @content;
+  }
+}
+
+// Media query mixin for a range between two breakpoints (min-width and max-width).
+@mixin between($min, $max, $use-em: false) {
+  @media (min-width: breakpoint($min, $use-em)) and (max-width: breakpoint($max, $use-em)) {
+    @content;
+  }
+}
+
+// Container query mixin for min-width — optionally scoped to a named container.
+@mixin container-min($key, $use-em: false, $name: false) {
+  @if $name {
+    @container #{$name} (min-width: #{breakpoint($key, $use-em)}) {
+      @content;
+    }
+  } @else {
+    @container (min-width: #{breakpoint($key, $use-em)}) {
+      @content;
+    }
+  }
+}
+
+// Container query mixin for max-width — optionally scoped to a named container.
+@mixin container-max($key, $use-em: false, $name: false) {
+  @if $name {
+    @container #{$name} (max-width: #{breakpoint($key, $use-em)}) {
+      @content;
+    }
+  } @else {
+    @container (max-width: #{breakpoint($key, $use-em)}) {
+      @content;
+    }
+  }
+}
+
+// Container query mixin for a range between two breakpoints — optionally scoped to a named container.
+@mixin container-between($min, $max, $use-em: false, $name: false) {
+  @if $name {
+    @container #{$name}
+      (min-width: #{breakpoint($min, $use-em)}) and
+      (max-width: #{breakpoint($max, $use-em)}) {
+      @content;
+    }
+  } @else {
+    @container
+      (min-width: #{breakpoint($min, $use-em)}) and
+      (max-width: #{breakpoint($max, $use-em)}) {
+      @content;
+    }
+  }
+}
