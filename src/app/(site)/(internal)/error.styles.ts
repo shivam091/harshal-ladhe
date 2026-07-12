@@ -1,0 +1,38 @@
+import { styled } from "@linaria/react";
+export { ErrorIconCircle as IconCircle } from "@/app/error-page.styles";
+
+// Centred flex column for the route-error (network/500) error state display.
+export const ErrorWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding-inline: 1.5rem;
+  padding-block: 5rem;
+`;
+
+// Route-error heading — bold, danger-coloured h2.
+export const Heading = styled.h2`
+  font-size: 1.5rem;
+  line-height: calc(2 / 1.5);
+  font-weight: 700;
+  color: var(--color-fg-danger);
+`;
+
+// Route-error body paragraph — muted colour, constrained to a readable max-width.
+export const Message = styled.p`
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-block-start: 0.75rem;
+  max-inline-size: 28rem;
+  color: var(--color-fg-muted);
+`;
+
+// Action button row for the route-error page.
+export const ButtonRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-block-start: 1.5rem;
+`;
