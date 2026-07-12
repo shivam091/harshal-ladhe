@@ -11,4 +11,40 @@ export interface TagMeta {
   fallback copy, and entries may exist ahead of the posts, tutorials, or snippets that use them.
 */
 export const tagMeta: Record<string, TagMeta> = {
+  "2d-layouts": {
+    title: "Exploring 2D Layouts for Web Design",
+    description: "Two-dimensional layout techniques for the web, primarily using CSS Grid and Flexbox for complex and structured designs."
+  },
+  "css-grid": {
+    title: "Mastering CSS Grid Layout",
+    description: "Core concepts and advanced techniques for mastering CSS Grid Layout for building robust, two-dimensional web interfaces."
+  },
+  "grid": {
+    title: "Grid Systems and Layouts",
+    description: "Creating grid-based layouts on the web, often involving CSS Grid or Flexbox."
+  },
+  "layout": {
+    title: "Modern Web Layout Techniques and Best Practices",
+    description: "Content focused on the structure and arrangement of web elements, including CSS Grid, Flexbox, and various responsive design techniques."
+  },
+  "beginner": {
+    title: "Web Development for Beginners",
+    description: "Posts, tutorials, and snippets tailored for web development beginners, covering foundational concepts in an easy-to-understand format."
+  },
+  "frontend": {
+    title: "Frontend Engineering: HTML, CSS, JS, and SVG",
+    description: "Core frontend development topics including DOM manipulation, responsive design, and integrating code-based graphics into web applications."
+  },
+  "web-design": {
+    title: "Principles of Web Design and UI/UX",
+    description: "Principles and aesthetics of designing functional, accessible, and visually appealing user interfaces for the web."
+  },
+  "css": {
+    title: "All Content Tagged CSS",
+    description: "All content tagged with CSS, covering topics from layout to styling, properties, and modern specifications."
+  },
+  "devtools": {
+    title: "Debugging with Browser DevTools",
+    description: "Using browser developer tools to inspect, debug, and fine-tune CSS layouts, styles, and computed values."
+  },
 };
