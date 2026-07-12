@@ -27,6 +27,22 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Modern Web Layout Techniques and Best Practices",
     description: "Content focused on the structure and arrangement of web elements, including CSS Grid, Flexbox, and various responsive design techniques."
   },
+  "fr-units": {
+    title: "Understanding `fr` Units in CSS Grid",
+    description: "How the 'fr' (fractional) unit works in CSS Grid to efficiently distribute available space among grid tracks."
+  },
+  "minmax": {
+    title: "Mastering the `minmax()` Function in CSS",
+    description: "Understanding the 'minmax()' function in CSS Grid for setting a flexible minimum and maximum size for grid tracks."
+  },
+  "auto-fill": {
+    title: "'auto-fill' in CSS Grid Explained",
+    description: "How the 'auto-fill' keyword in CSS Grid works with 'grid-template-columns' to create dynamic and responsive grids."
+  },
+  "auto-fit": {
+    title: "'auto-fit' in CSS Grid Explained",
+    description: "How the 'auto-fit' keyword in CSS Grid works for creating flexible and adaptive container layouts."
+  },
   "grid-alignment": {
     title: "Aligning Items in CSS Grid",
     description: "Focus on alignment properties in CSS Grid like 'justify-items', 'align-items', 'justify-content', and 'align-content' for precise component placement."
@@ -34,6 +50,18 @@ export const tagMeta: Record<string, TagMeta> = {
   "grid-template-areas": {
     title: "Using Grid Template Areas for Layout",
     description: "Using the 'grid-template-areas' property for visually mapping out CSS Grid layouts with named areas."
+  },
+  "container-queries": {
+    title: "Exploring CSS Container Queries",
+    description: "Using CSS Container Queries to style components based on the size of their parent container, not just the viewport."
+  },
+  "media-queries": {
+    title: "Mastering CSS Media Queries",
+    description: "Mastering CSS Media Queries for creating responsive designs that adjust based on screen size, orientation, and other device characteristics."
+  },
+  "responsive": {
+    title: "Responsive Web Design Strategies",
+    description: "Techniques and strategies for building responsive web designs that look and function well on all screen sizes and devices."
   },
   "beginner": {
     title: "Web Development for Beginners",
@@ -66,5 +94,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "named-grid-lines": {
     title: "Naming Grid Lines in CSS Grid",
     description: "Assigning custom names to grid lines in `grid-template-columns` and `grid-template-rows` for more readable, maintainable `grid-column`/`grid-row` placement."
+  },
+  "browser-support": {
+    title: "Browser Support and Compatibility",
+    description: "Checking feature support across browsers, and writing CSS and JavaScript that degrade gracefully where a feature isn't yet available."
+  },
+  "progressive-enhancement": {
+    title: "Progressive Enhancement in CSS",
+    description: "Building on broadly supported CSS first, with readable fallbacks and @supports guards, then layering on newer features for browsers that support them."
   },
 };
