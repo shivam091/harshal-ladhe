@@ -91,6 +91,30 @@ export interface PostSeriesInfo {
   ascending, ties broken alphabetically by title.
 */
 export const series: Series[] = [
+  {
+    slug: "css-grid-fundamentals",
+    title: "CSS Grid Fundamentals",
+    order: 1,
+    excerpt: "Build smarter, responsive layouts—grid made easy",
+    description: 'Unlock the power of CSS Grid in this hands-on 3-part series! Learn to craft clean, responsive layouts using "fr" units, "minmax()", "auto-fill", "auto-fit", and modern media & container queries — no frameworks needed.',
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/series/css-grid-fundamentals/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS Grid Fundamentals infographic showing 2D grid layouts, CSS code, responsive design, and the three-part series covering grid basics, layout control, and responsive techniques."
+    },
+    parts: [
+      "getting-started-with-css-grid",
+      "mastering-css-grid",
+      "responsive-css-grid-layouts"
+    ],
+    signoff: "Three parts, one continuous thread — from your very first grid container to layouts that flex without breaking. Thanks for working through all of it with me. Go build something with your new grid. 🧱",
+    changelog: [
+      { date: "2026-08-15", change: "Added cover image" },
+      { date: "2026-07-12", change: "Initial publication" }
+    ]
+  },
 ];
 
 /*
