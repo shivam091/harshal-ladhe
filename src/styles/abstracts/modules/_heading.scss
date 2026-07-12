@@ -1,0 +1,7 @@
+// Placeholder selector with shared heading defaults: margin, text-rendering, and overflow-wrap.
+%heading {
+  margin-block: var(--fluid-space-md) var(--fluid-space-sm);
+  text-rendering: optimizeLegibility;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+}

@@ -1,0 +1,15 @@
+// Base paragraph styles and the .lead utility for introductory text.
+@layer base {
+  p {
+    margin-block: var(--fluid-space-sm);
+    line-height: var(--line-height-paragraph);
+    text-wrap: pretty; // reduces orphans without full widow/orphan logic
+  }
+
+  // Larger introductory paragraph — attach to the first <p> in a section.
+  .lead {
+    font-size: var(--fluid-font-size-md);
+    line-height: var(--line-height-relaxed);
+    color: var(--color-fg-muted);
+  }
+}
