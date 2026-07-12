@@ -1,0 +1,29 @@
+// One consistent, themed focus ring so keyboard users always know where they are.
+:focus,
+:focus-visible {
+  outline: 0.125rem solid var(--color-outline-focus);
+  outline-offset: 0.125rem;
+}
+
+// Hides the focus ring for pointer-driven focus so it only shows for keyboard navigation.
+:focus:not(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+// Class and ARIA-disabled elements aren't inert natively, so they need the same treatment as :disabled.
+:disabled,
+.disabled,
+[aria-disabled=true] {
+  box-shadow: none;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+// Strips all transitions and animations for users who prefer reduced motion.
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none;
+    animation: none;
+  }
+}

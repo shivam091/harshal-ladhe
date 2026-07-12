@@ -1,0 +1,65 @@
+// Wide tables scroll horizontally instead of squeezing columns, so cell content never wraps awkwardly.
+@layer base {
+  table {
+    display: block;
+    margin-block-end: 1rem;
+    inline-size: max-content;
+    max-inline-size: 100%;
+    border-collapse: collapse;
+    overflow: auto;
+
+    th {
+      background-color: var(--color-bg-muted);
+      font-weight: 600;
+      line-height: 1.25;
+      white-space: nowrap;
+
+      // UA stylesheets center <th> by default, which misaligns headers with their start-aligned cells.
+      text-align: inherit;
+    }
+
+    td {
+      line-height: 1.375;
+    }
+
+    th,
+    td {
+      padding: 0.5rem 0.75rem;
+      border: 0.0625rem solid var(--color-border-default);
+    }
+
+    tr {
+      background-color: var(--color-bg-default);
+      border-block-start: 0.0625rem solid var(--color-border-muted);
+
+      &:nth-child(2n) {
+        background-color: var(--color-bg-muted);
+      }
+
+      /*
+       * Translucent overlay (not a flat color) so the highlight reads
+       * correctly whether it lands on a default or zebra-striped row.
+       */
+      &:hover {
+        background-color: var(--color-bg-control-transparent-hover);
+      }
+    }
+  }
+
+  // Numeric data reads better right-aligned; wins over the plain th/td rules above via specificity.
+  td[data-align="right"],
+  th[data-align="right"] {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+
+  // Above the table so readers know what they're looking at before scanning the data.
+  caption {
+    font-size: 0.875rem;
+    color: var(--color-fg-muted);
+    // UA stylesheets center <caption> by default, misaligning it with the table body.
+    text-align: start;
+    margin-block-end: 0.25rem;
+    caption-side: top;
+  }
+}

@@ -1,0 +1,13 @@
+/*
+ * Eases the home-page header flush to the viewport top as scrolling starts instead of
+ * snapping; --header-top-offset must stay a typed @property or it can't be interpolated.
+ */
+@keyframes header-offset-settle {
+  from {
+    --header-top-offset: 1rem;
+  }
+
+  to {
+    --header-top-offset: 0px;
+  }
+}
