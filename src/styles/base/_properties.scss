@@ -1,0 +1,97 @@
+/*
+ * Sky gradient stops, typed as <color> so theme swaps can transition them.
+ *
+ * Gradients themselves can't be interpolated — `transition: background` on a
+ * linear-gradient snaps instantly. Transitioning the typed stop colors instead
+ * makes the browser repaint the gradient every frame with in-between values.
+ * inherits: true keeps the theme's :root values flowing down to consumers.
+ * initial-value mirrors the light theme (see constants/themes/light.ts).
+ */
+@property --color-bg-sky-from {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 70% 78%);
+}
+
+// Bottom stop of the sky gradient — typed so it can transition independently of --color-bg-sky-from.
+@property --color-bg-sky-to {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 70% 70%);
+}
+
+// Pale sky tint behind the inner-page and bottom banners — typed so skyFadeGradient can transition.
+@property --color-bg-sky-subtle {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 90% 88%);
+}
+
+/*
+ * Theme colors painted inside gradients — typed for the same reason as the sky stops,
+ * so gradient text, opaqueBgCss layers and striped frames fade on a theme swap
+ * instead of snapping while the page fades.
+ * initial-value mirrors the light theme (see constants/themes/light.ts).
+ */
+@property --color-fg-attention {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(25 100% 37%);
+}
+
+// Middle stop of the hero gradient text.
+@property --color-fg-success {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(137 66% 30%);
+}
+
+// Lead stop of the hero gradient text and its underline.
+@property --color-fg-danger {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(357 71% 48%);
+}
+
+// Accent stop in the hero heading's sliding gradient.
+@property --color-fg-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(212 92% 43%);
+}
+
+/*
+ * Typed so the scroll-driven glass effect interpolates smoothly — untyped custom
+ * properties animate discretely, jumping at 50% of the animation range.
+ * initial-value must be a concrete literal; CSS variables are not allowed here.
+ */
+@property --glass-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+// Typed as <length> so the header blur eases in with scroll instead of snapping.
+@property --blur-amount {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/*
+ * Registered so animation-range can resolve it — unregistered, the value is opaque
+ * to the animation engine and animation-range silently ignores it. Inherits so any
+ * ancestor of <header> can override the threshold per page.
+ */
+@property --scroll-threshold {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 250px;
+}
+
+// Inherits so the scroll-driven animation on :root can move the sticky header; 0px keeps it flush-top by default.
+@property --header-top-offset {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}

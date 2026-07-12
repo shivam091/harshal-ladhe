@@ -1,0 +1,28 @@
+// Named breakpoints so media and container queries share one scale instead of magic numbers.
+@use "sass:map";
+@use "@/styles/abstracts/functions/to-em" as *;
+
+// Rem-based so breakpoints scale with the user's root font size.
+$breakpoints: (
+  xs:  20rem,
+  sm:  30rem,
+  md:  48rem,
+  lg:  64rem,
+  xl:  80rem,
+  xxl: 90rem,
+);
+
+// Offers em output because em-based media queries respond to browser zoom consistently across engines.
+@function breakpoint($key, $use-em: false) {
+  @if map.has-key($breakpoints, $key) {
+    $value: map.get($breakpoints, $key);
+
+    @if $use-em {
+      @return to-em($value);
+    }
+
+    @return $value;
+  } @else {
+    @error "No breakpoint found for `#{$key}`. Available keys: #{map.keys($breakpoints)}.";
+  }
+}

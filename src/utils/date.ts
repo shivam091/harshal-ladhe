@@ -1,0 +1,9 @@
+// UTC so a post's date never shifts by a day depending on the reader's timezone.
+export function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC"
+  });
+}

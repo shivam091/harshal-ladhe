@@ -1,0 +1,21 @@
+// Links stay undecorated until hover so dense prose isn't cluttered with underlines.
+@use "@/styles/abstracts/mixins/text-underline" as *;
+
+@layer base {
+  a {
+    color: var(--color-fg-link);
+    text-decoration: none;
+
+    &:hover {
+      // Touch devices can leave :hover stuck after a tap with no mouseleave to
+      // clear it, so a bare hover rule would leave links underlined indefinitely.
+      @media (hover: hover) {
+        @include text-underline;
+      }
+    }
+
+    // &:visited {
+    //   color: var(--color-fg-link-visited);
+    // }
+  }
+}
