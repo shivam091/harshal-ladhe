@@ -1,0 +1,4 @@
+// Single entry point so the abstracts → base → layout order is fixed in one place.
+@use "@/styles/abstracts";
+@use "@/styles/base";
+@use "@/styles/layout";
