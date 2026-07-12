@@ -1,0 +1,98 @@
+// Global resets and base rules: box-sizing, scroll-lock, custom scrollbar styles, and @property registrations.
+@use "@/styles/abstracts/mixins/scroll-lock" as *;
+// Imports the header-offset-settle keyframe for the scroll-driven home-page gap animation.
+@use "@/styles/abstracts/animations/header-offset-settle" as *;
+
+/*
+ * Default scroll threshold covers SkyBannerTop (225 px SVG → 250 px gives a small overlap).
+ * :has() selectors key off data-banner attributes on the banner components,
+ * so each layout gets the right threshold with no JavaScript.
+ */
+:root {
+  --scroll-threshold: 250px;
+}
+
+// Taller scroll threshold for inner/post pages using the inner sky SVG (357 px viewBox).
+:root:has([data-banner="sky-inner"]) {
+  --scroll-threshold: 360px;
+}
+
+// Home page threshold: 456 px SVG front layer + 4 px overlap = 460 px; also enables the header offset animation.
+:root:has([data-banner="hero"]) {
+  --scroll-threshold: 460px;
+  --header-top-offset: var(--space-base);
+}
+
+// Applies the scroll-driven header-offset animation on browsers that support animation-timeline.
+@supports (animation-timeline: scroll()) {
+  :root:has([data-banner="hero"]) {
+    animation: header-offset-settle linear;
+    animation-timeline: scroll(root block);
+    animation-range: 0px var(--header-height);
+    animation-fill-mode: forwards;
+  }
+}
+
+// Applies the scroll-lock mixin when the HTML element has .scroll-locked (e.g., while the mobile drawer is open).
+html.scroll-locked {
+  @include scroll-lock;
+}
+
+/*
+ * WHY @layer base
+ *
+ * In the CSS cascade, unlayered styles always beat layered ones — no matter
+ * specificity. Component styles (.module.scss and Linaria-generated classes)
+ * are unlayered, so wrapping these resets in @layer base guarantees component
+ * styles can always override them without needing !important.
+ */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body,
+  body *:not(p):not(li):not(ul):not(ol):not(h1):not(h2):not(h3):not(h4):not(h5):not(h6):not(blockquote):not(pre):not(code):not(kbd):not(samp) {
+    margin: 0;
+    padding: 0;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-bg-scrollbar-thumb) var(--color-bg-scrollbar);
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+    background-color: var(--color-bg-scrollbar);
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+    background-color: var(--color-bg-scrollbar);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-bg-scrollbar-thumb);
+    border-radius: 10px;
+    border: var(--border-width-medium) solid var(--color-bg-scrollbar);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-bg-scrollbar-thumb-hover);
+  }
+
+  ::-webkit-scrollbar-track {
+    border-radius: var(--border-radius-sm);
+    background-color: var(--color-bg-scrollbar);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background-color: var(--color-bg-scrollbar);
+  }
+}

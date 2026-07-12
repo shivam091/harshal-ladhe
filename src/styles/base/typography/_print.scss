@@ -1,0 +1,165 @@
+/*
+ * Print typography — page geometry, color reset, URL disclosure, and page-break rules.
+ * Intentionally outside @layer so these rules beat unlayered component (Linaria) styles.
+ */
+@media print {
+  // A4 portrait with generous margins so content doesn't crowd the gutter.
+  @page {
+    size: A4 portrait;
+    margin: 2cm 2.5cm;
+  }
+
+  /*
+   * Color and shadow reset
+   * Forces black-on-white regardless of the active theme; removes decorative shadows.
+   */
+  *,
+  *::before,
+  *::after {
+    color: #000 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /*
+   * Body
+   * 12pt / 1.5 is the conventional print baseline for body text.
+   */
+  body {
+    font-family: var(--font-stack-system);
+    font-size: 12pt;
+    line-height: var(--line-height-base);
+  }
+
+  /*
+   * Hide interactive and decorative chrome
+   * Navigation, buttons, skip link, scroll-to-top, mobile drawer, and decorative banners
+   * serve no purpose on paper and can confuse the printed layout.
+   */
+  header nav,
+  header [aria-label="Search"],
+  header [aria-label="Toggle sounds"],
+  header [aria-label="Toggle color scheme"],
+  header [aria-label="Toggle menu"],
+  [data-mobile-only],
+  [role="dialog"],
+  .skip-link,
+  [aria-label="Scroll to top"] {
+    display: none !important;
+  }
+
+  /*
+   * Links — expose destination URLs
+   * Makes printed links useful by appending the href in parentheses.
+   */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #444 !important;
+    word-break: break-all;
+  }
+
+  // Skip expanding anchors and javascript: pseudo-URIs — they're meaningless on paper.
+  a[href^="#"]::after,
+  a[href^="javascript:"]::after,
+  a[href^="mailto:"]::after {
+    content: "";
+  }
+
+  /*
+   * Headings
+   * Prevent a heading from landing at the very bottom of a page with no body below it.
+   */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    break-after: avoid;
+    orphans: 3;
+    widows: 3;
+  }
+
+  /*
+   * Paragraphs
+   * Classic typographic minimum: keep at least 3 lines before and after a break.
+   */
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /*
+   * Images
+   * Cap width so images can't overflow the page; avoid a break splitting one in half.
+   */
+  img {
+    max-inline-size: 100% !important;
+    break-inside: avoid;
+  }
+
+  /*
+   * Figures
+   * Keep figure + caption on the same page.
+   */
+  figure {
+    break-inside: avoid;
+  }
+
+  /*
+   * Code
+   * Wrap long lines instead of scrolling (scrollbars don't exist on paper),
+   * and keep a block from being split across pages.
+   */
+  pre,
+  code,
+  kbd,
+  samp {
+    font-family: var(--font-stack-monospace);
+    font-size: 10pt;
+  }
+
+  pre {
+    white-space: pre-wrap;
+    word-break: break-all;
+    break-inside: avoid;
+    border: 1pt solid #ccc;
+    padding: 0.5cm;
+  }
+
+  /*
+   * Blockquotes
+   * Simple left rule replaces the theme-coloured border; avoid splitting across pages.
+   */
+  blockquote {
+    border-inline-start: 3pt solid #888;
+    padding-inline-start: 0.5cm;
+    break-inside: avoid;
+  }
+
+  /*
+   * Tables
+   * Collapse borders for a clean printed grid; pin the header row on every page.
+   */
+  table {
+    border-collapse: collapse;
+    inline-size: 100%;
+  }
+
+  thead {
+    display: table-header-group; // repeats on every printed page
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  th,
+  td {
+    border: 1pt solid #ccc;
+    padding: 4pt 6pt;
+    text-align: start;
+  }
+}
