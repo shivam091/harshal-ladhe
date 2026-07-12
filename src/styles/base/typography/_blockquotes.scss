@@ -1,0 +1,37 @@
+// Blockquote and cite — left-bordered pull style with muted italic body text.
+@layer base {
+  blockquote {
+    margin-block: var(--fluid-space-md);
+    margin-inline: 0;
+    padding-block: var(--fluid-space-sm);
+    padding-inline: var(--fluid-space-md) var(--fluid-space-sm);
+    border-inline-start: 3px solid var(--color-border-accent-emphasis);
+    color: var(--color-fg-muted);
+    font-size: var(--fluid-font-size-md);
+    font-style: italic;
+
+    // Reset paragraph margin inside quotes so spacing comes from blockquote padding.
+    > p {
+      margin-block: 0;
+
+      + p {
+        margin-block-start: var(--fluid-space-xs);
+      }
+    }
+  }
+
+  // Attribution line — rendered below the quoted text.
+  cite {
+    display: block;
+    margin-block-start: var(--fluid-space-xs);
+    font-size: var(--font-size-sm);
+    font-style: normal;
+    font-weight: var(--font-weight-medium);
+    color: var(--color-fg-muted);
+
+    // Em dash prefix applied via CSS so the author doesn't have to type it.
+    &::before {
+      content: "\2014\00a0"; // — (em dash + non-breaking space)
+    }
+  }
+}

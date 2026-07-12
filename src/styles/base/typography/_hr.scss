@@ -1,0 +1,11 @@
+// Horizontal rule — thin muted divider with generous block margin.
+@layer base {
+  hr {
+    border: none;
+    border-block-start: var(--border-width-default) solid var(--color-border-muted);
+    margin-block: var(--fluid-space-lg);
+    block-size: 0;
+    overflow: visible;
+    color: inherit;
+  }
+}
