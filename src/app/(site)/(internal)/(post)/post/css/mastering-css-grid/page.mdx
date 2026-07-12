@@ -1,0 +1,600 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("mastering-css-grid");
+
+## Introduction
+
+Welcome to **Part 2** of the CSS Grid Fundamentals Series!
+
+In [Part 1](/post/css/getting-started-with-css-grid), you laid the groundwork — learning how to define grid containers, set up tracks, and build basic layouts.
+
+Now, it's time to go beyond the basics.
+
+**Think of CSS Grid as your layout canvas** — and in this part, you'll pick up new tools like a **ruler, compass, and highlighter** to draw structure, alignment, and flow with precision.
+
+We'll cover:
+
+- `grid-template-areas` and named grid lines for clean, visual layout structure
+- Alignment techniques using `place-items` and `place-self`
+- Distributing tracks with `justify-content` and `align-content` when your grid is smaller than its container
+- Spanning elements across rows and columns — and keeping visual order accessible
+- The hidden mechanics of **explicit** and **implicit** grids
+- `subgrid`, for keeping nested grids aligned to their parent's tracks
+
+These are the techniques that elevate your layouts from _functional_ to _flexible and scalable_ — especially in real-world, component-based frontend projects.
+
+<RainbowDivider />
+
+## Grid Template Areas
+
+The `grid-template-areas` property allows you to define your layout using named areas, making the grid structure more readable and easier to maintain — especially for complex page layouts. It acts as a visual blueprint of your design and simplifies the placement of grid items.
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-areas:
+      "header header header"
+      "sidebar main main"
+      "footer footer footer";
+    grid-template-columns: 1fr 2fr 2fr;
+    grid-template-rows: auto 1fr auto;
+    padding: 1rem;
+    gap: 1rem;
+  }
+`}
+</CodeBlock>
+
+Each quoted line defines a row in the grid. The repeated area names indicate how many columns that area spans. You can then assign elements to these areas using the `grid-area` property:
+
+<CodeBlock language="css">
+{`
+  .header {
+    grid-area: header;
+    background: #f8b400;
+    padding: 1rem;
+  }
+
+  .main {
+    grid-area: main;
+    background: #4caf50;
+    padding: 1rem;
+  }
+
+  .sidebar {
+    grid-area: sidebar;
+    background: #2196f3;
+    padding: 1rem;
+  }
+
+  .footer {
+    grid-area: footer;
+    background: #9c27b0;
+    padding: 1rem;
+  }
+`}
+</CodeBlock>
+
+Here's the HTML structure:
+
+<CodeBlock language="html">
+{`
+  <div class="grid">
+    <header class="header">Header</header>
+    <aside class="sidebar">Sidebar</aside>
+    <main class="main">Main Content</main>
+    <footer class="footer">Footer</footer>
+  </div>
+`}
+</CodeBlock>
+
+**Explanation:**
+
+- The layout is visually defined using `grid-template-areas`, making it easier to understand and modify.
+- The grid has **3 columns** and **3 rows**.
+- Named areas like `"header"`, `"sidebar"`, `"main"`, and `"footer"` are assigned using `grid-area`, allowing semantic HTML elements to be positioned without relying on source order.
+- The column layout uses `1fr 2fr 2fr`, giving the sidebar less space than the main content.
+- This is a clean, semantic approach to building responsive page sections — no floats or nested containers needed.
+
+<GridAreasDiagram />
+
+👉 Want to see this exact technique applied to a full page? The [Holy Grail Layout](/tutorial/holy-grail-layout) snippet builds the classic header/nav/main/aside/footer layout with `grid-template-areas` — including a responsive breakpoint that re-flows it into a single column.
+
+### Naming Grid Lines Directly
+
+`grid-template-areas` names whole *regions*, but you can also name the individual **lines** that make up your columns and rows — useful when you want semantic placement without carving out full named areas.
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns:
+      [sidebar-start] 250px
+      [sidebar-end main-start] 1fr
+      [main-end];
+    gap: 1rem;
+  }
+
+  .sidebar {
+    grid-column: sidebar-start / sidebar-end;
+  }
+
+  .main {
+    grid-column: main-start / main-end;
+  }
+`}
+</CodeBlock>
+
+Each name in square brackets marks a line, and a single line can carry **multiple names** (like `sidebar-end main-start` above, marking where one track ends and the next begins). Items then reference those names in `grid-column` / `grid-row` instead of raw numbers.
+
+**Visual Illustration**
+
+<GridNamedLinesDiagram />
+
+<Info title="Tip">
+  Named lines and `grid-template-areas` solve overlapping problems — areas are best for whole named regions, named lines are best when you only need one or two edges to be self-documenting without defining a full area grid.
+</Info>
+
+<RainbowDivider />
+
+## Aligning Grid Items
+
+CSS Grid not only lets you organize content into rows and columns — it also gives you precise control over **how items are aligned within their grid cells**.
+
+Alignment can be applied at two levels:
+
+### Container-Level Alignment
+
+These properties are applied to the **grid container** and affect **all items** inside the grid:
+
+- **justify-items** — Aligns items **horizontally** (inline axis) within each cell.
+- **align-items** — Aligns items **vertically** (block axis) within each cell.
+- **place-items** — A shorthand for combining both `align-items` and `justify-items`, written in that order: **`place-items: <align-items> <justify-items>`**.
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    justify-items: center; /* Horizontally center all grid items within their cells */
+    align-items: center;   /* Vertically center all grid items within their cells */
+  }
+`}
+</CodeBlock>
+
+**Visual Reference (Centered Items)**
+
+<GridContainerAlignmentDiagram variant="center" />
+
+You can also use `place-items` as a shorthand — remember, the first value is `align-items` and the second is `justify-items`, so `end start` means `align-items: end` (bottom) then `justify-items: start` (left):
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    place-items: end start; /* align-items: end (bottom), justify-items: start (left) */
+  }
+`}
+</CodeBlock>
+
+**Visual Reference (Bottom-Left Aligned)**
+
+<GridContainerAlignmentDiagram variant="end-start" />
+
+### Item-Level Alignment
+
+While container-level alignment applies to **all grid items**, item-level alignment lets you override alignment **per individual item**. These properties are set directly on the grid items themselves:
+
+- **justify-self** — Aligns an item **horizontally** (inline axis) within its grid cell.
+- **align-self** — Aligns an item **vertically** (block axis) within its grid cell.
+- **place-self** — A shorthand for combining `align-self` and `justify-self`, written in that order: **`place-self: <align-self> <justify-self>`**.
+
+<CodeBlock language="css">
+{`
+  .item {
+    justify-self: end; /* Aligns this item to the right (inline-end) of its cell */
+    align-self: start; /* Aligns this item to the top (block-start) of its cell */
+  }
+`}
+</CodeBlock>
+
+**Visual Reference (Top-Right Alignment)**
+
+<GridItemAlignmentDiagram variant="top-right" />
+
+You can also use `place-self` as a shorthand — remember, the first value is `align-self` and the second is `justify-self`, so `end start` means `align-self: end` (bottom) then `justify-self: start` (left):
+
+<CodeBlock language="css">
+{`
+  .item {
+    place-self: end start; /* align-self: end (bottom), justify-self: start (left) */
+  }
+`}
+</CodeBlock>
+
+**Visual Reference (Bottom-Left Alignment)**
+
+<GridItemAlignmentDiagram variant="bottom-left" />
+
+<Warning title="Watch the argument order">
+  To reproduce the **top-right** example above using the shorthand, you'd need `place-self: start end;` (`align-self: start` then `justify-self: end`) — not `place-self: end start`. Mixing up the order is one of the most common `place-self` mistakes.
+</Warning>
+
+<Info title="Item-level wins">
+  Item-level alignment always **takes priority over** container-level alignment: `justify-self`, `align-self`, and `place-self` override `justify-items`, `align-items`, and `place-items` on a per-item basis. For example, if the container sets `place-items: center`, but one item sets `align-self: start`, that one item ignores the container's vertical centering and sticks to the top of its cell — every other item still centers as normal.
+</Info>
+
+<RainbowDivider />
+
+## Distributing Grid Tracks
+
+Everything in the previous section aligned an item *within its own cell*. `justify-content` and `align-content` solve a
+different problem: what happens to the **extra space** when the grid's tracks, added together, don't fill the container?
+That only happens when tracks have a fixed size (like `100px`) instead of a flexible one (like `1fr`, which always grows
+to consume every available pixel) — so this is the first place in this post where sizing your tracks in fixed units
+instead of `fr` actually matters.
+
+- **justify-content** — distributes the grid's **columns** horizontally within the container's leftover width.
+- **align-content** — distributes the grid's **rows** vertically within the container's leftover height.
+- **place-content** — a shorthand for combining both, written **`place-content: <align-content> <justify-content>`**.
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 80px); /* Fixed tracks — 240px total, container is wider */
+    justify-content: space-between;         /* Distribute the extra horizontal space between the columns */
+  }
+`}
+</CodeBlock>
+
+Three values cause most of the confusion in practice — `space-between`, `space-around`, and `space-evenly` — and the
+difference between them is entirely about what happens at the **edges**:
+
+- `space-between` — no space before the first track or after the last; all the extra space goes strictly *between* tracks.
+- `space-around` — every track gets equal space on both sides, so the edge gaps end up **half** the size of the gaps between tracks.
+- `space-evenly` — every gap, edge or between, is exactly equal.
+
+**Visual Illustration**
+
+<GridContentDistributionDiagram />
+
+<Warning title="stretch only affects auto-sized tracks">
+  `justify-content: stretch` (or `align-content: stretch`) only stretches tracks that don't already have an explicit
+  size — a track defined as `80px` never grows past `80px`, no matter what `justify-content` says. If every track in
+  your grid has a fixed size (as in the example above), `stretch` behaves exactly like `start`.
+</Warning>
+
+<RainbowDivider />
+
+## Spanning Grid Items
+
+CSS Grid allows items to span across multiple columns or rows using `grid-column` and `grid-row`. These properties let you define where an item starts and ends in the grid layout.
+
+Imagine a **3×3** grid:
+
+<CodeBlock language="html">
+{`
+  <div class="grid">
+    <div class="item">Spanning</div>
+    <div>Item 2</div>
+    <div>Item 3</div>
+    <div>Item 4</div>
+  </div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+    grid-template-rows: repeat(3, 100px);  /* 3 equal rows */
+    gap: 0.5rem;
+  }
+`}
+</CodeBlock>
+
+And you apply:
+
+<CodeBlock language="css">
+{`
+  .item {
+    grid-column: 1 / 3; /* Spans from column line 1 to 3 → covers columns 1 and 2 */
+    grid-row: 2 / 4;    /* Spans from row line 2 to 4 → covers rows 2 and 3 */
+  }
+`}
+</CodeBlock>
+
+**Visual Reference (Lines Shown)**
+
+<GridSpanDiagram />
+
+### Shorthand vs Longhand
+
+The `grid-column` and `grid-row` properties are shorthands for their respective **start** and **end** lines:
+
+<CodeBlock language="css">
+{`
+  .item {
+    grid-column: 2 / 4;
+    grid-row: 1 / 3;
+  }
+`}
+</CodeBlock>
+
+This is functionally the same as:
+
+<CodeBlock language="css">
+{`
+  .item {
+    grid-column-start: 2;
+    grid-column-end: 4;
+
+    grid-row-start: 1;
+    grid-row-end: 3;
+  }
+`}
+</CodeBlock>
+
+### Shorthand with `span`
+
+Instead of specifying **start** and **end** lines manually, you can use the `span` keyword to make your code simpler and more flexible:
+
+<CodeBlock language="css">
+{`
+  .item {
+    grid-column: span 2; /* Span 2 columns from auto-start */
+    grid-row: span 2;    /* Span 2 rows from auto-start */
+  }
+`}
+</CodeBlock>
+
+This tells the grid item to span **2 columns and 2 rows** starting from its **auto-determined position** (i.e. where the browser places it in the flow).
+
+<Details summary="When to use it?">
+
+- You **don't need to control exact start/end line numbers**.
+- You want the browser to determine the position automatically.
+- You're working with **auto-placed items** in a dynamic or responsive layout.
+
+</Details>
+
+<RainbowDivider />
+
+## Accessibility: Visual Order vs. DOM Order
+
+`grid-column` and `grid-row` let you place an item anywhere in the grid — but placement only changes **where it appears on screen**. It doesn't move the element in the HTML.
+
+That mismatch matters for two groups of users:
+
+- **Keyboard users** tab through elements in **DOM order**, not visual order. If a "Submit" button is moved visually to appear first but is still last in the markup, keyboard focus will jump around in a way that doesn't match what's on screen.
+- **Screen reader users** hear content read in **DOM order** by default, so a visually-reordered layout can be announced in a confusing sequence.
+
+**Visual Illustration**
+
+<GridVisualOrderDiagram />
+
+<Warning title="Rule of thumb">
+  Keep your HTML source order matching the **logical reading order** of the content whenever possible. Use `grid-column` / `grid-row` for genuine visual layout needs (e.g. a hero image spanning multiple cells), not to fully reshuffle unrelated content.
+</Warning>
+
+If you do need a layout where visual and reading order diverge — for example, a sidebar that appears first on screen but should be read last — test it with keyboard-only navigation (`Tab`) and a screen reader to confirm the experience still makes sense.
+
+<RainbowDivider />
+
+## Grid Types
+
+In CSS Grid, it's important to understand the two types of grids: **explicit** and **implicit**. These define how grid tracks (rows and columns) are created — either by the developer or automatically by the browser.
+
+### Explicit Grids
+
+An **explicit** grid is one that you define yourself using properties like `grid-template-columns` and `grid-template-rows`.
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;   /* Two equal-width columns */
+    grid-template-rows: 100px 100px;  /* Two fixed-height rows */
+    gap: 1rem;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="grid">
+    <div>Item 1</div>
+    <div>Item 2</div>
+    <div>Item 3</div>
+    <div>Item 4</div>
+  </div>
+`}
+</CodeBlock>
+
+In this case, you've explicitly created a **2×2 grid**, which gives you **4 cells**. Each of the 4 items is placed within this defined layout.
+
+**Visual Illustration**
+
+<GridExplicitDiagram />
+
+If you place more items than your explicit tracks can hold, the grid will automatically generate new rows or columns to accommodate them — these are known as _implicit tracks_, which we'll explore next.
+
+### Implicit Grids
+
+In CSS Grid, if the number of items exceeds the explicitly defined rows or columns, the browser **automatically creates additional tracks** — these form what's known as the **implicit grid**.
+
+You can control the size of these extra rows and columns using:
+
+- **grid-auto-rows** – defines height of implicit rows.
+- **grid-auto-columns** – defines width of implicit columns.
+
+#### Example: Implicit Rows
+
+Let's say you define only 2 rows, but add 5 items:
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 100px 100px; /* Explicit: only 2 rows defined */
+    gap: 1rem;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="grid">
+    <div>Item 1</div>
+    <div>Item 2</div>
+    <div>Item 3</div>
+    <div>Item 4</div>
+    <div>Item 5</div> <!-- This item doesn't fit in the defined grid -->
+  </div>
+`}
+</CodeBlock>
+
+**What happens?**
+
+- The first 4 items fill the 2×2 grid.
+- The 5th item **overflows** the defined rows.
+- So, the browser **creates a 3rd row automatically** — this is the **implicit grid**.
+
+**Visual Illustration**
+
+<GridImplicitDiagram variant="rows" />
+
+By default, the height of implicit rows is `auto`. You can control their size using `grid-auto-rows`:
+
+<CodeBlock language="css">
+{`
+  .grid {
+    grid-auto-rows: 100px; /* Applies height to all implicit rows */
+  }
+`}
+</CodeBlock>
+
+#### Example: Implicit Columns
+
+Now let's say you define only 2 columns, but use **grid-auto-flow: column** so overflow items push into new columns instead of new rows:
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns: 150px 150px; /* Explicit: only 2 columns defined */
+    grid-template-rows: 100px 100px;
+    grid-auto-flow: column; /* Place items column-wise */
+    grid-auto-columns: 150px; /* Width for any implicitly created columns */
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="grid">
+    <div>Item 1</div>
+    <div>Item 2</div>
+    <div>Item 3</div>
+    <div>Item 4</div>
+    <div>Item 5</div> <!-- This item doesn't fit in the defined grid -->
+  </div>
+`}
+</CodeBlock>
+
+**What happens?**
+
+- With `grid-auto-flow: column`, items fill **column by column**: Item 1 and Item 2 fill column 1, Item 3 and Item 4 fill column 2 — using up both explicit columns.
+- Item 5 has nowhere left to go, so the browser **generates a 3rd column implicitly** rather than wrapping to a new row.
+- That new column is **150px wide** (because of `grid-auto-columns`), and since only Item 5 lands in it, the column's second cell stays empty.
+
+**Visual Illustration**
+
+<GridImplicitDiagram variant="columns" />
+
+Use `grid-auto-columns` to control the width of these new columns.
+
+<Info title="Tip">
+  You rarely need to use `grid-auto-columns` unless you're manually placing items across columns (e.g. `grid-column: 4`) or using `grid-auto-flow: column` and want to control generated column width.
+</Info>
+
+<RainbowDivider />
+
+## Subgrid: Aligning Nested Grids
+
+So far, every grid you've built has been self-contained — a grid item is a black box to its own children. If that item has its own `display: grid` children, they size themselves independently, with no awareness of the parent's tracks.
+
+`subgrid` changes that. It lets a **nested grid** adopt its parent's column or row tracks instead of defining its own — so content inside nested grid items can line up across siblings, even when those siblings have different content lengths.
+
+<CodeBlock language="css">
+{`
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .card {
+    display: grid;
+    grid-template-rows: subgrid;   /* Inherit the parent's row tracks */
+    grid-row: span 3;              /* Occupy 3 of the parent's rows */
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="cards">
+    <div class="card">
+      <h3>Title</h3>
+      <p>A short description.</p>
+      <button>Buy now</button>
+    </div>
+    <div class="card">
+      <h3>A much longer title that wraps</h3>
+      <p>A longer description with more detail spanning multiple lines.</p>
+      <button>Buy now</button>
+    </div>
+  </div>
+`}
+</CodeBlock>
+
+**Why this matters:** without `subgrid`, each `.card` sizes its own three rows (title, description, button) independently — so if one card's title wraps to two lines, that card's button drops out of alignment with the others. With `grid-template-rows: subgrid`, every card's title, description, and button rows are the *parent's* tracks, so they stay aligned across every card regardless of content length.
+
+**Visual Illustration**
+
+<GridSubgridDiagram />
+
+<Warning title="Browser support">
+  `subgrid` is supported in all current major browsers (Chrome, Firefox, Safari), but if you need to support older versions, check current compatibility before relying on it in production — and consider a fallback where each nested grid simply sizes its own tracks.
+</Warning>
+
+<RainbowDivider />
+
+## Common Mistakes with Alignment & Spanning
+
+- **Confusing `justify-items`/`align-items` with `justify-content`/`align-content`.** The `-items` properties align content *inside each cell*; the `-content` properties (see [Distributing Grid Tracks](#distributing-grid-tracks) above) align the **entire track grid** within the container when the grid is smaller than its container. Mixing them up is one of the most common Grid debugging rabbit holes.
+- **Off-by-one errors with line numbers.** Grid lines are numbered starting at `1`, not `0` — and a grid with `3` columns has `4` lines, not `3`. `grid-column: 1 / 3` spans two tracks (columns 1 and 2), not three.
+- **Forgetting you can count from the end.** Line `-1` always refers to the **last line** in the explicit grid, no matter how many tracks it has — `grid-column: 1 / -1` is a quick way to span an item across every column without knowing the exact count.
+- **Leaving `grid-auto-rows` / `grid-auto-columns` unitless.** Unlike `fr` on explicit tracks, implicit tracks need an explicit unit (`grid-auto-rows: 100px`, not `grid-auto-rows: 1`) — a bare number is invalid and the browser falls back to `auto`.
+
+<RainbowDivider />
+
+## Conclusion
+
+You've now mastered the core tools that bring **power, readability, and precision** to CSS Grid layouts:
+
+- Named areas — and named lines — help you design layouts visually and semantically.
+- Item alignment ensures pixel-perfect placement in every cell.
+- `justify-content` / `align-content` distribute the whole track grid within its container, once you know that's a different job from aligning items.
+- Spanning techniques let you control flow and sizing beyond automatic placement — with an eye on keeping visual and DOM order in sync for accessibility.
+- Explicit vs. implicit grids give you confidence when your layout grows unexpectedly.
+- Subgrid lets nested grids inherit their parent's tracks, so content stays aligned across siblings.
+
+Up next in [Part 3 → Responsive CSS Grid Layouts: fr Units, minmax(), auto-fill, and auto-fit Explained](/post/css/responsive-css-grid-layouts), we'll unlock how to:
+
+- Use `fr`, `minmax()`, `auto-fit`, and `auto-fill` for fluid responsive tracks
+- Pair grid with **media** and **container** queries
+- Build **robust, flexible layouts** that adapt to any screen — no media query soup needed!
