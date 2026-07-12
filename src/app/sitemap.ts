@@ -11,6 +11,8 @@ import { siteConfig } from "@/config/site";
 import { join } from "node:path";
 import { snippets } from "@/data/snippets";
 import { getSnippetDates } from "@/lib/snippets";
+import { getSortedSeries } from "@/data/series";
+import { getSeriesDates } from "@/lib/series";
 import { gitLastModified } from "@/lib/git-dates";
 
 // Required for `output: "export"` — tells Next.js this route is fully static.
@@ -119,6 +121,20 @@ const snippetPages: MetadataRoute.Sitemap = snippetDates.map(({ slug, lastModifi
   priority: 0.7
 }));
 
+/*
+  Individual series pages only — the /series index lives in staticPages above.
+  lastModified tracks the series' intro MDX file in git history.
+*/
+const seriesPages: MetadataRoute.Sitemap = getSortedSeries().map(({ slug }) => {
+  const { lastModifiedAt } = getSeriesDates(slug);
+  return {
+    url: `${base}/series/${slug}`,
+    lastModified: lastModifiedAt ? new Date(lastModifiedAt) : new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.7
+  };
+});
+
 // Dynamic post pages
 // Uncomment and adapt when the posts route is ready:
 //
@@ -145,7 +161,8 @@ const snippetPages: MetadataRoute.Sitemap = snippetDates.map(({ slug, lastModifi
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     ...staticPages,
-    ...snippetPages
+    ...snippetPages,
+    ...seriesPages
     // ...postPages,   // ← uncomment when posts are live
   ];
 }
