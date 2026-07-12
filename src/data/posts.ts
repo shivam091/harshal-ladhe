@@ -87,6 +87,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-07-05", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "mastering-css-grid",
+    title: "Mastering CSS Grid: Grid Areas, Item Alignment, and Spanning",
+    excerpt: "Structure with clarity, align with precision.",
+    description: "Take your CSS Grid skills to the next level by mastering semantic layouts with grid areas, named lines, item alignment, spanning, subgrid, and accessible ordering.",
+    category: ["CSS"],
+    tags: ["css", "css-grid", "grid", "beginner", "layout", "grid-template-areas", "grid-alignment", "frontend", "subgrid", "named-grid-lines", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/mastering-css-grid/cover.png",
+      width: 1200,
+      height: 630,
+      type: "image/png",
+      alt: "Stylized 2D illustration visualizing advanced CSS Grid techniques like alignment, named grid areas, and spanning elements across rows and columns.",
+      caption: "Named grid areas, item alignment and spanning across rows and columns."
+    },
+    signoff: "A lot of testing and refining went into getting these grid-area, alignment, spanning, subgrid, and accessibility examples just right, and I hope that effort shows in how clearly they click for you. Thanks for following along — hope your layouts feel a little more precise now. 📐",
+    pinned: true,
+    changelog: [
+      { date: "2026-07-05", change: "Initial publication" }
+    ]
   }
 ];
 
