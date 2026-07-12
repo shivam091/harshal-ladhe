@@ -1,0 +1,12 @@
+/*
+  Mixin (not a placeholder) for a deliberate link underline — offset and thinned so it reads
+  as an accent rather than the browser's default hugging underline. Included on link hover.
+  A mixin rather than %placeholder because its @include site sits inside a @media block, and
+  Sass forbids @extend from crossing a media-query boundary.
+*/
+@mixin text-underline {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  text-decoration-thickness: 1px;
+  text-decoration-color: currentColor;
+}
