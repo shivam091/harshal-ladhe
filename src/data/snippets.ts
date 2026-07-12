@@ -92,6 +92,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-07-12", change: "Initial publication." }
     ],
+  },
+  {
+    slug: "encapsulation-private-class-fields",
+    title: "Encapsulation with Private Class Fields",
+    excerpt: "Use native #private syntax to protect class properties in JavaScript.",
+    description: "Implement native engine-level privacy in your OOP structures using ES2022+ private class fields and memory-efficient prototype methods.",
+    category: ["JavaScript"],
+    tags: ["javascript", "oop", "encapsulation", "classes", "clean-code"],
+    image: {
+      path: "/assets/img/goodies/snippets/encapsulation-private-class-fields/cover.webp",
+      width: 1536,
+      height: 1024,
+      type: "image/webp",
+      alt: "Representation of a JavaScript Class with a locked vault icon for private fields.",
+    },
+    changelog: [
+      { date: "2026-07-12", change: "Initial publication." }
+    ],
   }
 ];
 
