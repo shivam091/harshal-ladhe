@@ -13,6 +13,16 @@ import Details from "@/components/Details";
 import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/Aside";
 import RainbowDivider from "@/components/RainbowDivider";
 import GridAnatomyDiagram from "@/components/mdx/GridAnatomyDiagram";
+import GridAreasDiagram from "@/components/mdx/GridAreasDiagram";
+import GridSpanDiagram from "@/components/mdx/GridSpanDiagram";
+import GridContainerAlignmentDiagram from "@/components/mdx/GridContainerAlignmentDiagram";
+import GridContentDistributionDiagram from "@/components/mdx/GridContentDistributionDiagram";
+import GridItemAlignmentDiagram from "@/components/mdx/GridItemAlignmentDiagram";
+import GridExplicitDiagram from "@/components/mdx/GridExplicitDiagram";
+import GridImplicitDiagram from "@/components/mdx/GridImplicitDiagram";
+import GridNamedLinesDiagram from "@/components/mdx/GridNamedLinesDiagram";
+import GridSubgridDiagram from "@/components/mdx/GridSubgridDiagram";
+import GridVisualOrderDiagram from "@/components/mdx/GridVisualOrderDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -40,6 +50,16 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     a: MDXLink,
     RainbowDivider,
     GridAnatomyDiagram,
+    GridAreasDiagram,
+    GridSpanDiagram,
+    GridContainerAlignmentDiagram,
+    GridContentDistributionDiagram,
+    GridItemAlignmentDiagram,
+    GridExplicitDiagram,
+    GridImplicitDiagram,
+    GridNamedLinesDiagram,
+    GridSubgridDiagram,
+    GridVisualOrderDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
