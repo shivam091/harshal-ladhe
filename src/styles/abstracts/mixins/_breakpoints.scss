@@ -1,0 +1,66 @@
+// Wraps queries around named breakpoints so components never hard-code widths.
+@use "@/styles/abstracts/functions/breakpoint" as *;
+
+// Mobile-first default — styles apply from the breakpoint up.
+@mixin min($key, $use-em: false) {
+  @media (min-width: breakpoint($key, $use-em)) {
+    @content;
+  }
+}
+
+// For the occasional desktop-first override below a breakpoint.
+@mixin max($key, $use-em: false) {
+  @media (max-width: breakpoint($key, $use-em)) {
+    @content;
+  }
+}
+
+// Scopes styles to a single band without stacking min and max overrides.
+@mixin between($min, $max, $use-em: false) {
+  @media (min-width: breakpoint($min, $use-em)) and (max-width: breakpoint($max, $use-em)) {
+    @content;
+  }
+}
+
+// Container variant so components respond to their slot, not the viewport; $name targets a specific ancestor.
+@mixin container-min($key, $use-em: false, $name: false) {
+  @if $name {
+    @container #{$name} (min-width: #{breakpoint($key, $use-em)}) {
+      @content;
+    }
+  } @else {
+    @container (min-width: #{breakpoint($key, $use-em)}) {
+      @content;
+    }
+  }
+}
+
+// Container counterpart to max(), for components that shrink with their slot.
+@mixin container-max($key, $use-em: false, $name: false) {
+  @if $name {
+    @container #{$name} (max-width: #{breakpoint($key, $use-em)}) {
+      @content;
+    }
+  } @else {
+    @container (max-width: #{breakpoint($key, $use-em)}) {
+      @content;
+    }
+  }
+}
+
+// Container counterpart to between(), for styles tied to one slot-width band.
+@mixin container-between($min, $max, $use-em: false, $name: false) {
+  @if $name {
+    @container #{$name}
+      (min-width: #{breakpoint($min, $use-em)}) and
+      (max-width: #{breakpoint($max, $use-em)}) {
+      @content;
+    }
+  } @else {
+    @container
+      (min-width: #{breakpoint($min, $use-em)}) and
+      (max-width: #{breakpoint($max, $use-em)}) {
+      @content;
+    }
+  }
+}

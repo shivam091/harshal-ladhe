@@ -1,0 +1,6 @@
+// Lets markup opt into float clearing without a Sass @extend.
+@use "@/styles/abstracts/modules/clearfix";
+
+.clearfix {
+  @extend %clearfix;
+}

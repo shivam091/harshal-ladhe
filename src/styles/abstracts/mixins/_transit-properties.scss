@@ -1,0 +1,20 @@
+// Avoids repeating duration, easing and delay for every property in a multi-property transition.
+@use "sass:list";
+@use "sass:string";
+
+@mixin transit-properties($props, $duration: 300ms, $easing: cubic-bezier(0.6, 0, 0.2, 1), $delay: null) {
+  $transitions: ();
+
+  @each $prop in $props {
+    $entry: "#{$prop} #{$duration} #{$easing}";
+
+    @if $delay != null {
+      $entry: $entry + " #{$delay}";
+    }
+
+    $transitions: list.append($transitions, string.unquote($entry), comma);
+  }
+
+  transition: $transitions;
+  will-change: $props;
+}
