@@ -1,0 +1,67 @@
+/*
+ * Inline code/kbd/samp and block pre — monospace family, syntax-neutral base styles.
+ * Syntax highlighting colours come from the theme tokens (--color-code-syntax-*).
+ */
+@layer base {
+  // Shared monospace base
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    // Disable ligatures and kerning — they can distort operator sequences (==, =>).
+    font-feature-settings: "kern" 0, "liga" 0;
+    tab-size: 2;
+  }
+
+  /*
+   * Inline variants
+   * Scoped to :not(pre) so the reset below doesn't fight the block pre > code rule.
+   */
+  :not(pre) > code,
+  :not(pre) > samp {
+    font-size: 0.875em; // relative so it scales with surrounding text
+    padding: 0.125em 0.375em;
+    border-radius: 4px;
+    background: var(--color-bg-neutral-muted);
+    color: var(--color-code-syntax-keyword);
+    vertical-align: baseline;
+  }
+
+  // kbd gets a pressed-key look on top of the inline code base.
+  :not(pre) > kbd {
+    font-size: 0.875em;
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+    background: var(--color-bg-muted);
+    color: var(--color-fg-default);
+    border: 0.0625rem solid var(--color-border-default);
+    border-block-end-width: 0.125rem;
+    box-shadow: inset 0 -1px 0 var(--color-border-default);
+    vertical-align: baseline;
+  }
+
+  // Block code
+  pre {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin-block: clamp(0.75rem, 1vw, 1rem);
+    padding: clamp(0.75rem, 1vw, 1rem);
+    background: var(--color-bg-default);
+    overflow-inline: auto;
+    scrollbar-width: thin;
+
+    // Strip the inline code overrides when code lives inside a pre block.
+    > code {
+      font-family: 'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+      font-feature-settings: "kern" 0, "liga" 0;
+      font-size: inherit;
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      color: inherit;
+      border: none;
+      box-shadow: none;
+    }
+  }
+}

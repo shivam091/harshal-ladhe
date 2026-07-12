@@ -1,0 +1,8 @@
+// Text selection colours — pulled from the theme's selection palette.
+// bg-selection / fg-selection are defined per theme in base/variables/*.scss.
+@layer base {
+  ::selection {
+    background: var(--color-bg-selection);
+    color: var(--color-fg-selection);
+  }
+}

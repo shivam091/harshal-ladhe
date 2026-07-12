@@ -1,0 +1,5 @@
+// Wrap a table in this to enable horizontal scrolling on narrow viewports.
+.table-responsive {
+  overflow-inline: auto;
+  -webkit-overflow-scrolling: touch;
+}
