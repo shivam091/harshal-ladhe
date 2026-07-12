@@ -151,4 +151,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The Factory Pattern in JavaScript",
     description: "Using factory functions to create objects with private state and shared behaviour, without classes or `new`."
   },
+  "oop": {
+    title: "Object-Oriented Programming in JavaScript",
+    description: "Object-oriented techniques in JavaScript — classes, inheritance, and encapsulation — built on its prototype model."
+  },
+  "classes": {
+    title: "JavaScript Classes",
+    description: "Working with JavaScript classes, from constructors and methods to private fields and static members."
+  },
 };
