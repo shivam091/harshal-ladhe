@@ -16,4 +16,8 @@ export interface CategoryMeta {
   of the posts that use them; only categories actually present on a post get a page.
 */
 export const categoryMeta: Record<string, CategoryMeta> = {
+  css: {
+    title: "All Posts on CSS and Web Styling",
+    description: "A collection of articles and tutorials on Cascading Style Sheets (CSS), covering modern layout techniques, responsive design, and best practices for web styling."
+  },
 };
