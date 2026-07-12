@@ -1,0 +1,33 @@
+// Base layout styles: html sizing, smooth scroll, and body font, color, and theme-transition setup.
+@use "@/styles/abstracts/mixins/transit-properties" as *;
+
+@layer base {
+  html {
+    block-size: 100%;
+    inline-size: 100%;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+    scroll-behavior: smooth;
+    overflow-inline: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-padding-block-start: calc(5rem * 2);
+  }
+
+  body {
+    min-block-size: 100vh;
+    inline-size: 100%;
+    font-family: 'Alan Sans', 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', 'Liberation Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    font-size: clamp(0.9375rem, 1.8vw, 1rem);
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--color-fg-default);
+    background: var(--color-bg-default);
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+
+    @include transit-properties((background, color), $duration: 350ms, $easing: cubic-bezier(0.41, 0.1, 0.13, 1));
+  }
+}

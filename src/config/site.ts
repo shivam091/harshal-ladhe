@@ -1,0 +1,52 @@
+// Central site metadata — author info, URLs, font stack, and founding year consumed across components and SEO.
+export const siteConfig = {
+  // Display name used in OG metadata, the site header, and share previews.
+  name: "Harshal V. LADHE",
+  // Short tagline shown beneath the site name in hero / header contexts.
+  tagline: "A showcase of my technical blog posts, coding insights, and open source projects.",
+  // Longer bio used in OG description and the about section.
+  description: "I'm a software engineer, freelancer, and lifelong learner passionate about building clean, scalable web solutions. I contribute to open-source, embrace minimalism in code and life, and stay curious about emerging tech.",
+  // Canonical origin — used to build absolute URLs for OG tags, sitemaps, and share links.
+  url: "https://harshal-ladhe.vercel.app",
+
+  // BCP-47 language tag set on <html lang>.
+  lang: "en",
+  // IANA timezone used for date formatting and sitemap lastmod timestamps.
+  timezone: "Asia/Kolkata",
+
+  author: {
+    name: "Harshal V. LADHE",
+    // Rotating role labels displayed in animated hero text.
+    roles: ["software engineer", "freelancer", "lifelong learner"],
+    email: "harshal.ladhe.1@gmail.com",
+    // Relative path to the downloadable résumé PDF served from /public.
+    resume: "/resume.pdf",
+    url: "https://harshal-ladhe.vercel.app",
+    social: {
+      github: "https://github.com/shivam091",
+      linkedin: "https://www.linkedin.com/in/shivam091",
+      instagram: "http://instagram.com/taurusian_soul"
+    }
+  },
+
+  // Year the site launched — used in the footer copyright range (foundedYear–present).
+  foundedYear: 2026,
+
+  verification: {
+    // Google Search Console ownership token injected into <head> via Next.js metadata.
+    google: [
+      "hTBhtR_jnBb5Cua7vHU-6J3unFg6ADgRtGv1oaJeuVg"
+    ]
+  },
+
+  // Google Fonts stylesheet URL — loaded in the root layout for the site's type stack.
+  font_url: "https://fonts.googleapis.com/css2?family=Alan+Sans:wght@300..900&family=Source+Sans+3:ital,wght@0,200..900;1,200..900&family=Source+Code+Pro:wght@200..900&display=swap",
+
+  analytics: {
+    // Google Analytics 4 measurement ID injected by the Analytics component.
+    googleMeasurementId: "G-R5EZ91PMYX"
+  }
+};
+
+// Inferred type of siteConfig — use when a function parameter needs the full config shape.
+export type SiteConfig = typeof siteConfig;
