@@ -1,0 +1,5 @@
+// Lets wide tables scroll on narrow viewports instead of forcing the whole page to overflow.
+.table-responsive {
+  overflow-inline: auto;
+  -webkit-overflow-scrolling: touch;
+}
