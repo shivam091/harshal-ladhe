@@ -32,6 +32,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Modern Web Layout Techniques and Best Practices",
     description: "Content focused on the structure and arrangement of web elements, including CSS Grid, Flexbox, and various responsive design techniques."
   },
+  "grid-alignment": {
+    title: "Aligning Items in CSS Grid",
+    description: "Focus on alignment properties in CSS Grid like 'justify-items', 'align-items', 'justify-content', and 'align-content' for precise component placement."
+  },
+  "grid-template-areas": {
+    title: "Using Grid Template Areas for Layout",
+    description: "Using the 'grid-template-areas' property for visually mapping out CSS Grid layouts with named areas."
+  },
   "beginner": {
     title: "Guides for Beginner Web Developers",
     description: "Guides and tutorials specifically tailored for web development beginners, covering foundational concepts in an easy-to-understand format."
@@ -48,8 +56,20 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "All Articles Tagged CSS",
     description: "All content tagged with CSS, covering topics from layout to styling, properties, and modern specifications."
   },
+  "accessibility": {
+    title: "Web Accessibility (a11y) Standards and Guides",
+    description: "Articles focused on web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
+  },
   "devtools": {
     title: "Debugging with Browser DevTools",
     description: "Using browser developer tools to inspect, debug, and fine-tune CSS layouts, styles, and computed values."
+  },
+  "subgrid": {
+    title: "CSS Subgrid Explained",
+    description: "Using the `subgrid` value for `grid-template-columns` and `grid-template-rows` to let nested grids inherit track sizing from their parent."
+  },
+  "named-grid-lines": {
+    title: "Naming Grid Lines in CSS Grid",
+    description: "Assigning custom names to grid lines in `grid-template-columns` and `grid-template-rows` for more readable, maintainable `grid-column`/`grid-row` placement."
   },
 };
