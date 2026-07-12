@@ -11,4 +11,8 @@ export interface CategoryMeta {
   fallback copy, and entries may exist ahead of the posts that use them.
 */
 export const categoryMeta: Record<string, CategoryMeta> = {
+  css: {
+    title: "All Posts on CSS and Web Styling",
+    description: "A collection of articles and tutorials on Cascading Style Sheets (CSS), covering modern layout techniques, responsive design, and best practices for web styling."
+  },
 };
