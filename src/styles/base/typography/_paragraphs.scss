@@ -1,0 +1,15 @@
+// Generous line-height suits long-form reading.
+@layer base {
+  p {
+    margin-block: clamp(0.5rem, 0.8vw, 0.75rem);
+    line-height: 1.75;
+    text-wrap: pretty; // reduces orphans without full widow/orphan logic
+  }
+
+  // Gives a section's opening paragraph more weight to ease readers in.
+  .lead {
+    font-size: clamp(1rem, 2vw, 1.125rem);
+    line-height: 1.625;
+    color: var(--color-fg-muted);
+  }
+}

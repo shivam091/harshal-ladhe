@@ -1,0 +1,9 @@
+// Shared via @extend so every heading level starts from the same baseline without repeating it.
+// Layered because @extend emits the merged rule here, not at the extending site — unlayered, heading margins would escape @layer base.
+@layer base {
+  %heading {
+    margin-block: clamp(0.75rem, 1vw, 1rem) clamp(0.5rem, 0.8vw, 0.75rem);
+    text-rendering: optimizeLegibility;
+    overflow-wrap: break-word;
+  }
+}

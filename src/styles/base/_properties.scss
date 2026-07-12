@@ -1,0 +1,92 @@
+/*
+ * Sky gradient stops, typed as <color> so theme swaps can transition them —
+ * gradients themselves can't be interpolated and would snap instantly.
+ * initial-value mirrors the light theme's tokens.
+ */
+@property --color-bg-sky-from {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 70% 78%);
+}
+
+// Bottom stop of the sky gradient — typed so it can transition independently of --color-bg-sky-from.
+@property --color-bg-sky-to {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 70% 70%);
+}
+
+// Pale sky tint — typed so gradients painted with it fade on a theme swap instead of snapping.
+@property --color-bg-sky-subtle {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(200 90% 88%);
+}
+
+/*
+ * Theme colors painted inside gradients — typed for the same reason as the sky stops,
+ * so they fade on a theme swap instead of snapping while the page fades.
+ * initial-value mirrors the light theme's tokens.
+ */
+@property --color-fg-attention {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(25 100% 37%);
+}
+
+// Also painted inside gradients, so typed to fade with the theme.
+@property --color-fg-success {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(137 66% 30%);
+}
+
+// Also painted inside gradients, so typed to fade with the theme.
+@property --color-fg-danger {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(357 71% 48%);
+}
+
+// Also painted inside gradients, so typed to fade with the theme.
+@property --color-fg-accent {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: hsl(212 92% 43%);
+}
+
+/*
+ * Typed so the scroll-driven glass effect interpolates smoothly — untyped custom
+ * properties animate discretely, jumping at 50% of the animation range.
+ * initial-value must be a concrete literal; CSS variables are not allowed here.
+ */
+@property --glass-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+// Typed as <length> so the header blur eases in with scroll instead of snapping.
+@property --blur-amount {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/*
+ * Registered so animation-range can resolve it — unregistered, the value is opaque
+ * to the animation engine and animation-range silently ignores it. Inherits so any
+ * ancestor of <header> can override the threshold per page.
+ */
+@property --scroll-threshold {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 250px;
+}
+
+// Inherits so the scroll-driven animation on :root can move the sticky header; 0px keeps it flush-top by default.
+@property --header-top-offset {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
