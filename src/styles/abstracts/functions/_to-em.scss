@@ -1,0 +1,4 @@
+// Converts a rem value to an equivalent em value (useful for em-based media queries).
+@function to-em($rem) {
+  @return $rem * 1em / 1rem;
+}

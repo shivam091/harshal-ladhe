@@ -1,0 +1,17 @@
+// h1–h6 and matching .h1–.h6 utility classes, driven by heading token CSS custom properties.
+@use "@/styles/abstracts/modules/heading" as *;
+
+@layer base {
+  @each $h in (h1, h2, h3, h4, h5, h6) {
+    #{$h},
+    .#{$h} {
+      @extend %heading;
+
+      font-size:      var(--#{$h}-size);
+      font-weight:    var(--#{$h}-weight);
+      line-height:    var(--#{$h}-line-height);
+      letter-spacing: var(--#{$h}-letter-spacing);
+      text-wrap:      var(--#{$h}-wrap);
+    }
+  }
+}
