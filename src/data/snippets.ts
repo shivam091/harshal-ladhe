@@ -26,6 +26,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-07-12", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "encapsulation-closure",
+    title: "Encapsulation with Closures",
+    excerpt: "Encapsulate private variables using JavaScript closure patterns.",
+    description: "Master the functional approach to data encapsulation in JavaScript by leveraging lexical scoping to create immutable private variables.",
+    category: ["JavaScript"],
+    tags: ["javascript", "closures", "encapsulation", "design-patterns", "functional-programming", "private-state", "clean-code", "factory-pattern"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/encapsulation-closure/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover image illustrating private state encapsulation in JavaScript using closures, symbolized by a shield protecting internal variables."
+    },
+    changelog: [
+      { date: "2026-07-12", change: "Initial publication." }
+    ]
   }
 ];
 
