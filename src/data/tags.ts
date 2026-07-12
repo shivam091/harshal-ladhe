@@ -103,4 +103,24 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Progressive Enhancement in CSS",
     description: "Building layouts and effects that work with a baseline of broadly-supported CSS — readable fallbacks, @supports guards — then layering on newer features for browsers that support them."
   },
+  "objectfreeze": {
+    title: "Using `Object.freeze()` in JavaScript",
+    description: "How `Object.freeze()` locks an object's properties, where its shallow behaviour falls short, and how to freeze nested structures."
+  },
+  "deep-freeze": {
+    title: "Deep Freezing Objects in JavaScript",
+    description: "Recursive techniques for freezing every level of a JavaScript object so nested data can't be mutated by accident."
+  },
+  "immutability": {
+    title: "Immutability in JavaScript",
+    description: "Patterns for keeping data immutable in JavaScript — freezing objects, avoiding shared mutation, and making state changes predictable."
+  },
+  "secure-coding": {
+    title: "Secure Coding Practices",
+    description: "Defensive coding techniques that protect data and behaviour from accidental or malicious tampering."
+  },
+  "strict-mode": {
+    title: "JavaScript Strict Mode",
+    description: "How `\"use strict\"` changes JavaScript's behaviour, turning silent failures such as writes to frozen objects into thrown errors."
+  },
 };
