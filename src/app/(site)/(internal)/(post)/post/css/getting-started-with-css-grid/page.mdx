@@ -256,7 +256,7 @@ A few gotchas trip up almost everyone the first time they reach for Grid:
 - **Confusing `gap` with margin.** `gap` only adds space *between* tracks, never on the outer edge of the grid. If you need space around the whole grid, that's still `padding` or `margin` on the container.
 - **Assuming items need a wrapping row/column count.** You don't have to plan for every item up front — if you add more items than your `grid-template-rows`/`grid-template-columns` account for, the browser keeps going and generates *implicit* tracks automatically. We'll cover exactly how that works in Part 2.
 - **Styling the wrong element.** Layout properties (`grid-template-columns`, `gap`, alignment shorthands) belong on the **container**; sizing and content properties (`grid-column`, `grid-row`, padding) belong on the **items**. Mixing them up is a common source of "why isn't this working?" moments.
-- **Expecting item order to always match visual order.** Once you start using placement properties like `grid-column`/`grid-row`, an item's position on screen can differ from its position in the HTML. That's powerful, but it has real accessibility implications — more on that in Part 2.
+- **Expecting item order to always match visual order.** Once you start using placement properties like `grid-column`/`grid-row`, an item's position on screen can differ from its position in the HTML. That's powerful, but it has real accessibility implications — more on that in [Part 2](/post/css/mastering-css-grid).
 
 <RainbowDivider />
 
@@ -309,7 +309,7 @@ Here's a quick recap of what you've learned in this post:
 
 You now have a solid foundation to build upon — and this is just the beginning.
 
-🔗 **Up Next (Part 2):** Mastering CSS Grid: Grid Areas, Item Alignment, and Spanning — we'll dive deeper into advanced techniques like:
+🔗 **Up Next (Part 2):** [Mastering CSS Grid: Grid Areas, Item Alignment, and Spanning](/post/css/mastering-css-grid) — we'll dive deeper into advanced techniques like:
 
 - Naming and using grid areas
 - Aligning and justifying items
