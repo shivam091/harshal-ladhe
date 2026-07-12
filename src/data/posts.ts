@@ -11,6 +11,26 @@ import type { Post, PostNavigation } from "@/interfaces/post";
   "next" is the one just after (newer).
 */
 export const posts: Post[] = [
+  {
+    slug: "getting-started-with-css-grid",
+    title: "Getting Started with CSS Grid: A Beginner's Guide to 2D Layouts",
+    excerpt: "Lay the foundation, shape the grid.",
+    description: "A beginner-friendly introduction to CSS Grid that covers core concepts and guides you through building your first 2D layouts with real-world examples.",
+    category: ["CSS"],
+    tags: ["css", "grid", "css-grid", "beginner", "layout", "web-design", "frontend", "2d-layouts"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/getting-started-with-css-grid/cover.png",
+      width: 1200,
+      height: 630,
+      type: "image/png",
+      alt: "Flat-design digital illustration introducing CSS Grid fundamentals, featuring icons for grid containers, tracks, and layout structures."
+    },
+    signoff: "This one took a good deal of care to get the fundamentals right, and I hope it gives you a solid footing with containers, tracks, and your first 2D layout. Appreciate you taking the time to work through it with me — happy gridding. 🧱",
+    pinned: true,
+    changelog: [
+      { date: "2026-07-05", change: "Initial publication" },
+    ],
+  }
 ];
 
 // Look up a single post by its slug.
