@@ -11,6 +11,7 @@ import PostMeta from "@/components/PostMeta";
 import Details from "@/components/Details";
 import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/Aside";
 import RainbowDivider from "@/components/RainbowDivider";
+import GridAnatomyDiagram from "@/components/mdx/GridAnatomyDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -37,6 +38,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Quote: AsideQuote,
     a: MDXLink,
     RainbowDivider,
+    GridAnatomyDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
