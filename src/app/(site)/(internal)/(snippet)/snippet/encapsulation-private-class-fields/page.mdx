@@ -1,0 +1,93 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("encapsulation-private-class-fields");
+
+## Introduction
+
+Modern JavaScript (ES2022+) introduced **Private Class Fields**, marked by the `#` prefix. Historically, developers used the `_variable`
+convention to signal privacy, but native private fields provide **Hard Encapsulation** enforced by the engine.
+
+Unlike closures, which rely on function scope, private fields are a native engine-level feature that ensures properties cannot be
+accessed or modified outside the class body.
+
+## The Private Class Counter
+
+<CodeBlock language="js">
+{`
+  /**
+   * A Counter class using native private fields demonstrating
+   * hard encapsulation.
+   */
+  class Counter {
+    #count; // Explicit private field declaration
+    #initialValue;
+
+    constructor(initialValue = 0) {
+      this.#count = initialValue;
+      this.#initialValue = initialValue;
+    }
+
+    increment(step = 1) {
+      return this.#count += step;
+    }
+
+    decrement(step = 1) {
+      return this.#count -= step;
+    }
+
+    reset() {
+      this.#count = this.#initialValue;
+    }
+
+    // Getter for read-only access
+    get value() {
+      return this.#count;
+    }
+  }
+`}
+</CodeBlock>
+
+## How It Works
+
+**1. The `#` Prefix:** The `#` is a structural change. Accessing `counter.#count` from outside the class throws a **Syntax Error**
+     at parse-time.
+
+**2. Prototype Efficiency:** Methods are stored on `Counter.prototype`. Instances share the same functions in memory, which is highly efficient.
+
+**3. Engine-Level Security:** Privacy is enforced by the runtime, preventing "hacks" to access internal data.
+
+## Example Usage
+
+<CodeBlock language="js">
+{`
+  const counter = new Counter(10);
+
+  counter.increment(5);
+  console.log(counter.value); // 15
+
+  counter.decrement(2);
+  console.log(counter.value); // 13
+
+  // This will throw a Syntax Error:
+  console.log(counter.#count);
+`}
+</CodeBlock>
+
+## Why Use This Over Closures?
+
+While [Closures](/snippet/encapsulation-closure) are excellent for functional programming and factory functions, Classes are often preferred in 2026 for:
+
+- **Performance:** Shared methods via the prototype save memory when creating thousands of instances.
+- **Explicit Intent:** Seeing `#variable` at the top of a class makes it immediately obvious what the internal state is.
+- **Static Privacy:** You can have private variables that belong to the *Class itself* (static), which closures cannot easily replicate
+  without extra boilerplate.
+
+## When to Use Class Fields?
+
+Use **Class Fields** for complex state machines, high-performance applications (where you have thousands of instances), or when
+building a library that follows a traditional OOP structure.
+
+## Key Takeaway
+
+Private Class Fields are the modern standard for **Object-Oriented Encapsulation**. They offer a cleaner syntax than closures for
+complex state management while providing engine-level security against external tampering.
