@@ -1,0 +1,35 @@
+// Figure and figcaption base styles — vertical rhythm, fluid image sizing, and muted caption.
+@layer base {
+  // Adds vertical breathing room; zeroes out browser's default side margin.
+  figure {
+    margin-block: clamp(0.75rem, 1vw, 1rem);
+    margin-inline: 0;
+
+    // Prevents overflow and preserves aspect ratio for images nested inside a figure.
+    img {
+      display: block;
+      max-inline-size: 100%;
+      block-size: auto;
+    }
+  }
+
+  // Small, centered, muted label rendered below the figure image.
+  figcaption {
+    margin-block-start: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.375;
+    color: var(--color-fg-muted);
+    text-align: center;
+  }
+
+  svg {
+    display: block;
+    text-decoration: inherit;
+    text-rendering: auto;
+    text-transform: none;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-font-smoothing: antialiased;
+    overflow: visible;
+    pointer-events: none;
+  }
+}
