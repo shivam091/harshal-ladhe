@@ -1,0 +1,52 @@
+/*
+ * Typed custom properties for the scroll-driven glass animation.
+ *
+ * Registering these as typed properties lets the browser interpolate them
+ * smoothly in @keyframes. Without @property they are untyped (<any>), and CSS
+ * can only animate untyped custom properties discretely — i.e. they jump from
+ * the "from" to the "to" value at exactly 50% of the animation range.
+ *
+ * initial-value must be a concrete literal; CSS variables are not allowed here.
+ */
+@property --glass-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
+// CSS custom property animating blur amount — registered as <length> so it can interpolate in @keyframes.
+@property --blur-amount {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+/*
+ * Scroll animation threshold.
+ *
+ * --scroll-threshold controls the animation-range end point for the header
+ * glass effect. Registering it as <length> (with inherits: true) means the
+ * browser can substitute it inside animation-range: 0px var(--scroll-threshold).
+ * Without @property registration the value would be opaque to the animation
+ * engine and animation-range would silently ignore it.
+ *
+ * Override per page by setting --scroll-threshold on any ancestor of <header>.
+ * The :has() rules below do this automatically based on which banner is present.
+ */
+@property --scroll-threshold {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 250px;
+}
+
+/*
+ * --header-top-offset drives inset-block-start on the sticky header.
+ * Registered as <length> + inherits:true so the scroll-driven animation
+ * on :root propagates down to the <header> element via inheritance.
+ * initial-value: 0px = flush-top on all non-home pages.
+ */
+@property --header-top-offset {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}

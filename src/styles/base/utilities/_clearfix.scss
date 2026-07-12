@@ -1,0 +1,6 @@
+// Exposes the %clearfix placeholder as a concrete .clearfix utility class.
+@use "@/styles/abstracts/modules/clearfix";
+
+.clearfix {
+  @extend %clearfix;
+}
