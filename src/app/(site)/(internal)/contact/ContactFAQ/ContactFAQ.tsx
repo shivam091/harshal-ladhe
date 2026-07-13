@@ -1,25 +1,30 @@
 "use client";
 
-import { JSX } from "react";
+import type { JSX } from "react";
 import Collapse from "@/components/Collapse";
+import Sparkles from "@/components/Sparkles";
 import { slugify } from "@/utils/string";
 import { markdownToHtml } from "@/utils/markdown";
 import type { IconPlusState } from "@/types/icons/plus";
-import { ContactFAQProps } from "@/interfaces/contact-faq";
+import type { ContactFAQProps } from "@/interfaces/contact-faq";
 import IconPlus from "@/icons/IconPlus";
 import {
   FAQHeading,
   FAQList,
   FAQRoot,
   IconWrapper
-} from "@/app/(site)/(internal)/contact/ContactFAQ.styles";
+} from "@/app/(site)/(internal)/contact/ContactFAQ/ContactFAQ.styles";
 
 // Renders the FAQ sidebar as a list of animated Collapse items with a morphing plus/chevron icon.
 export default function ContactFAQ({ faqs }: ContactFAQProps): JSX.Element {
   return (
     <>
       <FAQRoot aria-label="Frequently asked questions">
-        <FAQHeading>Frequently Asked Questions</FAQHeading>
+        <FAQHeading>
+          <Sparkles isToggleable={false} colors={["#FFC700", "#FF8A9B", "#79E0FF"]}>
+            Frequently Asked Questions
+          </Sparkles>
+        </FAQHeading>
         <FAQList>
           {faqs.map((faq, index) => (
             <li key={index}>
