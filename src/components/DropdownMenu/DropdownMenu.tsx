@@ -5,6 +5,7 @@ import { createContext, useCallback, useMemo, useRef, useState } from "react";
 import * as Radix from "@radix-ui/react-dropdown-menu";
 import type { DropdownMenuProps, DropdownCtxType, Side } from "@/components/DropdownMenu/DropdownMenu.types";
 import { computeSide } from "@/components/DropdownMenu/DropdownMenu.helpers";
+import { useSound } from "@/hooks/use-sound";
 
 // Lets the tip and panel react to open state and the measured side without prop-drilling.
 export const DropdownCtx = createContext<DropdownCtxType>({ isOpen: false, autoSide: "bottom" });
@@ -17,13 +18,20 @@ export function DropdownMenu({ children, modal = false }: DropdownMenuProps): JS
   const [open, setOpen] = useState(false);
   const [autoSide, setAutoSide] = useState<Side>("bottom");
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [playOpen] = useSound("/sounds/menu-open-softer.mp3");
+  const [playClose] = useSound("/sounds/menu-close.mp3");
 
   const handleOpenChange = useCallback((next: boolean) => {
     if (next && triggerRef.current) {
       setAutoSide(computeSide(triggerRef.current.getBoundingClientRect()));
     }
     setOpen(next);
-  }, []);
+    if (next) {
+      playOpen();
+    } else {
+      playClose();
+    }
+  }, [playOpen, playClose]);
 
   // Stable identity so context consumers only re-render when isOpen or autoSide actually change.
   const ctxValue = useMemo<DropdownCtxType>(() => ({ isOpen: open, autoSide }), [open, autoSide]);
