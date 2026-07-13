@@ -5,6 +5,7 @@ import { useSpring } from "@react-spring/web";
 import { useBoop } from "@/hooks/use-boop";
 import { useTransformBoop } from "@/hooks/use-transform-boop";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { useSound } from "@/hooks/use-sound";
 import { SPRINGS } from "@/constants/springs";
 import { ClipboardIcon, CheckIcon } from "@/components/Icon";
 import VisuallyHidden from "@/components/VisuallyHidden";
@@ -21,6 +22,8 @@ export default function CopyButton({ code, onCopy }: CopyButtonProps) {
   // Ref so the unmount cleanup can cancel the click-triggered rotation reset too, not just the copy reset.
   const rotationResetRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
+  // Camera shutter click, played once per successful copy alongside the shimmer sweep.
+  const [playShutter] = useSound("/sounds/camera-shutter.wav", { volume: 0.5 });
 
   // Outer: subtle scale boop on hover; inner: two-phase lean+kick via a single spring
   const [isBooped, outerTrigger] = useBoop();
@@ -45,6 +48,7 @@ export default function CopyButton({ code, onCopy }: CopyButtonProps) {
     setRotation(-10);
     rotationResetRef.current = setTimeout(() => setRotation(0), 150);
     onCopy();
+    playShutter();
     setIsCopied(true);
 
     if (resetRef.current) clearTimeout(resetRef.current);
