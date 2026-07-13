@@ -4,16 +4,16 @@ import { styled } from "@linaria/react";
 export const FAQRoot = styled.aside`
   grid-area: contact-questions;
   background: var(--color-bg-cloud-300);
-  border-radius: var(--border-radius-default);
-  padding: var(--space-base);
+  border-radius: 0.375rem;
+  padding: 1rem;
   border: 1px solid var(--color-border-muted);
 `;
 
 // FAQ section heading — monospace, letter-spaced for a code-like visual identity.
 export const FAQHeading = styled.h2`
-  font-size: var(--font-size-xl);
+  font-size: 1.5rem;
   letter-spacing: 1px;
-  margin-block: var(--space-none) var(--space-base);
+  margin-block: 0 1rem;
   color: var(--color-fg-default);
 `;
 
@@ -30,8 +30,8 @@ export const IconWrapper = styled.span`
   flex-shrink: 0;
   display: grid;
   place-content: center;
-  inline-size: var(--size-lg);
-  block-size: var(--size-lg);
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
 
   & > svg {
     position: relative;
