@@ -9,14 +9,15 @@ import { Wrapper, SegmentButton } from "@/components/HitCounter/HitCounter.style
 
 /*
   Fetches the view count for the current pathname from `/api/views` and displays
-  it as a six-digit retro LED counter. Clicking the counter toggles its "lit" state,
-  switching between the off-state and on-state colour tokens and playing a matching
-  physical switch sound.
+  it as a six-digit retro LED counter. Pressing the counter plays a physical switch
+  "pop-down" sound; releasing it cuts that short, toggles the "lit" state, and plays
+  the matching on/off "pop-up" sound — mirroring a real momentary switch.
 */
 export default function HitCounter() {
   const pathname = usePathname();
   const [views, setViews] = useState<number | null>(null);
   const [isOn, setIsOn] = useState(false);
+  const [playPress, , stopPress] = useSound("/sounds/pop-down.mp3");
   const [playOn] = useSound("/sounds/pop-up-on.mp3");
   const [playOff] = useSound("/sounds/pop-up-off.mp3");
 
@@ -26,6 +27,13 @@ export default function HitCounter() {
       .then((d: { views?: number }) => setViews(d.views ?? 0))
       .catch(() => setViews(0));
   }, [pathname]);
+
+  // Cuts the press sound short, plays the matching on/off pop, and flips the lit state.
+  function toggleCounter() {
+    stopPress();
+    (isOn ? playOff : playOn)();
+    setIsOn((prev) => !prev);
+  }
 
   if (views === null) return null;
 
@@ -42,9 +50,10 @@ export default function HitCounter() {
           <em># of hits</em>
         </strong>
         <SegmentButton
-          onClick={() => {
-            setIsOn((prev) => !prev);
-            (isOn ? playOff : playOn)();
+          onPointerDown={() => playPress()}
+          onPointerUp={toggleCounter}
+          onKeyDown={(ev) => {
+            if (ev.key === "Enter") toggleCounter();
           }}
           data-is-on={String(isOn)}
           aria-label={`Retro-style hit counter, showing that ${views} ${
