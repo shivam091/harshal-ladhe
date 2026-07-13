@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useIsOnscreen } from "@/hooks/use-is-onscreen";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { useRandomInterval } from "@/hooks/use-random-interval";
+import { useSound } from "@/hooks/use-sound";
 import type { SparklesProps, SparkleType } from "@/components/Sparkles/Sparkles.types";
 import { Sparkle } from "@/components/Sparkles/Sparkle";
 import {
@@ -21,7 +22,7 @@ const DEFAULT_COLORS = ["#FFC700"];
 
 /*
   Sparkles around text add a playful highlight (inspired by joshwcomeau.com); optionally a
-  button that toggles the effect.
+  button that toggles the effect with a switch sound.
 */
 export default function Sparkles({
   rate = 250,
@@ -42,6 +43,9 @@ export default function Sparkles({
 
   const ref = useRef<HTMLButtonElement | HTMLSpanElement>(null);
   const isOnscreen = useIsOnscreen(ref);
+
+  const [playOn] = useSound("/sounds/switch-on.wav");
+  const [playOff] = useSound("/sounds/switch-off.wav");
 
   const prefersReducedMotion = usePrefersReducedMotion();
   const shouldAnimate = hasDelayElapsed && !prefersReducedMotion;
@@ -95,7 +99,18 @@ export default function Sparkles({
         className={wrapper}
         data-toggleable={String(isToggleable)}
         type={isToggleable ? "button" : undefined}
-        onClick={isToggleable ? () => setIsEnabled((current) => !current) : undefined}
+        onClick={
+          isToggleable
+            ? () => {
+                setIsEnabled((current) => !current);
+                if (isEnabled) {
+                  playOff();
+                } else {
+                  playOn();
+                }
+              }
+            : undefined
+        }
         style={style}
         {...delegated}
       >
