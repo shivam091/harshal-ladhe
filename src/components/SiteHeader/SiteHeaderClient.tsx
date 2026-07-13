@@ -23,10 +23,10 @@ import { useTransformBoop } from "@/hooks/use-transform-boop";
 import { SPRINGS } from "@/constants/springs";
 import {
   AdjustIcon,
-  SearchIcon,
-  SpeakerIcon
+  SearchIcon
 } from "@/components/Icon";
 import { Icon } from "@/components/Icon";
+import SoundToggle from "@/components/SoundToggle";
 import { useTheme } from "@/hooks/use-theme";
 import {
   DropdownMenu,
@@ -190,9 +190,7 @@ export default function SiteHeaderClient(): JSX.Element {
           <SearchIcon size={16} />
         </button>
 
-        <button className={headerActionClass} aria-label="Toggle sounds (coming soon)" disabled>
-          <SpeakerIcon size={16} />
-        </button>
+        <SoundToggle size={16} className={headerActionClass} />
 
         {/* Theme switcher — Radix DropdownMenu */}
         <DropdownMenu>
