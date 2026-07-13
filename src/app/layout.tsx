@@ -8,6 +8,7 @@ import SkipLink from "@/components/SkipLink";
 import ScrollToTop from "@/components/ScrollToTop";
 import BreadcrumbsJsonLd from "@/components/BreadcrumbsJsonLd";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { SoundProvider } from "@/context/SoundContext";
 import AnalyticsProvider from "@/components/AnalyticsProvider";
 import NavigationProgress from "@/components/NavigationProgress";
 import { themeRule } from "@/utils/color";
@@ -133,13 +134,15 @@ export default function RootLayout({
           */}
           <MotionConfig reducedMotion="user">
             <ThemeProvider>
-              <AnalyticsProvider>
-                {/* Suspense required because usePathname() reads from the router context */}
-                <Suspense fallback={null}>
-                  <NavigationProgress />
-                </Suspense>
-                {children}
-              </AnalyticsProvider>
+              <SoundProvider>
+                <AnalyticsProvider>
+                  {/* Suspense required because usePathname() reads from the router context */}
+                  <Suspense fallback={null}>
+                    <NavigationProgress loader="rings" />
+                  </Suspense>
+                  {children}
+                </AnalyticsProvider>
+              </SoundProvider>
             </ThemeProvider>
 
             <ScrollToTop />
