@@ -15,12 +15,13 @@ import { mainNav, colorSchemes, socialLinks } from "@/data/navigation";
 import { useBoop } from "@/hooks/use-boop";
 import { useTransformBoop } from "@/hooks/use-transform-boop";
 import { SPRINGS } from "@/constants/springs";
+import { useSound } from "@/hooks/use-sound";
 import {
   AdjustIcon,
-  SearchIcon,
-  SpeakerIcon
+  SearchIcon
 } from "@/components/Icon";
 import { Icon } from "@/components/Icon";
+import SoundToggle from "@/components/SoundToggle";
 import { useTheme } from "@/hooks/use-theme";
 import {
   DropdownMenu,
@@ -53,6 +54,10 @@ export default function SiteHeaderClient(): JSX.Element {
   const { theme, setTheme } = useTheme();
   const drawerId = useId();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [playSearchOpen] = useSound("/sounds/pop-up-on.mp3");
+  const [playSearchClose] = useSound("/sounds/pop-up-off.mp3");
+  const [playMenuOpen] = useSound("/sounds/menu-open-softer.mp3");
+  const [playMenuClose] = useSound("/sounds/menu-close.mp3");
 
   const toggleRef = useRef<HTMLButtonElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -74,12 +79,13 @@ export default function SiteHeaderClient(): JSX.Element {
     if (!drawerOpen) return;
     if (pressTimeoutRef.current !== null) window.clearTimeout(pressTimeoutRef.current);
     setIsPressed(true);
+    playMenuClose();
     pressTimeoutRef.current = window.setTimeout(() => {
       setIsPressed(false);
       setDrawerOpen(false);
       pressTimeoutRef.current = null;
     }, 167);
-  }, [drawerOpen]);
+  }, [drawerOpen, playMenuClose]);
 
   // Portals need document.body, which doesn't exist during SSR.
   useEffect(() => setMounted(true), []);
@@ -174,9 +180,7 @@ export default function SiteHeaderClient(): JSX.Element {
           <SearchIcon size={16} />
         </button>
 
-        <button className={headerActionClass} aria-label="Toggle sounds (coming soon)" disabled>
-          <SpeakerIcon size={16} />
-        </button>
+        <SoundToggle size={16} className={headerActionClass} />
 
         {/* Theme switcher */}
         <DropdownMenu>
@@ -247,12 +251,14 @@ export default function SiteHeaderClient(): JSX.Element {
             if (remaining <= 0) {
               setDrawerOpen(true);
               setIsPressed(false);
+              playMenuOpen();
             } else {
               pressTimeoutRef.current = window.setTimeout(() => {
                 setDrawerOpen(true);
                 setIsPressed(false);
                 pressTimeoutRef.current = null;
               }, remaining);
+              playMenuOpen();
             }
           }}
           onPointerLeave={() => setIsPressed(false)}
