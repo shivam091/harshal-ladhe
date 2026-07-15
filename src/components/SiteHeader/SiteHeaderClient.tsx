@@ -38,6 +38,10 @@ import {
 import Drawer from "@/components/SiteHeader/Drawer";
 import IconRssLink from "@/icons/IconRssLink";
 import IconHamburger from "@/icons/IconHamburger";
+import IconDeviceDesktop from "@/icons/IconDeviceDesktop";
+import IconSun from "@/icons/IconSun";
+import IconSunDim from "@/icons/IconSunDim";
+import IconMoonCrescent from "@/icons/IconMoonCrescent";
 import type { ThemeOption } from "@/types/color-scheme";
 import type { IconHamburgerStatus } from "@/types/icon";
 import {
@@ -164,6 +168,12 @@ export default function SiteHeaderClient(): JSX.Element {
   const [isAdjustBooped, triggerAdjustBoop] = useBoop();
   const adjustBoopStyle = useTransformBoop(isAdjustBooped, { rotation: -45, scaleX: 1.1, scaleY: 1.1, springConfig: SPRINGS.quick });
 
+  // One boop state per color-scheme dropdown item, each driving its own bespoke animated icon.
+  const [isSystemBooped, triggerSystemBoop] = useBoop();
+  const [isSunBooped, triggerSunBoop] = useBoop();
+  const [isSoftDarkBooped, triggerSoftDarkBoop] = useBoop();
+  const [isMoonBooped, triggerMoonBoop] = useBoop();
+
   // Persists the chosen color scheme key to localStorage via ThemeContext.
   const handleTheme = useCallback((key: ThemeOption) => {
     setTheme(key);
@@ -218,14 +228,29 @@ export default function SiteHeaderClient(): JSX.Element {
           <DropdownContent align="center" side="bottom" aria-label="Available color schemes">
             {colorSchemes.map((scheme) => {
               const isActive = scheme.key === theme;
+
+              // Every color-scheme item gets its own bespoke animated icon that boops on hover/focus.
+              const boopedIcon =
+                scheme.key === "system"
+                  ? { icon: <IconDeviceDesktop size={14} isBooped={isSystemBooped} />, trigger: triggerSystemBoop }
+                  : scheme.key === "light"
+                    ? { icon: <IconSun size={14} isBooped={isSunBooped} />, trigger: triggerSunBoop }
+                    : scheme.key === "soft-dark"
+                      ? { icon: <IconSunDim size={14} isBooped={isSoftDarkBooped} />, trigger: triggerSoftDarkBoop }
+                      : scheme.key === "dark"
+                        ? { icon: <IconMoonCrescent size={14} isBooped={isMoonBooped} />, trigger: triggerMoonBoop }
+                        : null;
+
               return (
                 <DropdownItem
                   key={scheme.key}
                   onSelect={() => handleTheme(scheme.key)}
                   role="menuitemradio"
                   aria-checked={isActive}
+                  onPointerEnter={boopedIcon?.trigger}
+                  onFocus={boopedIcon?.trigger}
                 >
-                  <Icon name={scheme.icon} size={14} />
+                  {boopedIcon?.icon ?? <Icon name={scheme.icon} size={14} />}
                   {scheme.label}
                   {isActive && (
                     <Icon name="check" size={12} className={successIconClass} />
