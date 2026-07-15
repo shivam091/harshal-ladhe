@@ -35,6 +35,9 @@ export interface DropdownItemProps {
   "aria-checked"?: boolean;
   // When true, selecting the item does not auto-close the dropdown (calls event.preventDefault).
   preventAutoClose?: boolean;
+  // Forwarded to the rendered element — lets a per-item icon boop on hover/keyboard focus.
+  onPointerEnter?: () => void;
+  onFocus?: () => void;
 }
 
 // Props for a non-interactive label row used to group items.
