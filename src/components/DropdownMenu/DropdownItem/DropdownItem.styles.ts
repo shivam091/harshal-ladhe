@@ -4,11 +4,11 @@ import { css } from "@linaria/core";
 export const itemClass = css`
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 0.5rem;
   inline-size: 100%;
-  padding-block: var(--space-sm);
-  padding-inline: var(--space-md);
-  font-size: var(--font-size-sm);
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  font-size: 0.875rem;
   color: var(--color-fg-default);
   cursor: pointer;
   outline: none;
