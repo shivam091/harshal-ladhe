@@ -21,6 +21,7 @@
     "@radix-ui/react-tooltip": "^1.2.10",
     "@react-spring/web": "^10.0.4",
     "@types/mdx": "^2.0.13",
+    "fuse.js": "^7.4.2",
     "mongodb": "^7.3.0",
     "motion": "^12.40.0",
     "next": "^16.2.6",
@@ -28,13 +29,13 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-google-recaptcha-v3": "^1.11.0",
+    "remark-gfm": "^4.0.1",
     "remark-mdx": "^3.1.1",
     "remark-parse": "^11.0.0",
     "sass": "^1.99.0",
     "shiki": "^4.2.0",
     "typed.js": "^3.0.0",
-    "unified": "^11.0.5",
-    "remark-gfm": "^4.0.1"
+    "unified": "^11.0.5"
   },
   "devDependencies": {
     "@types/node": "^20",
