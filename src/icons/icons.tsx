@@ -1,4 +1,28 @@
-import type { IconDefinition } from "@/types/icon";
+import type { ReactNode, SVGProps } from "react";
+
+// Shape of every entry in the icons registry — viewBox required; svgProps overrides defaults; children is the SVG markup.
+export type IconDefinition = {
+  viewBox: string;
+  svgProps?: SVGProps<SVGSVGElement>;
+  children: ReactNode;
+};
+
+// Shared props for spring-animated icons whose only interaction is a boop.
+export interface IconBoopProps {
+  size?: number;
+  // When provided, the parent controls the boop state; omit to let the icon boop itself on hover.
+  isBooped?: boolean;
+}
+
+// Shape of the analytics data attributes read by useAnalytics from any tracked element in the DOM.
+export type AnalyticsEvent = {
+  // GA4 event name sent as the first argument to gtag("event", ...).
+  event: string;
+  // Human-readable label describing the specific element that was interacted with.
+  label: string;
+  // Logical grouping for the event, e.g. "social", "footer", "nav".
+  category: string;
+};
 
 // Central icon registry mapping name → definition; drives the Icon component and all createIcon-based named exports.
 export const icons = {
@@ -270,6 +294,22 @@ export const icons = {
       </>
     )
   },
+  close: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <line x1="6" y1="6" x2="18" y2="18" />
+        <line x1="18" y1="6" x2="6" y2="18" />
+      </>
+    )
+  },
   code: {
     viewBox: "0 0 24 24",
     children: (
@@ -523,6 +563,28 @@ export const icons = {
       </>
     )
   },
+  loader: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M12 2v4" />
+        <path d="m16.2 7.8 2.9-2.9" />
+        <path d="M18 12h4" />
+        <path d="m16.2 16.2 2.9 2.9" />
+        <path d="M12 18v4" />
+        <path d="m4.9 19.1 2.9-2.9" />
+        <path d="M2 12h4" />
+        <path d="m4.9 4.9 2.9 2.9" />
+      </>
+    )
+  },
   magicWand: {
     viewBox: "0 0 24 24",
     svgProps: {
@@ -724,3 +786,6 @@ export const icons = {
     )
   }
 } satisfies Record<string, IconDefinition>;
+
+// Union of every valid icon key — derived automatically from the registry so it stays in sync.
+export type IconName = keyof typeof icons;
