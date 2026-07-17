@@ -19,6 +19,7 @@ export const CircleFillIcon = createIcon("circleFill");
 export const ClipboardIcon = createIcon("clipboard");
 export const ClipboardCheckIcon = createIcon("clipboardCheck");
 export const ClockIcon = createIcon("clock");
+export const CloseIcon = createIcon("close");
 export const CodeIcon = createIcon("code");
 export const CodeBlockIcon = createIcon("codeBlock");
 export const DeviceDesktopIcon = createIcon("deviceDesktop");
