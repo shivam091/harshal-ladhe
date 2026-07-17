@@ -270,6 +270,22 @@ export const icons = {
       </>
     )
   },
+  close: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <line x1="6" y1="6" x2="18" y2="18" />
+        <line x1="18" y1="6" x2="6" y2="18" />
+      </>
+    )
+  },
   code: {
     viewBox: "0 0 24 24",
     children: (
@@ -520,6 +536,28 @@ export const icons = {
         <rect x="9" y="5.4" width="11" height="1.5" rx="0.6" />
         <rect x="9" y="11.4" width="11" height="1.5" rx="0.6" />
         <rect x="9" y="17.4" width="11" height="1.5" rx="0.6" />
+      </>
+    )
+  },
+  loader: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M12 2v4" />
+        <path d="m16.2 7.8 2.9-2.9" />
+        <path d="M18 12h4" />
+        <path d="m16.2 16.2 2.9 2.9" />
+        <path d="M12 18v4" />
+        <path d="m4.9 19.1 2.9-2.9" />
+        <path d="M2 12h4" />
+        <path d="m4.9 4.9 2.9 2.9" />
       </>
     )
   },
