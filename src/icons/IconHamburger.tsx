@@ -5,13 +5,24 @@ import { useSpring, animated } from "@react-spring/web";
 import { useBoop } from "@/hooks/use-boop";
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import defaultAttributes from "@/components/Icon/defaultAttributes";
-import type { IconHamburgerProps } from "@/interfaces/icons/hamburger";
 import {
   VIEWBOX_SIZE,
   getFirstLineProps,
   getSecondLineProps,
   getThirdLineProps
 } from "@/icons/IconHamburger.helpers";
+
+// Represents the animation phase of the hamburger ↔ close icon transition
+export type IconHamburgerStatus = "closed" | "opening" | "open" | "closing";
+
+// Parent passes iconStatus (derived from isPressed + drawerOpen) and isOpen (controls scale); boop is owned internally.
+export interface IconHamburgerProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  // Derived by the parent from its isPressed + drawerOpen state
+  iconStatus: IconHamburgerStatus;
+  // Controls the scale(1.5) wrapper — true when drawer is open
+  isOpen: boolean;
+  size?: number;
+}
 
 // Spring-animated hamburger/X button — owns boop state and the scale wrapper; parent only drives iconStatus and isOpen.
 const IconHamburger = forwardRef<HTMLButtonElement, IconHamburgerProps>(
