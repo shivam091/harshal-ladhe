@@ -16,10 +16,10 @@ export const Wrapper = styled.span`
 */
 export const ShimmerWrapper = styled.span`
   position: absolute;
-  width: 50%;
-  height: 45%;
-  top: 23%;
-  right: 30%;
+  inline-size: 50%;
+  block-size: 45%;
+  inset-block-start: 23%;
+  inset-inline-end: 30%;
   border-radius: 50%;
   overflow: clip;
   transform: scale(0.85) rotate(-20deg);
@@ -43,8 +43,8 @@ export const ShimmerWrapper = styled.span`
 export const Shimmer = styled(animated.span)`
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
+  inline-size: 100%;
+  block-size: 100%;
   background: white;
   opacity: 0.5;
   animation: shimmer-in 400ms both;
