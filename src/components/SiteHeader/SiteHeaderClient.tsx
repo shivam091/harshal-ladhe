@@ -6,7 +6,8 @@
  * scroll listener or IntersectionObserver on the main thread.
  */
 
-import { JSX, useCallback, useEffect, useRef, useState, useId } from "react";
+import type { JSX} from "react";
+import { useCallback, useEffect, useRef, useState, useId } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence } from "motion/react";
 import { usePathname } from "next/navigation";
@@ -15,10 +16,7 @@ import { useBoop } from "@/hooks/use-boop";
 import { useTransformBoop } from "@/hooks/use-transform-boop";
 import { SPRINGS } from "@/constants/springs";
 import { useSound } from "@/hooks/use-sound";
-import {
-  AdjustIcon,
-  SearchIcon
-} from "@/components/Icon";
+import { AdjustIcon } from "@/components/Icon";
 import { Icon } from "@/components/Icon";
 import SoundToggle from "@/components/SoundToggle";
 import { useTheme } from "@/hooks/use-theme";
@@ -29,14 +27,16 @@ import {
   DropdownItem
 } from "@/components/DropdownMenu";
 import Drawer from "@/components/SiteHeader/Drawer";
+import Search from "@/components/Search";
 import IconRssLink from "@/icons/IconRssLink";
 import IconHamburger from "@/icons/IconHamburger";
 import IconDeviceDesktop from "@/icons/IconDeviceDesktop";
 import IconSun from "@/icons/IconSun";
 import IconSunDim from "@/icons/IconSunDim";
+import IconSearch from "@/icons/IconSearch";
 import IconMoonCrescent from "@/icons/IconMoonCrescent";
-import type { ThemeOption } from "@/types/color-scheme";
-import type { IconHamburgerStatus } from "@/types/icon";
+import type { ThemeOption } from "@/constants/color-scheme";
+import type { IconHamburgerStatus } from "@/icons/IconHamburger";
 import {
   headerActionClass,
   Nav,
@@ -57,6 +57,10 @@ export default function SiteHeaderClient(): JSX.Element {
   const { theme, setTheme } = useTheme();
   const drawerId = useId();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const searchId = useId();
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchToggleRef = useRef<HTMLButtonElement>(null);
+  const hasEverOpenedSearchRef = useRef(false);
   const [playSearchOpen] = useSound("/sounds/pop-up-on.mp3");
   const [playSearchClose] = useSound("/sounds/pop-up-off.mp3");
   const [playMenuOpen] = useSound("/sounds/menu-open-softer.mp3");
@@ -90,14 +94,32 @@ export default function SiteHeaderClient(): JSX.Element {
     }, 167);
   }, [drawerOpen, playMenuClose]);
 
+  /*
+    Opens the search dialog, closing the mobile drawer first if it's open — the two
+    are mutually exclusive full-panel overlays sharing the same header real estate.
+  */
+  const openSearch = useCallback(() => {
+    if (drawerOpen) {
+      setDrawerOpen(false);
+      setIsPressed(false);
+    }
+    setSearchOpen(true);
+    playSearchOpen();
+  }, [drawerOpen, playSearchOpen]);
+
+  const closeSearch = useCallback(() => {
+    setSearchOpen(false);
+    playSearchClose();
+  }, [playSearchClose]);
+
   // Portals need document.body, which doesn't exist during SSR.
   useEffect(() => setMounted(true), []);
 
-  // A modal drawer shouldn't let the page scroll behind it.
+  // A modal drawer or dialog shouldn't let the page scroll behind it.
   useEffect(() => {
-    document.documentElement.classList.toggle("scroll-locked", drawerOpen);
+    document.documentElement.classList.toggle("scroll-locked", drawerOpen || searchOpen);
     return () => document.documentElement.classList.remove("scroll-locked");
-  }, [drawerOpen]);
+  }, [drawerOpen, searchOpen]);
 
   /*
     The <header> persists across SPA navigations, so open overlays and the glass animation's
@@ -105,6 +127,7 @@ export default function SiteHeaderClient(): JSX.Element {
   */
   useEffect(() => {
     setDrawerOpen(false);
+    setSearchOpen(false);
     setIsPressed(false);
     if (pressTimeoutRef.current !== null) {
       window.clearTimeout(pressTimeoutRef.current);
@@ -136,6 +159,40 @@ export default function SiteHeaderClient(): JSX.Element {
     return () => document.removeEventListener("keydown", handle);
   }, [drawerOpen, closeDrawer]);
 
+  /*
+    Escape closes the search dialog — but not within the first second of opening. Without
+    this grace period, a keypress that's still in flight right as the dialog opens (e.g.
+    the same Escape that toggled a different UI element a moment ago) can immediately
+    close it again before the user's even seen it.
+  */
+  useEffect(() => {
+    if (!searchOpen) return;
+    const openedAt = Date.now();
+    const handle = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && Date.now() - openedAt > 1000) { closeSearch(); }
+    };
+    document.addEventListener("keydown", handle);
+    return () => document.removeEventListener("keydown", handle);
+  }, [searchOpen, closeSearch]);
+
+  /*
+    Returning focus to the toggle keeps keyboard users where they left off, guarded so focus
+    isn't stolen on initial mount or navigation.
+  */
+  useEffect(() => {
+    if (searchOpen) {
+      hasEverOpenedSearchRef.current = true;
+    } else if (hasEverOpenedSearchRef.current) {
+      /*
+        preventScroll matters here even with body scroll locked while search is open — the
+        reader may well have been scrolled well past the header before opening it. A bare
+        .focus() would snap the viewport back up to bring the toggle into view; preventScroll
+        keeps them exactly where they were once the lock lifts.
+      */
+      searchToggleRef.current?.focus({ preventScroll: true });
+    }
+  }, [searchOpen]);
+
   // Returning focus to the toggle keeps keyboard users where they left off once the drawer closes.
   useEffect(() => {
     if (drawerOpen) {
@@ -147,6 +204,8 @@ export default function SiteHeaderClient(): JSX.Element {
 
   const [isAdjustBooped, triggerAdjustBoop] = useBoop();
   const adjustBoopStyle = useTransformBoop(isAdjustBooped, { rotation: -45, scaleX: 1.1, scaleY: 1.1, springConfig: SPRINGS.quick });
+
+  const [isSearchIconBooped, triggerSearchIconBoop] = useBoop();
 
   // Separate boop states so hovering one item never animates another's icon.
   const [isSystemBooped, triggerSystemBoop] = useBoop();
@@ -181,12 +240,17 @@ export default function SiteHeaderClient(): JSX.Element {
 
       {/* Header actions */}
       <ActionsRow>
-        {/*
-          Not wired up to anything yet. `disabled` stops these from being announced to
-          assistive tech as functional controls that silently do nothing on activation.
-        */}
-        <button className={headerActionClass} aria-label="Search (coming soon)" disabled>
-          <SearchIcon size={16} />
+        <button
+          ref={searchToggleRef}
+          className={headerActionClass}
+          aria-label="Search"
+          aria-haspopup="dialog"
+          aria-controls={searchOpen ? searchId : undefined}
+          aria-expanded={searchOpen}
+          onPointerEnter={triggerSearchIconBoop}
+          onClick={openSearch}
+        >
+          <IconSearch size={16} isBooped={isSearchIconBooped} />
         </button>
 
         <SoundToggle size={16} className={headerActionClass} />
@@ -268,6 +332,8 @@ export default function SiteHeaderClient(): JSX.Element {
               closeDrawer();
               return;
             }
+            // Opening the drawer while search is open closes search first — the two are mutually exclusive.
+            if (searchOpen) closeSearch();
             const elapsed = pressedTimestamp.current
               ? Date.now() - pressedTimestamp.current
               : MIN_PRESS_MS;
@@ -300,6 +366,20 @@ export default function SiteHeaderClient(): JSX.Element {
               id={drawerId}
               pathname={pathname}
               onClose={closeDrawer}
+            />
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
+
+      {/* Portaled so the dialog escapes the header's stacking context. */}
+      {mounted && createPortal(
+        <AnimatePresence>
+          {searchOpen && (
+            <Search
+              key="search-modal"
+              id={searchId}
+              onClose={closeSearch}
             />
           )}
         </AnimatePresence>,
