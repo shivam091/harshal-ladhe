@@ -1,0 +1,132 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.title {
+  font-size: 1.375rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: hsl(210, 10%, 90%);
+}
+
+.display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 7.5rem;
+  height: 7.5rem;
+  border-radius: 50%;
+  background: hsl(213, 20%, 10%);
+  border: 1px solid hsl(213, 12%, 24%);
+  box-shadow: 0 0 0 0.375rem hsl(213, 20%, 10%),
+              0 0 0 0.4375rem hsl(213, 12%, 24%);
+}
+
+.count {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: hsl(210, 100%, 74%);
+}
+
+.step-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-label {
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+  margin-right: 0.25rem;
+}
+
+.step-btn {
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid hsl(213, 12%, 24%);
+  border-radius: 0.375rem;
+  background: hsl(213, 18%, 15%);
+  color: hsl(210, 12%, 60%);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.step-btn--active {
+  background: hsl(213, 30%, 20%);
+  border-color: hsl(213, 80%, 54%);
+  color: hsl(213, 85%, 60%);
+}
+
+.controls {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.btn {
+  padding: 0.5rem 1.125rem;
+  border: 1px solid hsl(213, 12%, 24%);
+  border-radius: 0.375rem;
+  background: hsl(213, 18%, 15%);
+  color: hsl(210, 10%, 90%);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn:hover {
+  background: hsl(219, 17%, 18%);
+}
+
+.btn--plus,
+.btn--minus {
+  font-size: 1.25rem;
+  font-weight: 700;
+  width: 2.75rem;
+  padding: 0;
+}
+
+.btn--plus {
+  color: hsl(140, 52%, 60%);
+  border-color: hsl(140, 55%, 38%);
+}
+
+.btn--plus:hover {
+  background: hsl(140, 20%, 14%);
+  border-color: hsl(140, 55%, 48%);
+}
+
+.btn--minus {
+  color: hsl(3, 85%, 70%);
+  border-color: hsl(2, 70%, 50%);
+}
+
+.btn--minus:hover {
+  background: hsl(3, 30%, 14%);
+  border-color: hsl(3, 70%, 60%);
+}
+
+.btn--reset {
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
