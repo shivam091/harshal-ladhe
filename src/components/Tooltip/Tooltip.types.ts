@@ -11,4 +11,9 @@ export interface TooltipProps {
   sideOffset?: number;
   // Hover delay before the tooltip opens (ms).
   delayDuration?: number;
+  /*
+    Shows the tooltip immediately regardless of hover/focus state — for callers that need to
+    surface a hint programmatically (e.g. after a quick click) rather than on hover alone.
+  */
+  forceOpen?: boolean;
 }
