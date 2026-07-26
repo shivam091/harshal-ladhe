@@ -10,6 +10,23 @@ export const icons = {
       </>
     )
   },
+  alertOctagon: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </>
+    )
+  },
   archive: {
     viewBox: "0 0 24 24",
     children: (
@@ -90,6 +107,22 @@ export const icons = {
         <line x1="9" y1="9" x2="14.5" y2="9" />
         <line x1="9" y1="13" x2="16" y2="13" />
         <line x1="9" y1="17" x2="14" y2="17" />
+      </>
+    )
+  },
+  bookOpen: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M12 7v14" />
+        <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
       </>
     )
   },
@@ -220,6 +253,22 @@ export const icons = {
       </>
     )
   },
+  circleSlash: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="22" y1="2" x2="2" y2="22" />
+      </>
+    )
+  },
   clipboard: {
     viewBox: "0 0 24 24",
     svgProps: {
@@ -320,6 +369,23 @@ export const icons = {
       </>
     )
   },
+  // Two side-by-side panes — SplitDiffViewToggle's glyph for the Diff tab's split (old | new) layout.
+  columns: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="3" y="4" width="7" height="16" rx="1" />
+        <rect x="14" y="4" width="7" height="16" rx="1" />
+      </>
+    )
+  },
   deviceDesktop: {
     viewBox: "0 0 24 24",
     children: (
@@ -370,6 +436,23 @@ export const icons = {
       </>
     )
   },
+  externalLink: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <line x1="10" y1="14" x2="21" y2="3" />
+        <polyline points="14 3 21 3 21 10" />
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      </>
+    )
+  },
   exclamationTriangle: {
     viewBox: "0 0 24 24",
     children: (
@@ -410,6 +493,60 @@ export const icons = {
     children: (
       <>
         <polyline points="5 12 12 12 19 12" />
+      </>
+    )
+  },
+  folder: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M2.625 1.5 A2.625 2.625 0 0 0 0 4.125 V19.875 C0 21.324 1.176 22.5 2.625 22.5 H21.375 A2.625 2.625 0 0 0 24 19.875 V7.125 A2.625 2.625 0 0 0 21.375 4.5 H11.25 A0.375 0.375 0 0 1 10.95 4.35 L9.6 2.55 C9.105 1.89 8.325 1.5 7.5 1.5 H2.625 Z" />
+      </>
+    )
+  },
+  folderOpen: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M0.7695 2.2695 A2.625 2.625 0 0 1 2.625 1.5 H7.875 C8.7 1.5 9.48 1.89 9.975 2.55 L11.325 4.35 A0.375 0.375 0 0 0 11.625 4.5 H19.5 A1.5 1.5 0 0 1 21 6 V6.75 H4.125 A1.125 1.125 0 0 0 4.125 9 H22.092 A1.5 1.5 0 0 1 23.583 10.6755 L22.5 19.875 A2.625 2.625 0 0 1 19.875 22.5 H2.625 A2.625 2.625 0 0 1 0 19.875 V4.125 C0 3.429 0.276 2.76 0.7695 2.2695 Z" />
+      </>
+    )
+  },
+  foldUp: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M11.735 2.516L7.39 6.86A.375 .375 0 0 0 7.656 7.5H10.875v4.854a1.125 1.125 0 1 0 2.25 0V7.5h3.219a.375 .375 0 0 0 .265-.64L12.265 2.516a.375 .375 0 0 0-.531 0ZM20.625 16.5a1.125 1.125 0 0 0 0 2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75Zm-5.625 1.125a1.125 1.125 0 0 1 1.125-1.125h.75a1.125 1.125 0 0 1 0 2.25h-.75a1.125 1.125 0 0 1-1.125-1.125ZM11.625 16.5a1.125 1.125 0 0 0 0 2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75ZM6 17.625a1.125 1.125 0 0 1 1.125-1.125h.75a1.125 1.125 0 0 1 0 2.25h-.75a1.125 1.125 0 0 1-1.125-1.125ZM2.625 16.5a1.125 1.125 0 0 0 0 2.25h.75a1.125 1.125 0 0 0 0-2.25h-.75Z" />
+      </>
+    )
+  },
+  foldDown: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M12.265 21.485l4.344-4.344a.375 .375 0 0 0-.265-.641H13.125V11.646a1.125 1.125 0 1 0-2.25 0V16.5H7.656a.375 .375 0 0 0-.265 .64l4.344 4.344a.375 .375 0 0 0 .531 0ZM3.375 7.5a1.125 1.125 0 0 0 0-2.25h-.75a1.125 1.125 0 0 0 0 2.25h.75ZM9 6.375a1.125 1.125 0 0 1-1.125 1.125h-.75a1.125 1.125 0 0 1 0-2.25h.75a1.125 1.125 0 0 1 1.125 1.125ZM12.375 7.5a1.125 1.125 0 0 0 0-2.25h-.75a1.125 1.125 0 0 0 0 2.25h.75ZM18 6.375a1.125 1.125 0 0 1-1.125 1.125h-.75a1.125 1.125 0 0 1 0-2.25h.75a1.125 1.125 0 0 1 1.125 1.125Zm3.375 1.125a1.125 1.125 0 0 0 0-2.25h-.75a1.125 1.125 0 0 0 0 2.25h.75Z" />
+      </>
+    )
+  },
+  unfold: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M12.265 1.016l4.344 4.343a.375 .375 0 0 1-.265 .641H13.125v1.875a1.125 1.125 0 0 1-2.25 0V6H7.656a.375 .375 0 0 1-.265-.64L11.735 1.016a.375 .375 0 0 1 .531 0ZM10.875 16.125a1.125 1.125 0 0 1 2.25 0V18h3.219a.375 .375 0 0 1 .265 .64l-4.343 4.344a.375 .375 0 0 1-.531 0l-4.344-4.344A.375 .375 0 0 1 7.656 18H10.875v-1.875Zm-7.5-3a1.125 1.125 0 0 0 0-2.25h-.75a1.125 1.125 0 0 0 0 2.25h.75ZM9 12a1.125 1.125 0 0 1-1.125 1.125h-.75a1.125 1.125 0 0 1 0-2.25h.75A1.125 1.125 0 0 1 9 12Zm3.375 1.125a1.125 1.125 0 0 0 0-2.25h-.75a1.125 1.125 0 0 0 0 2.25h.75ZM18 12a1.125 1.125 0 0 1-1.125 1.125h-.75a1.125 1.125 0 0 1 0-2.25h.75A1.125 1.125 0 0 1 18 12Zm3.375 1.125a1.125 1.125 0 0 0 0-2.25h-.75a1.125 1.125 0 0 0 0 2.25h.75Z" />
       </>
     )
   },
@@ -468,6 +605,26 @@ export const icons = {
       </>
     )
   },
+  indentGuides: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <line x1="4" y1="4" x2="4" y2="20" strokeDasharray="2 2" />
+        <line x1="10" y1="8" x2="10" y2="20" strokeDasharray="2 2" />
+        <line x1="16" y1="12" x2="16" y2="20" strokeDasharray="2 2" />
+        <line x1="4" y1="4" x2="8" y2="4" />
+        <line x1="10" y1="8" x2="14" y2="8" />
+        <line x1="16" y1="12" x2="20" y2="12" />
+      </>
+    )
+  },
   home: {
     viewBox: "0 0 24 24",
     children: (
@@ -507,6 +664,14 @@ export const icons = {
         <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
         <circle cx="12" cy="12" r="4" />
         <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+      </>
+    )
+  },
+  keyboard: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M6.21,13.29a.93.93,0,0,0-.33-.21,1,1,0,0,0-.76,0,.9.9,0,0,0-.54.54,1,1,0,1,0,1.84,0A1,1,0,0,0,6.21,13.29ZM13.5,11h1a1,1,0,0,0,0-2h-1a1,1,0,0,0,0,2Zm-4,0h1a1,1,0,0,0,0-2h-1a1,1,0,0,0,0,2Zm-3-2h-1a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2ZM20,5H4A3,3,0,0,0,1,8v8a3,3,0,0,0,3,3H20a3,3,0,0,0,3-3V8A3,3,0,0,0,20,5Zm1,11a1,1,0,0,1-1,1H4a1,1,0,0,1-1-1V8A1,1,0,0,1,4,7H20a1,1,0,0,1,1,1Zm-6-3H9a1,1,0,0,0,0,2h6a1,1,0,0,0,0-2Zm3.5-4h-1a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm.71,4.29a1,1,0,0,0-.33-.21,1,1,0,0,0-.76,0,.93.93,0,0,0-.33.21,1,1,0,0,0-.21.33A1,1,0,1,0,19.5,14a.84.84,0,0,0-.08-.38A1,1,0,0,0,19.21,13.29Z" />
       </>
     )
   },
@@ -583,11 +748,43 @@ export const icons = {
       </>
     )
   },
+  minus: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "currentColor",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <line x1="6" y1="12" x2="18" y2="12" />
+      </>
+    )
+  },
   moon: {
     viewBox: "0 0 24 24",
     children: (
       <>
         <path d="M10.719 2.082c-2.572 2.028-4.719 5.212-4.719 9.918 0 4.569 1.938 7.798 4.548 9.895-4.829-.705-8.548-4.874-8.548-9.895 0-5.08 3.808-9.288 8.719-9.918zm1.281-2.082c-6.617 0-12 5.383-12 12s5.383 12 12 12c1.894 0 3.87-.333 5.37-1.179-3.453-.613-9.37-3.367-9.37-10.821 0-7.555 6.422-10.317 9.37-10.821-1.74-.682-3.476-1.179-5.37-1.179zm0 10.999c1.437.438 2.562 1.564 2.999 3.001.44-1.437 1.565-2.562 3.001-3-1.436-.439-2.561-1.563-3.001-3-.437 1.436-1.562 2.561-2.999 2.999zm8.001.001c.958.293 1.707 1.042 2 2.001.291-.959 1.042-1.709 1.999-2.001-.957-.292-1.707-1.042-2-2-.293.958-1.042 1.708-1.999 2zm-1-9c-.437 1.437-1.563 2.562-2.998 3.001 1.438.44 2.561 1.564 3.001 3.002.437-1.438 1.563-2.563 2.996-3.002-1.433-.437-2.559-1.564-2.999-3.001z" />
+      </>
+    )
+  },
+  pilcrow: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M13 4v16" />
+        <path d="M17 4v16" />
+        <path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13" />
       </>
     )
   },
@@ -604,6 +801,24 @@ export const icons = {
       <>
         <line x1="6" y1="12" x2="18" y2="12" />
         <line x1="12" y1="18" x2="12" y2="6" />
+      </>
+    )
+  },
+  refresh: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+        <path d="M21 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+        <path d="M8 16H3v5" />
       </>
     )
   },
@@ -728,6 +943,59 @@ export const icons = {
       </>
     )
   },
+  textSize: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M4 19 8.5 5 13 19" />
+        <path d="M5.5 14h6" />
+        <path d="M15 19 18 11 21 19" />
+        <path d="M16 16.5h4" />
+      </>
+    )
+  },
+  textSizeDecrease: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3 19 8 5 13 19" />
+        <path d="M4.8 14h6.4" />
+        <path d="M15 17h6" />
+      </>
+    )
+  },
+  textSizeIncrease: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3 19 8 5 13 19" />
+        <path d="M4.8 14h6.4" />
+        <path d="M15 17h6" />
+        <path d="M18 14v6" />
+      </>
+    )
+  },
   twitter: {
     viewBox: "0 0 24 24",
     children: (
@@ -741,6 +1009,47 @@ export const icons = {
     children: (
       <>
         <path d="M16.6 14c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-.7-.3-1.4-.7-2-1.2-.5-.5-1-1.1-1.4-1.7-.1-.2 0-.4.1-.5.1-.1.2-.3.4-.4.1-.1.2-.3.2-.4.1-.1.1-.3 0-.4-.1-.1-.6-1.3-.8-1.8-.1-.7-.3-.7-.5-.7h-.5c-.2 0-.5.2-.6.3-.6.6-.9 1.3-.9 2.1.1.9.4 1.8 1 2.6 1.1 1.6 2.5 2.9 4.2 3.7.5.2.9.4 1.4.5.5.2 1 .2 1.6.1.7-.1 1.3-.6 1.7-1.2.2-.4.2-.8.1-1.2l-.4-.2m2.5-9.1C15.2 1 8.9 1 5 4.9c-3.2 3.2-3.8 8.1-1.6 12L2 22l5.3-1.4c1.5.8 3.1 1.2 4.7 1.2 5.5 0 9.9-4.4 9.9-9.9.1-2.6-1-5.1-2.8-7m-2.7 14c-1.3.8-2.8 1.3-4.4 1.3-1.5 0-2.9-.4-4.2-1.1l-.3-.2-3.1.8.8-3-.2-.3c-2.4-4-1.2-9 2.7-11.5S16.6 3.7 19 7.5c2.4 3.9 1.3 9-2.6 11.4" />
+      </>
+    )
+  },
+  wrapText: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <path d="M20 14v2a2 2 0 0 1-2 2h-3" />
+        <path d="M17 20l-2-2 2-2" />
+      </>
+    )
+  },
+  minimap: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="3" y="4" width="18" height="16" rx="2" />
+        <line x1="17" y1="4" x2="17" y2="20" />
+        <line x1="6" y1="8" x2="13" y2="8" />
+        <line x1="6" y1="11" x2="15" y2="11" />
+        <line x1="6" y1="14" x2="11" y2="14" />
+        <line x1="6" y1="17" x2="14" y2="17" />
+        <line x1="19" y1="8" x2="20" y2="8" />
+        <line x1="19" y1="11" x2="20" y2="11" />
+        <line x1="19" y1="14" x2="20" y2="14" />
       </>
     )
   },
