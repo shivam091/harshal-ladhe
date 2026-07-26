@@ -1,0 +1,67 @@
+/*
+  Tab strip for switching between whole demo panels/views (a `.tabs[role="tablist"]` of
+  `.tab[role="tab"]` buttons, each paired with a `.tab-panel` sharing its `data-mode`/id) — an
+  underline strip, deliberately styled with no pill fill and no dot, so it reads as "swap the
+  view" rather than being confused with the segmented-control pill in segmented-control.css,
+  which picks one *option* within a single view instead.
+*/
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-block-end: 0.0625rem solid var(--pg-border);
+}
+
+.tab {
+  position: relative;
+  padding-block: 0.625rem;
+  padding-inline: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--pg-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.625rem;
+  inset-block-end: -0.0625rem;
+  block-size: 0.125rem;
+  background: var(--pg-primary);
+  transform: scaleX(0);
+  transition: transform 0.15s ease;
+}
+
+.tab:hover {
+  color: var(--pg-text);
+}
+
+.tab.tab--active {
+  color: var(--pg-text);
+}
+
+.tab.tab--active::after {
+  transform: scaleX(1);
+}
+
+.tab:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.125rem;
+}
+
+/* Panels a tab strip switches between — one visible (.tab-panel--active) at a time. */
+.tab-panel {
+  display: none;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.tab-panel.tab-panel--active {
+  display: flex;
+}
