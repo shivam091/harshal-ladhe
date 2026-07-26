@@ -27,6 +27,7 @@ export const LIGHT_COLORS_RAW: ColorMapRaw = {
   // Foregrounds
   colorFgDefault:            [222, 22,  5],
   colorFgMuted:              [225, 15,  50],
+  colorFgFaint:              [220, 12,  65],
   colorFgNeutral:            [212, 9,   39],
   colorFgOnEmphasis:         [0,   0,   100],
   colorFgLink:               [212, 92,  43],
