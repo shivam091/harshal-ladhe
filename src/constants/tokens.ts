@@ -216,6 +216,7 @@ const tokens: Record<string, string> = {
   "--size-peta": "7rem",
   "--size-exa":  "8rem",
   "--size-narrow": "28rem",
+  "--size-large":  "60rem",
 
   // Misc
   "--header-height": "5rem",
