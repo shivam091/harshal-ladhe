@@ -13,7 +13,7 @@ export default function useInterval(callback: () => void, delay: number | null):
 
   useEffect(() => {
     savedCallback.current = callback;
-  });
+  }, [callback]);
 
   useEffect(() => {
     if (delay === null) return;
@@ -22,3 +22,5 @@ export default function useInterval(callback: () => void, delay: number | null):
     return () => window.clearInterval(id);
   }, [delay]);
 }
+
+export { useInterval };
