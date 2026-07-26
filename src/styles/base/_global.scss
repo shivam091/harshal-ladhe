@@ -38,6 +38,13 @@ html.scroll-locked {
   @include scroll-lock;
 }
 
+// Undoes Radix's body[data-scroll-locked] overflow:hidden — html, not body, is the real
+// scroller here, so locking body too breaks SiteHeader's position:sticky. Scroll-blocking
+// itself still works (react-remove-scroll's wheel/touch listeners, not this CSS).
+html body[data-scroll-locked] {
+  overflow: visible !important;
+}
+
 /*
  * WHY @layer base
  *
