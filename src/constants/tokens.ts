@@ -216,6 +216,7 @@ const tokens: Record<string, string> = {
   "--size-peta": "7rem",
   "--size-exa":  "8rem",
   "--size-narrow": "28rem",
+  "--size-large":  "60rem",
 
   // Layout
   "--min-width": "37.5rem",
@@ -226,7 +227,7 @@ const tokens: Record<string, string> = {
 
   // Font stacks
   "--font-stack-system": "'Alan Sans', 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', 'Liberation Sans', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
-  "--font-stack-monospace": "'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+  "--font-stack-monospace": "'Source Code Pro', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace"
 };
 
 export const TOKENS_CSS = Object.entries(tokens)
