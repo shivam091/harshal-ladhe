@@ -163,6 +163,45 @@ The payoff: switch the theme and **every code block re-colours instantly**, with
 
 ---
 
+## Interactive Sandbox
+
+Static code blocks are great for reading, but a couple of posts on this site walk through actual UI behavior — todos toggling, a counter incrementing — and no screenshot can show that convincingly. So instead, some code blocks are a real, editable sandbox running directly in the page, not a picture of one:
+
+<Sandbox slug="todo-list" height={600} editorWidthPercentage={60} />
+
+Type in the editor above and the preview re-renders live, the same way it would on your own machine.
+
+A smaller example — a plain counter with a couple of `useState` calls — shows the same editor without the todo app's extra nesting:
+
+<Sandbox slug="counter-app" height={500} />
+
+**What you can do with it:**
+
+- Edit any file and watch the preview update immediately, no manual refresh.
+- Switch between files via tabs, or open the file explorer to browse the whole project.
+- Format the active file with Prettier — click the sparkle icon, or just hit `Shift` + `Alt` + `F`.
+- Click-and-hold the reset button to restore every file to its original contents and rerun the app from a clean slate.
+- Pop the whole thing open in CodeSandbox if you want a full IDE and more room to work.
+
+It's built on CodeSandbox's **Sandpack**, but only for the bundler and preview iframe — the editor itself is a real **CodeMirror 6** instance I've wired up myself, with the feature set I'd actually want from a code editor rather than Sandpack's stock experience:
+
+- **Multiple cursors** — `Cmd`/`Ctrl` + click to add a cursor, `Cmd`/`Ctrl` + `D` to select the next occurrence of whatever's under the caret (keep pressing it to select more), and `Cmd`/`Ctrl` + `Shift` + `L` to select every occurrence at once.
+- **Rectangular selection** — hold `Alt` and drag to select a column block spanning multiple lines, VS Code/Sublime-style.
+- **Find & replace** — `Cmd`/`Ctrl` + `F` opens the panel, `Cmd`/`Ctrl` + `G` and `Shift` + `Cmd`/`Ctrl` + `G` step through matches, `Cmd`/`Ctrl` + `Alt` + `G` jumps to a line.
+- **Inline error diagnostics** — a compile error doesn't just print to the console; the offending line gets a red highlight, a squiggly underline, and a gutter dot with a hover tooltip, the same as a real local editor.
+- **Bracket-pair colorization** — nested `()`/`[]`/`{}` pairs are colored by nesting depth, so it's easy to tell at a glance which pair actually matches which.
+- **Code folding** — collapse a function, block, or tag from the gutter chevron, or `Cmd`/`Ctrl` + `Shift` + `[` / `]` from the keyboard (`Cmd`/`Ctrl` + `Alt` + `[` / `]` folds or unfolds everything at once).
+- **Breadcrumbs and sticky scroll** — both opt-in per embed, and turned on for the todo app above since it has enough nesting to actually benefit: breadcrumbs show a symbol path (`Foo › bar`) for wherever your cursor is, click any segment to jump there; sticky scroll pins a nested function/block's own header to the top of the editor as you scroll into its body, so you never lose track of what you're inside.
+- **Indent guides** — always on, no toolbar toggle, so nesting structure is visible at a glance.
+- **Visible whitespace** — always on too, but only marks spaces, tabs, and blank lines within whatever you've currently selected, rather than cluttering the whole file.
+- **Snippets** — CSS and HTML ship none of their own, so I added a few common ones (`@media`, `flex`, `grid`, `keyframes` for CSS; `html5`, `link`, `script`, `img`, `a` for HTML) — type the prefix and hit Tab.
+
+**Support:** autocomplete, formatting, and syntax highlighting are all file-type aware — TypeScript/TSX, JavaScript/JSX, CSS/SCSS, HTML, and JSON each get real, relevant suggestions (a `.css` file suggests `margin`, `padding`, and friends, not arbitrary words pulled from elsewhere in the file) instead of one generic completion list. The live syntax colors are also remapped token-by-token to match this post's own static code blocks (see [Code Highlighting](#code-highlighting-shiki) above) — Sandpack's bundled highlighting is close, but coarser, so without that remapping the live editor and a static snippet would disagree on a few colors for identical code. On narrower screens the split view stacks vertically instead of squeezing two side-by-side panes into no room.
+
+I ended up running my own bundler client underneath Sandpack rather than its default — the only way to get full control over the console output and error states, instead of settling for Sandpack's own cross-origin, unstyleable overlay.
+
+---
+
 ## Animations
 
 Subtle motion is provided by **Framer Motion**. Interactions — button hovers, drawer open/close, theme transitions — use a small set of spring presets defined in a central constants file, so the motion always feels consistent.
