@@ -27,6 +27,7 @@ export const DARK_COLORS_RAW: ColorMapRaw = {
   // Foregrounds
   colorFgDefault:            [210, 10,  90],
   colorFgMuted:              [210, 12,  60],
+  colorFgFaint:              [210, 8,   44],
   colorFgNeutral:            [215, 8,   60],
   colorFgOnEmphasis:         [0,   0,   100],
   colorFgLink:               [213, 85,  60],
