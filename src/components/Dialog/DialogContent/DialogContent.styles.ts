@@ -50,7 +50,7 @@ export const contentClass = css`
   background: var(--color-bg-overlay);
   border-radius: var(--border-radius-lg);
   box-shadow: var(--box-shadow-md);
-  padding: var(--space-lg);
+  padding: var(--space-md);
   will-change: opacity, transform;
 
   &[data-state="open"] {

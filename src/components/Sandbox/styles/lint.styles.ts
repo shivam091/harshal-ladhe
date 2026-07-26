@@ -1,0 +1,121 @@
+// Lint diagnostics (lint.ts): inline squiggles, the gutter markers that surface them, and the diagnostic panel/tooltip.
+export const lintCss = `
+  /* Native wavy text-decoration replaces lint's hardcoded-color SVG background, which can't resolve CSS custom properties. */
+  .cm-lintRange {
+    background-image: none !important;
+    text-decoration-line: underline;
+    text-decoration-style: wavy;
+    text-decoration-skip-ink: none;
+  }
+
+  .cm-lintRange-error {
+    text-decoration-color: var(--color-fg-danger) !important;
+  }
+
+  .cm-lintRange-warning {
+    text-decoration-color: var(--color-fg-attention) !important;
+  }
+
+  .cm-lintRange-info {
+    text-decoration-color: var(--color-fg-neutral) !important;
+  }
+
+  .cm-lintRange-hint {
+    text-decoration-color: var(--color-fg-muted) !important;
+  }
+
+  .cm-lintRange-active {
+    background: var(--color-bg-accent-muted) !important;
+  }
+
+  /* Lint gutter column is reserved unconditionally by @codemirror/lint — collapsed here and restored only once diagnostics exist. */
+  .cm-gutter-lint {
+    display: none !important;
+  }
+
+  .cm-editor.cm-has-diagnostics .cm-gutter-lint {
+    display: flex !important;
+  }
+
+  /* Unlike the fold gutter, @codemirror/lint never centers its own marker in a taller line — centered here instead. */
+  .cm-gutter-lint .cm-gutterElement {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  /* Gutter dot markers — same data-uri var() limitation as the squiggle above, so a plain colored circle replaces the built-in image. */
+  .cm-lint-marker {
+    content: none !important;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .cm-lint-marker-error {
+    background: var(--color-fg-danger) !important;
+  }
+
+  .cm-lint-marker-warning {
+    background: var(--color-fg-attention) !important;
+  }
+
+  .cm-lint-marker-info {
+    background: var(--color-fg-neutral) !important;
+  }
+
+  /* Hover tooltip's inner list — box chrome comes from the shared .cm-tooltip rule (tooltips-autocomplete.styles.ts), so only font/overflow are set here. */
+  .cm-tooltip-lint {
+    font-family: var(--font-stack-monospace) !important;
+    font-size: var(--font-size-sm) !important;
+    overflow: hidden;
+  }
+
+  /* Mod-Shift-m lint panel is a genuinely different element (.cm-panel, not .cm-tooltip) — needs its own full chrome. */
+  .cm-panel.cm-panel-lint {
+    background: var(--color-bg-default) !important;
+    border: var(--border-width-default) solid var(--color-border-muted) !important;
+    border-radius: var(--border-radius-md) !important;
+    font-family: var(--font-stack-monospace) !important;
+    font-size: var(--font-size-sm) !important;
+    overflow: hidden;
+  }
+
+  .cm-diagnostic {
+    border-inline-start-width: 3px !important;
+    color: var(--color-fg-default);
+    margin-block-end: 0;
+  }
+
+  .cm-diagnostic-error {
+    border-inline-start-color: var(--color-border-danger-emphasis) !important;
+    background-image: linear-gradient(var(--color-bg-danger-muted), var(--color-bg-danger-muted));
+    color: var(--color-fg-danger);
+  }
+
+  .cm-diagnostic-warning {
+    border-inline-start-color: var(--color-border-attention-emphasis) !important;
+    background-image: linear-gradient(var(--color-bg-attention-muted), var(--color-bg-attention-muted));
+    color: var(--color-fg-attention);
+  }
+
+  .cm-diagnostic-info {
+    border-inline-start-color: var(--color-border-accent-muted) !important;
+    background-image: linear-gradient(var(--color-bg-accent-muted), var(--color-bg-accent-muted));
+    color: var(--color-fg-accent);
+  }
+
+  .cm-diagnostic-hint {
+    border-inline-start-color: var(--color-border-muted) !important;
+  }
+
+  .cm-diagnosticAction {
+    background: var(--color-bg-accent-emphasis) !important;
+    color: var(--color-fg-on-emphasis) !important;
+    border-radius: var(--border-radius-sm) !important;
+  }
+
+  .cm-diagnosticSource {
+    color: var(--color-fg-muted);
+  }
+`;

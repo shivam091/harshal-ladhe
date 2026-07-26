@@ -1,0 +1,76 @@
+/*
+  Segmented control for sandboxes that offer a small set of mutually-exclusive options, plus the
+  .demo-mode panel pairing it commonly switches between. Two markup shapes, both styled here:
+   - Radio+span: a real <input type="radio"> per option, visually hidden, with a sibling <span>
+     rendering the label — real radiogroup semantics/keyboard behavior for a genuine form value.
+   - Button: a plain <button class="segment"> per option, toggled via a `segment--active` class
+     in JS — simpler when the control just switches which panel is showing, not a form value.
+  Pick whichever shape fits what the control means; both render identically.
+*/
+
+.segmented-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+}
+
+.segment {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+/* Radio+span variant: the actual input is invisible, stretched over its sibling span. */
+.segment input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segment span,
+button.segment {
+  display: block;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: center;
+  color: var(--pg-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+button.segment:hover {
+  color: var(--pg-text);
+}
+
+.segment input:checked + span,
+.segment input:checked + span:hover,
+button.segment.segment--active,
+button.segment.segment--active:hover {
+  background: var(--pg-primary);
+  color: #fff;
+}
+
+.segment input:focus-visible + span,
+button.segment:focus-visible {
+  outline: 2px solid var(--pg-primary);
+  outline-offset: 2px;
+}
+
+/* Panels a segmented control commonly switches between — one visible (.active-mode) at a time. */
+.demo-mode {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.demo-mode.active-mode {
+  display: flex;
+}
