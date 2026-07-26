@@ -1,0 +1,100 @@
+// Diff gutter (diff-gutter.ts): per-line added/removed markers, the gutter column itself, and the click-to-open diff popup.
+export const diffGutterCss = `
+  /*
+    Collapsed until the active file actually differs from its original content — same collapse-when-empty
+    treatment as the lint gutter.
+  */
+  .cm-sbx-diff-gutter {
+    display: none !important;
+  }
+
+  .cm-editor.cm-has-diff .cm-sbx-diff-gutter {
+    display: flex !important;
+  }
+
+  .cm-sbx-diff-gutter .cm-gutterElement {
+    padding: 0 !important;
+  }
+
+  .cm-sbx-diff-spacer,
+  .cm-sbx-diff-marker {
+    inline-size: 3px;
+    block-size: 100%;
+  }
+
+  .cm-sbx-diff-marker {
+    border-radius: 2px;
+    cursor: pointer;
+  }
+
+  .cm-sbx-diff-marker-added {
+    background: var(--color-code-syntax-inserted-text);
+  }
+
+  .cm-sbx-diff-marker-removed {
+    background: var(--color-code-syntax-deleted-text);
+  }
+
+  /*
+    Box chrome (background/border/radius) comes from the shared .cm-tooltip rule
+    (tooltips-autocomplete.styles.ts) — only font/layout are set here.
+  */
+  .cm-tooltip-diff {
+    font-family: var(--font-stack-monospace) !important;
+    font-size: var(--font-size-sm) !important;
+    line-height: var(--line-height-code) !important;
+    overflow: hidden;
+    max-inline-size: 32rem;
+  }
+
+  /*
+    Unified-diff header line ("@@ -5,10 +5,12 @@") — visually distinct from the +/- rows below it, muted rather
+    than red/green since it isn't itself a changed line.
+  */
+  .cm-sbx-diff-hunk-header {
+    padding-inline: var(--space-sm);
+    padding-block-end: var(--space-xxs);
+    color: var(--color-fg-muted);
+    white-space: pre;
+  }
+
+  /*
+    Same visual treatment as .cm-diagnostic (lint.styles.ts): a colored inline-start bar with a gradient-tinted
+    background per row.
+  */
+  .cm-sbx-diff-line {
+    display: flex;
+    gap: var(--space-xxs);
+    padding-inline: var(--space-sm);
+    border-inline-start-width: 3px !important;
+    min-block-size: 1lh;
+    white-space: pre;
+  }
+
+  .cm-sbx-diff-line-marker {
+    flex-shrink: 0;
+    inline-size: 1ch;
+    font-weight: var(--font-weight-bold, bold);
+  }
+
+  .cm-sbx-diff-line-removed {
+    border-inline-start-color: var(--color-code-syntax-deleted-text) !important;
+    background-image: linear-gradient(var(--color-code-syntax-deleted-bg), var(--color-code-syntax-deleted-bg));
+    color: var(--color-code-syntax-deleted-text);
+  }
+
+  .cm-sbx-diff-line-added {
+    border-inline-start-color: var(--color-code-syntax-inserted-text) !important;
+    background-image: linear-gradient(var(--color-code-syntax-inserted-bg), var(--color-code-syntax-inserted-bg));
+    color: var(--color-code-syntax-inserted-text);
+  }
+
+  /*
+    Word-level diff (diffLineWords, via highlightRow) — highlights the word(s) that actually changed within a
+    replaced-line pair, layered on top of the row's own add/remove tint.
+  */
+  .cm-sbx-diff-line-removed [data-changed="true"],
+  .cm-sbx-diff-line-added [data-changed="true"] {
+    color: var(--color-code-syntax-changed-text) !important;
+  }
+`;

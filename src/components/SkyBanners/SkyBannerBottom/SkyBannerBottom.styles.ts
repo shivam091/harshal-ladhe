@@ -50,14 +50,22 @@ export const CloudLayersBottom = styled.div`
   margin-block-start: -1px;
 `;
 
-// Wide panoramic cloud SVG; overflows the banner width to prevent edge gaps.
+/*
+  Wide panoramic cloud SVG — overflows the banner width to prevent edge gaps, mirroring
+  CloudShapes' own equivalent in SkyBannerTop.styles.ts (both built from the same artwork). Shrinks
+  to a viewport-relative width on phones so it doesn't push the page's scrollable width out with it.
+*/
 export const CloudShapesBottom = styled.svg`
   display: block;
   margin-block-start: -1px;
   max-inline-size: revert;
-  min-inline-size: 5120px;
+  inline-size: 5120px;
   overflow: visible;
   transform: translateZ(0);
+
+  @media ${BREAKPOINTS.mobile} {
+    inline-size: 670vw;
+  }
 `;
 
 // Background cloud fill — blends to the page background color on theme swap.
