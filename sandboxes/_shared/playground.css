@@ -1,0 +1,375 @@
+/*
+  Shared "playground" chrome reused by every vanilla CSS sandbox in this family: the dark card
+  shell, the demo-area frame, the fieldset/field-grid control layout, and the number/select/button
+  field styling. Import this FIRST, then the sandbox's own styles.css — its rules load after and
+  win the cascade, so a sandbox can still add its own --pg-* variables (accent colors, a different
+  --pg-shadow-sm, etc.) or override any rule here (e.g. .demo-area's overflow).
+
+  Segmented-control/tab styling lives in the sibling segmented-control.css instead, since it's an
+  optional piece only some sandboxes need. Demo-specific elements, keyframes, and any per-sandbox
+  --pg-* additions/overrides stay local to that sandbox's own styles.css.
+*/
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --pg-bg: #0f1220;
+  --pg-surface: #171a2b;
+  --pg-surface-muted: #1d2137;
+  --pg-border: #2a2f45;
+  --pg-text: #e7e9f5;
+  --pg-text-muted: #9297b3;
+  --pg-primary: #818cf8;
+  --pg-primary-dark: #6366f1;
+  --pg-primary-soft: rgba(129, 140, 248, 0.3);
+  --pg-shadow: 0 1.25rem 2.8125rem -0.9375rem rgba(0, 0, 0, 0.6);
+  --pg-shadow-sm: 0 0.5rem 1.25rem -0.5rem rgba(0, 0, 0, 0.5);
+  --pg-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pg-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+body {
+  margin: 0;
+  min-block-size: 100vh;
+  display: flex;
+  justify-content: center;
+  padding-block: 2.5rem;
+  padding-inline: 1rem;
+  background: var(--pg-bg);
+  color: var(--pg-text);
+  font-family: var(--pg-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.playground {
+  inline-size: 100%;
+  max-inline-size: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.75rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  box-shadow: var(--pg-shadow);
+}
+
+.playground-header h1 {
+  margin-block: 0 0.25rem;
+  margin-inline: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--pg-text-muted);
+}
+
+/* Demo area */
+
+.demo-area {
+  position: relative;
+  padding: 1rem;
+  border: 0.0625rem dashed var(--pg-border);
+  background: var(--pg-surface-muted);
+  overflow: auto;
+}
+
+/* Control groups */
+
+fieldset.control-group {
+  min-inline-size: 0;
+  margin: 0;
+  padding-block: 1rem 1.125rem;
+  padding-inline: 1.125rem;
+  border: 0.0625rem solid var(--pg-border);
+}
+
+fieldset.control-group legend {
+  padding-block: 0;
+  padding-inline: 0.375rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
+  font-family: var(--pg-mono);
+}
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11.25rem, 1fr));
+  gap: 0.875rem;
+}
+
+/* Three equal columns instead of the default auto-fit (which only ever fits two at this container width). */
+.fields-grid--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  min-inline-size: 0;
+}
+
+/* Spans every column of the parent .fields-grid, giving a field its own full-width row instead of sharing one with siblings. */
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pg-text-muted);
+}
+
+/*
+  Same look as `.field label`, for a visual label with no single control to attach a real <label>
+  to (e.g. captioning a button group in a JS-framework sandbox, where `aria-label` on the group
+  itself already carries the accessible name) — reach for a real <label for="..."> first whenever
+  one control is what's actually being labeled.
+*/
+.field-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--pg-text-muted);
+}
+
+/* An inline dynamic value or shorthand note inside a label, e.g. `<label>place-items <span>(shorthand)</span></label>`. */
+.field label span {
+  font-family: var(--pg-mono);
+  color: var(--pg-text);
+}
+
+/*
+  Wraps a number input + its unit select (e.g. duration "2" + "s"/"ms") — the wrapper owns the
+  border/background/focus ring instead so the input underneath goes borderless/transparent,
+  keeping both parts looking like one control.
+*/
+.field-input {
+  display: flex;
+  align-items: center;
+  border: 0.0625rem solid var(--pg-border);
+  background: var(--pg-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field-input:focus-within {
+  border-color: var(--pg-primary);
+  box-shadow: 0 0 0 0.1875rem var(--pg-primary-soft);
+}
+
+input[type="number"],
+select {
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: var(--pg-text);
+  background-color: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+select {
+  padding-inline-end: 2.125rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239297b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  background-size: 1rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--pg-primary);
+  box-shadow: 0 0 0 0.1875rem var(--pg-primary-soft);
+}
+
+.field-input input[type="number"] {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.field-input .unit-select {
+  flex: 0 0 auto;
+  inline-size: auto;
+  padding-block: 0.625rem;
+  padding-inline: 0.5rem 1.25rem;
+  font-size: 0.8rem;
+  border: none;
+  background-position: right 0.25rem center;
+  background-size: 0.75rem;
+}
+
+.field-input .unit-select:focus {
+  outline: none;
+  color: var(--pg-text);
+  box-shadow: none;
+}
+
+/* Checkbox field — a single checkbox with its label text (and optionally inline code) on one line. */
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  color: var(--pg-text);
+  cursor: pointer;
+}
+
+.checkbox-field + .checkbox-field {
+  margin-block-start: 0.625rem;
+}
+
+/*
+  appearance: none turns the checkbox itself into the visual box — a custom checkmark is painted
+  as its own background-image (an inline SVG) only once :checked, so no extra wrapper element is
+  needed anywhere this class is already used. A square box + checkmark (vs. the segmented
+  control's round dot) keeps "toggle this on/off" visually distinct from "pick one of these."
+*/
+.checkbox-field input[type="checkbox"] {
+  flex: 0 0 auto;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: var(--pg-surface);
+  border: 0.09375rem solid var(--pg-border);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.checkbox-field input[type="checkbox"]:checked {
+  background-color: var(--pg-primary);
+  border-color: var(--pg-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5L6.5 11.5L12.5 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 0.6875rem;
+}
+
+.checkbox-field input[type="checkbox"]:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.125rem;
+}
+
+.checkbox-field code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+/*
+  Visually hides an element while keeping it in the accessibility tree — for text that only needs
+  to exist for screen readers (e.g. a <label> for an input already described well enough visually
+  by surrounding context, like a placeholder).
+*/
+.sr-only {
+  position: absolute;
+  inline-size: 0.0625rem;
+  block-size: 0.0625rem;
+  padding: 0;
+  margin: -0.0625rem;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Button */
+
+.toggle-btn {
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  border: none;
+  box-shadow: var(--pg-shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.toggle-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-0.0625rem);
+}
+
+.toggle-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.toggle-btn:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.1875rem;
+}
+
+.toggle-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.toggle-btn:disabled:hover {
+  filter: none;
+  transform: none;
+}
+
+@media (max-width: 30rem) {
+  .playground {
+    padding: 1.25rem;
+    gap: 1rem;
+  }
+
+  fieldset.control-group {
+    padding: 0.875rem;
+  }
+
+  /* Fixed 3-column layout has no auto-fit to fall back on, so it needs an explicit mobile override. */
+  .fields-grid--3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.readout {
+  align-self: flex-start;
+  inline-size: 100%;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  font-family: var(--pg-mono);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tip {
+  margin-block: 0.875rem 0;
+  margin-inline: 0;
+  padding-block: 0.5rem;
+  padding-inline: 0.625rem;
+  font-size: 0.8rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+}
