@@ -1,0 +1,49 @@
+"use client";
+
+import type { JSX } from "react";
+import { useSpring } from "@react-spring/web";
+import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
+import { SPRINGS } from "@/constants/springs";
+import defaultAttributes from "@/components/Icon/defaultAttributes";
+import { icons } from "@/icons/icons";
+import type { IconToggleStatus } from "@/hooks/use-toggle-icon-status";
+
+// Props for IconCircleSlash — "clear" glyph that spins 180° per click.
+export interface IconCircleSlashProps {
+  size?: number;
+  status?: IconToggleStatus;
+  // Cumulative rotation target in degrees — the caller increments this by 180 on each click.
+  rotation: number;
+}
+import { RotatingGroup } from "@/icons/styles/IconCircleSlash.styles";
+
+/*
+  Rotation is driven by the caller so every click adds a half turn; the glyph matches the
+  registry entry so its static shape has one source of truth.
+*/
+export default function IconCircleSlash({ size = 16, status = "idle", rotation }: IconCircleSlashProps): JSX.Element {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
+  const spin = useSpring({
+    transform: `rotate(${rotation}deg)`,
+    config: SPRINGS.default,
+    immediate: prefersReducedMotion
+  });
+
+  return (
+    <>
+      <svg
+        {...defaultAttributes}
+        width={size}
+        height={size}
+        fill="none"
+        stroke="currentColor"
+        style={{ overflow: "visible", opacity: status !== "idle" ? 1 : 0.7 }}
+      >
+        <RotatingGroup style={spin}>{icons.circleSlash.children}</RotatingGroup>
+      </svg>
+    </>
+  );
+}
+
+IconCircleSlash.displayName = "IconCircleSlash";
