@@ -1,0 +1,81 @@
+:root {
+  --pg-success: #4ade80;
+  --pg-danger: #fb7185;
+}
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+}
+
+.display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 7.5rem;
+  block-size: 7.5rem;
+  border-radius: 50%;
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  box-shadow: 0 0 0 0.375rem var(--pg-surface-muted), 0 0 0 0.4375rem var(--pg-border);
+}
+
+.count {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--pg-primary);
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 0.625rem;
+}
+
+.btn {
+  padding-block: 0.5rem;
+  padding-inline: 1.125rem;
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: 0.375rem;
+  background: var(--pg-surface);
+  color: var(--pg-text);
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover {
+  background: var(--pg-surface-muted);
+}
+
+.btn--plus,
+.btn--minus {
+  font-size: 1.25rem;
+  font-weight: 700;
+  inline-size: 2.75rem;
+  padding: 0;
+}
+
+.btn--plus {
+  color: var(--pg-success);
+  border-color: var(--pg-success);
+}
+
+.btn--plus:hover {
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.btn--minus {
+  color: var(--pg-danger);
+  border-color: var(--pg-danger);
+}
+
+.btn--minus:hover {
+  background: rgba(251, 113, 133, 0.1);
+}
+
+.btn--reset {
+  font-size: 0.8125rem;
+  color: var(--pg-text-muted);
+}
