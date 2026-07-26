@@ -1,0 +1,87 @@
+/*
+  Min/max-flanked range slider with a floating value bubble tracking the thumb — pair with
+  range-slider.js's positionRangeBubble() to keep the bubble centered as the thumb moves.
+  Markup shape: .range-row > .range-edge, .range-track > (input[type=range] + .range-bubble), .range-edge
+*/
+
+.range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-edge {
+  flex: 0 0 auto;
+  font-family: var(--pg-mono);
+  font-size: 0.7rem;
+  color: var(--pg-text-muted);
+}
+
+.range-track {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-top: 22px;
+}
+
+.range-bubble {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 1px 6px;
+  font-family: var(--pg-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  background: var(--pg-primary-dark);
+  border-radius: 4px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.range-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--pg-primary-dark);
+}
+
+input[type="range"] {
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--pg-border);
+  appearance: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--pg-primary);
+  border: 2px solid var(--pg-surface);
+  box-shadow: var(--pg-shadow-sm);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--pg-border);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--pg-surface);
+  border-radius: 50%;
+  background: var(--pg-primary);
+  box-shadow: var(--pg-shadow-sm);
+  cursor: pointer;
+}
