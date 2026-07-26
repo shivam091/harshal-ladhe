@@ -10,6 +10,23 @@ export const icons = {
       </>
     )
   },
+  alertOctagon: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
+        <line x1="12" y1="8" x2="12" y2="12" />
+        <line x1="12" y1="16" x2="12.01" y2="16" />
+      </>
+    )
+  },
   archive: {
     viewBox: "0 0 24 24",
     children: (
@@ -90,6 +107,22 @@ export const icons = {
         <line x1="9" y1="9" x2="14.5" y2="9" />
         <line x1="9" y1="13" x2="16" y2="13" />
         <line x1="9" y1="17" x2="14" y2="17" />
+      </>
+    )
+  },
+  bookOpen: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M12 7v14" />
+        <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z" />
       </>
     )
   },
@@ -217,6 +250,22 @@ export const icons = {
     children: (
       <>
         <circle cx="12" cy="12" r="12" />
+      </>
+    )
+  },
+  circleSlash: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="22" y1="2" x2="2" y2="22" />
       </>
     )
   },
@@ -370,6 +419,23 @@ export const icons = {
       </>
     )
   },
+  externalLink: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <line x1="10" y1="14" x2="21" y2="3" />
+        <polyline points="14 3 21 3 21 10" />
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+      </>
+    )
+  },
   exclamationTriangle: {
     viewBox: "0 0 24 24",
     children: (
@@ -410,6 +476,36 @@ export const icons = {
     children: (
       <>
         <polyline points="5 12 12 12 19 12" />
+      </>
+    )
+  },
+  folder: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M2.625 1.5 A2.625 2.625 0 0 0 0 4.125 V19.875 C0 21.324 1.176 22.5 2.625 22.5 H21.375 A2.625 2.625 0 0 0 24 19.875 V7.125 A2.625 2.625 0 0 0 21.375 4.5 H11.25 A0.375 0.375 0 0 1 10.95 4.35 L9.6 2.55 C9.105 1.89 8.325 1.5 7.5 1.5 H2.625 Z" />
+      </>
+    )
+  },
+  folderOpen: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M0.7695 2.2695 A2.625 2.625 0 0 1 2.625 1.5 H7.875 C8.7 1.5 9.48 1.89 9.975 2.55 L11.325 4.35 A0.375 0.375 0 0 0 11.625 4.5 H19.5 A1.5 1.5 0 0 1 21 6 V6.75 H4.125 A1.125 1.125 0 0 0 4.125 9 H22.092 A1.5 1.5 0 0 1 23.583 10.6755 L22.5 19.875 A2.625 2.625 0 0 1 19.875 22.5 H2.625 A2.625 2.625 0 0 1 0 19.875 V4.125 C0 3.429 0.276 2.76 0.7695 2.2695 Z" />
       </>
     )
   },
@@ -468,6 +564,26 @@ export const icons = {
       </>
     )
   },
+  indentGuides: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <line x1="4" y1="4" x2="4" y2="20" strokeDasharray="2 2" />
+        <line x1="10" y1="8" x2="10" y2="20" strokeDasharray="2 2" />
+        <line x1="16" y1="12" x2="16" y2="20" strokeDasharray="2 2" />
+        <line x1="4" y1="4" x2="8" y2="4" />
+        <line x1="10" y1="8" x2="14" y2="8" />
+        <line x1="16" y1="12" x2="20" y2="12" />
+      </>
+    )
+  },
   home: {
     viewBox: "0 0 24 24",
     children: (
@@ -507,6 +623,14 @@ export const icons = {
         <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
         <circle cx="12" cy="12" r="4" />
         <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+      </>
+    )
+  },
+  keyboard: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M6.21,13.29a.93.93,0,0,0-.33-.21,1,1,0,0,0-.76,0,.9.9,0,0,0-.54.54,1,1,0,1,0,1.84,0A1,1,0,0,0,6.21,13.29ZM13.5,11h1a1,1,0,0,0,0-2h-1a1,1,0,0,0,0,2Zm-4,0h1a1,1,0,0,0,0-2h-1a1,1,0,0,0,0,2Zm-3-2h-1a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2ZM20,5H4A3,3,0,0,0,1,8v8a3,3,0,0,0,3,3H20a3,3,0,0,0,3-3V8A3,3,0,0,0,20,5Zm1,11a1,1,0,0,1-1,1H4a1,1,0,0,1-1-1V8A1,1,0,0,1,4,7H20a1,1,0,0,1,1,1Zm-6-3H9a1,1,0,0,0,0,2h6a1,1,0,0,0,0-2Zm3.5-4h-1a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm.71,4.29a1,1,0,0,0-.33-.21,1,1,0,0,0-.76,0,.93.93,0,0,0-.33.21,1,1,0,0,0-.21.33A1,1,0,1,0,19.5,14a.84.84,0,0,0-.08-.38A1,1,0,0,0,19.21,13.29Z" />
       </>
     )
   },
@@ -591,6 +715,23 @@ export const icons = {
       </>
     )
   },
+  pilcrow: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M13 4v16" />
+        <path d="M17 4v16" />
+        <path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13" />
+      </>
+    )
+  },
   plus: {
     viewBox: "0 0 24 24",
     svgProps: {
@@ -604,6 +745,24 @@ export const icons = {
       <>
         <line x1="6" y1="12" x2="18" y2="12" />
         <line x1="12" y1="18" x2="12" y2="6" />
+      </>
+    )
+  },
+  refresh: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+        <path d="M21 3v5h-5" />
+        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+        <path d="M8 16H3v5" />
       </>
     )
   },
