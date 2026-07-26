@@ -27,6 +27,7 @@ export const SOFT_DARK_COLORS_RAW: ColorMapRaw = {
   // Foregrounds
   colorFgDefault:            [216, 19,  85],
   colorFgMuted:              [214, 8,   60],
+  colorFgFaint:              [214, 8,   46],
   colorFgNeutral:            [214, 8,   60],
   colorFgOnEmphasis:         [210, 67,  96],
   colorFgLink:               [214, 76,  59],
