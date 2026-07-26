@@ -1,0 +1,54 @@
+/*
+  Small inline SVGs for the custom search panel, goto-line card, fold gutter, and breadcrumb bar —
+  plain DOM, so the app's react-spring icon components (which need a mounted React tree per icon,
+  and never unmount it once superseded) don't apply here.
+*/
+const ICON_ATTRIBUTES: Record<string, string> = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  stroke: "currentColor",
+  "stroke-width": "2",
+  "stroke-linecap": "round",
+  "stroke-linejoin": "round"
+};
+
+function createSvg(innerHtml: string, size: number): SVGSVGElement {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  for (const [name, value] of Object.entries(ICON_ATTRIBUTES)) {
+    svg.setAttribute(name, value);
+  }
+  svg.setAttribute("width", String(size));
+  svg.setAttribute("height", String(size));
+  svg.style.display = "block";
+  svg.innerHTML = innerHtml;
+  return svg;
+}
+
+// Same polyline coordinates as IconChevronDown's morph targets, for a pixel-consistent chevron.
+const CHEVRON_POINTS: Record<"up" | "down", string> = {
+  up: "6 14 12 8 18 14",
+  down: "6 10 12 16 18 10"
+};
+
+// Previous/next-match nav buttons in the search panel.
+export function createChevronIcon(direction: "up" | "down", size = 14): SVGSVGElement {
+  return createSvg(`<polyline points="${CHEVRON_POINTS[direction]}" />`, size);
+}
+
+// Close control shared by the search panel and the goto-line card.
+export function createCloseIcon(size = 14): SVGSVGElement {
+  return createSvg(
+    `<line x1="6" y1="6" x2="18" y2="18" /><line x1="18" y1="6" x2="6" y2="18" />`,
+    size
+  );
+}
+
+// Fold gutter's collapsed marker and the breadcrumb bar's "›" separator — same geometry as the registry's "chevronRight" icon.
+export function createChevronRightIcon(size = 14): SVGSVGElement {
+  return createSvg(`<polyline points="9 18 15 12 9 6" />`, size);
+}
+
+// Fold gutter's expanded marker — same geometry as the registry's "chevronDown" icon.
+export function createChevronDownIcon(size = 14): SVGSVGElement {
+  return createSvg(`<polyline points="6 10 12 16 18 10" />`, size);
+}
