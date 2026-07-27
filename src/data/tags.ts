@@ -159,4 +159,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "JavaScript Classes",
     description: "Working with JavaScript classes, from constructors and methods to private fields and static members."
   },
+  "responsive-design": {
+    title: "Responsive Design Techniques",
+    description: "Building layouts, type, and spacing that adapt smoothly to every screen size, from small phones to wide desktops."
+  },
+  "holy-grail-layout": {
+    title: "The Holy Grail Layout",
+    description: "Building the classic header, footer, and three-column Holy Grail layout with modern CSS Grid."
+  },
 };
