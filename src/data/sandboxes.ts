@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "holy-grail-layout",
+    title: "Holy Grail Layout",
+    description: "Header, two sidebars, main content, and footer — CSS Grid template areas with a responsive mobile stack.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "todo-list",
     title: "Todo List",
     description: "Add, toggle, and remove todos — TypeScript generics, useState with arrays.",
