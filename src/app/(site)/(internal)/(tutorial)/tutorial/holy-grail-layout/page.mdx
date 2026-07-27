@@ -1,0 +1,182 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("holy-grail-layout");
+
+## Introduction
+
+The **Holy Grail layout** is a classic web design pattern consisting of a header, three columns (sidebar, main content, sidebar), and a footer. Historically, this layout was difficult to achieve with floats or early flexbox techniques without structural hacks.
+
+CSS Grid makes this pattern straightforward — providing a **clear, semantic, and responsive** solution with minimal code.
+
+<RainbowDivider />
+
+## The Grid Snippet
+
+<CodeBlock language="css">
+{`
+  :root {
+    --sidebar-width: 200px;
+    --layout-gap: 0;
+  }
+
+  .holy-grail-wrapper {
+    display: grid;
+    grid-template-areas:
+      "header header header"
+      "nav main side"
+      "footer footer footer";
+    grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
+    grid-template-rows: auto 1fr auto;
+    min-height: 100vh;
+    gap: var(--layout-gap);
+  }
+
+  header {
+    grid-area: header;
+  }
+
+  nav {
+    grid-area: nav;
+  }
+
+  main {
+    grid-area: main;
+  }
+
+  aside {
+    grid-area: side;
+  }
+
+  footer {
+    grid-area: footer;
+  }
+
+  /* Mobile Responsive */
+  @media (max-width: 768px) {
+    .holy-grail-wrapper {
+      grid-template-areas:
+        "header"
+        "main"
+        "nav"
+        "side"
+        "footer";
+      grid-template-columns: 1fr;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Minimal HTML Structure
+
+Only the wrapper requires a class. All layout positioning is handled by semantic elements.
+
+<CodeBlock language="html">
+{`
+  <div class="holy-grail-wrapper">
+    <header>Header</header>
+    <nav>Navigation</nav>
+    <main>Main Content</main>
+    <aside>Right Sidebar</aside>
+    <footer>Footer</footer>
+  </div>
+`}
+</CodeBlock>
+
+This keeps the markup clean and readable while allowing CSS Grid to control layout independently of source order.
+
+<Sandbox slug="holy-grail-layout" />
+
+<RainbowDivider />
+
+## Highlights
+
+- **Semantic naming:** `grid-template-areas` acts as a visual blueprint for the layout.
+- **Sticky footer:** `min-height: 100vh` combined with a `1fr` row pushes the footer to the bottom.
+- **Ultra-responsive:** Mobile layout is achieved by remapping areas — no DOM changes required.
+- **Configurable:** Sidebar widths are controlled via CSS variables.
+
+<RainbowDivider />
+
+## Customization Tips
+
+### Adjust Sidebar Width
+
+<CodeBlock language="css">
+{`
+  :root {
+    --sidebar-width: 240px;
+  }
+`}
+</CodeBlock>
+
+### Remove the Right Sidebar
+
+- Remove the `<aside>` element
+- Update the grid areas:
+
+<CodeBlock language="css">
+{`
+  .holy-grail-wrapper {
+    grid-template-areas:
+      "header header"
+      "nav main"
+      "footer footer";
+    grid-template-columns: var(--sidebar-width) 1fr;
+  }
+`}
+</CodeBlock>
+
+### Make a Sidebar Sticky
+
+<CodeBlock language="css">
+{`
+  nav {
+    position: sticky;
+    top: 0;
+    align-self: start;
+  }
+`}
+</CodeBlock>
+
+### Change Mobile Order
+
+Simply rearrange the `grid-template-areas` inside the media query.
+
+## Accessibility Notes
+
+- Semantic elements (`header`, `nav`, `main`, `aside`, `footer`) provide meaningful landmarks for assistive technologies.
+- Ensure the **source order matches the logical reading order**, even if the visual layout changes.
+- Avoid unnecessary ARIA roles when semantic elements already convey meaning.
+
+<RainbowDivider />
+
+## Common Variations
+
+- **Two-column layout:** Remove the right sidebar for blogs and docs.
+- **Dashboard layout:** Left nav + main + utility rail.
+- **Content-first mobile:** Stack `main` immediately below `header`.
+- **Ad rail:** Replace `aside` with promotional or analytics content.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Dashboard UIs:** Left nav, center data, right-side filters.
+- **Blog Layouts:** Main article with a sidebar for categories and another for ads.
+- **Documentation Sites:** Header navigation with a sticky table of contents.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+This Grid-based Holy Grail layout is:
+
+- Modern and hack-free
+- Easy to reason about
+- Fully responsive
+- Accessible by default
+- Flexible enough for real-world UI systems
+
+Use it as a **layout foundation**, then adapt it via grid areas rather than restructuring your markup.
