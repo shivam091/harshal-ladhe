@@ -1,0 +1,114 @@
+/* CSS Reset (Lightweight) */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  line-height: 1.6;
+  background: #0f172a; /* slate-900 */
+  color: #0f172a;
+}
+
+/* Design Tokens */
+:root {
+  --sidebar-width: 13.75rem;
+  --layout-gap: 1rem;
+
+  --color-header: #6366f1; /* indigo */
+  --color-nav: #22c55e; /* green */
+  --color-main: #f8fafc; /* slate-50 */
+  --color-aside: #f59e0b; /* amber */
+  --color-footer: #0ea5e9; /* sky */
+
+  --radius: 0.75rem;
+  --shadow: 0 0.625rem 1.5625rem rgba(0, 0, 0, 0.15);
+}
+
+/* Holy Grail Grid */
+.holy-grail-wrapper {
+  display: grid;
+  grid-template-areas:
+    "header header header"
+    "nav main side"
+    "footer footer footer";
+  grid-template-columns: var(--sidebar-width) 1fr var(--sidebar-width);
+  grid-template-rows: auto 1fr auto;
+
+  min-block-size: 100vh;
+  gap: var(--layout-gap);
+  padding: var(--layout-gap);
+}
+
+/* Layout Regions */
+header,
+nav,
+main,
+aside,
+footer {
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* Header */
+header {
+  grid-area: header;
+  background: var(--color-header);
+  font-weight: 500;
+}
+
+/* Navigation */
+nav {
+  grid-area: nav;
+  background: var(--color-nav);
+  color: #052e16;
+  font-weight: 500;
+}
+
+/* Main Content */
+main {
+  grid-area: main;
+  background: var(--color-main);
+}
+
+main h1 {
+  margin-block-start: 0;
+}
+
+/* Right Sidebar */
+aside {
+  grid-area: side;
+  background: var(--color-aside);
+  color: #451a03;
+  font-weight: 500;
+}
+
+/* Footer */
+footer {
+  grid-area: footer;
+  background: var(--color-footer);
+  color: #082f49;
+  font-weight: 500;
+}
+
+/* Mobile Layout */
+@media (max-width: 48rem) {
+  .holy-grail-wrapper {
+    grid-template-areas:
+      "header"
+      "main"
+      "nav"
+      "side"
+      "footer";
+    grid-template-columns: 1fr;
+  }
+}
