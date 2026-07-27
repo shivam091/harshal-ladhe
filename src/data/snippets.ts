@@ -78,7 +78,7 @@ export const snippets: Snippet[] = [
     },
     changelog: [
       { date: "2026-07-12", change: "Initial publication" }
-    ],
+    ]
   },
   {
     slug: "encapsulation-closure",
@@ -105,7 +105,7 @@ export const snippets: Snippet[] = [
     },
     changelog: [
       { date: "2026-07-12", change: "Initial publication." }
-    ],
+    ]
   },
   {
     slug: "encapsulation-private-class-fields",
@@ -123,7 +123,31 @@ export const snippets: Snippet[] = [
     },
     changelog: [
       { date: "2026-07-12", change: "Initial publication." }
+    ]
+  },
+  {
+    slug: "holy-grail-layout",
+    title: "The Holy Grail Layout (Grid Edition)",
+    excerpt: "A responsive Holy Grail layout built with CSS Grid and grid-template-areas — no floats, no hacks.",
+    description: "Build the classic Holy Grail layout using modern CSS Grid — a clean, responsive header, sidebars, main content, and footer without floats or layout hacks.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "css-grid",
+      "layout",
+      "responsive-design",
+      "web-design",
+      "holy-grail-layout",
     ],
+    image: {
+      path: "/assets/img/goodies/snippets/holy-grail-layout/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Diagram showing a webpage layout with header, footer, two sidebars, and a center content area.",
+    },
+    changelog: [
+      { date: "2026-07-27", change: "Initial publication" }
+    ]
   }
 ];
 
