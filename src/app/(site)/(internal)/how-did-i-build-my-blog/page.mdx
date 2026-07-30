@@ -277,11 +277,48 @@ Accessibility isn't an afterthought here — it's baked into the component desig
 
 ## Data: MongoDB
 
-Most of this site is static, but a few features need to persist data between visits — view counts, and contact-form submissions. For that I reach for **MongoDB**.
+Most of this site is static, but a few features need to persist data between visits — view counts, likes, and contact-form submissions. For that I reach for **MongoDB**.
 
-A document database is a natural fit here. The shapes I'm storing are small and loosely related — a view counter keyed by post, a contact message with a timestamp — and a schema-less, JSON-native model means I can evolve those shapes without migrations getting in the way. There's no relational complexity to justify the ceremony of a SQL schema.
+A document database is a natural fit here. The shapes I'm storing are small and loosely related — a view counter keyed by post, a like counter keyed by post, a contact message with a timestamp — and a schema-less, JSON-native model means I can evolve those shapes without migrations getting in the way. There's no relational complexity to justify the ceremony of a SQL schema.
 
 All of this lives on the server side, so the database credentials never touch the browser. What gets stored, and for how long, is spelled out on the [Privacy Policy](/privacy-policy) page.
+
+---
+
+## The Like Button
+
+Every post, snippet, and series entry has a small animated heart living in the sidebar — or floating nearby on pages with no sidebar to sit in. It's not just a static icon: click it and the heart fills in, bounces, bursts into a handful of emoji confetti, and a little "Thanks for the love! ❤️" bubble floats upward and fades out. Click an already-liked heart and it still bounces for you, just with a gentler "You already liked this! 💛" instead.
+
+Go ahead and try it — this one's a demo, wired up to nothing but local component state, so it won't touch this post's real count:
+
+<LikeButtonDemo />
+
+The interactive personality is built entirely from scratch:
+
+- **The heart leans away from your cursor** as it gets close, and its eyes track the pointer — pure geometry (angle to cursor, clamped displacement) feeding a `@react-spring/web` rotation and eye-translation. No mouse-tracking library, just `atan2` and a bit of trigonometry doing the heavy lifting.
+- **Confetti on success** — a burst of ❤️💖✨💕🎉 characters fly outward with per-particle randomized spring physics (distance, rotation, mass all vary), then fade and get swept up by a garbage-collection interval. No image sprite sheet required — the "sprites" are just emoji.
+- **The count is real**, stored in MongoDB the same way page views are: one document per post, keyed by its slug.
+
+Since there's no login system on this blog, "one like per visitor" is enforced the same way the view counter avoids double-counting a refresh: a hashed IP address, backed by a MongoDB unique index that makes the *first* like for a given (post, visitor) pair succeed and every later one fail outright. No separate "have they already liked this?" check is needed — the database itself enforces it by rejecting the duplicate:
+
+<CodeBlock language="ts" showCopyButton={false}>
+{`
+  await db.collection("page_like_seen").insertOne({ slug, ipHash, at: new Date() });
+  // A duplicate (slug, ipHash) pair throws a Mongo error (code 11000) instead of
+  // inserting — that failure *is* the "already liked" signal.
+`}
+</CodeBlock>
+
+<Info title="A small confession">
+  Yes, I'm aware: clear your `localStorage`, switch from Wi-Fi to mobile data,
+  and you can technically like a post more than once. Building a bulletproof
+  "exactly one like, ever, from one human" system would need actual accounts —
+  which felt like a wild overcorrection for a heart that bursts into confetti
+  emoji. So consider it less of a bug and more of a speedrun category: if
+  you've ever cleared your storage and hopped networks purely to like one of my
+  posts twice, I am simultaneously flattered and mildly concerned about you.
+  Thank you for your dedication.
+</Info>
 
 ---
 
