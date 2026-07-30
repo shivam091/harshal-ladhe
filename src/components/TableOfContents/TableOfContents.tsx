@@ -15,6 +15,8 @@ import {
 /*
   Sticky sidebar navigation for post pages: lists the post's headings, highlights the section
   currently in view, and smooth-scrolls to a section on click. Renders nothing if the post has no headings.
+  LikeButton is a sibling of this component (rendered by the post layout, not here) so it stays
+  visible even on posts with no headings, where this component renders null.
 */
 export default function TableOfContents({ maxLevel = 3 }: TableOfContentsProps): JSX.Element | null {
   // Drives the fade/slide-in entrance animation — false during SSR, flipped true after hydration.

@@ -4,13 +4,15 @@ import { PublishedAt, LastModifiedAt, ContentDates } from "@/components/ContentD
 import MDXHeadingAnchor from "@/components/MDXHeadingAnchor";
 import CoreStack from "@/app/(site)/(internal)/how-did-i-build-my-blog/CoreStack";
 import SocialLinks from "@/components/SocialLinks";
-import PostSignOff from "@/components/SignOff/PostSignOff";
+import PageSignOff from "@/components/SignOff/PageSignOff";
 import CodeBlock from "@/components/CodeBlock";
 import SnippetMeta from "@/components/SnippetMeta";
 import PostMeta from "@/components/PostMeta";
 import Details from "@/components/Details";
 import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/Aside";
 import Sandbox from "@/components/Sandbox";
+import LikeButtonDemo from "@/components/LikeButtonDemo";
+import RainbowDivider from "@/components/RainbowDivider";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -26,7 +28,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ContentDates,
     CoreStack,
     SocialLinks,
-    PostSignOff,
+    PageSignOff,
     CodeBlock,
     SnippetMeta,
     PostMeta,
@@ -37,6 +39,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Quote: AsideQuote,
     a: MDXLink,
     Sandbox,
+    LikeButtonDemo,
+    RainbowDivider,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
