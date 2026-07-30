@@ -1,8 +1,8 @@
 "use client";
 
-import { JSX, ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 import { usePathname, notFound } from "next/navigation";
-import PostSignOff from "@/components/SignOff/PostSignOff";
+import PageSignOff from "@/components/SignOff/PageSignOff";
 import PageNavigation from "@/components/PageNavigation";
 import Categories from "@/components/Categories";
 import Tags from "@/components/Tags";
@@ -13,11 +13,14 @@ import { inlineMarkdownToHtml } from "@/utils/markdown";
 import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { PageMetaSecondary } from "@/components/PageMeta/PageMeta.styles";
 import { getPostBySlug, getPostNavigation } from "@/data/posts";
+import { getPostUrl } from "@/utils/post-url";
 import { getSeriesForPost } from "@/data/series";
 import { getRelatedPosts } from "@/lib/related-posts";
 import RelatedPosts from "@/app/(site)/(internal)/(post)/RelatedPosts";
 import HitCounter from "@/components/HitCounter";
 import TableOfContents from "@/components/TableOfContents";
+import LikeButton from "@/components/LikeButton";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Article,
   PostHeader,
@@ -35,7 +38,13 @@ import SeriesPostNav from "@/app/(site)/(internal)/(series)/SeriesPostNav";
 */
 export default function PostLayout({ children }: { children: ReactNode }): JSX.Element {
   const pathname = usePathname();
-  const slug = pathname.replace(/^\/post\//, "").replace(/\/$/, "");
+  const slug = pathname.replace(/^\/post\/[^/]+\//, "").replace(/\/$/, "");
+
+  /*
+    Checked here rather than inside the table of contents, so the like button isn't hidden along
+    with the TOC on posts with no headings; same threshold the TOC collapses at.
+  */
+  const isTOCCollapsed = useMediaQuery("(width <= 64rem)");
 
   const post = getPostBySlug(slug);
   if (!post) notFound();
@@ -58,11 +67,12 @@ export default function PostLayout({ children }: { children: ReactNode }): JSX.E
           {post.toc?.show !== false && (
             <PostTOC>
               <TableOfContents maxLevel={post.toc?.maxLevel ?? 3} />
+              <LikeButton floating={isTOCCollapsed} />
             </PostTOC>
           )}
         </PostGrid>
 
-        <PostSignOff metadata={post} />
+        <PageSignOff showText metadata={post} />
 
         {series && <SeriesPostNav series={series} />}
 
@@ -86,8 +96,8 @@ export default function PostLayout({ children }: { children: ReactNode }): JSX.E
         ariaLabel="Post navigation"
         previousLabel="Older"
         nextLabel="Newer"
-        previous={previous ? { href: `/post/${previous.slug}`, title: previous.title } : null}
-        next={next ? { href: `/post/${next.slug}`, title: next.title } : null}
+        previous={previous ? { href: getPostUrl(previous), title: previous.title } : null}
+        next={next ? { href: getPostUrl(next), title: next.title } : null}
       />
     </>
   );
