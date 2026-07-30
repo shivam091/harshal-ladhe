@@ -1,6 +1,6 @@
 "use client";
 
-import { JSX, ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 import { usePathname, notFound } from "next/navigation";
 import PageSignOff from "@/components/SignOff/PageSignOff";
 import PageNavigation from "@/components/PageNavigation";
@@ -13,6 +13,8 @@ import { inlineMarkdownToHtml } from "@/utils/markdown";
 import { PageMetaSecondary } from "@/components/PageMeta/PageMeta.styles";
 import { getSnippetBySlug, getSnippetNavigation } from "@/data/snippets";
 import HitCounter from "@/components/HitCounter";
+import LikeButton from "@/components/LikeButton";
+import { ExternalLinkIcon } from "@/components/Icon";
 import { siteConfig } from "@/config/site";
 import {
   Article,
@@ -68,6 +70,8 @@ export default function SnippetLayout({ children }: { children: ReactNode }): JS
         <ContentFooter title={snippet.title} contentLabel="snippet" />
 
         {siteConfig.hitCounter && <HitCounter />}
+
+        <LikeButton floating />
 
         <PageNavigation
           ariaLabel="Snippet navigation"
