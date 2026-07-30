@@ -12,6 +12,7 @@ import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
 import { PageMetaSecondary } from "@/components/PageMeta/PageMeta.styles";
 import HitCounter from "@/components/HitCounter";
+import LikeButton from "@/components/LikeButton";
 import IconExternalLink from "@/icons/IconExternalLink";
 import { useToggleIconStatus } from "@/hooks/use-toggle-icon-status";
 import { siteConfig } from "@/config/site";
@@ -79,6 +80,8 @@ export default function ContentLayout({
         <ContentFooter title={entry.title} contentLabel={routeSegment} />
 
         {siteConfig.hitCounter && <HitCounter />}
+
+        <LikeButton floating />
 
         <PageNavigation
           ariaLabel={`${label} navigation`}

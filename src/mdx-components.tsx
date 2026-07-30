@@ -11,6 +11,7 @@ import PostMeta from "@/components/PostMeta";
 import Details from "@/components/Details";
 import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/Aside";
 import Sandbox from "@/components/Sandbox";
+import LikeButtonDemo from "@/components/LikeButtonDemo";
 import RainbowDivider from "@/components/RainbowDivider";
 import GridAnatomyDiagram from "@/components/mdx/GridAnatomyDiagram";
 import GridAreasDiagram from "@/components/mdx/GridAreasDiagram";
@@ -50,6 +51,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Quote: AsideQuote,
     a: MDXLink,
     Sandbox,
+    LikeButtonDemo,
     RainbowDivider,
     GridAnatomyDiagram,
     GridAreasDiagram,
