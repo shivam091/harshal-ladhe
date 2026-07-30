@@ -45,10 +45,13 @@ export const PostGrid = styled.div`
   }
 `;
 
-// min-inline-size: 0 lets wide content scroll inside the column instead of stretching the grid.
+/*
+  min-inline-size: 0 lets wide content scroll inside the column instead of stretching the grid.
+  No overflow-inline: hidden — even that alone makes this a scroll container, which would hijack
+  descendant `animation-timeline: view()` reveals away from the page scroller.
+*/
 export const PostContent = styled.div`
   grid-area: post-content;
-  overflow-inline: hidden;
   min-inline-size: 0;
   container-type: inline-size;
   user-select: none;
@@ -59,18 +62,25 @@ export const PostContent = styled.div`
   }
 `;
 
-// Sticky so the table of contents stays in reach while reading; collapses where there's no room.
+/*
+  A flex column rather than a scroller so only the heading list scrolls, keeping the like
+  button pinned below it always visible. Below the collapse breakpoint it just drops its sticky
+  positioning, since the like button styles its own floating mode.
+*/
 export const PostTOC = styled.aside`
   grid-area: toc;
+  display: flex;
+  flex-direction: column;
   position: sticky;
   inset-block-start: calc(5rem + 1.5rem);
   max-block-size: calc(100vh - 5rem - 1.5rem);
   padding-inline: 0.5rem;
   align-self: start;
-  overflow-block: auto;
 
   @media (width <= 64rem) {
-    display: none;
+    position: static;
+    max-block-size: none;
+    padding-inline: 0;
   }
 `;
 
