@@ -48,10 +48,15 @@ export const PostGrid = styled.div`
   }
 `;
 
-// MDX body — prose lives here with PostMeta at the very top (injected by remark-post-meta).
+/*
+  MDX body — prose lives here with PostMeta at the very top (injected by remark-post-meta).
+  No overflow-inline: hidden here — even overflow-inline alone makes this a CSS scroll container,
+  which hijacks any descendant `animation-timeline: view()` (e.g. RainbowDivider) away from the
+  page scroller, breaking its scroll-linked reveal. CodeBlock/Sandbox already clip and scroll
+  themselves, so nothing in the post body relies on this container to hide horizontal overflow.
+*/
 export const PostContent = styled.div`
   grid-area: post-content;
-  overflow-inline: hidden;
   min-inline-size: 0;
   container-type: inline-size;
   user-select: none;
@@ -62,18 +67,32 @@ export const PostContent = styled.div`
   }
 `;
 
-// Sticky sidebar slot for the table of contents; collapses on small screens.
+/*
+  Sticky sidebar slot for the table of contents. It's a flex column (rather than
+  giving itself overflow-block:auto) so its child TocWrapper can put the scrolling
+  on just the heading list — see TocScrollRegion — while LikeButton, pinned below
+  that scroll region, always stays visible instead of scrolling out of view.
+
+  Below the collapse breakpoint the heading list itself is hidden (see
+  TocTitle/TocList) and LikeButton switches to its own floating-pill mode (see
+  TableOfContents' useMediaQuery call and LikeButton's `floating` prop), so this
+  sidebar just neutralizes its own sticky positioning rather than styling a pill
+  itself — that styling has a single source of truth in LikeButton's own folder.
+*/
 export const PostTOC = styled.aside`
   grid-area: toc;
+  display: flex;
+  flex-direction: column;
   position: sticky;
   inset-block-start: calc(5rem + 1.5rem);
   max-block-size: calc(100vh - 5rem - 1.5rem);
   padding-inline: 0.5rem;
   align-self: start;
-  overflow-block: auto;
 
   @media (width <= 64rem) {
-    display: none;
+    position: static;
+    max-block-size: none;
+    padding-inline: 0;
   }
 `;
 
