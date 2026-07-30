@@ -13,6 +13,7 @@ import { inlineMarkdownToHtml } from "@/utils/markdown";
 import { PageMetaSecondary } from "@/components/PageMeta/PageMeta.styles";
 import { getSnippetBySlug, getSnippetNavigation } from "@/data/snippets";
 import HitCounter from "@/components/HitCounter";
+import LikeButton from "@/components/LikeButton";
 import { siteConfig } from "@/config/site";
 import {
   Article,
@@ -61,6 +62,8 @@ export default function SnippetLayout({ children }: { children: ReactNode }): JS
         <ContentFooter title={snippet.title} contentLabel="snippet" />
 
         {siteConfig.hitCounter && <HitCounter />}
+
+        <LikeButton floating />
 
         <PageNavigation
           ariaLabel="Snippet navigation"
