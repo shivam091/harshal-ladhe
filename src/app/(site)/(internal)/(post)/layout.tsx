@@ -19,6 +19,8 @@ import { getPublishedDate, getRelatedPosts } from "@/lib/related-entries";
 import RelatedContent from "@/components/RelatedContent";
 import HitCounter from "@/components/HitCounter";
 import TableOfContents from "@/components/TableOfContents";
+import LikeButton from "@/components/LikeButton";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Article,
   PostHeader,
@@ -37,6 +39,12 @@ import SeriesPostNav from "@/app/(site)/(internal)/(series)/SeriesPostNav";
 export default function PostLayout({ children }: { children: ReactNode }): JSX.Element {
   const pathname = usePathname();
   const slug = pathname.replace(/^\/post\/[^/]+\//, "").replace(/\/$/, "");
+
+  /*
+    Checked here rather than inside the table of contents, so the like button isn't hidden along
+    with the TOC on posts with no headings; same threshold the TOC collapses at.
+  */
+  const isTOCCollapsed = useMediaQuery("(width <= 64rem)");
 
   const post = getPostBySlug(slug);
   if (!post) notFound();
@@ -59,6 +67,7 @@ export default function PostLayout({ children }: { children: ReactNode }): JSX.E
           {post.toc?.show !== false && (
             <PostTOC>
               <TableOfContents maxLevel={post.toc?.maxLevel ?? 3} />
+              <LikeButton floating={isTOCCollapsed} />
             </PostTOC>
           )}
         </PostGrid>
