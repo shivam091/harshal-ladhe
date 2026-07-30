@@ -1,17 +1,18 @@
 "use client";
 
-import { JSX } from "react";
+import type { JSX } from "react";
 import { usePathname, notFound } from "next/navigation";
 import PageSignOff from "@/components/SignOff/PageSignOff";
 import Changelog from "@/components/Changelog";
 import PageNavigation from "@/components/PageNavigation";
 import HitCounter from "@/components/HitCounter";
+import LikeButton from "@/components/LikeButton";
 import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
 import { getSeriesBySlug, getSeriesNavigation, getSeriesPosts } from "@/data/series";
 import SeriesPartList from "@/app/(site)/(internal)/(series)/SeriesPartList";
 import { siteConfig } from "@/config/site";
-import { SeriesDetailLayoutClientProps } from "@/interfaces/series";
+import type { SeriesDetailLayoutClientProps } from "@/interfaces/series";
 import {
   Article,
   SeriesHeader,
@@ -76,6 +77,8 @@ export default function SeriesDetailLayoutClient({ children, readingMinutesBySlu
         <Changelog entries={series.changelog ?? []} />
 
         {siteConfig.hitCounter && <HitCounter />}
+
+        <LikeButton floating />
       </Article>
     </>
   );
