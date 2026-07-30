@@ -19,5 +19,10 @@ export const SPRINGS = {
   quick: {
     tension: 300,
     friction: 20,
+  },
+  // Extremely stiff + heavily damped → tracks a fast-moving input (e.g. the cursor) with almost no lag or overshoot.
+  fast: {
+    tension: 1270,
+    friction: 200,
   }
 };

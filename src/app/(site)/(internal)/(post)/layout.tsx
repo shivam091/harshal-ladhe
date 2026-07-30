@@ -2,7 +2,7 @@
 
 import { JSX, ReactNode } from "react";
 import { usePathname, notFound } from "next/navigation";
-import PostSignOff from "@/components/SignOff/PostSignOff";
+import PageSignOff from "@/components/SignOff/PageSignOff";
 import PageNavigation from "@/components/PageNavigation";
 import Categories from "@/components/Categories";
 import Tags from "@/components/Tags";
@@ -19,6 +19,8 @@ import { getRelatedPosts } from "@/lib/related-posts";
 import RelatedPosts from "@/app/(site)/(internal)/(post)/RelatedPosts";
 import HitCounter from "@/components/HitCounter";
 import TableOfContents from "@/components/TableOfContents";
+import LikeButton from "@/components/LikeButton";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Article,
   PostHeader,
@@ -38,6 +40,14 @@ import {
 export default function PostLayout({ children }: { children: ReactNode }): JSX.Element {
   const pathname = usePathname();
   const slug = pathname.replace(/^\/post\//, "").replace(/\/$/, "");
+
+  /*
+    Below this breakpoint LikeButton switches to its own floating-pill mode —
+    same threshold PostGrid/TableOfContents collapse at. Computed here (not in
+    TableOfContents) so LikeButton isn't nested inside — and therefore isn't
+    hidden along with — the TOC when a post has no headings to list.
+  */
+  const isTOCCollapsed = useMediaQuery("(width <= 64rem)");
 
   const post = getPostBySlug(slug);
   if (!post) notFound();
@@ -60,11 +70,12 @@ export default function PostLayout({ children }: { children: ReactNode }): JSX.E
           {post.toc?.show !== false && (
             <PostTOC>
               <TableOfContents maxLevel={post.toc?.maxLevel ?? 3} />
+              <LikeButton floating={isTOCCollapsed} />
             </PostTOC>
           )}
         </PostGrid>
 
-        <PostSignOff metadata={post} />
+        <PageSignOff showText metadata={post} />
 
         {series && <SeriesPostNav series={series} />}
 
