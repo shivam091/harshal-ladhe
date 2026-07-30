@@ -6,6 +6,7 @@ import PageSignOff from "@/components/SignOff/PageSignOff";
 import Changelog from "@/components/Changelog";
 import PageNavigation from "@/components/PageNavigation";
 import HitCounter from "@/components/HitCounter";
+import LikeButton from "@/components/LikeButton";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import Tooltip from "@/components/Tooltip";
 import { CalendarIcon, HistoryIcon, BookOpenIcon } from "@/components/Icon";
@@ -127,6 +128,8 @@ export default function SeriesDetailLayoutClient({ children, readingMinutesBySlu
         <Changelog entries={series.changelog ?? []} />
 
         {siteConfig.hitCounter && <HitCounter />}
+
+        <LikeButton floating />
       </Article>
     </>
   );
