@@ -6,6 +6,7 @@ import PageSignOff from "@/components/SignOff/PageSignOff";
 import Changelog from "@/components/Changelog";
 import PageNavigation from "@/components/PageNavigation";
 import HitCounter from "@/components/HitCounter";
+import LikeButton from "@/components/LikeButton";
 import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
 import { getSeriesBySlug, getSeriesNavigation, getSeriesPosts } from "@/data/series";
@@ -83,6 +84,8 @@ export default function SeriesDetailLayoutClient({ children, readingMinutesBySlu
         <Changelog entries={series.changelog ?? []} />
 
         {siteConfig.hitCounter && <HitCounter />}
+
+        <LikeButton floating />
       </Article>
     </>
   );
