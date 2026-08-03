@@ -21,7 +21,7 @@ Over the past few months, I've been designing and building this blog from scratc
 
 This post walks through the core stack powering this blog, the trade-offs I made, and some of the interesting details hiding under the hood. If you're building your own blog or evaluating some of these technologies, I hope this is useful.
 
----
+<RainbowDivider />
 
 ## The core stack
 
@@ -37,7 +37,7 @@ This list may look like overkill for a personal blog, and a few people have aske
 
 If it wasn't for those constraints, I would have been very tempted by **Astro** — it's tailor-made for content-heavy sites.
 
----
+<RainbowDivider />
 
 ## Framework: Next.js with App Router
 
@@ -52,7 +52,7 @@ Key decisions:
 - **Nested Layouts** — each level of the hierarchy gets its own layout, making the site easy to extend.
 - **TypeScript throughout** — strict mode, no `any`, fully typed configuration and components.
 
----
+<RainbowDivider />
 
 ## Content: MDX
 
@@ -83,7 +83,7 @@ This is essential for the kind of content I want to create. I can drop in intera
 
 I'm using Next.js's **built-in MDX support** via `@next/mdx`, with a custom `remark` plugin to automatically pull `publishedAt` and `lastModifiedAt` dates from git history. No manual frontmatter dates needed.
 
----
+<RainbowDivider />
 
 ## Styling: Linaria
 
@@ -107,7 +107,7 @@ The integration uses `next-with-linaria` to wire Linaria into the Next.js build 
 
 **Why not Tailwind?** Linaria's `styled` API was a more natural migration path from what I had before, and I find the explicit named components easier to read and maintain. Tailwind is great — just not the right fit for this project.
 
----
+<RainbowDivider />
 
 ## Design Tokens & Theming
 
@@ -119,7 +119,7 @@ Rather than hardcoding colors or sizes anywhere, everything flows through **CSS 
 
 Colors are defined as HSL tuples, making it easy to derive variants (muted, subtle, on-color) with predictable lightness relationships.
 
----
+<RainbowDivider />
 
 ## Typography
 
@@ -130,7 +130,7 @@ Type carries most of the visual personality of a text-heavy site, so it got real
 
 Both are loaded from **Google Fonts**, with `font-display: swap` so text is readable immediately rather than blocking on the font download. Every size and weight uses **fluid typography** via CSS `clamp()`, scaling smoothly between a minimum and maximum viewport instead of jumping at breakpoints — so a heading is never awkwardly oversized on a phone or undersized on a wide monitor. Line length, line height, and vertical rhythm are all tuned for sustained reading rather than raw density.
 
----
+<RainbowDivider />
 
 ## Code Highlighting: Shiki
 
@@ -161,7 +161,7 @@ Shiki accepts CSS variable strings directly as `foreground` values, so the theme
 
 The payoff: switch the theme and **every code block re-colours instantly**, with no re-highlighting and no flash — because the actual colours live in CSS variables the browser re-evaluates on the spot.
 
----
+<RainbowDivider />
 
 ## Interactive Sandbox
 
@@ -201,7 +201,7 @@ It's built on CodeSandbox's **Sandpack**, but only for the bundler and preview i
 
 I ended up running my own bundler client underneath Sandpack rather than its default — the only way to get full control over the console output and error states, instead of settling for Sandpack's own cross-origin, unstyleable overlay.
 
----
+<RainbowDivider />
 
 ## Animations
 
@@ -209,7 +209,7 @@ Subtle motion is provided by **Framer Motion**. Interactions — button hovers, 
 
 The flashlight overlay effect (visible on 404 and error pages) is pure CSS: a `radial-gradient` on `::before` that follows the cursor via two `--cursorX` / `--cursorY` custom properties updated on `pointermove`. No canvas, no WebGL, no JavaScript animation loop.
 
----
+<RainbowDivider />
 
 ## Analytics
 
@@ -219,7 +219,7 @@ The wiring is intentionally boring. The measurement ID lives in `siteConfig` —
 
 Beyond page views, a few key interactions are tracked with custom events — for example, each card in the core-stack grid above fires a `core_stack_click` event via `data-analytics-*` attributes, so I can see which technologies readers are curious about. No cookies beyond what GA sets itself, no third-party tracking otherwise, and the whole thing is documented on the [Privacy Policy](/privacy-policy) page — including how to opt out.
 
----
+<RainbowDivider />
 
 ## Spam Protection: reCAPTCHA v3
 
@@ -261,7 +261,7 @@ The integration has two halves:
 
 Keeping the secret key strictly server-side (in a Route Handler, never shipped to the browser) means the scoring decision can't be tampered with from the client. The result is a form that's frictionless for real people but quietly hostile to bots. Note that reCAPTCHA does load Google's script and analyze page interactions — that's documented in the [Privacy Policy](/privacy-policy) and [Terms of Use](/terms-of-use).
 
----
+<RainbowDivider />
 
 ## Accessibility
 
@@ -274,17 +274,54 @@ Accessibility isn't an afterthought here — it's baked into the component desig
 - Flashlight and animation effects respect `prefers-reduced-motion`.
 - Color contrast meets WCAG AA across all three themes.
 
----
+<RainbowDivider />
 
 ## Data: MongoDB
 
-Most of this site is static, but a few features need to persist data between visits — view counts, and contact-form submissions. For that I reach for **MongoDB**.
+Most of this site is static, but a few features need to persist data between visits — view counts, likes, and contact-form submissions. For that I reach for **MongoDB**.
 
-A document database is a natural fit here. The shapes I'm storing are small and loosely related — a view counter keyed by post, a contact message with a timestamp — and a schema-less, JSON-native model means I can evolve those shapes without migrations getting in the way. There's no relational complexity to justify the ceremony of a SQL schema.
+A document database is a natural fit here. The shapes I'm storing are small and loosely related — a view counter keyed by post, a like counter keyed by post, a contact message with a timestamp — and a schema-less, JSON-native model means I can evolve those shapes without migrations getting in the way. There's no relational complexity to justify the ceremony of a SQL schema.
 
 All of this lives on the server side, so the database credentials never touch the browser. What gets stored, and for how long, is spelled out on the [Privacy Policy](/privacy-policy) page.
 
----
+<RainbowDivider />
+
+## The Like Button
+
+Every post, snippet, and series entry has a small animated heart living in the sidebar — or floating nearby on pages with no sidebar to sit in. It's not just a static icon: click it and the heart fills in, bounces, bursts into a handful of emoji confetti, and a little "Thanks for the love! ❤️" bubble floats upward and fades out. Click an already-liked heart and it still bounces for you, just with a gentler "You already liked this! 💛" instead.
+
+Go ahead and try it — this one's a demo, wired up to nothing but local component state, so it won't touch this post's real count:
+
+<LikeButtonDemo />
+
+The interactive personality is built entirely from scratch:
+
+- **The heart leans away from your cursor** as it gets close, and its eyes track the pointer — pure geometry (angle to cursor, clamped displacement) feeding a `@react-spring/web` rotation and eye-translation. No mouse-tracking library, just `atan2` and a bit of trigonometry doing the heavy lifting.
+- **Confetti on success** — a burst of ❤️💖✨💕🎉 characters fly outward with per-particle randomized spring physics (distance, rotation, mass all vary), then fade and get swept up by a garbage-collection interval. No image sprite sheet required — the "sprites" are just emoji.
+- **The count is real**, stored in MongoDB the same way page views are: one document per post, keyed by its slug.
+
+Since there's no login system on this blog, "one like per visitor" is enforced the same way the view counter avoids double-counting a refresh: a hashed IP address, backed by a MongoDB unique index that makes the *first* like for a given (post, visitor) pair succeed and every later one fail outright. No separate "have they already liked this?" check is needed — the database itself enforces it by rejecting the duplicate:
+
+<CodeBlock language="ts" showCopyButton={false}>
+{`
+  await db.collection("page_like_seen").insertOne({ slug, ipHash, at: new Date() });
+  // A duplicate (slug, ipHash) pair throws a Mongo error (code 11000) instead of
+  // inserting — that failure *is* the "already liked" signal.
+`}
+</CodeBlock>
+
+<Info title="A small confession">
+  Yes, I'm aware: clear your `localStorage`, switch from Wi-Fi to mobile data,
+  and you can technically like a post more than once. Building a bulletproof
+  "exactly one like, ever, from one human" system would need actual accounts —
+  which felt like a wild overcorrection for a heart that bursts into confetti
+  emoji. So consider it less of a bug and more of a speedrun category: if
+  you've ever cleared your storage and hopped networks purely to like one of my
+  posts twice, I am simultaneously flattered and mildly concerned about you.
+  Thank you for your dedication.
+</Info>
+
+<RainbowDivider />
 
 ## Deployment
 
@@ -292,6 +329,6 @@ The site is deployed on **Vercel**, which pairs naturally with Next.js — zero-
 
 Source lives on **GitHub**. Every push to `main` triggers a production deployment automatically.
 
----
+<RainbowDivider />
 
 If you have any questions or doubts regarding the core stack, feel free to drop me a message via the **[contact page](/contact)** or use the social links in the **footer**.
