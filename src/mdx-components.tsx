@@ -1,6 +1,9 @@
 import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
 import MDXImage from "@/components/MDXImage";
+import { siteConfig } from "@/config/site";
+import NewsletterCallout from "@/components/NewsletterCallout";
+import ConsentSettingsButton from "@/components/ConsentSettingsButton";
 import { PublishedAt, LastModifiedAt, ContentDates } from "@/components/ContentDates";
 import MDXHeadingAnchor from "@/components/MDXHeadingAnchor";
 import CoreStack from "@/app/(site)/(internal)/how-did-i-build-my-blog/CoreStack";
@@ -29,8 +32,31 @@ import GridVisualOrderDiagram from "@/components/mdx/GridVisualOrderDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
-  if (isInternal) return <Link href={href} {...props} />;
-  return <a href={href} target="_blank" rel="noopener noreferrer" {...props} />;
+  if (isInternal) return <Link href={href} {...linkAnalytics(href)} {...props} />;
+  return <a href={href} target="_blank" rel="noopener noreferrer" {...linkAnalytics(href)} {...props} />;
+}
+
+const SITE_HOST = new URL(siteConfig.url).hostname;
+
+// Worked out at render, so the shared click listener can send article_link_click without parsing URLs itself.
+function linkAnalytics(href: string): Record<string, string> {
+  let domain = SITE_HOST;
+  let outbound = false;
+  try {
+    const url = new URL(href, siteConfig.url);
+    domain = url.hostname || url.protocol.replace(/:$/, "");
+    outbound = domain !== SITE_HOST;
+  } catch {
+    // An unparseable href is left attributed to this site rather than dropped from the stats.
+  }
+
+  return {
+    "data-analytics-event": "article_link_click",
+    "data-analytics-label": href,
+    "data-analytics-link-url": href,
+    "data-analytics-link-domain": domain,
+    "data-analytics-outbound": String(outbound)
+  };
 }
 
 export function useMDXComponents(components: MDXComponents): MDXComponents {
@@ -51,6 +77,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Warning: AsideWarning,
     Quote: AsideQuote,
     a: MDXLink,
+    NewsletterSignup: NewsletterCallout,
+    ConsentSettingsButton,
     Sandbox,
     LikeButtonDemo,
     RainbowDivider,
