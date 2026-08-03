@@ -1,6 +1,67 @@
 import { css } from "@linaria/core";
 import { styled } from "@linaria/react";
 import Link from "next/link";
+import { BREAKPOINTS } from "@/constants/breakpoints";
+
+// Top section — two-column layout: brand/greeting on left, newsletter on right.
+export const FooterTop = styled.div`
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-block-end: 2rem;
+  border-block-end: 1px solid var(--color-border-muted);
+  margin-block-end: 1.5rem;
+
+  @media ${BREAKPOINTS.mobile} {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+    text-align: start;
+  }
+`;
+
+// Left column — stacks logo link and greeting text.
+export const FooterBrand = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+
+  @media ${BREAKPOINTS.mobile} {
+    align-items: flex-start;
+  }
+`;
+
+// Footer logo link — mirrors the header LogoLink appearance.
+export const FooterLogoLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-fg-accent-muted);
+  text-decoration-line: none;
+  font-weight: 700;
+  inline-size: fit-content;
+
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-fg-default);
+    }
+  }
+`;
+
+// Right column — newsletter call-to-action and form.
+export const FooterNewsletterSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  max-inline-size: 420px;
+
+  @media ${BREAKPOINTS.mobile} {
+    inline-size: 100%;
+  }
+`;
 
 // Transparent background so the sky bottom ornament shows through.
 export const SiteFooterContainer = styled.footer`
@@ -8,7 +69,6 @@ export const SiteFooterContainer = styled.footer`
   color: var(--color-fg-accent-muted);
   font-size: 0.875rem;
   padding: clamp(0.75rem, 1vw, 1rem);
-  margin-block-start: var(--space-base);
 `;
 
 // 2×2 named-area grid; collapses to single-column stack on mobile.
