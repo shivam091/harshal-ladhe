@@ -8,9 +8,16 @@ import { Icon } from "@/components/Icon";
 import IconRssLink from "@/icons/IconRssLink";
 import IconFileLink from "@/icons/IconFileLink";
 import IconEnvelopeLink from "@/icons/IconEnvelopeLink";
+import SiteName from "@/components/SiteHeader/SiteName";
+import FooterGreeting from "@/components/SiteFooter/FooterGreeting/FooterGreeting";
+import NewsletterForm from "@/components/NewsletterForm";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import {
   Heart,
+  FooterTop,
+  FooterBrand,
+  FooterLogoLink,
+  FooterNewsletterSection,
   FooterGrid,
   FooterLink,
   FooterCredits,
@@ -33,6 +40,20 @@ export default function Footer(): JSX.Element {
   return (
     <>
       <SiteFooterContainer aria-label="Site footer">
+
+        <FooterTop>
+          <FooterBrand>
+            <FooterLogoLink href="/" aria-label="Home">
+              <SiteName animated={false} />
+            </FooterLogoLink>
+            <FooterGreeting />
+          </FooterBrand>
+
+          <FooterNewsletterSection>
+            <NewsletterForm source="footer" />
+          </FooterNewsletterSection>
+        </FooterTop>
+
         <FooterGrid>
 
           <FooterLinksNav aria-label="Quick links">
