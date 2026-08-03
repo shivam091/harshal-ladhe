@@ -3,6 +3,7 @@ import { getTutorialBySlug } from "@/data/tutorials";
 import { getSnippetBySlug } from "@/data/snippets";
 import { getSeriesBySlug } from "@/data/series";
 import { getPostCategorySlug } from "@/utils/post-url";
+import { readConsentStatus } from "@/lib/consent";
 
 export type GaParams = Record<string, string | number | boolean>;
 
@@ -11,6 +12,10 @@ export type ConsentState = "granted" | "denied";
 // gtag comes from an external script, so TypeScript has to be told it may exist on window.
 declare global {
   interface Window {
+    // Declared to tell a loaded tag from the inline stub: gtag.js sets it only after configuring a measurement ID.
+    google_tag_manager?: Record<string, unknown>;
+    // Declared so a rejected gtag.js request is reported at once, rather than only after the load wait runs out.
+    __gaBlocked?: boolean;
     gtag?: {
       (command: "event", eventName: string, params?: GaParams): void;
       (command: "consent", action: "default" | "update", params: Record<string, ConsentState | number | string[]>): void;
@@ -24,7 +29,7 @@ declare global {
 */
 export function trackEvent(name: string, params: GaParams = {}): void {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  window.gtag("event", name, params);
+  window.gtag("event", name, { consent_status: readConsentStatus(), ...params });
 }
 
 export type ContentGroup = "post" | "tutorial" | "snippet" | "series" | "listing" | "page";

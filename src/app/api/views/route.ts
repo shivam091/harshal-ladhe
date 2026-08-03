@@ -1,10 +1,12 @@
 import type { NextRequest} from "next/server";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import type { Collection } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { getPageUrl } from "@/utils/page-url";
 import { getClientIp, hashVisitor } from "@/lib/client-ip";
-import { getCountry, getIstDay, safeKey } from "@/lib/visit-keys";
+import { BOT_PATTERN, getCountry, getIstDay, isDatacentreIp, safeKey } from "@/lib/visit-keys";
+import type { ConsentStatus } from "@/lib/consent";
+import { CONSENT_STATUSES } from "@/lib/consent";
 
 // One document per slug so every counter can be bumped in a single atomic upsert.
 type PageView = {
@@ -35,9 +37,27 @@ type PageView = {
   devicesByDay: Record<string, Partial<Record<DeviceType, number>>>;
   // Same day keys again; referrer keys are sanitised because Mongo field names can't contain dots.
   referrersByDay: Record<string, Record<string, number>>;
+  // Same day keys; splits views by the reader's consent answer, so the gap to GA's views can be attributed to declines.
+  consentByDay?: Record<string, Partial<Record<ConsentStatus, number>>>;
+  // Same day keys; whether gtag actually loaded for a view, so ad-blocked views can be told from consent-denied ones.
+  gaByDay?: Record<string, Partial<Record<GaStatus, number>>>;
+  // Same day keys; views that look automated, tallied so the gap to GA's bot-filtered views can be explained.
+  suspectByDay?: Record<string, Partial<Record<SuspectKind, number>>>;
+  // Same day keys; one key per "source|medium|campaign" so a campaign's traffic can be read without the landing URL.
+  campaignsByDay?: Record<string, Record<string, number>>;
   createdAt: Date;
   updatedAt: Date;
 };
+
+// No "unknown" status: a view that leaves before the check sends no second beacon, so unknowns are the shortfall from
+// the view count.
+const GA_STATUSES = ["loaded", "blocked"] as const;
+
+type GaStatus = (typeof GA_STATUSES)[number];
+
+// Webdriver is proof of automation, so those views count as bots; a datacentre address is only a hint, so those stay
+// human views and are just tallied.
+type SuspectKind = "webdriver" | "datacentre";
 
 // Mirrors the `devices` keys so an increment can never target an unknown field.
 type DeviceType = "tablet" | "mobile" | "desktop" | "tv" | "unknown";
@@ -63,9 +83,6 @@ const INDEX_NOT_FOUND = 27;
 
 // Only record slugs that look like real app paths — guards against junk payloads.
 const SLUG_PATTERN = /^\/[\w\-/]*$/;
-
-// Deliberately rough — enough to keep common crawlers and link previewers out of the human metrics.
-const BOT_PATTERN = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|quora|pinterest|vkshare|whatsapp|telegram|preview|monitor|lighthouse|headless/i;
 
 /*
   Dropped rather than left alone, because a TTL index already in a database
@@ -101,9 +118,36 @@ function ensureSeenIndexes(db: Awaited<ReturnType<typeof getDb>>): Promise<unkno
   return seenIndexReady;
 }
 
-// Buckets by host rather than full URL so referral sources aggregate instead of fragmenting.
-function getReferrerHost(req: NextRequest): string {
-  const referer = req.headers.get("referer");
+// What the beacon reports about how the visit began; only the first page of a visit carries referrer and utm.
+type ViewBeacon = {
+  slug?: string;
+  referrer?: unknown;
+  internal?: unknown;
+  utm?: unknown;
+  consent?: unknown;
+  // Set by browsers under automation (Selenium, Playwright, Puppeteer), which real readers never are.
+  webdriver?: unknown;
+  // On a second beacon of its own, so the view itself never waits for the gtag check.
+  ga?: unknown;
+};
+
+// Each campaign part is capped so one long tag can't crowd the others out of the key.
+const UTM_PART_MAX = 40;
+
+// Six parts fit with their separators; the shorter default would cut off the last ones.
+const CAMPAIGN_KEY_MAX = 256;
+
+/*
+  Buckets by host rather than full URL so referral sources aggregate instead of fragmenting. The beacon's own Referer
+  header is always this site's page, so the page's document.referrer from the body is what counts; the header is only
+  a fallback for a client that predates it.
+*/
+function getReferrerHost(req: NextRequest, beacon: ViewBeacon): string {
+  if (beacon.internal === true) return "internal";
+
+  const referer = "referrer" in beacon
+    ? (typeof beacon.referrer === "string" ? beacon.referrer : "")
+    : req.headers.get("referer");
   if (!referer) return "direct";
   try {
     const host = new URL(referer).hostname.replace(/^www\./, "");
@@ -114,6 +158,21 @@ function getReferrerHost(req: NextRequest): string {
   } catch {
     return "direct";
   }
+}
+
+function utmPart(value: unknown): string {
+  const part = typeof value === "string" ? value.trim().toLowerCase().slice(0, UTM_PART_MAX) : "";
+  return part || "(none)";
+}
+
+// Only a landing URL tagged with utm_source counts as a campaign; the other tags alone say too little. Content, term
+// and id come last so a key stored before they were counted still reads as the first three.
+function getCampaignKey(utm: unknown): string | null {
+  if (!utm || typeof utm !== "object") return null;
+  const { source, medium, campaign, content, term, id } = utm as Record<string, unknown>;
+  if (typeof source !== "string" || !source.trim()) return null;
+  const parts = [source, medium, campaign, content, term, id].map(utmPart);
+  return safeKey(parts.join("|"), CAMPAIGN_KEY_MAX);
 }
 
 // TV and tablet go first because their UAs often also match the broader mobile/desktop patterns.
@@ -173,7 +232,8 @@ export async function GET(req: NextRequest) {
 */
 export async function POST(req: NextRequest) {
   try {
-    const { slug } = (await req.json()) as { slug?: string };
+    const beacon = (await req.json()) as ViewBeacon;
+    const { slug } = beacon;
 
     if (!slug || slug.length > 256 || !SLUG_PATTERN.test(slug)) {
       // Silently ignore bad input — never expose validation to a tracking beacon.
@@ -183,15 +243,28 @@ export async function POST(req: NextRequest) {
     const now = new Date();
     const day = getIstDay(now);
     const ua = req.headers.get("user-agent") ?? "";
-    const isBot = BOT_PATTERN.test(ua);
+    const isWebdriver = beacon.webdriver === true;
+    const isBot = BOT_PATTERN.test(ua) || isWebdriver;
     const db = await getDb();
+
+    // The tag-status beacon only adds to its own counter, so it can never count a view twice; bots are ignored.
+    const ga = GA_STATUSES.find((status) => status === beacon.ga);
+    if (ga) {
+      if (!isBot) {
+        await db.collection<PageView>(COLLECTION).updateOne(
+          { _id: slug } as never,
+          { $inc: { [`gaByDay.${day}.${ga}`]: 1 }, $set: { updatedAt: now } }
+        );
+      }
+      return new NextResponse(null, { status: 204 });
+    }
 
     // Bots are tallied separately and never pollute the human-facing metrics.
     if (isBot) {
       await db.collection<PageView>(COLLECTION).updateOne(
         { _id: slug } as never,
         {
-          $inc: { botCount: 1 },
+          $inc: { botCount: 1, ...(isWebdriver ? { [`suspectByDay.${day}.webdriver`]: 1 } : {}) },
           $set: { slug, url: getPageUrl(slug), updatedAt: now },
           $setOnInsert: { createdAt: now }
         },
@@ -201,17 +274,21 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = getClientIp(req);
-    const referrer = safeKey(getReferrerHost(req));
+    const referrer = safeKey(getReferrerHost(req, beacon));
+    const campaign = getCampaignKey(beacon.utm);
     const country = await getCountry(req);
     const device = getDevice(ua);
+    const consent = CONSENT_STATUSES.find((state) => state === beacon.consent) ?? "pending";
     const isNew = await isNewUniqueVisitor(db, slug, day, hashVisitor(ip), country);
 
     const inc: Record<string, number> = {
       visitorCount: 1,
       [`countriesByDay.${day}.${country}`]: 1,
       [`devicesByDay.${day}.${device}`]: 1,
-      [`referrersByDay.${day}.${referrer}`]: 1
+      [`referrersByDay.${day}.${referrer}`]: 1,
+      [`consentByDay.${day}.${consent}`]: 1
     };
+    if (campaign) inc[`campaignsByDay.${day}.${campaign}`] = 1;
     if (isNew) inc.uniqueVisitorCount = 1;
 
     await db.collection<PageView>(COLLECTION).updateOne(
@@ -223,6 +300,16 @@ export async function POST(req: NextRequest) {
       },
       { upsert: true }
     );
+
+    // After the response, because the network lookup can be slow and must never hold up the beacon.
+    after(async () => {
+      try {
+        if (!(await isDatacentreIp(ip))) return;
+        await db.collection<PageView>(COLLECTION).updateOne({ _id: slug } as never, { $inc: { [`suspectByDay.${day}.datacentre`]: 1 } });
+      } catch {
+        // A missed tally is harmless.
+      }
+    });
   } catch {
     // Swallow everything — tracking must never affect the visitor's experience.
   }
