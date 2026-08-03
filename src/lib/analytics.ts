@@ -3,6 +3,8 @@ import { getTutorialBySlug } from "@/data/tutorials";
 import { getSnippetBySlug } from "@/data/snippets";
 import { getSeriesBySlug } from "@/data/series";
 import { getPostCategorySlug } from "@/utils/post-url";
+import { readConsentStatus } from "@/lib/consent";
+import { mixpanelTrack } from "@/lib/mixpanel";
 
 export type GaParams = Record<string, string | number | boolean>;
 
@@ -11,6 +13,10 @@ export type ConsentState = "granted" | "denied";
 // gtag comes from an external script, so TypeScript has to be told it may exist on window.
 declare global {
   interface Window {
+    // Declared to tell a loaded tag from the inline stub: gtag.js sets it only after configuring a measurement ID.
+    google_tag_manager?: Record<string, unknown>;
+    // Declared so a rejected gtag.js request is reported at once, rather than only after the load wait runs out.
+    __gaBlocked?: boolean;
     gtag?: {
       (command: "event", eventName: string, params?: GaParams): void;
       (command: "consent", action: "default" | "update", params: Record<string, ConsentState | number | string[]>): void;
@@ -19,12 +25,15 @@ declare global {
 }
 
 /*
-  gtag only exists in production (see the root layout) and may be blocked, so every event degrades to a no-op rather
-  than breaking the interaction that triggered it.
+  gtag and Mixpanel only exist in production (see the root layout) and either may be blocked, so every event degrades
+  to a no-op rather than breaking the interaction that triggered it. Both get every event, so the two can be compared.
 */
 export function trackEvent(name: string, params: GaParams = {}): void {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  window.gtag("event", name, params);
+  if (typeof window === "undefined") return;
+  const status = readConsentStatus();
+  const withConsent = { consent_status: status, ...params };
+  window.gtag?.("event", name, withConsent);
+  mixpanelTrack(name, withConsent, { status });
 }
 
 export type ContentGroup = "post" | "tutorial" | "snippet" | "series" | "listing" | "page";

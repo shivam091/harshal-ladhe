@@ -32,6 +32,10 @@ export default function SoundToggle({ size = 16, className }: SoundToggleProps):
         className={className}
         aria-label={soundEnabled ? "Disable sounds" : "Enable sounds"}
         aria-pressed={soundEnabled}
+        // Read at click time, before the re-render, so the label is the state the click switches to.
+        data-analytics-event="sound_toggle"
+        data-analytics-label={soundEnabled ? "off" : "on"}
+        data-analytics-category="preference"
         // Hover alone gives the icon a little boop, independent of the actual toggle below.
         onPointerEnter={triggerBoop}
         onClick={() => {

@@ -5,6 +5,7 @@ import { getCountry } from "@/lib/visit-keys";
 import { getClientIp } from "@/lib/client-ip";
 import { sendContactEmails } from "@/lib/mail/contact-mailer";
 import { gaVisitor, sendGaEvent } from "@/lib/ga-measurement";
+import { mixpanelVisitor, sendMixpanelEvent } from "@/lib/mixpanel-server";
 import { isEntryPath } from "@/utils/correction";
 
 // Stores the reCAPTCHA score alongside the message so borderline submissions can be reviewed later.
@@ -105,7 +106,8 @@ export async function POST(req: NextRequest) {
     after(() => sendContactEmails(submission));
     // Sent from here, once the message is stored, so ad blockers can't hide it and a refused one isn't counted.
     const visitor = gaVisitor(req);
-    after(() => sendGaEvent(visitor, "contact_submit"));
+    const mixpanel = mixpanelVisitor(req, getClientIp(req));
+    after(() => Promise.all([sendGaEvent(visitor, "contact_submit"), sendMixpanelEvent(mixpanel, "contact_submit")]));
 
     return NextResponse.json({ success: true });
   } catch (err) {

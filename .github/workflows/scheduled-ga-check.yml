@@ -1,0 +1,36 @@
+name: Check that analytics still works
+
+on:
+  schedule:
+    # Daily, off the hour so it doesn't queue with everything else scheduled at :00.
+    - cron: "23 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SITE_URL: https://harshal-ladhe.vercel.app
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Installed on the fly: the site itself doesn't depend on Playwright, so it stays out of package.json.
+      - name: Install Playwright
+        run: |
+          npm init -y > /dev/null
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: Check the tag, consent mode and view beacon
+        run: node .github/scripts/ga-check.mjs

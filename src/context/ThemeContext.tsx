@@ -11,6 +11,8 @@ import React, {
 } from "react";
 import type { ThemeOption } from "@/constants/color-scheme";
 import { DEFAULT_THEME, THEME_KEY } from "@/constants/color-scheme";
+import { trackEvent } from "@/lib/analytics";
+import { mixpanelRegister } from "@/lib/mixpanel";
 
 // Keeps the user's choice (possibly "system") rather than the resolved theme so the UI can show what they picked.
 export interface ThemeContextType {
@@ -46,6 +48,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }): JSX.
     browsers and reduced-motion readers get an instant swap.
   */
   const setTheme = useCallback((next: ThemeOption, animate = true) => {
+    // Only a reader's own switch: a restore doesn't animate, and an OS change re-applies "system" to itself.
+    if (animate && next !== themeRef.current) {
+      trackEvent("theme_change", { theme: next, previous_theme: themeRef.current });
+      mixpanelRegister({ theme: next });
+    }
     themeRef.current = next;
     const resolved = next === "system" ? resolveSystem() : next;
     const root = document.documentElement;
