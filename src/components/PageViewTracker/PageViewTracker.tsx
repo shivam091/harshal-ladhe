@@ -11,7 +11,8 @@ export default function PageViewTracker(): null {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!pathname) return;
+    // Unsubscribe links carry a subscriber's signed token, which has no place in page-view stats.
+    if (!pathname || pathname.startsWith("/unsubscribe/")) return;
 
     const body = JSON.stringify({ slug: pathname });
 
