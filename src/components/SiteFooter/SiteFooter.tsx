@@ -8,9 +8,16 @@ import { Icon } from "@/components/Icon";
 import IconRssLink from "@/icons/IconRssLink";
 import IconFileLink from "@/icons/IconFileLink";
 import IconEnvelopeLink from "@/icons/IconEnvelopeLink";
+import SiteName from "@/components/SiteHeader/SiteName";
+import FooterGreeting from "@/components/SiteFooter/FooterGreeting/FooterGreeting";
+import NewsletterForm from "@/components/NewsletterForm";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import {
   Heart,
+  FooterTop,
+  FooterBrand,
+  FooterLogoLink,
+  FooterNewsletterSection,
   FooterGrid,
   FooterLink,
   FooterCredits,
@@ -21,11 +28,10 @@ import {
   footerLinkClass
 } from "@/components/SiteFooter/SiteFooter.styles";
 
-// Site footer with three nav sections (quick links, social, legal) plus a credits/copyright row.
+// Site footer with brand/greeting + newsletter CTA on top, and three nav sections plus credits below.
 export default function Footer(): JSX.Element {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
-  // "foundedYear–present" range, or just foundedYear if this is the launch year.
   const copyrightYear =
     currentYear > siteConfig.foundedYear
       ? `${siteConfig.foundedYear}–present`
@@ -34,6 +40,20 @@ export default function Footer(): JSX.Element {
   return (
     <>
       <SiteFooterContainer aria-label="Site footer">
+
+        <FooterTop>
+          <FooterBrand>
+            <FooterLogoLink href="/" aria-label="Home">
+              <SiteName animated={false} />
+            </FooterLogoLink>
+            <FooterGreeting />
+          </FooterBrand>
+
+          <FooterNewsletterSection>
+            <NewsletterForm />
+          </FooterNewsletterSection>
+        </FooterTop>
+
         <FooterGrid>
 
           <FooterLinksNav aria-label="Quick links">
@@ -43,7 +63,6 @@ export default function Footer(): JSX.Element {
           </FooterLinksNav>
 
           <FooterSocialNav aria-label="Social links">
-            {/* Skip links whose href is empty (e.g. resume not yet configured). */}
             {socialLinks.filter(link => link.href).map((link) => {
               const { type, label, href, icon, external, analytics } = link;
 
