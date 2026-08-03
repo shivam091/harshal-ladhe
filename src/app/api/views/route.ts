@@ -35,6 +35,8 @@ type PageView = {
   devicesByDay: Record<string, Partial<Record<DeviceType, number>>>;
   // Same day keys again; referrer keys are sanitised because Mongo field names can't contain dots.
   referrersByDay: Record<string, Record<string, number>>;
+  // Same day keys; one key per "source|medium|campaign" so a campaign's traffic can be read without the landing URL.
+  campaignsByDay?: Record<string, Record<string, number>>;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -101,9 +103,31 @@ function ensureSeenIndexes(db: Awaited<ReturnType<typeof getDb>>): Promise<unkno
   return seenIndexReady;
 }
 
-// Buckets by host rather than full URL so referral sources aggregate instead of fragmenting.
-function getReferrerHost(req: NextRequest): string {
-  const referer = req.headers.get("referer");
+// What the beacon reports about how the visit began; only the first page of a visit carries referrer and utm.
+type ViewBeacon = {
+  slug?: string;
+  referrer?: unknown;
+  internal?: unknown;
+  utm?: unknown;
+};
+
+// Each campaign part is capped so one long tag can't crowd the others out of the key.
+const UTM_PART_MAX = 40;
+
+// Six parts fit with their separators; the shorter default would cut off the last ones.
+const CAMPAIGN_KEY_MAX = 256;
+
+/*
+  Buckets by host rather than full URL so referral sources aggregate instead of fragmenting. The beacon's own Referer
+  header is always this site's page, so the page's document.referrer from the body is what counts; the header is only
+  a fallback for a client that predates it.
+*/
+function getReferrerHost(req: NextRequest, beacon: ViewBeacon): string {
+  if (beacon.internal === true) return "internal";
+
+  const referer = "referrer" in beacon
+    ? (typeof beacon.referrer === "string" ? beacon.referrer : "")
+    : req.headers.get("referer");
   if (!referer) return "direct";
   try {
     const host = new URL(referer).hostname.replace(/^www\./, "");
@@ -114,6 +138,21 @@ function getReferrerHost(req: NextRequest): string {
   } catch {
     return "direct";
   }
+}
+
+function utmPart(value: unknown): string {
+  const part = typeof value === "string" ? value.trim().toLowerCase().slice(0, UTM_PART_MAX) : "";
+  return part || "(none)";
+}
+
+// Only a landing URL tagged with utm_source counts as a campaign; the other tags alone say too little. Content, term
+// and id come last so a key stored before they were counted still reads as the first three.
+function getCampaignKey(utm: unknown): string | null {
+  if (!utm || typeof utm !== "object") return null;
+  const { source, medium, campaign, content, term, id } = utm as Record<string, unknown>;
+  if (typeof source !== "string" || !source.trim()) return null;
+  const parts = [source, medium, campaign, content, term, id].map(utmPart);
+  return safeKey(parts.join("|"), CAMPAIGN_KEY_MAX);
 }
 
 // TV and tablet go first because their UAs often also match the broader mobile/desktop patterns.
@@ -173,7 +212,8 @@ export async function GET(req: NextRequest) {
 */
 export async function POST(req: NextRequest) {
   try {
-    const { slug } = (await req.json()) as { slug?: string };
+    const beacon = (await req.json()) as ViewBeacon;
+    const { slug } = beacon;
 
     if (!slug || slug.length > 256 || !SLUG_PATTERN.test(slug)) {
       // Silently ignore bad input — never expose validation to a tracking beacon.
@@ -201,7 +241,8 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = getClientIp(req);
-    const referrer = safeKey(getReferrerHost(req));
+    const referrer = safeKey(getReferrerHost(req, beacon));
+    const campaign = getCampaignKey(beacon.utm);
     const country = await getCountry(req);
     const device = getDevice(ua);
     const isNew = await isNewUniqueVisitor(db, slug, day, hashVisitor(ip), country);
@@ -212,6 +253,7 @@ export async function POST(req: NextRequest) {
       [`devicesByDay.${day}.${device}`]: 1,
       [`referrersByDay.${day}.${referrer}`]: 1
     };
+    if (campaign) inc[`campaignsByDay.${day}.${campaign}`] = 1;
     if (isNew) inc.uniqueVisitorCount = 1;
 
     await db.collection<PageView>(COLLECTION).updateOne(

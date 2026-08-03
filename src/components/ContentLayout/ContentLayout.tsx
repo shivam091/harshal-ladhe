@@ -13,6 +13,8 @@ import { inlineMarkdownToHtml } from "@/utils/markdown";
 import { PageMetaSecondary } from "@/components/PageMeta/PageMeta.styles";
 import HitCounter from "@/components/HitCounter";
 import LikeButton from "@/components/LikeButton";
+import ArticleEndMarker from "@/components/ArticleEndMarker";
+import NewsletterCallout from "@/components/NewsletterCallout";
 import IconExternalLink from "@/icons/IconExternalLink";
 import { useToggleIconStatus } from "@/hooks/use-toggle-icon-status";
 import { siteConfig } from "@/config/site";
@@ -80,7 +82,11 @@ export default function ContentLayout({
           </ContentTOC>
         </ContentGrid>
 
+        <ArticleEndMarker />
+
         <PageSignOff />
+
+        <NewsletterCallout source="article_end" />
 
         <PageMetaSecondary role="group" aria-label={`${label} metadata`}>
           <Categories categories={entry.category} link />

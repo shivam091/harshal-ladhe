@@ -5,8 +5,8 @@ import { getClientIp } from "@/lib/client-ip";
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
 // Header-derived keys land in a Mongo dot-path, where `.` and `$` would break or hijack the update.
-export function safeKey(value: string): string {
-  return value.replace(/[.$]/g, "_").slice(0, 64) || "unknown";
+export function safeKey(value: string, max = 64): string {
+  return value.replace(/[.$]/g, "_").slice(0, max) || "unknown";
 }
 
 // ipinfo's Lite plan is free and unmetered, and its `country_code` matches the edge headers' ISO format.
