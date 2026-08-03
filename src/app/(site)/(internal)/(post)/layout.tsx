@@ -20,6 +20,8 @@ import RelatedPosts from "@/app/(site)/(internal)/(post)/RelatedPosts";
 import HitCounter from "@/components/HitCounter";
 import TableOfContents from "@/components/TableOfContents";
 import LikeButton from "@/components/LikeButton";
+import ArticleEndMarker from "@/components/ArticleEndMarker";
+import NewsletterCallout from "@/components/NewsletterCallout";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Article,
@@ -72,7 +74,11 @@ export default function PostLayout({ children }: { children: ReactNode }): JSX.E
           )}
         </PostGrid>
 
+        <ArticleEndMarker />
+
         <PageSignOff showText metadata={post} />
+
+        <NewsletterCallout source="article_end" />
 
         {series && <SeriesPostNav series={series} />}
 

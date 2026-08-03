@@ -11,6 +11,8 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { SoundProvider } from "@/context/SoundContext";
 import AnalyticsProvider from "@/components/AnalyticsProvider";
 import NavigationProgress from "@/components/NavigationProgress";
+import ConsentBanner from "@/components/ConsentBanner";
+import { CONSENT_REGIONS, CONSENT_STORAGE_KEY, consentParams } from "@/lib/consent";
 import { themeRule } from "@/utils/color";
 import { LIGHT_COLORS_CSS } from "@/constants/themes/light";
 import { DARK_COLORS_CSS } from "@/constants/themes/dark";
@@ -91,13 +93,31 @@ const GA_ID = siteConfig.analytics.googleMeasurementId;
 // Preview and local traffic would pollute the real visitor numbers, so only Vercel production reports to GA.
 const IS_GA_ENABLED = process.env.VERCEL_ENV === "production";
 
+/*
+  Consent Mode v2: denied by default only where the law asks for opt-in, and a stored choice is applied before config
+  so a returning reader's first hit already honours it. The first page view comes from usePageViews, so it carries the
+  same content params as later ones.
+*/
 const GA_SCRIPT = `
   window.dataLayer = window.dataLayer || [];
   function gtag () {
     dataLayer.push(arguments);
   }
+  gtag("consent", "default", ${JSON.stringify({ ...consentParams("denied"), region: CONSENT_REGIONS })});
+  gtag("consent", "default", ${JSON.stringify(consentParams("granted"))});
+  try {
+    var consent = localStorage.getItem("${CONSENT_STORAGE_KEY}");
+    if (consent === "granted" || consent === "denied") {
+      gtag("consent", "update", {
+        ad_storage: consent,
+        ad_user_data: consent,
+        ad_personalization: consent,
+        analytics_storage: consent
+      });
+    }
+  } catch (e) {}
   gtag("js", new Date());
-  gtag("config", "${GA_ID}");
+  gtag("config", "${GA_ID}", { send_page_view: false });
 `;
 
 export default function RootLayout({
@@ -146,6 +166,7 @@ export default function RootLayout({
             </ThemeProvider>
 
             <ScrollToTop />
+            <ConsentBanner />
           </MotionConfig>
         </body>
       </html>
