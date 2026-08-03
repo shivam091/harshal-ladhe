@@ -8,9 +8,16 @@ import { Icon } from "@/components/Icon";
 import IconRssLink from "@/icons/IconRssLink";
 import IconFileLink from "@/icons/IconFileLink";
 import IconEnvelopeLink from "@/icons/IconEnvelopeLink";
+import SiteName from "@/components/SiteHeader/SiteName";
+import FooterGreeting from "@/components/SiteFooter/FooterGreeting/FooterGreeting";
+import NewsletterForm from "@/components/NewsletterForm";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import {
   Heart,
+  FooterTop,
+  FooterBrand,
+  FooterLogoLink,
+  FooterNewsletterSection,
   FooterGrid,
   FooterLink,
   FooterCredits,
@@ -21,11 +28,10 @@ import {
   footerLinkClass
 } from "@/components/SiteFooter/SiteFooter.styles";
 
-// Keeps secondary destinations, profiles and legal pages reachable from every page without crowding the header.
+// Keeps navigation, profiles, legal pages and the newsletter reachable from every page without crowding the header.
 export default function Footer(): JSX.Element {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
-  // Collapses to a single year in the launch year so the range never reads "2026–2026".
   const copyrightYear =
     currentYear > siteConfig.foundedYear
       ? `${siteConfig.foundedYear}–present`
@@ -34,6 +40,20 @@ export default function Footer(): JSX.Element {
   return (
     <>
       <SiteFooterContainer aria-label="Site footer">
+
+        <FooterTop>
+          <FooterBrand>
+            <FooterLogoLink href="/" aria-label="Home">
+              <SiteName animated={false} />
+            </FooterLogoLink>
+            <FooterGreeting />
+          </FooterBrand>
+
+          <FooterNewsletterSection>
+            <NewsletterForm />
+          </FooterNewsletterSection>
+        </FooterTop>
+
         <FooterGrid>
 
           <FooterLinksNav aria-label="Quick links">
@@ -43,7 +63,6 @@ export default function Footer(): JSX.Element {
           </FooterLinksNav>
 
           <FooterSocialNav aria-label="Social links">
-            {/* Unconfigured links (e.g. no resume yet) are skipped rather than rendered dead. */}
             {socialLinks.filter(link => link.href).map((link) => {
               const { type, label, href, icon, external, analytics } = link;
 
