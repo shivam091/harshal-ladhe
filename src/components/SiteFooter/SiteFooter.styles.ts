@@ -1,6 +1,67 @@
 import { css } from "@linaria/core";
 import { styled } from "@linaria/react";
 import Link from "next/link";
+import { BREAKPOINTS } from "@/constants/breakpoints";
+
+// Top section — two-column layout: brand/greeting on left, newsletter on right.
+export const FooterTop = styled.div`
+  display: flex;
+  gap: var(--space-xl);
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-block-end: var(--space-xl);
+  border-block-end: 1px solid var(--color-border-muted);
+  margin-block-end: var(--space-lg);
+
+  @media ${BREAKPOINTS.mobile} {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-lg);
+    text-align: start;
+  }
+`;
+
+// Left column — stacks logo link and greeting text.
+export const FooterBrand = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  flex: 1;
+
+  @media ${BREAKPOINTS.mobile} {
+    align-items: flex-start;
+  }
+`;
+
+// Footer logo link — mirrors the header LogoLink appearance.
+export const FooterLogoLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-fg-accent-muted);
+  text-decoration-line: none;
+  font-weight: var(--font-weight-bold);
+  width: fit-content;
+
+  &:hover {
+    @media (hover: hover) {
+      color: var(--color-fg-default);
+    }
+  }
+`;
+
+// Right column — newsletter call-to-action and form.
+export const FooterNewsletterSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  flex: 1;
+  max-inline-size: 420px;
+
+  @media ${BREAKPOINTS.mobile} {
+    inline-size: 100%;
+  }
+`;
 
 // Transparent background so the sky bottom ornament shows through.
 export const SiteFooterContainer = styled.footer`
@@ -8,7 +69,6 @@ export const SiteFooterContainer = styled.footer`
   color: var(--color-fg-accent-muted);
   font-size: var(--font-size-sm);
   padding: var(--fluid-space-md);
-  margin-block-start: var(--space-base);
 `;
 
 // 2×2 named-area grid; collapses to single-column stack on mobile.
