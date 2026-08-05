@@ -8,6 +8,10 @@ In modern web development, network requests are prone to transient failures. Ins
 
 This snippet implements an asynchronous retry function using **Exponential Backoff**. By doubling the delay between each attempt, you reduce the load on the failing service and give it time to stabilize.
 
+<Info title="Scalability Note">
+  If you are building a high-traffic system and need to prevent "Thundering Herd" spikes, see the advanced [Exponential Backoff with Jitter](/snippet/exponential-backoff-with-jitter) version.
+</Info>
+
 <RainbowDivider />
 
 ## The Retry Snippet
