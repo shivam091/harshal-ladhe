@@ -1,0 +1,205 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("async-retry-exponential-backoff");
+
+## Introduction
+
+In modern web development, network requests are prone to transient failures. Instead of failing immediately, a **retry strategy** allows your application to recover gracefully.
+
+This snippet implements an asynchronous retry function using **Exponential Backoff**. By doubling the delay between each attempt, you reduce the load on the failing service and give it time to stabilize.
+
+<RainbowDivider />
+
+## The Retry Snippet
+
+<CodeBlock language="js">
+{`
+  /**
+   * Retries an asynchronous function using exponential backoff.
+   *
+   * @param {Function} fn - The async function or promise-returning operation to execute.
+   * @param {Object} [options] - Configuration settings for the retry logic.
+   * @param {number} [options.retries=3] - Maximum number of retry attempts allowed before throwing.
+   * @param {number} [options.delay=1000] - Initial delay in milliseconds for the first retry.
+   * @param {number} [options.maxDelay=30000] - Cap limit (in ms) to prevent wait times from growing indefinitely.
+   * @returns {Promise<*>} Resolves with the value returned by \`fn\`.
+   */
+  async function retry(fn, { retries = 3, delay = 1000, maxDelay = 30000 } = {}) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (retries <= 0) {
+        throw error;
+      }
+
+      console.warn(\`Attempt failed. Retrying... Attempts remaining: \${retries}. Waiting \${delay}ms.\`);
+
+      await new Promise(resolve => setTimeout(resolve, delay));
+
+      // Calculate next backoff interval capped by maxDelay
+      const nextDelay = Math.min(delay * 2, maxDelay);
+
+      return retry(fn, {
+        retries: retries - 1,
+        delay: nextDelay,
+        maxDelay
+      });
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Typed Signature
+
+The interactive sandbox below wires this up in TypeScript with a generic return type — here's the shape it types against:
+
+<CodeBlock language="ts">
+{`
+  export interface RetryOptions {
+    /** Maximum number of allowed retry attempts (default: 3) */
+    retries?: number;
+    /** Base delay in milliseconds before the first retry attempt (default: 1000) */
+    delay?: number;
+    /** Maximum delay cap in milliseconds across all backoff intervals (default: 30000) */
+    maxDelay?: number;
+  }
+
+  export function retry<T>(
+    fn: () => Promise<T>,
+    options?: RetryOptions
+  ): Promise<T>;
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Initial Execution:** The function attempts to call and await the provided promise generator (`fn()`).
+2. **Error Interception:** If `fn()` resolves successfully, execution completes immediately. If it throws or rejects, the `catch` block intercepts the failure context.
+3. **Base Case Check:** The function checks if `retries` has reached zero. If no retries remain, it rethrows the final error up the execution stack.
+4. **Execution Pause:** The async workflow is paused via an un-refed `Promise` wrapper combined with `setTimeout(..., delay)`.
+5. **Backoff Escalation & Recursion:** The `delay` value is multiplied by 2 (bounded by `maxDelay`), and the function recursively invokes itself with decremented retry counter.
+
+<RainbowDivider />
+
+## Key Architectural Highlights
+
+* **Options Object Pattern:** Uses destructuring defaults to make all configurations optional while preserving explicit function calls without positional parameter ambiguity.
+* **Capped Exponential Growth:** Pure exponential growth (`2ⁿ`) expands rapidly. Capping the interval via `Math.min(..., maxDelay)` keeps long-tail retry times within acceptable bounds.
+* **Non-Blocking Recursion:** Tail-call style async recursion allows the JavaScript Event Loop to remain entirely non-blocking while waiting between attempts.
+
+<RainbowDivider />
+
+## Example Usage
+
+### 1. Basic API Fetching
+
+<CodeBlock language="js">
+{`
+  const fetchUserProfile = async () => {
+    const response = await fetch("https://api.example.com/user/me");
+    if (!response.ok) {
+      throw new Error(\`Request failed with status: \${response.status}\`);
+    }
+    return response.json();
+  };
+
+  async function loadData() {
+    try {
+      const user = await retry(fetchUserProfile, {
+        retries: 4,
+        delay: 500,
+        maxDelay: 5000
+      });
+      console.log("User Profile Loaded:", user);
+    } catch (err) {
+      console.error("Failed to load user profile after retries:", err.message);
+    }
+  }
+
+  loadData();
+`}
+</CodeBlock>
+
+### 2. Selective Error Filtering (Advanced)
+
+Retrying non-transient errors (like HTTP 401 Unauthorized or HTTP 404 Not Found) wastes resources and delays error visibility. You can wrap your call to guard against non-retryable errors:
+
+<CodeBlock language="js">
+{`
+  await retry(
+    async () => {
+      try {
+        return await fetchPaymentStatus();
+      } catch (err) {
+        // Do not retry client auth or validation errors
+        if (err.status === 401 || err.status === 400) {
+          throw new NonRetryableError(err.message);
+        }
+        throw err; // Allow standard transient errors to be retried
+      }
+    },
+    { retries: 3, delay: 1000 }
+  );
+`}
+</CodeBlock>
+
+Below is the same utility wired up to a simulated flaky call — run it and check the Console tab to watch each attempt and its growing delay.
+
+<Sandbox slug="async-retry-exponential-backoff" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## When Should You Retry?
+
+Exponential backoff is appropriate for **temporary** failures, including:
+
+- Network interruptions
+- Connection resets
+- Gateway timeouts
+- HTTP 408
+- HTTP 429
+- HTTP 500
+- HTTP 502
+- HTTP 503
+- HTTP 504
+- Temporary database connection failures
+- Cloud provider transient errors
+
+These failures often resolve themselves after a short period.
+
+<RainbowDivider />
+
+## When Should You NOT Retry?
+
+Some failures are permanent and should fail immediately.
+
+Avoid retrying errors such as:
+
+- HTTP 400 Bad Request
+- HTTP 401 Unauthorized
+- HTTP 403 Forbidden
+- HTTP 404 Not Found
+- Validation failures
+- Invalid user input
+- Programming errors
+- Syntax errors
+
+Retrying these only wastes time because another attempt will almost certainly fail for the same reason.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Idempotency Guarantee:** Ensure that functions retried via backoff are **idempotent** (i.e., calling them multiple times produces the exact same side-effects as calling them once). HTTP `GET`, `PUT`, and `DELETE` requests are generally safe; `POST` requests without idempotency keys are dangerous.
+* **Cancellation Support:** Long backoff sequences can lead to memory leaks if an underlying user unmounts a component (e.g., in React/Vue). Consider integrating an `AbortSignal` parameter to cancel ongoing timers when contexts unmount.
+* **Observability:** In production environments, replace native `console.warn` statements with structured loggers (e.g., Datadog, Sentry, Pino) to track metrics around retry frequency and failure rates.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+The standard `retry` utility provides a safety net for flaky APIs. By using an **Options Object** and **Max Delay**, you ensure your code remains maintainable and resilient under stress.
