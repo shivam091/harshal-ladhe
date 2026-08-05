@@ -167,4 +167,28 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The Holy Grail Layout",
     description: "Building the classic header, footer, and three-column Holy Grail layout with modern CSS Grid."
   },
+  "async-retry": {
+    title: "Retrying Async Operations",
+    description: "Retrying failed asynchronous operations in JavaScript with configurable attempts, delays, and backoff strategies."
+  },
+  "backoff": {
+    title: "Backoff Strategies for Retries",
+    description: "Spacing out retries with linear, exponential, and jittered backoff so failing services get time to recover."
+  },
+  "error-handling": {
+    title: "Error Handling in JavaScript",
+    description: "Catching, retrying, and reporting errors in JavaScript — especially in asynchronous, promise-based code."
+  },
+  "resilience": {
+    title: "Building Resilient Applications",
+    description: "Techniques that help applications survive network failures, flaky services, and transient errors gracefully."
+  },
+  "nodejs": {
+    title: "All Content Tagged Node.js",
+    description: "Node.js techniques and utilities for server-side JavaScript, from async workflows to resilient API calls."
+  },
+  "api-calls": {
+    title: "Making Reliable API Calls",
+    description: "Making network requests that cope with timeouts, failures, and rate limits without hammering the server."
+  },
 };
