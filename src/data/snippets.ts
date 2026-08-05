@@ -68,13 +68,13 @@ export const snippets: Snippet[] = [
       "deep-freeze",
       "immutability",
       "secure-coding",
-      "strict-mode",
+      "strict-mode"
     ],
     image: {
       path: "/assets/img/goodies/snippets/deep-freeze-objects/cover.png",
       width: 1536,
       height: 1024,
-      alt: "Promotional digital graphic showing the phrase ‘JavaScript deepFreeze()’ with code-themed visuals and design elements aligned to the left.",
+      alt: "Promotional digital graphic showing the phrase ‘JavaScript deepFreeze()’ with code-themed visuals and design elements aligned to the left."
     },
     changelog: [
       { date: "2026-07-12", change: "Initial publication" }
@@ -95,13 +95,13 @@ export const snippets: Snippet[] = [
       "functional-programming",
       "private-state",
       "clean-code",
-      "factory-pattern",
+      "factory-pattern"
     ],
     image: {
       path: "/assets/img/goodies/snippets/encapsulation-closure/cover.png",
       width: 1536,
       height: 1024,
-      alt: "Cover image illustrating private state encapsulation in JavaScript using closures, symbolized by a shield protecting internal variables.",
+      alt: "Cover image illustrating private state encapsulation in JavaScript using closures, symbolized by a shield protecting internal variables."
     },
     changelog: [
       { date: "2026-07-12", change: "Initial publication." }
@@ -119,7 +119,7 @@ export const snippets: Snippet[] = [
       path: "/assets/img/goodies/snippets/encapsulation-private-class-fields/cover.png",
       width: 1536,
       height: 1024,
-      alt: "Representation of a JavaScript Class with a locked vault icon for private fields.",
+      alt: "Representation of a JavaScript Class with a locked vault icon for private fields."
     },
     changelog: [
       { date: "2026-07-12", change: "Initial publication." }
@@ -137,17 +137,17 @@ export const snippets: Snippet[] = [
       "layout",
       "responsive-design",
       "web-design",
-      "holy-grail-layout",
+      "holy-grail-layout"
     ],
     image: {
       path: "/assets/img/goodies/snippets/holy-grail-layout/cover.png",
       width: 1536,
       height: 1024,
-      alt: "Diagram showing a webpage layout with header, footer, two sidebars, and a center content area.",
+      alt: "Diagram showing a webpage layout with header, footer, two sidebars, and a center content area."
     },
     changelog: [
       { date: "2026-07-27", change: "Initial publication" }
-    ],
+    ]
   },
   {
     slug: "async-retry-exponential-backoff",
@@ -165,16 +165,46 @@ export const snippets: Snippet[] = [
       "nodejs",
       "async-await",
       "api-calls",
-      "clean-code",
+      "clean-code"
     ],
     image: {
       path: "/assets/img/goodies/snippets/async-retry-exponential-backoff/cover.png",
       width: 1536,
       height: 1024,
-      alt: "Illustration of exponential retry logic showing a circular retry loop, increasing delays, and a digital countdown timer.",
+      alt: "Illustration of exponential retry logic showing a circular retry loop, increasing delays, and a digital countdown timer."
     },
     changelog: [
       { date: "2026-08-05", change: "Initial publication with Options Object and Max Delay support." }
+    ]
+  },
+  {
+    slug: "exponential-backoff-with-jitter",
+    title: "Exponential Backoff with Jitter",
+    excerpt: "Prevent server traffic spikes using random retry jitter.",
+    description: "Enhance your retry logic with 'Full Jitter' to decohere client requests and protect your infrastructure during recovery.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "jitter",
+      "thundering-herd",
+      "backoff",
+      "distributed-systems",
+      "scalability",
+      "architecture",
+      "reliability"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/exponential-backoff-with-jitter/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Visualization of exponential backoff with jitter, showing randomized retry intervals over time to prevent synchronized retries."
+    },
+    link: {
+      label: "dssdds",
+      href: "/"
+    },
+    changelog: [
+      { date: "2026-08-05", change: "Initial publication with Full Jitter implementation." }
     ]
   }
 ];
@@ -197,6 +227,6 @@ export function getSnippetNavigation(slug: string): SnippetNavigation {
 
   return {
     previous: previous ? { slug: previous.slug, title: previous.title } : null,
-    next: next ? { slug: next.slug, title: next.title } : null,
+    next: next ? { slug: next.slug, title: next.title } : null
   };
 }
