@@ -42,7 +42,14 @@ export const sandboxes: SandboxMeta[] = [
     description: "Increment, decrement, and reset a counter — useState fundamentals.",
     template: "react-ts",
     entry: "/App.tsx"
-  }
+  },
+  {
+    slug: "async-retry-exponential-backoff",
+    title: "Exponential Backoff Retry",
+    description: "Simulates a flaky API call retried with doubling, capped delays — watch each attempt in the console.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  },
 ];
 
 // Looks up a sandbox's registry entry by slug.
