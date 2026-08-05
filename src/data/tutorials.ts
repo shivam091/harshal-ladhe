@@ -27,6 +27,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-07-27", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "async-retry-exponential-backoff",
+    title: "Exponential Backoff Retry Utility",
+    excerpt: "Retry async operations with exponential backoff and caps.",
+    description: "A production-ready recursive utility to retry failed asynchronous operations with a configurable delay that doubles and caps to prevent infinite wait times.",
+    category: ["JavaScript"],
+    tags: ["javascript", "async-retry", "backoff", "promises", "error-handling", "resilience", "nodejs", "async-await", "api-calls", "clean-code"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/async-retry-exponential-backoff/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Illustration of exponential retry logic showing a circular retry loop, increasing delays, and a digital countdown timer.",
+      caption: "A retry loop waiting a little longer after each failed attempt."
+    },
+    changelog: [
+      { date: "2026-08-05", change: "Initial publication with Options Object and Max Delay support." }
+    ]
   }
 ];
 
