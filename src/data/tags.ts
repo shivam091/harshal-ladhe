@@ -191,4 +191,28 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Making Reliable API Calls",
     description: "Making network requests that cope with timeouts, failures, and rate limits without hammering the server."
   },
+  "jitter": {
+    title: "Adding Jitter to Retries",
+    description: "Using randomised jitter to spread retry attempts out so clients don't all hit a recovering service at once."
+  },
+  "thundering-herd": {
+    title: "The Thundering Herd Problem",
+    description: "What causes the thundering herd problem and how backoff with jitter keeps synchronised clients from overwhelming a server."
+  },
+  "distributed-systems": {
+    title: "Distributed Systems Concepts",
+    description: "Concepts and patterns for building systems that stay reliable when many clients and services talk over the network."
+  },
+  "scalability": {
+    title: "Building for Scalability",
+    description: "Patterns that keep applications and services performing well as traffic and load grow."
+  },
+  "architecture": {
+    title: "Software Architecture",
+    description: "Structural decisions and patterns that shape how systems behave under load, failure, and change."
+  },
+  "reliability": {
+    title: "Reliability Engineering",
+    description: "Techniques for building software that keeps working through partial failures and unpredictable conditions."
+  },
 };
