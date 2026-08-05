@@ -36,6 +36,13 @@ export const sandboxes: SandboxMeta[] = [
     template: "react-ts",
     entry: "/App.tsx"
   },
+  {
+    slug: "exponential-backoff-with-jitter",
+    title: "Jitter vs. No Jitter",
+    description: "Six concurrent clients retry a failing request — toggle Full Jitter to see retries scatter instead of stacking.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  }
 ];
 
 // Looks up a sandbox's registry entry by slug.
