@@ -48,6 +48,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-08-05", change: "Initial publication with Options Object and Max Delay support." }
     ]
+  },
+  {
+    slug: "exponential-backoff-with-jitter",
+    title: "Exponential Backoff with Jitter",
+    excerpt: "Prevent server traffic spikes using random retry jitter.",
+    description: "Enhance your retry logic with 'Full Jitter' to decohere client requests and protect your infrastructure during recovery.",
+    category: ["JavaScript"],
+    tags: ["javascript", "jitter", "thundering-herd", "backoff", "distributed-systems", "scalability", "architecture", "reliability"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/exponential-backoff-with-jitter/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Visualization of exponential backoff with jitter, showing randomized retry intervals over time to prevent synchronized retries."
+    },
+    changelog: [
+      { date: "2026-08-05", change: "Initial publication with Full Jitter implementation." }
+    ]
   }
 ];
 
