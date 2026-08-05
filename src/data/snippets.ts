@@ -104,7 +104,7 @@ export const snippets: Snippet[] = [
       width: 1536,
       height: 1024,
       type: "image/webp",
-      alt: "Representation of a JavaScript Class with a locked vault icon for private fields.",
+      alt: "Representation of a JavaScript Class with a locked vault icon for private fields."
     },
     changelog: [
       { date: "2026-07-12", change: "Initial publication." }
@@ -126,7 +126,7 @@ export const snippets: Snippet[] = [
     },
     changelog: [
       { date: "2026-07-27", change: "Initial publication" }
-    ],
+    ]
   },
   {
     slug: "async-retry-exponential-backoff",
@@ -144,6 +144,28 @@ export const snippets: Snippet[] = [
     },
     changelog: [
       { date: "2026-08-05", change: "Initial publication with Options Object and Max Delay support." }
+    ]
+  },
+  {
+    slug: "exponential-backoff-with-jitter",
+    title: "Exponential Backoff with Jitter",
+    excerpt: "Prevent server traffic spikes using random retry jitter.",
+    description: "Enhance your retry logic with 'Full Jitter' to decohere client requests and protect your infrastructure during recovery.",
+    category: ["JavaScript"],
+    tags: ["javascript", "jitter", "thundering-herd", "backoff", "distributed-systems", "scalability", "architecture", "reliability"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/exponential-backoff-with-jitter/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Visualization of exponential backoff with jitter, showing randomized retry intervals over time to prevent synchronized retries."
+    },
+    link: {
+      label: "dssdds",
+      href: "/"
+    },
+    changelog: [
+      { date: "2026-08-05", change: "Initial publication with Full Jitter implementation." }
     ]
   }
 ];
@@ -166,6 +188,6 @@ export function getSnippetNavigation(slug: string): SnippetNavigation {
 
   return {
     previous: previous ? { slug: previous.slug, title: previous.title } : null,
-    next: next ? { slug: next.slug, title: next.title } : null,
+    next: next ? { slug: next.slug, title: next.title } : null
   };
 }
