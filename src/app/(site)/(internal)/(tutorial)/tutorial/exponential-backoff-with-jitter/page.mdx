@@ -1,0 +1,243 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("exponential-backoff-with-jitter");
+
+## Introduction
+
+This utility is an evolution of the [Exponential Backoff](/tutorial/async-retry-exponential-backoff) pattern. While standard backoff
+helps, synchronized retries from thousands of clients can create a **"Thundering Herd"** effect—crashing a server just as it attempts to recover.
+
+Adding **Jitter** (randomness) spreads these requests out, ensuring a smoother recovery for your backend.
+
+Exponential backoff dramatically improves reliability by spacing out retry attempts. However, in distributed systems another problem quickly appears.
+
+Imagine **10,000 clients** calling the same API.
+
+If that API suddenly goes offline, every client begins retrying using the exact same delay schedule:
+
+<CodeBlock showCopyButton={false}>
+{`
+  1 second
+  2 seconds
+  4 seconds
+  8 seconds
+`}
+</CodeBlock>
+
+When the service comes back online, every client retries simultaneously.
+
+Instead of recovering, the server immediately receives another massive wave of requests.
+
+This phenomenon is known as the **Thundering Herd Problem**.
+
+To solve this, modern distributed systems introduce Jitter—a small amount of randomness added to every retry delay.
+
+Rather than retrying together, clients naturally spread themselves across time, allowing the recovering service to handle requests gradually instead of all at once.
+
+<RainbowDivider />
+
+## What is Full Jitter?
+
+Instead of always waiting exactly `1000ms`, the client waits for a random duration between `0ms` and `1000ms`. For the next retry, it waits between `0ms` and `2000ms`, and then between `0ms` and `4000ms`.
+
+Every client therefore receives a different retry schedule.
+
+Even though the maximum delay still grows exponentially, the actual retry times become naturally distributed.
+
+<RainbowDivider/>
+
+## Why This Matters
+
+Consider 1,000 users refreshing a page at the same time.
+
+**Without jitter:**
+
+<CodeBlock showCopyButton={false}>
+{`
+  ████████████████████
+  ████████████████████
+  ████████████████████
+`}
+</CodeBlock>
+
+Every retry lands together.
+
+**With Full Jitter:**
+
+<CodeBlock showCopyButton={false}>
+{`
+  ██  █ █   ██ █
+  ███   ███
+    █ ███ █
+`}
+</CodeBlock>
+
+Traffic becomes evenly spread across time.
+
+This significantly reduces contention and allows recovering systems to stabilize much more quickly.
+
+<RainbowDivider />
+
+## The Jitter Utility
+
+<CodeBlock language="js">
+{`
+  /**
+   * Retries an async function with Full Jitter.
+   * @param {Function} fn - The async function to retry.
+   * @param {Object} options - Configuration settings.
+   * @param {number} options.retries - Max number of retry attempts.
+   * @param {number} options.delay - Initial delay in ms.
+   * @param {number} options.maxDelay - Maximum allowable delay cap.
+   */
+  async function retryWithJitter(fn, { retries = 3, delay = 1000, maxDelay = 30000 } = {}) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (retries === 0) throw e;
+
+      // 1. Calculate the current upper backoff ceiling, bounded by maxDelay
+      const currentRange = Math.min(delay, maxDelay);
+
+      // 2. Full Jitter: Pick a uniform random duration between 0 and currentCeiling
+      const jitteredDelay = Math.random() * currentRange;
+
+      console.log(\`Retrying in \${Math.round(jitteredDelay)}ms...\`);
+
+      await new Promise(resolve => setTimeout(resolve, jitteredDelay));
+
+      // 3. Double base ceiling for the subsequent retry attempt
+      return retryWithJitter(fn, {
+        retries: retries - 1,
+        delay: delay * 2,
+        maxDelay
+      });
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Typed Signature
+
+The interactive sandbox below wires this up in TypeScript with a generic return type, a `jitter` toggle so you can compare it against plain exponential backoff, and an `onWait` callback for plotting each retry — here's the shape it types against:
+
+<CodeBlock language="ts">
+{`
+  export interface RetryOptions {
+    retries?: number;
+    delay?: number;
+    maxDelay?: number;
+    /** Set false to fall back to plain (non-jittered) exponential backoff */
+    jitter?: boolean;
+    /** Optional callback executed on every sleep cycle with the calculated wait in ms */
+    onWait?: (ms: number) => void;
+    /** Optional prefix for console output, useful when several callers retry concurrently */
+    label?: string;
+  }
+
+  export function retryWithJitter<T>(
+    fn: () => Promise<T>,
+    options?: RetryOptions
+  ): Promise<T>;
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Why Use Jitter?
+
+| Attribute | Standard Exponential Backoff | Full Jitter Backoff | Equal Jitter Backoff |
+| :--- | :--- | :--- | :--- |
+| **Formula** | `t = min(delay·2ⁿ, maxDelay)` | `t = random(0, min(delay·2ⁿ, maxDelay))` | `t = v÷2 + random(0, v÷2)`, where `v` is the Standard Backoff value |
+| **Timing Pattern** | Fully Deterministic | Random uniform distribution | Base fallback + random component |
+| **Cluster Behavior** | High peak concurrency spikes | Completely smooth load distribution | Bounded variation |
+| **Best Used For** | Isolated background jobs / CLI scripts | Distributed microservices / APIs | Latency-sensitive critical loops |
+
+<RainbowDivider />
+
+## How It Works
+
+1.  **Wait Calculation:** Instead of waiting exactly `N` ms, we pick a random number between `0` and `N`.
+2.  **Decoherence:** This ensures that multiple failing clients do not retry at the same time.
+3.  **Efficiency:** "Full Jitter" is widely considered the most effective way to reduce contention on a recovering resource.
+
+<RainbowDivider />
+
+## Example Usage
+
+### Distributed Batch API Request Handling
+
+<CodeBlock language="js">
+{`
+  import { retryWithJitter } from "./retryWithJitter";
+
+  const syncDatabaseRecord = async (record) => {
+    const res = await fetch(\`/api/v1/records/\${record.id}\`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(record)
+    });
+
+    if (!res.ok) {
+      throw new Error(\`Database update rejected with status \${res.status}\`);
+    }
+
+    return res.json();
+  };
+
+  // Safe execution across hundreds of simultaneous background sync jobs
+  async function processQueue(batch) {
+    const updates = batch.map(record =>
+      retryWithJitter(() => syncDatabaseRecord(record), {
+        retries: 5,
+        delay: 200,   // Low base delay for rapid initial checks
+        maxDelay: 8000 // Upper ceiling caps wait times at 8s
+      })
+    );
+
+    return Promise.allSettled(updates);
+  }
+`}
+</CodeBlock>
+
+Below is a live comparison — six clients retry the same failing request at once. Toggle **Full Jitter** on and off and watch whether their retries land together or scatter across the timeline. The sandbox uses a shorter `delay`/`maxDelay` than the snippet above (400ms/4000ms instead of 1000ms/30000ms) purely so the timeline finishes animating in a few seconds — the retry logic is identical either way.
+
+<Sandbox slug="exponential-backoff-with-jitter" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use Jitter?
+
+Full Jitter is especially valuable for:
+
+- Public APIs
+- Microservices
+- Serverless platforms
+- Queue workers
+- Background jobs
+- Message consumers
+- Kubernetes workloads
+- Distributed schedulers
+- High-traffic SaaS platforms
+- Mobile applications with millions of users
+
+For a simple CLI tool or internal script, ordinary exponential backoff is usually sufficient.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+Jitter smooths out *when* retries happen, but it doesn't change the underlying risks of retrying at all — the same considerations from the [base retry utility](/tutorial/async-retry-exponential-backoff#production-considerations-edge-cases) still apply here: retried functions need to be **idempotent**, long backoff sequences should support **cancellation** (e.g. via `AbortSignal`), and `console.warn` should be replaced with a structured logger in production.
+
+Two jitter-specific things worth deciding upfront:
+
+* **Full Jitter vs. Equal Jitter:** Full Jitter (used above) gives the smoothest load distribution but means any individual retry could fire almost immediately. If a request needs a *minimum* backoff — e.g. to respect a downstream rate limit — Equal Jitter (see the comparison table above) guarantees at least half the backoff value while still spreading retries out.
+* **Per-client jitter seeding:** `Math.random()` is fine for spreading load across independent clients/processes, as here. It isn't a substitute for actual rate limiting on the server side — jitter reduces contention, it doesn't enforce a limit.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+For production-scale applications, always favor **Jitter**. It transforms a fragile retry loop into a robust recovery mechanism that respects the health of your entire system architecture.
