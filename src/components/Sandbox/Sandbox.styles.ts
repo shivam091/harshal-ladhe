@@ -129,7 +129,6 @@ export const StackedLayout = styled.div`
   (mirrors the Editor/extensions split), and are composed here into this single styled-component.
 */
 export const SandboxWrapper = styled.div`
-  position: relative;
   border-radius: var(--border-radius-default);
   overflow: clip;
   border: var(--border-width-default) solid var(--color-border-muted);
