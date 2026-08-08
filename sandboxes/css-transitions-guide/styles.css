@@ -1,0 +1,82 @@
+:root {
+  --pg-accent: #f472b6;
+  --pg-accent-dark: #ec4899;
+}
+
+/* Demo area — hidden overflow so the box can't visually escape the track mid-transition. */
+
+.demo-area {
+  overflow: hidden;
+}
+
+.demo-track {
+  position: relative;
+  height: 150px;
+  display: flex;
+  align-items: center;
+}
+
+.demo-track::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(to right, var(--pg-border) 0 6px, transparent 6px 12px);
+}
+
+#animated-box {
+  position: relative;
+  z-index: 1;
+  width: 60px;
+  height: 60px;
+  border-radius: 1rem;
+  box-shadow: var(--pg-shadow-sm);
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  will-change: transform;
+}
+
+/*
+  Color is deliberately not part of the user-configurable transition (set via JS below) — pink
+  only while box.in-transit is present, back to this base gradient the instant that class is
+  removed on the transform's transitionend, regardless of which position it lands at.
+*/
+#animated-box.in-transit {
+  background: linear-gradient(135deg, var(--pg-accent), var(--pg-accent-dark));
+}
+
+.box-state-one {
+  transform: translateX(0) scale(1);
+}
+
+.box-state-two {
+  transform: translateX(var(--travel-distance, 70vw)) scale(1.2);
+}
+
+.timing-group {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.timing-group.active-group {
+  display: flex;
+}
+
+/* This sandbox's .timing-group already adds its own gap between children — no extra top margin needed. */
+.tip {
+  margin: 0;
+}
+
+@media (max-width: 480px) {
+  .demo-track {
+    height: 120px;
+  }
+
+  #animated-box {
+    width: 48px;
+    height: 48px;
+  }
+}

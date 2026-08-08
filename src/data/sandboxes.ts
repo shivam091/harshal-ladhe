@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-transitions-guide",
+    title: "CSS Transitions Playground",
+    description: "Tune duration, delay, and timing function (preset, cubic-bezier, or steps) live against a transform + background-color transition.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "holy-grail-layout",
     title: "Holy Grail Layout",
     description: "Header, two sidebars, main content, and footer — CSS Grid template areas with a responsive mobile stack.",
@@ -27,7 +34,7 @@ export const sandboxes: SandboxMeta[] = [
     title: "React Counter",
     description: "Increment, decrement, and reset a counter — useState fundamentals.",
     template: "react-ts",
-    entry: "/App.tsx",
+    entry: "/App.tsx"
   },
   {
     slug: "async-retry-exponential-backoff",
