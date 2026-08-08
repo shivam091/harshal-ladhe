@@ -15,4 +15,8 @@ export const categoryMeta: Record<string, CategoryMeta> = {
     title: "CSS and Web Styling",
     description: "Posts, tutorials, and snippets on Cascading Style Sheets (CSS), covering modern layout techniques, responsive design, and best practices for web styling."
   },
+  animations: {
+    title: "Web Animations Masterclass (CSS, JS, SVG, and Spring)",
+    description: "Dive into web animations! Explore posts, tutorials, and snippets on CSS transitions, JavaScript-powered effects, SVG animation, spring physics, and performance optimization for stunning UI/UX."
+  },
 };
