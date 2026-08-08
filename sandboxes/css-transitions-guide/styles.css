@@ -1,0 +1,345 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --pg-bg: #0f1220;
+  --pg-surface: #171a2b;
+  --pg-surface-muted: #1d2137;
+  --pg-border: #2a2f45;
+  --pg-text: #e7e9f5;
+  --pg-text-muted: #9297b3;
+  --pg-primary: #818cf8;
+  --pg-primary-dark: #6366f1;
+  --pg-primary-soft: rgba(129, 140, 248, 0.3);
+  --pg-accent: #f472b6;
+  --pg-accent-dark: #ec4899;
+  --pg-shadow: 0 20px 45px -15px rgba(0, 0, 0, 0.6);
+  --pg-shadow-sm: 0 8px 20px -8px rgba(0, 0, 0, 0.5);
+  --pg-radius-lg: 1.25rem;
+  --pg-radius-md: 0.85rem;
+  --pg-shadow-sm: 0 8px 20px -8px rgba(31, 41, 55, 0.2);
+  --pg-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pg-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+  background: var(--pg-bg);
+  color: var(--pg-text);
+  font-family: var(--pg-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.playground {
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px;
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius-lg);
+  box-shadow: var(--pg-shadow);
+}
+
+.playground-header h1 {
+  margin: 0 0 4px;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--pg-text-muted);
+}
+
+/* Demo area */
+
+.demo-area {
+  position: relative;
+  padding: 16px;
+  border: 1px dashed var(--pg-border);
+  border-radius: var(--pg-radius-md);
+  background: var(--pg-surface-muted);
+  overflow: hidden;
+}
+
+.demo-track {
+  position: relative;
+  height: 150px;
+  display: flex;
+  align-items: center;
+}
+
+.demo-track::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: repeating-linear-gradient(to right, var(--pg-border) 0 6px, transparent 6px 12px);
+}
+
+#animated-box {
+  position: relative;
+  z-index: 1;
+  width: 60px;
+  height: 60px;
+  border-radius: 1rem;
+  box-shadow: var(--pg-shadow-sm);
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  will-change: transform;
+}
+
+/*
+  Color is deliberately not part of the user-configurable transition (set via JS below) — pink
+  only while box.in-transit is present, back to this base gradient the instant that class is
+  removed on the transform's transitionend, regardless of which position it lands at.
+*/
+#animated-box.in-transit {
+  background: linear-gradient(135deg, var(--pg-accent), var(--pg-accent-dark));
+}
+
+.box-state-one {
+  transform: translateX(0) scale(1);
+}
+
+.box-state-two {
+  transform: translateX(var(--travel-distance, 70vw)) scale(1.2);
+}
+
+.readout {
+  align-self: flex-start;
+  padding: 6px 10px;
+  font-family: var(--pg-mono);
+  font-size: 0.78rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+}
+
+/* Control groups */
+
+fieldset.control-group {
+  min-width: 0;
+  margin: 0;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius-md);
+}
+
+fieldset.control-group legend {
+  padding: 0 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
+}
+
+.fields-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--pg-text-muted);
+}
+
+.field-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+  background: var(--pg-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field-input:focus-within {
+  border-color: var(--pg-primary);
+  box-shadow: 0 0 0 3px var(--pg-primary-soft);
+}
+
+input[type="number"],
+select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--pg-primary);
+  box-shadow: 0 0 0 3px var(--pg-primary-soft);
+}
+
+/*
+  Inside .field-input (duration/delay, which append a unit suffix) the wrapper itself owns the
+  border/background/focus ring instead, so the input underneath goes borderless/transparent —
+  otherwise the unit span would sit outside a visibly separate box from its input.
+*/
+.field-input input[type="number"] {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.field-input .unit-select {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 10px 8px 10px 0;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 0;
+}
+
+.field-input .unit-select:focus {
+  outline: none;
+  color: var(--pg-text);
+  box-shadow: none;
+}
+
+/* Segmented radio control */
+
+.segmented-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+}
+
+.segment {
+  position: relative;
+  flex: 1 1 auto;
+}
+
+.segment input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.segment span {
+  display: block;
+  padding: 8px 10px;
+  border-radius: calc(var(--pg-radius-sm) - 2px);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: center;
+  color: var(--pg-text-muted);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.segment input:checked + span {
+  background: var(--pg-primary);
+  color: #fff;
+}
+
+.segment input:focus-visible + span {
+  outline: 2px solid var(--pg-primary);
+  outline-offset: 2px;
+}
+
+.timing-group {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.timing-group.active-group {
+  display: flex;
+}
+
+.tip {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+  border-radius: var(--pg-radius-sm);
+}
+
+/* Toggle button */
+
+.toggle-btn {
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  border: none;
+  border-radius: var(--pg-radius-md);
+  box-shadow: var(--pg-shadow-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.toggle-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+.toggle-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.toggle-btn:focus-visible {
+  outline: 2px solid var(--pg-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .playground {
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .demo-track {
+    height: 120px;
+  }
+
+  #animated-box {
+    width: 48px;
+    height: 48px;
+  }
+
+  fieldset.control-group {
+    padding: 14px;
+  }
+}

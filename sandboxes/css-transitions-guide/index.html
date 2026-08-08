@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Transitions Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS Transitions Playground</h1>
+        <p>Tune duration, delay, and timing function, then toggle the box to watch them play out.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Transition preview">
+        <div class="demo-track">
+          <div id="animated-box" class="box-state-one"></div>
+        </div>
+      </section>
+
+      <output id="transition-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Transition Properties</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="duration-input">Duration</label>
+            <div class="field-input">
+              <input type="number" id="duration-input" min="0.1" max="10" step="0.1" value="3">
+              <select id="duration-unit" class="unit-select" aria-label="Duration unit">
+                <option value="s">s</option>
+                <option value="ms">ms</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="delay-input">Delay</label>
+            <div class="field-input">
+              <input type="number" id="delay-input" min="-10" max="10" step="0.1" value="0">
+              <select id="delay-unit" class="unit-select" aria-label="Delay unit">
+                <option value="s">s</option>
+                <option value="ms">ms</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Timing Function</legend>
+
+        <div class="segmented-control" role="radiogroup" aria-label="Timing function type">
+          <label class="segment">
+            <input type="radio" name="timing-type" value="preset" checked>
+            <span>Preset</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="timing-type" value="bezier">
+            <span>Cubic-Bezier</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="timing-type" value="steps">
+            <span>Steps</span>
+          </label>
+        </div>
+
+        <div id="timing-options-container">
+          <div id="preset-options" class="timing-group active-group">
+            <div class="field">
+              <label for="timing-select-preset">Select Preset</label>
+              <select id="timing-select-preset">
+                <option value="ease">ease</option>
+                <option value="linear">linear</option>
+                <option value="ease-in">ease-in</option>
+                <option value="ease-out">ease-out</option>
+                <option value="ease-in-out">ease-in-out</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="bezier-options" class="timing-group">
+            <div class="fields-grid">
+              <div class="field">
+                <label for="bezier-x1">x1</label>
+                <input type="number" id="bezier-x1" min="0" max="1" step="0.1" value="0.68">
+              </div>
+
+              <div class="field">
+                <label for="bezier-y1">y1</label>
+                <input type="number" id="bezier-y1" min="-2" max="2" step="0.1" value="-0.55">
+              </div>
+
+              <div class="field">
+                <label for="bezier-x2">x2</label>
+                <input type="number" id="bezier-x2" min="0" max="1" step="0.1" value="0.27">
+              </div>
+
+              <div class="field">
+                <label for="bezier-y2">y2</label>
+                <input type="number" id="bezier-y2" min="-2" max="2" step="0.1" value="1.55">
+              </div>
+            </div>
+
+            <p class="tip">Try (0.1, 0.7, 1, 0.1) for a fast start.</p>
+          </div>
+
+          <div id="steps-options" class="timing-group">
+            <div class="fields-grid">
+              <div class="field">
+                <label for="steps-count">Steps Count</label>
+                <input type="number" id="steps-count" min="1" max="10" step="1" value="5">
+              </div>
+
+              <div class="field">
+                <label for="steps-direction">Direction</label>
+                <select id="steps-direction">
+                  <option value="jump-end">jump-end (default)</option>
+                  <option value="jump-start">jump-start</option>
+                  <option value="jump-none">jump-none</option>
+                  <option value="jump-both">jump-both</option>
+                  <option value="start">start (classic)</option>
+                  <option value="end">end (classic)</option>
+                </select>
+              </div>
+            </div>
+
+            <p class="tip">Use "start" to display first step immediately.</p>
+          </div>
+        </div>
+      </fieldset>
+
+      <button id="toggle-state-btn" class="toggle-btn" type="button">Toggle Transition State</button>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
