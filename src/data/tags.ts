@@ -79,6 +79,46 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "All Content Tagged CSS",
     description: "All content tagged with CSS, covering topics from layout to styling, properties, and modern specifications."
   },
+  "animation": {
+    title: "CSS and JavaScript Animations",
+    description: "All aspects of web animation, from fundamental principles to advanced techniques using CSS, JavaScript, and various libraries."
+  },
+  "transition": {
+    title: "Mastering CSS Transitions for Smooth UI Effects",
+    description: "Learn to use CSS `transition` properties for creating smooth, predictable state changes and hover effects in your user interface."
+  },
+  "will-change": {
+    title: "Optimizing Animations with the `will-change` CSS Property",
+    description: "Understanding the `will-change` property to hint to the browser about planned changes, allowing for better rendering and animation performance."
+  },
+  "performance": {
+    title: "Techniques for High-Performance Web Animations",
+    description: "Focus on optimizing animation speed, frame rate, and responsiveness using best practices, browser tools, and efficient code."
+  },
+  "gpu-acceleration": {
+    title: "Leveraging GPU Acceleration for Smoother Animations",
+    description: "Moving animations to the GPU (Graphics Processing Unit) using properties like `transform` and `opacity` for silky-smooth rendering."
+  },
+  "transform": {
+    title: "Using the CSS `transform` Property for 2D and 3D Effects",
+    description: "Using the powerful CSS `transform` property to translate, rotate, scale, and skew elements for creative visual effects."
+  },
+  "opacity": {
+    title: "Animating Opacity and Transparency Effects",
+    description: "Using the `opacity` property, a simple, performant way to animate fading and visibility changes in UI elements."
+  },
+  "timing-function": {
+    title: "Exploring CSS Animation Timing Functions (`ease`, `steps`, `cubic-bezier`)",
+    description: "Understand how to control the speed curve of your animations using built-in keywords, `steps()`, and custom `cubic-bezier()` and `linear()` timing functions."
+  },
+  "microinteractions": {
+    title: "Designing and Implementing Effective Microinteractions",
+    description: "Focus on small, subtle animations and feedback loops that enhance user experience, usability, and delight in a web application."
+  },
+  "ui-design": {
+    title: "User Interface (UI) Design Principles",
+    description: "Content covering the visual and interactive elements of interface design, from color, gradients, and borders to motion that communicates state and flow."
+  },
   "accessibility": {
     title: "Web Accessibility (a11y) Standards and Practices",
     description: "Web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
