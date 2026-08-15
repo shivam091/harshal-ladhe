@@ -94,7 +94,7 @@ Here's the HTML structure:
 - The column layout uses `1fr 2fr 2fr`, giving the sidebar less space than the main content.
 - This is a clean, semantic approach to building responsive page sections — no floats or nested containers needed.
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/JodQLgg)
+👉 Try this hands-on in the **Template Areas** tab of the [interactive playground](#interactive-example) below, or [on CodePen](https://codepen.io/shivam091/pen/JodQLgg).
 
 <RainbowDivider />
 
@@ -512,6 +512,22 @@ Use `grid-auto-columns` to control the width of these new columns.
 <Info title="Tip">
   You rarely need to use `grid-auto-columns` unless you're manually placing items across columns (e.g. `grid-column: 4`) or using `grid-auto-flow: column` and want to control generated column width.
 </Info>
+
+<RainbowDivider />
+
+## Interactive Example
+
+Alignment, spanning, and implicit tracks are easiest to internalize together. Use the **Alignment & Spanning** tab below to set
+container-level `justify-items` / `align-items` for every cell (or flip the checkbox to see the same rule written as the
+`place-items` / `place-self` shorthand), then self-align and span just the highlighted hero item, each in its own panel. The last
+panel raises the item count past the explicit 3×3 grid so you can watch the browser generate implicit tracks — via `grid-auto-flow`,
+`grid-auto-rows`, and `grid-auto-columns` — in real time.
+
+Switch to the **Template Areas** tab to revisit named regions from the top of this post — swap between a few preset layouts and
+watch the same colored blocks reflow into a completely different shape, with the generated `grid-template-areas` and `grid-area`
+rules shown live below the preview.
+
+<Sandbox slug="mastering-css-grid" defaultLayout="vertical" />
 
 <RainbowDivider />
 
