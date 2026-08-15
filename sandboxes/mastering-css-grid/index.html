@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Grid Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS Grid Playground</h1>
+        <p>Switch between alignment/spanning and named template areas — everything below updates live.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Demo mode">
+        <button class="tab tab--active" type="button" data-mode="alignment" role="tab" aria-selected="true">Alignment &amp; Spanning</button>
+        <button class="tab" type="button" data-mode="distribution" role="tab" aria-selected="false">Content Distribution</button>
+        <button class="tab" type="button" data-mode="areas" role="tab" aria-selected="false">Template Areas</button>
+      </div>
+
+      <div id="alignment-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area" aria-label="Grid preview">
+          <div id="grid-preview" class="grid-preview"></div>
+        </section>
+
+        <output id="grid-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Container Alignment (all items)</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="justify-items-select">justify-items</label>
+              <select id="justify-items-select">
+                <option value="stretch">stretch</option>
+                <option value="start">start</option>
+                <option value="center" selected>center</option>
+                <option value="end">end</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="align-items-select">align-items</label>
+              <select id="align-items-select">
+                <option value="stretch">stretch</option>
+                <option value="start">start</option>
+                <option value="center" selected>center</option>
+                <option value="end">end</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="place-items-select">place-items <span class="shorthand-note">(shorthand)</span></label>
+              <select id="place-items-select"></select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Self-Alignment (Hero Item)</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="justify-self-select">justify-self</label>
+              <select id="justify-self-select">
+                <option value="">(inherit)</option>
+                <option value="stretch">stretch</option>
+                <option value="start">start</option>
+                <option value="center">center</option>
+                <option value="end">end</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="align-self-select">align-self</label>
+              <select id="align-self-select">
+                <option value="">(inherit)</option>
+                <option value="stretch">stretch</option>
+                <option value="start">start</option>
+                <option value="center">center</option>
+                <option value="end">end</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="place-self-select">place-self <span class="shorthand-note">(shorthand)</span></label>
+              <select id="place-self-select"></select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Spanning (Hero Item)</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="column-span-input">grid-column: span</label>
+              <div class="range-row">
+                <span class="range-edge">1</span>
+                <div class="range-track">
+                  <input type="range" id="column-span-input" min="1" max="3" step="1" value="1">
+                  <output class="range-bubble" id="column-span-value" for="column-span-input">1</output>
+                </div>
+                <span class="range-edge">3</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="row-span-input">grid-row: span</label>
+              <div class="range-row">
+                <span class="range-edge">1</span>
+                <div class="range-track">
+                  <input type="range" id="row-span-input" min="1" max="3" step="1" value="1">
+                  <output class="range-bubble" id="row-span-value" for="row-span-input">1</output>
+                </div>
+                <span class="range-edge">3</span>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Explicit vs Implicit Grid</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="item-count-input">Item count</label>
+              <div class="range-row">
+                <span class="range-edge">9</span>
+                <div class="range-track">
+                  <input type="range" id="item-count-input" min="9" max="16" step="1" value="9">
+                  <output class="range-bubble" id="item-count-value" for="item-count-input">9</output>
+                </div>
+                <span class="range-edge">16</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="auto-flow-select">grid-auto-flow</label>
+              <select id="auto-flow-select">
+                <option value="row" selected>row</option>
+                <option value="column">column</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="auto-track-input"><span id="auto-track-label">grid-auto-rows</span></label>
+              <div class="range-row">
+                <span class="range-edge">40px</span>
+                <div class="range-track">
+                  <input type="range" id="auto-track-input" min="40" max="140" step="10" value="60">
+                  <output class="range-bubble" id="auto-track-value" for="auto-track-input">60px</output>
+                </div>
+                <span class="range-edge">140px</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="tip">The first 9 items (<span class="legend-swatch explicit-swatch"></span> solid) fill the explicit 3×3 grid. Raise the item count and the rest (<span class="legend-swatch implicit-swatch"></span> dashed) overflow into browser-generated implicit tracks.</p>
+        </fieldset>
+      </div>
+
+      <div id="distribution-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Content distribution preview">
+          <div id="distribution-preview" class="distribution-preview">
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+          </div>
+        </section>
+
+        <output id="distribution-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Distribute Tracks</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="justify-content-select">justify-content</label>
+              <select id="justify-content-select">
+                <option value="start">start</option>
+                <option value="center">center</option>
+                <option value="end">end</option>
+                <option value="stretch">stretch</option>
+                <option value="space-between" selected>space-between</option>
+                <option value="space-around">space-around</option>
+                <option value="space-evenly">space-evenly</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="align-content-select">align-content</label>
+              <select id="align-content-select">
+                <option value="start" selected>start</option>
+                <option value="center">center</option>
+                <option value="end">end</option>
+                <option value="stretch">stretch</option>
+                <option value="space-between">space-between</option>
+                <option value="space-around">space-around</option>
+                <option value="space-evenly">space-evenly</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="place-content-select">place-content <span class="shorthand-note">(shorthand)</span></label>
+              <select id="place-content-select"></select>
+            </div>
+          </div>
+
+          <p class="tip">These 6 tracks are fixed at 70×50px each inside a wider, taller container — on purpose, so there's leftover space for <code>justify-content</code>/<code>align-content</code> to distribute. Switch either to <code>stretch</code> to see it do nothing here: a fixed-size track never grows past its own size.</p>
+        </fieldset>
+      </div>
+
+      <div id="areas-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Template areas preview">
+          <div id="areas-preview" class="areas-preview"></div>
+        </section>
+
+        <output id="areas-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Layout Preset</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="areas-preset-select">grid-template-areas</label>
+              <select id="areas-preset-select">
+                <option value="holy-grail" selected>Holy Grail</option>
+                <option value="dashboard">Dashboard</option>
+                <option value="sidebar-right">Sidebar Right</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="areas-gap-input">Gap</label>
+              <div class="range-row">
+                <span class="range-edge">0px</span>
+                <div class="range-track">
+                  <input type="range" id="areas-gap-input" min="0" max="24" step="2" value="8">
+                  <output class="range-bubble" id="areas-gap-value" for="areas-gap-input">8px</output>
+                </div>
+                <span class="range-edge">24px</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="tip">Every colored block is a real element assigned to a named region with <code>grid-area</code> — swap the preset to see the same markup reflow into a completely different shape, with zero source-order changes.</p>
+        </fieldset>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
