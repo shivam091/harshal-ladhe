@@ -1,0 +1,117 @@
+:root {
+  --pg-accent: #f472b6;
+  --pg-accent-dark: #ec4899;
+  --pg-radius-sm: 0.5rem;
+}
+
+/* Demo area — centers the fixed-size grid/areas previews the shared frame otherwise stretches. */
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+}
+
+.grid-preview {
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  grid-template-rows: repeat(3, 100px);
+  gap: 6px;
+  padding: 6px;
+  /* Faint per-cell boundary so alignment (stretch vs. center/start/end) reads clearly even when an item shrinks to its intrinsic size. */
+  background-image:
+    repeating-linear-gradient(to right, var(--pg-border) 0 1px, transparent 1px 106px),
+    repeating-linear-gradient(to bottom, var(--pg-border) 0 1px, transparent 1px 106px);
+}
+
+.grid-item {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--pg-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  box-shadow: var(--pg-shadow-sm);
+}
+
+.grid-item.hero-item {
+  width: auto;
+  height: auto;
+  background: linear-gradient(135deg, var(--pg-accent), var(--pg-accent-dark));
+  min-width: 50px;
+  min-height: 50px;
+}
+
+/* Browser-generated implicit tracks — dashed border + amber tone so they read as distinct from the explicit 3x3 grid's solid indigo items. */
+.grid-item.implicit-item {
+  background: rgba(245, 158, 11, 0.15);
+  border: 2px dashed #f59e0b;
+  color: #f59e0b;
+  box-shadow: none;
+}
+
+.areas-preview {
+  display: grid;
+  width: 100%;
+  min-height: 240px;
+}
+
+.area-region {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border-radius: var(--pg-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  text-transform: capitalize;
+  box-shadow: var(--pg-shadow-sm);
+}
+
+.area-header {
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+}
+
+.area-sidebar {
+  background: linear-gradient(135deg, #38bdf8, #0284c7);
+}
+
+.area-main {
+  background: linear-gradient(135deg, #4ade80, #16a34a);
+}
+
+.area-footer {
+  background: linear-gradient(135deg, var(--pg-accent), var(--pg-accent-dark));
+}
+
+.area-widgets {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+}
+
+.shorthand-note {
+  font-family: var(--pg-mono);
+  font-size: 0.72rem;
+  font-weight: 400;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-inline: 2px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.legend-swatch.explicit-swatch {
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+}
+
+.legend-swatch.implicit-swatch {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1.5px dashed #f59e0b;
+}
