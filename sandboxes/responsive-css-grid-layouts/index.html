@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Responsive Grid Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Responsive Grid Playground</h1>
+        <p>Shrink the container and drop the card count to see auto-fit collapse empty tracks while auto-fill keeps reserving space for them.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Card grid preview">
+        <div id="container-frame" class="container-frame">
+          <div id="grid-preview" class="grid-preview"></div>
+        </div>
+      </section>
+
+      <output id="grid-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Grid Template</legend>
+
+        <div class="segmented-control" role="radiogroup" aria-label="Repeat mode">
+          <label class="segment">
+            <input type="radio" name="mode" value="auto-fit" checked>
+            <span>auto-fit</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="mode" value="auto-fill">
+            <span>auto-fill</span>
+          </label>
+        </div>
+
+        <div class="fields-grid">
+          <div class="field">
+            <label for="min-input">Min track size</label>
+            <div class="range-row">
+              <span class="range-edge">100px</span>
+              <div class="range-track">
+                <input type="range" id="min-input" min="100" max="300" step="10" value="180">
+                <output class="range-bubble" id="min-track-value" for="min-input">180px</output>
+              </div>
+              <span class="range-edge">300px</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="card-count-input">Card count</label>
+            <div class="range-row">
+              <span class="range-edge">1</span>
+              <div class="range-track">
+                <input type="range" id="card-count-input" min="1" max="8" step="1" value="4">
+                <output class="range-bubble" id="card-count-value" for="card-count-input">4</output>
+              </div>
+              <span class="range-edge">8</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="container-width-input">Container width</label>
+            <div class="range-row">
+              <span class="range-edge">300px</span>
+              <div class="range-track">
+                <input type="range" id="container-width-input" min="300" max="900" step="20" value="700">
+                <output class="range-bubble" id="container-width-value" for="container-width-input">700px</output>
+              </div>
+              <span class="range-edge">900px</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="tip">With few cards in a wide container: <strong>auto-fit</strong> stretches them to fill the space, <strong>auto-fill</strong> leaves empty tracks the size of one card instead.</p>
+      </fieldset>
+
+      <h2 class="section-heading">Container Queries</h2>
+      <p class="section-intro">This card reflows based on <strong>its own</strong> width — not the viewport — once its container crosses the breakpoint below.</p>
+
+      <section class="demo-area" aria-label="Container query card preview">
+        <div id="cq-container" class="cq-container">
+          <div class="cq-card">
+            <h3 class="cq-title">Dashboard Title</h3>
+            <div class="cq-meta">User • 5 mins ago</div>
+            <div class="cq-content">This card's layout changes based on container width, not the viewport.</div>
+          </div>
+        </div>
+      </section>
+
+      <output id="cq-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>@container</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="cq-width-input">Container width</label>
+            <div class="range-row">
+              <span class="range-edge">200px</span>
+              <div class="range-track">
+                <input type="range" id="cq-width-input" min="200" max="700" step="10" value="350">
+                <output class="range-bubble" id="cq-width-value" for="cq-width-input">350px</output>
+              </div>
+              <span class="range-edge">700px</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="cq-breakpoint-input">@container min-width</label>
+            <div class="range-row">
+              <span class="range-edge">200px</span>
+              <div class="range-track">
+                <input type="range" id="cq-breakpoint-input" min="200" max="700" step="10" value="500">
+                <output class="range-bubble" id="cq-breakpoint-value" for="cq-breakpoint-input">500px</output>
+              </div>
+              <span class="range-edge">700px</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="tip">Drag the container past the breakpoint (or drag the breakpoint under the container) to watch the card switch from a stacked single column to a two-column layout — driven entirely by its own width, not the browser window.</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

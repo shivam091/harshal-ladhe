@@ -6,7 +6,7 @@ export const metadata = buildPostMetadata("mastering-css-grid");
 
 Welcome to **Part 2** of the CSS Grid Fundamentals Series!
 
-In [Part 1](/post/getting-started-with-css-grid), you laid the groundwork — learning how to define grid containers, set up tracks, and build basic layouts.
+In [Part 1](/post/css/getting-started-with-css-grid), you laid the groundwork — learning how to define grid containers, set up tracks, and build basic layouts.
 
 Now, it's time to go beyond the basics.
 
@@ -94,7 +94,7 @@ Here's the HTML structure:
 - The column layout uses `1fr 2fr 2fr`, giving the sidebar less space than the main content.
 - This is a clean, semantic approach to building responsive page sections — no floats or nested containers needed.
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/JodQLgg)
+👉 Try this hands-on in the **Template Areas** tab of the [interactive playground](#interactive-example) below, or [on CodePen](https://codepen.io/shivam091/pen/JodQLgg).
 
 <RainbowDivider />
 
@@ -515,6 +515,22 @@ Use `grid-auto-columns` to control the width of these new columns.
 
 <RainbowDivider />
 
+## Interactive Example
+
+Alignment, spanning, and implicit tracks are easiest to internalize together. Use the **Alignment & Spanning** tab below to set
+container-level `justify-items` / `align-items` for every cell (or flip the checkbox to see the same rule written as the
+`place-items` / `place-self` shorthand), then self-align and span just the highlighted hero item, each in its own panel. The last
+panel raises the item count past the explicit 3×3 grid so you can watch the browser generate implicit tracks — via `grid-auto-flow`,
+`grid-auto-rows`, and `grid-auto-columns` — in real time.
+
+Switch to the **Template Areas** tab to revisit named regions from the top of this post — swap between a few preset layouts and
+watch the same colored blocks reflow into a completely different shape, with the generated `grid-template-areas` and `grid-area`
+rules shown live below the preview.
+
+<Sandbox slug="mastering-css-grid" defaultLayout="vertical" />
+
+<RainbowDivider />
+
 ## Conclusion
 
 You've now mastered the core tools that bring **power, readability, and precision** to CSS Grid layouts:
@@ -524,7 +540,7 @@ You've now mastered the core tools that bring **power, readability, and precisio
 - Spanning techniques let you control flow and sizing beyond automatic placement.
 - Explicit vs. implicit grids give you confidence when your layout grows unexpectedly.
 
-Up next in [Part 3 → Responsive CSS Grid Layouts: fr Units, minmax(), auto-fill, and auto-fit Explained](/post/responsive-css-grid-layouts), we'll unlock how to:
+Up next in [Part 3 → Responsive CSS Grid Layouts: fr Units, minmax(), auto-fill, and auto-fit Explained](/post/css/responsive-css-grid-layouts), we'll unlock how to:
 
 - Use `fr`, `minmax()`, `auto-fit`, and `auto-fill` for fluid responsive tracks
 - Pair grid with **media** and **container** queries

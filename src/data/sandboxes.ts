@@ -56,6 +56,27 @@ export const sandboxes: SandboxMeta[] = [
     description: "Six concurrent clients retry a failing request — toggle Full Jitter to see retries scatter instead of stacking.",
     template: "react-ts",
     entry: "/App.tsx"
+  },
+  {
+    slug: "responsive-css-grid-layouts",
+    title: "Responsive Grid Playground",
+    description: "Shrink the container and drop the card count live to see auto-fit collapse empty tracks while auto-fill keeps reserving space for them, then tune a @container breakpoint to watch a card reflow based on its own width.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
+    slug: "mastering-css-grid",
+    title: "Grid Alignment, Spanning & Template Areas Playground",
+    description: "Set container-level justify-items/align-items (or the place-items/place-self shorthand), span and self-align a hero item, raise the item count past the explicit grid to watch implicit tracks appear, and switch to the Template Areas tab to swap between named-region layout presets.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
+    slug: "getting-started-with-css-grid",
+    title: "CSS Grid Track Builder",
+    description: "Tune column count, row height, gap, and item count live to see grid-template-columns and grid-auto-rows reflow the grid.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 
