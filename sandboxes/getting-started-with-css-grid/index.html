@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Grid Track Builder</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS Grid Track Builder</h1>
+        <p>Tune the column count, row height, gap, and item count, then watch the grid reflow live.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Grid preview">
+        <div id="grid-preview" class="grid-preview"></div>
+      </section>
+
+      <output id="grid-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Grid Template</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="columns-input">Columns</label>
+            <div class="range-row">
+              <span class="range-edge">1</span>
+              <div class="range-track">
+                <input type="range" id="columns-input" min="1" max="6" step="1" value="3">
+                <output class="range-bubble" id="columns-value" for="columns-input">3</output>
+              </div>
+              <span class="range-edge">6</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="row-height-input">Row height</label>
+            <div class="range-row">
+              <span class="range-edge">40px</span>
+              <div class="range-track">
+                <input type="range" id="row-height-input" min="40" max="200" step="10" value="100">
+                <output class="range-bubble" id="row-height-value" for="row-height-input">100px</output>
+              </div>
+              <span class="range-edge">200px</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="gap-input">Gap</label>
+            <div class="range-row">
+              <span class="range-edge">0px</span>
+              <div class="range-track">
+                <input type="range" id="gap-input" min="0" max="40" step="2" value="16">
+                <output class="range-bubble" id="gap-value" for="gap-input">16px</output>
+              </div>
+              <span class="range-edge">40px</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="item-count-input">Item count</label>
+            <div class="range-row">
+              <span class="range-edge">3</span>
+              <div class="range-track">
+                <input type="range" id="item-count-input" min="3" max="12" step="1" value="6">
+                <output class="range-bubble" id="item-count-value" for="item-count-input">6</output>
+              </div>
+              <span class="range-edge">12</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
