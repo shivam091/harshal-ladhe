@@ -105,6 +105,8 @@ It's especially useful when building **responsive** layouts, because it allows a
 
 In this example, cards lay out in rows on large screens and stack neatly, without overflow, on small screens.
 
+👉 Try this hands-on in the **Grid Template** panel of the [interactive playground](#interactive-example) below — set the minimum track size to 250px to match this example.
+
 <RainbowDivider />
 
 ## `auto-fit` vs `auto-fill`
@@ -132,6 +134,8 @@ Want a grid that adapts to screen width _without media queries_? Use `auto-fit` 
 - `auto-fill`: Maintains the grid structure, even if columns are empty. Reserves space for empty columns.
 
 <GridSizingDiagram />
+
+👉 Try this hands-on in the **Grid Template** panel of the [interactive playground](#interactive-example) below — toggle between auto-fit and auto-fill with just a few cards in a wide container to see the difference.
 
 <RainbowDivider />
 
@@ -220,6 +224,19 @@ Here's the HTML structure:
 <Warning title="Note">
   Most modern browsers support container queries (except older Safari/Firefox versions). Always check compatibility if building for production.
 </Warning>
+
+👉 Try this hands-on in the **@container** panel of the [interactive playground](#interactive-example) below — drag the container width past the breakpoint and watch the card reflow based on its own width, not the viewport's.
+
+<RainbowDivider />
+
+## Interactive Example
+
+The difference between `auto-fit` and `auto-fill` only really clicks once you can shrink the container yourself, and container queries
+only click once you see a component reflow from its *own* width rather than the viewport's. Use the playground below to switch modes,
+tune the minimum track size, and change the card count in the first panel — then drag the container width and `@container` breakpoint
+in the second panel to watch a card switch from a stacked single column to a two-column layout.
+
+<Sandbox slug="responsive-css-grid-layouts" defaultLayout="vertical" />
 
 <RainbowDivider />
 
@@ -351,6 +368,8 @@ A simple dashboard grid using `grid-template-areas`, `minmax()`, and media queri
 `}
 </CodeBlock>
 
+👉 This is the exact card the **@container** panel of the [interactive playground](#interactive-example) below builds live — resize its container width to watch it reflow.
+
 <RainbowDivider />
 
 ## Common Pitfalls with Responsive Grids
@@ -419,6 +438,10 @@ Here's a concise summary of essential CSS Grid properties:
 | `grid-auto-columns` | Defines column size for **implicitly created columns** |
 | `grid-column` | Specifies how many columns an item spans or where it starts/ends |
 | `grid-row` | Specifies how many rows an item spans or where it starts/ends |
+
+<Info>
+  Want to feel the alignment, spanning, and implicit-track rows in this table rather than just read about them? [Part 2's interactive playground](/post/css/mastering-css-grid#interactive-example) lets you tune every one of them live.
+</Info>
 
 <RainbowDivider />
 

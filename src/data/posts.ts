@@ -87,6 +87,7 @@ export const posts: Post[] = [
     signoff: "This one took a good deal of care to get the fundamentals right, and I hope it gives you a solid footing with containers, tracks, and your first 2D layout. Appreciate you taking the time to work through it with me — happy gridding. 🧱",
     pinned: true,
     changelog: [
+      { date: "2026-08-15", change: "Added interactive playground for column/row templates and gap" },
       { date: "2026-07-05", change: "Initial publication" }
     ]
   },
@@ -107,6 +108,7 @@ export const posts: Post[] = [
     signoff: "A lot of testing and refining went into getting these grid-area, alignment, spanning, subgrid, and accessibility examples just right, and I hope that effort shows in how clearly they click for you. Thanks for following along — hope your layouts feel a little more precise now. 📐",
     pinned: true,
     changelog: [
+      { date: "2026-08-15", change: "Added interactive playground for alignment, spanning, and implicit tracks" },
       { date: "2026-07-05", change: "Initial publication" }
     ]
   },
@@ -128,6 +130,7 @@ export const posts: Post[] = [
     pinned: true,
     featured: true,
     changelog: [
+      { date: "2026-08-15", change: "Added interactive auto-fit vs auto-fill and container query playground" },
       { date: "2026-07-05", change: "Initial publication" }
     ]
   },
