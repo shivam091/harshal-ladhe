@@ -1,0 +1,518 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("advanced-git-techniques-and-workflows");
+
+## Introduction
+
+This is **Part 2** of a two-part series. [Part 1](/post/git/git-basics-for-beginners) covered the everyday loop — staging, committing, branching, merging, undoing mistakes, and working with a remote. If any of those feel shaky, that post is the place to start; everything here builds directly on that mental model of working directory → staging area → repository, and branches as cheap, movable pointers.
+
+This post covers the tools you reach for once a repo gets real: rewriting history safely before sharing it, applying individual commits with precision, finding the exact commit that broke something, and understanding what Git is actually doing under the hood — which turns "undo commands feel scary" into "I know exactly how to get this back."
+
+By the end, you'll be comfortable with:
+
+- Rebasing — including interactive rebase, and when *not* to reach for it
+- `cherry-pick` and `bisect` for surgical history operations
+- Git's internal object model — what a commit, branch, and tag actually *are*
+- Submodules, worktrees, hooks, and productivity config
+- Recovering "lost" work with `git reflog`
+- Real branching workflows — Git Flow, GitHub Flow, trunk-based development
+
+<RainbowDivider />
+
+## Rebasing
+
+Rebasing replays your branch's commits on top of a different base commit, producing a cleaner, linear history than a merge commit would.
+
+<CodeBlock language="bash">
+{`
+  git switch feature/login
+  git rebase main              # replay feature/login's commits on top of main's latest commit
+  git rebase --continue        # after resolving a conflict mid-rebase
+  git rebase --skip            # skip the commit currently causing a conflict
+  git rebase --abort           # bail out entirely, back to the pre-rebase state
+  git rebase --onto main old-base feature   # replay only commits since old-base, onto main
+`}
+</CodeBlock>
+
+<GitRebaseDiagram />
+
+<Warning title="The Golden Rule of Rebasing">
+  Never rebase commits that exist outside your own repository — that is, commits other people may have already pulled. Rebasing rewrites SHAs; if someone has already built on top of the originals, they'll get diverging history and a painful merge. Rebase your own local, unpushed work freely; for shared branches, merge instead (or coordinate the rewrite explicitly with everyone involved).
+</Warning>
+
+### Interactive Rebase
+
+The single most powerful history-editing tool in Git — lets you reorder, edit, combine, or drop commits before they're shared.
+
+<CodeBlock language="bash">
+{`
+  git rebase -i HEAD~5     # interactively edit the last 5 commits
+  git rebase -i main       # interactively edit everything since diverging from main
+`}
+</CodeBlock>
+
+This opens an editor listing your commits, oldest first, each with an action:
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  pick   a1b2c3d Add login form
+  squash e4f5g6h Fix typo in login form
+  reword h7i8j9k Add validation
+  fixup  k1l2m3n Remove console.log
+  drop   n4o5p6q WIP: experiment (not needed)
+`}
+</CodeBlock>
+
+<Details summary="What each interactive rebase action does">
+
+| Action | Effect |
+| --- | --- |
+| `pick` | Keep the commit as-is |
+| `reword` | Keep the changes, but stop to edit the commit message |
+| `edit` | Stop after applying this commit, so you can amend it further |
+| `squash` | Combine into the *previous* commit, merging both messages |
+| `fixup` | Like `squash`, but silently discards this commit's message |
+| `drop` | Discard the commit entirely |
+
+</Details>
+
+`--autosquash` automates the common "small fix for an earlier commit" case:
+
+<CodeBlock language="bash">
+{`
+  git commit --fixup=abc1234       # creates a commit clearly marked as a fixup for abc1234
+  git rebase -i --autosquash main  # automatically reorders and marks it "fixup" for you
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Cherry-Picking
+
+Applies the changes from a specific commit onto your current branch — useful for pulling in one fix without merging an entire branch.
+
+<CodeBlock language="bash">
+{`
+  git cherry-pick abc1234              # apply one commit onto the current branch
+  git cherry-pick abc1234 def5678      # apply several commits, in the order given
+  git cherry-pick abc1234^..def5678    # apply a range of commits (exclusive of abc1234 itself)
+  git cherry-pick -n abc1234           # apply the changes, but don't commit — stage them for review first
+  git cherry-pick -x abc1234           # append "(cherry picked from commit abc1234)" to the message
+  git cherry-pick --continue           # after resolving a conflict
+  git cherry-pick --abort              # bail out entirely
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Finding the Commit That Introduced a Bug: `git bisect`
+
+Binary-searches through history to find the exact commit that introduced a bug.
+
+<CodeBlock language="bash">
+{`
+  git bisect start
+  git bisect bad                 # the current commit is broken
+  git bisect good v1.2.0         # this earlier tag/commit was known-good
+
+  # Git checks out a commit halfway between — test it, then tell it the result:
+  git bisect good                # this commit is fine, search the newer half
+  git bisect bad                 # this commit is broken, search the older half
+  # ...repeat until Git reports the exact first-bad commit
+
+  git bisect reset               # done — return to your original branch
+`}
+</CodeBlock>
+
+<GitBisectDiagram />
+
+<Info title="Automating bisect">
+  If the bug is detectable by a script (a failing test, a non-zero exit code), skip the manual good/bad loop entirely: `git bisect run ./test-for-bug.sh` drives the whole search automatically.
+</Info>
+
+<RainbowDivider />
+
+## Rewriting History Safely
+
+Beyond interactive rebase, a few more tools exist specifically for cleaning up history before sharing it.
+
+<CodeBlock language="bash">
+{`
+  git rebase -i --root                # interactively rewrite EVERY commit, from the very first one
+  git commit --squash=abc1234         # like --fixup, but keeps this commit's message for review during squash
+  git filter-repo --path secrets.env --invert-paths   # (separate tool) permanently remove a file from all history
+`}
+</CodeBlock>
+
+<Warning title="git filter-branch is deprecated">
+  Git's own documentation now recommends the third-party `git filter-repo` tool over the built-in `git filter-branch` for history-wide rewrites (removing a file from every commit, splitting a repo, etc.) — it's dramatically faster and much harder to misuse. `filter-branch` is still bundled with Git for compatibility, but new work should reach for `filter-repo`.
+</Warning>
+
+<RainbowDivider />
+
+## Submodules & Subtrees
+
+Two different ways to embed one Git repository inside another.
+
+### Submodules
+
+A submodule is a *pointer* to a specific commit of another repository — the two histories stay entirely separate.
+
+<CodeBlock language="bash">
+{`
+  git submodule add https://github.com/user/lib.git libs/lib
+  git submodule init                  # after cloning a repo that already has submodules
+  git submodule update                # check out the commit each submodule is pinned to
+  git submodule update --init --recursive   # do both, recursively, in one step
+  git submodule foreach 'git pull origin main'   # run a command inside every submodule
+`}
+</CodeBlock>
+
+### Subtrees
+
+A subtree copies another repository's history directly *into* yours, as a subdirectory — one combined history, no separate pointer to manage.
+
+<CodeBlock language="bash">
+{`
+  git subtree add --prefix=libs/lib https://github.com/user/lib.git main --squash
+  git subtree pull --prefix=libs/lib https://github.com/user/lib.git main --squash
+  git subtree push --prefix=libs/lib https://github.com/user/lib.git main
+`}
+</CodeBlock>
+
+<Info title="Which one?">
+  Submodules keep the dependency's history separate and are the better fit when multiple projects share the exact same submodule and need to stay in sync. Subtrees fold everything into one repo — simpler for consumers (no extra clone step), at the cost of a bulkier combined history.
+</Info>
+
+<RainbowDivider />
+
+## Worktrees
+
+Lets you check out **multiple branches at once**, each in its own directory, all backed by the same `.git` history — no need to stash or commit WIP just to switch context.
+
+<CodeBlock language="bash">
+{`
+  git worktree add ../hotfix hotfix/urgent-bug   # new working directory, on an existing branch
+  git worktree add -b feature/new ../new-feature  # new working directory AND new branch, together
+  git worktree list                              # see every linked worktree
+  git worktree remove ../hotfix                  # done with it — clean up
+`}
+</CodeBlock>
+
+<Success title="Why this beats stashing">
+  Need to jump onto an urgent hotfix mid-feature? `git worktree add` gives you a second directory to work in immediately, with your feature branch's working directory left completely untouched — no `git stash`, no context-switch cost, no risk of forgetting a stash existed.
+</Success>
+
+<RainbowDivider />
+
+## Git Internals: Objects, Refs, and the `.git` Directory
+
+[Part 1](/post/git/git-basics-for-beginners#how-git-thinks-the-core-model) introduced commits as snapshots and branches as pointers, at the level you need to use Git day-to-day. Here's what that actually looks like on disk.
+
+Git's entire history is a **content-addressable key-value store** of four object types, all identified by the SHA-1 (or, on newer repos, SHA-256) hash of their contents.
+
+| Object | Contains |
+| --- | --- |
+| **blob** | A single file's raw content (no filename, no metadata) |
+| **tree** | A directory listing — names + modes, pointing at blobs and other trees |
+| **commit** | A pointer to one tree (the snapshot), one or more parent commits, author/committer, and a message |
+| **tag** | An annotated tag's metadata, pointing at a commit |
+
+Here's how those objects actually link together for a small project:
+
+<GitObjectGraphDiagram />
+
+### Plumbing Commands
+
+The commands you've used so far ("porcelain") are built on lower-level "plumbing" commands that operate on these objects directly:
+
+<CodeBlock language="bash">
+{`
+  git cat-file -p HEAD          # pretty-print any object's raw content, by hash or ref
+  git cat-file -t abc1234       # print an object's type (blob / tree / commit / tag)
+  git hash-object src/index.js  # compute the SHA a file's content WOULD get, without storing it
+  git rev-parse HEAD            # resolve any ref/shorthand to its full SHA
+  git ls-tree HEAD              # list a commit's top-level tree entries
+  git update-ref refs/heads/main abc1234  # move a branch pointer directly (what \`git reset\` uses internally)
+`}
+</CodeBlock>
+
+### The `.git` Directory, Briefly
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  .git/
+  ├── HEAD              # currently "ref: refs/heads/main" — a pointer to a pointer
+  ├── config            # this repo's local config (git config --local)
+  ├── index             # the staging area, in binary form
+  ├── objects/          # every blob/tree/commit/tag, content-addressed by hash
+  ├── refs/
+  │   ├── heads/        # one file per local branch, containing a commit SHA
+  │   └── tags/         # one file per tag
+  └── logs/             # the reflog — see below
+`}
+</CodeBlock>
+
+<Info title="Why this matters practically">
+  Once you know a branch is just a file containing a SHA, a lot of "advanced" Git stops feeling like magic: `git branch feature` is writing a new file to `refs/heads/`; `git reset --hard` is overwriting the current branch's file with a different SHA; a merge conflict is just two trees Git can't automatically combine into one.
+</Info>
+
+<RainbowDivider />
+
+## `.gitattributes`
+
+[Part 1](/post/git/git-basics-for-beginners#gitignore) covered `.gitignore` for excluding untracked files. `.gitattributes` is its sibling — controlling per-path *behavior* for files that are tracked: line endings, diff/merge strategy, and what counts as generated code.
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  * text=auto              # normalize line endings for text files, leave binaries alone
+  *.png binary             # never diff, never normalize — treat as opaque binary
+  package-lock.json -diff  # tracked normally, but excluded from diffs (generated file)
+  *.min.js linguist-generated  # hint to GitHub's diff UI: this is generated, collapse it by default
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Hooks
+
+Scripts Git runs automatically at specific points — stored in `.git/hooks/`, and (unlike everything else in `.git`) **not** cloned or versioned along with the repo by default.
+
+<CodeBlock language="bash">
+{`
+  .git/hooks/pre-commit    # runs before a commit is created — great for linting/formatting
+  .git/hooks/commit-msg    # runs after the message is written — enforce a message format
+  .git/hooks/pre-push      # runs before a push leaves your machine — run the test suite
+`}
+</CodeBlock>
+
+A minimal `pre-commit` hook (make it executable with `chmod +x`):
+
+<CodeBlock language="bash">
+{`
+  #!/bin/sh
+  npm run lint || {
+    echo "Lint failed — commit aborted."
+    exit 1
+  }
+`}
+</CodeBlock>
+
+<Info title="Sharing hooks with a team">
+  Since `.git/hooks/` isn't versioned, teams typically manage hooks with a tool like **Husky** or **pre-commit**, or point Git at a versioned directory directly: `git config core.hooksPath .githooks`.
+</Info>
+
+<RainbowDivider />
+
+## Aliases & Productivity Config
+
+Aliases turn long, frequent commands into muscle memory.
+
+<CodeBlock language="bash">
+{`
+  git config --global alias.co switch
+  git config --global alias.st status -sb
+  git config --global alias.lg "log --oneline --graph --all"
+  git config --global alias.amend "commit --amend --no-edit"
+  git config --global alias.undo "reset --soft HEAD~1"
+  git config --global alias.unstage "restore --staged"
+`}
+</CodeBlock>
+
+These end up in `~/.gitconfig` and can also be edited directly:
+
+<CodeBlock language="bash">
+{`
+  [alias]
+    co = switch
+    st = status -sb
+    lg = log --oneline --graph --all
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Recovering From Disaster: `git reflog`
+
+`reflog` is a local, private log of every place `HEAD` and each branch have pointed — it's what makes Git's "undo" commands feel so fearless, because almost nothing is *actually* gone until Git's garbage collector eventually runs.
+
+<CodeBlock language="bash">
+{`
+  git reflog                      # every place HEAD has pointed, most recent first
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  a1b2c3d HEAD@{0}: commit: Add validation
+  e4f5g6h HEAD@{1}: reset: moving to HEAD~1
+  h7i8j9k HEAD@{2}: commit: Fix typo
+  k1l2m3n HEAD@{3}: checkout: moving from main to feature/login
+`}
+</CodeBlock>
+
+Recovering a commit that a `reset --hard` (or a bad rebase, or an accidental branch deletion) seemed to erase:
+
+<CodeBlock language="bash">
+{`
+  git reflog                          # find the SHA from just before the mistake
+  git branch recovered-work a1b2c3d   # create a new branch pointing at it — nothing is lost
+  # or, to put your CURRENT branch back exactly where it was:
+  git reset --hard a1b2c3d
+`}
+</CodeBlock>
+
+<Success title="This even recovers deleted branches">
+  Deleted a branch with `git branch -D` by mistake? Its last commit is still sitting in the reflog (or discoverable via `git fsck --lost-found`) until garbage collection eventually clears it — which by default only happens after weeks. `git reflog`, find the SHA, `git branch <name> <sha>`, and it's back.
+</Success>
+
+<RainbowDivider />
+
+## Common Workflows
+
+The commands above compose into a handful of well-known branching strategies. None is "correct" — the right one depends on release cadence and team size.
+
+| Workflow | Shape | Best fit |
+| --- | --- | --- |
+| **GitHub Flow** | `main` is always deployable; every change is a short-lived feature branch + PR, merged straight back into `main` | Continuous deployment, web apps |
+| **Git Flow** | Long-lived `main` + `develop`, with `feature/*`, `release/*`, and `hotfix/*` branches | Scheduled releases, versioned software |
+| **Trunk-Based Development** | Everyone commits small, frequent changes directly to `main` (or very short-lived branches), often behind feature flags | Large teams, high commit velocity, strong CI |
+
+**GitHub Flow**
+
+<GitWorkflowDiagram variant="github-flow" />
+
+**Git Flow**
+
+<GitWorkflowDiagram variant="git-flow" />
+
+**Trunk-Based Development**
+
+<GitWorkflowDiagram variant="trunk-based" />
+
+<Info title="Merge commit, squash, or rebase-merge on a PR?">
+  **Merge commit** preserves every individual commit and shows exactly when the branch was integrated, at the cost of a busier history. **Squash merge** collapses a branch into one clean commit on `main` — the most common default for GitHub PRs. **Rebase-merge** replays the branch's individual commits onto `main` with no merge commit at all, keeping a fully linear history. Most teams pick squash for feature branches (clean `main` history) and reserve real merges for long-lived branches like `release/*`.
+</Info>
+
+<RainbowDivider />
+
+## Performance: Shallow, Sparse & Partial Clones
+
+Once a repository gets large — long history, huge tree, or both — a few flags keep everyday work fast.
+
+<CodeBlock language="bash">
+{`
+  git clone --depth 1 <url>                 # shallow: only the latest commit's history
+  git clone --filter=blob:none <url>        # partial: full commit history, file content fetched on demand
+  git sparse-checkout init --cone           # sparse: only materialize specific directories on disk
+  git sparse-checkout set src/ docs/
+  git gc                                    # compact loose objects into packfiles, prune unreachable ones
+  git maintenance start                     # schedule background gc/prefetch automatically
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Command Cheat Sheet
+
+A quick-reference pass over this post's topics.
+
+| Task | Command |
+| --- | --- |
+| Rebase onto main | `git rebase main` |
+| Interactive rebase | `git rebase -i HEAD~n` |
+| Autosquash a fixup | `git commit --fixup=<sha>` + `git rebase -i --autosquash main` |
+| Apply one commit elsewhere | `git cherry-pick <sha>` |
+| Find a bug's origin | `git bisect start` |
+| Remove a file from all history | `git filter-repo --path <file> --invert-paths` |
+| Add a submodule | `git submodule add <url> <path>` |
+| Work on two branches at once | `git worktree add <path> <branch>` |
+| Inspect any object | `git cat-file -p <sha>` |
+| Recover "lost" work | `git reflog` |
+| Shallow / partial clone | `git clone --depth 1` / `--filter=blob:none` |
+
+<RainbowDivider />
+
+## Best Practices
+
+**Never force-push to a shared branch without warning.** If a rewrite is truly necessary, use `--force-with-lease` (it fails safely if the remote has commits you haven't seen yet, instead of silently discarding them), and tell whoever else has that branch checked out.
+
+<CodeBlock language="bash">
+{`
+  git push --force-with-lease
+`}
+</CodeBlock>
+
+**Reach for `git reflog` before you panic.** Almost nothing committed is truly lost immediately — reflog, `fsck --lost-found`, and the object store itself usually have your back.
+
+**Prefer `git filter-repo` over `git filter-branch`.** It's the tool Git's own docs point to now for history-wide rewrites — faster, and much harder to get subtly wrong.
+
+**Keep hooks fast, or people will bypass them.** A `pre-commit` hook that takes 30 seconds trains everyone to reach for `--no-verify`, which quietly defeats the whole point. Keep it fast, or move the slow checks to CI instead.
+
+**Squash before you share, not after.** Interactive rebase to clean up a branch's commits is cheap and safe *before* anyone else has pulled it. Once it's shared, you're stuck merging instead — so tidy up early.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### "I need to undo a merge I already pushed"
+
+<CodeBlock language="bash">
+{`
+  git revert -m 1 <merge-commit-sha>   # -m 1 keeps the mainline parent, undoing the merged-in side
+`}
+</CodeBlock>
+
+### "My interactive rebase hit a conflict and I'm not sure what state I'm in"
+
+<CodeBlock language="bash">
+{`
+  git status               # tells you exactly which commit is being replayed and what's conflicted
+  git rebase --abort        # when in doubt, bail out entirely — you're back to before the rebase started
+`}
+</CodeBlock>
+
+### "I force-pushed and think I overwrote someone's commits"
+
+<CodeBlock language="bash">
+{`
+  # On THEIR machine, if they still have the old commits checked out or in their own reflog:
+  git reflog                          # find the SHA of the commit that got overwritten
+  git push origin <that-sha>:main     # push it back up, then reconcile properly
+`}
+</CodeBlock>
+
+Going forward, this is exactly the scenario `--force-with-lease` exists to prevent.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="What's the difference between git merge and git rebase?">
+  Both integrate one branch's changes into another, but `merge` preserves history exactly as it happened (including a new merge commit), while `rebase` rewrites your branch's commits to look as if they were built on top of the latest target branch — producing a linear history at the cost of changing commit SHAs.
+</Details>
+
+<Details summary="How do I completely undo a git reset --hard?">
+  Run `git reflog`, find the SHA from immediately before the reset, then `git reset --hard <that-sha>`. This works as long as garbage collection hasn't run since — which, by default, takes weeks.
+</Details>
+
+<Details summary="What's the actual difference between SHA-1 and SHA-256 repositories?">
+  Git has supported SHA-256 object hashing since 2.29 as an opt-in alternative to the default SHA-1, mainly for stronger collision resistance. In practice almost every repository you'll touch — including this one — still uses SHA-1; SHA-256 support is there, but the tooling ecosystem (hosting providers, CI, other tools) hasn't fully caught up yet.
+</Details>
+
+<RainbowDivider />
+
+## Conclusion
+
+Git's surface area is large, but nearly all of it comes back to the same handful of ideas from [Part 1](/post/git/git-basics-for-beginners): commits are immutable snapshots, and branches are cheap, movable pointers into that snapshot history. Everything in this post is really just that model applied more forcefully — rebasing is replaying pointers onto a new base, `reflog` works because old pointer positions don't vanish immediately, and a "commit" is, underneath it all, just a tree object with a parent and a message.
+
+**Key Takeaways:**
+
+- `merge` preserves history as it happened; `rebase` rewrites it for linearity — never rebase commits others have already pulled
+- Interactive rebase (`rebase -i`) is the single most useful tool for turning messy WIP commits into a clean, reviewable history before sharing it
+- `git reflog` is your safety net — almost nothing is unrecoverable until garbage collection actually runs
+- Prefer `--force-with-lease` over `--force` when a rewrite genuinely must be pushed
+- A commit is a tree + parent pointer(s) + metadata; a branch is a file containing a SHA — once that clicks, most "advanced" Git stops feeling like magic
+- Pick a workflow (GitHub Flow, Git Flow, trunk-based) that matches your release cadence, and stay consistent about it as a team
+
+Between this post and [Part 1](/post/git/git-basics-for-beginners), that's Git end to end — from your first `git init` to rewriting history with confidence. Keep both bookmarked as a reference, and when a command's exact flags slip your mind, `git help <command>` is always one step closer than a search engine.
