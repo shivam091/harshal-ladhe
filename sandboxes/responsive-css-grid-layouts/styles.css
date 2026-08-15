@@ -1,0 +1,89 @@
+:root {
+  --pg-accent: #f472b6;
+  --pg-accent-dark: #ec4899;
+  --pg-radius-sm: 0.5rem;
+}
+
+.container-frame {
+  max-inline-size: 100%;
+  padding: 0.625rem;
+  border: 0.125rem dashed var(--pg-primary-soft);
+  border-radius: var(--pg-radius-sm);
+  /* index.js sets this element's size via inline style.width — stays physical to match. */
+  transition: width 0.15s ease;
+}
+
+.grid-preview {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.grid-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 3.75rem;
+  border-radius: var(--pg-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  box-shadow: var(--pg-shadow-sm);
+}
+
+.section-heading {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.section-intro {
+  margin-block: -0.75rem 0;
+  margin-inline: 0;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+/* The container-query context — .cq-card's @container rule (injected into #cq-dynamic-style by index.js) resolves against this element's own width. */
+.cq-container {
+  container-type: inline-size;
+  max-inline-size: 100%;
+  padding: 0.625rem;
+  border: 0.125rem dashed var(--pg-primary-soft);
+  border-radius: var(--pg-radius-sm);
+  /* index.js sets this element's size via inline style.width — stays physical to match. */
+  transition: width 0.15s ease;
+}
+
+.cq-card {
+  display: grid;
+  grid-template-areas:
+    "title"
+    "meta"
+    "content";
+  gap: 0.5rem;
+  padding: 0.875rem;
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+}
+
+.cq-title {
+  grid-area: title;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--pg-text);
+}
+
+.cq-meta {
+  grid-area: meta;
+  font-size: 0.78rem;
+  color: var(--pg-text-muted);
+}
+
+.cq-content {
+  grid-area: content;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
