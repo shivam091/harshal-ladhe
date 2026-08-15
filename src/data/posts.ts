@@ -175,6 +175,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-08-15", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "advanced-git-techniques-and-workflows",
+    title: "Advanced Git: Rebasing, Internals, and Real-World Workflows",
+    excerpt: "Rebase confidently, understand internals, and recover from anywhere.",
+    description: "An advanced Git guide covering interactive rebasing, cherry-picking, bisect, Git internals (objects, refs, the .git directory), submodules, worktrees, hooks, reflog-based recovery, and real branching workflows.",
+    category: ["Git"],
+    tags: ["git", "rebase", "git-workflow", "git-internals", "reflog", "advanced"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/git/advanced-git-techniques-and-workflows/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Advanced Git: Rebasing, Internals, and Real-World Workflows — a dark neon Git-themed illustration featuring interactive rebasing and commit graphs, Git’s blob-tree-commit-tag object model, advanced Git commands, reflog-based recovery, and GitHub Flow, Git Flow, and trunk-based development workflows.",
+      caption: "Interactive rebasing, Git's object model, reflog recovery and team workflows."
+    },
+    signoff: "This half is the one that turns Git from \"a tool I follow instructions for\" into something you can actually reason about — I hope the internals section in particular makes the rest of it click. Thanks for sticking with the series through to the end. 🚀",
+    pinned: true,
+    changelog: [
+      { date: "2026-08-15", change: "Initial publication" }
+    ]
   }
 ];
 
