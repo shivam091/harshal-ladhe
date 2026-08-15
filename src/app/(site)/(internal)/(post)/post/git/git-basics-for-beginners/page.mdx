@@ -1,0 +1,726 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("git-basics-for-beginners");
+
+## Introduction
+
+Git is a **distributed version control system** — every clone of a repository is a full copy of its history, not just a checkout of the latest files. That single design choice explains almost everything else about how Git behaves: why commits are cheap, why branches are cheap, why you can work entirely offline, and why "undoing" something in Git usually means *finding* a commit rather than restoring from a backup.
+
+This is **Part 1** of a two-part series. This post covers the everyday loop you'll use in nearly every session: setting up Git, staging and committing, branching and merging, undoing mistakes, and working with a remote like GitHub. Part 2 picks up from here with rebasing, Git internals, and disaster-recovery workflows.
+
+By the end of this post, you'll be comfortable with:
+
+- The core mental model: working directory, staging area, repository
+- Creating and cloning repos, and keeping untracked junk out of them with `.gitignore`
+- Everyday commands: `status`, `add`, `commit`, `diff`, `log`
+- Branching and merging, including resolving conflicts
+- Undoing mistakes safely — `restore`, `reset`, `revert`, `clean`
+- Stashing work-in-progress, and working with remotes (`fetch`/`pull`/`push`)
+- Tagging releases
+
+Let's start with the mental model — everything else is easier once this clicks.
+
+<RainbowDivider />
+
+## Installing & Configuring Git
+
+### Installation
+
+<CodeBlock language="bash">
+{`
+  # Debian / Ubuntu
+  sudo apt install git
+
+  # Fedora
+  sudo dnf install git
+
+  # macOS (Homebrew)
+  brew install git
+
+  # Windows
+  # Download from https://git-scm.com/download/win — includes Git Bash
+`}
+</CodeBlock>
+
+Verify the install and check the version:
+
+<CodeBlock language="bash">
+{`
+  git --version
+`}
+</CodeBlock>
+
+### First-Time Setup
+
+Git needs to know who you are before you can commit — this identity gets baked into every commit you make.
+
+<CodeBlock language="bash">
+{`
+  git config --global user.name "Ada Lovelace"
+  git config --global user.email "ada@example.com"
+`}
+</CodeBlock>
+
+<Info title="Config scopes">
+  `--global` writes to `~/.gitconfig` (applies to every repo for your user). `--local` (the default when you omit a scope, inside a repo) writes to `.git/config` for that repo only. `--system` writes to a machine-wide config file. When the same key is set at multiple scopes, the narrowest one wins: local beats global beats system.
+</Info>
+
+A few options worth configuring early:
+
+<CodeBlock language="bash">
+{`
+  # Default branch name for new repos (Git still defaults to "master" unless you set this)
+  git config --global init.defaultBranch main
+
+  # Your preferred editor for commit messages
+  git config --global core.editor "code --wait"
+
+  # Colored output in the terminal
+  git config --global color.ui auto
+
+  # Rebase (not merge) when you run \`git pull\` on a tracking branch
+  git config --global pull.rebase true
+`}
+</CodeBlock>
+
+### Inspecting Config
+
+<CodeBlock language="bash">
+{`
+  git config --list                # every effective setting, merged across scopes
+  git config --list --show-origin  # ...and which file each one came from
+  git config user.email            # a single key
+  git config --global --edit       # open ~/.gitconfig directly in your editor
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How Git Thinks: The Core Model
+
+Almost every Git command operates on one of three areas:
+
+| Area | What it is | How you interact with it |
+| --- | --- | --- |
+| **Working directory** | The actual files on disk you edit | Any editor, `git checkout`, `git restore` |
+| **Staging area (index)** | A draft of your *next* commit | `git add`, `git restore --staged`, `git reset` |
+| **Repository (`.git`)** | The committed history — permanent once committed | `git commit`, `git log`, `git show` |
+
+<GitCoreModelDiagram />
+
+A few core objects and terms you'll see everywhere:
+
+- **Commit** — an immutable snapshot of the whole project, identified by a SHA hash, pointing at its parent commit(s).
+- **Branch** — just a movable pointer to a commit. Creating a branch is instant because nothing is copied.
+- **HEAD** — a pointer to whichever branch (or commit) you currently have checked out.
+- **Tag** — a pointer to a specific commit that, unlike a branch, never moves.
+- **Remote** — a named reference to another copy of the repository, usually on a server (`origin` by default).
+
+<Success title="Key insight">
+  A commit is a snapshot, not a diff. Git computes diffs for *display* (in `log -p`, `diff`, `show`), but internally it stores full snapshots and is smart about not duplicating unchanged file content between them.
+</Success>
+
+<Info title="Curious how this actually works on disk?">
+  This post sticks to the everyday, user-facing model above. Part 2 goes underneath it — the actual object types Git stores, and what a branch really looks like as a file.
+</Info>
+
+<RainbowDivider />
+
+## Creating & Cloning Repositories
+
+### `git init`
+
+Turns the current directory into a Git repository by creating a `.git` folder.
+
+<CodeBlock language="bash">
+{`
+  git init                     # initialize in the current directory
+  git init my-project          # create the directory and initialize it
+  git init --bare              # a repository with no working directory — used for servers
+`}
+</CodeBlock>
+
+### `git clone`
+
+Copies an existing repository — its full history, not just the latest snapshot.
+
+<CodeBlock language="bash">
+{`
+  git clone https://github.com/user/repo.git
+  git clone https://github.com/user/repo.git my-folder   # clone into a custom directory name
+
+  git clone --branch develop https://github.com/user/repo.git   # check out a specific branch
+  git clone --depth 1 https://github.com/user/repo.git          # shallow clone: only the latest commit
+`}
+</CodeBlock>
+
+<Warning title="Shallow clones are read-mostly">
+  A `--depth` clone truncates history, which breaks operations that need older commits — `git log` beyond the cutoff, most rebases, and `git blame` past that point. They're great for CI checkouts and disposable builds, not for a repo you plan to develop in long-term.
+</Warning>
+
+<RainbowDivider />
+
+## `.gitignore`
+
+Tells Git which untracked files to never list in `status` or offer to `add`.
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  # Comments start with #
+  node_modules/          # ignore a whole directory
+  *.log                  # ignore every file matching a glob
+  !important.log         # ...except this one (negation)
+  /dist                  # leading slash: only at the repo root, not any nested "dist"
+  build/**/*.map         # ** matches across directory boundaries
+`}
+</CodeBlock>
+
+<CodeBlock language="bash">
+{`
+  git check-ignore -v path/to/file   # debug WHY a file is (or isn't) ignored, and by which rule
+  git rm --cached already-tracked.log  # stop tracking a file WITHOUT deleting it locally
+`}
+</CodeBlock>
+
+<Warning title=".gitignore only affects untracked files">
+  Adding a pattern to `.gitignore` does nothing for a file Git is already tracking — it'll keep showing up as modified forever. Untrack it first with `git rm --cached`, then the ignore rule takes effect.
+</Warning>
+
+<RainbowDivider />
+
+## The Basic Workflow: Status, Add, Commit
+
+### `git status`
+
+Shows the state of the working directory and staging area relative to the last commit.
+
+<CodeBlock language="bash">
+{`
+  git status
+  git status -s     # short format: one line per file, with change-type letters
+  git status -b     # short format, plus the current branch and ahead/behind counts
+  git status --ignored   # also list files excluded by .gitignore
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  $ git status -sb
+  ## main...origin/main [ahead 1]
+   M src/index.js
+  A  src/utils.js
+  ?? notes.txt
+`}
+</CodeBlock>
+
+<Info title="Reading the short-format letters">
+  Two columns: the first is the **staged** state, the second is the **unstaged** state. `M ` = modified and staged; ` M` = modified but not staged; `A ` = newly added and staged; `??` = untracked; `UU` = unresolved merge conflict.
+</Info>
+
+### `git add`
+
+Moves changes from the working directory into the staging area.
+
+<CodeBlock language="bash">
+{`
+  git add index.js              # stage one file
+  git add src/ tests/           # stage everything under these directories
+  git add .                     # stage everything in and below the current directory
+  git add -A                    # stage everything in the whole repo, including deletions, from any cwd
+  git add -u                    # stage modifications and deletions only — never new/untracked files
+  git add -p                    # interactively choose which *hunks* of a file to stage
+  git add --dry-run .           # preview what would be staged, without staging it
+`}
+</CodeBlock>
+
+<Info title="git add -p is worth learning early">
+  Interactive/patch staging lets you split one edited file into multiple focused commits — stage just the bug fix now, the unrelated formatting cleanup later. At the prompt, `y` stages the hunk, `n` skips it, `s` tries to split it into smaller hunks, and `e` lets you hand-edit exactly which lines get staged.
+</Info>
+
+### `git commit`
+
+Records the staged snapshot into history.
+
+<CodeBlock language="bash">
+{`
+  git commit -m "Add input validation"
+  git commit -am "Fix typo"          # -a stages every tracked, modified file first (skips untracked!)
+  git commit                         # opens $EDITOR for a multi-line message
+  git commit --amend                 # replace the previous commit with a new one (message and/or content)
+  git commit --amend --no-edit       # amend the content, keep the existing message
+  git commit -v                      # show the diff being committed inside the message editor
+`}
+</CodeBlock>
+
+<Warning title="Never amend a pushed commit others have pulled">
+  `--amend` rewrites the commit's SHA. If anyone else has already pulled the original commit, amending and pushing again creates diverging history for them. Amend freely on commits that only exist locally; once shared, prefer a new commit.
+</Warning>
+
+<RainbowDivider />
+
+## Inspecting Changes: `diff`, `show`, and `log`
+
+### `git diff`
+
+Compares two states of the repository — by default, working directory against the index.
+
+<CodeBlock language="bash">
+{`
+  git diff                       # working directory vs. staging area (unstaged changes)
+  git diff --staged              # staging area vs. last commit (a.k.a. --cached)
+  git diff HEAD                  # working directory vs. last commit (staged + unstaged together)
+  git diff main..feature         # a branch against another branch
+  git diff -- src/index.js       # limit the diff to one path
+  git diff --stat                # summary: files changed, insertions/deletions, no line-by-line detail
+`}
+</CodeBlock>
+
+Sample output:
+
+<CodeBlock language="diff">
+{`
+  diff --git a/src/greet.js b/src/greet.js
+  index 83db48f..bf269c4 100644
+  --- a/src/greet.js
+  +++ b/src/greet.js
+  @@ -1,3 +1,3 @@
+   function greet(name) {
+  -  return "Hello " + name;
+  +  return \`Hello, \${name}!\`;
+   }
+`}
+</CodeBlock>
+
+### `git show`
+
+Displays a single commit — its message and its diff against its parent.
+
+<CodeBlock language="bash">
+{`
+  git show HEAD              # the most recent commit
+  git show abc1234           # a specific commit by (abbreviated) SHA
+  git show --stat HEAD       # just the changed-files summary
+`}
+</CodeBlock>
+
+### `git log`
+
+The history browser.
+
+<CodeBlock language="bash">
+{`
+  git log                          # full history, newest first
+  git log --oneline                # one compact line per commit
+  git log --oneline --graph --all  # ASCII graph of every branch's history — hugely useful
+  git log -p                       # each commit's full diff inline
+  git log -n 5                     # limit to the last 5 commits
+  git log --author="Ada"           # filter by author (substring match)
+  git log --grep="fix"             # filter by commit message content
+  git log -- src/index.js          # history that touched one path
+`}
+</CodeBlock>
+
+### `git blame`
+
+Shows, line by line, which commit last touched each line of a file.
+
+<CodeBlock language="bash">
+{`
+  git blame src/index.js
+  git blame -L 10,20 src/index.js   # only lines 10–20
+  git blame -w src/index.js         # ignore whitespace-only changes
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Branching
+
+Branches are the feature that makes Git's workflow possible — because a branch is just a pointer, creating one is instant regardless of repo size.
+
+<CodeBlock language="bash">
+{`
+  git branch                       # list local branches, * marks the current one
+  git branch -a                    # local + remote-tracking branches
+  git branch -v                    # list with each branch's latest commit
+  git branch feature/login         # create a new branch (doesn't switch to it)
+  git branch -m old-name new-name  # rename a branch
+  git branch -d feature/login      # delete a branch (only if fully merged)
+  git branch -D feature/login      # force-delete, even if unmerged — use with intent
+`}
+</CodeBlock>
+
+### Switching Branches: `switch` vs. `checkout` vs. `restore`
+
+Historically, `git checkout` did three unrelated jobs — switch branches, restore files, and check out a detached commit — which made it confusing and easy to misuse by accident. Git 2.23 split it into two focused commands.
+
+<CodeBlock language="bash">
+{`
+  # Modern (recommended)
+  git switch feature/login          # switch to an existing branch
+  git switch -c feature/signup      # create AND switch, in one step
+  git switch -                      # switch back to the previous branch (like cd -)
+
+  # Legacy, still everywhere in older docs/scripts
+  git checkout feature/login
+  git checkout -b feature/signup
+`}
+</CodeBlock>
+
+<Info title="Detached HEAD">
+  Checking out a specific commit (rather than a branch) puts you in "detached HEAD" state — you can look around and even commit, but those commits aren't on any branch and are easy to lose once you switch away. Git will warn you and suggest `git switch -c <new-branch>` to save the work under a real branch name.
+</Info>
+
+<RainbowDivider />
+
+## Merging
+
+Bringing one branch's changes into another.
+
+<CodeBlock language="bash">
+{`
+  git switch main
+  git merge feature/login              # merge feature/login into the current branch
+  git merge --no-ff feature/login      # always create a merge commit, even if a fast-forward is possible
+  git merge --ff-only feature/login    # fail instead of merging, unless a fast-forward is possible
+  git merge --abort                    # bail out of a merge with conflicts, back to the pre-merge state
+`}
+</CodeBlock>
+
+### Fast-Forward vs. Three-Way Merge
+
+**Fast-forward** — main has no new commits of its own, so the pointer just moves:
+
+<GitMergeDiagram variant="fast-forward" />
+
+**Three-way merge** — both branches have new commits, so a merge commit is created:
+
+<GitMergeDiagram variant="three-way" />
+
+### Resolving a Merge Conflict
+
+When both branches changed the same lines, Git stops and marks the file:
+
+<CodeBlock language="diff">
+{`
+  <<<<<<< HEAD
+  const GREETING = "Hello";
+  =======
+  const GREETING = "Hi there";
+  >>>>>>> feature/login
+`}
+</CodeBlock>
+
+1. Open the file, edit it down to the single correct version, and remove the `<<<<<<<` / `=======` / `>>>>>>>` markers.
+2. `git add <file>` to mark it resolved.
+3. `git commit` to finish the merge (the message is pre-filled).
+
+<CodeBlock language="bash">
+{`
+  git status                # lists files still marked "both modified"
+  git diff                  # shows the conflict markers in context
+  git checkout --ours -- path/to/file    # take "our" side entirely for one file
+  git checkout --theirs -- path/to/file  # take "their" side entirely for one file
+  git merge --abort          # start over instead of resolving
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Undoing Things
+
+Git has several "undo" commands, and picking the right one depends on **where** the change lives.
+
+| You want to... | Use |
+| --- | --- |
+| Discard unstaged changes in a file | `git restore <file>` |
+| Unstage a file (keep its edits) | `git restore --staged <file>` |
+| Change the last commit's message/content | `git commit --amend` |
+| Move HEAD back, keep changes staged | `git reset --soft <commit>` |
+| Move HEAD back, unstage changes | `git reset --mixed <commit>` (the default) |
+| Move HEAD back, discard changes entirely | `git reset --hard <commit>` |
+| Undo a commit *without* rewriting history | `git revert <commit>` |
+| Remove untracked files entirely | `git clean` |
+
+### `git restore`
+
+<CodeBlock language="bash">
+{`
+  git restore index.js               # discard unstaged changes, back to the last commit's version
+  git restore --staged index.js      # unstage the file, but keep its edits in the working directory
+`}
+</CodeBlock>
+
+### `git reset`
+
+<CodeBlock language="bash">
+{`
+  git reset --soft HEAD~1     # undo the last commit, keep everything staged
+  git reset HEAD~1            # (--mixed, the default) undo the commit, unstage the changes
+  git reset --hard HEAD~1     # undo the commit AND discard the changes entirely
+  git reset HEAD -- file.js   # unstage one specific file, keep its edits
+`}
+</CodeBlock>
+
+<GitResetDiagram />
+
+<Warning title="--hard discards work">
+  `git reset --hard` throws away uncommitted changes with no confirmation, and uncommitted work has never been snapshotted anywhere — it's genuinely unrecoverable. Committed changes that get "reset away" aren't gone forever, though; Part 2's reflog section covers getting them back.
+</Warning>
+
+### `git revert`
+
+Creates a **new** commit that undoes a previous one — safe for already-shared history, unlike `reset`.
+
+<CodeBlock language="bash">
+{`
+  git revert abc1234             # revert one commit, opens editor for the message
+  git revert --no-edit abc1234   # ...using the default generated message
+  git revert -n abc1234          # revert into the staging area, but don't commit yet (stack up multiple)
+`}
+</CodeBlock>
+
+### `git clean`
+
+Removes files Git isn't tracking — separate from `reset`, which only touches tracked files.
+
+<CodeBlock language="bash">
+{`
+  git clean -n     # dry run — show what WOULD be deleted, deletes nothing
+  git clean -f     # actually delete untracked files
+  git clean -fd    # ...and untracked directories too
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Stashing
+
+Temporarily shelves changes you're not ready to commit, so you can switch context and come back to them later.
+
+<CodeBlock language="bash">
+{`
+  git stash                      # stash tracked changes (staged + unstaged)
+  git stash push -m "wip: login" # same, with a descriptive message
+  git stash -u                   # also stash untracked files
+
+  git stash list                 # see every stash, most recent first
+  git stash show -p stash@{1}    # view a specific stash's diff
+
+  git stash pop                  # re-apply the most recent stash AND remove it from the list
+  git stash apply                # re-apply the most recent stash, but KEEP it in the list
+
+  git stash drop stash@{0}       # delete one stash without applying it
+  git stash clear                # delete every stash
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Working with Remotes
+
+### `git remote`
+
+<CodeBlock language="bash">
+{`
+  git remote -v                       # list remotes with their URLs
+  git remote add origin <url>         # register a new remote named "origin"
+  git remote set-url origin <url>     # change a remote's URL
+  git remote show origin              # detailed info: tracked branches, push/pull URLs
+`}
+</CodeBlock>
+
+### `git fetch`
+
+Downloads commits and refs from a remote — **without** touching your working directory or local branches.
+
+<CodeBlock language="bash">
+{`
+  git fetch origin                # update remote-tracking branches (origin/main, etc.)
+  git fetch --all                 # fetch from every configured remote
+  git fetch --prune               # also delete local references to branches deleted on the remote
+`}
+</CodeBlock>
+
+<Success title="fetch is always safe">
+  `git fetch` never modifies your working directory, staged changes, or current branch — it only updates your local knowledge of what the remote looks like (`origin/main`, etc.). It's a great habit to fetch often and merge/rebase deliberately, rather than relying on `pull` to do both at once.
+</Success>
+
+### `git pull`
+
+Shorthand for `fetch` followed by either a `merge` or a `rebase` into your current branch.
+
+<CodeBlock language="bash">
+{`
+  git pull                    # fetch + merge (or rebase, if pull.rebase is configured)
+  git pull --rebase           # fetch + rebase, just for this one pull
+  git pull origin main        # explicitly specify remote and branch
+`}
+</CodeBlock>
+
+### `git push`
+
+<CodeBlock language="bash">
+{`
+  git push                              # push the current branch to its configured upstream
+  git push origin main                  # push explicitly to a remote and branch
+  git push -u origin feature/login      # push AND set feature/login to track origin/feature/login
+  git push origin --delete feature/old  # delete a branch on the remote
+`}
+</CodeBlock>
+
+<Info title="Tracking branches">
+  `git branch -vv` shows every local branch's upstream and how far ahead/behind it is. Once a branch has an upstream (set via `push -u` or `branch --set-upstream-to`), plain `git push`/`git pull` know where to go without extra arguments.
+</Info>
+
+<RainbowDivider />
+
+## Tagging
+
+Tags mark specific points in history — releases, most commonly — and unlike branches, they never move.
+
+<CodeBlock language="bash">
+{`
+  git tag                          # list all tags
+  git tag v1.0.0                   # lightweight tag on the current commit
+  git tag -a v1.0.0 -m "Release 1.0.0"   # annotated tag — has its own message, author, and date
+  git tag -d v1.0.0                # delete a local tag
+
+  git push origin v1.0.0           # push a single tag
+  git push origin --tags           # push every local tag
+
+  git checkout v1.0.0              # check out a tag (detached HEAD)
+`}
+</CodeBlock>
+
+<Info title="Lightweight vs. annotated">
+  A lightweight tag is just a name pointing at a commit — quick, but carries no metadata. An annotated tag (`-a`) is a full object with its own message, tagger name, and date, and is what `git describe` and most release tooling expect. Use annotated tags for anything you'll actually reference later.
+</Info>
+
+<RainbowDivider />
+
+## Command Cheat Sheet
+
+A quick-reference pass over everything in this post.
+
+| Task | Command |
+| --- | --- |
+| Configure identity | `git config --global user.name/user.email` |
+| Start a repo | `git init` / `git clone <url>` |
+| Check status | `git status -sb` |
+| Stage changes | `git add <path>` / `git add -p` |
+| Commit | `git commit -m "..."` |
+| Fix last commit | `git commit --amend` |
+| View history | `git log --oneline --graph --all` |
+| Compare changes | `git diff` / `git diff --staged` |
+| Create a branch | `git switch -c <name>` |
+| Merge a branch | `git merge <branch>` |
+| Discard unstaged edits | `git restore <path>` |
+| Unstage a file | `git restore --staged <path>` |
+| Undo a commit, keep changes | `git reset --soft HEAD~1` |
+| Undo a shared commit | `git revert <sha>` |
+| Shelve work-in-progress | `git stash` / `git stash pop` |
+| Sync with remote | `git fetch` / `git pull` |
+| Publish a branch | `git push -u origin <branch>` |
+| Tag a release | `git tag -a v1.0.0 -m "..."` |
+
+<RainbowDivider />
+
+## Best Practices
+
+**Commit early, commit often, commit small.** A commit that does one thing is easy to review and easy to revert.
+
+**Write commit messages for your future self.** A summary line under ~50 characters, imperative mood ("Add" not "Added"), and — for anything non-obvious — a blank line followed by *why* the change was made, not just what it does.
+
+**Pull before you push, fetch before you assume.** `git fetch` is free and safe; run it often so `git status -sb`'s ahead/behind counts are actually trustworthy.
+
+**Keep `main` always deployable.** Do your experimenting on a branch. If `main` breaks, everyone downstream — CI, teammates, deploys — breaks with it.
+
+**Use `.gitignore` from the very first commit.** Retrofitting it after `node_modules/` or build output has already been committed means untracking files one by one — much easier to get right up front. A minimal one to start from:
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  node_modules/
+  dist/
+  .env
+  *.log
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### "I committed to the wrong branch"
+
+<CodeBlock language="bash">
+{`
+  git branch correct-branch     # create a branch AT the current (wrong) commit
+  git reset --hard HEAD~1       # move the original branch back, dropping the commit from it
+  git switch correct-branch     # your commit is safe here, on the branch it should've been on
+`}
+</CodeBlock>
+
+### "My push was rejected: non-fast-forward"
+
+The remote has commits you don't have locally yet — usually a teammate pushed first.
+
+<CodeBlock language="bash">
+{`
+  git pull --rebase     # fetch their commits, replay yours on top
+  git push
+`}
+</CodeBlock>
+
+### "I have a detached HEAD and don't want to lose this work"
+
+<CodeBlock language="bash">
+{`
+  git switch -c rescue-branch   # immediately save the current commit under a real branch name
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Frequently Asked Questions (FAQ)
+
+### What's the difference between `git fetch` and `git pull`?
+
+`fetch` only downloads — it never touches your working directory or current branch. `pull` is `fetch` followed immediately by a `merge` (or `rebase`, if configured) into your current branch.
+
+---
+
+### Can I rename a file without losing its history?
+
+Yes — Git detects renames automatically based on content similarity; you don't need a special "rename" command. `git mv old.js new.js` (which is really just `mv` + `git add` + `git rm`) works fine too. `git log --follow -- new.js` will show history from before the rename.
+
+---
+
+### Why does `git status` show a file as modified right after I clone?
+
+Almost always line-ending normalization (`core.autocrlf`) rewriting the file on checkout to match your platform's convention. `git diff` on that file will show only whitespace/line-ending changes, not real content changes.
+
+<RainbowDivider />
+
+## Conclusion
+
+That's the everyday Git loop: three areas your files move through (working directory → staging → repository), commits as immutable snapshots, and branches as cheap, movable pointers. Once that model is solid, staging, committing, branching, and merging stop being memorized commands and start being things you can reason your way through.
+
+**Key Takeaways:**
+
+- Git tracks three areas: working directory, staging area (index), and the committed repository — know which one a command operates on
+- Commits are snapshots with parent pointers, not diffs — diffs are computed for display
+- Branches are cheap because they're just a pointer to a commit, nothing more
+- For undoing: `restore` (working dir/staging), `reset` (move HEAD, local-only), `revert` (new commit, safe for shared history)
+- `.gitignore` only affects untracked files — untrack an already-committed file with `git rm --cached` before an ignore rule can take effect
+- `fetch` is always safe; `pull` combines it with a merge or rebase
+- A resolved merge conflict is just `add` + `commit`, same as any other change
+
+🔗 **Up Next (Part 2):** Advanced Git: Rebasing, Internals, and Real-World Workflows — where we'll cover:
+
+- Rewriting history safely with interactive rebase
+- Cherry-picking, bisecting, and finding "lost" work with `reflog`
+- What a commit, branch, and tag actually *are* on disk
+- Submodules, worktrees, hooks, and the branching workflows real teams use
+
+Stay tuned — you're one post away from being genuinely dangerous with Git. 💪
