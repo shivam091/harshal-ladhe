@@ -42,6 +42,27 @@ export const series: Series[] = [
       { date: "2026-07-12", change: "Initial publication" }
     ]
   },
+  {
+    slug: "git-from-basics-to-advanced",
+    title: "Git: From Basics to Advanced",
+    order: 2,
+    excerpt: "Everyday Git commands, plus advanced recovery workflows.",
+    description: "A 2-part Git series — start with the everyday staging/commit/branch/merge loop, then move on to rebasing, Git internals, and disaster-recovery workflows with reflog.",
+    image: {
+      path: "/assets/img/series/git-from-basics-to-advanced/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Cover image for the “Git: From Basics to Advanced” series, featuring a glowing Git branch graph with main, feature, and release branches, plus two sections covering Git basics, advanced workflows, internals, rebasing, recovery, and real-world Git usage."
+    },
+    parts: [
+      "git-basics-for-beginners",
+      "advanced-git-techniques-and-workflows",
+    ],
+    signoff: "From your first commit to rebasing with confidence — that's the whole arc this series was built to cover. Thanks for sticking with it through both parts. Go put it to use. 🌱",
+    changelog: [
+      { date: "2026-08-15", change: "Initial publication" }
+    ]
+  },
 ];
 
 /*

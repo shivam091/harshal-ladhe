@@ -118,4 +118,56 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Articles on User Interface (UI) Design Principles",
     description: "Content covering the visual and interactive elements of interface design, where animation plays a key role in communicating state and flow."
   },
+  "git": {
+    title: "All Articles Tagged Git",
+    description: "Everything tagged Git — staging, committing, branching, merging, rebasing, and the advanced commands that come up once a repo gets real.",
+  },
+  "version-control": {
+    title: "Version Control Concepts and Practices",
+    description: "Core version control concepts — snapshots, history, branching models, and collaborative workflows — mostly explored through Git.",
+  },
+  "github": {
+    title: "Working with GitHub: Remotes, PRs, and Collaboration",
+    description: "Guides on collaborating through GitHub — remotes, pull requests, forks, and branch-protection workflows built on top of Git.",
+  },
+  "branching": {
+    title: "Git Branching Strategies and Commands",
+    description: "Everything about Git branches — creating, switching, renaming, tracking, and choosing a branching strategy for your team.",
+  },
+  "merging": {
+    title: "Merging Branches in Git",
+    description: "Fast-forward vs. three-way merges, resolving conflicts, and choosing merge strategies when bringing branches together.",
+  },
+  "rebase": {
+    title: "Git Rebase: Interactive Rebasing and History Rewriting",
+    description: "Using git rebase — including interactive rebase, autosquash, and the tradeoffs of rewriting shared history.",
+  },
+  "git-workflow": {
+    title: "Git Workflows for Teams",
+    description: "Branching and release models like Git Flow, GitHub Flow, and trunk-based development, and how to pick one for your team.",
+  },
+  "cli": {
+    title: "Command-Line Tooling and Workflows",
+    description: "Practical command-line usage and workflows, from everyday commands to productivity aliases and configuration.",
+  },
+  "reflog": {
+    title: "Recovering Lost Work with Git Reflog",
+    description: "Using git reflog and related recovery techniques to get back commits, branches, and work that seem to be gone for good.",
+  },
+  "stash": {
+    title: "Stashing Changes with Git",
+    description: "Setting aside uncommitted work with git stash — stashing, listing, applying, and managing multiple stashes without a throwaway commit.",
+  },
+  "cherry-pick": {
+    title: "Cherry-Picking Commits in Git",
+    description: "Applying individual commits from one branch onto another with git cherry-pick, including conflict resolution and cherry-picking ranges.",
+  },
+  "git-internals": {
+    title: "How Git Works Under the Hood",
+    description: "Git's object model, the .git directory, refs, and the plumbing commands that power everyday Git usage.",
+  },
+  "advanced": {
+    title: "Advanced Guides for Experienced Developers",
+    description: "Deeper dives past the fundamentals — for readers already comfortable with the basics and ready for edge cases and internals.",
+  },
 };
