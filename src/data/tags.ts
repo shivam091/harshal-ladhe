@@ -151,6 +151,30 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Stashing Changes with Git",
     description: "Setting aside uncommitted work with git stash — stashing, listing, applying, and managing multiple stashes without a throwaway commit."
   },
+  "rebase": {
+    title: "Git Rebase: Interactive Rebasing and History Rewriting",
+    description: "Using git rebase — including interactive rebase, autosquash, and the tradeoffs of rewriting shared history."
+  },
+  "git-workflow": {
+    title: "Git Workflows for Teams",
+    description: "Branching and release models like Git Flow, GitHub Flow, and trunk-based development, and how to pick one for your team."
+  },
+  "reflog": {
+    title: "Recovering Lost Work with Git Reflog",
+    description: "Using git reflog and related recovery techniques to get back commits, branches, and work that seem to be gone for good."
+  },
+  "cherry-pick": {
+    title: "Cherry-Picking Commits in Git",
+    description: "Applying individual commits from one branch onto another with git cherry-pick, including conflict resolution and cherry-picking ranges."
+  },
+  "git-internals": {
+    title: "How Git Works Under the Hood",
+    description: "Git's object model, the .git directory, refs, and the plumbing commands that power everyday Git usage."
+  },
+  "advanced": {
+    title: "Advanced Topics for Experienced Developers",
+    description: "Deeper dives past the fundamentals — for readers already comfortable with the basics and ready for edge cases and internals."
+  },
   "accessibility": {
     title: "Web Accessibility (a11y) Standards and Practices",
     description: "Web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
