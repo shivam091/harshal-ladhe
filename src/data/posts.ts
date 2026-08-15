@@ -154,6 +154,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-08-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "git-basics-for-beginners",
+    title: "Git Basics: A Beginner's Guide to Version Control",
+    excerpt: "Master Git's core workflow, from commit to merge.",
+    description: "A beginner-friendly guide to Git covering setup, the staging area, everyday commands like add/commit/diff/log, .gitignore, branching, merging, undoing mistakes, stashing, remotes, and tags.",
+    category: ["Git"],
+    tags: ["git", "version-control", "github", "gitignore", "branching", "merging", "cli", "beginner"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/git/git-basics-for-beginners/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Git Basics: A Beginner’s Guide to Version Control — a dark neon tech illustration showing Git’s working directory, staging area, repository, branching and merging workflow, terminal commands, Git logo, and Git object model.",
+      caption: "Git's working directory, staging area and repository, with branching and merging."
+    },
+    signoff: "This one's meant to be the guide I wish I'd had when Git still felt like a wall of unfamiliar commands — I hope it makes that first `git merge` conflict feel like a puzzle instead of a crisis. Part 2 picks up right where this leaves off. 🌱",
+    pinned: true,
+    changelog: [
+      { date: "2026-08-15", change: "Initial publication" }
+    ]
   }
 ];
 
