@@ -119,6 +119,38 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "User Interface (UI) Design Principles",
     description: "Content covering the visual and interactive elements of interface design, from color, gradients, and borders to motion that communicates state and flow."
   },
+  "git": {
+    title: "Git: Version Control from Basics to Internals",
+    description: "Everything tagged Git — staging, committing, branching, merging, rebasing, and the advanced commands that come up once a repo gets real."
+  },
+  "version-control": {
+    title: "Version Control Concepts and Practices",
+    description: "Core version control concepts — snapshots, history, branching models, and collaborative workflows — mostly explored through Git."
+  },
+  "github": {
+    title: "Working with GitHub: Remotes, PRs, and Collaboration",
+    description: "Collaborating through GitHub — remotes, pull requests, forks, and branch-protection workflows built on top of Git."
+  },
+  "branching": {
+    title: "Git Branching Strategies and Commands",
+    description: "Everything about Git branches — creating, switching, renaming, tracking, and choosing a branching strategy for your team."
+  },
+  "merging": {
+    title: "Merging Branches in Git",
+    description: "Fast-forward vs. three-way merges, resolving conflicts, and choosing merge strategies when bringing branches together."
+  },
+  "cli": {
+    title: "Command-Line Tooling and Workflows",
+    description: "Practical command-line usage and workflows, from everyday commands to productivity aliases and configuration."
+  },
+  "gitignore": {
+    title: "Using .gitignore to Exclude Files from Git",
+    description: "Writing and troubleshooting .gitignore files — pattern syntax, ignoring already-tracked files, and keeping build artifacts and secrets out of a repo."
+  },
+  "stash": {
+    title: "Stashing Changes with Git",
+    description: "Setting aside uncommitted work with git stash — stashing, listing, applying, and managing multiple stashes without a throwaway commit."
+  },
   "accessibility": {
     title: "Web Accessibility (a11y) Standards and Practices",
     description: "Web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
