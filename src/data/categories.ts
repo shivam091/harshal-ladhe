@@ -19,4 +19,8 @@ export const categoryMeta: Record<string, CategoryMeta> = {
     title: "Web Animations Masterclass (CSS, JS, SVG, and Spring)",
     description: "Dive into web animations! Explore tutorials and guides on CSS transitions, JavaScript-powered effects, SVG animation, spring physics, and performance optimization for stunning UI/UX."
   },
+  git: {
+    title: "Git and Version Control Guides",
+    description: "In-depth guides on Git — from everyday staging, committing, and branching to advanced rebasing, history rewriting, and disaster recovery workflows."
+  }
 };
