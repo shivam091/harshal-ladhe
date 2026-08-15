@@ -6,7 +6,7 @@ export const metadata = buildPostMetadata("git-basics-for-beginners");
 
 Git is a **distributed version control system** — every clone of a repository is a full copy of its history, not just a checkout of the latest files. That single design choice explains almost everything else about how Git behaves: why commits are cheap, why branches are cheap, why you can work entirely offline, and why "undoing" something in Git usually means *finding* a commit rather than restoring from a backup.
 
-This is **Part 1** of a two-part series. This post covers the everyday loop you'll use in nearly every session: setting up Git, staging and committing, branching and merging, undoing mistakes, and working with a remote like GitHub. Part 2 picks up from here with rebasing, Git internals, and disaster-recovery workflows.
+This is **Part 1** of a two-part series. This post covers the everyday loop you'll use in nearly every session: setting up Git, staging and committing, branching and merging, undoing mistakes, and working with a remote like GitHub. [Part 2](/post/git/advanced-git-techniques-and-workflows) picks up from here with rebasing, Git internals, and disaster-recovery workflows.
 
 By the end of this post, you'll be comfortable with:
 
@@ -121,7 +121,7 @@ A few core objects and terms you'll see everywhere:
 </Success>
 
 <Info title="Curious how this actually works on disk?">
-  This post sticks to the everyday, user-facing model above. Part 2 goes underneath it — the actual object types Git stores, and what a branch really looks like as a file.
+  This post sticks to the everyday, user-facing model above. [Part 2](/post/git/advanced-git-techniques-and-workflows#git-internals-objects-refs-and-the-git-directory) goes underneath it — the actual object types Git stores, and what a branch really looks like as a file.
 </Info>
 
 <RainbowDivider />
@@ -465,7 +465,7 @@ Git has several "undo" commands, and picking the right one depends on **where** 
 <GitResetDiagram />
 
 <Warning title="--hard discards work">
-  `git reset --hard` throws away uncommitted changes with no confirmation, and uncommitted work has never been snapshotted anywhere — it's genuinely unrecoverable. Committed changes that get "reset away" aren't gone forever, though; Part 2's reflog section covers getting them back.
+  `git reset --hard` throws away uncommitted changes with no confirmation, and uncommitted work has never been snapshotted anywhere — it's genuinely unrecoverable. Committed changes that get "reset away" aren't gone forever, though; [Part 2's reflog section](/post/git/advanced-git-techniques-and-workflows#recovering-from-disaster-git-reflog) covers getting them back.
 </Warning>
 
 ### `git revert`
@@ -716,7 +716,7 @@ That's the everyday Git loop: three areas your files move through (working direc
 - `fetch` is always safe; `pull` combines it with a merge or rebase
 - A resolved merge conflict is just `add` + `commit`, same as any other change
 
-🔗 **Up Next (Part 2):** Advanced Git: Rebasing, Internals, and Real-World Workflows — where we'll cover:
+🔗 **Up Next (Part 2):** [Advanced Git: Rebasing, Internals, and Real-World Workflows](/post/git/advanced-git-techniques-and-workflows) — where we'll cover:
 
 - Rewriting history safely with interactive rebase
 - Cherry-picking, bisecting, and finding "lost" work with `reflog`
