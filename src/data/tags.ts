@@ -180,6 +180,38 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Advanced Guides for Experienced Developers",
     description: "Deeper dives past the fundamentals — for readers already comfortable with the basics and ready for edge cases and internals."
   },
+  "svg": {
+    title: "Scalable Vector Graphics for the Web",
+    description: "Master Scalable Vector Graphics (SVG). Learn to create resolution-independent, DOM-friendly, and performant graphics using XML-based code."
+  },
+  "graphics": {
+    title: "Creating High-Quality Web Graphics",
+    description: "A look into both vector and raster graphics for the web, focusing on clarity, performance, and the right format for the right task."
+  },
+  "advanced-css": {
+    title: "Advanced CSS Techniques",
+    description: "Deeper explorations of modern CSS features and specifications that go beyond foundational layout and styling concepts."
+  },
+  "vector-graphics": {
+    title: "Mastering Vector Graphics and Scalability",
+    description: "Explore the world of vector-based design where images are defined by mathematical paths, ensuring they stay sharp at any resolution or screen size."
+  },
+  "web-graphics": {
+    title: "Optimizing Graphics for Modern Web Performance",
+    description: "Technical guides on implementing and optimizing icons, illustrations, and data visualizations to keep web applications fast and visually stunning."
+  },
+  "ui-development": {
+    title: "Modern UI Development and Implementation",
+    description: "Focusing on the bridge between design and code, covering how to build interactive, accessible, and responsive user interface components."
+  },
+  "coordinate-system": {
+    title: "Understanding the SVG Coordinate System",
+    description: "Deep dive into how SVG canvas coordinates work, mastering the X-axis, Y-axis, and the 'top-left (0,0)' rule of the browser."
+  },
+  "viewbox": {
+    title: "Mastering the SVG viewBox and Scaling",
+    description: "Learn how to use the viewBox attribute to define virtual coordinate grids (User Units) and create graphics that scale perfectly in any container."
+  },
   "accessibility": {
     title: "Web Accessibility (a11y) Standards and Guides",
     description: "Articles focused on web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
@@ -203,5 +235,5 @@ export const tagMeta: Record<string, TagMeta> = {
   "progressive-enhancement": {
     title: "Progressive Enhancement in CSS",
     description: "Building layouts that work with a baseline of broadly-supported CSS, then layering on newer features for browsers that support them."
-  },
+  }
 };
