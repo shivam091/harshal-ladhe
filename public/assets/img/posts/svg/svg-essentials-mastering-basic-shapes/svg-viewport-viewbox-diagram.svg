@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" role="img" aria-labelledby="diagram-title diagram-desc">
+  <title id="diagram-title">viewBox vs. viewport diagram</title>
+  <desc id="diagram-desc">A 100 by 100 user-unit viewBox containing a circle on the left, connected by an arrow labeled "scales to fit" to a 200 by 200 pixel viewport window on the right, showing the same circle rendered larger inside a browser-style frame.</desc>
+
+  <defs>
+    <marker id="vvArrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <rect x="1" y="1" width="798" height="378" rx="16" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+
+  <g font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif">
+    <!-- Left panel: viewBox as graph-paper canvas -->
+    <text x="150" y="40" text-anchor="middle" font-size="18" font-weight="600" fill="#1e293b">viewBox (the canvas)</text>
+    <text x="150" y="64" text-anchor="middle" font-size="13" fill="#4f46e5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">viewBox=&quot;0 0 100 100&quot;</text>
+
+    <rect x="40" y="90" width="220" height="220" fill="#ffffff" stroke="#94a3b8" stroke-width="2" />
+    <g stroke="#e2e8f0" stroke-width="1">
+      <line x1="95" y1="90" x2="95" y2="310" />
+      <line x1="150" y1="90" x2="150" y2="310" />
+      <line x1="205" y1="90" x2="205" y2="310" />
+      <line x1="40" y1="145" x2="260" y2="145" />
+      <line x1="40" y1="200" x2="260" y2="200" />
+      <line x1="40" y1="255" x2="260" y2="255" />
+    </g>
+    <circle cx="150" cy="200" r="100" fill="#6366f1" fill-opacity="0.25" stroke="#4338ca" stroke-width="2" />
+
+    <text x="40" y="82" font-size="11" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">(0,0)</text>
+    <text x="260" y="326" text-anchor="end" font-size="11" fill="#64748b" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">(100,100)</text>
+
+    <text x="150" y="352" text-anchor="middle" font-size="12" fill="#64748b">100 &#215; 100 user units</text>
+
+    <!-- Arrow -->
+    <line x1="275" y1="210" x2="486" y2="210" stroke="#94a3b8" stroke-width="3" marker-end="url(#vvArrowhead)" />
+    <text x="380" y="190" text-anchor="middle" font-size="13" font-weight="600" fill="#334155">scales to fit</text>
+    <text x="380" y="234" text-anchor="middle" font-size="11" font-style="italic" fill="#64748b">same coordinates, bigger window</text>
+
+    <!-- Right panel: viewport as a browser-style window -->
+    <text x="630" y="40" text-anchor="middle" font-size="18" font-weight="600" fill="#1e293b">viewport (the window)</text>
+    <text x="630" y="64" text-anchor="middle" font-size="13" fill="#4f46e5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">width=&quot;200&quot; height=&quot;200&quot;</text>
+
+    <rect x="500" y="90" width="260" height="260" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="2" />
+    <rect x="500" y="90" width="260" height="26" rx="8" fill="#e2e8f0" />
+    <circle cx="514" cy="103" r="4" fill="#ef4444" />
+    <circle cx="530" cy="103" r="4" fill="#f59e0b" />
+    <circle cx="546" cy="103" r="4" fill="#22c55e" />
+
+    <circle cx="630" cy="233" r="107" fill="#6366f1" fill-opacity="0.25" stroke="#4338ca" stroke-width="2" />
+
+    <text x="630" y="368" text-anchor="middle" font-size="12" fill="#64748b">200 &#215; 200 px on the page</text>
+  </g>
+</svg>

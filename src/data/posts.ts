@@ -2,8 +2,9 @@ import type { Post, PostNavigation } from "@/interfaces/post";
 
 /*
   Registry of every post. Each entry has a matching content file at
-  app/(site)/(internal)/(post)/post/<slug>/page.mdx. This drives the /posts list,
-  the detail chrome, and prev/next nav.
+  app/(site)/(internal)/(post)/post/<category-slug>/<slug>/page.mdx, where
+  <category-slug> is the slugified form of this entry's first `category`.
+  This drives the /posts list, the detail chrome, and prev/next nav.
 
   Dates come from git history at build time (lib/posts.ts for the list;
   remark-post-meta for the detail). New posts are appended to the end, so the
@@ -129,6 +130,24 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-08-15", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-mastering-basic-shapes",
+    title: "SVG Essentials: Mastering Shapes, Coordinates, and Styling",
+    excerpt: "Build sharp, scalable graphics with basic shapes.",
+    description: "Learn how to build resolution-independent SVG graphics. Master the viewBox, coordinates, essential shapes, and CSS styling with fill, stroke, and hover animations.",
+    category: ["SVG"],
+    tags: ["svg", "graphics", "advanced-css", "frontend", "web-design", "vector-graphics", "web-graphics", "transition", "ui-development", "coordinate-system", "viewbox"],
+    image: {
+      path: "/assets/img/posts/svg/svg-essentials-mastering-basic-shapes/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "SVG Essentials — Mastering Basic Shapes in SVG, featuring colorful geometric shapes, an SVG editor interface, coordinate system, viewBox, geometry rules, and SVG code on a vibrant dark gradient background."
+    },
+    signoff: "Between the six shape playgrounds, the presentation-attributes demo, and getting that radar sweep to pivot from exactly the right point, this ended up with more moving pieces than any SVG post so far — I hope tinkering with those sliders builds more intuition than the coordinate math alone ever could. Thanks for working through the whole toolkit with me. Go build something that scales without breaking a sweat. 🎯",
+    changelog: [
+      { date: "2026-08-21", change: "Initial publication" }
+    ]
   }
 ];
 
@@ -151,7 +170,7 @@ export function getPostNavigation(slug: string): PostNavigation {
   const next = index < posts.length - 1 ? posts[index + 1] : null;
 
   return {
-    previous: previous ? { slug: previous.slug, title: previous.title } : null,
-    next: next ? { slug: next.slug, title: next.title } : null
+    previous: previous ? { slug: previous.slug, title: previous.title, category: previous.category } : null,
+    next: next ? { slug: next.slug, title: next.title, category: next.category } : null
   };
 }
