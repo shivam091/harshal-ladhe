@@ -22,5 +22,9 @@ export const categoryMeta: Record<string, CategoryMeta> = {
   git: {
     title: "Git and Version Control",
     description: "Posts, tutorials, and snippets on Git — from everyday staging, committing, and branching to advanced rebasing, history rewriting, and disaster recovery workflows."
+  },
+  svg: {
+    title: "SVG and Vector Graphics",
+    description: "Posts, tutorials, and snippets on Scalable Vector Graphics (SVG) — from coordinates, the viewBox, and basic shapes to mastering the path element and building custom vector icons."
   }
 };
