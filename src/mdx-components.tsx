@@ -14,6 +14,8 @@ import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/
 import Sandbox from "@/components/Sandbox";
 import LikeButtonDemo from "@/components/LikeButtonDemo";
 import RainbowDivider from "@/components/RainbowDivider";
+import SvgSnippet from "@/components/SvgSnippet";
+import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
 import GridAnatomyDiagram from "@/components/mdx/GridAnatomyDiagram";
 import GridAreasDiagram from "@/components/mdx/GridAreasDiagram";
 import GridSpanDiagram from "@/components/mdx/GridSpanDiagram";
@@ -62,6 +64,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Sandbox,
     LikeButtonDemo,
     RainbowDivider,
+    SvgSnippet,
+    InteractiveSvgPanel,
     GridAnatomyDiagram,
     GridAreasDiagram,
     GridSpanDiagram,
