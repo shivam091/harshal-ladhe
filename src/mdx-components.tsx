@@ -15,6 +15,7 @@ import LikeButtonDemo from "@/components/LikeButtonDemo";
 import RainbowDivider from "@/components/RainbowDivider";
 import SvgSnippet from "@/components/SvgSnippet";
 import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
+import ViewboxViewportDiagram from "@/components/mdx/ViewboxViewportDiagram";
 import GridAnatomyDiagram from "@/components/mdx/GridAnatomyDiagram";
 import GridAreasDiagram from "@/components/mdx/GridAreasDiagram";
 import GridSpanDiagram from "@/components/mdx/GridSpanDiagram";
@@ -65,6 +66,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     RainbowDivider,
     SvgSnippet,
     InteractiveSvgPanel,
+    ViewboxViewportDiagram,
     GridAnatomyDiagram,
     GridAreasDiagram,
     GridSpanDiagram,
