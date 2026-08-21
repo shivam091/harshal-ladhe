@@ -13,6 +13,8 @@ import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/
 import Sandbox from "@/components/Sandbox";
 import LikeButtonDemo from "@/components/LikeButtonDemo";
 import RainbowDivider from "@/components/RainbowDivider";
+import SvgSnippet from "@/components/SvgSnippet";
+import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -41,6 +43,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Sandbox,
     LikeButtonDemo,
     RainbowDivider,
+    SvgSnippet,
+    InteractiveSvgPanel,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
