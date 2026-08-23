@@ -13,6 +13,7 @@ import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/
 import Sandbox from "@/components/Sandbox";
 import LikeButtonDemo from "@/components/LikeButtonDemo";
 import RainbowDivider from "@/components/RainbowDivider";
+import IconStretchyGuy from "@/icons/IconStretchyGuy";
 import SvgSnippet from "@/components/SvgSnippet";
 import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
 
@@ -43,6 +44,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Sandbox,
     LikeButtonDemo,
     RainbowDivider,
+    IconStretchyGuy,
     SvgSnippet,
     InteractiveSvgPanel,
     /*
