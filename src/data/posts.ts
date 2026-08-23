@@ -213,6 +213,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-08-21", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "mastering-js-operators",
+    title: "Mastering JavaScript Operators: A Complete Guide with Examples",
+    excerpt: "Transform, compare, assign—write cleaner code.",
+    description: "A complete breakdown of all JavaScript operators including arithmetic, logical, assignment, comparison, bitwise, and special operators with syntax and real-world examples.",
+    category: ["JavaScript"],
+    tags: ["javascript", "operators", "es6", "frontend", "cheatsheet", "optional-chaining", "nullish-coalescing", "spread-operator", "ternary-operator", "type-coercion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/mastering-js-operators/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Mastering JavaScript Operators — a colorful neon infographic showing JavaScript operator categories, code examples, and modern syntax for writing clean, efficient code."
+    },
+    toc: { maxLevel: 4 },
+    signoff: "Every operator in this guide—from `+` to `??=`—got its own runnable example, and the precedence table alone went through more revisions than I'd like to admit before it was scannable at a glance. This is the most thorough reference on the site so far; thanks for working through all of it with me. Go write cleaner conditionals. ✨",
+    changelog: [
+      { date: "2025-08-23", change: "Initial publication" }
+    ]
   }
 ];
 
