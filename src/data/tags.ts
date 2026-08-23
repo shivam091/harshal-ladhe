@@ -205,5 +205,41 @@ export const tagMeta: Record<string, TagMeta> = {
   "viewbox": {
     title: "Mastering the SVG viewBox and Scaling",
     description: "Learn how to use the viewBox attribute to define virtual coordinate grids (User Units) and create graphics that scale perfectly in any container."
+  },
+  "javascript": {
+    title: "JavaScript: The Full Guide to Modern Development Logic",
+    description: "Comprehensive resources covering the entire JavaScript ecosystem, from foundational syntax and logic to advanced runtime execution and modern web patterns."
+  },
+  "operators": {
+    title: "A Complete Guide to JavaScript Operators",
+    description: "A complete guide to JavaScript operators, including arithmetic, assignment, comparison, logical, and unary operators."
+  },
+  "es6": {
+    title: "Posts on Modern JavaScript (ES6 and Beyond)",
+    description: "Articles focusing on modern JavaScript features introduced in ECMAScript 2015 (ES6) and later versions, enhancing development efficiency."
+  },
+  "cheatsheet": {
+    title: "Web Development Cheatsheets and References",
+    description: "Quick reference guides and cheatsheets for essential web development concepts and syntax, designed for easy recall."
+  },
+  "optional-chaining": {
+    title: "Optional Chaining (`?.`) in JavaScript",
+    description: "Using the `?.` operator to safely access deeply nested properties and call methods without manual null checks or try/catch guards."
+  },
+  "nullish-coalescing": {
+    title: "Nullish Coalescing (`??`) in JavaScript",
+    description: "Using the `??` operator to supply fallback values only for `null` or `undefined`, without accidentally overriding falsy values like 0 or an empty string."
+  },
+  "spread-operator": {
+    title: "The JavaScript Spread Operator Explained",
+    description: "Using `...` to expand arrays and objects into individual elements — for cloning, merging, and passing arguments to functions."
+  },
+  "ternary-operator": {
+    title: "The JavaScript Ternary (Conditional) Operator",
+    description: "Writing concise conditional expressions with `? :`, JavaScript's only operator that takes three operands, as a shorthand for simple if...else logic."
+  },
+  "type-coercion": {
+    title: "Type Coercion in JavaScript",
+    description: "How JavaScript implicitly converts values between types during comparisons, arithmetic, and boolean checks — and where it commonly surprises developers."
   }
 };
