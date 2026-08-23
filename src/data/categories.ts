@@ -26,5 +26,9 @@ export const categoryMeta: Record<string, CategoryMeta> = {
   svg: {
     title: "SVG and Vector Graphics Guides",
     description: "Guides on Scalable Vector Graphics (SVG) — from coordinates, the viewBox, and basic shapes to mastering the path element and building custom vector icons."
+  },
+  javascript: {
+    title: "All Posts on JavaScript Programming",
+    description: "Explore posts on the JavaScript programming language, including ES6+ features, operators, concepts, and techniques for modern frontend development."
   }
 };
