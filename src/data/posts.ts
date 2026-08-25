@@ -205,6 +205,7 @@ export const posts: Post[] = [
     },
     signoff: "Between the six shape playgrounds, the presentation-attributes demo, and getting that radar sweep to pivot from exactly the right point, this ended up with more moving pieces than any SVG post so far — I hope tinkering with those sliders builds more intuition than the coordinate math alone ever could. Thanks for working through the whole toolkit with me. Go build something that scales without breaking a sweat. 🎯",
     changelog: [
+      { date: "2026-08-25", change: "Added cross-reference to post 'SVG Polygon vs Polyline: Differences, Fill Rules, and Use Cases'" },
       { date: "2026-08-21", change: "Initial publication" }
     ]
   },
