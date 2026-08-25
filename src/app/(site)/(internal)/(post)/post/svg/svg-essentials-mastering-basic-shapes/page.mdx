@@ -399,6 +399,9 @@ Exactly like a polyline, but it is a **closed** shape. The browser automatically
   The browser connects the final point back to the first point for you.
 </Info>
 
+For a deeper look at `fill-rule`, winding order, self-intersecting shapes, and finishing off sharp corners with `stroke-linejoin` and
+`stroke-miterlimit`, see [SVG Polygon vs Polyline: Differences, Fill Rules, and Use Cases](/post/svg/polygon-vs-polyline).
+
 <RainbowDivider />
 
 ## The Points List Syntax
@@ -654,7 +657,7 @@ moved past "copy-pasting" SVG code to actually understanding how it works:
 * **The `viewBox` vs. Viewport:** You've mastered the distinction between the physical "window" (pixels) and the internal "canvas" (user units).
 * **Basic Shapes:** You can now construct layouts using the six core elements: lines, rectangles, circles, ellipses, polylines, and polygons.
 * **Geometry Rules:** You now know that rectangle corner radii are effectively limited by half the rectangle's width and height, while circle and ellipse radii can extend beyond the visible `viewBox`.
-* **Points Lists:** You understand that `polyline` and `polygon` use ordered X/Y coordinate pairs and that `polygon` automatically closes the final segment.
+* **Points Lists:** You understand that `polyline` and `polygon` use ordered X/Y coordinate pairs and that `polygon` automatically closes the final segment — [SVG Polygon vs Polyline](/post/svg/polygon-vs-polyline) picks up from here with `fill-rule`, joins and caps, and real-world use cases.
 * **Styling & Interactivity:** You understand how to use `fill` and `stroke` and why `transform-origin` is critical when animating
   SVG elements with CSS — Animating SVG: A Guide to CSS Transitions and Keyframes
   picks up from here with `transition` vs `@keyframes`, `transform-box: fill-box`, and `stroke-dasharray` line-draw effects.
