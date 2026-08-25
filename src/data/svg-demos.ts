@@ -323,6 +323,121 @@ export const svgDemos: SvgDemoMeta[] = [
   </g>
 </svg>`;
     }
+  },
+  {
+    slug: "polygon-vs-polyline-demo",
+    title: "Free-Form Points",
+    controls: [
+      { id: "mode", label: "Element", type: "select", options: ["polygon", "polyline"], defaultValue: "polygon" },
+      { id: "x1", label: "Point 1 x", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "y1", label: "Point 1 y", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "x2", label: "Point 2 x", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "y2", label: "Point 2 y", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "x3", label: "Point 3 x", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "y3", label: "Point 3 y", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "x4", label: "Point 4 x", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "y4", label: "Point 4 y", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "fill", label: "Fill", type: "color", defaultValue: "#6366f1" },
+      { id: "stroke", label: "Stroke", type: "color", defaultValue: "#4338ca" },
+      { id: "strokeWidth", label: "Stroke width", type: "range", min: 1, max: 6, step: 1, defaultValue: 2 }
+    ],
+    // Swapping to "polyline" drops the auto-close and the fill, so the same scrambled points that make a self-intersecting polygon also show the open "phantom fill" contrast.
+    render: (values) => {
+      const tag = values.mode === "polyline" ? "polyline" : "polygon";
+      const points = `${values.x1},${values.y1} ${values.x2},${values.y2} ${values.x3},${values.y3} ${values.x4},${values.y4}`;
+      const fillAttr = values.mode === "polyline" ? `fill="none"` : `fill="${values.fill}" fill-opacity="0.25"`;
+      // Guide points scale with stroke-width so they stay visible past a thick stroke instead of getting swallowed by it.
+      const dotR = Number(values.strokeWidth) + 1;
+      const haloR = dotR + 1;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Shape: the four draggable points, closed as a polygon or left open as a polyline. -->
+  <${tag} points="${points}" ${fillAttr} stroke="${values.stroke}" stroke-width="${values.strokeWidth}" stroke-linejoin="round" stroke-linecap="round" />
+
+  <!-- Guide points: the four vertices from the controls above. -->
+  <circle cx="${values.x1}" cy="${values.y1}" r="${haloR}" fill="${values.stroke}" opacity="0.2" />
+  <circle cx="${values.x1}" cy="${values.y1}" r="${dotR}" fill="${values.stroke}" />
+  <circle cx="${values.x2}" cy="${values.y2}" r="${haloR}" fill="${values.stroke}" opacity="0.2" />
+  <circle cx="${values.x2}" cy="${values.y2}" r="${dotR}" fill="${values.stroke}" />
+  <circle cx="${values.x3}" cy="${values.y3}" r="${haloR}" fill="${values.stroke}" opacity="0.2" />
+  <circle cx="${values.x3}" cy="${values.y3}" r="${dotR}" fill="${values.stroke}" />
+  <circle cx="${values.x4}" cy="${values.y4}" r="${haloR}" fill="${values.stroke}" opacity="0.2" />
+  <circle cx="${values.x4}" cy="${values.y4}" r="${dotR}" fill="${values.stroke}" />
+</svg>`;
+    }
+  },
+  {
+    slug: "polygon-vs-polyline-shape-presets",
+    title: "Shape Presets",
+    controls: [
+      { id: "preset", label: "Preset", type: "select", options: ["square", "hexagon", "star"], defaultValue: "square" },
+      { id: "mode", label: "Element", type: "select", options: ["polygon", "polyline"], defaultValue: "polygon" },
+      { id: "fill", label: "Fill", type: "color", defaultValue: "#6366f1" },
+      { id: "stroke", label: "Stroke", type: "color", defaultValue: "#4338ca" },
+      { id: "strokeWidth", label: "Stroke width", type: "range", min: 1, max: 6, step: 1, defaultValue: 2 }
+    ],
+    render: (values) => {
+      type Point = [number, number];
+
+      const presets: Record<string, Point[]> = {
+        // Four corners of a square, listed clockwise from the top-left.
+        square: [
+          [25, 25],
+          [75, 25],
+          [75, 75],
+          [25, 75]
+        ],
+
+        // Six vertices forming a regular-looking hexagon.
+        hexagon: [
+          [50, 10],
+          [85, 30],
+          [85, 70],
+          [50, 90],
+          [15, 70],
+          [15, 30]
+        ],
+
+        // Ten alternating outer and inner vertices forming a five-pointed star.
+        star: [
+          [50, 5],
+          [61, 35],
+          [95, 35],
+          [67, 55],
+          [78, 85],
+          [50, 65],
+          [22, 85],
+          [33, 55],
+          [5, 35],
+          [39, 35]
+        ]
+      };
+
+      const preset = String(values.preset);
+      const points: Point[] = presets[preset] ?? presets.square;
+      const pointsString = points.map(([x, y]: Point) => `${x},${y}`).join(" ");
+      const tag = values.mode === "polyline" ? "polyline" : "polygon";
+      const fillAttr = values.mode === "polyline" ? `fill="none"` : `fill="${values.fill}" fill-opacity="0.25"`;
+      // Guide points scale with stroke-width so they stay visible past a thick stroke instead of getting swallowed by it.
+      const dotR = Number(values.strokeWidth) + 1;
+      const haloR = dotR + 1;
+      const guidePoints = points
+        .map(
+          ([x, y]: Point) => `
+  <circle cx="${x}" cy="${y}" r="${haloR}" fill="${values.stroke}" opacity="0.2" />
+  <circle cx="${x}" cy="${y}" r="${dotR}" fill="${values.stroke}" />`
+        )
+        .join("");
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Shape: the selected preset's vertices, closed as a polygon or left open as a polyline. -->
+  <${tag} points="${pointsString}" ${fillAttr} stroke="${values.stroke}" stroke-width="${values.strokeWidth}" stroke-linejoin="round" stroke-linecap="round" />
+
+  <!-- Guide points: every vertex of the current preset. -->${guidePoints}
+</svg>`;
+    }
   }
 ];
 
