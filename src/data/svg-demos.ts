@@ -236,6 +236,94 @@ export const svgDemos: SvgDemoMeta[] = [
   </g>
 </svg>`;
     }
+  },
+  {
+    slug: "polygon-vs-polyline-demo",
+    title: "Free-Form Points",
+    controls: [
+      { id: "mode", label: "Element", type: "select", options: ["polygon", "polyline"], defaultValue: "polygon" },
+      { id: "x1", label: "Point 1 x", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "y1", label: "Point 1 y", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "x2", label: "Point 2 x", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "y2", label: "Point 2 y", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "x3", label: "Point 3 x", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "y3", label: "Point 3 y", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "x4", label: "Point 4 x", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "y4", label: "Point 4 y", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "fill", label: "Fill", type: "color", defaultValue: "#6366f1" },
+      { id: "stroke", label: "Stroke", type: "color", defaultValue: "#4338ca" },
+      { id: "strokeWidth", label: "Stroke width", type: "range", min: 1, max: 6, step: 1, defaultValue: 2 }
+    ],
+    // Swapping to "polyline" drops the auto-close and the fill, so the same scrambled points that make a self-intersecting polygon also show the open "phantom fill" contrast.
+    render: (values) => {
+      const tag = values.mode === "polyline" ? "polyline" : "polygon";
+      const points = `${values.x1},${values.y1} ${values.x2},${values.y2} ${values.x3},${values.y3} ${values.x4},${values.y4}`;
+      const fillAttr = values.mode === "polyline" ? `fill="none"` : `fill="${values.fill}" fill-opacity="0.25"`;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <${tag} points="${points}" ${fillAttr} stroke="${values.stroke}" stroke-width="${values.strokeWidth}" stroke-linejoin="round" stroke-linecap="round" />
+</svg>`;
+    }
+  },
+  {
+    slug: "polygon-vs-polyline-shape-presets",
+    title: "Shape Presets",
+    controls: [
+      { id: "preset", label: "Preset", type: "select", options: ["square", "hexagon", "star"], defaultValue: "square" },
+      { id: "mode", label: "Element", type: "select", options: ["polygon", "polyline"], defaultValue: "polygon" },
+      { id: "fill", label: "Fill", type: "color", defaultValue: "#6366f1" },
+      { id: "stroke", label: "Stroke", type: "color", defaultValue: "#4338ca" },
+      { id: "strokeWidth", label: "Stroke width", type: "range", min: 1, max: 6, step: 1, defaultValue: 2 }
+    ],
+    render: (values) => {
+      type Point = [number, number];
+
+      const presets: Record<string, Point[]> = {
+        // Four corners of a square, listed clockwise from the top-left.
+        square: [
+          [25, 25],
+          [75, 25],
+          [75, 75],
+          [25, 75]
+        ],
+
+        // Six vertices forming a regular-looking hexagon.
+        hexagon: [
+          [50, 10],
+          [85, 30],
+          [85, 70],
+          [50, 90],
+          [15, 70],
+          [15, 30]
+        ],
+
+        // Ten alternating outer and inner vertices forming a five-pointed star.
+        star: [
+          [50, 5],
+          [61, 35],
+          [95, 35],
+          [67, 55],
+          [78, 85],
+          [50, 65],
+          [22, 85],
+          [33, 55],
+          [5, 35],
+          [39, 35]
+        ]
+      };
+
+      const preset = String(values.preset);
+      const points: Point[] = presets[preset] ?? presets.square;
+      const pointsString = points.map(([x, y]: Point) => `${x},${y}`).join(" ");
+      const tag = values.mode === "polyline" ? "polyline" : "polygon";
+      const fillAttr = values.mode === "polyline" ? `fill="none"` : `fill="${values.fill}" fill-opacity="0.25"`;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <${tag} points="${pointsString}" ${fillAttr} stroke="${values.stroke}" stroke-width="${values.strokeWidth}" stroke-linejoin="round" stroke-linecap="round" />
+</svg>`;
+    }
   }
 ];
 
