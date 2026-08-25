@@ -241,5 +241,33 @@ export const tagMeta: Record<string, TagMeta> = {
   "type-coercion": {
     title: "Type Coercion in JavaScript",
     description: "How JavaScript implicitly converts values between types during comparisons, arithmetic, and boolean checks — and where it commonly surprises developers."
+  },
+  "polygon": {
+    title: "Mastering SVG Polygons and Multi-Sided Shapes",
+    description: "Learn to define closed geometric shapes using the SVG <polygon> element, mastering the points attribute to create everything from triangles to complex custom polygons."
+  },
+  "polyline": {
+    title: "Creating Open Paths with SVG Polylines",
+    description: "Guides on using the <polyline> element for creating series of connected straight-line segments, perfect for open-ended shapes, sparklines, and technical drawings."
+  },
+  "shapes": {
+    title: "SVG Basic Shapes and Geometric Primitives",
+    description: "A comprehensive look at SVG's built-in shape elements, including rectangles, circles, ellipses, and lines, for building structured graphics without complex paths."
+  },
+  "fill-rule": {
+    title: "Understanding SVG Fill Rules: nonzero vs. evenodd",
+    description: "A technical breakdown of the fill-rule property, explaining how the 'nonzero' and 'evenodd' algorithms determine the interior area of complex, self-intersecting paths."
+  },
+  "icons": {
+    title: "Designing and Implementing Custom Web Icons",
+    description: "Best practices for building, optimizing, and managing custom SVG icon systems that are accessible, performant, and easy to style."
+  },
+  "frontend-development": {
+    title: "Frontend Engineering: Building for the Modern Web",
+    description: "Comprehensive resources on the intersection of HTML, CSS, JavaScript, and SVG to build high-performance, accessible user interfaces."
+  },
+  "accessibility": {
+    title: "Web Accessibility (a11y) Standards and Guides",
+    description: "Articles focused on web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
   }
 };
