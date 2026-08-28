@@ -19,6 +19,12 @@ export interface SeriesImage {
   alt: string;
 }
 
+// Props for the /series index feed.
+export interface SeriesListProps {
+  // Series to render as cards, in the order given (typically curated order).
+  series: Series[];
+}
+
 // Props for the series parts list.
 export interface SeriesPartListProps {
   // Posts belonging to the series, in part order.
