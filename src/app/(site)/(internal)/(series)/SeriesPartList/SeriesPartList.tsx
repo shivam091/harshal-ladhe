@@ -8,7 +8,7 @@ import { getPublishedDate } from "@/lib/related-posts";
 import { getPostUrl } from "@/utils/post-url";
 import { formatDate } from "@/utils/date";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
-import type { SeriesPartListProps } from "@/interfaces/series";
+import type { Post } from "@/data/posts";
 import {
   PostFeed,
   PostPreview,
@@ -30,6 +30,16 @@ import {
   layout.tsx and can't be recomputed here. No series badge is shown — every
   card already belongs to the series being viewed.
 */
+// Props for the series parts list.
+interface SeriesPartListProps {
+  // Posts belonging to the series, in part order.
+  posts: Post[];
+  // Read time (minutes) by post slug — computed server-side via git history
+  // (see lib/posts.ts) and threaded down from the layout, since this list
+  // itself renders inside a "use client" tree and can't compute it directly.
+  readingMinutesBySlug: Record<string, number>;
+}
+
 export default function SeriesPartList({ posts, readingMinutesBySlug }: SeriesPartListProps): JSX.Element {
   return (
     <>

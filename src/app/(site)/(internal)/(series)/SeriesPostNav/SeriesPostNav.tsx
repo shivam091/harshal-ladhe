@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import Link from "next/link";
 import { getPostUrl } from "@/utils/post-url";
-import type { SeriesPostNavProps } from "@/interfaces/series";
+import type { PostSeriesInfo } from "@/data/series";
 import {
   SeriesNav,
   SeriesNavHeader,
@@ -20,6 +20,12 @@ import {
   is, a link back to the series, and links to the previous / next part. Port of
   the Jekyll series/post-nav.html include.
 */
+// Props for the in-series wayfinding block.
+interface SeriesPostNavProps {
+  // The series this post belongs to — title, url, position, and previous/next neighbours.
+  series: PostSeriesInfo;
+}
+
 export default function SeriesPostNav({ series }: SeriesPostNavProps): JSX.Element {
   const { title, url, index, total, previousPost, nextPost } = series;
 
