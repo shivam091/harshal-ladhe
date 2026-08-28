@@ -3,7 +3,7 @@
 import type { JSX } from "react";
 import { useMemo } from "react";
 import FilterChips from "@/components/FilterChips";
-import AnimatedPostList from "@/components/PostList/AnimatedPostList";
+import PostsFeed from "@/components/PostsFeed";
 import { CONTENT_TYPE_ICONS } from "@/constants/content-type-icons";
 import { useToggleSet } from "@/hooks/use-toggle-set";
 import { TAXONOMY_ENTRY_LABELS, TAXONOMY_ENTRY_TYPES } from "@/utils/taxonomy-entries";
@@ -52,7 +52,7 @@ export default function TaxonomyFeed({ entries }: TaxonomyFeedProps): JSX.Elemen
         ariaLabel="Filter by content type"
       />
 
-      <AnimatedPostList posts={visibleEntries} showTypeIcon />
+      <PostsFeed posts={visibleEntries} showTypeIcon animateChanges />
     </>
   );
 }
