@@ -1,21 +1,9 @@
 import type { JSX } from "react";
 import type {Metadata } from "next";
-import Link from "next/link";
 import VisuallyHidden from "@/components/VisuallyHidden";
+import SeriesFeed from "@/app/(site)/(internal)/series/SeriesFeed";
 import { getSortedSeriesWithDates } from "@/lib/series";
-import {
-  SeriesSection,
-  SeriesList,
-  SeriesCard,
-  SeriesCardHeader,
-  SeriesCardTitle,
-  SeriesCardExcerpt,
-  SeriesCardBody,
-  SeriesCardDescription,
-  SeriesCardFooter
-} from "@/app/(site)/(internal)/series/series.styles";
-import { BookOpenIcon } from "@/components/Icon";
-import { PageMetaItem } from "@/components/PageMeta/PageMeta.styles";
+import { SeriesSection } from "@/app/(site)/(internal)/series/series.styles";
 
 export const metadata: Metadata = {
   title: "Series",
@@ -50,45 +38,7 @@ export default function SeriesPage(): JSX.Element {
 
         <p>{metadata.description as string}</p>
 
-        <SeriesList>
-          {series.map((item) => {
-            const partCount = item.parts.length;
-
-            return (
-              <SeriesCard key={item.slug}>
-                <SeriesCardHeader>
-                  <SeriesCardTitle>
-                    <Link
-                      href={`/series/${item.slug}`}
-                      title={item.title}
-                      aria-label={`View parts of series: ${item.title}`}
-                    >
-                      {item.title}
-                    </Link>
-                  </SeriesCardTitle>
-
-                  {item.excerpt && <SeriesCardExcerpt>{item.excerpt}</SeriesCardExcerpt>}
-                </SeriesCardHeader>
-
-                {item.description && (
-                  <SeriesCardBody>
-                    <SeriesCardDescription title={item.description}>
-                      {item.description}
-                    </SeriesCardDescription>
-                  </SeriesCardBody>
-                )}
-
-                <SeriesCardFooter>
-                  <PageMetaItem className="series-parts">
-                    <BookOpenIcon />
-                    <VisuallyHidden>Parts:</VisuallyHidden>
-                    {partCount} part{partCount !== 1 ? "s" : ""}
-                  </PageMetaItem>
-                </SeriesCardFooter>
-              </SeriesCard>
-            );
-          })}
-        </SeriesList>
+        <SeriesFeed series={series} />
       </SeriesSection>
     </>
   );
