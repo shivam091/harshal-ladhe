@@ -70,6 +70,14 @@ export const siteConfig = {
   // When true, renders the retro LED hit counter at the bottom of each post/snippet/series page.
   hitCounter: true,
 
+  // Shared batching for every "Show more" feed (posts, series, and future content types).
+  pagination: {
+    // Items shown before the "Show more" button appears.
+    initialCount: 5,
+    // Additional items revealed per "Show more" click.
+    loadCount: 5
+  },
+
   // Home page sections. Each block can be toggled off, and empty sections hide
   // themselves regardless. Port of the Jekyll home generators' `_config.yml`.
   home: {
