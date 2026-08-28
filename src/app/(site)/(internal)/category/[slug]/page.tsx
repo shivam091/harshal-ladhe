@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import type {Metadata } from "next";
 import { notFound } from "next/navigation";
 import VisuallyHidden from "@/components/VisuallyHidden";
-import PostList from "@/components/PostList";
+import PostsFeed from "@/components/PostsFeed";
 import {
   getAllCategories,
   getPostsByCategory,
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   };
 }
 
-// Renders every post filed under this category, reusing the shared PostList feed.
+// Renders every post filed under this category, batched behind "Show more" like /posts so long archives stay scannable.
 export default async function CategoryPage({ params }: CategoryPageProps): Promise<JSX.Element> {
   const { slug } = await params;
   const category = getCategoryBySlug(slug);
@@ -87,7 +87,7 @@ export default async function CategoryPage({ params }: CategoryPageProps): Promi
           Posts in {category}
         </VisuallyHidden>
 
-        <PostList posts={posts} />
+        <PostsFeed posts={posts} />
       </CategoryArchiveSection>
     </>
   );
