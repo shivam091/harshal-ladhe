@@ -1,7 +1,7 @@
 import type { JSX } from "react";
 import type {Metadata } from "next";
 import VisuallyHidden from "@/components/VisuallyHidden";
-import PostList from "@/components/PostList";
+import PostsFeed from "@/app/(site)/(internal)/posts/PostsFeed";
 import { getSortedPosts } from "@/lib/posts";
 import { PostsSection } from "@/app/(site)/(internal)/posts/posts.styles";
 
@@ -36,7 +36,7 @@ export default function PostsPage(): JSX.Element {
 
         <p>{metadata.description as string}</p>
 
-        <PostList posts={posts} />
+        <PostsFeed posts={posts} />
       </PostsSection>
     </>
   );
