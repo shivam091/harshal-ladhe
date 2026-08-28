@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   };
 }
 
-// Reuses the shared post feed so category archives look like the main post list.
+// Batched behind "Show more" so long archives stay scannable.
 export default async function CategoryPage({ params }: CategoryPageProps): Promise<JSX.Element> {
   const { slug } = await params;
   const category = getCategoryBySlug(slug);
