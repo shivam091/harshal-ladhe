@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
   };
 }
 
-// Reuses the shared post feed so tag archives look like the main post list.
+// Batched behind "Show more" so long archives stay scannable.
 export default async function TagPage({ params }: TagPageProps): Promise<JSX.Element> {
   const { slug } = await params;
   const tag = getTagBySlug(slug);
