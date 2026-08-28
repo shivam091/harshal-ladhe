@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import VisuallyHidden from "@/components/VisuallyHidden";
-import PostList from "@/components/PostList";
+import PostsFeed from "@/components/PostsFeed";
 import { getAllTags, getPostsByTag, getTagBySlug, getTagMeta } from "@/lib/tags";
 import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
   };
 }
 
-// Reuses the shared post feed so tag archives look like the main post list.
+// Batched behind "Show more" so long archives stay scannable.
 export default async function TagPage({ params }: TagPageProps): Promise<JSX.Element> {
   const { slug } = await params;
   const tag = getTagBySlug(slug);
@@ -82,7 +82,7 @@ export default async function TagPage({ params }: TagPageProps): Promise<JSX.Ele
         Posts tagged {tag}
       </VisuallyHidden>
 
-      <PostList posts={posts} />
+      <PostsFeed posts={posts} />
     </TagArchiveSection>
   );
 }
