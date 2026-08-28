@@ -1,6 +1,6 @@
 "use client";
 
-import type { JSX } from "react";
+import type { JSX, ReactNode } from "react";
 import { usePathname, notFound } from "next/navigation";
 import PageSignOff from "@/components/SignOff/PageSignOff";
 import Changelog from "@/components/Changelog";
@@ -12,7 +12,6 @@ import { inlineMarkdownToHtml } from "@/utils/markdown";
 import { getSeriesBySlug, getSeriesNavigation, getSeriesPosts } from "@/data/series";
 import SeriesPartList from "@/app/(site)/(internal)/(series)/SeriesPartList";
 import { siteConfig } from "@/config/site";
-import type { SeriesDetailLayoutClientProps } from "@/interfaces/series";
 import {
   Article,
   SeriesHeader,
@@ -31,6 +30,14 @@ import {
   readingMinutesBySlug is from the client-safe registry, and the parts list derives
   its published dates from each post's changelog.
 */
+// Props for the client half of the /series section layout.
+interface SeriesDetailLayoutClientProps {
+  children: ReactNode;
+  // Read time (minutes) by post slug — computed server-side by layout.tsx via
+  // lib/posts.ts (git history), since this component can't do that itself.
+  readingMinutesBySlug: Record<string, number>;
+}
+
 export default function SeriesDetailLayoutClient({ children, readingMinutesBySlug }: SeriesDetailLayoutClientProps): JSX.Element {
   const pathname = usePathname();
   const slug = pathname.replace(/^\/series\//, "").replace(/\/$/, "");
