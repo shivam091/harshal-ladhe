@@ -244,6 +244,24 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-08-25", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "css-logical-properties",
+    title: "CSS Logical Properties: Writing Modes, RTL, and Direction-Aware Layouts",
+    excerpt: "Design once, adapt everywhere.",
+    description: "CSS Logical Properties adapt your layout to any language, direction, or writing mode from one stylesheet — no more RTL hacks or duplicated styles.",
+    category: ["CSS"],
+    tags: ["css", "layout", "rtl", "logical-properties", "writing-modes", "i18n", "frontend", "accessibility"],
+    image: {
+      path: "/assets/img/posts/css/css-logical-properties/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Cover image for ‘CSS Logical Properties: Writing Modes, RTL, and Direction-Aware Layouts,’ showing physical properties compared with logical properties, LTR and RTL direction controls, horizontal and vertical writing modes, inline and block axis diagrams, and direction-aware layout mappings."
+    },
+    signoff: "This one leaned harder on visuals than any post before it — four custom SVG diagrams built to keep the inline and block axes crossing the right way in every writing mode, plus the direction/writing-mode toggle above to prove it live. Chasing all sixty-some properties across sixteen categories down to their physical equivalents turned up a few surprises along the way — a couple of values that looked valid but aren't implemented anywhere, one that isn't even real syntax. I hope watching those arrows and toggles do their thing builds more intuition than the mapping tables alone ever could. Thanks for tracing every axis with me — go replace a `margin-left` with something that actually adapts. 🧭",
+    changelog: [
+      { date: "2026-08-30", change: "Initial publication" }
+    ],
   }
 ];
 
