@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Logical Properties Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Logical vs Physical Properties</h1>
+        <p>Flip the direction and writing mode — watch which card holds up.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Logical vs physical property preview">
+        <div id="stage" class="stage">
+          <div class="card card--physical">
+            <span class="card-badge card-badge--physical">Physical</span>
+            <code class="card-code">
+              margin-left · padding-left · border-left · text-align: left
+            </code>
+            <p class="card-text">Nailed to the left, no matter what you pick below.</p>
+          </div>
+
+          <div class="card card--logical">
+            <span class="card-badge card-badge--logical">Logical</span>
+            <code class="card-code">
+              margin-inline-start · padding-inline-start · border-inline-start · text-align: start
+            </code>
+            <p class="card-text">Follows the start edge — flips with direction and writing mode.</p>
+          </div>
+        </div>
+      </section>
+
+      <output id="props-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Configuration</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <span class="field-label" id="direction-label">Direction</span>
+            <div class="segmented-control" role="radiogroup" aria-labelledby="direction-label">
+              <label class="segment">
+                <input type="radio" name="direction" value="ltr" checked>
+                <span>LTR</span>
+              </label>
+              <label class="segment">
+                <input type="radio" name="direction" value="rtl">
+                <span>RTL</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field field--full">
+            <span class="field-label" id="writing-mode-label">Writing mode</span>
+            <div class="segmented-control" role="radiogroup" aria-labelledby="writing-mode-label">
+              <label class="segment">
+                <input type="radio" name="writing-mode" value="horizontal-tb" checked>
+                <span>horizontal-tb</span>
+              </label>
+              <label class="segment">
+                <input type="radio" name="writing-mode" value="vertical-rl">
+                <span>vertical-rl</span>
+              </label>
+              <label class="segment">
+                <input type="radio" name="writing-mode" value="vertical-lr">
+                <span>vertical-lr</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
