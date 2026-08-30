@@ -271,6 +271,22 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Web Accessibility (a11y) Standards and Practices",
     description: "Web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
   },
+  "rtl": {
+    title: "Right-to-Left (RTL) Layout Techniques",
+    description: "Building interfaces that work correctly for right-to-left languages like Arabic and Hebrew, without duplicating stylesheets.",
+  },
+  "logical-properties": {
+    title: "CSS Logical Properties Explained",
+    description: "CSS Logical Properties — flow-relative alternatives to left/right/top/bottom that adapt across writing modes and directions.",
+  },
+  "writing-modes": {
+    title: "CSS Writing Modes",
+    description: "The `writing-mode` property and how it reshapes the inline and block axes for vertical and horizontal scripts.",
+  },
+  "i18n": {
+    title: "i18n: Internationalization Techniques",
+    description: "Content tagged with the i18n shorthand for internationalisation — adapting layout, text, and styling for a global audience.",
+  },
   "devtools": {
     title: "Debugging with Browser DevTools",
     description: "Using browser developer tools to inspect, debug, and fine-tune CSS layouts, styles, and computed values."
