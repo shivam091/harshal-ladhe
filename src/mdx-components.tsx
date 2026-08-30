@@ -17,6 +17,7 @@ import IconStretchyGuy from "@/icons/IconStretchyGuy";
 import SvgSnippet from "@/components/SvgSnippet";
 import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
 import ViewboxViewportDiagram from "@/components/mdx/ViewboxViewportDiagram";
+import AxisDiagram from "@/components/mdx/AxisDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -49,6 +50,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     SvgSnippet,
     InteractiveSvgPanel,
     ViewboxViewportDiagram,
+    AxisDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
