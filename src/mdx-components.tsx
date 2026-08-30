@@ -17,6 +17,7 @@ import IconStretchyGuy from "@/icons/IconStretchyGuy";
 import SvgSnippet from "@/components/SvgSnippet";
 import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
 import ViewboxViewportDiagram from "@/components/mdx/ViewboxViewportDiagram";
+import AxisDiagram from "@/components/mdx/AxisDiagram";
 import GridAnatomyDiagram from "@/components/mdx/GridAnatomyDiagram";
 import GridAreasDiagram from "@/components/mdx/GridAreasDiagram";
 import GridSpanDiagram from "@/components/mdx/GridSpanDiagram";
@@ -69,6 +70,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     SvgSnippet,
     InteractiveSvgPanel,
     ViewboxViewportDiagram,
+    AxisDiagram,
     GridAnatomyDiagram,
     GridAreasDiagram,
     GridSpanDiagram,
