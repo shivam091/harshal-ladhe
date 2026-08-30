@@ -16,6 +16,13 @@ export const sandboxes: SandboxMeta[] = [
     entry: "/index.html"
   },
   {
+    slug: "css-logical-properties",
+    title: "Logical vs Physical Properties",
+    description: "Flip direction and writing mode to see a logical-property card adapt while its physical-property twin stays put.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  },
+  {
     slug: "holy-grail-layout",
     title: "Holy Grail Layout",
     description: "Header, two sidebars, main content, and footer — CSS Grid template areas with a responsive mobile stack.",
