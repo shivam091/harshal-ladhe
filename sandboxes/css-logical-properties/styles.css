@@ -1,0 +1,92 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+  --pg-radius-md: 0.75rem;
+  --pg-danger: #fb7185;
+  --pg-danger-soft: rgba(251, 113, 133, 0.15);
+  --pg-success: #4ade80;
+  --pg-success-soft: rgba(74, 222, 128, 0.15);
+}
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+}
+
+.stage {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border: 0.0625rem dashed var(--pg-border);
+  border-radius: var(--pg-radius-md);
+  background: var(--pg-surface-muted);
+  min-block-size: 16.25rem;
+}
+
+.card {
+  inline-size: 13.75rem;
+  block-size: 9.375rem;
+  flex-shrink: 0;
+  border-radius: var(--pg-radius-sm);
+  background: var(--pg-surface);
+  box-shadow: var(--pg-shadow-sm);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card--physical {
+  margin-left: 0;
+  padding-left: 1rem;
+  border-left: 0.25rem solid var(--pg-danger);
+  text-align: left;
+}
+
+.card--logical {
+  margin-inline-start: 0;
+  padding-inline-start: 1rem;
+  border-inline-start: 0.25rem solid var(--pg-success);
+  text-align: start;
+}
+
+.card-badge {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding-block: 0.15rem;
+  padding-inline: 0.5rem;
+  border-radius: 62.4375rem;
+}
+
+.card-badge--physical {
+  background: var(--pg-danger-soft);
+  color: var(--pg-danger);
+}
+
+.card-badge--logical {
+  background: var(--pg-success-soft);
+  color: var(--pg-success);
+}
+
+.card-code {
+  font-family: var(--pg-mono);
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--pg-text-muted);
+}
+
+.card-text {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--pg-text);
+}
+
+@media (max-width: 30rem) {
+  .stage {
+    min-block-size: 13.75rem;
+  }
+
+  .card {
+    inline-size: 11.25rem;
+  }
+}
