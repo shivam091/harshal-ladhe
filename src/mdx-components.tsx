@@ -19,6 +19,12 @@ import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
 import ViewboxViewportDiagram from "@/components/mdx/ViewboxViewportDiagram";
 import AxisDiagram from "@/components/mdx/AxisDiagram";
 import GridAnatomyDiagram from "@/components/mdx/GridAnatomyDiagram";
+import GridAreasDiagram from "@/components/mdx/GridAreasDiagram";
+import GridSpanDiagram from "@/components/mdx/GridSpanDiagram";
+import GridContainerAlignmentDiagram from "@/components/mdx/GridContainerAlignmentDiagram";
+import GridItemAlignmentDiagram from "@/components/mdx/GridItemAlignmentDiagram";
+import GridExplicitDiagram from "@/components/mdx/GridExplicitDiagram";
+import GridImplicitDiagram from "@/components/mdx/GridImplicitDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -53,6 +59,12 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ViewboxViewportDiagram,
     AxisDiagram,
     GridAnatomyDiagram,
+    GridAreasDiagram,
+    GridSpanDiagram,
+    GridContainerAlignmentDiagram,
+    GridItemAlignmentDiagram,
+    GridExplicitDiagram,
+    GridImplicitDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
