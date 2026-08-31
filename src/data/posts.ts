@@ -85,6 +85,7 @@ export const posts: Post[] = [
     signoff: "This one took a good deal of care to get the fundamentals right, and I hope it gives you a solid footing with containers, tracks, and your first 2D layout. Appreciate you taking the time to work through it with me — happy gridding. 🧱",
     pinned: true,
     changelog: [
+      { date: "2026-08-31", change: "Added a grid terminology diagram and removed the CodePen link" },
       { date: "2026-08-15", change: "Added interactive playground for column/row templates and gap" },
       { date: "2026-07-05", change: "Initial publication" }
     ]
