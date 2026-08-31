@@ -25,6 +25,7 @@ import GridContainerAlignmentDiagram from "@/components/mdx/GridContainerAlignme
 import GridItemAlignmentDiagram from "@/components/mdx/GridItemAlignmentDiagram";
 import GridExplicitDiagram from "@/components/mdx/GridExplicitDiagram";
 import GridImplicitDiagram from "@/components/mdx/GridImplicitDiagram";
+import GridSizingDiagram from "@/components/mdx/GridSizingDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -65,6 +66,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     GridItemAlignmentDiagram,
     GridExplicitDiagram,
     GridImplicitDiagram,
+    GridSizingDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
