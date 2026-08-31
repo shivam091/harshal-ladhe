@@ -72,6 +72,7 @@ export const posts: Post[] = [
     pinned: true,
     featured: true,
     changelog: [
+      { date: "2026-08-31", change: "Added an auto-fit vs auto-fill diagram, linked the Holy Grail Layout snippet, and removed CodePen links" },
       { date: "2026-08-15", change: "Added interactive auto-fit vs auto-fill and container query playground" },
       { date: "2026-07-05", change: "Initial publication" }
     ]

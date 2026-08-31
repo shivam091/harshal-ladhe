@@ -2,8 +2,10 @@ import type { JSX } from "react";
 import { CELL, TRACK, LINES, CONTAINER_X, CONTAINER_SIZE } from "@/components/mdx/GridSpanDiagram/GridSpanDiagram.constants";
 import { Wrapper, Svg } from "@/components/mdx/GridSpanDiagram/GridSpanDiagram.styles";
 
-// Static SVG diagram of the post's own spanning example — an item placed with `grid-column: 1 / 3` and
-// `grid-row: 2 / 4` inside a 3x3 grid, alongside the three items that keep their normal, unspanned cells.
+/*
+  Static SVG diagram of the post's own spanning example — an item placed with `grid-column: 1 / 3` and
+  `grid-row: 2 / 4` inside a 3x3 grid, alongside the three items that keep their normal, unspanned cells.
+*/
 export default function GridSpanDiagram(): JSX.Element {
   return (
     <>
