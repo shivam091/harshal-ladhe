@@ -94,7 +94,11 @@ Here's the HTML structure:
 - The column layout uses `1fr 2fr 2fr`, giving the sidebar less space than the main content.
 - This is a clean, semantic approach to building responsive page sections — no floats or nested containers needed.
 
-👉 Try this hands-on in the **Template Areas** tab of the [interactive playground](#interactive-example) below, or [on CodePen](https://codepen.io/shivam091/pen/JodQLgg).
+<GridAreasDiagram />
+
+👉 Try this hands-on in the **Template Areas** tab of the [interactive playground](#interactive-example) below.
+
+👉 Want to see this exact technique applied to a full page? The [Holy Grail Layout](/tutorial/holy-grail-layout) snippet builds the classic header/nav/main/aside/footer layout with `grid-template-areas` — including a responsive breakpoint that re-flows it into a single column.
 
 <RainbowDivider />
 
@@ -110,7 +114,7 @@ These properties are applied to the **grid container** and affect **all items** 
 
 - **justify-items** — Aligns items **horizontally** (inline axis) within each cell.
 - **align-items** — Aligns items **vertically** (block axis) within each cell.
-- **place-items** — A shorthand for combining both `align-items` and `justify-items`.
+- **place-items** — A shorthand for combining both `align-items` and `justify-items`, written in that order: **`place-items: <align-items> <justify-items>`**.
 
 <CodeBlock language="css">
 {`
@@ -124,46 +128,22 @@ These properties are applied to the **grid container** and affect **all items** 
 
 **Visual Reference (Centered Items)**
 
-<CodeBlock language="plaintext" showCopyButton={false}>
-{`
-  +-------------+-------------+-------------+
-  |             |             |             |
-  |     [ ]     |     [ ]     |     [ ]     |  ← centered in both directions
-  |             |             |             |
-  +-------------+-------------+-------------+
-  |             |             |             |
-  |     [ ]     |     [ ]     |     [ ]     |
-  |             |             |             |
-  +-------------+-------------+-------------+
-`}
-</CodeBlock>
+<GridContainerAlignmentDiagram variant="center" />
 
-You can also use `place-items` as a shorthand:
+You can also use `place-items` as a shorthand — remember, the first value is `align-items` and the second is `justify-items`, so `end start` means `align-items: end` (bottom) then `justify-items: start` (left):
 
 <CodeBlock language="css">
 {`
   .grid {
     display: grid;
-    place-items: end start; /* Aligns all grid items to the bottom (block-end) and left (inline-start) */
+    place-items: end start; /* align-items: end (bottom), justify-items: start (left) */
   }
 `}
 </CodeBlock>
 
 **Visual Reference (Bottom-Left Aligned)**
 
-<CodeBlock language="plaintext" showCopyButton={false}>
-{`
-  +-------------+-------------+-------------+
-  |             |             |             |
-  |             |             |             |
-  | [ ]         | [ ]         | [ ]         |  ← bottom-left alignment
-  +-------------+-------------+-------------+
-  |             |             |             |
-  |             |             |             |
-  | [ ]         | [ ]         | [ ]         |
-  +-------------+-------------+-------------+
-`}
-</CodeBlock>
+<GridContainerAlignmentDiagram variant="end-start" />
 
 ### Item-Level Alignment
 
@@ -171,7 +151,7 @@ While container-level alignment applies to **all grid items**, item-level alignm
 
 - **justify-self** — Aligns an item **horizontally** (inline axis) within its grid cell.
 - **align-self** — Aligns an item **vertically** (block axis) within its grid cell.
-- **place-self** — A shorthand for combining `align-self` and `justify-self`.
+- **place-self** — A shorthand for combining `align-self` and `justify-self`, written in that order: **`place-self: <align-self> <justify-self>`**.
 
 <CodeBlock language="css">
 {`
@@ -184,43 +164,31 @@ While container-level alignment applies to **all grid items**, item-level alignm
 
 **Visual Reference (Top-Right Alignment)**
 
-<CodeBlock language="plaintext" showCopyButton={false}>
-{`
-  +-------------+
-  |         [ ] |  ← aligned to top-right
-  |             |
-  |             |
-  +-------------+
-`}
-</CodeBlock>
+<GridItemAlignmentDiagram variant="top-right" />
 
-You can also achieve the same alignment with `place-self`:
+You can also use `place-self` as a shorthand — remember, the first value is `align-self` and the second is `justify-self`, so `end start` means `align-self: end` (bottom) then `justify-self: start` (left):
 
 <CodeBlock language="css">
 {`
   .item {
-    place-self: end start; /* Aligns this item to the bottom (block-end) and left (inline-start) */
+    place-self: end start; /* align-self: end (bottom), justify-self: start (left) */
   }
 `}
 </CodeBlock>
 
 **Visual Reference (Bottom-Left Alignment)**
 
-<CodeBlock language="plaintext" showCopyButton={false}>
-{`
-  +-------------+
-  |             |
-  |             |
-  | [ ]         |  ← aligned to bottom-left
-  +-------------+
-`}
-</CodeBlock>
+<GridItemAlignmentDiagram variant="bottom-left" />
 
-<Info title="Pro Tip">
-  You can override grid container alignment (`place-items`, `align-items`, `justify-items`) on a per-item basis using `place-self`, `align-self`, or `justify-self`.
+<Warning title="Watch the argument order">
+  To reproduce the **top-right** example above using the shorthand, you'd need `place-self: start end;` (`align-self: start` then `justify-self: end`) — not `place-self: end start`. Mixing up the order is one of the most common `place-self` mistakes.
+</Warning>
+
+<Info title="Item-level wins">
+  Item-level alignment always **takes priority over** container-level alignment: `justify-self`, `align-self`, and `place-self` override `justify-items`, `align-items`, and `place-items` on a per-item basis. For example, if the container sets `place-items: center`, but one item sets `align-self: start`, that one item ignores the container's vertical centering and sticks to the top of its cell — every other item still centers as normal.
 </Info>
 
-👉 [Try these alignments on CodePen](https://codepen.io/shivam091/pen/bNdPMKj)
+👉 Try this hands-on in the **Container Alignment** and **Self-Alignment** panels of the **Alignment & Spanning** tab in the [interactive playground](#interactive-example) below.
 
 <RainbowDivider />
 
@@ -265,25 +233,7 @@ And you apply:
 
 **Visual Reference (Lines Shown)**
 
-<CodeBlock language="plaintext" showCopyButton={false}>
-{`
-  +------------+------------+------------+
-  |            |            |            |
-  |   Item 2   |   Item 3   |   Item 4   |
-  |            |            |            |
-  +------------+------------+------------+
-  |            |            |            |
-  |            |            |            |
-  |            |            |            |
-  +         Spanning        +------------+
-  |            |            |            |
-  |            |            |            |
-  |            |            |            |
-  +------------+------------+------------+
-`}
-</CodeBlock>
-
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/bNdPKwJ)
+<GridSpanDiagram />
 
 ### Shorthand vs Longhand
 
@@ -327,8 +277,6 @@ Instead of specifying **start** and **end** lines manually, you can use the `spa
 
 This tells the grid item to span **2 columns and 2 rows** starting from its **auto-determined position** (i.e. where the browser places it in the flow).
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/raVEKzW)
-
 <Details summary="When to use it?">
 
 - You **don't need to control exact start/end line numbers**.
@@ -336,6 +284,8 @@ This tells the grid item to span **2 columns and 2 rows** starting from its **au
 - You're working with **auto-placed items** in a dynamic or responsive layout.
 
 </Details>
+
+👉 Try this hands-on in the **Spanning (Hero Item)** panel of the **Alignment & Spanning** tab in the [interactive playground](#interactive-example) below.
 
 <RainbowDivider />
 
@@ -373,17 +323,7 @@ In this case, you've explicitly created a **2×2 grid**, which gives you **4 cel
 
 **Visual Illustration**
 
-<CodeBlock language="plaintext" showCopyButton={false}>
-{`
-  +---------+--------+
-  | Item 1  | Item 2 |
-  +---------+--------+
-  | Item 3  | Item 4 |
-  +---------+--------+
-`}
-</CodeBlock>
-
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/jEPjpzL)
+<GridExplicitDiagram />
 
 If you place more items than your explicit tracks can hold, the grid will automatically generate new rows or columns to accommodate them — these are known as _implicit tracks_, which we'll explore next.
 
@@ -431,19 +371,7 @@ Let's say you define only 2 rows, but add 5 items:
 
 **Visual Illustration**
 
-<CodeBlock language="plaintext" showCopyButton={false}>
-{`
-  Explicit Grid:          Implicit Grid:
-
-  +---------+--------+    +---------+--------+
-  | Item 1  | Item 2 |    | Item 1  | Item 2 |
-  +---------+--------+    +---------+--------+
-  | Item 3  | Item 4 |    | Item 3  | Item 4 |
-  +---------+--------+    +---------+--------+
-                          | Item 5  |   —    | ← auto-created implicit row
-                          +---------+--------+
-`}
-</CodeBlock>
+<GridImplicitDiagram variant="rows" />
 
 By default, the height of implicit rows is `auto`. You can control their size using `grid-auto-rows`:
 
@@ -455,16 +383,17 @@ By default, the height of implicit rows is `auto`. You can control their size us
 `}
 </CodeBlock>
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/bNdPjMq)
+👉 Try this hands-on in the **Explicit vs Implicit Grid** panel of the **Alignment & Spanning** tab — push the item count past 9 to see the browser add a 3rd row, in the [interactive playground](#interactive-example) below.
 
 #### Example: Implicit Columns
 
-Now let's say you only define rows, and use **manual placement** or **grid-auto-flow: column** to push items into new columns:
+Now let's say you define only 2 columns, but use **grid-auto-flow: column** so overflow items push into new columns instead of new rows:
 
 <CodeBlock language="css">
 {`
   .grid {
     display: grid;
+    grid-template-columns: 150px 150px; /* Explicit: only 2 columns defined */
     grid-template-rows: 100px 100px;
     grid-auto-flow: column; /* Place items column-wise */
     grid-auto-columns: 150px; /* Width for any implicitly created columns */
@@ -486,32 +415,21 @@ Now let's say you only define rows, and use **manual placement** or **grid-auto-
 
 **What happens?**
 
-- Items will flow **across columns**, not rows.
-- Since no `grid-template-columns` is defined, the browser will **generate columns implicitly**.
-- Each column will now be **150px wide** (because of `grid-auto-columns`).
+- With `grid-auto-flow: column`, items fill **column by column**: Item 1 and Item 2 fill column 1, Item 3 and Item 4 fill column 2 — using up both explicit columns.
+- Item 5 has nowhere left to go, so the browser **generates a 3rd column implicitly** rather than wrapping to a new row.
+- That new column is **150px wide** (because of `grid-auto-columns`), and since only Item 5 lands in it, the column's second cell stays empty.
 
 **Visual Illustration**
 
-<CodeBlock language="plaintext" showCopyButton={false}>
-{`
-  Explicit Grid:          Implicit Grid:
-
-  +---------+--------+    +---------+--------+--------+
-  | Item 1  | Item 2 |    | Item 1  | Item 2 | Item 5 |
-  +---------+--------+    +---------+--------+--------+
-  | Item 3  | Item 4 |    | Item 3  | Item 4 |        |
-  +---------+--------+    +---------+--------+--------+
-                                                  ↑ implicit columns created dynamically
-`}
-</CodeBlock>
+<GridImplicitDiagram variant="columns" />
 
 Use `grid-auto-columns` to control the width of these new columns.
-
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/JodgZqM)
 
 <Info title="Tip">
   You rarely need to use `grid-auto-columns` unless you're manually placing items across columns (e.g. `grid-column: 4`) or using `grid-auto-flow: column` and want to control generated column width.
 </Info>
+
+👉 In that same panel, switch **grid-auto-flow** to **column** to see implicit columns generated instead, in the [interactive playground](#interactive-example) below.
 
 <RainbowDivider />
 
