@@ -61,8 +61,6 @@ You can create equal-width columns easily with `repeat()` and `1fr`:
 
 This setup creates **3 columns of equal width**, with a `1rem` gap between both columns and rows. It's clean and scalable.
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/LEVKBqw)
-
 <RainbowDivider />
 
 ## `minmax()` Function
@@ -106,7 +104,7 @@ It's especially useful when building **responsive** layouts, because it allows a
 
 In this example, cards are laid out in rows on large screens and they stack neatly without overflow on small screens.
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/raVEZaP)
+👉 Try this hands-on in the **Grid Template** panel of the [interactive playground](#interactive-example) below — set the minimum track size to 250px to match this example.
 
 <RainbowDivider />
 
@@ -130,11 +128,13 @@ Want a grid that adapts to screen width _without media queries_? Use `auto-fit` 
 - `auto-fit` collapses empty tracks if there isn't enough content.
 - `auto-fill` reserves space for empty tracks, keeping the layout structure intact.
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/ogXrMmv)
-
 **Clarification:**
 - `auto-fit`: Shrinks or collapses unused columns when there's no content.
 - `auto-fill`: Maintains the grid structure, even if columns are empty. Reserves space for empty columns.
+
+<GridSizingDiagram />
+
+👉 Try this hands-on in the **Grid Template** panel of the [interactive playground](#interactive-example) below — toggle between auto-fit and auto-fill with just a few cards in a wide container to see the difference.
 
 <RainbowDivider />
 
@@ -162,8 +162,6 @@ This layout shows:
 
 - **3 columns** on desktop screens.
 - A **single-column stacked layout** on tablets or phones (under 768px).
-
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/yyNdqwj)
 
 <RainbowDivider />
 
@@ -222,11 +220,11 @@ Here's the HTML structure:
 `}
 </CodeBlock>
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/yyNmQXM)
-
 <Warning title="Note">
   Most modern browsers support container queries (except older Safari/Firefox versions). Always check compatibility if building for production.
 </Warning>
+
+👉 Try this hands-on in the **@container** panel of the [interactive playground](#interactive-example) below — drag the container width past the breakpoint and watch the card reflow based on its own width, not the viewport's.
 
 <RainbowDivider />
 
@@ -305,7 +303,7 @@ A simple dashboard grid using `grid-template-areas`, `minmax()`, and media queri
 `}
 </CodeBlock>
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/yyNmQGP)
+👉 For the classic version of this pattern — with a header, footer, and second sidebar too — see the [Holy Grail Layout](/tutorial/holy-grail-layout) snippet.
 
 ### Card Grid with Container Queries
 
@@ -369,7 +367,7 @@ A simple dashboard grid using `grid-template-areas`, `minmax()`, and media queri
 `}
 </CodeBlock>
 
-👉 [Try this on CodePen](https://codepen.io/shivam091/pen/VYLoVqJ)
+👉 This is the exact card the **@container** panel of the [interactive playground](#interactive-example) below builds live — resize its container width to watch it reflow.
 
 <RainbowDivider />
 
