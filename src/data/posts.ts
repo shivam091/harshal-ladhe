@@ -106,6 +106,7 @@ export const posts: Post[] = [
     signoff: "A lot of testing and refining went into getting these grid-area, alignment, and spanning examples just right, and I hope that effort shows in how clearly they click for you. Thanks for following along — hope your layouts feel a little more precise now. 📐",
     pinned: true,
     changelog: [
+      { date: "2026-08-31", change: "Replaced ASCII diagrams with interactive SVG illustrations, linked the Holy Grail Layout snippet, and removed CodePen links" },
       { date: "2026-08-16", change: "Added a Template Areas mode to the interactive playground" },
       { date: "2026-08-15", change: "Added interactive playground for alignment, spanning, and implicit tracks" },
       { date: "2026-07-05", change: "Initial publication" }
