@@ -155,6 +155,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-08-31", change: "Added an interactive timing-function curve diagram and playground cross-references" },
       { date: "2026-08-08", change: "Initial publication" }
     ]
   },
