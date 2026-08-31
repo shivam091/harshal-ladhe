@@ -207,6 +207,7 @@ export const posts: Post[] = [
     },
     signoff: "This one leaned harder on visuals than any post before it — four custom SVG diagrams built to keep the inline and block axes crossing the right way in every writing mode, plus the direction/writing-mode toggle above to prove it live. Chasing all sixty-some properties across sixteen categories down to their physical equivalents turned up a few surprises along the way — a couple of values that looked valid but aren't implemented anywhere, one that isn't even real syntax. I hope watching those arrows and toggles do their thing builds more intuition than the mapping tables alone ever could. Thanks for tracing every axis with me — go replace a `margin-left` with something that actually adapts. 🧭",
     changelog: [
+      { date: "2026-08-31", change: "Added interactive playground cross-references" },
       { date: "2026-08-30", change: "Initial publication" }
     ],
   }
