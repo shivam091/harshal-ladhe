@@ -63,6 +63,8 @@ A transition only occurs **when a property changes** — usually due to:
 `}
 </CodeBlock>
 
+👉 Try this hands-on with the **Toggle Transition State** button in the [interactive playground](#interactive-example) below — same class-toggle mechanism, live.
+
 <RainbowDivider />
 
 ## Transition Properties
@@ -103,6 +105,8 @@ The `transition-duration` CSS property defines **how long** the transition takes
   }
 `}
 </CodeBlock>
+
+👉 Try this hands-on with the **Duration** control in the [interactive playground](#interactive-example) below.
 
 You can specify multiple durations for multiple properties, maintaining the order defined in the `transition-property` property:
 
@@ -145,12 +149,18 @@ The `transition-timing-function` CSS property controls the **speed curve** of th
 | `steps(n, start/end)` | Jump-based transitions for discrete steps. |
 | `cubic-bezier(x1, y1, x2, y2)` | Custom curve for precise control. |
 
+Here's what those curves actually look like, plotted on a shared timeline:
+
+<TransitionTimingDiagram />
+
 **Analogy:** Think of the transition as a car accelerating from a stoplight.
 
 - **linear:** The car instantly hits a constant speed and holds it. (Unnatural)
 - **ease-in:** The car starts slowly and then slams the gas at the end. (Hard start)
 - **ease-out:** The car accelerates quickly and then slowly coasts to its final stop. (Soft landing)
 - **ease-in-out:** The car accelerates smoothly and slows down smoothly, providing the most natural, polished feel.
+
+👉 Try this hands-on in the **Timing Function** control of the [interactive playground](#interactive-example) below — switch between the **Preset**, **Steps**, and **Cubic-Bezier** sub-groups to feel the difference.
 
 You can specify multiple timing functions for multiple properties, maintaining the order defined in the `transition-property` property:
 
@@ -225,6 +235,8 @@ For example, applying `transition-delay: -0.5s` to a transition with a `1s` dura
 | **Pre-Positioned State** | `.element { transition: opacity 1s; transition-delay: -0.5s; }` | Transition starts immediately, but visually at 50% opacity (the halfway point), and completes the remaining fade over 0.5 seconds. |
 
 This technique eliminates the need to define a separate intermediate CSS rule just to position an element slightly advanced in its transition when the page loads or a state change occurs.
+
+👉 Try this hands-on in the **Delay** control of the [interactive playground](#interactive-example) below — it accepts negative values too, so you can feel the "pre-positioned" effect directly.
 
 ### 5. `transition`
 
