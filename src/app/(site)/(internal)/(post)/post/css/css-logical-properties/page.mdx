@@ -36,6 +36,8 @@ If the document switches to RTL, `margin-inline-start` automatically applies to 
 
 This ensures your layout is **writing mode aware**.
 
+👉 Try this hands-on in the [interactive playground](#interactive-example) below — flip **Direction** to `rtl` and watch the Physical card's margin stay on the left while the Logical card's follows the text.
+
 <Info title="Browser support">
   Logical properties are broadly supported in current versions of Chrome, Edge, Firefox, and Safari; verify specifics on MDN when targeting older browsers.
 </Info>
@@ -158,6 +160,8 @@ Think of it this way:
   }
 `}
 </CodeBlock>
+
+👉 Try this hands-on in the [interactive playground](#interactive-example) below — the **Writing mode** control cycles through exactly these values.
 
 <RainbowDivider />
 
@@ -465,6 +469,8 @@ your logical properties. This ensures that browsers without logical property sup
 - Makes debugging easier by clearly separating legacy and modern styles.
 
 </Details>
+
+👉 The [interactive playground](#interactive-example) above renders this exact `margin` / `padding` / `text-align` set side by side — Physical vs. Logical — so you can see live what these fallbacks are working around.
 
 <RainbowDivider />
 
