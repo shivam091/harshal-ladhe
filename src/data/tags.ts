@@ -445,5 +445,41 @@ export const tagMeta: Record<string, TagMeta> = {
   "view-timeline": {
     title: "CSS `view()` Timelines Explained",
     description: "Understanding the `animation-timeline` property and `view()` timelines for animations that progress as an element moves through the viewport.",
+  },
+  "css3": {
+    title: "All Posts on CSS3 Features",
+    description: "Articles covering CSS3 specifications and the modern features they introduced for styling and animating the web.",
+  },
+  "css-animation": {
+    title: "CSS Animation Techniques",
+    description: "Guides and tutorials focused specifically on animating elements with CSS, from timing functions to keyframe sequencing.",
+  },
+  "steps": {
+    title: "The CSS `steps()` Timing Function",
+    description: "Deep dives into the `steps()` timing function for discrete, frame-based animation jumps instead of continuous easing.",
+  },
+  "css-tricks": {
+    title: "Handy CSS Tricks and Techniques",
+    description: "Practical, lesser-known CSS techniques and tricks for solving common styling and animation problems.",
+  },
+  "discrete-animation": {
+    title: "Discrete (Stepped) Animation Techniques",
+    description: "Articles on animations that jump between fixed states rather than interpolating smoothly, such as those built with `steps()`.",
+  },
+  "typewriter-effect": {
+    title: "Building CSS Typewriter Effects",
+    description: "Tutorials on recreating the classic typewriter text-reveal effect using CSS animations and the `steps()` timing function.",
+  },
+  "sprite-animation": {
+    title: "CSS Sprite Sheet Animation",
+    description: "Techniques for animating sprite sheets on the web by stepping through `background-position` frames with CSS.",
+  },
+  "web-performance": {
+    title: "Web Performance Optimization",
+    description: "Content focused on keeping web interfaces fast and responsive, from rendering pipelines to animation efficiency.",
+  },
+  "ui-animation": {
+    title: "UI Animation Design and Implementation",
+    description: "Articles on animating interface elements to communicate state, guide attention, and improve perceived responsiveness.",
   }
 };

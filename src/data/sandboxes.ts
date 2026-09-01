@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-step-timing-function",
+    title: "CSS steps() Playground",
+    description: "Compare a linear move against a stepped one live — tune step count, jump term, and duration, plus a matching typewriter reveal.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "css-keyframes-guide",
     title: "CSS Keyframes Playground",
     description: "Tune duration, delay, timing function, iteration count, direction, and fill mode live against a multi-step @keyframes animation.",

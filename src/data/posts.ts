@@ -288,6 +288,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-07-31", change: "Initial publication" },
     ],
+  },
+  {
+    slug: "css-step-timing-function",
+    title: "Mastering CSS steps() for Discrete, Stepped Animations",
+    excerpt: "Master discrete frame-based jumps in CSS animations.",
+    description: "A comprehensive guide to the CSS steps() function, detailing its syntax, parameters, and practical applications for creating unique, stepped animation effects in web design. Boost your CSS animation skills.",
+    category: ["Animations"],
+    tags: ["css", "css3", "animation", "css-animation", "web-animation", "steps", "transition", "keyframes", "timing-function", "web-design", "css-tricks", "discrete-animation", "typewriter-effect", "sprite-animation", "web-performance", "ui-animation"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-07-31", change: "Initial publication" },
+    ],
   }
 ];
 
