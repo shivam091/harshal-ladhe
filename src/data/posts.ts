@@ -38,18 +38,19 @@ export const posts: Post[] = [
     slug: "mastering-css-grid",
     title: "Mastering CSS Grid: Grid Areas, Item Alignment, and Spanning",
     excerpt: "Structure with clarity, align with precision.",
-    description: "Take your CSS Grid skills to the next level by mastering semantic layouts with grid areas, item alignment, and element spanning techniques.",
+    description: "Take your CSS Grid skills to the next level by mastering semantic layouts with grid areas, named lines, item alignment, spanning, subgrid, and accessible ordering.",
     category: ["CSS"],
-    tags: ["css", "css-grid", "grid", "beginner", "layout", "grid-template-areas", "grid-alignment", "frontend"],
+    tags: ["css", "css-grid", "grid", "beginner", "layout", "grid-template-areas", "grid-alignment", "frontend", "subgrid", "named-grid-lines", "accessibility"],
     image: {
       path: "/assets/img/posts/css/mastering-css-grid-alignment-spanning/cover.png",
       width: 1200,
       height: 630,
       alt: "Stylized 2D illustration visualizing advanced CSS Grid techniques like alignment, named grid areas, and spanning elements across rows and columns."
     },
-    signoff: "A lot of testing and refining went into getting these grid-area, alignment, and spanning examples just right, and I hope that effort shows in how clearly they click for you. Thanks for following along — hope your layouts feel a little more precise now. 📐",
+    signoff: "A lot of testing and refining went into getting these grid-area, alignment, spanning, subgrid, and accessibility examples just right, and I hope that effort shows in how clearly they click for you. Thanks for following along — hope your layouts feel a little more precise now. 📐",
     pinned: true,
     changelog: [
+      { date: "2026-09-01", change: "Added named grid lines, subgrid, and accessible-ordering sections (each with a new diagram), plus a common mistakes checklist for alignment and spanning" },
       { date: "2026-08-31", change: "Replaced ASCII diagrams with interactive SVG illustrations, linked the Holy Grail Layout snippet, and removed CodePen links" },
       { date: "2026-08-16", change: "Added a Template Areas mode to the interactive playground" },
       { date: "2026-08-15", change: "Added interactive playground for alignment, spanning, and implicit tracks" },

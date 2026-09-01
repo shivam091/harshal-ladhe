@@ -289,5 +289,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "devtools": {
     title: "Debugging with Browser DevTools",
     description: "Using browser developer tools to inspect, debug, and fine-tune CSS layouts, styles, and computed values."
+  },
+  "subgrid": {
+    title: "CSS Subgrid Explained",
+    description: "Using the `subgrid` value for `grid-template-columns` and `grid-template-rows` to let nested grids inherit track sizing from their parent."
+  },
+  "named-grid-lines": {
+    title: "Naming Grid Lines in CSS Grid",
+    description: "Assigning custom names to grid lines in `grid-template-columns` and `grid-template-rows` for more readable, maintainable `grid-column`/`grid-row` placement."
   }
 };

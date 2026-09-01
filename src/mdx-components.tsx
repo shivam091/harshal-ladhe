@@ -25,7 +25,10 @@ import GridContainerAlignmentDiagram from "@/components/mdx/GridContainerAlignme
 import GridItemAlignmentDiagram from "@/components/mdx/GridItemAlignmentDiagram";
 import GridExplicitDiagram from "@/components/mdx/GridExplicitDiagram";
 import GridImplicitDiagram from "@/components/mdx/GridImplicitDiagram";
+import GridNamedLinesDiagram from "@/components/mdx/GridNamedLinesDiagram";
 import GridSizingDiagram from "@/components/mdx/GridSizingDiagram";
+import GridSubgridDiagram from "@/components/mdx/GridSubgridDiagram";
+import GridVisualOrderDiagram from "@/components/mdx/GridVisualOrderDiagram";
 import TransitionTimingDiagram from "@/components/mdx/TransitionTimingDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
@@ -67,7 +70,10 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     GridItemAlignmentDiagram,
     GridExplicitDiagram,
     GridImplicitDiagram,
+    GridNamedLinesDiagram,
     GridSizingDiagram,
+    GridSubgridDiagram,
+    GridVisualOrderDiagram,
     TransitionTimingDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
