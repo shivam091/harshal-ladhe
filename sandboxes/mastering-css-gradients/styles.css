@@ -1,0 +1,208 @@
+:root {
+  --pg-radius-lg: 1rem;
+}
+
+.gradient-preview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--pg-radius-lg);
+  box-shadow: var(--pg-shadow-sm);
+  transition: background 0.15s ease;
+}
+
+.type-group {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.type-group.active-group {
+  display: flex;
+}
+
+input[type="color"] {
+  width: 100%;
+  height: 42px;
+  padding: 4px;
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  cursor: pointer;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--pg-text);
+  cursor: pointer;
+}
+
+.checkbox-field + .checkbox-field {
+  margin-top: 10px;
+}
+
+.checkbox-field input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-field code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+/*
+  A `.field` from the shared playground styles sets its own `display`, which normally beats the
+  `[hidden]` user-agent rule regardless of specificity (author styles always win over UA styles for
+  the same property) — this re-asserts `display: none` as an author rule so `el.hidden = true`
+  actually hides these fields instead of silently doing nothing.
+*/
+.field[hidden] {
+  display: none;
+}
+
+/* Layer toggle row: checkbox + label text + an optional color swatch pinned to the right. */
+.layer-toggle input[type="color"] {
+  width: 32px;
+  height: 24px;
+  padding: 2px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+/* ----------------------------- Layering panel ----------------------------- */
+
+.glass-demo-area {
+  position: relative;
+  min-height: 240px;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* A busy, colorful pattern behind the card — exists only to give backdrop-filter: blur() something to blur. */
+.glass-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(45deg, #f97316 0, #f97316 20px, #a855f7 20px, #a855f7 40px),
+    conic-gradient(from 0deg at 70% 30%, #14b8a6, #f472b6, #facc15, #14b8a6);
+  background-blend-mode: overlay;
+}
+
+.glass-card {
+  position: absolute;
+  inset: 14% 18%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  transition: background-color 0.15s ease, background-image 0.15s ease, backdrop-filter 0.15s ease;
+}
+
+/* ----------------------------- Animated Demos panel ----------------------------- */
+
+.anim-demo-area {
+  position: relative;
+  /* Fixed (not min-) height so .liquid-flow's height: 100% below has a definite size to resolve against. */
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.anim-el {
+  display: none;
+}
+
+.anim-el.active-anim {
+  display: flex;
+}
+
+.liquid-flow {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--pg-radius-lg);
+  background: linear-gradient(270deg, #ff9a9e, #fad0c4, #fbc2eb, #a6c1ee);
+  background-size: 600% 600%;
+  animation: gradients-liquid-flow 8s ease infinite;
+}
+
+@keyframes gradients-liquid-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.border-beam {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 140px;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+  background: #1a1a2e;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.border-beam::before {
+  content: "";
+  position: absolute;
+  inset: -200%;
+  background: conic-gradient(from 0deg, transparent 0%, transparent 80%, #4facfe 90%, transparent 100%);
+  animation: gradients-beam-spin var(--beam-duration, 4s) linear infinite;
+}
+
+.border-beam span {
+  position: relative;
+  z-index: 1;
+  padding: 8px 14px;
+  background: #1a1a2e;
+  border-radius: 10px;
+}
+
+.sweep-loader {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #2575fc, transparent);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #fff 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 6px), #fff 0);
+  animation: gradients-beam-spin var(--sweep-duration, 1s) linear infinite;
+}
+
+@keyframes gradients-beam-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Simulates prefers-reduced-motion: reduce so the effect is visible without changing OS settings. */
+.reduced-motion .anim-el,
+.reduced-motion .anim-el::before {
+  animation: none !important;
+}
+
+@media (max-width: 480px) {
+  .gradient-preview {
+    aspect-ratio: 4 / 3;
+  }
+
+  .glass-demo-area {
+    min-height: 200px;
+  }
+
+  .border-beam {
+    width: 100%;
+  }
+}
