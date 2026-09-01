@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Gradients Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS Gradients Playground</h1>
+        <p>Switch gradient types, tune angles and stop positions, and toggle OKLCH interpolation to see the generated CSS update live.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Gradient preview">
+        <div id="gradient-preview" class="gradient-preview"></div>
+      </section>
+
+      <output id="gradient-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Gradient Type</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Gradient type">
+          <label class="segment">
+            <input type="radio" name="gradient-type" value="linear" checked>
+            <span>Linear</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="gradient-type" value="radial">
+            <span>Radial</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="gradient-type" value="conic">
+            <span>Conic</span>
+          </label>
+        </div>
+
+        <div id="type-options-container">
+          <div id="linear-options" class="type-group active-group">
+            <div class="field">
+              <label for="angle-input">Angle <span id="angle-label">90deg</span></label>
+              <div class="range-row">
+                <span class="range-edge">0deg</span>
+                <div class="range-track">
+                  <input type="range" id="angle-input" min="0" max="360" step="1" value="90">
+                  <output class="range-bubble" id="angle-value" for="angle-input">90deg</output>
+                </div>
+                <span class="range-edge">360deg</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="radial-options" class="type-group">
+            <div class="fields-grid">
+              <div class="field">
+                <label for="shape-select">Shape</label>
+                <select id="shape-select">
+                  <option value="circle">circle</option>
+                  <option value="ellipse" selected>ellipse</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="radial-position-select">Position</label>
+                <select id="radial-position-select">
+                  <option value="center" selected>center</option>
+                  <option value="top">top</option>
+                  <option value="bottom">bottom</option>
+                  <option value="left">left</option>
+                  <option value="right">right</option>
+                  <option value="top left">top left</option>
+                  <option value="top right">top right</option>
+                  <option value="bottom left">bottom left</option>
+                  <option value="bottom right">bottom right</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div id="conic-options" class="type-group">
+            <div class="fields-grid">
+              <div class="field">
+                <label for="from-angle-input">From angle <span id="from-angle-label">0deg</span></label>
+                <div class="range-row">
+                  <span class="range-edge">0deg</span>
+                  <div class="range-track">
+                    <input type="range" id="from-angle-input" min="0" max="360" step="1" value="0">
+                    <output class="range-bubble" id="from-angle-value" for="from-angle-input">0deg</output>
+                  </div>
+                  <span class="range-edge">360deg</span>
+                </div>
+              </div>
+              <div class="field">
+                <label for="conic-position-select">Position</label>
+                <select id="conic-position-select">
+                  <option value="center" selected>center</option>
+                  <option value="top">top</option>
+                  <option value="bottom">bottom</option>
+                  <option value="left">left</option>
+                  <option value="right">right</option>
+                  <option value="top left">top left</option>
+                  <option value="top right">top right</option>
+                  <option value="bottom left">bottom left</option>
+                  <option value="bottom right">bottom right</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Color Stops</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="color-start">Start (0%)</label>
+            <input type="color" id="color-start" value="#f97316">
+          </div>
+          <div class="field">
+            <label for="color-mid">Midpoint</label>
+            <input type="color" id="color-mid" value="#14b8a6">
+          </div>
+          <div class="field">
+            <label for="color-end">End (100%)</label>
+            <input type="color" id="color-end" value="#a855f7">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="midpoint-input">Midpoint position <span id="midpoint-label">50%</span></label>
+          <div class="range-row">
+            <span class="range-edge">0%</span>
+            <div class="range-track">
+              <input type="range" id="midpoint-input" min="0" max="100" step="1" value="50">
+              <output class="range-bubble" id="midpoint-value" for="midpoint-input">50%</output>
+            </div>
+            <span class="range-edge">100%</span>
+          </div>
+        </div>
+
+        <p class="tip">Drag the midpoint off 50% to see how an interpolation hint shifts where the color transition happens.</p>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Color Space</legend>
+        <label class="checkbox-field" for="oklch-toggle">
+          <input type="checkbox" id="oklch-toggle">
+          <span>Interpolate in OKLCH (<code>in oklch</code>)</span>
+        </label>
+        <p class="tip">Toggle this on a blue → yellow gradient to see the muddy RGB midpoint disappear.</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

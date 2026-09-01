@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "mastering-css-gradients",
+    title: "CSS Gradients Playground",
+    description: "Switch between linear, radial, and conic gradients, drag the midpoint off 50% to feel an interpolation hint, and toggle OKLCH interpolation live.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-transitions-guide",
     title: "CSS Transitions Playground",
     description: "Tune duration, delay, and timing function (preset, cubic-bezier, or steps) live against a transform + background-color transition.",

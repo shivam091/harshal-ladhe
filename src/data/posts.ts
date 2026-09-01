@@ -216,6 +216,25 @@ export const posts: Post[] = [
       { date: "2026-08-31", change: "Added interactive playground cross-references" },
       { date: "2026-08-30", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "mastering-css-gradients",
+    title: "Mastering CSS Gradients: Types, Use Cases, and Best Practices",
+    excerpt: "Design modern UI backgrounds using CSS gradients",
+    description: "A deep dive into CSS gradients—linear, radial, conic, repeating—with examples, SCSS helpers, animations, and practical best practices for modern web design.",
+    category: ["CSS"],
+    tags: ["css", "gradients", "background", "linear-gradient", "radial-gradient", "conic-gradient", "repeating-gradient", "modern-css", "ui-design", "color-theory", "oklch", "animation", "scss"],
+    image: {
+      path: "/assets/img/posts/css/mastering-css-gradients/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Illustrated cover showing vibrant CSS gradients with code snippets, color wheels, glassmorphism card, and animated loader, representing modern UI design using CSS gradients."
+    },
+    signoff: "Getting the OKLCH toggle and the border-beam spinner to feel right took more tinkering than I expected, and I hope dragging that midpoint slider makes the gray-dead-zone problem click in a way reading about it never quite does. Thanks for gradient-ing along with me. 🌈",
+    changelog: [
+      { date: "2026-09-01", change: "Deepened explanations throughout for readers new to gradients, and added 5 new diagrams (angle convention, radial size keywords, conic sweep, repeat units, and layer stacking)" },
+      { date: "2026-01-29", change: "Initial publication" }
+    ]
   }
 ];
 
