@@ -1,0 +1,17 @@
+import type { GitObjectKind } from "@/types/git-object-graph-diagram";
+import type { GitObjectNodeStyle } from "@/interfaces/git-object-graph-diagram";
+
+/*
+  Maps an object's kind to the colors its box renders with — one distinct color per Git object type, so
+  commits, trees, and blobs stay visually distinguishable at a glance.
+*/
+export function getObjectNodeStyle(kind: GitObjectKind): GitObjectNodeStyle {
+  switch (kind) {
+    case "commit":
+      return { fill: "var(--color-bg-accent-muted)", stroke: "var(--color-border-accent-emphasis)" };
+    case "tree":
+      return { fill: "var(--color-bg-attention-muted)", stroke: "var(--color-border-attention-emphasis)" };
+    default:
+      return { fill: "var(--color-bg-success-muted)", stroke: "var(--color-border-success-emphasis)" };
+  }
+}
