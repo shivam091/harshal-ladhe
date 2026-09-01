@@ -235,6 +235,18 @@ export const posts: Post[] = [
       { date: "2026-09-01", change: "Deepened explanations throughout for readers new to gradients, and added 5 new diagrams (angle convention, radial size keywords, conic sweep, repeat units, and layer stacking)" },
       { date: "2026-01-29", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "mastering-async-javascript",
+    title: "Mastering Asynchronous JavaScript: Callbacks, Promises, and Async/Await",
+    excerpt: "Write clean, predictable asynchronous JavaScript",
+    description: "A deep guide to asynchronous JavaScript covering the event loop, callbacks, promises, async/await, microtasks, concurrency patterns, and performance best practices for modern web development.",
+    category: ["JavaScript"],
+    tags: ["javascript", "async-javascript", "modern-js", "async", "callbacks", "promises", "async-await", "event-loop", "microtasks"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-07-31", change: "Initial publication" },
+    ],
   }
 ];
 
