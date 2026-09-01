@@ -123,7 +123,7 @@ export const posts: Post[] = [
     excerpt: "Smarter layouts without rigid breakpoints.",
     description: 'Learn how to build truly responsive CSS Grid layouts using "fr" units, "minmax()", "auto-fit", "auto-fill", and modern media & container queries.',
     category: ["CSS"],
-    tags: ["css", "grid", "beginner", "responsive", "layout", "fr-units", "minmax", "media-queries", "container-queries", "auto-fit", "auto-fill"],
+    tags: ["css", "grid", "beginner", "responsive", "layout", "fr-units", "minmax", "media-queries", "container-queries", "auto-fit", "auto-fill", "browser-support", "progressive-enhancement"],
     image: {
       path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/responsive-css-grid-layouts/cover.png",
       width: 1200,
@@ -135,6 +135,7 @@ export const posts: Post[] = [
     pinned: true,
     featured: true,
     changelog: [
+      { date: "2026-09-01", change: "Added a common pitfalls section and a browser support & fallbacks section with an @supports example" },
       { date: "2026-08-31", change: "Added an auto-fit vs auto-fill diagram, linked the Holy Grail Layout snippet, and removed CodePen links" },
       { date: "2026-08-15", change: "Added interactive auto-fit vs auto-fill and container query playground" },
       { date: "2026-07-05", change: "Initial publication" }
