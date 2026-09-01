@@ -106,13 +106,7 @@ Almost every Git command operates on one of three areas:
 | **Staging area (index)** | A draft of your *next* commit | `git add`, `git restore --staged`, `git reset` |
 | **Repository (`.git`)** | The committed history — permanent once committed | `git commit`, `git log`, `git show` |
 
-<CodeBlock language="bash" showCopyButton={false}>
-{`
-  Working Directory  --git add-->  Staging Area  --git commit-->  Repository (.git)
-        ^                                                              |
-        |__________________ git checkout / git restore ________________|
-`}
-</CodeBlock>
+<GitCoreModelDiagram />
 
 A few core objects and terms you'll see everywhere:
 
@@ -395,25 +389,13 @@ Bringing one branch's changes into another.
 
 ### Fast-Forward vs. Three-Way Merge
 
-<CodeBlock language="bash" showCopyButton={false}>
-{`
-  Fast-forward (main has no new commits of its own — the pointer just moves):
+**Fast-forward** — main has no new commits of its own, so the pointer just moves:
 
-  main:     A---B
-  feature:       \\--C---D
+<GitMergeDiagram variant="fast-forward" />
 
-  git merge feature  →  main:  A---B---C---D
+**Three-way merge** — both branches have new commits, so a merge commit is created:
 
-
-  Three-way merge (both branches have new commits — a merge commit is created):
-
-  main:     A---B-------E
-  feature:       \\--C---D
-
-  git merge feature  →  main:  A---B-------E---M
-                                    \\--C---D--/
-`}
-</CodeBlock>
+<GitMergeDiagram variant="three-way" />
 
 ### Resolving a Merge Conflict
 
@@ -479,6 +461,8 @@ Git has several "undo" commands, and picking the right one depends on **where** 
   git reset HEAD -- file.js   # unstage one specific file, keep its edits
 `}
 </CodeBlock>
+
+<GitResetDiagram />
 
 <Warning title="--hard discards work">
   `git reset --hard` throws away uncommitted changes with no confirmation, and uncommitted work has never been snapshotted anywhere — it's genuinely unrecoverable. Committed changes that get "reset away" aren't gone forever, though; [Part 2's reflog section](/post/git/advanced-git-techniques-and-workflows#recovering-from-disaster-git-reflog) covers getting them back.
