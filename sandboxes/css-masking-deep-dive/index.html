@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Masking Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS Masking Playground</h1>
+        <p>Switch between a fade and a spotlight mask, toggle alpha vs. luminance mode, and tune repeat/size to see the generated CSS update live.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Masked preview">
+        <div id="mask-preview" class="mask-preview"></div>
+      </section>
+
+      <output id="mask-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Mask Shape</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Mask shape">
+          <label class="segment">
+            <input type="radio" name="mask-shape" value="fade" checked>
+            <span>Fade</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="mask-shape" value="spotlight">
+            <span>Spotlight</span>
+          </label>
+        </div>
+
+        <div id="shape-options-container">
+          <div id="fade-options" class="type-group active-group">
+            <div class="field">
+              <label for="angle-input">Angle <span id="angle-label">180deg</span></label>
+              <div class="range-row">
+                <span class="range-edge">0deg</span>
+                <div class="range-track">
+                  <input type="range" id="angle-input" min="0" max="360" step="1" value="180">
+                  <output class="range-bubble" id="angle-value" for="angle-input">180deg</output>
+                </div>
+                <span class="range-edge">360deg</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="fade-stop-input">Fade ends at <span id="fade-stop-label">70%</span></label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="fade-stop-input" min="10" max="100" step="1" value="70">
+                  <output class="range-bubble" id="fade-stop-value" for="fade-stop-input">70%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="spotlight-options" class="type-group">
+            <div class="fields-grid">
+              <div class="field">
+                <label for="position-select">Position</label>
+                <select id="position-select">
+                  <option value="center" selected>center</option>
+                  <option value="top">top</option>
+                  <option value="bottom">bottom</option>
+                  <option value="left">left</option>
+                  <option value="right">right</option>
+                  <option value="top left">top left</option>
+                  <option value="top right">top right</option>
+                  <option value="bottom left">bottom left</option>
+                  <option value="bottom right">bottom right</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="size-select">Size keyword</label>
+                <select id="size-select">
+                  <option value="closest-side">closest-side</option>
+                  <option value="closest-corner">closest-corner</option>
+                  <option value="farthest-side">farthest-side</option>
+                  <option value="farthest-corner" selected>farthest-corner</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Mask Mode</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Mask mode">
+          <label class="segment">
+            <input type="radio" name="mask-mode" value="alpha" checked>
+            <span>Alpha</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="mask-mode" value="luminance">
+            <span>Luminance</span>
+          </label>
+        </div>
+        <p class="tip" id="mode-tip">Alpha mode's source fades from opaque black to fully transparent — it reads the source's opacity.</p>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Repeat &amp; Size</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="repeat-select">mask-repeat</label>
+            <select id="repeat-select">
+              <option value="no-repeat" selected>no-repeat</option>
+              <option value="repeat">repeat</option>
+              <option value="repeat-x">repeat-x</option>
+              <option value="repeat-y">repeat-y</option>
+              <option value="round">round</option>
+              <option value="space">space</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="mask-size-select">mask-size</label>
+            <select id="mask-size-select">
+              <option value="cover" selected>cover</option>
+              <option value="contain">contain</option>
+              <option value="auto">auto</option>
+              <option value="100% 100%">100% 100%</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

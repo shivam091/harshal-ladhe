@@ -1,0 +1,496 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-masking-deep-dive");
+
+CSS masking lets you control **what parts of an element are visible**, using images, gradients, or SVG shapes as
+the source of truth. Where `clip-path` draws a hard, all-or-nothing boundary, masking works in shades — a pixel
+can be 30% visible, or fade smoothly from opaque to nothing, because the mask itself can carry its own gradient
+of transparency or brightness.
+
+<Quote>
+  clip-path answers "is this pixel in or out?" A mask answers "how visible is this pixel?" — and that one extra
+  question is where every soft edge, fade, and reveal effect in this post comes from.
+</Quote>
+
+This guide walks through every `mask-*` property, how they behave when you stack more than one mask layer, and
+how to put them to work in real interfaces — fades, spotlight effects, text reveals, and a gradient-border trick
+that shows up in more design systems than most people realize is CSS masking under the hood.
+
+## What is CSS Masking?
+
+Masking decides an element's visibility pixel by pixel, using a second image — the **mask** — as the source of
+truth instead of a fixed shape. The browser reads that source in one of two ways, controlled by `mask-mode`:
+
+- **Alpha** — the source's *opacity* decides visibility. Fully opaque → fully visible, fully transparent → fully
+  hidden, semi-transparent → partially visible.
+- **Luminance** — the source's *brightness* decides visibility. White → fully visible, black → fully hidden,
+  gray → partially visible — and this holds even when the source is 100% opaque throughout.
+
+That second point is the one beginners trip over: a luminance mask doesn't need any transparency in its own
+source at all. You can write `mask-image: linear-gradient(white, black)` — two fully opaque colors — and still
+get a soft fade, because luminance mode reads *how bright* each pixel is, not how see-through it is.
+
+<MaskVisibilityDiagram />
+
+<CodeBlock language="css">
+{`
+  .masked {
+    mask-image: linear-gradient(to right, black, transparent);
+  }
+`}
+</CodeBlock>
+
+<Success title="Key insight">
+  If your mask source uses `transparent` anywhere, you're almost certainly relying on alpha mode (the default for
+  CSS gradients). If it's fully opaque black-to-white, you need `mask-mode: luminance` for it to do anything at
+  all — an opaque gradient under the default alpha mode reads as 100% visible everywhere.
+</Success>
+
+<RainbowDivider />
+
+## Mask Layers: Layering Like Backgrounds
+
+Just like `background`, `mask` accepts a comma-separated list of layers — multiple mask sources composited
+together. Each layer can carry its own:
+
+- position
+- size
+- repeat behavior
+- compositing rule (via `mask-composite`), controlling how it combines with the layer beneath it
+
+Layers are declared **top-first**, exactly like `background-image`, and each layer's individual properties
+(`mask-position`, `mask-size`, `mask-repeat`, and so on) accept a matching comma-separated list, positionally
+paired to the layers. Left unset, the default composite mode is `add` — every layer's visible region simply
+unions together, which is why a single-layer mask (the overwhelming majority of real usage) never needs to think
+about compositing at all.
+
+If you've read our [gradient layering coverage](/post/css/mastering-css-gradients#layered-gradients-the-glassmorphism-secret),
+this will feel familiar — it's the same multi-layer mental model CSS already uses for `background-image`, just
+applied to visibility instead of color.
+
+<RainbowDivider />
+
+## The mask-* Properties
+
+### `mask-image`
+
+Defines the mask source — this is the one property that actually determines the mask's shape.
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-image: radial-gradient(circle, black 60%, transparent 100%);
+  }
+`}
+</CodeBlock>
+
+**Supported values:**
+
+- `url()` → image or SVG
+- `linear-gradient()`, `radial-gradient()`, `conic-gradient()`
+- `none`
+
+**Use Cases:**
+
+- Fade edges
+- Spotlight effects
+- Text reveals
+
+### `mask-mode`
+
+Controls how the values from `mask-image` are interpreted — see [What is CSS Masking?](#what-is-css-masking)
+above for the full alpha-vs-luminance breakdown.
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-mode: alpha;      /* default for gradient sources */
+    mask-mode: luminance;
+  }
+`}
+</CodeBlock>
+
+**Supported mask modes:**
+
+- `alpha` — uses the source's transparency
+- `luminance` — uses the source's brightness
+- `match-source` — the actual spec default; resolves to `luminance` for an SVG `<mask>` element and `alpha`
+  for everything else (images, gradients), which is why gradient sources behave as alpha mode "by default"
+  without you ever writing the keyword
+
+### `mask-repeat`
+
+Controls tiling of the mask, exactly like `background-repeat`.
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-repeat: no-repeat;
+  }
+`}
+</CodeBlock>
+
+**Supported values:**
+
+- `repeat`
+- `repeat-x`
+- `repeat-y`
+- `no-repeat`
+- `space`
+- `round`
+
+### `mask-position`
+
+Sets mask placement — works exactly like `background-position`, accepting keywords, percentages, or lengths.
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-position: center;
+  }
+`}
+</CodeBlock>
+
+### `mask-size`
+
+Controls scaling of the mask source within its positioning area.
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-size: cover;
+  }
+`}
+</CodeBlock>
+
+**Supported values:**
+
+- `auto`
+- `cover`
+- `contain`
+- custom sizes (`100px 100px`)
+
+### `mask-origin`
+
+Defines the positioning reference box the mask is measured from.
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-origin: border-box;
+  }
+`}
+</CodeBlock>
+
+### `mask-clip`
+
+Controls which box the mask's visible output is clipped to — independent of where the mask is *positioned*
+(`mask-origin`). It's entirely possible to position a mask relative to the border box while clipping its
+output to the content box, cutting off anything that would otherwise spill into the padding.
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-clip: content-box;
+  }
+`}
+</CodeBlock>
+
+`mask-origin` and `mask-clip` both accept the same 3 reference boxes:
+
+<MaskBoxRegionsDiagram />
+
+### `mask-composite` — Advanced
+
+Controls how multiple mask layers combine with each other.
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-image: url(mask1.png), url(mask2.png);
+    mask-composite: add, subtract;
+  }
+`}
+</CodeBlock>
+
+**Supported values:**
+
+- `add` — union: visible wherever either layer is visible
+- `subtract` — visible only where the layer above is visible *and* the layer below isn't
+- `intersect` — visible only where both layers are visible
+- `exclude` — visible wherever exactly one layer is visible, hidden where both (or neither) are
+
+<MaskCompositeDiagram />
+
+<Warning title="WebKit uses a completely different syntax">
+  Safari predates the standardized `mask-composite` keywords and still requires `-webkit-mask-composite` with its
+  own vocabulary: `source-over` (≈ add), `source-in` (≈ intersect), `source-out` (≈ subtract), and `xor`
+  (≈ exclude). There's no shared value string between the two — you need both properties, with both sets of
+  keywords, if Safari support matters.
+</Warning>
+
+### `mask-type` — SVG specific
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-type: luminance;
+  }
+`}
+</CodeBlock>
+
+Applies to an SVG `<mask>` element itself (not an element being masked), overriding whether that mask's content
+is read as luminance or alpha — this is the SVG-side equivalent of `mask-mode`, and it's how `MaskVisibilityDiagram`
+above renders its own two columns.
+
+### Shorthand — `mask`
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask: url(mask.png) no-repeat center / cover;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Multiple Mask Layers Example
+
+<CodeBlock language="css">
+{`
+  .element {
+    mask-image:
+      radial-gradient(circle at center, black 40%, transparent 60%),
+      linear-gradient(to right, black, transparent);
+
+    mask-composite: intersect;
+  }
+`}
+</CodeBlock>
+
+Reading this the way the browser does: the radial layer draws a soft circular spotlight, the linear layer draws
+a left-to-right fade, and `intersect` keeps only the region where *both* layers are visible — a spotlight that
+also fades out toward the right edge, all from two gradients and no image asset.
+
+<RainbowDivider />
+
+## Practical Patterns
+
+### 1. Image Fade Effect
+
+<CodeBlock language="css">
+{`
+  .fade {
+    mask-image: linear-gradient(to bottom, black 70%, transparent);
+  }
+`}
+</CodeBlock>
+
+The image stays fully opaque for its first 70%, then fades to nothing over the remaining 30% — useful for
+letting a hero image bleed into the page background instead of ending on a hard edge.
+
+### 2. Text Reveal Animation
+
+<CodeBlock language="css">
+{`
+  .text {
+    mask-image: linear-gradient(90deg, transparent, black, transparent);
+    mask-size: 200%;
+    animation: reveal 3s infinite;
+  }
+
+  @keyframes reveal {
+    0% {
+      mask-position: 100%
+    }
+
+    100% {
+      mask-position: 0%
+    }
+  }
+`}
+</CodeBlock>
+
+The mask is a narrow visible band (`transparent, black, transparent`) stretched to 200% of the element's own
+width, so only a sliver of it is visible at once. Animating `mask-position` slides that band across the text —
+the same "blow it up, then pan across it" trick used for
+[animated gradient backgrounds](/post/css/mastering-css-gradients#background-position-trick-liquid-flow), just
+applied to visibility instead of color.
+
+### 3. Gradient Border Mask Trick
+
+<CodeBlock language="css">
+{`
+  .card {
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(45deg, red, blue) border-box;
+
+    border: 4px solid transparent;
+    mask-composite: exclude;
+  }
+`}
+</CodeBlock>
+
+<Info title="This one needs a partner property to actually work">
+  On its own, `mask-composite: exclude` has nothing to exclude — it needs a matching `mask-image` with (at
+  least) two layers to combine. In practice this pattern is usually paired with a `mask-image` built from two
+  copies of the element's own border-radius shape, one at `border-box` and one inset to `padding-box`, so the
+  "exclude" leaves only the ring between them visible. Treat the snippet above as the background half of the
+  trick — the background layering is what creates the gradient border color; the mask half is what limits it
+  to a ring instead of a filled shape.
+</Info>
+
+### 4. Spotlight Hover Effect
+
+<CodeBlock language="css">
+{`
+  .card {
+    mask-image: radial-gradient(circle at var(--x) var(--y), black 20%, transparent 40%);
+  }
+`}
+</CodeBlock>
+
+Pair this with a `mousemove` listener that updates `--x`/`--y` (in percentages or pixels matching the element's
+own box) and you get a spotlight that follows the cursor — the mask itself never changes shape, only its
+position, so the effect stays smooth even on a low-powered device.
+
+<RainbowDivider />
+
+## Browser Support & Prefixes
+
+- WebKit browsers (Safari, and Chrome/Edge until fairly recently) require `-webkit-mask-*` equivalents for
+  every property in this post
+- Always include both the prefixed and unprefixed version, unprefixed last so it wins where supported
+
+<CodeBlock language="css">
+{`
+  .element {
+    -webkit-mask-image: linear-gradient(black, transparent);
+    mask-image: linear-gradient(black, transparent);
+  }
+`}
+</CodeBlock>
+
+<Warning title="mask-composite needs both properties AND both vocabularies">
+  Don't just prefix the property name — `-webkit-mask-composite` also expects entirely different keyword values
+  than `mask-composite` (see the compositing section above). Copy-pasting `add`/`subtract`/`intersect`/`exclude`
+  into the `-webkit-` version silently does nothing in Safari.
+</Warning>
+
+<RainbowDivider />
+
+## mask vs. clip-path
+
+| Feature        | `mask` | `clip-path` |
+| -------------- | ------ | ----------- |
+| Soft edges     |   ✅   |     ❌      |
+| Gradients      |   ✅   |     ❌      |
+| Performance    |   ⚠️   |     ✅      |
+| Complex shapes |   ✅   |     ✅      |
+
+The performance gap is smaller than it looks in practice: `clip-path` wins because a hard boundary is cheap to
+rasterize, while a mask with a soft, animated gradient asks the browser to recompute a blend on every affected
+pixel. If your shape has a hard edge and no transparency, reach for `clip-path` — it does the same job for less
+cost. The moment you need a **soft** edge, a **gradient**, or a **compositing rule across multiple layers**,
+`clip-path` simply can't express it, and masking is the only option in CSS.
+
+<RainbowDivider />
+
+## Reusable SCSS Mixin
+
+<CodeBlock language="scss">
+{`
+  @mixin mask-gradient($direction: to bottom, $stops: (black, transparent), $mode: alpha) {
+    -webkit-mask-image: linear-gradient($direction, $stops...);
+    mask-image: linear-gradient($direction, $stops...);
+    mask-mode: $mode;
+  }
+`}
+</CodeBlock>
+
+**Usage:**
+
+<CodeBlock language="scss">
+{`
+  .fade {
+    @include mask-gradient(to bottom, (black 60%, transparent));
+  }
+
+  // A luminance-mode fade needs fully opaque stops, not a transparent one — the mixin's $mode
+  // parameter exists specifically so you don't have to remember that when switching modes.
+  .luminance-fade {
+    @include mask-gradient(to bottom, (white, black), luminance);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading about alpha vs. luminance is one thing, but watching the generated gradient stops flip between
+`black, transparent` and `white, black` as you toggle the mode is what makes it click. Switch between a fade and
+a spotlight mask, toggle the mode, and tune repeat/size to see the CSS update live.
+
+<Sandbox slug="css-masking-deep-dive" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Best Practices
+
+- Prefer **gradients over images** for mask sources — no HTTP request, infinitely scalable, and themeable via
+  CSS custom properties
+- Use `will-change: mask-image` cautiously, and only on elements you're actively animating — it reserves a
+  compositor layer that costs memory if left on indefinitely
+- Combine masking with `opacity` and `filter` for richer effects — they compose cleanly since none of them
+  affect layout
+- Test in Safari specifically — between the `-webkit-` prefix requirement and `mask-composite`'s different
+  keyword vocabulary, it's the browser most likely to silently do nothing
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+- Forgetting the `-webkit-*` prefix, or prefixing the property but not swapping `mask-composite`'s keywords
+- Writing an opaque gradient (`white, black`) without setting `mask-mode: luminance` — under the default alpha
+  mode, that gradient reads as 100% visible everywhere
+- Using large raster image masks where a gradient would do — every dimension a gradient mask gives you
+  (scalable, themeable, no request) an image mask gives up
+- Assuming `mask` behaves like `clip-path` — reaching for a mask when a hard-edged `clip-path` shape would do
+  the same job for less rendering cost
+
+<RainbowDivider />
+
+## When to Use Masking
+
+Use masking when you need:
+
+- Soft fades
+- Reveal animations
+- Complex UI overlays
+- Advanced hover effects
+- Creative image treatments
+
+<RainbowDivider />
+
+## Conclusion
+
+CSS masking unlocks a layer of visual control beyond traditional layout and styling tools. Once you understand
+how mask layers, gradients, and compositing work together — and specifically how alpha and luminance modes read
+the exact same-looking gradient two completely different ways — you can build effects that used to require
+heavy SVG or canvas logic, in plain CSS.
+
+<RainbowDivider />
+
+## What's Next: Combining Masks with Gradient Overlays
+
+Masking answers "how visible is this pixel," but it doesn't touch color — for that, you still reach for a
+gradient *overlay* layered on top of your content. The two techniques compose well together: mask a hero photo's
+edges into transparency with `mask-image`, then use a separate gradient layer to tint what remains for text
+legibility.
+
+Our companion post, **[Mastering CSS Gradient Overlays](/post/css/css-gradient-overlays)**, covers that second
+half in depth — flat, fade, diagonal, radial, and split overlay patterns, blend modes, and production concerns
+like accessibility and dark-mode support. Read it next if hero banners and legible text-over-image layouts are
+what brought you here.

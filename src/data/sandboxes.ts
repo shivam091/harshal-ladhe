@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-masking-deep-dive",
+    title: "CSS Masking Playground",
+    description: "Switch between a fade and a spotlight mask, toggle alpha vs. luminance mode to watch the generated gradient stops change, and tune repeat/size live.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "css-step-timing-function",
     title: "CSS steps() Playground",
     description: "Compare a linear move against a stepped one live — tune step count, jump term, and duration, plus a matching typewriter reveal.",

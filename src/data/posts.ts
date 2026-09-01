@@ -332,6 +332,24 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-08-25", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "css-masking-deep-dive",
+    title: "CSS Masking Deep Dive: Mastering mask-* Properties with Real Examples",
+    excerpt: "Control visibility with CSS mask properties.",
+    description: "A complete, advanced guide to CSS masking covering every mask-* property, compositing, multiple layers, browser quirks, and practical UI patterns with real examples.",
+    category: ["CSS"],
+    tags: ["css", "css-masking", "mask-image", "mask-composite", "web-design", "frontend", "advanced-css", "ui-effects", "animations"],
+    image: {
+      path: "/assets/img/posts/css/css-masking-deep-dive/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Illustrated cover showing CSS mask-image gradients revealing and fading a photo, with a compositing diagram of overlapping circles representing add, subtract, intersect, and exclude."
+    },
+    signoff: "Getting a real SVG mask element to render the alpha-vs-luminance diagram itself (rather than just describing the difference) took a few tries, and I hope watching the playground's gradient stops flip between black-to-transparent and white-to-black makes that distinction click the way writing about it alone never quite does. Thanks for masking along with me. 🎭",
+    changelog: [
+      { date: "2026-09-01", change: "Initial publication" }
+    ]
   }
 ];
 
