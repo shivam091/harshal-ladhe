@@ -76,7 +76,7 @@ export const posts: Post[] = [
     excerpt: "Lay the foundation, shape the grid.",
     description: "A beginner-friendly introduction to CSS Grid that covers core concepts and guides you through building your first 2D layouts with real-world examples.",
     category: ["CSS"],
-    tags: ["css", "grid", "css-grid", "beginner", "layout", "web-design", "frontend", "2d-layouts"],
+    tags: ["css", "grid", "css-grid", "beginner", "layout", "web-design", "frontend", "2d-layouts", "devtools"],
     image: {
       path: "/assets/img/posts/css/getting-started-with-css-grid/cover.webp",
       width: 1200,
@@ -87,6 +87,7 @@ export const posts: Post[] = [
     signoff: "This one took a good deal of care to get the fundamentals right, and I hope it gives you a solid footing with containers, tracks, and your first 2D layout. Appreciate you taking the time to work through it with me — happy gridding. 🧱",
     pinned: true,
     changelog: [
+      { date: "2026-09-01", change: "Added a browser DevTools grid-debugging walkthrough and a common beginner mistakes checklist" },
       { date: "2026-08-31", change: "Added a grid terminology diagram and removed the CodePen link" },
       { date: "2026-08-15", change: "Added interactive playground for column/row templates and gap" },
       { date: "2026-07-05", change: "Initial publication" }
