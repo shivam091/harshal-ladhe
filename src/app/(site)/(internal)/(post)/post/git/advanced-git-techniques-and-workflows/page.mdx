@@ -34,14 +34,7 @@ Rebasing replays your branch's commits on top of a different base commit, produc
 `}
 </CodeBlock>
 
-<CodeBlock language="bash" showCopyButton={false}>
-{`
-  Before:                          After \`git rebase main\` (on feature):
-
-  main:     A---B---C              main:     A---B---C
-  feature:   \\--D---E              feature:               \\--D'---E'
-`}
-</CodeBlock>
+<GitRebaseDiagram />
 
 <Warning title="The Golden Rule of Rebasing">
   Never rebase commits that exist outside your own repository — that is, commits other people may have already pulled. Rebasing rewrites SHAs; if someone has already built on top of the originals, they'll get diverging history and a painful merge. Rebase your own local, unpushed work freely; for shared branches, merge instead (or coordinate the rewrite explicitly with everyone involved).
@@ -130,6 +123,8 @@ Binary-searches through history to find the exact commit that introduced a bug.
   git bisect reset               # done — return to your original branch
 `}
 </CodeBlock>
+
+<GitBisectDiagram />
 
 <Info title="Automating bisect">
   If the bug is detectable by a script (a failing test, a non-zero exit code), skip the manual good/bad loop entirely: `git bisect run ./test-for-bug.sh` drives the whole search automatically.
@@ -223,14 +218,9 @@ Git's entire history is a **content-addressable key-value store** of four object
 | **commit** | A pointer to one tree (the snapshot), one or more parent commits, author/committer, and a message |
 | **tag** | An annotated tag's metadata, pointing at a commit |
 
-<CodeBlock language="bash" showCopyButton={false}>
-{`
-  commit  ──▶  tree  ──┬──▶  blob  (index.js)
-                        ├──▶  blob  (styles.css)
-                        └──▶  tree  (src/)
-                                └──▶  blob  (utils.js)
-`}
-</CodeBlock>
+Here's how those objects actually link together for a small project:
+
+<GitObjectGraphDiagram />
 
 ### Plumbing Commands
 
@@ -388,15 +378,17 @@ The commands above compose into a handful of well-known branching strategies. No
 | **Git Flow** | Long-lived `main` + `develop`, with `feature/*`, `release/*`, and `hotfix/*` branches | Scheduled releases, versioned software |
 | **Trunk-Based Development** | Everyone commits small, frequent changes directly to `main` (or very short-lived branches), often behind feature flags | Large teams, high commit velocity, strong CI |
 
-<CodeBlock language="bash" showCopyButton={false}>
-{`
-  GitHub Flow:
+**GitHub Flow**
 
-  main:      A---B-----------E---F
-                  \\         /
-  feature:         C---D---/   (branch, commit, open PR, merge)
-`}
-</CodeBlock>
+<GitWorkflowDiagram variant="github-flow" />
+
+**Git Flow**
+
+<GitWorkflowDiagram variant="git-flow" />
+
+**Trunk-Based Development**
+
+<GitWorkflowDiagram variant="trunk-based" />
 
 <Info title="Merge commit, squash, or rebase-merge on a PR?">
   **Merge commit** preserves every individual commit and shows exactly when the branch was integrated, at the cost of a busier history. **Squash merge** collapses a branch into one clean commit on `main` — the most common default for GitHub PRs. **Rebase-merge** replays the branch's individual commits onto `main` with no merge commit at all, keeping a fully linear history. Most teams pick squash for feature branches (clean `main` history) and reserve real merges for long-lived branches like `release/*`.
@@ -511,8 +503,6 @@ Run `git reflog`, find the SHA from immediately before the reset, then `git rese
 ### What's the actual difference between SHA-1 and SHA-256 repositories?
 
 Git has supported SHA-256 object hashing since 2.29 as an opt-in alternative to the default SHA-1, mainly for stronger collision resistance. In practice almost every repository you'll touch — including this one — still uses SHA-1; SHA-256 support is there, but the tooling ecosystem (hosting providers, CI, other tools) hasn't fully caught up yet.
-
----
 
 <RainbowDivider />
 
