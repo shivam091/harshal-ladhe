@@ -377,5 +377,45 @@ export const tagMeta: Record<string, TagMeta> = {
   "microtasks": {
     title: "Microtasks and the Priority Queue",
     description: "Articles on the microtask queue that backs Promises and queueMicrotask, and how it's prioritized ahead of macrotasks like setTimeout.",
+  },
+  "web-apis": {
+    title: "Browser Web APIs for Modern Frontends",
+    description: "Coverage of native browser APIs — beyond the core language — that power reactive, high-performance web applications.",
+  },
+  "observer-pattern": {
+    title: "The Observer Pattern in JavaScript",
+    description: "Articles on the Observer (Pub/Sub) design pattern, both as implemented by native browser APIs and as a custom pattern for decoupled state updates.",
+  },
+  "reactive-programming": {
+    title: "Reactive Programming on the Web",
+    description: "Content on writing code that responds to state and environment changes as they happen, rather than polling for them.",
+  },
+  "event-listener": {
+    title: "Event Listeners and DOM Events",
+    description: "Guides on addEventListener, event delegation, and handling user interactions and browser events efficiently.",
+  },
+  "mutation-observer": {
+    title: "MutationObserver Deep Dives",
+    description: "Articles on using MutationObserver to react to DOM structure and attribute changes without expensive polling.",
+  },
+  "intersection-observer": {
+    title: "IntersectionObserver in Practice",
+    description: "Guides on using IntersectionObserver for lazy loading, scrollspy navigation, infinite scroll, and visibility-triggered animations.",
+  },
+  "resize-observer": {
+    title: "ResizeObserver for Container-Aware Components",
+    description: "Content on using ResizeObserver to react to an individual element's size changes, enabling truly container-aware, responsive components.",
+  },
+  "dom": {
+    title: "Working with the DOM",
+    description: "Articles on reading, updating, and reacting to changes in the Document Object Model from JavaScript.",
+  },
+  "core-web-vitals": {
+    title: "Core Web Vitals and Performance Metrics",
+    description: "Guides on measuring and improving Core Web Vitals like Largest Contentful Paint and Cumulative Layout Shift using browser performance APIs.",
+  },
+  "lazy-loading": {
+    title: "Lazy Loading Techniques",
+    description: "Techniques for deferring the loading of images, components, and data until they're actually needed, improving initial page performance.",
   }
 };

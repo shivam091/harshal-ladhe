@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "mastering-js-observers",
+    title: "JavaScript Observers Playground",
+    description: "Watch MutationObserver, IntersectionObserver, and ResizeObserver fire live — mutate the DOM, scroll targets into view, and resize a box while the console logs every callback.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "mastering-css-gradients",
     title: "CSS Gradients Playground",
     description: "Switch between linear, radial, and conic gradients, drag the midpoint off 50% to feel an interpolation hint, and toggle OKLCH interpolation live.",

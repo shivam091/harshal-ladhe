@@ -247,6 +247,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-07-31", change: "Initial publication" },
     ],
+  },
+  {
+    slug: "mastering-js-observers",
+    title: "Mastering JavaScript Observers: A Complete Guide to Reactive Web APIs",
+    excerpt: "Unlock reactive power with JavaScript Observer APIs.",
+    description: "Master MutationObserver, IntersectionObserver, ResizeObserver, and PerformanceObserver. Learn to build high-performance, reactive web apps with real-world examples and best practices.",
+    category: ["JavaScript"],
+    tags: ["javascript", "web-apis", "observer-pattern", "frontend-development", "performance", "reactive-programming", "event-listener", "mutation-observer", "intersection-observer", "resize-observer", "dom", "core-web-vitals", "lazy-loading"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-07-31", change: "Initial publication" },
+    ]
   }
 ];
 
