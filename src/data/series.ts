@@ -95,7 +95,7 @@ export const series: Series[] = [
     title: "CSS Grid Fundamentals",
     order: 1,
     excerpt: "Build smarter, responsive layouts—grid made easy",
-    description: 'Unlock the power of CSS Grid in this hands-on 3-part series! Learn to craft clean, responsive layouts using "fr" units, "minmax()", "auto-fill", "auto-fit", and modern media & container queries — no frameworks needed.',
+    description: 'Unlock the power of CSS Grid in this hands-on 3-part series! Go from container fundamentals and DevTools debugging, through named lines, alignment, spanning, and subgrid, to fully responsive layouts with "fr" units, "minmax()", "auto-fill", "auto-fit", and modern media & container queries — no frameworks needed.',
     image: {
       path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/series/css-grid-fundamentals/cover.png",
       width: 1536,
@@ -110,6 +110,7 @@ export const series: Series[] = [
     ],
     signoff: "Three parts, one continuous thread — from your very first grid container to layouts that flex without breaking. Thanks for working through all of it with me. Go build something with your new grid. 🧱",
     changelog: [
+      { date: "2026-09-01", change: "Expanded all three parts with new sections — DevTools debugging, named grid lines, subgrid, accessible ordering, common pitfalls, and browser fallbacks" },
       { date: "2026-08-15", change: "Added cover image" },
       { date: "2026-07-12", change: "Initial publication" }
     ]
