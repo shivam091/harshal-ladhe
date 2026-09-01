@@ -291,5 +291,9 @@ export const tagMeta: Record<string, TagMeta> = {
   "i18n": {
     title: "i18n: Internationalization Techniques",
     description: "Shorthand-tagged posts on internationalization — adapting layout, text, and styling for a global audience.",
+  },
+  "devtools": {
+    title: "Debugging with Browser DevTools",
+    description: "Using browser developer tools to inspect, debug, and fine-tune CSS layouts, styles, and computed values."
   }
 };
