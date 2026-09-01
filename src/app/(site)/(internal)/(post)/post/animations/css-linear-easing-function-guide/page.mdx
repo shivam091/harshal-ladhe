@@ -1,0 +1,313 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-linear-easing-function-guide");
+
+## Introduction
+
+Drop a ball on a hard floor and watch it settle. It doesn't hit the ground once and stop — it bounces, a little lower each time, then a little lower again, until the bounces are too small to see and it's just resting. Three, four, sometimes five distinct rises and falls before it's actually still.
+
+Now try to describe that motion with a single `cubic-bezier()` curve. You can't — not because you haven't found the right four numbers yet, but because a cubic bezier is structurally incapable of it. It's one polynomial, which means progress can rise, or fall, or rise-then-fall, but it can only cross its own resting value *once*. A ball that bounces three times crosses `1` three times. That's not a harder curve to tune; it's a different category of curve entirely.
+
+CSS's `linear()` easing function is that different category. Instead of two control points pulling on a fixed cubic shape, it takes a plain list of numbers — as many as the motion needs — and draws a straight line between each one in turn. No polynomial, no ceiling on how many times it can cross `1`, no limit on how strange the shape gets. [An Interactive Guide to CSS Easing Functions and cubic-bezier()](/post/css-easing-functions-guide) introduced `linear()` in passing, with a warning that it was structurally out of scope for that page's graphs. This post is the follow-through: the full syntax, the auto-spacing rules that make short `linear()` calls readable, a draggable playground with as many stops as you want, and the spring, bounce, and anticipation recipes that `linear()` was practically invented for.
+
+<Info title="Prerequisite">
+  This post assumes you're already comfortable with the time-vs-progress mental model and `cubic-bezier()` from [An Interactive Guide to CSS Easing Functions and cubic-bezier()](/post/css-easing-functions-guide) — in particular [why a cubic curve has a hard ceiling](/post/css-easing-functions-guide#beyond-cubic-bezier-the-linear-function), which is exactly where this post picks up. If `transition-timing-function` itself is still new territory, that post covers the fundamentals first.
+</Info>
+
+## Why cubic-bezier() Has a Ceiling — and linear() Doesn't
+
+Every named timing function — `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` — and every custom `cubic-bezier(x1, y1, x2, y2)` value is the same kind of object underneath: a single cubic polynomial pinned at `(0, 0)` and `(1, 1)`, shaped by two control points in between. That's an enormously flexible shape — the entire "Beyond the Defaults" section of the companion post is built on pushing those two points harder — but it's still fundamentally *one* curve, and one curve can only bend so many times before it runs out of room.
+
+Concretely: a cubic bezier's `y` value, as a function of `x`, can have at most one local maximum and one local minimum. That's enough for one overshoot past the target — the "punchy pop" curves from the companion post — but it's not enough for a second overshoot, a third bounce, or a shape with a flat plateau in the middle. Those all require the curve to change direction more times than a single cubic polynomial is capable of.
+
+`linear()` sidesteps the whole problem by not being a polynomial at all. It's a **piecewise-linear function**: a plain list of points, connected corner to corner by straight line segments.
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  /* Every value here is a point the line passes through. Add a stop,
+     the shape gets one more corner to bend at — no ceiling. */
+  transition-timing-function: linear(0, 0.5, 1);
+  transition-timing-function: linear(0, 0.63 25%, 0.9 45%, 1.04 65%, 1);
+`}
+</CodeBlock>
+
+The first line is just three points along the diagonal — visually indistinguishable from the plain `linear` keyword, because three evenly-spaced points on a straight line *is* a straight line. The second line is the same bounce-and-settle example from the companion post: progress climbs past `1`, dips back under, climbs past it again, and finally rests — three direction changes that no `cubic-bezier()` call could ever produce. That's the entire idea of `linear()` in one comparison: trade a fixed, smooth, two-point shape for an open-ended list of straight segments.
+
+<RainbowDivider />
+
+## Anatomy of a linear() Stop
+
+Formally, `linear()` takes a comma-separated list of **stops**, and each stop is:
+
+```
+<number> [<percentage>]?
+```
+
+- The **number** is required. It's a progress value — exactly the same `y`-axis quantity from the companion post's time-vs-progress model. `0` means "still at the start," `1` means "fully at the end," and like a bezier control point's `y`, it's completely unbounded: negative values and values past `1` are both valid, which is where overshoot and anticipation come from.
+- The **percentage** is optional. When present, it *pins* that stop to an exact point along the transition's duration — `25%` means "a quarter of the way through the time, progress should be exactly this value." When absent, the stop's position is worked out automatically.
+
+That second part — what happens to a stop with no percentage — is the detail that makes `linear()` pleasant to write by hand instead of a chore.
+
+### Auto-Spaced Stops
+
+A stop with no percentage doesn't sit at some default location; it's spread evenly across whatever room is left between its pinned neighbors. The rule, in full:
+
+- If the **first** stop has no percentage, it's treated as `0%`.
+- If the **last** stop has no percentage, it's treated as `100%`.
+- Any run of consecutive un-pinned stops **between** two pinned ones (including those two boundary defaults) is spaced at equal intervals across that gap.
+
+Walk through a concrete example — `linear(0, 0.3, 0.6, 0.9 80%, 1)` — and the resolved percentages are:
+
+| Stop | Written as | Resolved position |
+| --- | --- | --- |
+| `0` | no percentage (first stop) | `0%` |
+| `0.3` | no percentage | `26.7%` |
+| `0.6` | no percentage | `53.3%` |
+| `0.9` | `80%` | `80%` |
+| `1` | no percentage (last stop) | `100%` |
+
+The first stop defaults to `0%`, the last defaults to `100%`, and the two un-pinned stops in between — `0.3` and `0.6` — split the `0%`–`80%` gap into three equal thirds. Nudge that `80%` to `50%` instead, and those same two stops would slide left with it, still evenly spaced between `0%` and the new boundary. This is exactly why the plain `linear(0, 0.5, 1)` from the last section behaved like a straight line: with no percentages anywhere, every stop just distributes evenly across the full `0%`–`100%` range, which is a straight diagonal by definition.
+
+<Success title="This is also why linear() reads naturally for sampled data">
+  If you're generating a curve programmatically — sampling a spring simulation at a fixed timestep, say — you almost never need to compute percentages at all. Equal timesteps *are* equal spacing, which is exactly what leaving every percentage off already gives you for free. Write the sampled values as bare numbers and the auto-spacing rule does the rest.
+</Success>
+
+### Pinned Stops with a Percentage
+
+A percentage is how you break out of even spacing and sculpt something asymmetric — the same role a bezier control point's `x` plays, but per-stop instead of a single shared pull. The bounce example from the introduction leans on this directly: `0.63 25%, 0.9 45%, 1.04 65%` places three of the five stops at specific, unevenly-spaced points, front-loading the motion so the first bounce arrives quickly and the smaller ones that follow get comparatively less time each — mimicking how a real bounce's rhythm compresses as it loses energy.
+
+<Warning title="An out-of-order percentage doesn't run backward">
+  Percentages in a `linear()` list are expected to be non-decreasing — each one at or after the stop before it. If you write one that's numerically *smaller* than an earlier stop's resolved position, the browser doesn't reject the declaration or make time run backward: it silently raises that percentage up to match the largest one that came before it. The practical effect is a segment that collapses to zero width — an instant jump in progress at that instant in time, drawn as a vertical rather than sloped line — rather than a parse error. Worth knowing if a generated or copy-pasted curve looks like it's snapping instead of easing at one specific point: check for percentages that are out of order.
+</Warning>
+
+<RainbowDivider />
+
+## Reading and Writing Multiple Comma-Separated Stops
+
+Everything above scales to as many comma-separated stops as the motion needs — there's no fixed arity the way `cubic-bezier()` is permanently stuck at four numbers. Each additional stop is one more corner the line is allowed to bend at, and one more chance to point at a specific moment in time with a specific progress value. A slightly richer elastic-settle curve, annotated stop by stop:
+
+<CodeBlock language="css">
+{`
+  .toast {
+    /* Ten stops: a fast overshoot, three shrinking oscillations, then rest.
+       Every stop here is pinned, front-loading the motion the same way a
+       real spring's energy dissipates faster than a human would guess. */
+    transition-timing-function: linear(
+      0,          /* start, always 0% */
+      0.42   9%,  /* accelerating out */
+      0.83  18%,  /* still climbing */
+      1.15  32%,  /* first overshoot past the target */
+      0.92  45%,  /* swings back under */
+      1.06  58%,  /* second, smaller overshoot */
+      0.97  70%,  /* smaller undershoot */
+      1.02  83%,  /* third, tiny overshoot */
+      0.99  92%,  /* barely visible correction */
+      1          /* settle, always 100% */
+    );
+    transition-duration: 900ms;
+  }
+`}
+</CodeBlock>
+
+A few things worth noticing in that list, because they generalize to every `linear()` value you'll write or generate:
+
+- **Order matters, and it's positional, not sorted.** The browser draws segments in the order the stops are written, connecting each one to the next. It doesn't re-sort by percentage first — which is exactly why an out-of-order percentage gets clamped upward rather than silently reordered, as the warning above covers.
+- **Whitespace and newlines are free.** CSS doesn't care that the value above spans eleven lines with comments — it's parsed as a single comma-separated list either way. Long, generated `linear()` values are far more reviewable formatted one stop per line than crammed onto one, the same way a long `grid-template-areas` value benefits from line breaks purely for the human reading it later.
+- **The value never has to be monotonic.** Unlike the percentage (position), which is enforced non-decreasing, the number (progress) is free to go up, down, up again, in any pattern — that freedom is the entire reason `linear()` exists. A list of values that only ever increases would just be a fancier way to write a straight line.
+- **Two stops is the practical floor.** `linear(0, 1)` is valid and equivalent to the plain `linear` keyword — a single straight segment. There isn't a documented hard cap on the other end; the practical ceiling is legibility, not the spec (more on sane stop counts in the [Common Mistakes](#common-mistakes-and-gotchas) section below).
+
+<RainbowDivider />
+
+## Try It: The linear() Playground
+
+Reading resolved-position tables builds the mental model; dragging a curve until it *looks* like the bounce you're picturing builds the intuition. Unlike the two-handle `cubic-bezier()` playground in the companion post, this one has to support an arbitrary, changing number of points — so it comes with its own add/remove/pin controls instead of just two draggable handles.
+
+<LinearEasingPlayground />
+
+A short tour of the controls:
+
+- **Drag a filled handle** to change both its value and its pinned position — filled handles are pinned to an exact percentage, shown with a solid dot.
+- **Drag a muted handle** and only its value moves; muted handles are auto-spaced, so their horizontal position keeps tracking the even-spacing rule as you and every other stop change.
+- **The pin checkbox** in the stop list below the graph flips a stop between the two modes — check it to freeze the stop's current position as an exact percentage, uncheck it to hand that position back to auto-spacing.
+- **Add stop** inserts a new, unpinned stop at the midpoint of whichever gap is currently widest — the fastest way to add a bend to the flattest-looking part of the curve.
+- **Load a preset** drops in one of four curated shapes — Bounce, Spring, Anticipate, and Smooth Step — each discussed in detail in the next section.
+- Every drag and edit updates the `linear(...)` readout live; the copy button next to it grabs the exact value shown, ready to paste into a stylesheet.
+
+<Info title="Keyboard control">
+  Every handle is focusable and responds to arrow keys, exactly like the `cubic-bezier()` playground: Up/Down nudges the value, Left/Right nudges the position (pinning the stop the first time you use it), and holding Shift takes bigger steps. The first and last stops stay fixed at `0%`/`100%` by design — only their value is adjustable, since a `linear()` curve's start and end times are as fixed as a bezier's `P0`/`P3` anchors.
+</Info>
+
+<RainbowDivider />
+
+## Building Real Motion With linear()
+
+With the mechanics in hand, here's what they're actually for. Every preset in the playground above corresponds to one of these.
+
+### Bounce and Settle
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  transition-timing-function: linear(0, 0.63 25%, 0.9 45%, 1.04 65%, 1);
+`}
+</CodeBlock>
+
+This is the running example from earlier, and it's the clearest illustration of what a bezier curve can't do: progress climbs past `1` at `65%` of the way through, dips back toward it, and — if you added a couple more shrinking stops — could climb past it again. Real bounces lose energy each time, which is why each successive overshoot in a good bounce curve should be smaller than the last, and why the timing between bounces should compress rather than stay even (matching how the "multiple comma-separated stops" example spaces its own oscillations progressively tighter).
+
+### Spring Physics
+
+<Success title="Uniform sampling plus auto-spacing is the trick">
+  A physically simulated spring (mass, stiffness, damping) doesn't have a closed-form shape the way a bezier curve does — it's the numeric output of a differential equation, evaluated at each timestep. Sample that output at a fixed interval — say, every 16ms for a 700ms animation, roughly 44 samples — and hand the resulting list of values to `linear()` as bare numbers with no percentages at all. Because the samples came from *equal* time steps, the auto-spacing rule from earlier reproduces exactly the timing they were sampled at, for free.
+</Success>
+
+This is genuinely how most "spring easing" `linear()` values you'll find in the wild are produced — not hand-tuned stop by stop, but generated by running a spring simulation once and dumping its output straight into a `linear()` list. The **Spring** preset in the playground above is a hand-picked, six-stop simplification of exactly that process — real generated springs commonly run to several dozen stops for a smooth result, which is normal and not a sign you've done something wrong.
+
+### Anticipation (Wind-Up)
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  transition-timing-function: linear(0, -0.2 15%, 1);
+`}
+</CodeBlock>
+
+A small dip below `0` before the curve ever starts climbing — a wind-up, like a coiled spring pulling back before it's released. The companion post's `cubic-bezier(0.36, 0, 0.66, -0.56)` "Anticipation" recipe does something similar with a bezier curve, but only as a dip on *one* end of the motion. Because `linear()` has no limit on how many times the line can change direction, you can combine a wind-up *and* a multi-bounce settle in the very same value — something worth trying in the playground above by loading Anticipate and then dragging in a couple of extra stops near the end.
+
+### Smoothing a Middle Section
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  transition-timing-function: linear(0, 0.2, 0.8, 1);
+`}
+</CodeBlock>
+
+Four evenly-spaced stops, values front- and back-loaded toward the ends and compressed in the middle — an "S" shape that eases in, moves at a comparatively steady clip through the middle, and eases back out. It's a rougher, more angular cousin of `ease-in-out`, and it's a good starting shape to reach for when a design calls for "something like `ease-in-out`, but I want to hand-tune the middle" without committing to bezier math.
+
+<RainbowDivider />
+
+## Flat Segments: The Two-Percentage Stop Syntax
+
+There's one more piece of `linear()` syntax worth knowing, mostly because it explains behavior you might otherwise stumble into by accident: a stop can actually take **two** percentages, not just one.
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  /* A stop can carry a percentage *range* instead of a single point. */
+  transition-timing-function: linear(0, 0.5 20% 40%, 1);
+
+  /* This is exactly equivalent — two ordinary stops, same value, back to back. */
+  transition-timing-function: linear(0, 0.5 20%, 0.5 40%, 1);
+`}
+</CodeBlock>
+
+Giving a stop two percentages duplicates it at both points, which — since two stops at the same value connect with a perfectly flat line — produces a plateau: progress freezes at `0.5` for the entire stretch from `20%` to `40%` of the duration, then resumes moving. The two-percentage form is purely a shorthand for the longer version underneath; both lines above produce the identical curve, and reach for whichever reads more clearly in context.
+
+That plateau behavior is worth knowing even if you never write the two-percentage form yourself, because it's easy to produce *by accident* with two ordinary stops that happen to land on the same value:
+
+<Warning title="Equal consecutive values means a flat segment, on purpose or not">
+  Any two consecutive stops with the same number — however they got there, one stop with two percentages or two separate stops — produce a flat, zero-slope segment between them. That's a deliberate "hold here for a moment" tool for things like a typing-effect pause or a deliberate hitch before a bounce resumes. It's also a common accidental result of copy-pasting sampled spring data that happens to plateau briefly near its resting value — not a bug if you notice it, but worth a glance if a `linear()`-eased element seems to visibly pause partway through and you didn't intend one.
+</Warning>
+
+<RainbowDivider />
+
+## linear() vs. cubic-bezier() vs. steps()
+
+All three of CSS's timing-function tools solve the same underlying problem — mapping elapsed time to progress — with genuinely different trade-offs:
+
+| | `cubic-bezier()` | `linear()` | `steps()` |
+| --- | --- | --- | --- |
+| Shape | One smooth cubic curve | Straight segments through any number of points | Discrete, instant jumps |
+| Control points | Exactly 2, fixed arity | Any number, open-ended | A count, plus a jump direction |
+| Can it bounce more than once? | No — one bend, at most one overshoot | Yes — as many as you add stops for | N/A — no interpolation at all |
+| Interpolation between points | Smooth (curved) | Smooth in time, but *linear* between each pair — visible corners at each stop | None — a hard cut, no interpolation |
+| Best for | Everyday UI motion — entrances, exits, in-place state changes | Springs, multi-bounce settles, and any shape two control points can't express | Sprite sheets, ticking clocks, typewriter reveals |
+| Typical value length | Always 4 numbers | Grows with the motion's complexity | 1 number plus a keyword |
+
+The corner-vs-curve distinction in that "interpolation between points" row is worth sitting with for a second: `linear()`'s segments are individually straight, so a `linear()` curve with only a handful of widely-spaced stops can look visibly *angular* up close, with sharp direction changes at each stop instead of `cubic-bezier()`'s smooth bend. More stops make the corners less noticeable, at the cost of a longer value — the same smoothness-for-verbosity trade every piecewise approximation makes.
+
+<RainbowDivider />
+
+## Browser Support and Safe Fallbacks
+
+`linear()` is a newer addition to the timing-function family than `cubic-bezier()` and `steps()`, both of which have been supported since CSS3. It shipped across Chromium, Firefox, and Safari within the same few months of each other in 2023, and by now sits comfortably inside every evergreen browser's Baseline feature set — but "newer" is still worth a support check before you rely on it for anything load-bearing, especially if your project supports older or non-evergreen browsers.
+
+The safe pattern is the same one the companion post uses for `linear()` itself: declare a `cubic-bezier()` fallback *first*, then the `linear()` value you actually want, on the same property.
+
+<CodeBlock language="css">
+{`
+  .toast {
+    /* A browser that doesn't understand linear() treats the second
+       declaration as an invalid value and simply ignores it — keeping
+       this cubic-bezier() approximation instead of falling through to
+       nothing, or to the CSS default \`ease\`. */
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition-timing-function: linear(0, 0.63 25%, 0.9 45%, 1.04 65%, 1);
+  }
+`}
+</CodeBlock>
+
+This works because of how the CSS cascade handles a single property declared twice inside the same rule: a browser that doesn't recognize the `linear()` function treats that entire declaration as invalid at parse time and drops it, leaving the previous, valid `cubic-bezier()` declaration in effect. A browser that *does* understand `linear()` simply applies the later declaration as normal, since later same-specificity declarations win. Either way, every browser ends up with a working timing function — just a smoother one on newer engines.
+
+<Info title="Feature-querying a whole block, not just one property">
+  For a larger chunk of CSS that should only apply where `linear()` is understood — rather than a single property with an inline fallback — `@supports` accepts any property-and-value pair as its test, including one that uses a function: `@supports (transition-timing-function: linear(0, 1)) { ... }`. That's a genuine, spec-legal feature query, not a hack — the same mechanism you'd use to test support for `container-queries` or `has()`.
+</Info>
+
+<RainbowDivider />
+
+## Performance and Accessibility
+
+A `linear()` timing function costs the browser's compositor essentially the same as a `cubic-bezier()` one at runtime: both reduce to "look up the progress value for this moment in time," whether that lookup solves a cubic polynomial or walks a list of segments. Everything the companion post's [Accessibility and Performance](/post/css-easing-functions-guide#accessibility-and-performance) section says about preferring `transform`- and `opacity`-driven, GPU-friendly properties applies exactly the same way here — the timing function doesn't change which properties are cheap to animate.
+
+Where `linear()` genuinely differs is **stylesheet weight**, not runtime cost: a ten-stop value is a longer string to parse and ship than a four-number `cubic-bezier()` call, and a generated spring curve with forty or fifty stops is longer still. That's a trivial cost for one timing function on one element, but it's worth keeping an eye on if a design system embeds a large generated `linear()` value as a repeated CSS custom property across many components — the same "keep your bundle lean" instinct that applies to any other repeated, sizeable string in a stylesheet.
+
+On the motion side: the playground's Play button checks `prefers-reduced-motion` and disables itself when it's set, exactly like every race demo in the companion post — the point of that demo is motion some readers have explicitly asked not to see, so it shouldn't play regardless. Dragging stops, reading the graph, and copying the generated value all stay fully available either way, since none of that requires anything to actually move. The same rule applies to any spring, bounce, or elastic curve you ship for real: wrap it in `@media (prefers-reduced-motion: reduce)` just as you would an overshoot `cubic-bezier()`, since a multi-bounce `linear()` curve is, if anything, *more* motion than a single overshoot — not less.
+
+<RainbowDivider />
+
+## Common Mistakes and Gotchas
+
+- **Reaching for `linear()` when a keyword would do.** `linear(0, 1)` and the plain `linear` keyword are equivalent, and a three-or-four-stop `linear()` value that's just approximating `ease-in-out` is usually more legible written as `cubic-bezier()` or the keyword itself. Save `linear()` for shapes that genuinely need more than one bend.
+- **Assuming the *value* has to increase, only the *position* does.** Percentages are enforced non-decreasing (with the clamp-upward behavior covered earlier); the numbers themselves are free to rise and fall in any pattern — that's the entire feature, not an edge case to work around.
+- **Pasting a generated curve without a fallback.** Spring and bounce generators output raw `linear()` values with no `cubic-bezier()` declared alongside them. Add one, even a rough approximation, before shipping — the pattern in the [Browser Support](#browser-support-and-safe-fallbacks) section above costs one extra line.
+- **Letting stop counts balloon past what the motion needs.** There's no spec-enforced ceiling, but a 200-stop value copied wholesale from a simulation's full output is usually the same shape a well-chosen 30–40 stops would produce, at a fraction of the size — down-sample before shipping, not after something looks wrong.
+- **Confusing an accidental plateau for a bug.** Two consecutive stops landing on the same value produce a flat segment, which reads as a visible pause. If a `linear()`-eased element seems to hitch partway through, check for repeated values before assuming something else broke — see the [flat segment](#flat-segments-the-two-percentage-stop-syntax) section above.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+### Does the order I write stops in matter, or does the browser sort them by percentage first?
+
+Order matters, and it isn't re-sorted. The browser connects stops in exactly the sequence they're written, which is also why an out-of-order percentage doesn't reorder anything — it gets clamped upward to match the largest percentage seen so far, as covered earlier. Always write stops in the order you want them drawn.
+
+---
+
+### Can `linear()` be animated — can a transition morph from one linear() shape to another?
+
+No, for the same reason `cubic-bezier()` can't: the timing function isn't an animatable property. One `linear()` value governs an entire transition (or one per segment, in a multi-keyframe animation), start to finish. To make a curve's shape appear to change mid-motion, chain separate transitions or keyframe segments, each with its own timing function, rather than expecting one value to morph live.
+
+---
+
+### Does linear() work with animation-timing-function on individual @keyframes selectors, the same way cubic-bezier() does?
+
+Yes — `linear()` is accepted anywhere a timing function is, including as an override on a single keyframe selector inside `@keyframes`, exactly like the keyword and `cubic-bezier()` values covered in the companion post.
+
+---
+
+### Is there a real limit to how many stops linear() can take?
+
+Not one the spec enforces — the practical ceiling is legibility and stylesheet size, not a hard cutoff. Generated spring curves with several dozen stops are common and work fine; the [Common Mistakes](#common-mistakes-and-gotchas) section above covers when to down-sample one that's grown larger than the motion actually needs.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+`cubic-bezier()` is one smooth curve built from exactly two control points — expressive, but capped at a single bend no matter how hard you push those points. `linear()` removes the cap entirely by trading the smooth curve for a straight-segmented one built from as many stops as the motion calls for, each a plain progress value with an optional percentage that pins it to an exact moment in time. Leave the percentage off and a stop spreads evenly across whatever room its pinned neighbors leave it — which is exactly why sampled data, like a spring simulation's output, drops straight into `linear()` with no extra math required.
+
+**Key takeaways:**
+
+- `linear()` takes a comma-separated list of stops — `<number> [<percentage>]?` — with no fixed limit on how many, unlike `cubic-bezier()`'s permanent four.
+- A stop's number is the progress value (unbounded, same as a bezier control point's `y`); its optional percentage pins it to an exact point in the transition's duration.
+- Stops with no percentage auto-space evenly between their pinned neighbors — the first defaults to `0%`, the last to `100%`, which is why uniformly-sampled data (like a spring simulation) needs no percentages at all.
+- Percentages must be non-decreasing; an out-of-order one is silently clamped upward to the largest seen so far, collapsing that segment rather than running backward.
+- A stop can carry two percentages instead of one, which duplicates its value across that range and produces a flat, paused segment — the same effect two ordinary equal-value stops produce.
+- `linear()` costs the same at runtime as `cubic-bezier()`; the real trade-off is stylesheet weight, so down-sample a generated curve to what the motion actually needs.
+- It's newer than `cubic-bezier()` and `steps()` — confirm support and declare a `cubic-bezier()` fallback first, exactly like the pattern shown above.
+- Reserve it for shapes a single bezier curve genuinely can't express — multi-bounce settles, sampled springs, deliberate flat pauses — not as a default replacement for the keywords and curves that already cover everyday UI motion.

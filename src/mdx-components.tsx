@@ -20,6 +20,7 @@ import LinearEasingGraph from "@/components/LinearEasingGraph";
 import LinearEasingRace from "@/components/LinearEasingRace";
 import StepsEasingGraph from "@/components/StepsEasingGraph";
 import StepsEasingRace from "@/components/StepsEasingRace";
+import LinearEasingPlayground from "@/components/LinearEasingPlayground";
 import IconStretchyGuy from "@/icons/IconStretchyGuy";
 import SvgSnippet from "@/components/SvgSnippet";
 import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
@@ -82,6 +83,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     CubicBezierPlayground,
     LinearEasingGraph,
     LinearEasingRace,
+    LinearEasingPlayground,
     StepsEasingGraph,
     StepsEasingRace,
     IconStretchyGuy,

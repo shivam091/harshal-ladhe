@@ -493,5 +493,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "linear-easing": {
     title: "The CSS `linear()` Easing Function",
     description: "Guides to the `linear()` timing function — piecewise-linear curves with an open-ended list of stops, for shapes a single `cubic-bezier()` can't express, like spring and bounce easing.",
+  },
+  "spring-animation": {
+    title: "Spring-Based Animation on the Web",
+    description: "Guides on spring-physics motion for the web — mass, stiffness, and damping-driven curves, and how to approximate them in CSS with `linear()`.",
+  },
+  "bounce-easing": {
+    title: "Bounce Easing Curves",
+    description: "Curves that overshoot and settle rather than ease smoothly to a stop — building bounce timing functions with `linear()` and `cubic-bezier()`.",
   }
 };

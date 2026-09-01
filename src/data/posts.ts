@@ -319,6 +319,19 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-08-25", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "css-linear-easing-function-guide",
+    title: "An Interactive Guide to the CSS linear() Easing Function",
+    excerpt: "Chain custom stops into springs, bounces, and elastics.",
+    description: "A deep, interactive guide to CSS's linear() easing function — comma-separated stops, percentage positions, and building spring and bounce curves cubic-bezier() can't express.",
+    category: ["Animations"],
+    tags: ["css", "animation", "css-animation", "timing-function", "easing", "linear-easing", "cubic-bezier", "spring-animation", "bounce-easing", "web-animation", "ui-design", "microinteractions", "accessibility", "advanced", "frontend"],
+    toc: { maxLevel: 3 },
+    signoff: "Between the draggable open-stop-count playground, the pin-vs-auto-spacing toggle, and getting the bounce, spring, and anticipate presets to each feel distinct, this page's demo took more iterations than any curve on the cubic-bezier() side of the series — I hope dragging a stop past the finish line builds the shape faster than the percentages alone ever could. Thanks for tracing every stop with me. Go chain together a curve of your own. 🌀",
+    changelog: [
+      { date: "2026-08-25", change: "Initial publication" }
+    ],
   }
 ];
 
