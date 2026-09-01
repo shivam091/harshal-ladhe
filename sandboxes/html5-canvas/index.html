@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML5 Canvas Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Particle System Playground</h1>
+        <p>Move your mouse over the canvas to push particles around, and toggle collisions to watch them bounce off each other in real time.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Canvas particle preview">
+        <canvas id="scene" aria-label="Animated particle field reacting to the mouse"></canvas>
+        <output id="fps-readout" class="fps-readout" aria-live="off">60 fps</output>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Particles</legend>
+        <div class="field">
+          <label for="count-input">Particle count <span id="count-label">80</span></label>
+          <div class="range-row">
+            <span class="range-edge">10</span>
+            <div class="range-track">
+              <input type="range" id="count-input" min="10" max="200" step="5" value="80">
+              <output class="range-bubble" id="count-value" for="count-input">80</output>
+            </div>
+            <span class="range-edge">200</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="mouse-radius-input">Mouse influence radius <span id="mouse-radius-label">120px</span></label>
+          <div class="range-row">
+            <span class="range-edge">40</span>
+            <div class="range-track">
+              <input type="range" id="mouse-radius-input" min="40" max="260" step="10" value="120">
+              <output class="range-bubble" id="mouse-radius-value" for="mouse-radius-input">120px</output>
+            </div>
+            <span class="range-edge">260</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Physics</legend>
+        <div class="fields-grid">
+          <label class="checkbox-field" for="collisions-toggle">
+            <input type="checkbox" id="collisions-toggle" checked>
+            <span>Particle-to-particle collisions</span>
+          </label>
+          <label class="checkbox-field" for="attract-toggle">
+            <input type="checkbox" id="attract-toggle">
+            <span>Attract instead of repel</span>
+          </label>
+        </div>
+        <p class="tip">Collisions are checked every frame with a simple circle-overlap test, then resolved by swapping velocity along the contact normal — the same approach a lot of 2D games use for cheap, believable bounces.</p>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Scene</legend>
+        <button type="button" id="reset-btn" class="toggle-btn">Reset particles</button>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
