@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hero Overlay Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Hero Overlay Playground</h1>
+        <p>Switch overlay patterns, tune colors/opacity and angle, and toggle a blend mode to see how legible the heading stays over a busy "photo".</p>
+      </header>
+
+      <section class="demo-area" aria-label="Hero preview">
+        <div id="hero-preview" class="hero-preview">
+          <h2 class="hero-heading">Hero Title</h2>
+        </div>
+      </section>
+
+      <output id="overlay-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Overlay Pattern</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Overlay pattern">
+          <label class="segment">
+            <input type="radio" name="overlay-pattern" value="flat" checked>
+            <span>Flat</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="overlay-pattern" value="fade">
+            <span>Fade</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="overlay-pattern" value="diagonal">
+            <span>Diagonal</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="overlay-pattern" value="radial">
+            <span>Radial</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="overlay-pattern" value="split">
+            <span>Split</span>
+          </label>
+        </div>
+
+        <div class="field" id="angle-field">
+          <label for="angle-input">Angle <span id="angle-label">180deg</span></label>
+          <div class="range-row">
+            <span class="range-edge">0deg</span>
+            <div class="range-track">
+              <input type="range" id="angle-input" min="0" max="360" step="1" value="180">
+              <output class="range-bubble" id="angle-value" for="angle-input">180deg</output>
+            </div>
+            <span class="range-edge">360deg</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Colors</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="color-1">Color 1</label>
+            <input type="color" id="color-1" value="#000000">
+          </div>
+          <div class="field">
+            <label for="opacity-1-input">Opacity 1 <span id="opacity-1-label">55%</span></label>
+            <div class="range-row">
+              <span class="range-edge">0%</span>
+              <div class="range-track">
+                <input type="range" id="opacity-1-input" min="0" max="100" step="1" value="55">
+                <output class="range-bubble" id="opacity-1-value" for="opacity-1-input">55%</output>
+              </div>
+              <span class="range-edge">100%</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="color-2">Color 2</label>
+            <input type="color" id="color-2" value="#0ea5e9">
+          </div>
+          <div class="field">
+            <label for="opacity-2-input">Opacity 2 <span id="opacity-2-label">40%</span></label>
+            <div class="range-row">
+              <span class="range-edge">0%</span>
+              <div class="range-track">
+                <input type="range" id="opacity-2-input" min="0" max="100" step="1" value="40">
+                <output class="range-bubble" id="opacity-2-value" for="opacity-2-input">40%</output>
+              </div>
+              <span class="range-edge">100%</span>
+            </div>
+          </div>
+        </div>
+        <p class="tip" id="color-2-tip">Color 2 is used by the Diagonal and Radial patterns.</p>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Blend Mode</legend>
+        <div class="field">
+          <label for="blend-select">background-blend-mode</label>
+          <select id="blend-select">
+            <option value="normal" selected>normal</option>
+            <option value="multiply">multiply</option>
+            <option value="screen">screen</option>
+            <option value="overlay">overlay</option>
+            <option value="soft-light">soft-light</option>
+          </select>
+        </div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
