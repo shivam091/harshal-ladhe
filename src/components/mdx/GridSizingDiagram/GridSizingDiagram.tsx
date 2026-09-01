@@ -1,6 +1,6 @@
 import type { JSX } from "react";
-import { Wrapper, Svg } from "@/components/mdx/GridSizingDiagram/GridSizingDiagram.styles";
 import { PANEL_W, PANEL_TOP, PANEL_H, FIT_LEFT, FIT_ITEM_W, FIT_X, FILL_LEFT, FILL_TRACK_W, FILL_X } from "@/components/mdx/GridSizingDiagram/GridSizingDiagram.constants";
+import { Wrapper, Svg } from "@/components/mdx/GridSizingDiagram/GridSizingDiagram.styles";
 
 /*
   Static SVG diagram comparing `auto-fit` and `auto-fill` on the same container width — the same 3 items,
