@@ -16,6 +16,8 @@ By the end of this post, you'll be able to:
 - Set up column and row templates
 - Use fractional units and spacing with `gap`
 - Build simple, scalable 2D layouts
+- Debug a grid visually using your browser's DevTools
+- Avoid the most common beginner mistakes
 
 Let's dive in.
 
@@ -31,7 +33,7 @@ Modern websites demand layout techniques that are **flexible**, **responsive**, 
 
 But none of these offered full control over **2D layouts**.
 
-That's where **CSS Grid** shines. Here's why it's a game changer:
+This is precisely where **CSS Grid** changes the game. Here's why:
 
 ### Two-Dimensional Power
 
@@ -220,12 +222,50 @@ This layout gives you both **predictability** and **flexibility**, especially wh
 
 <RainbowDivider />
 
+## Debugging Grid Layouts with DevTools
+
+You don't have to guess at track sizes or eyeball gaps — every modern browser can draw your grid lines, numbers, and areas directly on top of the rendered page.
+
+### Chrome / Edge
+
+1. Open DevTools (`F12` or `Cmd+Opt+I`) and select any element with `display: grid` in the **Elements** panel.
+2. A small **grid** badge appears next to the element in the DOM tree — click it to toggle the overlay.
+3. In the **Layout** tab (next to Styles/Computed), enable **Show line numbers**, **Show track sizes**, and **Show area names** for a fully labeled overlay.
+
+### Firefox
+
+Firefox has the most complete Grid Inspector of the major browsers:
+
+1. Open DevTools and go to the **Layout** panel.
+2. Under **Grid**, check the box next to your grid container.
+3. Toggle **line numbers**, **area names**, and even an **infinite canvas** view that keeps the overlay visible while you scroll.
+
+<Info title="Tip">
+  Firefox also lets you display the grid overlay for **multiple grid containers at once**, each in a different color — handy when you're debugging nested grids or comparing a mobile and desktop layout side by side.
+</Info>
+
+The overlay is invaluable for answering questions like *"why did my item jump to a new row?"* or *"is this gap coming from `gap` or from margin?"* — instead of guessing, you can see the actual line numbers and track boundaries your browser computed.
+
+<RainbowDivider />
+
 ## Interactive Example
 
 Reading the column and row values is one thing, but tuning them live is what makes the mental model click. Use the playground below to
 change the column count, row height, gap, and item count, and watch `grid-template-columns` and `grid-auto-rows` reflow the grid in real time.
 
 <Sandbox slug="getting-started-with-css-grid" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Common Beginner Mistakes
+
+A few gotchas trip up almost everyone the first time they reach for Grid:
+
+- **Forgetting `display: grid` on the parent.** Grid properties like `grid-template-columns` or `gap` silently do nothing on an element that isn't a grid (or inline-grid) container — there's no error, the layout just doesn't change.
+- **Confusing `gap` with margin.** `gap` only adds space *between* tracks, never on the outer edge of the grid. If you need space around the whole grid, that's still `padding` or `margin` on the container.
+- **Assuming items need a wrapping row/column count.** You don't have to plan for every item up front — if you add more items than your `grid-template-rows`/`grid-template-columns` account for, the browser keeps going and generates *implicit* tracks automatically. We'll cover exactly how that works in Part 2.
+- **Styling the wrong element.** Layout properties (`grid-template-columns`, `gap`, alignment shorthands) belong on the **container**; sizing and content properties (`grid-column`, `grid-row`, padding) belong on the **items**. Mixing them up is a common source of "why isn't this working?" moments.
+- **Expecting item order to always match visual order.** Once you start using placement properties like `grid-column`/`grid-row`, an item's position on screen can differ from its position in the HTML. That's powerful, but it has real accessibility implications — more on that in [Part 2](/post/css/mastering-css-grid).
 
 <RainbowDivider />
 
