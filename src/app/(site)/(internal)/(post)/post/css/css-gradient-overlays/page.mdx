@@ -1,0 +1,671 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-gradient-overlays");
+
+Gradient overlays are a fundamental technique in modern web design. They bridge the gap between raw photography
+and functional UI, ensuring that your text remains legible while your visuals stay impactful. This guide moves
+from basic stacking to advanced blend modes and performance-first animations.
+
+If you're new to gradients, consider exploring the
+[different types of gradients in CSS](/post/css/mastering-css-gradients) before diving into overlay techniques.
+
+## Why Gradient Overlays are Essential
+
+In professional UI design, a gradient overlay is rarely just for "looks." It serves several functional purposes:
+
+- **Text Legibility (The "Scrim" Effect):** Images often contain high-contrast areas (highlights and shadows) that
+  make text difficult to read.
+- **Visual Hierarchy:** You can use gradients to "point" at specific content, like a CTA button or a headline.
+- **Brand Consistency:** Overlays let you tint disparate stock photos with your brand's specific color palette,
+  creating a cohesive look.
+- **Asset Weight:** A CSS gradient is measured in bytes, whereas a pre-edited image with a baked-in gradient is
+  measured in kilobytes.
+
+<RainbowDivider />
+
+## Understanding the Stacking Context
+
+The most common point of confusion is the order of layers. In the `background-image` property, **the first item
+listed is the top layer**.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+      url('hero.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+`}
+</CodeBlock>
+
+<Info title="Quick Tip">
+  Always include `background-size: cover` and `background-position: center` when working with background images
+  to ensure proper scaling and alignment across devices.
+</Info>
+
+| Layer Order      | CSS Component          | Visibility                            |
+| ---------------- | ----------------------- | -------------------------------------- |
+| **Top Layer**     | `linear-gradient(...)` | Acts as the "tint" or "glass" layer    |
+| **Bottom Layer**  | `url('image.jpg')`     | The base visual content                |
+
+<OverlayStackDiagram />
+
+<Quote>
+  Think of it like a physical photo on a desk. If you place a piece of colored transparency film (the gradient)
+  over the photo, the film must be on top for you to see the effect.
+</Quote>
+
+<RainbowDivider />
+
+## Before vs After: Why Gradient Overlays Matter
+
+One of the easiest ways to understand the impact of gradient overlays is to compare the same design with and
+without an overlay.
+
+### Without Overlay
+
+- Text blends into the background
+- Poor contrast in bright or busy areas
+- Harder to scan and read content
+
+### With Gradient Overlay
+
+- Improved contrast and readability
+- Clear visual hierarchy
+- Better focus on headings and CTAs
+
+<Success title="Key Takeaway">
+  Gradient overlays are not just decorative — they directly impact usability. A small adjustment in opacity or
+  direction can significantly improve how users perceive and interact with your content.
+</Success>
+
+<RainbowDivider />
+
+## Deep Dive: Advanced Gradient Overlay Patterns
+
+### 1. Flat Overlay (Uniform Contrast Layer)
+
+A flat overlay applies a consistent opacity across the entire image.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+      url('hero.jpg');
+  }
+`}
+</CodeBlock>
+
+**When to Use**
+
+- When the background image is **too bright or noisy**
+- For **minimal and clean designs**
+- When you need **consistent readability across the entire section**
+
+Flat overlays are the safest option. They reduce visual unpredictability and ensure text is readable regardless
+of the image content.
+
+**Variations**
+
+<CodeBlock language="css">
+{`
+  /* Light overlay */
+  linear-gradient(rgba(255,255,255,0.4), rgba(255,255,255,0.4))
+
+  /* Brand tint */
+  linear-gradient(rgba(0,123,255,0.4), rgba(0,123,255,0.4))
+`}
+</CodeBlock>
+
+### 2. Gradient Fade Overlay (Directional Focus)
+
+A fade overlay gradually transitions from opaque to transparent.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0)),
+      url('hero.jpg');
+  }
+`}
+</CodeBlock>
+
+**When to Use**
+
+- When content is positioned at **top or bottom**
+- To **preserve image visibility** while improving readability
+- For **editorial or storytelling layouts**
+
+Fade overlays guide the user's eye naturally. They create a visual hierarchy without fully masking the image.
+
+**Direction Variations**
+
+- Top → Bottom: `to bottom`
+- Bottom → Top: `to top`
+- Left → Right: `to right`
+
+### 3. Diagonal Overlay (Dynamic Layouts)
+
+Adds movement and visual energy.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      linear-gradient(135deg, rgba(255,0,0,0.5), rgba(0,0,255,0.5)),
+      url('hero.jpg');
+  }
+`}
+</CodeBlock>
+
+**When to Use**
+
+- Landing pages and marketing sections
+- Modern UI with **bold visual identity**
+- When you want to **break rigid layouts**
+
+Diagonal overlays introduce **motion and direction**, even in static designs. They make sections feel more
+interactive. As a refresher, `135deg` here follows the same clockwise-from-the-top convention every
+`linear-gradient()` angle uses:
+
+<GradientAxisDiagram />
+
+<Info title="Pro Tip">
+  Pair diagonal overlays with angled layouts or clipped sections for visual consistency.
+</Info>
+
+### 4. Multi-Color Overlay (Brand Expression)
+
+Combines multiple colors into a single overlay.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      linear-gradient(
+        rgba(255,0,150,0.4),
+        rgba(0,204,255,0.4),
+        rgba(255,255,0,0.3)
+      ),
+      url('hero.jpg');
+  }
+`}
+</CodeBlock>
+
+**When to Use**
+
+- Branding-heavy sections
+- Creative portfolios
+- Product launches and campaigns
+
+Multi-color overlays can strongly communicate brand personality, but must be used carefully to avoid
+overwhelming users.
+
+**Best Practices**
+
+- Keep **opacity low (0.2–0.5)**
+- Avoid too many colors (2–3 is ideal)
+- Ensure text contrast remains strong
+
+### 5. Radial Spotlight Overlay (Focus Attention)
+
+Highlights a specific area while dimming surroundings.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      radial-gradient(circle at center, rgba(255,255,255,0.2), rgba(0,0,0,0.7)),
+      url('hero.jpg');
+  }
+`}
+</CodeBlock>
+
+**When to Use**
+
+- Highlighting **central content or CTA**
+- Product showcases
+- Portfolio hero sections
+
+This pattern mimics real-world lighting, drawing attention naturally to a focal point. The `circle at center`
+part is the same shape/position syntax covered in our radial gradients deep dive:
+
+<RadialGradientDiagram variant="shape" />
+
+**Position Variations**
+
+<CodeBlock language="css">
+{`
+  radial-gradient(circle at 30% 40%, ...)
+`}
+</CodeBlock>
+
+Allows precise control over focus area.
+
+### 6. Split Overlay (Content Emphasis)
+
+Divides the layout into overlay + clear sections.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      linear-gradient(to right, rgba(0,0,0,0.7) 50%, transparent 50%),
+      url('hero.jpg');
+  }
+`}
+</CodeBlock>
+
+**When to Use**
+
+- Text on one side, image on the other
+- Landing pages with **structured layouts**
+- SaaS hero sections
+
+Creates a **clear separation of content and visuals**, improving readability and layout balance.
+
+### 7. Layered Overlay System (Depth & Complexity)
+
+Stack multiple gradients for rich effects.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.8)),
+      linear-gradient(120deg, rgba(255,0,150,0.3), rgba(0,204,255,0.3)),
+      url('hero.jpg');
+  }
+`}
+</CodeBlock>
+
+**When to Use**
+
+- High-end UI designs
+- Hero banners needing depth
+- Interactive or animated sections
+
+Layering lets you combine contrast (a dark overlay), color (a brand tint), and direction (an angle) in one
+declaration — the same "stack of comma-separated layers, first on top" rule from
+[Understanding the Stacking Context](#understanding-the-stacking-context) above, just with three layers instead
+of two.
+
+### 8. Overlay with Blend Modes (Advanced Visual Effects)
+
+The `background-blend-mode` property defines how the gradient interacts with the pixels of the image.
+
+- `multiply`: Great for darkening images while keeping colors rich.
+- `screen`: Good for "washing out" an image for a bright, airy feel.
+- `overlay` / `soft-light`: Best for adding dramatic contrast and "pop."
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image:
+      url('hero.jpg'),
+      linear-gradient(to bottom, rgba(255,0,0,0.5), rgba(0,0,255,0.5));
+    background-blend-mode: overlay;
+  }
+`}
+</CodeBlock>
+
+**When to Use**
+
+- Creative or experimental designs
+- When you want **non-linear color interaction**
+
+Blend modes interact with the image's actual pixels, producing unique results without editing the image itself.
+
+<RainbowDivider />
+
+## Choosing the Right Overlay
+
+| Use Case            | Recommended Pattern |
+| -------------------- | -------------------- |
+| Maximum readability   | Flat overlay          |
+| Subtle readability    | Gradient fade         |
+| Dynamic design        | Diagonal              |
+| Branding              | Multi-color           |
+| Focus area            | Radial spotlight      |
+| Structured layout     | Split overlay         |
+| Premium UI            | Layered overlays      |
+
+<RainbowDivider />
+
+## Making Gradient Overlays Production-Ready
+
+Design patterns are only half the story. To use gradient overlays effectively in real projects, you need to
+consider accessibility, performance, and adaptability.
+
+### Accessibility First
+
+Ensure your overlays actually improve readability — not harm it.
+
+**Key practices:**
+
+- Maintain a **minimum contrast ratio of 4.5:1 (WCAG)**
+- Use overlays to balance bright or complex images
+- Avoid relying only on color to convey meaning
+
+**Enhance text clarity when needed:**
+
+<CodeBlock language="css">
+{`
+  .hero h1 {
+    text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  }
+`}
+</CodeBlock>
+
+### Performance Considerations
+
+Gradient overlays are lightweight — but misuse can still impact performance.
+
+**Best practices:**
+
+- Prefer CSS gradients over PNG overlays
+- Avoid stacking too many gradient layers
+- Use optimized background images
+
+Gradients are rendered by the browser and typically perform better than large image overlays, precisely because
+there's no extra HTTP request or decode step involved.
+
+### Dark & Light Mode Support
+
+Overlays should adapt to themes for consistent readability.
+
+<CodeBlock language="css">
+{`
+  :root {
+    --overlay: rgba(0,0,0,0.5);
+  }
+
+  [data-theme="dark"] {
+    --overlay: rgba(0,0,0,0.7);
+  }
+
+  .hero {
+    background-image: linear-gradient(var(--overlay), var(--overlay)), url('hero.jpg');
+  }
+`}
+</CodeBlock>
+
+This ensures your UI remains readable across different themes without duplicating styles.
+
+<RainbowDivider />
+
+## Animating Gradient Overlays
+
+<CodeBlock language="css">
+{`
+  .hero::before {
+    background: linear-gradient(45deg, #ff000066, #0000ff66);
+    background-size: 200% 200%;
+    animation: moveGradient 8s ease infinite;
+  }
+
+  @keyframes moveGradient {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+`}
+</CodeBlock>
+
+<Warning title="Never animate the gradient's colors directly">
+  Animating `background-position` runs on the compositor thread and stays smooth. Animating the gradient's own
+  color stops (or `background-image` itself) forces the browser to repaint every frame, which is expensive and
+  often visibly janky. The trick above moves a much-larger-than-needed gradient *around* behind a fixed viewport
+  instead of changing its colors — the same technique used for
+  [animated gradient backgrounds](/post/css/mastering-css-gradients#background-position-trick-liquid-flow).
+</Warning>
+
+**Use subtly for:**
+
+- Landing pages
+- SaaS headers
+- Interactive sections
+
+<RainbowDivider />
+
+## Responsive Overlay Strategies
+
+<CodeBlock language="css">
+{`
+  @media (max-width: 768px) {
+    .hero {
+      background-image:
+        linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.2)),
+        url('hero.jpg');
+    }
+  }
+`}
+</CodeBlock>
+
+- Mobile needs stronger overlays
+- Reduce visual clutter
+
+<RainbowDivider />
+
+## Real-World UI Patterns
+
+Here's how these overlay techniques are commonly used in production:
+
+**Hero Sections**
+- Gradient fade for headings and CTAs
+
+**Cards**
+- Subtle top-to-bottom overlays for text readability
+
+**Buttons**
+
+<CodeBlock language="css">
+{`
+  .button {
+    background: linear-gradient(135deg, #ff7a18, #ffb347);
+  }
+`}
+</CodeBlock>
+
+**Sections**
+- Diagonal or multi-color overlays to visually separate content blocks
+
+<RainbowDivider />
+
+## Common Mistakes to Avoid
+
+- Over-darkening images and losing visual context
+- Using too many colors, causing distraction
+- Ignoring mobile readability
+- Skipping contrast testing
+
+## Pro Tips
+
+- Use **HSLA** for easier color adjustments
+- Combine gradients with SVG shapes or `mask-image` — see our
+  **[CSS Masking deep dive](/post/css/css-masking-deep-dive)** for the full property reference
+- Experiment with `mask-image` specifically for edge-fade effects that a plain gradient overlay can't produce
+  on its own
+- Keep overlays subtle for a more premium look
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="How do I choose the right gradient direction?">
+  Choose the direction based on content placement: top-aligned text → `to bottom`, bottom-aligned text →
+  `to top`, side content → `to left` / `to right`, dynamic layouts → angled gradients (`45deg`, `135deg`). The
+  goal is to **support content readability, not fight it**.
+</Details>
+
+<Details summary="Can I use gradient overlays with videos instead of images?">
+  Yes. Instead of `background-image`, use a pseudo-element overlay:
+
+  <CodeBlock language="css">
+{`
+  .hero {
+    position: relative;
+  }
+
+  .hero video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5));
+  }
+`}
+  </CodeBlock>
+
+  This approach works the same way as image-based overlays.
+</Details>
+
+<Details summary="What's better: overlay using background-image or a pseudo-element?">
+  - `background-image`: simpler, less CSS, good for static designs
+  - `::before` pseudo-element: better for animations, easier layering control, more flexible for complex UI
+</Details>
+
+<Details summary="How do I make overlays responsive to different images?">
+  Use CSS variables for dynamic control and media queries for layout-based adjustments:
+
+  <CodeBlock language="css">
+{`
+  :root {
+    --overlay-opacity: 0.5;
+  }
+
+  .hero {
+    background-image:
+      linear-gradient(rgba(0,0,0,var(--overlay-opacity)), rgba(0,0,0,var(--overlay-opacity))),
+      url('hero.jpg');
+  }
+`}
+  </CodeBlock>
+</Details>
+
+<Details summary="Can I animate overlay colors smoothly?">
+  Yes, but avoid animating `background-image` directly. Instead, animate properties like `background-position`:
+
+  <CodeBlock language="css">
+{`
+  .hero::before {
+    background: linear-gradient(45deg, red, blue);
+    background-size: 200% 200%;
+    animation: move 6s infinite linear;
+  }
+
+  @keyframes move {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    100% {
+      background-position: 100% 50%;
+    }
+  }
+`}
+  </CodeBlock>
+</Details>
+
+<Details summary="How many gradient layers are safe to use?">
+  1–2 layers is optimal, 3 is acceptable, and 4+ should be used carefully with performance testing. Too many
+  layers can increase paint cost, especially on low-end devices.
+</Details>
+
+<Details summary="Can I use gradient overlays with CSS masks?">
+  Yes, for advanced effects:
+
+  <CodeBlock language="css">
+{`
+  .hero {
+    -webkit-mask-image: linear-gradient(to bottom, black 70%, transparent);
+    mask-image: linear-gradient(to bottom, black 70%, transparent);
+  }
+`}
+  </CodeBlock>
+
+  This creates fade-out effects without affecting colors directly — see the
+  **[CSS Masking deep dive](/post/css/css-masking-deep-dive)** for the full picture.
+</Details>
+
+<Details summary="Why does my overlay not appear?">
+  Common issues: a missing comma between the gradient and the image, an incorrect stacking order (the gradient
+  must come first), `background-size` not set properly, or using fully opaque colors instead of `rgba()`/`hsla()`.
+</Details>
+
+<Details summary="Do gradient overlays work in all browsers?">
+  Yes, `linear-gradient()` is widely supported in all modern browsers. For older browsers, provide a fallback
+  background color and avoid relying on advanced blend modes.
+</Details>
+
+<Details summary="Should I use gradients or image overlays?">
+  Prefer gradients when you want better performance, dynamic control (themes, animations), or cleaner,
+  maintainable CSS. Use image overlays only for complex textures or artistic effects.
+</Details>
+
+<Details summary="What is the ideal overlay opacity?">
+  Typically between **0.3 and 0.7**, depending on image brightness.
+</Details>
+
+<Details summary="When should I use pseudo-elements?">
+  Use `background-image` for simple overlays, and `::before` when you need animation or finer layering control.
+</Details>
+
+<Details summary="Do gradient overlays impact performance?">
+  Very little — especially compared to image-based overlays.
+</Details>
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading about overlay patterns is one thing, but watching the generated `background-image` stack (and a live
+`background-blend-mode`) update over a sample heading is what makes the legibility trade-offs click. Switch
+between flat, fade, diagonal, radial, and split patterns, tune colors/opacity and angle, and toggle a blend mode.
+
+<Sandbox slug="css-gradient-overlays" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Conclusion
+
+Gradient overlays are more than visual enhancements — they are essential tools for building accessible,
+readable, and modern interfaces.
+
+When used correctly, they help you:
+
+- Improve content clarity
+- Enhance visual hierarchy
+- Build scalable design systems
+
+Start simple, experiment with layering and direction, and evolve your overlays into a consistent design
+language.
+
+<RainbowDivider />
+
+## What's Next: Glassmorphism and Edge Fades
+
+Try combining these gradients with `backdrop-filter: blur(10px)` for a modern "Glassmorphism" effect on any card
+or panel that sits over a busy background.
+
+If you want the edges of a hero image itself to dissolve rather than just be tinted, that's a job for masking,
+not overlays — gradients change *color*, masks change *visibility*. Our companion post,
+**[CSS Masking Deep Dive](/post/css/css-masking-deep-dive)**, covers `mask-image`, `mask-mode`, and
+`mask-composite` in full, including how to combine a mask-faded edge with the overlay patterns from this post.

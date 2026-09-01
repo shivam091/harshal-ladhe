@@ -55,6 +55,7 @@ export const MoonIcon = createIcon("moon");
 export const PilcrowIcon = createIcon("pilcrow");
 export const PlayIcon = createIcon("play");
 export const PlusIcon = createIcon("plus");
+export const RedoIcon = createIcon("redo");
 export const RefreshIcon = createIcon("refresh");
 export const RssIcon = createIcon("rss");
 export const SearchIcon = createIcon("search");
@@ -63,7 +64,9 @@ export const SunDimIcon = createIcon("sunDim");
 export const SunIcon = createIcon("sun");
 export const TagIcon = createIcon("tag");
 export const TelegramIcon = createIcon("telegram");
+export const TrashIcon = createIcon("trash");
 export const TwitterIcon = createIcon("twitter");
+export const UndoIcon = createIcon("undo");
 export const WaveDividerIcon = createIcon("waveDivider");
 export const WhatsAppIcon = createIcon("whatsapp");
 

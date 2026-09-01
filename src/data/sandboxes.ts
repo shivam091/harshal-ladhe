@@ -9,9 +9,23 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-gradient-overlays",
+    title: "Hero Overlay Playground",
+    description: "Switch between flat, fade, diagonal, radial, and split overlay patterns, tune colors/opacity and angle, and toggle a background-blend-mode live to see how legible the heading stays over a busy photo.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "css-masking-deep-dive",
     title: "CSS Masking Playground",
     description: "Switch between a fade and a spotlight mask, toggle alpha vs. luminance mode to watch the generated gradient stops change, and tune repeat/size live.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
+    slug: "html5-canvas",
+    title: "HTML5 Canvas Playground",
+    description: "Dozens of particles react to your mouse in real time — toggle particle-to-particle collisions and switch between repel and attract to feel how each force changes the scene.",
     template: "vanilla",
     entry: "/index.html",
   },

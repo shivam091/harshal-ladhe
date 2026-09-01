@@ -302,6 +302,19 @@ export const posts: Post[] = [
     ],
   },
   {
+    slug: "html5-canvas-guide",
+    title: "HTML5 Canvas Guide: Drawing, Animation, and Best Practices",
+    excerpt: "Master drawing and animation with the HTML5 Canvas API.",
+    description: "Learn how to use the HTML5 Canvas API to create drawings, animations, interactive graphics, and high-performance visual effects in the browser.",
+    category: ["JavaScript"],
+    tags: ["canvas", "html5", "javascript", "animation", "webgl", "graphics", "frontend", "canvas-api"],
+    toc: { maxLevel: 3 },
+    signoff: "I hope this guide helps you turn your code into art! Now go forth and build something visually stunning. 🎨",
+    changelog: [
+      { date: "2026-09-01", change: "Initial publication" },
+    ],
+  },
+  {
     slug: "css-easing-functions-guide",
     title: "An Interactive Guide to CSS Easing Functions and cubic-bezier()",
     excerpt: "Feel how timing curves shape motion, design your own.",
@@ -347,6 +360,24 @@ export const posts: Post[] = [
       alt: "Illustrated cover showing CSS mask-image gradients revealing and fading a photo, with a compositing diagram of overlapping circles representing add, subtract, intersect, and exclude."
     },
     signoff: "Getting a real SVG mask element to render the alpha-vs-luminance diagram itself (rather than just describing the difference) took a few tries, and I hope watching the playground's gradient stops flip between black-to-transparent and white-to-black makes that distinction click the way writing about it alone never quite does. Thanks for masking along with me. 🎭",
+    changelog: [
+      { date: "2026-09-01", change: "Initial publication" }
+    ]
+  },
+  {
+    slug: "css-gradient-overlays",
+    title: "Master CSS Gradient Overlays: Hero Banners, UI Patterns & Advanced Techniques",
+    excerpt: "Design better visuals with powerful gradient overlays",
+    description: "Master CSS gradient overlays with practical techniques for hero banners, UI patterns, animations, accessibility, and performance. Includes real-world examples and best practices.",
+    category: ["CSS"],
+    tags: ["css", "gradients", "gradient-overlay", "hero-banner", "ui-design", "frontend", "web-design", "css-techniques", "background-blend-mode"],
+    image: {
+      path: "/assets/img/posts/css/css-gradient-overlays/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Illustration of CSS gradient overlay techniques on hero banners with layered gradients, blend modes, and UI elements."
+    },
+    signoff: "I hope this guide helps you treat your stylesheets like a palette! Go forth and paint the web with gradients that bring your designs to life. 🖌️",
     changelog: [
       { date: "2026-09-01", change: "Initial publication" }
     ]
