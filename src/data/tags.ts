@@ -297,5 +297,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "named-grid-lines": {
     title: "Naming Grid Lines in CSS Grid",
     description: "Assigning custom names to grid lines in `grid-template-columns` and `grid-template-rows` for more readable, maintainable `grid-column`/`grid-row` placement."
+  },
+  "browser-support": {
+    title: "CSS Browser Support and Compatibility",
+    description: "Checking feature support across browsers and writing CSS that degrades gracefully where a property or value isn't yet available."
+  },
+  "progressive-enhancement": {
+    title: "Progressive Enhancement in CSS",
+    description: "Building layouts that work with a baseline of broadly-supported CSS, then layering on newer features for browsers that support them."
   }
 };
