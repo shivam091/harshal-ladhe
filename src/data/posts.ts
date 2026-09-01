@@ -116,6 +116,7 @@ export const posts: Post[] = [
     signoff: "This one's meant to be the guide I wish I'd had when Git still felt like a wall of unfamiliar commands — I hope it makes that first `git merge` conflict feel like a puzzle instead of a crisis. Part 2 picks up right where this leaves off. 🌱",
     pinned: true,
     changelog: [
+      { date: "2026-08-31", change: "Added a Git core model diagram, fast-forward/three-way merge diagrams, and a git reset modes comparison diagram" },
       { date: "2026-08-15", change: "Initial publication" }
     ]
   },
