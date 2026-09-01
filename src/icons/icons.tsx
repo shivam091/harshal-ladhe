@@ -788,6 +788,14 @@ export const icons = {
       </>
     )
   },
+  play: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <polygon points="6 4 20 12 6 20 6 4" />
+      </>
+    )
+  },
   plus: {
     viewBox: "0 0 24 24",
     svgProps: {

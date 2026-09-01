@@ -300,6 +300,25 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-07-31", change: "Initial publication" },
     ],
+  },
+  {
+    slug: "css-easing-functions-guide",
+    title: "An Interactive Guide to CSS Easing Functions and cubic-bezier()",
+    excerpt: "Feel how timing curves shape motion, design your own.",
+    description: "A visual guide to CSS timing functions: how cubic-bezier() curves work, why easing keywords differ, and how to design your own custom curve.",
+    category: ["Animations"],
+    tags: ["css", "animation", "transition", "timing-function", "cubic-bezier", "easing", "css-animation", "microinteractions", "ui-design", "motion-design", "overshoot", "accessibility", "steps", "linear-easing", "frontend"],
+    image: {
+      path: "/assets/img/posts/css/css-easing-functions-guide/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "CSS easing functions guide cover featuring colorful cubic-bezier curves, timing-function graphs, preset easing cards, a curve playground, and a “Race the Curves” animation demo."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Between the labeled curve graphs, the live timing-function races, and the draggable cubic-bezier playground, this page ended up with three separate interactive pieces built just to make a curve's shape *felt* rather than just described — and I hope racing them, dragging them, and watching them settle does more for your intuition than the numbers ever could on their own. Thanks for working through the whole set with me — go make a curve that's entirely yours. 📈",
+    changelog: [
+      { date: "2026-08-25", change: "Initial publication" }
+    ],
   }
 ];
 

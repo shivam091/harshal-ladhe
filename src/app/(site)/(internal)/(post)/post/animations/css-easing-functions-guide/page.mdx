@@ -1,0 +1,330 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-easing-functions-guide");
+
+## Introduction
+
+Picture two cars leaving a red light at the same time and arriving at the next light, 200 meters away, in exactly 3 seconds. If you filmed both and watched the footage side by side, would the two clips look identical? Not necessarily. One car might leap off the line and coast the rest of the way; the other might crawl at first and then floor it. Same distance, same total time, completely different *feel*.
+
+That feel is what a **timing function** controls. In [An Interactive Guide to CSS Transitions](/post/css-transitions-guide), `transition-duration` got one line and `transition-timing-function` got a single table — enough to know the property exists, not enough to actually understand it. This post is the deep dive: what a timing function really is, why `ease`, `linear`, `ease-in`, `ease-out`, and `ease-in-out` all look and feel so different, and how `cubic-bezier()` lets you design a curve of your own from scratch. Every curve below comes with a labeled graph and a live demo, because a timing function is a *shape*, and shapes are much easier to feel than to read about.
+
+<Info title="Prerequisite">
+  This post assumes you're already comfortable with the basics of `transition-property`, `transition-duration`, and `transition-delay`. If any of those feel shaky, [An Interactive Guide to CSS Transitions](/post/css-transitions-guide) covers them first.
+</Info>
+
+<RainbowDivider />
+
+## Time vs. Progress: The Two Axes of a Timing Function
+
+Every CSS transition — and every keyframe animation — has to answer the same question, over and over, many times a second: *given that we're X% of the way through the duration, how far along should the property be?* A timing function is the answer to that question, expressed as a curve.
+
+Plot it on a graph and it looks like this:
+
+- The **horizontal axis (time)** is how far through the transition's *duration* you are — always starting at 0 (the transition just started) and ending at 1 (the transition just finished). Time only ever moves forward, so this axis is always clamped to the 0–1 range.
+- The **vertical axis (progress)** is how far the *property* has moved from its starting value to its ending value — 0 means "still at the start," 1 means "fully at the end." Unlike time, progress is *not* clamped. It can dip below 0 or rise above 1, which is exactly what happens when a curve overshoots its target before settling — more on that shortly.
+
+A straight diagonal line from `(0, 0)` to `(1, 1)` means progress advances at exactly the same rate as time — the property moves at a constant speed for the entire duration. Any curve that bows away from that diagonal is where things get interesting: a curve that dips *below* the diagonal early on is moving slower than "constant speed" at that point, and a curve that rises *above* it is moving faster.
+
+<Success title="Duration and timing function are independent">
+  `transition-duration` answers "how long," and `transition-timing-function` answers "how." Changing the duration stretches or compresses the *whole* curve in time without changing its shape — a 2-second `ease-in` still starts slow and finishes fast, just twice as slowly as a 1-second `ease-in`. Duration and timing function are two separate levers, and most of the *feel* of a transition comes from the second one, not the first.
+</Success>
+
+<RainbowDivider />
+
+## What Is a Cubic Bezier Curve?
+
+Every one of the five keyword timing functions — `linear`, `ease`, `ease-in`, `ease-out`, `ease-in-out` — is secretly a **cubic bezier curve**. They're just convenient, memorable names for five specific curves that the CSS spec pre-registered as keywords. Once you understand the curve underneath, the keywords stop feeling like magic words and start feeling like presets.
+
+A cubic bezier curve is built from four points:
+
+- **P0** and **P3** are fixed anchors at `(0, 0)` and `(1, 1)` — the start and end of every timing function, always. You never get to move these: every transition starts at 0% progress and ends at 100% progress, by definition.
+- **P1** and **P2** are the two *control points* you (or the keyword) get to place anywhere. Neither one sits on the curve itself — think of them as magnets. The curve is pulled toward each control point without ever quite touching it, more strongly near that end of the curve and less strongly further away.
+
+That's genuinely the whole idea. Drag P1 up and to the left, and the curve leaves the starting line at a steeper angle — progress accelerates quickly. Drag P2 down and to the right, and the curve approaches the finish line shallowly — progress decelerates gently before it gets there. Every named curve below is just a particular choice of where to put those two magnets.
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  /* The keyword on the left is shorthand for the cubic-bezier() value on the right. */
+  transition-timing-function: ease-in-out;
+  transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+`}
+</CodeBlock>
+
+Each `cubic-bezier(x1, y1, x2, y2)` call packs in exactly those two control points: `(x1, y1)` is P1, `(x2, y2)` is P2. You'll see this pattern in every curve section below — the graph shows where the two points sit, and the numbers underneath are literally what you'd type into `cubic-bezier()` to get that exact curve.
+
+<RainbowDivider />
+
+## The Five Named Curves
+
+### `linear`
+
+<EasingCurveGraph name="linear" />
+
+`linear` is the odd one out: it isn't really a curve at all. Its two control points, `(0.5, 0.5)` and `(0.5, 0.5)`, both sit exactly on the straight diagonal between P0 and P3 — so no matter how strongly they "pull," there's nothing off the line to pull *toward*. The result is a perfectly straight line, equivalent to `cubic-bezier(0, 0, 1, 1)`: progress advances at a constant rate for the entire duration, with no acceleration and no deceleration at either end.
+
+<TimingFunctionRace names={["linear", "ease", "ease-in", "ease-out", "ease-in-out"]} initialName="linear" />
+
+Watch the ghost trail above: it's the only one of the five that's perfectly evenly spaced. Every other curve bunches its dots somewhere.
+
+In practice, `linear` is rarely the right choice for movement — real-world motion almost never starts and stops instantly, so a linearly-moving object tends to read as mechanical or robotic. It earns its keep in a few specific places instead:
+
+- **Continuous, looping motion** — a spinner or a loading bar that's meant to feel perpetual rather than purposeful.
+- **Properties without a natural "settle"** — a `background-position` pan, or a color crossfade where there's no meaningful sense of "arriving."
+- **Anywhere the timing function is being driven by something else**, like a scroll position or a scrubber, where the browser's own easing would fight with the external progress source.
+
+### `ease`
+
+<EasingCurveGraph name="ease" />
+
+`ease` is CSS's *default* timing function — if you write `transition: opacity 300ms;` with no timing function at all, this is what you get. Its control points, `(0.25, 0.1)` and `(0.25, 1)`, sit a little above the diagonal near the start and hug close to full progress well before time runs out. The result: a quick, gentle ease in, a long comfortable middle at close to full speed, and a very soft ease out right at the very end.
+
+<Info title="Why this shape, specifically?">
+  `ease`'s curve isn't symmetric — it eases out far more than it eases in. That asymmetry is deliberate: objects that were already still and start moving (easing in) read as natural with just a touch of acceleration, but objects that are about to stop moving (easing out) read as much more natural with a longer, gentler deceleration — think of anything coming to rest in the real world, from a dropped ball to a car pulling into a parking spot. `ease` leans into that asymmetry, which is a big part of why it reads as the safe, "just works" default.
+</Info>
+
+Reach for `ease` (or just leave the timing function unset) for general-purpose UI motion where you don't have a strong opinion — hover states, simple fades, small position shifts. It's a genuinely good default, not merely the path of least resistance.
+
+### `ease-in`
+
+<EasingCurveGraph name="ease-in" />
+
+`ease-in`'s control points are `(0.42, 0)` and `(1, 1)` — notice that P2 sits exactly on the end anchor. With nothing pulling the curve away from the diagonal near the finish, there's no deceleration at all: the curve starts flat (slow) and just keeps accelerating, hardest right at the very end.
+
+That shape maps well onto one specific kind of motion: **things leaving**. An element sliding out of view, fading to fully transparent, or shrinking to nothing all feel natural starting slow and rushing toward their exit — because the viewer's attention is already elsewhere by the time it picks up speed, and the abrupt stop simply isn't visible; the element is already gone.
+
+<Warning title="The classic ease-in mistake">
+  `ease-in` on its own, for something *entering* the screen, is one of the most common animation missteps. The element crawls in barely moving, then suddenly slams into its final position at full speed — the exact opposite of the soft landing an entrance wants. If it feels like your motion "arrives too hard," you've probably reached for `ease-in` where `ease-out` belongs.
+</Warning>
+
+### `ease-out`
+
+<EasingCurveGraph name="ease-out" />
+
+`ease-out` mirrors `ease-in`: control points `(0, 0)` and `(0.58, 1)`, with P1 sitting exactly on the *start* anchor this time. All of the deceleration happens, and none of the acceleration — the curve leaves at full speed immediately and spends the rest of the duration gently gliding to a stop.
+
+This is the entrance curve. Anything appearing on screen — a modal fading in, a tooltip sliding into place, a dropdown expanding — reads as considered and deliberate with `ease-out`, because it mirrors how things settle in the physical world: fast to get moving, soft on arrival.
+
+<TimingFunctionRace names={["ease-in", "ease-out"]} initialName="ease-out" />
+
+Race these two back to back a few times. `ease-in` visibly lags at the start line before rushing the finish; `ease-out` is already moving the instant it's released and glides in gently. Same duration, same distance, opposite personalities — this is the pairing worth internalizing more than any other on this page.
+
+### `ease-in-out`
+
+<EasingCurveGraph name="ease-in-out" />
+
+`ease-in-out` combines both: `(0.42, 0)` and `(0.58, 1)` are near-mirror images of each other across the curve's midpoint, so it eases in gently, spends its middle stretch near full speed, and eases back out just as gently. Neither end is abrupt.
+
+That symmetry makes it the natural choice whenever a transition has no obvious "entrance" or "exit" to favor — motion that happens in place rather than arriving from or departing to somewhere. A toggle switch flipping, a value counting up, an accordion expanding and later collapsing with the *same* curve in both directions, or anything that loops and needs to feel equally comfortable moving forward and backward.
+
+<Info title="A useful rule of thumb">
+  If an element is *entering*, reach for `ease-out`. If it's *leaving*, reach for `ease-in`. If it's doing neither — just changing state in place — `ease-in-out` is almost always the safer symmetric choice over either one-sided curve.
+</Info>
+
+<RainbowDivider />
+
+## Beyond the Defaults: Supercharging a Curve
+
+The five keywords above are deliberately conservative — their control points never stray far past `x = 0.5`ish, which keeps the acceleration and deceleration gentle. Nothing stops you from pushing a control point further, though, and doing so lets you dial the *intensity* of a curve's personality up considerably.
+
+<EasingCurveGraph name="ease-in-out-mega" />
+
+This is `cubic-bezier(0.645, 0.045, 0.355, 1)` — an `ease-in-out` shape with both control points pushed much closer to the curve's flat ends. Compare it with the standard `ease-in-out` graph above: the middle stretch is noticeably steeper, and the ease in/out at either end is noticeably more pronounced. Same basic personality as `ease-in-out`, turned up.
+
+<TimingFunctionRace names={["ease-in-out", "ease-in-out-mega", "ease-mega"]} initialName="ease-in-out-mega" />
+
+Control points don't have to stay within the `0`–`1` box on the *y*-axis, either. Push P2's *y* value past 1 and the curve briefly rises above full progress before settling back down — the property visibly overshoots its target and eases back, the same way a spring does when you let go of it too fast.
+
+<EasingCurveGraph name="overshoot" />
+
+That's `cubic-bezier(0.325, 0, 0.7, 1.25)` — P2 sits at `y = 1.25`, a full quarter past the finish line. Race it against the pack:
+
+<TimingFunctionRace names={["ease-out", "overshoot"]} initialName="overshoot" />
+
+Watch the marker on `overshoot`: it visibly pushes past the finish line before settling back — a small, satisfying bounce rather than a hard stop. Used sparingly, this kind of overshoot is a great way to make a button press or a card popping into view feel tactile and alive.
+
+<Success title="This site uses one">
+  You don't have to take overshoot curves purely on faith — this very site defines `--motion-easing-overshoot: cubic-bezier(0.27, 0.22, 0.44, 1.03)` and `--motion-easing-bounce: cubic-bezier(0.34, 1.56, 0.64, 1)` as design tokens, used for exactly this kind of "arrived, and it feels good" micro-interaction. Next time something on this page pops rather than just appears, that's a curve just like the one above doing the work.
+</Success>
+
+<Warning title="A little goes a long way">
+  Overshoot and bounce curves read as playful and energetic, but they also draw a disproportionate amount of attention and take noticeably longer to fully settle than a curve that stays within `0`–`1`. Reserve them for small, infrequent, deliberately delightful moments — a like button, a success confirmation — rather than routine UI chrome. Applied everywhere, the effect stops feeling special and starts feeling like everything is jiggling.
+</Warning>
+
+<RainbowDivider />
+
+## A Quick Word on `steps()`
+
+Not every timing function is a curve. `steps(n, <jumpterm>)` divides the duration into `n` equal intervals and jumps discretely between them — no interpolation at all, just an instant snap from one value to the next. It's a fundamentally different model: a bezier curve describes a continuous rate of change, while `steps()` describes discrete, evenly-spaced jumps, which is exactly what a sprite-sheet animation, a ticking clock, or a typewriter-style text reveal needs.
+
+<CodeBlock language="css">
+{`
+  .sprite {
+    /* Jump through 8 frames over 800ms — no smoothing between them. */
+    transition-timing-function: steps(8, jump-start);
+  }
+`}
+</CodeBlock>
+
+Unlike every bezier curve above, `steps()` doesn't ease continuously — it holds a value, then jumps. Which of `n`'s interval boundaries actually produce a jump is decided by the second argument, the *jump-term*, and it's the part most easily glossed over:
+
+### `jump-start`
+
+<StepsEasingGraph name="jump-start" />
+
+The very first jump happens immediately, at `t = 0` — the value is never held at its starting point. From there it jumps again at every remaining interval boundary, reaching `1` for good one interval *before* the timeline ends and simply holding there. This is the shape behind the sprite example above: frame 1 shows the instant the element appears, not a blank hold.
+
+### `jump-end`
+
+<StepsEasingGraph name="jump-end" />
+
+The mirror image, and the default when no jump-term is given (`steps(5)` means `steps(5, jump-end)`). The value holds at `0` through the entire first interval, then jumps at every following boundary, with the final jump landing exactly on `t = 1`. A digital clock's seconds hand behaves this way: it sits still for a full second before ticking, not the other way around.
+
+### `jump-none`
+
+<StepsEasingGraph name="jump-none" />
+
+Neither end gets a jump — only the interior boundaries do, one fewer jump than `jump-start`/`jump-end`. That forces the height increments to divide the range into `n - 1` equal pieces instead of `n`, since the value still has to start at exactly `0` and finish at exactly `1` without a jump doing that work at either end.
+
+### `jump-both`
+
+<StepsEasingGraph name="jump-both" />
+
+Every boundary jumps, including both ends — one more jump than `jump-start`/`jump-end`, so the increments divide into `n + 1` pieces. The value jumps away from `0` immediately *and* jumps again on arrival at `1`, making it the busiest-looking of the four.
+
+<StepsEasingRace names={["jump-start", "jump-end", "jump-none", "jump-both"]} initialName="jump-start" />
+
+Race them back to back and watch where the ghost trail bunches up: `jump-start`'s dots crowd toward the beginning, `jump-end`'s crowd toward the finish, and `jump-both` visibly hops right off the start line and hops again right at the line. `jump-none` is the only one that doesn't visibly jump at either edge.
+
+For sprite sheets, typewriter reveals, and a progress bar built entirely from `steps()`, [Mastering CSS steps() for Discrete, Stepped Animations](/post/css-step-timing-function) works through several live examples in full. The [CSS Transitions Playground](/post/css-transitions-guide#interactive-example) in the companion post also has a dedicated `steps()` control with a live step-count and jump-direction picker if you'd rather tune it against a real transitioning element.
+
+## Designing Your Own Curve with `cubic-bezier()`
+
+Once the five keywords stop being enough, `cubic-bezier(x1, y1, x2, y2)` lets you place both control points anywhere you like. There's exactly one constraint worth internalizing:
+
+<Warning title="x must stay within 0 and 1">
+  P1 and P2's *x* values (the first and third numbers) are clamped to the `0`–`1` range by the CSS spec — pass anything outside it and the whole declaration is invalid. This isn't an arbitrary restriction: time only ever moves forward, so the curve has to be a proper function of *x* (exactly one *y* for every *x*). Letting *x* wander outside `0`–`1`, or letting the curve fold back on itself, would mean asking "what's the progress at a moment in time that doesn't exist yet" — there'd be no sensible answer. The *y* values, by contrast, are unrestricted in either direction, which is exactly how overshoot curves like the one above get their bounce.
+</Warning>
+
+A handful of hand-tuned curves come up often enough to be worth having on hand:
+
+| Recipe | Value | Feel |
+| --- | --- | --- |
+| Anticipation | `cubic-bezier(0.36, 0, 0.66, -0.56)` | Dips *below* 0 before advancing — a small wind-up before the motion starts, like a coiled spring. |
+| Punchy overshoot | `cubic-bezier(0.68, -0.55, 0.265, 1.55)` | Overshoots on *both* ends — a snappy, energetic pop. |
+| Soft landing | `cubic-bezier(0.16, 1, 0.3, 1)` | An intensified `ease-out` — leaves at full speed, decelerates hard and stays smooth all the way to a gentle stop. |
+| Sharp exit | `cubic-bezier(0.7, 0, 0.84, 0)` | An intensified `ease-in` — barely moves at first, then accelerates hard right up to the cut. |
+
+Rather than just reading numbers off a table, though, the fastest way to build an intuition for what P1 and P2 actually do is to move them yourself:
+
+<CubicBezierPlayground />
+
+Drag either handle (arrow keys work too, hold Shift for bigger steps) and watch three things update together: the curve itself, the live preview sliding across its track, and the `cubic-bezier(...)` string underneath — ready to copy straight into a stylesheet the moment it feels right.
+
+<Info title="Your browser has one of these too">
+  The playground above isn't the only place to drag a curve by hand — Chrome, Firefox, and Safari DevTools all render the same kind of visual editor the moment you click the little curve icon next to any `cubic-bezier(...)` value in the Styles/Rules pane. It's a great way to tune a curve that's already live on a real element, in its real context, without leaving the page you're debugging.
+</Info>
+
+<RainbowDivider />
+
+## Beyond `cubic-bezier()`: The `linear()` Function
+
+Every curve on this page so far has been a cubic bezier, and that's not a stylistic choice — it's a hard ceiling. A cubic curve is a single polynomial, which means it can only bend one way before settling: one acceleration, one deceleration, at most one overshoot past the finish line. That covers an enormous amount of real UI motion, but not all of it. A ball that bounces twice before coming to rest, or a curve with a shape too irregular to describe with just two control points, is structurally out of reach for `cubic-bezier()` — not a matter of finding better numbers, but a limit of what one cubic curve can express.
+
+CSS's `linear()` easing function removes that ceiling entirely. Instead of two control points, it takes any number of progress stops and draws a straight line between each consecutive pair — a piecewise-linear trace of whatever shape you're picturing:
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  /* Each number is a progress value; an optional percentage after it pins
+     that stop to an exact point in the duration. Stops without one are
+     spaced evenly across whatever room is left. */
+  transition-timing-function: linear(0, 0.5, 1);
+  transition-timing-function: linear(0, 0.63 25%, 0.9 45%, 1.04 65%, 1);
+`}
+</CodeBlock>
+
+The second line is a rough bounce-and-settle approximation — progress climbs past `1` twice before resting there, which no single `cubic-bezier()` call could ever produce, since a cubic curve can only cross its target once. Add more stops and the shape gets smoother; add fewer and it gets more angular. That's also exactly what makes `linear()` the tool behind most "spring easing" you'll see on the web: sample enough points along a real spring's decay curve and `linear()` can trace it almost exactly, something no fixed four-number formula can do.
+
+<LinearEasingGraph presetKey="bounce" />
+
+The dots mark each resolved stop — notice the middle three sit above the `y = 1` guide line before the curve settles back down onto it, which is exactly the double-overshoot the prose above describes.
+
+<LinearEasingRace names={["bounce", "spring", "anticipate", "smoothStep"]} initialName="bounce" />
+
+Flip between the four and race them: `bounce` and `spring` both overshoot and settle, but at different rates and with a different number of wobbles; `anticipate` visibly winds up *backwards* below `0` before it ever moves forward; `smoothStep` never leaves `0`–`1` at all, and just eases through the middle a little more gently than a straight line would.
+
+<Warning title="Check support before shipping it">
+  `linear()` is a newer spec addition than `cubic-bezier()` and `steps()`, both supported since CSS3, so confirm current browser support before relying on it for anything load-bearing. If you do, declare a `cubic-bezier()` fallback first: a browser that doesn't recognize `linear()` treats that second declaration as invalid and simply keeps the first, exactly like the keyword-then-value pattern shown earlier in this post. And if you want to build a curve like the one above yourself — dragging stops, pinning percentages, adding or removing points — [An Interactive Guide to the CSS linear() Easing Function](/post/css-linear-easing-function-guide) has a full draggable, open-stop-count playground plus the auto-spacing rules, spring/bounce recipes, and flat-segment syntax in full.
+</Warning>
+
+<RainbowDivider />
+
+## Choosing the Right Curve in Practice
+
+With five keywords, two supercharged variants, an overshoot curve, an entire playground for custom ones, and `linear()` for anything a single curve can't express, the actual decision usually comes down to a short mental checklist:
+
+| Question | Reach for |
+| --- | --- |
+| Is it entering the screen? | `ease-out` — fast to start, soft to land. |
+| Is it leaving the screen? | `ease-in` — slow to start, gone before the acceleration matters. |
+| Is it changing state in place (no clear entrance or exit)? | `ease-in-out` — symmetric, comfortable in both directions. |
+| Is it a continuous loop with no "arrival" at all? | `linear` — constant speed suits perpetual motion. |
+| Do you want it to feel tactile, springy, or celebratory? | An overshoot or bounce curve — sparingly. |
+| Is it a discrete, frame-by-frame effect rather than smooth movement? | `steps()` — not a curve at all, a different tool entirely. |
+| Does it need more than one bounce, or a shape two control points can't capture? | `linear()` — string together as many stops as the motion needs. |
+| None of the above feel quite right? | `cubic-bezier()` — design the exact curve you're picturing. |
+
+Duration matters here too, not just shape: a curve's personality reads clearly at 200–400ms, but stretch even the punchiest overshoot curve out to 2 seconds and it starts to feel sluggish rather than energetic — the [Best Practices](/post/css-transitions-guide#best-practices) section of the companion post covers picking a good duration in more depth.
+
+<RainbowDivider />
+
+## Accessibility and Performance
+
+Everything on this page is a `transform`-driven demo, which keeps it firmly in GPU-accelerated, main-thread-friendly territory — the [Why GPU-Accelerated Properties Are Cheap](/post/css-transitions-guide#why-gpu-accelerated-properties-are-cheap) section of the companion post covers exactly why that matters and which properties to prefer.
+
+The one thing worth calling out specifically here: every race demo on this page checks `prefers-reduced-motion` and disables its own Play button when it's set, since the whole point of those demos is motion that some readers have explicitly asked not to see. The static curve graphs and the bezier playground stay fully usable either way — nothing about *understanding* a curve's shape requires it to actually move.
+
+<Info title="Applying this to your own transitions">
+  The same idea applies to any timing function you ship, not just the demos here: overshoot and bounce curves in particular can read as excessive motion to someone with a vestibular disorder, so wrap them — like any non-essential motion — in `@media (prefers-reduced-motion: reduce)`. The [Accessibility: Respecting Motion Preferences](/post/css-transitions-guide#accessibility-respecting-motion-preferences) section of the companion post has the full pattern.
+</Info>
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+### Why does my `transition-timing-function` seem to have no effect?
+
+The most common cause is a `transition-duration` of `0s` — that's the default when it's left unset, and with no duration there's nothing to ease across, so the timing function has nothing to do. After that, check that the property is actually interpolable at all (`display`, for instance, isn't — see Pitfall 2 in the companion post) and that it's genuinely covered by `transition-property` or the shorthand you're using.
+
+---
+
+### Does `animation-timing-function` behave the same way as `transition-timing-function` on a multi-step `@keyframes` animation?
+
+Only for the simplest, two-keyframe case. Once an animation has three or more keyframes, the timing function applies *between each consecutive pair* by default, not once across the whole animation — a three-keyframe `ease-in-out` animation eases in and out twice, once per segment, not once overall. You can also set `animation-timing-function` on an individual keyframe selector to override just that one segment.
+
+---
+
+### Do `ease`, `ease-in`, and the other keywords produce identical curves everywhere — CSS, the Web Animations API, SVG?
+
+Yes. They're standardized `cubic-bezier()` control points, not browser-specific approximations, so the same keyword produces numerically identical motion whether it's written in a stylesheet, passed to `element.animate()` in JavaScript, or used as an SVG `<animate>` easing value.
+
+---
+
+### Can a transition switch from one curve to another partway through?
+
+No — the timing function isn't itself animatable; one curve governs the whole transition (or one per segment, in a multi-keyframe animation). To make motion feel like its curve changes mid-flight, chain separate transitions or keyframe segments back to back, each with its own timing function, rather than expecting one curve to change shape live.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+A timing function is a curve, not a keyword — five specific curves, in the case of the CSS defaults, each built from the same four points: two fixed anchors at the start and end, and two control points you (or the browser) get to place. `ease-out` puts its pull near the start and eases out; `ease-in` puts it near the end and eases in; `ease-in-out` splits the difference; `linear` refuses to pull at all. Once that shape clicks, `cubic-bezier()` stops being an intimidating four-number incantation and starts being exactly what it is: two points on a graph, placed wherever the motion you're picturing needs them to be.
+
+**Key takeaways:**
+
+- A timing function maps *time* (always 0–1) to *progress* (can exceed 0–1 for overshoot) — that mapping is the curve.
+- Every named keyword is a specific `cubic-bezier(x1, y1, x2, y2)` in disguise; P0/P3 are fixed at `(0,0)`/`(1,1)`, only P1/P2 move.
+- `ease-out` for entrances, `ease-in` for exits, `ease-in-out` for in-place state changes, `linear` for continuous loops — as a starting default, not an absolute rule.
+- Control-point *x* values must stay within `0`–`1`; *y* values can go beyond `0`–`1`, which is how overshoot and bounce curves get their bounce.
+- `cubic-bezier()` is capped at one bend by definition; `linear()` lifts that ceiling with an open-ended list of stops, trading smooth interpolation for however many points the shape needs.
+- `steps()` is a different model entirely — discrete jumps, not a continuous curve — and belongs to a different kind of animation.
+- Reserve overshoot/bounce curves for small, infrequent, deliberately delightful moments, and always respect `prefers-reduced-motion`.

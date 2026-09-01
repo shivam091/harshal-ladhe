@@ -13,6 +13,13 @@ import { AsideInfo, AsideSuccess, AsideWarning, AsideQuote } from "@/components/
 import Sandbox from "@/components/Sandbox";
 import LikeButtonDemo from "@/components/LikeButtonDemo";
 import RainbowDivider from "@/components/RainbowDivider";
+import EasingCurveGraph from "@/components/EasingCurveGraph";
+import TimingFunctionRace from "@/components/TimingFunctionRace";
+import CubicBezierPlayground from "@/components/CubicBezierPlayground";
+import LinearEasingGraph from "@/components/LinearEasingGraph";
+import LinearEasingRace from "@/components/LinearEasingRace";
+import StepsEasingGraph from "@/components/StepsEasingGraph";
+import StepsEasingRace from "@/components/StepsEasingRace";
 import IconStretchyGuy from "@/icons/IconStretchyGuy";
 import SvgSnippet from "@/components/SvgSnippet";
 import InteractiveSvgPanel from "@/components/InteractiveSvgPanel";
@@ -70,6 +77,13 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     Sandbox,
     LikeButtonDemo,
     RainbowDivider,
+    EasingCurveGraph,
+    TimingFunctionRace,
+    CubicBezierPlayground,
+    LinearEasingGraph,
+    LinearEasingRace,
+    StepsEasingGraph,
+    StepsEasingRace,
     IconStretchyGuy,
     SvgSnippet,
     InteractiveSvgPanel,

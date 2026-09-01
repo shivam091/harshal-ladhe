@@ -481,5 +481,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "ui-animation": {
     title: "UI Animation Design and Implementation",
     description: "Articles on animating interface elements to communicate state, guide attention, and improve perceived responsiveness.",
+  },
+  "cubic-bezier": {
+    title: "Designing Custom Curves with `cubic-bezier()`",
+    description: "How the `cubic-bezier(x1, y1, x2, y2)` function works — control points, the time-vs-progress model, and hand-tuning your own easing curves.",
+  },
+  "easing": {
+    title: "Understanding CSS Easing Curves",
+    description: "The shape behind every named timing function — why `ease-in`, `ease-out`, and `ease-in-out` feel so different, and how to pick the right one.",
+  },
+  "linear-easing": {
+    title: "The CSS `linear()` Easing Function",
+    description: "Guides to the `linear()` timing function — piecewise-linear curves with an open-ended list of stops, for shapes a single `cubic-bezier()` can't express, like spring and bounce easing.",
   }
 };
