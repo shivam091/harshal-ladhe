@@ -276,6 +276,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-02-20", change: "Initial publication & added tags' meta" },
     ],
+  },
+  {
+    slug: "css-keyframes-guide",
+    title: "An Interactive Guide to CSS Keyframes",
+    excerpt: "Bring static designs to life with keyframes",
+    description: "Master multi-step CSS animations using @keyframes. Learn control, performance, GPU optimization, and advanced web motion.",
+    category: ["Animations"],
+    tags: ["css", "keyframes", "animation", "gpu-performance", "multi-step", "web-motion", "ui-design", "frontend", "scroll-animation", "view-timeline", "advanced-css"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-07-31", change: "Initial publication" },
+    ],
   }
 ];
 

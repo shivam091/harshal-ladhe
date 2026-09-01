@@ -421,5 +421,29 @@ export const tagMeta: Record<string, TagMeta> = {
   "web-animation": {
     title: "Web Animation Fundamentals and Techniques",
     description: "Broad coverage of animating web interfaces, spanning CSS, JavaScript, and the browser APIs that drive motion.",
+  },
+  "keyframes": {
+    title: "Mastering CSS `@keyframes` Animations",
+    description: "In-depth guides on the CSS `@keyframes` rule for defining multi-stage, time-driven animations with full control over each step.",
+  },
+  "gpu-performance": {
+    title: "GPU-Accelerated Animation Performance",
+    description: "Techniques for keeping animations smooth by favoring properties the browser can hand off to the GPU instead of the main thread.",
+  },
+  "multi-step": {
+    title: "Multi-Step Animation Sequences",
+    description: "Building animations with more than two states, using percentage-based checkpoints to choreograph complex motion.",
+  },
+  "web-motion": {
+    title: "Web Motion Design and Implementation",
+    description: "Articles on designing and implementing purposeful motion across web interfaces, from micro-interactions to full-page effects.",
+  },
+  "scroll-animation": {
+    title: "Scroll-Driven Animation Techniques",
+    description: "Guides on tying animation progress to a user's scroll position instead of a fixed time-based duration.",
+  },
+  "view-timeline": {
+    title: "CSS `view()` Timelines Explained",
+    description: "Understanding the `animation-timeline` property and `view()` timelines for animations that progress as an element moves through the viewport.",
   }
 };

@@ -1,0 +1,122 @@
+:root {
+  --pg-violet: #a78bfa;
+  --pg-violet-dark: #8b5cf6;
+  --pg-accent: #f472b6;
+  --pg-accent-dark: #ec4899;
+}
+
+@keyframes travel {
+  0% {
+    transform: translateX(0) rotate(0deg) scale(1);
+    background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+    border-radius: var(--pg-radius-md);
+  }
+
+  50% {
+    transform: translateX(230px) rotate(180deg) scale(1.3);
+    background: linear-gradient(135deg, var(--pg-violet), var(--pg-violet-dark));
+    border-radius: 50%;
+  }
+
+  100% {
+    transform: translateX(460px) rotate(360deg) scale(1);
+    background: linear-gradient(135deg, var(--pg-accent), var(--pg-accent-dark));
+    border-radius: var(--pg-radius-md);
+  }
+}
+
+@media (max-width: 650px) {
+  @keyframes travel {
+    50% {
+      transform: translateX(35vw) rotate(180deg) scale(1.3);
+    }
+
+    100% {
+      transform: translateX(70vw) rotate(360deg) scale(1);
+    }
+  }
+}
+
+/* Demo area */
+
+.demo-area {
+  position: relative;
+  padding: 16px;
+  border: 1px dashed var(--pg-border);
+  border-radius: var(--pg-radius-md);
+  background: var(--pg-surface-muted);
+  overflow: hidden;
+}
+
+.demo-track {
+  position: relative;
+  height: 150px;
+  display: flex;
+  align-items: center;
+}
+
+#animated-box {
+  position: relative;
+  z-index: 1;
+  width: 60px;
+  height: 60px;
+  box-shadow: var(--pg-shadow-sm);
+  will-change: transform, background-color;
+}
+
+.tip {
+  margin: 14px 0 0;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+  border-radius: 0;
+}
+
+/* Buttons */
+
+.button-row {
+  display: flex;
+  gap: 12px;
+}
+
+.button-row .toggle-btn,
+.button-row .secondary-btn {
+  flex: 1;
+}
+
+.secondary-btn {
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--pg-text);
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.secondary-btn:hover {
+  background: var(--pg-surface);
+}
+
+.secondary-btn:active {
+  transform: scale(0.98);
+}
+
+.secondary-btn:focus-visible {
+  outline: 2px solid var(--pg-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .demo-track {
+    height: 120px;
+  }
+
+  #animated-box {
+    width: 48px;
+    height: 48px;
+  }
+}

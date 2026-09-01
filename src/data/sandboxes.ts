@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-keyframes-guide",
+    title: "CSS Keyframes Playground",
+    description: "Tune duration, delay, timing function, iteration count, direction, and fill mode live against a multi-step @keyframes animation.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "mastering-js-observers",
     title: "JavaScript Observers Playground",
     description: "Watch MutationObserver, IntersectionObserver, and ResizeObserver fire live — mutate the DOM, scroll targets into view, and resize a box while the console logs every callback.",
