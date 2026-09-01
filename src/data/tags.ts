@@ -417,5 +417,9 @@ export const tagMeta: Record<string, TagMeta> = {
   "lazy-loading": {
     title: "Lazy Loading Techniques",
     description: "Techniques for deferring the loading of images, components, and data until they're actually needed, improving initial page performance.",
+  },
+  "web-animation": {
+    title: "Web Animation Fundamentals and Techniques",
+    description: "Broad coverage of animating web interfaces, spanning CSS, JavaScript, and the browser APIs that drive motion.",
   }
 };

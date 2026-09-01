@@ -259,6 +259,23 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-07-31", change: "Initial publication" },
     ]
+  },
+  {
+    slug: "svg-essentials-mastering-the-path-element",
+    title: "SVG Essentials: Mastering the Path Element",
+    excerpt: "Understand SVG paths, curves, and commands",
+    description: "A complete guide to the SVG path element — understanding path commands, coordinates, bézier curves, arcs, and how to read and build complex vector shapes.",
+    category: ["SVG"],
+    tags: ["svg", "path-data", "vector", "javascript", "icons", "frontend-development", "bezier-curves", "web-animation", "ui-design"],
+    image: {
+      path: "/assets/img/posts/svg/svg-essentials-mastering-the-path-element/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Cover image for SVG Essentials showing colorful diagrams of SVG path commands, curves, and arcs",
+    },
+    changelog: [
+      { date: "2026-02-20", change: "Initial publication & added tags' meta" },
+    ],
   }
 ];
 

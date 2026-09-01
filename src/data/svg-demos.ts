@@ -20,6 +20,521 @@ export function resolveRangeMax(control: SvgDemoRangeControl, values: SvgDemoVal
 
 export const svgDemos: SvgDemoMeta[] = [
   {
+    slug: "path-m-command-demo",
+    title: "Path Command: M (MoveTo)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "x", label: "Start X", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "y", label: "Start Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 }
+    ],
+    render: (values) => {
+      const x = Number(values.x);
+      const y = Number(values.y);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "m" : "M";
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Coordinate guides -->
+  <line x1="${x}" y1="0" x2="${x}" y2="100" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.45" />
+  <line x1="0" y1="${y}" x2="100" y2="${y}" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.45" />
+
+  <!-- MoveTo point -->
+  <circle cx="${x}" cy="${y}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${x}" cy="${y}" r="1" fill="#6366f1" />
+
+  <!-- M command -->
+  <path d="${command} ${x} ${y}" fill="none" stroke="#6366f1" stroke-width="1" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-l-command-demo",
+    title: "Path Command: L (LineTo)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "startX", label: "Start X", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "startY", label: "Start Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "endX", label: "End X", type: "range", min: 0, max: 100, step: 1, defaultValue: 90 },
+      { id: "endY", label: "End Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 90 }
+    ],
+    render: (values) => {
+      const sx = Number(values.startX);
+      const sy = Number(values.startY);
+      const ex = Number(values.endX);
+      const ey = Number(values.endY);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "l" : "L";
+      const dx = ex - sx;
+      const dy = ey - sy;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Coordinate guides -->
+  <line x1="${sx}" y1="${sy}" x2="${ex}" y2="${sy}" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
+  <line x1="${ex}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
+
+  <!-- Main path -->
+  <path d="M ${sx} ${sy} ${command} ${relative ? dx : ex} ${relative ? dy : ey}" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Start point -->
+  <circle cx="${sx}" cy="${sy}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${sx}" cy="${sy}" r="1" fill="#6366f1" />
+
+  <!-- End point -->
+  <circle cx="${ex}" cy="${ey}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${ex}" cy="${ey}" r="1" fill="#6366f1" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-h-command-demo",
+    title: "Path Command: H (Horizontal LineTo)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "endX", label: "End X", type: "range", min: 0, max: 100, step: 1, defaultValue: 90 }
+    ],
+    render: (values) => {
+      const x = Number(values.endX);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "h" : "H";
+      const startX = 10;
+      const y = 50;
+      const dx = x - startX;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Horizontal construction guide -->
+  <line x1="${startX}" y1="${y}" x2="${x}" y2="${y}" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
+
+  <!-- Vertical guide to endpoint -->
+  <line x1="${x}" y1="20" x2="${x}" y2="80" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.4" />
+
+  <path d="M ${startX} ${y} ${command} ${relative ? dx : x}" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Start -->
+  <circle cx="${startX}" cy="${y}" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- End -->
+  <circle cx="${x}" cy="${y}" r="2" fill="#10b981" opacity="0.2" />
+  <circle cx="${x}" cy="${y}" r="1" fill="#10b981" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-v-command-demo",
+    title: "Path Command: V (Vertical LineTo)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "endY", label: "End Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 90 }
+    ],
+    render: (values) => {
+      const y = Number(values.endY);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "v" : "V";
+      const startY = 10;
+      const x = 50;
+      const dy = y - startY;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Vertical construction guide -->
+  <line x1="${x}" y1="${startY}" x2="${x}" y2="${y}" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
+
+  <!-- Horizontal guide -->
+  <line x1="20" y1="${y}" x2="80" y2="${y}" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.4" />
+
+  <path d="M ${x} ${startY} ${command} ${relative ? dy : y}" fill="none" stroke="#f43f5e" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Start -->
+  <circle cx="${x}" cy="${startY}" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- End -->
+  <circle cx="${x}" cy="${y}" r="2" fill="#f43f5e" opacity="0.2" />
+  <circle cx="${x}" cy="${y}" r="1" fill="#f43f5e" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-z-command-demo",
+    title: "Path Command: Z (ClosePath)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "peakX", label: "Peak X", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 },
+      { id: "peakY", label: "Peak Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 }
+    ],
+    render: (values) => {
+      const x = Number(values.peakX);
+      const y = Number(values.peakY);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "l" : "L";
+      const startX = 20;
+      const startY = 80;
+      const endX = 80;
+      const endY = 80;
+      const peakDX = x - startX;
+      const peakDY = y - startY;
+      const endDX = endX - x;
+      const endDY = endY - y;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Closing edge guide -->
+  <line x1="80" y1="80" x2="20" y2="80" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.6" />
+
+  <path d="M ${startX} ${startY} ${command} ${relative ? peakDX : x} ${relative ? peakDY : y} ${command} ${relative ? endDX : endX} ${relative ? endDY : endY} Z" fill="#6366f1" fill-opacity="0.2" stroke="#6366f1" stroke-width="1.5" stroke-linejoin="round" />
+
+  <!-- Start / close point -->
+  <circle cx="${startX}" cy="${startY}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${startX}" cy="${startY}" r="1" fill="#6366f1" />
+
+  <!-- Peak -->
+  <circle cx="${x}" cy="${y}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${x}" cy="${y}" r="1" fill="#6366f1" />
+
+  <!-- End -->
+  <circle cx="${endX}" cy="${endY}" r="1" fill="var(--color-fg-muted)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-q-command-demo",
+    title: "Path Command: Q (Quadratic Bézier)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "startX", label: "Start X", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "startY", label: "Start Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 },
+      { id: "controlX", label: "Control X", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 },
+      { id: "controlY", label: "Control Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "endX", label: "End X", type: "range", min: 0, max: 100, step: 1, defaultValue: 90 },
+      { id: "endY", label: "End Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 }
+    ],
+    render: (values) => {
+      const sx = Number(values.startX);
+      const sy = Number(values.startY);
+      const cx = Number(values.controlX);
+      const cy = Number(values.controlY);
+      const ex = Number(values.endX);
+      const ey = Number(values.endY);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "q" : "Q";
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Bézier control skeleton -->
+  <path d="M ${sx} ${sy} L ${cx} ${cy} L ${ex} ${ey}" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.7" />
+
+  <!-- Main curve -->
+  <path d="M ${sx} ${sy} ${command} ${relative ? cx - sx : cx} ${relative ? cy - sy : cy} ${relative ? ex - sx : ex} ${relative ? ey - sy : ey}" fill="none" stroke="#ec4899" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Start -->
+  <circle cx="${sx}" cy="${sy}" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- Control point -->
+  <circle cx="${cx}" cy="${cy}" r="2" fill="#ec4899" opacity="0.2" />
+  <circle cx="${cx}" cy="${cy}" r="1" fill="#ec4899" />
+
+  <!-- End -->
+  <circle cx="${ex}" cy="${ey}" r="1" fill="var(--color-fg-muted)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-t-command-demo",
+    title: "Path Command: T (Smooth Quadratic Bézier)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "startX", label: "Start X", type: "range", min: 0, max: 50, step: 1, defaultValue: 10 },
+      { id: "startY", label: "Start Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 },
+      { id: "controlX", label: "Q Control X", type: "range", min: 0, max: 100, step: 1, defaultValue: 30 },
+      { id: "controlY", label: "Q Control Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "junctionX", label: "Junction X", type: "range", min: 20, max: 80, step: 1, defaultValue: 50 },
+      { id: "junctionY", label: "Junction Y", type: "range", min: 20, max: 80, step: 1, defaultValue: 50 },
+      { id: "endX", label: "End X", type: "range", min: 50, max: 100, step: 1, defaultValue: 90 },
+      { id: "endY", label: "End Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 }
+    ],
+    render: (values) => {
+      const sx = Number(values.startX);
+      const sy = Number(values.startY);
+      const qx = Number(values.controlX);
+      const qy = Number(values.controlY);
+      const jx = Number(values.junctionX);
+      const jy = Number(values.junctionY);
+      const ex = Number(values.endX);
+      const ey = Number(values.endY);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "q" : "Q";
+      const tCommand = relative ? "t" : "T";
+
+      const reflectedX = 2 * jx - qx;
+      const reflectedY = 2 * jy - qy;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- First quadratic skeleton -->
+  <path d="M ${sx} ${sy} L ${qx} ${qy} L ${jx} ${jy}" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.7" />
+
+  <!-- Reflected control skeleton -->
+  <path d="M ${jx} ${jy} L ${reflectedX} ${reflectedY} L ${ex} ${ey}" fill="none" stroke="var(--color-fg-accent)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.6" />
+
+  <!-- Main path -->
+  <path d="M ${sx} ${sy} ${command} ${relative ? qx - sx : qx} ${relative ? qy - sy : qy} ${relative ? jx - sx : jx} ${relative ? jy - sy : jy} ${tCommand} ${relative ? ex - jx : ex} ${relative ? ey - jy : ey}" fill="none" stroke="#ec4899" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Start -->
+  <circle cx="${sx}" cy="${sy}" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- Original control -->
+  <circle cx="${qx}" cy="${qy}" r="2" fill="#ec4899" opacity="0.2" />
+  <circle cx="${qx}" cy="${qy}" r="1" fill="#ec4899" />
+
+  <!-- Junction -->
+  <circle cx="${jx}" cy="${jy}" r="2" fill="var(--color-fg-muted)" opacity="0.2" />
+  <circle cx="${jx}" cy="${jy}" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- Reflected/implicit T control -->
+  <circle cx="${reflectedX}" cy="${reflectedY}" r="2" fill="none" stroke="#ec4899" stroke-width="0.75" stroke-dasharray="2 2" />
+
+  <!-- End -->
+  <circle cx="${ex}" cy="${ey}" r="1" fill="var(--color-fg-muted)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-c-command-demo",
+    title: "Path Command: C (Cubic Bézier)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "startX", label: "Start X", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "startY", label: "Start Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 },
+      { id: "control1X", label: "C1 (Entry) X", type: "range", min: 0, max: 50, step: 1, defaultValue: 30 },
+      { id: "control1Y", label: "C1 (Entry) Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "control2X", label: "C2 (Exit) X", type: "range", min: 50, max: 100, step: 1, defaultValue: 70 },
+      { id: "control2Y", label: "C2 (Exit) Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 90 },
+      { id: "endX", label: "End X", type: "range", min: 0, max: 100, step: 1, defaultValue: 90 },
+      { id: "endY", label: "End Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 }
+    ],
+    render: (values) => {
+      const sx = Number(values.startX);
+      const sy = Number(values.startY);
+      const c1x = Number(values.control1X);
+      const c1y = Number(values.control1Y);
+      const c2x = Number(values.control2X);
+      const c2y = Number(values.control2Y);
+      const ex = Number(values.endX);
+      const ey = Number(values.endY);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "c" : "C";
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- First control handle -->
+  <line x1="${sx}" y1="${sy}" x2="${c1x}" y2="${c1y}" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.7" />
+
+  <!-- Second control handle -->
+  <line x1="${ex}" y1="${ey}" x2="${c2x}" y2="${c2y}" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.7" />
+
+  <!-- Main curve -->
+  <path d="M ${sx} ${sy} ${command} ${relative ? c1x - sx : c1x} ${relative ? c1y - sy : c1y} ${relative ? c2x - sx : c2x} ${relative ? c2y - sy : c2y} ${relative ? ex - sx : ex} ${relative ? ey - sy : ey}" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Start -->
+  <circle cx="${sx}" cy="${sy}" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- C1 -->
+  <circle cx="${c1x}" cy="${c1y}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${c1x}" cy="${c1y}" r="1" fill="#6366f1" />
+
+  <!-- C2 -->
+  <circle cx="${c2x}" cy="${c2y}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${c2x}" cy="${c2y}" r="1" fill="#6366f1" />
+
+  <!-- End -->
+  <circle cx="${ex}" cy="${ey}" r="1" fill="var(--color-fg-muted)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-s-command-demo",
+    title: "Path Command: S (Smooth Cubic Bézier)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "startX", label: "Start X", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "startY", label: "Start Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 },
+      { id: "control2X", label: "C2 X", type: "range", min: 10, max: 50, step: 1, defaultValue: 40 },
+      { id: "control2Y", label: "C2 Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 10 },
+      { id: "junctionX", label: "Junction X", type: "range", min: 30, max: 70, step: 1, defaultValue: 50 },
+      { id: "junctionY", label: "Junction Y", type: "range", min: 30, max: 70, step: 1, defaultValue: 50 },
+      { id: "controlS2X", label: "S2 X", type: "range", min: 50, max: 100, step: 1, defaultValue: 80 },
+      { id: "controlS2Y", label: "S2 Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 90 },
+      { id: "endX", label: "End X", type: "range", min: 70, max: 100, step: 1, defaultValue: 90 },
+      { id: "endY", label: "End Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 }
+    ],
+    render: (values) => {
+      const sx = Number(values.startX);
+      const sy = Number(values.startY);
+      const c2x = Number(values.control2X);
+      const c2y = Number(values.control2Y);
+      const jx = Number(values.junctionX);
+      const jy = Number(values.junctionY);
+      const s2x = Number(values.controlS2X);
+      const s2y = Number(values.controlS2Y);
+      const ex = Number(values.endX);
+      const ey = Number(values.endY);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "c" : "C";
+      const sCommand = relative ? "s" : "S";
+
+      const c1x = 20;
+      const c1y = 10;
+      const reflectedX = 2 * jx - c2x;
+      const reflectedY = 2 * jy - c2y;
+
+      const c1 = relative ? `${c1x - sx} ${c1y - sy}` : `${c1x} ${c1y}`;
+      const c2 = relative ? `${c2x - sx} ${c2y - sy}` : `${c2x} ${c2y}`;
+      const firstEnd = relative ? `${jx - sx} ${jy - sy}` : `${jx} ${jy}`;
+      const sControl = relative ? `${s2x - jx} ${s2y - jy}` : `${s2x} ${s2y}`;
+      const secondEnd = relative ? `${ex - jx} ${ey - jy}` : `${ex} ${ey}`;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Previous cubic control skeleton -->
+  <path d="M ${sx} ${sy} L ${c1x} ${c1y} L ${c2x} ${c2y} L ${jx} ${jy}" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.7" />
+
+  <!-- Smooth reflected control -->
+  <path d="M ${jx} ${jy} L ${reflectedX} ${reflectedY} L ${s2x} ${s2y} L ${ex} ${ey}" fill="none" stroke="var(--color-fg-accent)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.65" />
+
+  <!-- Main path -->
+  <path d="M ${sx} ${sy} ${command} ${c1} ${c2} ${firstEnd} ${sCommand} ${sControl} ${secondEnd}" fill="none" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Start -->
+  <circle cx="${sx}" cy="${sy}" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- Previous C2 -->
+  <circle cx="${c2x}" cy="${c2y}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${c2x}" cy="${c2y}" r="1" fill="#6366f1" />
+
+  <!-- Junction -->
+  <circle cx="${jx}" cy="${jy}" r="2" fill="var(--color-fg-muted)" opacity="0.2" />
+  <circle cx="${jx}" cy="${jy}" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- Implicit reflected control -->
+  <circle cx="${reflectedX}" cy="${reflectedY}" r="2" fill="none" stroke="#6366f1" stroke-width="0.75" stroke-dasharray="2 2" />
+
+  <!-- S second control -->
+  <circle cx="${s2x}" cy="${s2y}" r="2" fill="#6366f1" opacity="0.2" />
+  <circle cx="${s2x}" cy="${s2y}" r="1" fill="#6366f1" />
+
+  <!-- End -->
+  <circle cx="${ex}" cy="${ey}" r="1" fill="var(--color-fg-muted)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "path-a-command-demo",
+    title: "Path Command: A (Elliptical Arc)",
+    controls: [
+      { id: "coordinateSystem", label: "Coordinate System", type: "select", options: ["absolute", "relative"], defaultValue: "absolute" },
+      { id: "startX", label: "Start X", type: "range", min: 0, max: 100, step: 1, defaultValue: 20 },
+      { id: "startY", label: "Start Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 },
+      { id: "rx", label: "rx", type: "range", min: 10, max: 50, step: 1, defaultValue: 30 },
+      { id: "ry", label: "ry", type: "range", min: 10, max: 50, step: 1, defaultValue: 20 },
+      { id: "rotation", label: "Rotation", type: "range", min: 0, max: 360, step: 1, defaultValue: 0 },
+      { id: "largeArc", label: "Large Arc", type: "select", options: ["0", "1"], defaultValue: "0" },
+      { id: "sweep", label: "Sweep", type: "select", options: ["0", "1"], defaultValue: "1" },
+      { id: "endX", label: "End X", type: "range", min: 0, max: 100, step: 1, defaultValue: 80 },
+      { id: "endY", label: "End Y", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 }
+    ],
+    render: (values) => {
+      const sx = Number(values.startX);
+      const sy = Number(values.startY);
+      const rx = Number(values.rx);
+      const ry = Number(values.ry);
+      const rotation = Number(values.rotation);
+      const largeArc = Number(values.largeArc);
+      const sweep = Number(values.sweep);
+      const ex = Number(values.endX);
+      const ey = Number(values.endY);
+      const relative = values.coordinateSystem === "relative";
+      const command = relative ? "a" : "A";
+
+      const dx = ex - sx;
+      const dy = ey - sy;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Approximate ellipse used to visualize rx / ry -->
+  <ellipse cx="${(sx + ex) / 2}" cy="${(sy + ey) / 2}" rx="${rx}" ry="${ry}" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.55" transform="rotate(${rotation} ${(sx + ex) / 2} ${(sy + ey) / 2})" />
+
+  <!-- Start-to-end chord -->
+  <line x1="${sx}" y1="${sy}" x2="${ex}" y2="${ey}" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.45" />
+
+  <!-- Arc -->
+  <path d="M ${sx} ${sy} ${command} ${rx} ${ry} ${rotation} ${largeArc} ${sweep} ${relative ? dx : ex} ${relative ? dy : ey}" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" />
+
+  <!-- Start point -->
+  <circle cx="${sx}" cy="${sy}" r="2" fill="#10b981" opacity="0.2" />
+  <circle cx="${sx}" cy="${sy}" r="1" fill="#10b981" />
+
+  <!-- End point -->
+  <circle cx="${ex}" cy="${ey}" r="2" fill="#10b981" opacity="0.2" />
+  <circle cx="${ex}" cy="${ey}" r="1" fill="#10b981" />
+
+  <!-- Arc midpoint / ellipse center -->
+  <circle cx="${(sx + ex) / 2}" cy="${(sy + ey) / 2}" r="1" fill="var(--color-fg-muted)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "heart-shape-demo",
+    title: "Practical Example: The Heart Shape",
+    controls: [
+      { id: "radius", label: "Hump Radius", type: "range", min: 15, max: 25, step: 1, defaultValue: 20 },
+      { id: "tip", label: "Tip Depth", type: "range", min: 70, max: 100, step: 1, defaultValue: 95 },
+      { id: "bulge", label: "Bulge", type: "range", min: 40, max: 80, step: 1, defaultValue: 65 }
+    ],
+    render: (values) => {
+      const r = Number(values.radius);
+      const tip = Number(values.tip);
+      const bulge = Number(values.bulge);
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Construction guides -->
+  <path d="M 90 35 L 90 ${bulge} L 50 ${tip} L 10 ${bulge} L 10 35" fill="none" stroke="var(--color-fg-accent)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.45" />
+
+  <!-- Horizontal center guide -->
+  <line x1="10" y1="35" x2="90" y2="35" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.4" />
+
+  <!-- Heart -->
+  <path d="M 10 35 A ${r} ${r} 0 0 1 50 35 A ${r} ${r} 0 0 1 90 35 Q 90 ${bulge} 50 ${tip} Q 10 ${bulge} 10 35 Z" fill="#f43f5e" fill-opacity="0.2" stroke="#e11d48" stroke-width="1.5" stroke-linejoin="round" />
+
+  <!-- Left hump center -->
+  <circle cx="30" cy="35" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- Right hump center -->
+  <circle cx="70" cy="35" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- Left bulge control -->
+  <circle cx="90" cy="${bulge}" r="2" fill="#e11d48" opacity="0.2" />
+  <circle cx="90" cy="${bulge}" r="1" fill="#e11d48" />
+
+  <!-- Right bulge control -->
+  <circle cx="10" cy="${bulge}" r="2" fill="#e11d48" opacity="0.2" />
+  <circle cx="10" cy="${bulge}" r="1" fill="#e11d48" />
+
+  <!-- Tip -->
+  <circle cx="50" cy="${tip}" r="2" fill="#e11d48" opacity="0.2" />
+  <circle cx="50" cy="${tip}" r="1" fill="#e11d48" />
+
+  <!-- Start point -->
+  <circle cx="10" cy="35" r="1" fill="var(--color-fg-muted)" />
+
+  <!-- End / close point -->
+  <circle cx="10" cy="35" r="1.5" fill="var(--color-fg-muted)" />
+</svg>`;
+    }
+  },
+
+  {
     slug: "line-demo",
     title: "Interactive Example - Line",
     controls: [
