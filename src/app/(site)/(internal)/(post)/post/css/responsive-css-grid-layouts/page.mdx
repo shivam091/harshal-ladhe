@@ -8,8 +8,8 @@ Welcome to **Part 3** of the CSS Grid Fundamentals Series — the final and most
 
 So far, we've explored:
 
-- [Part 1](/post/css/getting-started-with-css-grid): Grid basics, tracks, and layout structure
-- [Part 2](/post/css/mastering-css-grid): Grid areas, alignment, spanning, and implicit/explicit tracks
+- [Part 1](/post/css/getting-started-with-css-grid): Grid basics, tracks, layout structure, and DevTools debugging
+- [Part 2](/post/css/mastering-css-grid): Grid areas, named lines, alignment, spanning, subgrid, accessible ordering, and implicit/explicit tracks
 
 Now, we shift gears to what makes CSS Grid truly shine — **responsiveness**.
 
@@ -19,6 +19,7 @@ In this post, you'll learn how to:
 - Combine `minmax()` with `auto-fit` and `auto-fill` to create fluid, wrapping grids
 - Write responsive layouts with or **without media queries**
 - Enhance responsiveness further using **container queries**
+- Sidestep the common pitfalls and add browser fallbacks with confidence
 
 Think of this as your guide to **building adaptable, scalable layouts** that behave beautifully on any screen — from a small phone to a wide desktop.
 
@@ -102,7 +103,7 @@ It's especially useful when building **responsive** layouts, because it allows a
 `}
 </CodeBlock>
 
-In this example, cards are laid out in rows on large screens and they stack neatly without overflow on small screens.
+In this example, cards lay out in rows on large screens and stack neatly, without overflow, on small screens.
 
 👉 Try this hands-on in the **Grid Template** panel of the [interactive playground](#interactive-example) below — set the minimum track size to 250px to match this example.
 
@@ -371,14 +372,60 @@ A simple dashboard grid using `grid-template-areas`, `minmax()`, and media queri
 
 <RainbowDivider />
 
+## Common Pitfalls with Responsive Grids
+
+A handful of surprises show up specifically when Grid meets responsive design:
+
+- **`minmax()` overflowing anyway.** `minmax(200px, 1fr)` still uses a minimum-content floor by default for text and images — if a single long word or unbreakable image is wider than `200px`, the track (and your layout) can overflow. Use `minmax(0, 1fr)` when you want the track to be able to shrink below its content's natural size, and let `overflow-wrap` / `object-fit` handle the content itself.
+- **`auto-fit` "losing" cards you expected to see.** With `auto-fit`, empty tracks collapse to `0`, and any *leftover* space gets redistributed to the remaining tracks — so 2 cards in a container sized for 5 will stretch to fill the row rather than staying card-sized. If you want cards to stay a consistent size and simply leave gaps, use `auto-fill` instead.
+- **Container queries needing `container-type` on the *parent*, not the element itself.** A common first mistake is adding `@container` rules to an element that never had `container-type` declared on its ancestor — without that, the query silently never matches.
+- **Reaching for a media query when a container query (or Grid itself) would do.** If a component only ever needs to respond to *its own* width, a media query tied to the viewport is the wrong tool — it'll behave inconsistently once that component is reused inside a narrower sidebar or a wider main column.
+
+<RainbowDivider />
+
+## Browser Support & Fallbacks
+
+Everything covered in this series — `fr`, `minmax()`, `auto-fit`/`auto-fill`, and `grid-template-areas` — has excellent support in all current browsers and has for years. Container queries are newer but are now supported in all current major browsers (Chrome, Firefox, Safari) — always double-check current compatibility if you're targeting older browser versions.
+
+If you need a safety net for an older browser, wrap the enhancement in a feature query so unsupported browsers just get your fallback layout instead of broken CSS:
+
+<CodeBlock language="css">
+{`
+  /* Fallback: simple stacked layout */
+  .card {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  /* Enhancement, applied only where supported */
+  @supports (container-type: inline-size) {
+    .card-wrapper {
+      container-type: inline-size;
+    }
+
+    @container (min-width: 500px) {
+      .card {
+        grid-template-columns: 2fr 1fr;
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+<Info title="Tip">
+  `@supports` works the same way for any Grid feature you're unsure about — wrap the modern rule in `@supports (display: grid)` (or the specific property you're checking) and provide a simpler fallback outside of it.
+</Info>
+
+<RainbowDivider />
+
 ## Quick Reference: Common Grid Properties
 
 Here's a concise summary of essential CSS Grid properties:
 
 | Property | Description |
 | -------- | ----------- |
-| `grid-template-columns` | Defines the number and width of columns in the grid |
-| `grid-template-rows` | Defines the number and height of rows in the grid |
+| `grid-template-columns` | Defines the number and width of columns — also accepts named lines and `subgrid` |
+| `grid-template-rows` | Defines the number and height of rows — also accepts named lines and `subgrid` |
 | `gap` | Sets spacing between rows and columns (shorthand for `row-gap` and `column-gap`) |
 | `grid-template-areas` | Defines named areas for placing grid items visually |
 | `justify-items` | Aligns **all grid items** horizontally within their cells |
@@ -430,9 +477,9 @@ Yes — but you'll need fewer. Grid's flexibility (with `fr`, `minmax()`, and `a
 
 Let's recap what you now know:
 
-- ✅ **Part 1:** The building blocks — containers, tracks, and structure
-- ✅ **Part 2:** Layout precision — grid areas, alignment, spanning, and track creation
-- ✅ **Part 3:** Flexibility — responsive units (`fr`, `minmax()`), smart auto-wrapping, media queries, and container queries
+- ✅ **Part 1:** The building blocks — containers, tracks, structure, and how to debug them with your browser's DevTools
+- ✅ **Part 2:** Layout precision — grid areas, named lines, alignment, spanning, subgrid, accessible ordering, and track creation
+- ✅ **Part 3:** Flexibility — responsive units (`fr`, `minmax()`), smart auto-wrapping, media queries, container queries, and the pitfalls to watch for
 
 With these tools, you can:
 
