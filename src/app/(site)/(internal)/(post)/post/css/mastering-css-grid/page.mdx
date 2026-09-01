@@ -14,10 +14,11 @@ Now, it's time to go beyond the basics.
 
 We'll cover:
 
-- `grid-template-areas` for clean, visual layout structure
+- `grid-template-areas` and named grid lines for clean, visual layout structure
 - Alignment techniques using `place-items` and `place-self`
-- Spanning elements across rows and columns
+- Spanning elements across rows and columns — and keeping visual order accessible
 - The hidden mechanics of **explicit** and **implicit** grids
+- `subgrid`, for keeping nested grids aligned to their parent's tracks
 
 These are the techniques that elevate your layouts from _functional_ to _flexible and scalable_ — especially in real-world, component-based frontend projects.
 
@@ -99,6 +100,41 @@ Here's the HTML structure:
 👉 Try this hands-on in the **Template Areas** tab of the [interactive playground](#interactive-example) below.
 
 👉 Want to see this exact technique applied to a full page? The [Holy Grail Layout](/tutorial/holy-grail-layout) snippet builds the classic header/nav/main/aside/footer layout with `grid-template-areas` — including a responsive breakpoint that re-flows it into a single column.
+
+### Naming Grid Lines Directly
+
+`grid-template-areas` names whole *regions*, but you can also name the individual **lines** that make up your columns and rows — useful when you want semantic placement without carving out full named areas.
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns:
+      [sidebar-start] 250px
+      [sidebar-end main-start] 1fr
+      [main-end];
+    gap: 1rem;
+  }
+
+  .sidebar {
+    grid-column: sidebar-start / sidebar-end;
+  }
+
+  .main {
+    grid-column: main-start / main-end;
+  }
+`}
+</CodeBlock>
+
+Each name in square brackets marks a line, and a single line can carry **multiple names** (like `sidebar-end main-start` above, marking where one track ends and the next begins). Items then reference those names in `grid-column` / `grid-row` instead of raw numbers.
+
+**Visual Illustration**
+
+<GridNamedLinesDiagram />
+
+<Info title="Tip">
+  Named lines and `grid-template-areas` solve overlapping problems — areas are best for whole named regions, named lines are best when you only need one or two edges to be self-documenting without defining a full area grid.
+</Info>
 
 <RainbowDivider />
 
@@ -289,6 +325,27 @@ This tells the grid item to span **2 columns and 2 rows** starting from its **au
 
 <RainbowDivider />
 
+## Accessibility: Visual Order vs. DOM Order
+
+`grid-column` and `grid-row` let you place an item anywhere in the grid — but placement only changes **where it appears on screen**. It doesn't move the element in the HTML.
+
+That mismatch matters for two groups of users:
+
+- **Keyboard users** tab through elements in **DOM order**, not visual order. If a "Submit" button is moved visually to appear first but is still last in the markup, keyboard focus will jump around in a way that doesn't match what's on screen.
+- **Screen reader users** hear content read in **DOM order** by default, so a visually-reordered layout can be announced in a confusing sequence.
+
+**Visual Illustration**
+
+<GridVisualOrderDiagram />
+
+<Warning title="Rule of thumb">
+  Keep your HTML source order matching the **logical reading order** of the content whenever possible. Use `grid-column` / `grid-row` for genuine visual layout needs (e.g. a hero image spanning multiple cells), not to fully reshuffle unrelated content.
+</Warning>
+
+If you do need a layout where visual and reading order diverge — for example, a sidebar that appears first on screen but should be read last — test it with keyboard-only navigation (`Tab`) and a screen reader to confirm the experience still makes sense.
+
+<RainbowDivider />
+
 ## Grid Types
 
 In CSS Grid, it's important to understand the two types of grids: **explicit** and **implicit**. These define how grid tracks (rows and columns) are created — either by the developer or automatically by the browser.
@@ -433,6 +490,66 @@ Use `grid-auto-columns` to control the width of these new columns.
 
 <RainbowDivider />
 
+## Subgrid: Aligning Nested Grids
+
+So far, every grid you've built has been self-contained — a grid item is a black box to its own children. If that item has its own `display: grid` children, they size themselves independently, with no awareness of the parent's tracks.
+
+`subgrid` changes that. It lets a **nested grid** adopt its parent's column or row tracks instead of defining its own — so content inside nested grid items can line up across siblings, even when those siblings have different content lengths.
+
+<CodeBlock language="css">
+{`
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+
+  .card {
+    display: grid;
+    grid-template-rows: subgrid;   /* Inherit the parent's row tracks */
+    grid-row: span 3;              /* Occupy 3 of the parent's rows */
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="cards">
+    <div class="card">
+      <h3>Title</h3>
+      <p>A short description.</p>
+      <button>Buy now</button>
+    </div>
+    <div class="card">
+      <h3>A much longer title that wraps</h3>
+      <p>A longer description with more detail spanning multiple lines.</p>
+      <button>Buy now</button>
+    </div>
+  </div>
+`}
+</CodeBlock>
+
+**Why this matters:** without `subgrid`, each `.card` sizes its own three rows (title, description, button) independently — so if one card's title wraps to two lines, that card's button drops out of alignment with the others. With `grid-template-rows: subgrid`, every card's title, description, and button rows are the *parent's* tracks, so they stay aligned across every card regardless of content length.
+
+**Visual Illustration**
+
+<GridSubgridDiagram />
+
+<Warning title="Browser support">
+  `subgrid` is supported in all current major browsers (Chrome, Firefox, Safari), but if you need to support older versions, check current compatibility before relying on it in production — and consider a fallback where each nested grid simply sizes its own tracks.
+</Warning>
+
+<RainbowDivider />
+
+## Common Mistakes with Alignment & Spanning
+
+- **Confusing `justify-items`/`align-items` with `justify-content`/`align-content`.** The `-items` properties align content *inside each cell*; the `-content` properties (not covered in this post) align the **entire track grid** within the container when the grid is smaller than its container. Mixing them up is one of the most common Grid debugging rabbit holes.
+- **Off-by-one errors with line numbers.** Grid lines are numbered starting at `1`, not `0` — and a grid with `3` columns has `4` lines, not `3`. `grid-column: 1 / 3` spans two tracks (columns 1 and 2), not three.
+- **Forgetting you can count from the end.** Line `-1` always refers to the **last line** in the explicit grid, no matter how many tracks it has — `grid-column: 1 / -1` is a quick way to span an item across every column without knowing the exact count.
+- **Leaving `grid-auto-rows` / `grid-auto-columns` unitless.** Unlike `fr` on explicit tracks, implicit tracks need an explicit unit (`grid-auto-rows: 100px`, not `grid-auto-rows: 1`) — a bare number is invalid and the browser falls back to `auto`.
+
+<RainbowDivider />
+
 ## Interactive Example
 
 Alignment, spanning, and implicit tracks are easiest to internalize together. Use the **Alignment & Spanning** tab below to set
@@ -453,10 +570,11 @@ rules shown live below the preview.
 
 You've now mastered the core tools that bring **power, readability, and precision** to CSS Grid layouts:
 
-- Named areas help you design layouts visually and semantically.
+- Named areas — and named lines — help you design layouts visually and semantically.
 - Item alignment ensures pixel-perfect placement in every cell.
-- Spanning techniques let you control flow and sizing beyond automatic placement.
+- Spanning techniques let you control flow and sizing beyond automatic placement — with an eye on keeping visual and DOM order in sync for accessibility.
 - Explicit vs. implicit grids give you confidence when your layout grows unexpectedly.
+- Subgrid lets nested grids inherit their parent's tracks, so content stays aligned across siblings.
 
 Up next in [Part 3 → Responsive CSS Grid Layouts: fr Units, minmax(), auto-fill, and auto-fit Explained](/post/css/responsive-css-grid-layouts), we'll unlock how to:
 
