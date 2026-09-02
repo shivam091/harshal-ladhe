@@ -6,6 +6,7 @@ export const ArchiveIcon = createIcon("archive");
 export const ArrowDownIcon = createIcon("arrowDown");
 export const ArrowRightIcon = createIcon("arrowRight");
 export const ArrowUpIcon = createIcon("arrowUp");
+export const BlobIcon = createIcon("blob");
 export const BookIcon = createIcon("book");
 export const BoxShadowIcon = createIcon("boxShadow");
 export const BookOpenIcon = createIcon("bookOpen");

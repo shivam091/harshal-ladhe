@@ -25,5 +25,11 @@ export const goodies: Goodie[] = [
     description: "Layered box-shadow editor with inset toggle, per-layer offset/blur/spread control, and live neumorphism/soft-UI presets.",
     icon: "boxShadow",
     href: "/goodies/box-shadow-generator"
+  },
+  {
+    name: "Border-Radius Generator",
+    description: "8-point corner radius editor with draggable handles, a squircle/superellipse mode, and organic blob presets.",
+    icon: "blob",
+    href: "/goodies/border-radius-generator"
   }
 ];
