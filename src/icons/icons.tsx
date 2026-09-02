@@ -552,6 +552,34 @@ export const icons = {
       </>
     )
   },
+  // Three overlapping flat-fill circles (RGB-primary layout) at partial opacity — the same "overlapping currentColor shapes" language as frostedPanel, here reading as color mixing / a palette rather than a filter stack.
+  colorPalette: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <circle cx="9" cy="9" r="7" opacity="0.55" />
+        <circle cx="16" cy="9" r="7" opacity="0.55" />
+        <circle cx="12.5" cy="16" r="7" opacity="0.55" />
+      </>
+    )
+  },
+  // Two opposing curved arrows — a generic swap/exchange glyph, used here for the contrast checker's foreground/background swap action.
+  swap: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M4 8 H17 M17 8 L13 4 M17 8 L13 12" />
+        <path d="M20 16 H7 M7 16 L11 12 M7 16 L11 20" />
+      </>
+    )
+  },
   facebook: {
     viewBox: "0 0 24 24",
     children: (

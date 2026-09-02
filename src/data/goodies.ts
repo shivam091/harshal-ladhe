@@ -61,5 +61,11 @@ export const goodies: Goodie[] = [
     description: "Min/max viewport → clamp() font-size calculator with an arbitrary list of named steps, a draggable viewport-width live preview, and CSS custom-property/Tailwind/React export.",
     icon: "fluidType",
     href: "/goodies/fluid-type-calculator"
+  },
+  {
+    name: "Color Palette & Contrast Checker",
+    description: "WCAG contrast ratio checker with AA/AAA pass/fail badges, plus a shade/tint ramp generated from a single seed color — perceptually-uniform OKLCH or a naive RGB-mix ramp for comparison.",
+    icon: "colorPalette",
+    href: "/goodies/color-palette-generator"
   }
 ];
