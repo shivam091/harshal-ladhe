@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "server-actions-form-mutation",
+    title: "Form Actions",
+    description: "A real <form> posting through an action — submit an invalid email to see the error state, then a valid one to see the pending state resolve into success.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "streaming-with-suspense",
     title: "Streaming with Suspense",
     description: "Three sections stream in independently, each on its own delay inside its own Suspense boundary — restart to replay the sequence.",

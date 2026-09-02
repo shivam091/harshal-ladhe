@@ -668,6 +668,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "server-actions-form-mutation",
+    title: "Progressive-Enhancement Forms with Server Actions",
+    excerpt: "A form that works before JavaScript loads, and gets pending/error states once it does.",
+    description: "Wire a Next.js Server Action to a <form> with useActionState and useFormStatus — a genuinely progressively-enhanced form with typed pending state and structured error handling, no manual fetch/useState plumbing.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "server-actions",
+      "use-server",
+      "useActionState",
+      "useFormStatus",
+      "forms",
+      "react-19",
+      "progressive-enhancement"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/server-actions-form-mutation/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A subscribe form submitting through a Server Action, showing a pending state on the submit button before an inline success message appears."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

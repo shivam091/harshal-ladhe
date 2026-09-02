@@ -1,0 +1,117 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("server-actions-form-mutation");
+
+## Introduction
+
+Submitting a form has usually meant one of two things: a plain HTML `<form>` that posts and reloads the page (works everywhere, feels dated), or `onSubmit` calling `fetch` from client-side JavaScript (feels modern, does nothing until JS finishes loading, and reimplements a lot of plumbing — pending state, error handling, form reset — by hand).
+
+**Server Actions** are Next.js's answer: an async function marked `"use server"` that a `<form>`'s `action` prop can call directly. The form works as a real, progressively-enhanced HTML form — and still gets a proper pending state and structured error handling once JavaScript is running.
+
+<RainbowDivider />
+
+## The Server Action
+
+<CodeBlock language="tsx">
+{`
+  // app/actions.ts
+  "use server";
+
+  export async function subscribe(previousState, formData) {
+    const email = formData.get("email");
+
+    if (!email || !email.includes("@")) {
+      return { status: "error", message: "Enter a valid email address." };
+    }
+
+    await db.subscribers.create({ email });
+    return { status: "success", message: \`Subscribed \${email}!\` };
+  }
+`}
+</CodeBlock>
+
+`"use server"` marks this function to run only on the server — Next.js generates a secure endpoint for it automatically. It never ships to the client bundle; calling it from a form is really an RPC call, wired up for you.
+
+<RainbowDivider />
+
+## Wiring It to a Form
+
+<CodeBlock language="tsx">
+{`
+  "use client";
+  import { useActionState } from "react";
+  import { subscribe } from "./actions";
+
+  export default function SubscribeForm() {
+    const [state, formAction] = useActionState(subscribe, { status: "idle", message: "" });
+
+    return (
+      <form action={formAction}>
+        <input type="email" name="email" />
+        <button type="submit">Subscribe</button>
+        {state.status !== "idle" && <p>{state.message}</p>}
+      </form>
+    );
+  }
+`}
+</CodeBlock>
+
+`useActionState(action, initialState)` wraps the server action and gives back `[state, formAction]` — `state` is whatever the action last returned, `formAction` is what you pass directly to the `<form>`'s `action` prop. React handles calling the action with the current state and the submitted `FormData` on every submission.
+
+<RainbowDivider />
+
+## Pending State with `useFormStatus`
+
+<CodeBlock language="tsx">
+{`
+  import { useFormStatus } from "react-dom";
+
+  function SubmitButton() {
+    const { pending } = useFormStatus(); // reads the NEAREST ENCLOSING <form>'s status
+    return (
+      <button type="submit" disabled={pending}>
+        {pending ? "Submitting…" : "Subscribe"}
+      </button>
+    );
+  }
+`}
+</CodeBlock>
+
+`useFormStatus` has to be called from a component *rendered inside* the `<form>` — it doesn't take the form as an argument, it reads whichever form is its nearest ancestor. That's why the submit button is usually its own small component rather than inlined directly in the form: `useFormStatus` inside the form component itself would read the *parent* form (if any), not this one.
+
+<RainbowDivider />
+
+## Try It Live
+
+This sandbox demonstrates the exact same React 19 Actions API (`useActionState`, `useFormStatus`, `<form action={fn}>`) that Server Actions are built on — running client-side, with a mocked async function standing in for `"use server"` (which needs a real server to exist). Submit with an invalid email, then a valid one, and watch the pending state.
+
+<Sandbox slug="server-actions-form-mutation" readOnly />
+
+<RainbowDivider />
+
+## Progressive Enhancement
+
+Because `<form action={formAction}>` is a *real* HTML form action, the form keeps working even before client-side JavaScript has finished loading and hydrating — the browser submits it as an actual navigation, the server action runs, and the page re-renders with the result. Once JavaScript is running, the exact same form gets the enhanced experience: no full page reload, a pending state, and inline error messages. Same markup, same action — the capability layers on top instead of replacing anything.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Newsletter signups, contact forms, comment submission — anything currently doing manual `fetch` + `useState` for pending/error handling
+- Forms that should keep working with JavaScript disabled or still loading (progressive enhancement matters for resilience, not just accessibility)
+- Any mutation currently going through a hand-rolled API route + client fetch, where a direct server action removes a layer of plumbing
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Server Actions are real endpoints — validate on the server regardless of client-side checks.** Anything reachable from the client (including a form action) must be treated as untrusted input; `type="email"` on the input is a UX nicety, not a security boundary.
+* **`useActionState`'s state persists across submissions** until the action returns something new — so a stale error message from a previous failed submission won't clear itself unless the action's return value (or your own reset logic) clears it.
+* **Actions can be called from outside forms too** — event handlers can call a server action directly (`onClick={() => myAction(args)}`) for non-form mutations (a delete button, a "load more" trigger), not just `<form action>`.
+* **Revalidate affected data after a mutation.** A server action that changes data usually needs to call `revalidatePath`/`revalidateTag` so already-cached pages reflect the change, rather than relying on the client to manually refetch.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Server Actions collapse "write an API route, write a client fetch call, write pending/error state by hand" into one `"use server"` function and a form `action` prop — while keeping the form genuinely functional before JavaScript ever runs. `useActionState` and `useFormStatus` are the two hooks that turn that function into a fully interactive form once it does.
