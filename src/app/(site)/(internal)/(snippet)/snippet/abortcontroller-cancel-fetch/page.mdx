@@ -1,0 +1,127 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("abortcontroller-cancel-fetch");
+
+## Introduction
+
+Search-as-you-type has a race condition hiding in plain sight. Type "ap", then "app", then "apple" fast enough, and you fire three requests. Networks are unpredictable — there's no guarantee they resolve in the order they were sent. If the response for "ap" arrives *after* the response for "apple", your UI briefly shows results for "ap" as the final state, even though the user has already moved on.
+
+`AbortController` fixes this by letting you actually cancel the stale request instead of just ignoring its result.
+
+<RainbowDivider />
+
+## The Building Block
+
+`fetch` accepts a `signal` option. Call `.abort()` on the controller that owns that signal, and the in-flight request rejects with an `AbortError` instead of resolving:
+
+<CodeBlock language="js">
+{`
+  const controller = new AbortController();
+
+  fetch("/api/search?q=apple", { signal: controller.signal })
+    .then((res) => res.json())
+    .catch((err) => {
+      if (err.name === "AbortError") return; // expected — we cancelled it
+      throw err;
+    });
+
+  controller.abort(); // cancels the request above
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The "Latest Request Wins" Pattern
+
+The fix for the search race condition isn't to abort on a timer — it's to abort the *previous* request every time a *new* one starts. Only the most recent request is ever allowed to resolve.
+
+<CodeBlock language="ts">
+{`
+  function createLatestRequest() {
+    let controller = null;
+
+    function run(task) {
+      controller?.abort();          // cancel whatever was in flight
+      const current = new AbortController();
+      controller = current;
+      return task(current.signal);   // caller passes the signal to fetch
+    }
+
+    function cancel() {
+      controller?.abort();
+    }
+
+    return { run, cancel };
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Typed Signature
+
+<CodeBlock language="ts">
+{`
+  interface LatestRequest<T> {
+    run: (task: (signal: AbortSignal) => Promise<T>) => Promise<T>;
+    cancel: () => void;
+  }
+
+  function createLatestRequest<T>(): LatestRequest<T>;
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  const searchRequest = createLatestRequest();
+
+  async function handleSearchInput(query) {
+    try {
+      const results = await searchRequest.run((signal) =>
+        fetch(\`/api/search?q=\${query}\`, { signal }).then((res) => res.json())
+      );
+      setResults(results);
+    } catch (err) {
+      if (err.name !== "AbortError") throw err; // ignore expected cancellations only
+    }
+  }
+`}
+</CodeBlock>
+
+Every keystroke calls `run` again, which silently aborts whatever request the previous keystroke started. Only the response for the query the user actually stopped on ever reaches `setResults`.
+
+<RainbowDivider />
+
+## Try It Live
+
+Type quickly into the box below — each keystroke starts a simulated request with a random delay. Watch the log: everything except the very last request gets aborted before it can resolve, no matter what order the delays would have otherwise resolved in.
+
+<Sandbox slug="abortcontroller-cancel-fetch" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Search-as-you-type and type-ahead autocomplete
+- Any request triggered by rapidly-changing input (filters, sliders, live previews)
+- Cancelling a request when the component that started it unmounts
+- Enforcing a client-side timeout (abort if a request takes longer than N seconds)
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Always distinguish `AbortError` from a real failure.** A cancelled request is expected behavior, not a bug — don't show an error toast or log it to your error tracker for cancellations. Check `error.name === "AbortError"` (or, in newer environments, `signal.reason`) before treating a rejection as a genuine failure.
+* **Cancel on unmount, not just on the next call.** In a React component, pair `AbortController` with a `useEffect` cleanup function so navigating away mid-request also cancels it — this is one of the canonical uses for effect cleanup, alongside event listener removal.
+* **`AbortSignal.timeout(ms)`** (widely supported in modern runtimes) gives you a ready-made signal that aborts itself after a duration — useful for enforcing request timeouts without hand-rolling a `setTimeout` + controller pair.
+* **Combining signals:** if you need both a manual cancel *and* a timeout on the same request, `AbortSignal.any([signalA, signalB])` merges multiple signals into one that aborts when any of them do.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+The bug this fixes is invisible in a fast local dev environment and very visible in production over a real, unpredictable network. Any time an async call can be superseded by a newer one before it resolves, cancel the old one explicitly — don't rely on response ordering.

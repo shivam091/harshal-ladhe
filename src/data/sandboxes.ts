@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "abortcontroller-cancel-fetch",
+    title: "Cancelling In-Flight Requests",
+    description: "Type quickly into the search box — each keystroke starts a simulated request and aborts whatever was still in flight, so only the latest one can ever resolve.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "event-emitter-from-scratch",
     title: "Event Emitter: Pub/Sub",
     description: "Publish a message and watch only the currently-subscribed listeners receive it — toggle subscribers on and off to see live (un)subscription in action.",

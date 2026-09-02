@@ -338,6 +338,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "abortcontroller-cancel-fetch",
+    title: "Cancelling In-Flight Requests with AbortController",
+    excerpt: "The 'latest request wins' pattern that fixes race conditions in search-as-you-type.",
+    description: "Fix the classic search-as-you-type race condition — a stale response overwriting a newer one — by aborting the previous in-flight request every time a new one starts.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "abortcontroller",
+      "fetch",
+      "cancellation",
+      "race-conditions",
+      "async-await",
+      "typescript",
+      "search-input"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/abortcontroller-cancel-fetch/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Timeline showing an earlier in-flight request being aborted the moment a newer request starts, preventing a stale response race condition."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
