@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Elements Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>&lt;like-button&gt; — a Custom Element</h1>
+        <p>Two independent instances, no framework, no build step — just a class and customElements.define().</p>
+      </header>
+
+      <div class="instances">
+        <like-button label="Article A"></like-button>
+        <like-button label="Article B" step="5"></like-button>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

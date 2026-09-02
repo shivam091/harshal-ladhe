@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "custom-elements-lightweight",
+    title: "<like-button> — a Custom Element",
+    description: "Two independent <like-button> instances, each with its own internal click count and a step attribute controlling how much each click adds — one class, no framework.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "use-transition-non-blocking-updates",
     title: "Keeping Input Responsive with useTransition",
     description: "Type quickly to filter 4,000 deliberately expensive items — with the transition on, typing stays smooth while the list lags a beat behind; turn it off and typing itself starts to stutter.",

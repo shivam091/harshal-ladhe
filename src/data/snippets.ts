@@ -1396,6 +1396,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "custom-elements-lightweight",
+    title: "A Dependency-Free Web Component with Custom Elements",
+    excerpt: "A real HTML tag, backed by one class — no framework, no build step, no runtime dependency.",
+    description: "The Custom Elements API turns a class extending HTMLElement into a real, usable HTML tag — lifecycle callbacks, observed attributes, and shadow DOM encapsulation, framework-agnostic and usable anywhere HTML is.",
+    category: ["HTML"],
+    tags: [
+      "html",
+      "web-components",
+      "custom-elements",
+      "shadow-dom",
+      "framework-agnostic",
+      "encapsulation",
+      "browser-apis"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/custom-elements-lightweight/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Two independent <like-button> custom elements on a page, each with its own internal click count, defined by a single HTMLElement subclass with no framework involved."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

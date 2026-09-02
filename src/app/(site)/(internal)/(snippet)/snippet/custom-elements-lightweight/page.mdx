@@ -1,0 +1,107 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("custom-elements-lightweight");
+
+## Introduction
+
+A self-contained, reusable, stateful piece of UI — a like button, a rating widget, a tooltip — usually means reaching for a framework component, even when the actual behavior involved is small. **Custom Elements**, part of the Web Components standard, let you define one as a real HTML tag: no framework, no build step, no runtime dependency — just a class and one registration call, usable in any HTML page, framework or none at all.
+
+<RainbowDivider />
+
+## The Minimal Shape
+
+<CodeBlock language="js">
+{`
+  class LikeButton extends HTMLElement {
+    connectedCallback() {
+      this.innerHTML = \`<button>Like</button>\`;
+      this.querySelector("button").addEventListener("click", () => {
+        this.textContent = "Liked!";
+      });
+    }
+  }
+
+  customElements.define("like-button", LikeButton);
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <!-- Usable anywhere, exactly like a native tag -->
+  <like-button></like-button>
+`}
+</CodeBlock>
+
+A Custom Element is a plain class extending `HTMLElement`, registered under a tag name via `customElements.define()`. From that point on, `<like-button>` works as real markup — parsed by the HTML parser, usable in server-rendered HTML, readable by any tool that understands HTML, not something that only exists after a framework's runtime hydrates the page.
+
+<RainbowDivider />
+
+## Lifecycle Callbacks
+
+<CodeBlock language="js">
+{`
+  class LikeButton extends HTMLElement {
+    connectedCallback() {}     // element inserted into the document — safe to render/wire up listeners
+    disconnectedCallback() {}  // element removed — clean up listeners, timers, observers
+    attributeChangedCallback(name, oldValue, newValue) {} // an observed attribute changed
+    static observedAttributes = ["label"]; // only attributes listed here trigger the callback above
+  }
+`}
+</CodeBlock>
+
+These four hooks cover the whole lifecycle a component library's own mount/unmount/update model usually wraps: `connectedCallback` is your mount, `disconnectedCallback` is your unmount/cleanup, and `attributeChangedCallback` (paired with `observedAttributes`) is how external markup changes flow back into the element's own rendering.
+
+<RainbowDivider />
+
+## Shadow DOM for Real Encapsulation
+
+<CodeBlock language="js">
+{`
+  class LikeButton extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: "open" });
+    }
+
+    connectedCallback() {
+      this.shadowRoot.innerHTML = \`
+        <style>button { color: hotpink; }</style>
+        <button>Like</button>
+      \`;
+    }
+  }
+`}
+</CodeBlock>
+
+`attachShadow({ mode: "open" })` gives the element its own DOM subtree with genuinely scoped styles — a `<style>` block inside a shadow root never leaks out to the rest of the page, and the page's own CSS doesn't leak in either, by default. This is real style isolation, enforced by the browser, not a build-time class-name-mangling trick.
+
+<RainbowDivider />
+
+## Try It Live
+
+Two `<like-button>` elements below, each with its own internal click count and a `step` attribute controlling how much each click adds — plain HTML tags, defined by one class, with no framework involved.
+
+<Sandbox slug="custom-elements-lightweight" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A widget that needs to work identically across multiple frameworks (or no framework) in the same organization — a design-system component shipped as a Custom Element works in a React app, a Vue app, and a plain HTML page unmodified
+- Small, self-contained, mostly-independent pieces of UI where pulling in a full framework runtime just for that one widget would be disproportionate
+- Embeddable widgets meant to be dropped into third-party sites (a chat widget, an embed) where the container page's own JavaScript stack is unknown or uncontrolled
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This isn't a wholesale alternative to React/Vue/etc. for building an entire application** — Custom Elements shine for isolated, reusable widgets; a large app's overall state management, routing, and data flow are still better served by an actual framework built for that scale.
+* **Attribute values are always strings.** Passing genuinely structured data (an array, an object) means either serializing to a string attribute (JSON, awkward for anything nontrivial) or setting a JS property directly on the element instance instead of an HTML attribute — most real components expose both an attribute (for markup-driven config) and a property (for programmatic config with real types).
+* **Shadow DOM's style isolation cuts both ways** — global page styles (a CSS reset, a design system's base styles) don't reach inside the shadow root either, unless explicitly passed in via CSS custom properties (which *do* cross the shadow boundary) or `::part()` for exposing specific internal elements to outside styling.
+* **`customElements.define()` can only be called once per tag name** — calling it twice for the same name throws. This matters most for hot-reloading during development, where a naive setup can trip over re-registering the same element on every reload.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Custom Elements give a reusable, stateful piece of UI a home as an actual HTML tag — framework-agnostic, usable anywhere HTML is, with lifecycle hooks and genuine style encapsulation built into the platform rather than a library. Reach for them specifically when a widget needs to outlive or cross framework boundaries; for an application's own internal components, your framework's own component model is still usually the better fit.
