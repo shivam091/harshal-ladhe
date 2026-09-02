@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "render-props-vs-hooks",
+    title: "Render Prop vs. Hook",
+    description: "Toggle between a MouseTracker render-prop component and an equivalent useMousePosition hook — same tracked coordinates, two ways to consume them.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "css-gradient-borders",
     title: "Gradient Border Playground",
     description: "Switch between linear and conic gradient borders, tune thickness and direction, and toggle animation to see the generated background-clip CSS update live.",

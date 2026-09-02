@@ -1,0 +1,134 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("render-props-vs-hooks");
+
+## Introduction
+
+Before hooks existed, sharing stateful logic between components meant one of two things: higher-order components, or **render props** — a component that owns some state and hands it to its children through a function prop instead of returning JSX directly.
+
+<CodeBlock language="jsx">
+{`
+  <MouseTracker>
+    {(position) => (
+      <p>x: {position.x}, y: {position.y}</p>
+    )}
+  </MouseTracker>
+`}
+</CodeBlock>
+
+`MouseTracker` doesn't render anything itself — it tracks the mouse position and calls `children(position)`, letting the caller decide what to render with it.
+
+It worked, and it's still valid React. But hooks solve the exact same problem — sharing stateful logic without duplicating it — with less ceremony. This snippet migrates the pattern above to a custom hook, one step at a time.
+
+<RainbowDivider />
+
+## The Render-Prop Version
+
+<CodeBlock language="tsx">
+{`
+  function MouseTracker({ children }) {
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+
+    useEffect(() => {
+      const handleMove = (event) => setPosition({ x: event.clientX, y: event.clientY });
+      window.addEventListener("mousemove", handleMove);
+      return () => window.removeEventListener("mousemove", handleMove);
+    }, []);
+
+    return children(position);
+  }
+`}
+</CodeBlock>
+
+The state and the effect live inside the component. To use the tracked position anywhere, you wrap that part of your tree in `<MouseTracker>` and unwrap the value again through the function argument.
+
+<RainbowDivider />
+
+## The Hook Version
+
+<CodeBlock language="tsx">
+{`
+  function useMousePosition() {
+    const [position, setPosition] = useState({ x: 0, y: 0 });
+
+    useEffect(() => {
+      const handleMove = (event) => setPosition({ x: event.clientX, y: event.clientY });
+      window.addEventListener("mousemove", handleMove);
+      return () => window.removeEventListener("mousemove", handleMove);
+    }, []);
+
+    return position;
+  }
+`}
+</CodeBlock>
+
+Line for line, this is the *same body* as `MouseTracker`. The only two changes: the function's name starts with `use` instead of describing a component, and the last line returns `position` directly instead of calling `children(position)`.
+
+Using it needs no wrapper at all:
+
+<CodeBlock language="jsx">
+{`
+  function Cursor() {
+    const position = useMousePosition();
+    return <p>x: {position.x}, y: {position.y}</p>;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Migrating: Three Mechanical Steps
+
+1. **Rename and de-component it.** Drop the `children` prop and the JSX return. Rename the function to start with `use`.
+2. **Return the value instead of calling children.** Replace `return children(position)` with `return position`.
+3. **Replace call sites.** Everywhere you had `<MouseTracker>{pos => ...}</MouseTracker>`, replace it with `const pos = useMousePosition()` and use `pos` directly in the surrounding JSX.
+
+No state logic changes. The migration is purely about *how the value gets to the caller* — a function argument vs. a return value.
+
+<RainbowDivider />
+
+## Side by Side
+
+<CodeBlock showCopyButton={false}>
+{`
+  Render Prop                          Hook
+  ────────────                         ────
+  <MouseTracker>                       const pos = useMousePosition();
+    {(pos) => (                        <p>{pos.x}, {pos.y}</p>
+      <p>{pos.x}, {pos.y}</p>
+    )}
+  </MouseTracker>
+`}
+</CodeBlock>
+
+The hook version drops one level of nesting and one layer of indirection — no wrapper element in the tree, no function signature to type out, no component name that only exists to shuttle a value through `children`.
+
+Try both live below — same tracked coordinates, two different ways of getting them into your JSX.
+
+<Sandbox slug="render-props-vs-hooks" readOnly />
+
+<RainbowDivider />
+
+## Why Hooks Won Out
+
+| Attribute | Render Props | Hooks |
+| :--- | :--- | :--- |
+| **Composing multiple** | Nested wrappers — `<A>{a => <B>{b => ...}</B>}</A>` | Flat — `const a = useA(); const b = useB();` |
+| **Extra elements in the tree** | One per wrapper (or a Fragment) | None |
+| **TypeScript** | Must type the `children` function signature | Return type inferred from the hook |
+| **Testing** | Mount the tree, drill into the render prop | Call the hook directly (e.g. `renderHook`) |
+| **Works in class components** | Yes | No — hooks require function components |
+
+<RainbowDivider />
+
+## When Render Props Still Earn Their Keep
+
+Hooks share *logic*, not markup — a hook can't decide what JSX renders in a specific slot within someone else's component tree. Render props (and the closely related "compound component" pattern) are still the right tool when a component needs to hand a consumer some internal state *and* let them control the exact markup around it, e.g. a combobox library exposing `{ isOpen, highlightedIndex, getItemProps }` so consumers can render arbitrarily different list items.
+
+And if the component sharing state is a legacy class component with no plans to convert, render props remain its only option — hooks are a function-component-only feature.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+If you're only sharing *state and behavior* — no opinion about what gets rendered — a custom hook is almost always the simpler choice today. Reach for render props specifically when the shared logic needs to hand back control over markup, not just a value.

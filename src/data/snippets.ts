@@ -182,6 +182,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "render-props-vs-hooks",
+    title: "Render Props vs. Hooks: Migrating to a Custom Hook",
+    excerpt: "Turn a render-prop component into a plain custom hook — same logic, no wrapper element.",
+    description: "Migrate a classic function-as-children render-prop component to a custom hook, and see exactly what disappears: the wrapper component, the JSX indirection, and the typed children callback.",
+    category: ["React"],
+    tags: [
+      "react",
+      "hooks",
+      "render-props",
+      "custom-hooks",
+      "refactoring",
+      "typescript",
+      "design-patterns",
+      "migration"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/render-props-vs-hooks/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Side-by-side comparison of a render-prop component wrapping JSX versus a custom hook returning a value directly."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
