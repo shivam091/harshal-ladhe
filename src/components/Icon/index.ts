@@ -57,6 +57,7 @@ export const HomeIcon = createIcon("home");
 export const IndentGuidesIcon = createIcon("indentGuides");
 export const InfoCircleIcon = createIcon("infoCircle");
 export const InstagramIcon = createIcon("instagram");
+export const JsonToTsIcon = createIcon("jsonToTs");
 export const KeyboardIcon = createIcon("keyboard");
 export const LinkIcon = createIcon("link");
 export const LinkedinIcon = createIcon("linkedin");
