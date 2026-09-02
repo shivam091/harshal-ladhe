@@ -1,0 +1,108 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("has-selector-parent-styling");
+
+## Introduction
+
+CSS selectors have always been able to style an element based on its *descendants'* tags or classes (`.card p`), but never the reverse — there was no way to style a *parent* based on what's inside it. Every "highlight the wrapper when the input inside it is invalid" or "show an empty state when a list has no items" case needed a JavaScript class toggle to fake it.
+
+**`:has()`** is CSS's relational pseudo-class: it matches an element if a selector *inside* it matches. It's the first way to style a parent based on its children, purely in CSS.
+
+<RainbowDivider />
+
+## The Core Idea
+
+<CodeBlock language="css">
+{`
+  /* Matches .field, but only if it CONTAINS an :invalid input */
+  .field:has(input:invalid) {
+    border-color: red;
+  }
+
+  /* Matches .card, but only if it CONTAINS a checked input */
+  .card:has(:checked) {
+    border-color: blue;
+  }
+`}
+</CodeBlock>
+
+Read `:has(...)` as "that contains a descendant matching...". Whatever selector goes inside the parentheses describes the *inside* of the element — the styling applies to the *outside* element itself, not the thing matched inside it.
+
+<RainbowDivider />
+
+## Form Validation Without JavaScript
+
+<CodeBlock language="css">
+{`
+  .field:has(input:invalid) {
+    border-color: hsl(0, 55%, 45%);
+    background: hsl(0, 40%, 10%);
+  }
+
+  .field:has(input:invalid) .field-hint {
+    color: hsl(0, 65%, 70%); /* style a SIBLING of the invalid input, via the shared parent */
+  }
+
+  .field:has(input:valid) {
+    border-color: hsl(140, 45%, 40%);
+  }
+`}
+</CodeBlock>
+
+Previously, this required a `blur`/`input` event listener toggling an `.is-invalid` class on the wrapper by hand. `:has()` reads the input's own native `:invalid`/`:valid` state directly — the browser's built-in HTML validation and your CSS stay in sync automatically.
+
+<RainbowDivider />
+
+## Empty States Without a Manual Flag
+
+<CodeBlock language="css">
+{`
+  .empty-message {
+    display: none;
+  }
+
+  /* No .is-empty class needed — react to the actual DOM state */
+  .task-panel:not(:has(.task-list li)) .task-list {
+    display: none;
+  }
+
+  .task-panel:not(:has(.task-list li)) .empty-message {
+    display: block;
+  }
+`}
+</CodeBlock>
+
+`:not(:has(.task-list li))` reads "doesn't contain a list item" — so this stays correct no matter how items get added or removed (a form submission, a drag-and-drop reorder, a filter), because it's reading the real DOM, not a flag your JavaScript has to remember to update.
+
+<RainbowDivider />
+
+## Try It Live
+
+Three examples, all reacting purely through CSS: type an invalid email to see the field wrapper react to its own input's validity; add and remove tasks to see the empty state appear and disappear on its own; click a plan card to see it highlight based on its radio input's checked state.
+
+<Sandbox slug="has-selector-parent-styling" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Form field wrappers reacting to their input's validity state
+- Empty-state UI for lists, tables, search results, and carts
+- Selectable cards (plan pickers, radio/checkbox-driven selection UI) styled without extra classes
+- Styling a layout differently based on how many children it has (`.grid:has(> :nth-child(4))`)
+- Dimming or highlighting a row based on whether it contains a specific element (an error icon, a "new" badge)
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`:has()` can be expensive to evaluate on very large, deeply nested trees**, since the browser has to check descendants of every candidate match. It's well-optimized in modern engines for typical UI-sized trees, but avoid applying it broadly across enormous lists without checking real-world performance.
+* **You can scope how deep it looks.** `.card:has(> input:checked)` (with the `>` child combinator) only matches a *direct* child, instead of searching the entire subtree — use it when you know exactly how deep the target sits, for both clarity and performance.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 105+, Firefox 121+, Safari 15.4+) as of this writing — check current support before relying on it as the only mechanism for critical UI states without a fallback.
+* **`:has()` doesn't replace all JavaScript-driven state** — it can only react to things expressible as CSS selectors (element presence, `:checked`, `:invalid`, attribute values). Genuinely complex conditional logic still belongs in JavaScript.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`:has()` closes a real gap in CSS — parent-aware styling that used to require a JavaScript class toggle now reads the DOM's actual state directly. Reach for it whenever a parent's appearance should depend on what's inside it, and you find yourself about to write an event listener whose only job is flipping a class.

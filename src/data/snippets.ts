@@ -467,6 +467,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "has-selector-parent-styling",
+    title: "Parent-Based Styling with :has()",
+    excerpt: "Style a parent based on its children — form validation and empty states without a JS class toggle.",
+    description: "The relational :has() pseudo-class lets a parent react to its descendants' state directly: highlight a field wrapper on invalid input, show an empty-state message, or style a selectable card — all without JavaScript flipping a class.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "has-selector",
+      "relational-selectors",
+      "form-validation",
+      "empty-states",
+      "modern-css",
+      "selectors"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/has-selector-parent-styling/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A form field wrapper highlighted red because the input inside it is invalid, illustrating the CSS :has() relational selector."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>:has() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>:has() — Parent-Based Styling</h1>
+        <p>Every reaction below is pure CSS reading a descendant's state — no class toggling in JavaScript.</p>
+      </header>
+
+      <section class="demo-block">
+        <h2>Field wrapper reacts to input validity</h2>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@example.com" required />
+          <span class="field-hint">Wrapper border/background driven by :has(input:invalid) / :has(input:valid).</span>
+        </div>
+      </section>
+
+      <section class="demo-block">
+        <h2>Empty-state list</h2>
+        <div class="button-row">
+          <button id="add-item-btn" class="secondary-btn" type="button">Add Task</button>
+          <button id="remove-item-btn" class="secondary-btn" type="button">Remove Task</button>
+        </div>
+        <div class="task-panel">
+          <ul class="task-list" id="task-list">
+            <li>Write the CSS snippet</li>
+          </ul>
+          <p class="empty-message">No tasks — add one above.</p>
+        </div>
+      </section>
+
+      <section class="demo-block">
+        <h2>Selectable card via :has(:checked)</h2>
+        <div class="plans">
+          <label class="plan-card">
+            <input type="radio" name="plan" value="basic" checked />
+            <span class="plan-name">Basic</span>
+          </label>
+          <label class="plan-card">
+            <input type="radio" name="plan" value="pro" />
+            <span class="plan-name">Pro</span>
+          </label>
+        </div>
+      </section>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

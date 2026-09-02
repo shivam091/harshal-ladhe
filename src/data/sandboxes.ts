@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "has-selector-parent-styling",
+    title: ":has() — Parent-Based Styling",
+    description: "Type an invalid email, add and remove tasks, and select a plan card — three parent elements reacting to their own descendants' state, entirely through :has().",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "scroll-driven-animations",
     title: "Scroll-Driven Animations",
     description: "Scroll the panel — a reading-progress bar and each card's fade-and-slide reveal are both driven purely by CSS scroll/view timelines, no JavaScript.",
