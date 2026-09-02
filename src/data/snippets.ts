@@ -1296,6 +1296,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "edge-runtime-vs-nodejs-runtime",
+    title: "Choosing a Runtime: Edge vs. Node.js",
+    excerpt: "A single export const runtime line — and a real trade-off between cold-start speed and API compatibility.",
+    description: "Edge Runtime and the Node.js runtime are genuinely different execution environments, configurable per route — Edge trades full Node.js API access for fast cold starts and global distribution, Node.js trades that speed for complete compatibility.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "edge-runtime",
+      "nodejs-runtime",
+      "middleware",
+      "app-router",
+      "cold-start",
+      "deployment"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/edge-runtime-vs-nodejs-runtime/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A lightweight route running on a fast-starting, globally distributed Edge Runtime isolate next to a heavier route running on a full Node.js process, illustrating the Next.js per-route runtime choice."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

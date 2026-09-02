@@ -1,0 +1,103 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("edge-runtime-vs-nodejs-runtime");
+
+## Introduction
+
+A Next.js route doesn't just run "on the server" as one undifferentiated thing — it runs in one of two distinct runtimes, and which one is picked changes what APIs are available, how fast the route cold-starts, and where geographically it actually executes. Getting this choice wrong shows up as either a confusing "module not found" for a Node built-in that simply doesn't exist in that runtime, or a route that's slower and more geographically centralized than it needed to be.
+
+**Edge Runtime** and the **Node.js runtime** are the two options — configurable per route, and understanding the actual trade-off between them is what makes the choice deliberate instead of accidental.
+
+<RainbowDivider />
+
+## Setting It Per Route
+
+<CodeBlock language="tsx">
+{`
+  // app/api/hello/route.ts
+  export const runtime = "edge"; // or "nodejs" — "nodejs" is the default
+
+  export async function GET() {
+    return Response.json({ message: "hello" });
+  }
+`}
+</CodeBlock>
+
+A single `export const runtime` line at the top of a Route Handler, Page, or Layout is the entire configuration surface — no separate deployment target, no infrastructure config, just a string.
+
+<RainbowDivider />
+
+## What Actually Differs
+
+<CodeBlock language="ts">
+{`
+  // Edge Runtime — a V8 isolate, the same execution model as Cloudflare Workers
+  // - Web-standard APIs only: fetch, Request/Response, crypto.subtle, streams
+  // - NO Node.js built-ins: no fs, no net, no child_process, no Buffer (mostly)
+  // - Most native/binary npm packages don't work — anything requiring a
+  //   compiled addon or direct filesystem access is off the table
+
+  // Node.js runtime — a full Node.js process
+  // - Every Node built-in and API available, exactly like any other Node server
+  // - Any npm package works, including ones with native bindings
+  // - The default runtime unless a route explicitly opts into "edge"
+`}
+</CodeBlock>
+
+Edge Runtime deliberately exposes a small, standardized surface (the same Web APIs a Service Worker or Cloudflare Worker has) rather than the full Node.js API — that constraint is exactly what makes it possible to run in lightweight, fast-starting isolates distributed globally, instead of a full Node.js process.
+
+<RainbowDivider />
+
+## Why the Constraint Exists: Cold Start and Distribution
+
+<CodeBlock language="text">
+{`
+  Edge Runtime:
+    Cold start   ~ single-digit milliseconds (a V8 isolate, not a process)
+    Distribution   runs at edge locations close to the requesting user
+    Trade-off      small API surface, limited package compatibility
+
+  Node.js runtime:
+    Cold start   ~ hundreds of milliseconds (spinning up a Node process)
+    Distribution   typically fewer regions, closer to your primary deployment
+    Trade-off      full compatibility, at the cost of startup latency and locality
+`}
+</CodeBlock>
+
+This is the actual trade-off, not an arbitrary restriction: V8 isolates are cheap enough to spin up per-request, at many geographic locations, specifically *because* they don't carry a full Node.js process's startup cost — which is also exactly why they can't offer everything a full Node.js process can.
+
+<RainbowDivider />
+
+## Comparison
+
+| | Edge Runtime | Node.js runtime |
+| :--- | :--- | :--- |
+| **Cold start** | Very fast (V8 isolate) | Slower (full process) |
+| **Available APIs** | Web-standard only (`fetch`, Web Crypto, streams) | Full Node.js API surface |
+| **npm package compatibility** | Limited — no native/binary addons, no `fs` | Full compatibility |
+| **Geographic distribution** | Runs close to the request, globally | Typically fewer, centralized regions |
+| **Max execution duration** | Generally shorter | Generally longer, more configurable |
+| **Best for** | Auth checks, redirects, lightweight logic, Middleware | Database drivers, heavy compute, full Node dependency trees |
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- **Edge**: authentication/authorization checks, geolocation-based redirects or rewrites, A/B testing logic, lightweight API routes with no Node-specific dependencies, anything where global low latency matters more than raw compute power
+- **Node.js**: routes using an ORM or database driver with native bindings, anything reading/writing the filesystem, heavy computational work, routes depending on an npm package that assumes Node built-ins are available
+- **Middleware specifically** has historically run on Edge Runtime by default/exclusively — check current docs for the exact state of Node.js-runtime Middleware support, since this has been an area of active change
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **A package that "just doesn't work" on Edge is the most common way this surfaces** — before debugging further, check whether the failure is a missing Node built-in (`fs`, `crypto`'s Node-specific APIs, `Buffer` in older usages) that Edge Runtime simply doesn't provide, rather than a bug in your own code.
+* **Switching a route to `nodejs` is the immediate fix for a package incompatibility**, but reconsider whether that route actually needs the incompatible dependency in the first place — sometimes a Web-standard equivalent (`crypto.subtle` instead of Node's `crypto` module, for instance) covers the same need without leaving Edge.
+* **Execution duration limits differ by runtime and hosting platform** — a route doing genuinely long-running work (large file processing, slow third-party API calls) may hit Edge's tighter limits before Node.js's, independent of which one is technically "faster" to start.
+* **This is a per-route decision, not an app-wide one** — a single Next.js app commonly mixes both: Edge for Middleware and lightweight API routes, Node.js for anything touching a database or heavier dependencies.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Edge Runtime and the Node.js runtime aren't "the same server, different flag" — they're genuinely different execution environments with different API surfaces, trading full Node.js compatibility for cold-start speed and global distribution (Edge) or vice versa (Node.js). Pick per route based on what that specific route actually needs: low-latency lightweight logic reaches for Edge; anything requiring Node-specific APIs or heavier compute stays on Node.js.
