@@ -35,6 +35,8 @@ export const SUPPORTED_LANGS = [
   "ssh-config",
   "bat",
   "diff",
+  "python",
+  "java",
 ];
 
 /*
@@ -55,6 +57,7 @@ export const LANG_ALIASES = {
   ssh:   "ssh-config",
   batch: "bat",
   cmd:   "bat",
+  py:    "python",
 };
 
 // ─── Grammar loaders ───────────────────────────────────────────────────────
@@ -79,6 +82,8 @@ export const LANG_LOADERS = {
   "ssh-config": () => import("shiki/langs/ssh-config.mjs"),
   bat:          () => import("shiki/langs/bat.mjs"),
   diff:         () => import("shiki/langs/diff.mjs"),
+  python:       () => import("shiki/langs/python.mjs"),
+  java:         () => import("shiki/langs/java.mjs"),
 };
 
 // ─── Highlighter singleton ─────────────────────────────────────────────────

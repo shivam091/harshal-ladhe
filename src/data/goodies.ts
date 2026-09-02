@@ -67,5 +67,17 @@ export const goodies: Goodie[] = [
     description: "WCAG contrast ratio checker with AA/AAA pass/fail badges, plus a shade/tint ramp generated from a single seed color — perceptually-uniform OKLCH or a naive RGB-mix ramp for comparison.",
     icon: "colorPalette",
     href: "/goodies/color-palette-generator"
+  },
+  {
+    name: "Regex Tester",
+    description: "Live match highlighting with numbered/named capture groups, a plain-English explain panel that breaks the pattern down piece by piece, and JavaScript/Python/Java export.",
+    icon: "regex",
+    href: "/goodies/regex-tester"
+  },
+  {
+    name: "Cron Expression Builder",
+    description: "Bidirectional cron builder — per-field mode widgets generate the 5-field string, a plain-English description reads it back, and a live next-5-runs preview with crontab/GitHub Actions/Kubernetes export.",
+    icon: "cron",
+    href: "/goodies/cron-expression-builder"
   }
 ];

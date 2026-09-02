@@ -523,6 +523,44 @@ export const icons = {
       </>
     )
   },
+  // Two angled slashes (regex literal delimiters) flanking a dot and a small asterisk burst — reads as "/.*/ ", the most recognizable regex shorthand there is.
+  regex: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M7 3 L4 21" />
+        <path d="M20 3 L17 21" />
+        <circle cx="9.5" cy="16" r="1.1" fill="currentColor" stroke="none" />
+        <path d="M13 10.5 L13 15.5 M10.8 11.75 L15.2 14.25 M15.2 11.75 L10.8 14.25" />
+      </>
+    )
+  },
+  // A clock face (circle + hour/minute hands) with a small looping-arrow badge at the lower right — the clock reads as "schedule," the loop as "recurring," together reading as a cron/repeating-timer glyph rather than a plain clock.
+  cron: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <circle cx="11" cy="11" r="8" />
+        <path d="M11 6.5 L11 11 L14 13" />
+        <path d="M16.5 16.5 A4 4 0 1 1 19.8 13.7" />
+        <path d="M19.8 11.5 L19.8 13.7 L17.6 13.4" />
+      </>
+    )
+  },
   // A bold "A" with an offset silhouette behind it — the same "cast shadow behind the real shape" language as the boxShadow icon, applied to a glyph instead of a card, so the two read as related but distinct effects.
   textEffects: {
     viewBox: "0 0 24 24",
