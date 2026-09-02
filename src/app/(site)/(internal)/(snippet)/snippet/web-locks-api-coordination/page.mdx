@@ -1,0 +1,105 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("web-locks-api-coordination");
+
+## Introduction
+
+A user with the same web app open in three tabs is more common than it sounds — and any code that assumes "only one instance of this app is running" quietly breaks the moment that happens. A token-refresh routine fires in all three tabs simultaneously, each unaware of the others; three tabs all write the same cache key to IndexedDB back to back; a background sync job runs three times instead of once.
+
+The **Web Locks API** (`navigator.locks`) coordinates exactly this — mutual exclusion (or shared access) over a named resource, enforced across every tab, iframe, and worker sharing the same origin, with zero server round-trip and zero `postMessage`/`BroadcastChannel` wiring of your own.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  async function refreshAuthToken() {
+    await navigator.locks.request("auth-token-refresh", async () => {
+      // Only one tab's callback runs this block at a time — every other tab
+      // requesting the same lock name waits here until this one finishes.
+      const token = await fetchNewToken();
+      localStorage.setItem("authToken", token);
+    });
+  }
+`}
+</CodeBlock>
+
+Call `refreshAuthToken()` from three tabs at once, and the lock name (`"auth-token-refresh"`) — not which tab asked for it — is what gets serialized. The second and third callers wait for the first to release the lock before their own callback runs, automatically.
+
+<RainbowDivider />
+
+## Not Waiting: ifAvailable
+
+<CodeBlock language="js">
+{`
+  await navigator.locks.request("sync-job", { ifAvailable: true }, async (lock) => {
+    if (lock === null) {
+      // Some other tab already holds it — don't wait, just skip this run.
+      return;
+    }
+    await runSyncJob();
+  });
+`}
+</CodeBlock>
+
+The default behavior queues every caller until the lock is free. `{ ifAvailable: true }` opts out of waiting entirely — the callback runs immediately either way, but receives `null` instead of a lock object if it wasn't actually free, letting you skip the work instead of blocking on it. This is the shape for "run this at most once across all tabs, and it's fine if a tab that missed the window just does nothing."
+
+<RainbowDivider />
+
+## Shared vs. Exclusive Access
+
+<CodeBlock language="js">
+{`
+  // Exclusive (the default) — only one holder at a time, across every mode.
+  navigator.locks.request("cache-key", async () => { /* write */ });
+
+  // Shared — any number of "mode: shared" holders can run concurrently,
+  // but none of them run alongside an exclusive holder of the same name.
+  navigator.locks.request("cache-key", { mode: "shared" }, async () => { /* read */ });
+`}
+</CodeBlock>
+
+This is the classic readers-writer pattern: any number of reads can happen concurrently (`mode: "shared"`), but a write (the default exclusive mode) waits for all in-flight reads to finish, and blocks any new reads from starting until it's done — the same guarantee a `RWMutex` gives in other languages, built into the browser.
+
+<RainbowDivider />
+
+## Try It Live
+
+Both buttons below request the exact same lock name — think of each as a separate browser tab. Fire "Tab A" then immediately "Tab B": B's request logs immediately, but its callback doesn't actually *run* until A releases the lock. "Tab C" uses `ifAvailable` instead, so it never waits — it just reports whether the lock was free.
+
+<Sandbox slug="web-locks-api-coordination" readOnly />
+
+<RainbowDivider />
+
+## Automatic Release on Tab Close
+
+<CodeBlock language="js">
+{`
+  navigator.locks.request("leader-election", async () => {
+    // This tab is now "the leader" for as long as it stays open and this
+    // promise stays pending — e.g. hold it open indefinitely to elect a leader.
+    await runForeverUntilTabCloses();
+  });
+  // If the tab crashes or is closed mid-hold, the lock releases automatically —
+  // no other tab is left waiting forever on a lock its holder can no longer release.
+`}
+</CodeBlock>
+
+This is what makes the API workable for real leader-election patterns: a lock is tied to the browsing context holding it, not to some external state that needs manual cleanup if that context disappears unexpectedly.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Locks are scoped per browser origin, not per tab** — this is the entire point. Two different origins (or the same origin in a private/incognito context vs. a normal one, in some browsers) don't contend for the same lock name at all.
+* **A lock name is just a string you pick** — there's no registry or central coordination beyond agreeing on the name across whatever code needs to contend for it. Namespacing lock names the way you'd namespace `localStorage` keys avoids accidental collisions between unrelated features.
+* **`navigator.locks.query()`** lists currently held and pending requests — useful for debugging "why is this stuck" without needing to add your own logging around every `.request()` call.
+* **A lock held by a callback that never resolves holds forever** — there's no built-in timeout. If a lock genuinely needs a time limit, race the callback's work against `AbortSignal.timeout()` yourself (`navigator.locks.request` accepts a `signal` option that aborts the wait, not an in-progress hold — check current spec behavior for exactly which phase a given browser aborts).
+* **Browser support**: Baseline since 2023 (Chrome/Edge 69+, Firefox 96+, Safari 15.4+) — broadly available, but always feature-detect (`"locks" in navigator`) before relying on it in code that has to run in older embedded webviews.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`navigator.locks` solves a class of bugs that's easy to miss in development (one tab, one instance of your app) and common in production (users routinely have the same app open in several tabs): the same named resource, contended for across every tab and worker on the origin, serialized or shared exactly as declared — no `BroadcastChannel` plumbing, no server-side coordination, required.

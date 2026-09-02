@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "web-locks-api-coordination",
+    title: "Coordinating Work with navigator.locks",
+    description: "Fire requests for the same named lock from two simulated tabs and watch the second queue behind the first, then try a third, non-blocking request with ifAvailable.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "explicit-resource-management-using",
     title: "Deterministic Cleanup with using",
     description: "Run a block that acquires three resources and watch them dispose in reverse order — then throw partway through and see disposal still happen for everything already acquired.",

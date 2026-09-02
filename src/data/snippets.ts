@@ -1071,6 +1071,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "web-locks-api-coordination",
+    title: "Coordinating Tabs with the Web Locks API",
+    excerpt: "One named lock, serialized (or shared) automatically across every tab on the same origin.",
+    description: "navigator.locks.request() coordinates access to a named resource across every tab, iframe, and worker sharing an origin — mutual exclusion or shared access, with automatic release if the holding tab closes, and no BroadcastChannel wiring of your own.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "web-locks-api",
+      "navigator-locks",
+      "cross-tab-coordination",
+      "concurrency",
+      "browser-apis",
+      "mutual-exclusion"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/web-locks-api-coordination/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Two browser tabs requesting the same named lock, with the second tab's callback queued until the first releases it, illustrating the Web Locks API."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
