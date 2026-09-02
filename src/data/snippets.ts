@@ -694,6 +694,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "middleware-auth-redirect",
+    title: "Auth Gating with Edge Middleware",
+    excerpt: "One middleware.ts file guards a whole route subtree, before any page even starts running.",
+    description: "A middleware.ts that redirects unauthenticated requests to protected routes before they reach any page, with a scoped matcher — plus NextResponse.next() vs. redirect() vs. rewrite() and Edge runtime constraints.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "middleware",
+      "edge-runtime",
+      "authentication",
+      "authorization",
+      "app-router",
+      "routing"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/middleware-auth-redirect/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A request being intercepted by edge middleware before reaching a protected route, redirecting to a login page when unauthenticated."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,97 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("middleware-auth-redirect");
+
+## Introduction
+
+Gating a set of routes behind authentication usually means checking auth state in every protected page — or worse, discovering a page you forgot to check. Next.js middleware runs *before* any of that: one file, evaluated on the Edge for every matching request, before the route it targets even starts rendering.
+
+<RainbowDivider />
+
+## The Middleware File
+
+<CodeBlock language="ts">
+{`
+  // middleware.ts (project root)
+  import { NextResponse } from "next/server";
+  import type { NextRequest } from "next/server";
+
+  const PROTECTED_PREFIXES = ["/dashboard", "/settings", "/billing"];
+
+  export function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+    const token = request.cookies.get("session")?.value;
+
+    if (isProtected && !token) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("from", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    return NextResponse.next();
+  }
+`}
+</CodeBlock>
+
+A single `middleware.ts` at the project root runs on every request matching its `config.matcher` (below), on Next.js's Edge runtime — before any page, layout, or Server Component in the matched route even starts executing.
+
+<RainbowDivider />
+
+## Scoping Which Routes It Runs On
+
+<CodeBlock language="ts">
+{`
+  export const config = {
+    matcher: ["/dashboard/:path*", "/settings/:path*", "/billing/:path*"],
+  };
+`}
+</CodeBlock>
+
+Without a `matcher`, middleware runs on *every* request — including static assets and API routes you probably don't want it touching. Scoping it explicitly (either via `config.matcher`, or an early-return check inside the function itself, as in the example above) keeps it from adding latency to requests it has no opinion about.
+
+<RainbowDivider />
+
+## Try It Live
+
+The same decision logic a real `middleware.ts` would run — pick a path and toggle whether the request is "authenticated" to see what the middleware decides.
+
+<Sandbox slug="middleware-auth-redirect" readOnly />
+
+<RainbowDivider />
+
+## `NextResponse.next()` vs. `NextResponse.redirect()`
+
+<CodeBlock language="ts">
+{`
+  NextResponse.next();              // let the request continue to its actual route, unchanged
+  NextResponse.redirect(url);        // respond immediately with a redirect — the route never runs
+  NextResponse.rewrite(url);         // serve a DIFFERENT route's content, URL bar stays the same
+`}
+</CodeBlock>
+
+`redirect` is what auth gating uses — the browser gets a 3xx response and navigates to `/login` itself, URL bar and all. `rewrite` is a different tool (A/B testing, serving localized content at the same URL) that middleware also commonly handles, but it's not what a login gate needs.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Gating entire route subtrees behind authentication in one place, instead of per-page checks
+- Redirecting based on geolocation, A/B test cohort, or feature flags (all available on the Edge request)
+- Enforcing a canonical domain/locale before a request reaches your app
+- Rate limiting or bot detection at the edge, before a request consumes any server compute
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Middleware runs on the Edge runtime, not Node.js.** It has a restricted API surface — no direct database drivers, no Node-specific APIs. Middleware should make a *decision* (redirect, rewrite, allow) quickly; the actual auth *verification* (checking a session against a database) usually happens by validating a signed token/cookie the middleware can read without a database round-trip, not by querying one from inside middleware itself.
+* **A missing or invalid token isn't proof someone is unauthenticated everywhere** — middleware is the first gate, not the only one. Pages and API routes still need their own authorization checks; middleware reduces exposure, it doesn't replace defense in depth.
+* **Every matched request pays whatever latency middleware adds.** Keep the logic fast and side-effect-free where possible — it runs before every single protected-route request, including ones that will ultimately succeed.
+* **`matcher` patterns are matched against the pathname, evaluated at build time** — they can't reference runtime values. Use an early-return inside `middleware()` itself for any condition that needs to inspect the actual request.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Middleware moves an auth check from "every page remembers to verify" to "one file guarantees it, before any page runs" — the tradeoff is a more restricted runtime and the discipline to keep it fast, since it sits in front of every matched request regardless of whether that request was ever going anywhere protected.

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "middleware-auth-redirect",
+    title: "Edge Middleware: Auth Gating",
+    description: "Pick a path and toggle authentication state to see the exact decision a real middleware.ts would make — allow the request through, or redirect to /login.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "server-actions-form-mutation",
     title: "Form Actions",
     description: "A real <form> posting through an action — submit an invalid email to see the error state, then a valid one to see the pending state resolve into success.",
