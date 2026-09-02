@@ -1,0 +1,99 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("resize-observer-container-sync");
+
+## Introduction
+
+`window.addEventListener("resize", ...)` answers one specific question: did the *browser viewport* change size? That's frequently not the question that actually matters — a sidebar widget, a resizable panel, a card in a grid can all change size for reasons that have nothing to do with the window (a sibling element growing, a manual drag-resize, a layout reflow triggered elsewhere on the page), and the viewport resize event never fires for any of them.
+
+**`ResizeObserver`** watches a specific element's own size directly — the actual question most components that need to be "responsive" are really asking, independent of whatever the browser window happens to be doing.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  const box = document.getElementById("box");
+
+  const observer = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      const { inlineSize: width, blockSize: height } = entry.borderBoxSize[0];
+      console.log(\`box is now \${width}×\${height}\`);
+    }
+  });
+
+  observer.observe(box);
+`}
+</CodeBlock>
+
+The callback fires whenever the observed element's size actually changes — from CSS, from its content changing, from a manual resize handle, from a parent's layout shifting it — none of which a `window` resize listener would ever catch.
+
+<RainbowDivider />
+
+## borderBoxSize vs. contentRect
+
+<CodeBlock language="js">
+{`
+  const observer = new ResizeObserver((entries) => {
+    for (const entry of entries) {
+      // Modern, and multi-fragment-safe (relevant for elements broken across
+      // columns/pages) — an array, so check [0] for the common single-fragment case.
+      const { inlineSize, blockSize } = entry.borderBoxSize[0];
+
+      // Older, simpler, single object — content box only (padding/border excluded).
+      const { width, height } = entry.contentRect;
+    }
+  });
+`}
+</CodeBlock>
+
+`borderBoxSize` measures the element including padding and border (matching `box-sizing: border-box`, the more common sizing model); `contentRect` measures content only. Both are available on every entry — pick based on which box model the rest of your layout math is already using.
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag the box's bottom-right corner (a native CSS `resize: both` handle) — the label reacts purely to the box's own size, computed via `ResizeObserver`, switching between a "compact" and "wide" layout label at a width breakpoint. Resizing the browser window itself does nothing here.
+
+<Sandbox slug="resize-observer-container-sync" readOnly />
+
+<RainbowDivider />
+
+## Relationship to CSS Container Queries
+
+<CodeBlock language="css">
+{`
+  /* Container queries solve the CSS-only version of the same problem */
+  .card-wrapper { container-type: inline-size; }
+  @container (min-width: 260px) {
+    .card { flex-direction: row; }
+  }
+`}
+</CodeBlock>
+
+For pure styling based on an element's own size, CSS container queries (`@container`) are usually the better tool now — no JavaScript, no observer to manage. `ResizeObserver` is still what you reach for when the reaction to a size change needs to be *JavaScript* — redrawing a `<canvas>`, recalculating a chart's layout, adjusting a virtualized list's item count — not just applying different CSS.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Redrawing a `<canvas>` or WebGL scene to match its container's actual pixel size, keeping it sharp instead of stretched
+- Recalculating a charting/visualization library's internal layout when its container resizes (a resizable dashboard panel, a split-pane layout)
+- Virtualized lists that need to know exactly how many items fit based on the container's current size
+- Any JS-driven (not purely CSS-driven) responsive behavior that depends on a specific element's size rather than the viewport's
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Disconnect the observer when it's no longer needed** (`observer.disconnect()`, or `observer.unobserve(element)` for a single element) — same cleanup discipline as any other observer or event listener, typically in whatever hook corresponds to unmount in your framework of choice.
+* **The callback can fire synchronously-adjacent to layout changes your own code causes** — resizing an element *inside* a `ResizeObserver` callback in response to that same element's size change can create a resize loop; browsers detect and break these (reporting a `ResizeObserver loop` warning) rather than hanging, but it's worth designing around rather than relying on that safety net.
+* **`entries` can include multiple observed elements in one callback call**, exactly like `IntersectionObserver` — always loop over `entries` rather than assuming one element per invocation.
+* **For pure CSS reactions to container size, prefer container queries** — reach for `ResizeObserver` specifically when the response needs to run actual JavaScript, not just apply a different set of styles.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`ResizeObserver` answers "has this specific element's size changed," directly and efficiently, which is what most "responsive" JavaScript logic actually needs to know — not "has the browser window changed," which `window`'s resize event is the only thing that ever answers. Reach for container queries first for pure styling; reach for `ResizeObserver` when the reaction genuinely needs to run code.

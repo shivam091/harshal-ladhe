@@ -1471,6 +1471,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "resize-observer-container-sync",
+    title: "Reacting to Element Size with ResizeObserver",
+    excerpt: "The actual question most \"responsive\" JS logic asks — has this element's size changed, not the window's.",
+    description: "ResizeObserver watches a specific element's own size directly, firing whenever it changes for any reason — a manual resize, a sibling's layout shift, content changing — none of which a window resize listener would ever catch.",
+    category: ["HTML"],
+    tags: [
+      "html",
+      "resize-observer",
+      "responsive-design",
+      "container-queries",
+      "canvas",
+      "layout",
+      "browser-apis"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/resize-observer-container-sync/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A manually resized box switching between a compact and wide layout label purely from its own size, tracked by ResizeObserver instead of a window resize listener."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

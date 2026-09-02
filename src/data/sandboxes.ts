@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "resize-observer-container-sync",
+    title: "Reacting to Element Size with ResizeObserver",
+    description: "Drag the box's bottom-right corner — the label updates purely from the element's own size via ResizeObserver, switching between a compact and wide layout label at a width breakpoint.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "intersection-observer-lazy-reveal",
     title: "Scroll-Triggered Reveal with IntersectionObserver",
     description: "Scroll the box to watch each card fade and slide into place the moment it crosses 40% visibility inside this specific scroll container, tracked by a single shared IntersectionObserver.",

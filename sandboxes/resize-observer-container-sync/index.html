@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResizeObserver Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Reacting to Element Size, Not Viewport</h1>
+        <p>Drag the box's bottom-right corner — the label below updates purely from this element's own size, with no window resize listener involved.</p>
+      </header>
+
+      <div class="resizable" id="box">
+        <p class="label" id="label">220×140 — compact layout</p>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
