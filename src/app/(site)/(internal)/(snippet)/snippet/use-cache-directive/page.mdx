@@ -1,0 +1,131 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-cache-directive");
+
+## Introduction
+
+Before this directive, caching in the App Router meant reaching for `fetch()`'s own caching options — fine for HTTP requests, but any data access that *isn't* a `fetch` call (a direct database query, a computed value, a call to an internal SDK) had no equivalent built-in caching story. The usual workaround was rolling a manual in-memory or external cache around it.
+
+**`"use cache"`** extends caching to any async function, component, or entire file — not just `fetch` — with its own granular revalidation controls (`cacheLife`, `cacheTag`) instead of `fetch`'s request-shaped options.
+
+<RainbowDivider />
+
+## Caching a Single Function
+
+<CodeBlock language="tsx">
+{`
+  async function getProduct(id: string) {
+    "use cache";
+    const product = await db.product.findUnique({ where: { id } });
+    return product;
+  }
+`}
+</CodeBlock>
+
+The directive goes at the top of the function body, exactly where `"use client"`/`"use server"` go at the top of a file. This function's result is now cached, keyed by its arguments — call `getProduct("42")` from two different places in the app, and the second call reuses the first's cached result instead of hitting the database again.
+
+<RainbowDivider />
+
+## Caching a Whole File or Component
+
+<CodeBlock language="tsx">
+{`
+  // Every exported async function in this file is cached.
+  "use cache";
+
+  export async function getProduct(id: string) { /* ... */ }
+  export async function getReviews(id: string) { /* ... */ }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // A Server Component itself can be cached — its rendered output, not just a data call inside it.
+  async function ProductCard({ id }: { id: string }) {
+    "use cache";
+    const product = await getProduct(id);
+    return <div>{product.name}</div>;
+  }
+`}
+</CodeBlock>
+
+Placed at the top of a file, the directive applies to every exported async function in it. Placed inside a component function, it caches that component's *rendered output* — useful when the expensive part is the render itself (formatting, computing derived layout data), not only the data fetch feeding it.
+
+<RainbowDivider />
+
+## Controlling How Long: cacheLife
+
+<CodeBlock language="tsx">
+{`
+  import { unstable_cacheLife as cacheLife } from "next/cache";
+
+  async function getProduct(id: string) {
+    "use cache";
+    cacheLife("hours"); // one of several built-in profiles ("seconds", "minutes", "hours", "days", "max", ...)
+    return db.product.findUnique({ where: { id } });
+  }
+`}
+</CodeBlock>
+
+`cacheLife` sets how long this specific cached entry is considered fresh before Next.js revalidates it in the background on the next request past that window — the same idea as `fetch`'s `next: { revalidate }` option, but usable anywhere `"use cache"` is, not just around a `fetch` call.
+
+<RainbowDivider />
+
+## Invalidating On Demand: cacheTag + revalidateTag
+
+<CodeBlock language="tsx">
+{`
+  import { unstable_cacheTag as cacheTag } from "next/cache";
+  import { revalidateTag } from "next/cache";
+
+  async function getProduct(id: string) {
+    "use cache";
+    cacheTag("product", id);
+    return db.product.findUnique({ where: { id } });
+  }
+
+  // Elsewhere — a Server Action that edits this exact product:
+  export async function updateProduct(id: string, data: ProductInput) {
+    "use server";
+    await db.product.update({ where: { id }, data });
+    revalidateTag(id); // invalidates every cache entry tagged with this product's id, immediately
+  }
+`}
+</CodeBlock>
+
+`cacheTag` labels a cached entry so it can be invalidated by name, on demand, from anywhere — a mutation doesn't need to know *which* cached functions read the data it just changed, only which tag(s) that data is associated with.
+
+<RainbowDivider />
+
+## Comparison
+
+| | `fetch()` caching | `"use cache"` |
+| :--- | :--- | :--- |
+| **Applies to** | Only `fetch()` calls | Any async function, component, or file |
+| **Freshness control** | `next: { revalidate: seconds }` | `cacheLife("profile")` |
+| **On-demand invalidation** | `revalidateTag` (needs `fetch`'s own `next: { tags }`) | `cacheTag()` + `revalidateTag`/`revalidatePath` |
+| **Caches a component's render output** | No | Yes |
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Direct database queries or ORM calls inside Server Components, where there's no `fetch()` to hang caching options off of
+- Expensive computed values (report aggregation, formatting large datasets) that don't change on every request
+- A Server Component whose *render*, not just its data fetch, is worth caching — layout math, formatting, derived display state
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Still an experimental/canary feature** (`unstable_cacheLife`/`unstable_cacheTag` naming reflects that directly) — API surface and stability can shift release to release; check current docs before committing to it for something business-critical.
+* **The cache key is derived from the function's arguments** — two calls with different arguments are cached separately, same as memoization. A function reading from closures or module-level mutable state instead of its arguments can produce a cache entry that doesn't reflect what actually changed.
+* **This is a *server-side* cache** — it doesn't run in the browser, and doesn't replace client-side caching (React Query, SWR, or component-local state) for data that needs to update reactively on the client without a full request round-trip.
+* **Tag names are just strings you choose** — there's no built-in relationship enforcement between, say, `cacheTag("product", id)` and a query that actually reads that product. Getting tagging wrong (too broad, too narrow, or simply mismatched) means either over-invalidating or serving stale data after a real change.
+* **Combine `cacheLife` and `cacheTag` freely** — a time-based freshness window as the default, with `revalidateTag` as the escape hatch for "this specific thing changed right now, don't wait for the window."
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`"use cache"` takes the caching model `fetch()` already had in the App Router and makes it available to any async work — a database call, a computed value, even a component's own render — with the same two levers, time-based (`cacheLife`) and tag-based (`cacheTag` + `revalidateTag`), just no longer limited to things shaped like an HTTP request.

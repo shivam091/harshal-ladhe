@@ -1246,6 +1246,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-cache-directive",
+    title: "Granular Caching with \"use cache\"",
+    excerpt: "Cache any async function, component, or file — not just fetch() calls — with time- or tag-based invalidation.",
+    description: "The \"use cache\" directive extends caching to any async function, Server Component render, or entire file, with cacheLife for time-based freshness and cacheTag + revalidateTag for on-demand invalidation — not limited to fetch() the way Next.js's earlier caching model was.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "use-cache",
+      "caching",
+      "cachelife",
+      "cachetag",
+      "revalidatetag",
+      "app-router"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/use-cache-directive/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A direct database query inside a Server Component being cached via the \"use cache\" directive, tagged for on-demand invalidation, illustrating Next.js's granular function-level caching."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
