@@ -1,0 +1,141 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("explicit-resource-management-using");
+
+## Introduction
+
+Anything that needs explicit cleanup — a database connection, a file handle, a lock, a listener — has always relied on `try`/`finally` to guarantee that cleanup runs, error or not. That works, but it doesn't scale: acquire three resources and you're either nesting three `try`/`finally` blocks, or manually tracking which ones opened successfully so you can close only those, in the right order, from a single `finally`.
+
+**Explicit Resource Management** (`using` / `await using`) moves that bookkeeping into the language itself: declare a resource with `using`, and it's disposed automatically at the end of its scope — in reverse order, every time, including when an exception is thrown.
+
+<RainbowDivider />
+
+## The try/finally Version
+
+<CodeBlock language="js">
+{`
+  function process() {
+    const a = openResource("a");
+    try {
+      const b = openResource("b");
+      try {
+        doWork(a, b);
+      } finally {
+        b.close();
+      }
+    } finally {
+      a.close();
+    }
+  }
+`}
+</CodeBlock>
+
+Correct, but the nesting depth tracks the number of resources — four resources means four levels deep, purely to guarantee cleanup order. And every one of these blocks is boilerplate anyone reading the function has to mentally skip past to find the actual logic (`doWork`).
+
+<RainbowDivider />
+
+## With using
+
+<CodeBlock language="js">
+{`
+  function process() {
+    using a = openResource("a");
+    using b = openResource("b");
+
+    doWork(a, b);
+  } // b disposed first, then a — automatically, even if doWork() throws
+`}
+</CodeBlock>
+
+No nesting, no nesting depth tied to resource count. `a` and `b` are disposed in reverse declaration order the moment `process()`'s scope ends — normal return, early return, or thrown exception, all identical.
+
+<RainbowDivider />
+
+## The Protocol: Symbol.dispose
+
+<CodeBlock language="ts">
+{`
+  class FileHandle {
+    constructor(private path: string) {
+      console.log(\`opened \${path}\`);
+    }
+
+    // This is the entire contract — any object with this method works with 'using'.
+    [Symbol.dispose](): void {
+      console.log(\`closed \${this.path}\`);
+    }
+  }
+
+  function readConfig() {
+    using file = new FileHandle("config.json");
+    // ... read from file ...
+  } // file[Symbol.dispose]() runs here automatically
+`}
+</CodeBlock>
+
+`using` doesn't care what the object *is* — only that it implements `[Symbol.dispose]()`. Anything that needs deterministic cleanup can opt in by adding one method, the same way any object becomes iterable by implementing `[Symbol.iterator]()`.
+
+<RainbowDivider />
+
+## await using for Async Cleanup
+
+<CodeBlock language="ts">
+{`
+  class DbConnection {
+    static async connect(url: string): Promise<DbConnection> { /* ... */ }
+
+    // Async disposal — for cleanup that itself needs to await something (flushing, a graceful close).
+    async [Symbol.asyncDispose](): Promise<void> {
+      await this.close();
+    }
+  }
+
+  async function runQuery() {
+    await using conn = await DbConnection.connect(url);
+    return conn.query("SELECT 1");
+  } // conn[Symbol.asyncDispose]() is awaited here before runQuery()'s promise resolves
+`}
+</CodeBlock>
+
+`await using` is to `Symbol.asyncDispose` what `using` is to `Symbol.dispose` — the caller doesn't move on (or return a value, or propagate an error) until every pending async disposal in the scope has actually finished.
+
+<RainbowDivider />
+
+## Try It Live
+
+Three resources are declared and acquired in order. Run the block and watch them dispose in reverse order in the log below — then flip the checkbox to throw partway through and see disposal still happen for every resource that was already acquired.
+
+<Sandbox slug="explicit-resource-management-using" readOnly />
+
+<RainbowDivider />
+
+## DisposableStack, for Dynamic Resource Counts
+
+<CodeBlock language="ts">
+{`
+  function processAll(paths: string[]) {
+    using stack = new DisposableStack();
+    const handles = paths.map((path) => stack.use(new FileHandle(path)));
+
+    return handles.map((h) => h.readAll());
+  } // every handle stack.use()'d is disposed here, in reverse order
+`}
+</CodeBlock>
+
+A plain `using` declaration is for a fixed, known-at-write-time set of resources. `DisposableStack` (and its async counterpart, `AsyncDisposableStack`) is for when the count isn't known until runtime — register each one with `.use()` as it's created, and the stack disposes everything it's holding, in reverse order, when its own scope ends.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Disposal happens even if the resource is never actually used after acquisition** — `using` guarantees cleanup runs, not that the resource did anything useful first. That's a feature: a failed step three lines later still cleans up steps one and two.
+* **`Symbol.dispose` must be synchronous; `Symbol.asyncDispose` must be awaited via `await using`.** Using a plain `using` on something that only implements `Symbol.asyncDispose` is a type error — the mismatch is caught at the API boundary, not silently ignored at runtime.
+* **If disposal itself throws, and the block was already throwing, the errors combine into a `SuppressedError`** (a real built-in) rather than one silently replacing the other — both are preserved and inspectable via `.error` and `.suppressed`.
+* **Compiler/runtime support**: TypeScript has supported the syntax since 5.2 (downleveled for older targets); native engine support is still rolling out. Until it's universal, transpilation (TypeScript, Babel) is the practical way to ship this today, same as `async`/`await` was for years before every target engine understood it directly.
+* **This isn't a replacement for `try`/`catch`** — `using` only guarantees disposal, it doesn't handle or swallow the original error. Wrap a `using` block in `try`/`catch` exactly as you would any other code, if you need to react to the failure rather than just clean up after it.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`using` and `await using` take the one part of `try`/`finally` that was always mechanical — "make sure this gets cleaned up, in reverse order, no matter how the block exits" — and make it declarative. Any resource with a `[Symbol.dispose]()` (or `[Symbol.asyncDispose]()`) method gets that guarantee for free, without the nesting that scaled linearly with how many resources a function happened to open.

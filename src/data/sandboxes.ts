@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "explicit-resource-management-using",
+    title: "Deterministic Cleanup with using",
+    description: "Run a block that acquires three resources and watch them dispose in reverse order — then throw partway through and see disposal still happen for everything already acquired.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "temporal-api-date-handling",
     title: "Date Arithmetic: Date vs. Temporal.PlainDate",
     description: "Add months to a date and compare legacy Date's silent month-end rollover against Temporal.PlainDate's explicit constrain/reject overflow handling.",

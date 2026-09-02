@@ -1046,6 +1046,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "explicit-resource-management-using",
+    title: "Deterministic Cleanup with using / await using",
+    excerpt: "Resources dispose automatically, in reverse order, even when the block throws.",
+    description: "The using and await using declarations call an object's Symbol.dispose/Symbol.asyncDispose automatically at the end of scope, in reverse acquisition order, replacing nested try/finally blocks with a flat, declarative alternative.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "using-declarations",
+      "explicit-resource-management",
+      "symbol-dispose",
+      "tc39",
+      "try-finally",
+      "resource-cleanup"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/explicit-resource-management-using/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Three resources acquired in order and disposed automatically in reverse order at the end of a using block, even after a thrown error, illustrating explicit resource management."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
