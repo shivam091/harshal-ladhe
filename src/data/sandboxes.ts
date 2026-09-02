@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "temporal-api-date-handling",
+    title: "Date Arithmetic: Date vs. Temporal.PlainDate",
+    description: "Add months to a date and compare legacy Date's silent month-end rollover against Temporal.PlainDate's explicit constrain/reject overflow handling.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "array-grouping-object-groupby",
     title: "Object.groupBy vs. Map.groupBy",
     description: "Group the same 8 transactions by a string key and then a boolean key through Object.groupBy, Map.groupBy, and a manual reduce — watch the boolean key survive intact only in the Map version.",

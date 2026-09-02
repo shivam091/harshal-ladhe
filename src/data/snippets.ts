@@ -1021,6 +1021,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "temporal-api-date-handling",
+    title: "Temporal.PlainDate: Fixing Date's Footguns",
+    excerpt: "Zero-indexed months, in-place mutation, and silent month-end rollover — gone.",
+    description: "Temporal.PlainDate replaces Date's classic footguns — zero-indexed months, in-place mutation, and silent month-end overflow — with an immutable, calendar-only date type and explicit overflow handling.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "temporal-api",
+      "plaindate",
+      "date-handling",
+      "immutability",
+      "tc39",
+      "date-object"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/temporal-api-date-handling/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "January 31st plus one month rolling into March with legacy Date versus clamping correctly to February's last day with Temporal.PlainDate."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

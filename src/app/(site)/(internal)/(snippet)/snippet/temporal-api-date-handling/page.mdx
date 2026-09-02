@@ -1,0 +1,113 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("temporal-api-date-handling");
+
+## Introduction
+
+`Date` has carried the same set of footguns since JavaScript 1.0: months are zero-indexed, every setter mutates the object in place, and there's no way to represent "just a calendar date" without also dragging along a timezone and a time-of-day you never asked for. Workarounds accumulated — `date-fns`, Moment.js, Luxon, day.js — because the platform itself never fixed the underlying object.
+
+**Temporal** is that fix, built into the language: a family of immutable, type-specific classes — `Temporal.PlainDate`, `PlainTime`, `PlainDateTime`, `ZonedDateTime`, `Duration`, `Instant` — each modeling exactly one concept `Date` conflated into one leaky class.
+
+<RainbowDivider />
+
+## The Classic Footguns
+
+<CodeBlock language="js">
+{`
+  // Months are 0-indexed — January is 0, not 1. Off-by-one is a one-character typo away.
+  const jan31 = new Date(2026, 0, 31);
+
+  // Every setter mutates in place — no defensive copy means shared references corrupt silently.
+  jan31.setMonth(jan31.getMonth() + 1);
+  jan31; // Tue Mar 03 2026 — NOT February. Adding "1 month" rolled past a short February entirely.
+`}
+</CodeBlock>
+
+`setMonth(1)` (February, 0-indexed) on the 31st doesn't clamp to February's last real day — `Date` normalizes the overflow by rolling forward into March, day 3 (Feb having only 28 days that year). "Add one month" quietly became "add roughly one month, sometimes more."
+
+<RainbowDivider />
+
+## Temporal.PlainDate: Immutable, and Explicit About Overflow
+
+<CodeBlock language="js">
+{`
+  const jan31 = Temporal.PlainDate.from("2026-01-31");
+
+  jan31.add({ months: 1 }).toString();
+  // "2026-02-28" — clamped to February's real last day, by default ("constrain")
+
+  jan31.add({ months: 1 }, { overflow: "reject" });
+  // throws RangeError — you explicitly asked to be told instead of silently clamped
+`}
+</CodeBlock>
+
+`.add()` returns a **new** `PlainDate` — `jan31` itself is untouched, so passing it around never risks another piece of code mutating your copy. And overflow is a decision you make, not a rule the engine picks for you: `"constrain"` (the default) clamps to the nearest valid day, `"reject"` throws instead of guessing.
+
+<RainbowDivider />
+
+## A Type Per Concept, Not One Object for Everything
+
+<CodeBlock language="ts">
+{`
+  Temporal.PlainDate;     // a calendar date, no time, no timezone — "2026-01-31"
+  Temporal.PlainTime;     // a time of day, no date, no timezone — "14:30:00"
+  Temporal.PlainDateTime; // date + time, still no timezone — "2026-01-31T14:30:00"
+  Temporal.ZonedDateTime; // date + time + timezone — the only one that represents a real instant
+  Temporal.Duration;      // a span of time — "3 months", not a difference between two Dates in ms
+  Temporal.Instant;       // a fixed point on the UTC timeline, timezone-free by definition
+`}
+</CodeBlock>
+
+A birthday, a deadline, a recurring "the 1st of every month" reminder — none of these are tied to a timezone, but modeling them with `Date` always drags one in anyway (`Date` is fundamentally a UTC-millisecond instant with a display timezone bolted on). `PlainDate` lets "January 31st" just mean January 31st, full stop, with no implicit "...at midnight in which timezone?" attached.
+
+<RainbowDivider />
+
+## Durations Between Dates
+
+<CodeBlock language="js">
+{`
+  const start = Temporal.PlainDate.from("2026-01-15");
+  const end = Temporal.PlainDate.from("2026-04-02");
+
+  start.until(end).toString();                          // "P2M18D" — 2 months, 18 days
+  start.until(end, { largestUnit: "days" }).toString();  // "P77D" — same span, expressed in days
+`}
+</CodeBlock>
+
+Compare this to the `Date` equivalent — subtracting two `Date` objects gives a raw millisecond count, from which "how many months apart" has to be computed by hand, calendar edge cases (varying month lengths, leap years) included.
+
+<RainbowDivider />
+
+## Try It Live
+
+Pick a start date and a number of months to add, then compare the legacy `Date.setMonth()` result against `Temporal.PlainDate.add()` under both overflow modes. Try January 31st plus one month — that's where the two approaches visibly diverge.
+
+<Sandbox slug="temporal-api-date-handling" readOnly />
+
+<RainbowDivider />
+
+## Comparison
+
+| | `Date` | `Temporal.PlainDate` |
+| :--- | :--- | :--- |
+| **Month indexing** | 0-indexed (January = 0) | 1-indexed (January = 1) |
+| **Mutability** | Setters mutate in place | Fully immutable — every operation returns a new value |
+| **Month-end overflow** | Silently rolls into the next month | Explicit `"constrain"` (clamp) or `"reject"` (throw) |
+| **Calendar-only dates** | Not representable — always carries a time + implicit timezone | `PlainDate` has neither |
+| **Parsing** | `new Date("01/02/2026")` is locale-ambiguous | `Temporal.PlainDate.from()` only accepts unambiguous ISO 8601 |
+| **Durations** | Manual millisecond math | `Temporal.Duration`, with calendar-aware `.until()`/`.since()` |
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Browser/runtime support is still rolling out.** Temporal shipped in some browsers starting in 2025, but for code that needs to run everywhere today, the [`@js-temporal/polyfill`](https://www.npmjs.com/package/@js-temporal/polyfill) package implements the full spec — same API, so migrating off the polyfill onto native support later needs zero code changes.
+* **Don't reach for `PlainDate` when you actually need an instant.** Anything that has to compare across timezones correctly — "did this event happen before that one," server timestamps, scheduling meetings across regions — wants `ZonedDateTime` or `Instant`, not `PlainDate`. `PlainDate` is specifically for when the timezone genuinely doesn't matter (birthdays, calendar-only deadlines, "day 1 of the billing cycle").
+* **`.from()` is intentionally strict.** Ambiguous strings like `"01/02/2026"` that `new Date()` happily (mis)parses one way in one locale and another way elsewhere are rejected outright by `Temporal.PlainDate.from()` — only unambiguous ISO 8601 (`"2026-01-02"`) is accepted.
+* **Every Temporal object is immutable**, same discipline as strings or numbers — `.add()`, `.with()`, `.subtract()` all return new instances. Code that assumed `Date`'s in-place mutation (storing a `Date` and calling `.setMonth()` on it later to "update" it) needs to reassign the variable instead.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Temporal doesn't patch `Date` — it replaces the one-class-does-everything model with a type for each concept (a plain date, a plain time, a timezone-aware instant, a duration), all immutable, all explicit about what happens at the edges. For any code currently fighting `Date`'s zero-indexed months, in-place mutation, or silent month-end rollover, `Temporal.PlainDate` (with the polyfill today, native tomorrow) is the fix that doesn't need a full date library pulled in to get it.
