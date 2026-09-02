@@ -1,0 +1,88 @@
+.border-preview {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.gradient-border-card {
+  --border-size: 4px;
+  --border-angle: 90deg;
+  --border-start: #ff6a00;
+  --border-end: #ee0979;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 130px;
+  border: var(--border-size) solid transparent;
+  border-radius: 16px;
+  background:
+    linear-gradient(var(--pg-surface), var(--pg-surface)) padding-box,
+    linear-gradient(var(--border-angle), var(--border-start), var(--border-end)) border-box;
+  transition: border-width 0.1s ease, background 0.1s ease;
+}
+
+.gradient-border-card.type-conic {
+  background:
+    linear-gradient(var(--pg-surface), var(--pg-surface)) padding-box,
+    conic-gradient(from var(--border-angle), var(--border-start), var(--border-end), var(--border-start)) border-box;
+}
+
+.gradient-border-card.animate {
+  background-size: 300% 300%;
+  animation: gb-flow 6s linear infinite;
+}
+
+@keyframes gb-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gradient-border-card span {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--pg-text);
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--pg-text);
+  cursor: pointer;
+}
+
+.checkbox-field input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-field code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+@media (max-width: 480px) {
+  .border-preview {
+    padding: 16px 8px;
+  }
+
+  .gradient-border-card {
+    width: 180px;
+    height: 110px;
+  }
+}

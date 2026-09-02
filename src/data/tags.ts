@@ -346,6 +346,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Streamlined Styling with SCSS and Preprocessors",
     description: "Optimize your CSS workflow using SCSS (Sass) features like variables, nesting, mixins, and modular imports for scalable and maintainable code."
   },
+  "mixins": {
+    title: "Reusable Styles with Sass Mixins",
+    description: "Write once, include everywhere: guides on building reusable Sass @mixin blocks to keep gradient, layout, and animation CSS DRY and consistent."
+  },
   "gradient-text": {
     title: "CSS Gradient Text Techniques",
     description: "Guides on clipping gradients to typography with background-clip: text, from static headings to animated and stroke-outlined text effects."
@@ -361,6 +365,10 @@ export const tagMeta: Record<string, TagMeta> = {
   "typography": {
     title: "Web Typography Techniques and Best Practices",
     description: "Articles on styling and structuring text on the web, from font fundamentals to advanced, CSS-driven visual treatments for headings and body copy."
+  },
+  "borders": {
+    title: "Advanced CSS Border Styling",
+    description: "Techniques for styling element borders beyond a flat color, including gradients, images, and animated effects using modern CSS."
   },
   "async-javascript": {
     title: "Asynchronous JavaScript Explained",

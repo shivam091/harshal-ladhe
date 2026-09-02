@@ -399,6 +399,24 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-gradient-borders",
+    title: "CSS Gradient Borders: Complete Guide with Techniques & Examples",
+    excerpt: "Build gradient borders using modern CSS techniques",
+    description: "A complete guide to CSS gradient borders using border-image, background-clip, mask, conic and radial gradients, animations, and a reusable SCSS mixin with real-world examples.",
+    category: ["CSS"],
+    tags: ["css", "gradients", "borders", "scss", "mixins", "animation", "ui-design", "frontend"],
+    image: {
+      path: "/assets/img/posts/css/css-gradient-borders/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "CSS gradient borders cover image showcasing multiple techniques including background-clip, conic and radial gradients, mask effects, animated borders, and SCSS mixin with colorful neon UI elements."
+    },
+    signoff: "The reusable SCSS mixin took the most tinkering of anything in this one, and I hope it saves you from retyping the same background-clip boilerplate on every card and button. Thanks for bordering on obsessive with me over a two-layer background trick. 🖼️",
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication" }
+    ]
   }
 ];
 

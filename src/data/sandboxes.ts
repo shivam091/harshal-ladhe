@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-gradient-borders",
+    title: "Gradient Border Playground",
+    description: "Switch between linear and conic gradient borders, tune thickness and direction, and toggle animation to see the generated background-clip CSS update live.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "css-gradient-text",
     title: "Gradient Text Playground",
     description: "Switch between linear, animated, and stroke gradient text, tune the angle and colors live, and toggle the multi-line wrap fix to see box-decoration-break in action.",

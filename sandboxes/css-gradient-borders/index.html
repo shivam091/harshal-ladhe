@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gradient Border Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Gradient Border Playground</h1>
+        <p>Switch between linear and conic gradient borders, tune thickness and direction, and toggle animation to see the generated <code>background-clip</code> CSS update live.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Gradient border preview">
+        <div class="border-preview">
+          <div class="gradient-border-card" id="gradient-border-card">
+            <span>Gradient Border</span>
+          </div>
+        </div>
+      </section>
+
+      <output id="border-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Gradient Type</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Gradient type">
+          <label class="segment">
+            <input type="radio" name="border-type" value="linear" checked>
+            <span>Linear</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="border-type" value="conic">
+            <span>Conic</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Border</legend>
+        <div class="field">
+          <label for="thickness-input">Thickness <span id="thickness-label">4px</span></label>
+          <div class="range-row">
+            <span class="range-edge">2px</span>
+            <div class="range-track">
+              <input type="range" id="thickness-input" min="2" max="12" step="1" value="4">
+              <output class="range-bubble" id="thickness-value" for="thickness-input">4px</output>
+            </div>
+            <span class="range-edge">12px</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="angle-input" id="angle-field-label">Direction <span id="angle-label">90deg</span></label>
+          <div class="range-row">
+            <span class="range-edge">0deg</span>
+            <div class="range-track">
+              <input type="range" id="angle-input" min="0" max="360" step="1" value="90">
+              <output class="range-bubble" id="angle-value" for="angle-input">90deg</output>
+            </div>
+            <span class="range-edge">360deg</span>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Colors</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="color-1">Color 1</label>
+            <input type="color" id="color-1" value="#ff6a00">
+          </div>
+          <div class="field">
+            <label for="color-2">Color 2</label>
+            <input type="color" id="color-2" value="#ee0979">
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Animation</legend>
+        <label class="checkbox-field" for="animate-toggle">
+          <input type="checkbox" id="animate-toggle">
+          <span>Animate <code>background-position</code></span>
+        </label>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
