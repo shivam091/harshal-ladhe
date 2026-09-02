@@ -1,0 +1,105 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("color-mix-dynamic-tints");
+
+## Introduction
+
+A design system usually needs more than one shade of its brand color — a light tint for a hover background, a dark shade for text on a light surface, a whole ramp for a chart. The traditional way to get there is picking every step by hand in a design tool and hardcoding ten hex values. Change the brand color later, and all ten need re-picking.
+
+**`color-mix()`** generates those steps from a formula instead of a palette — blend the brand color with white or black by whatever percentage you need, computed live in CSS.
+
+<RainbowDivider />
+
+## The Core Function
+
+<CodeBlock language="css">
+{`
+  color-mix(in oklch, var(--brand) 60%, white);
+  /*        ^colorspace  ^color  ^amount  ^mix target */
+`}
+</CodeBlock>
+
+Reads as: "60% of `--brand`, mixed with white." The percentage controls how much of the original color survives — higher percentage means closer to the brand color, lower means closer to white (or black, or any other color you mix toward).
+
+<RainbowDivider />
+
+## Building a Tint/Shade Ramp
+
+<CodeBlock language="css">
+{`
+  :root {
+    --brand: #3b82f6;
+  }
+
+  .tint-80 { background: color-mix(in oklch, var(--brand) 80%, white); }
+  .tint-60 { background: color-mix(in oklch, var(--brand) 60%, white); }
+  .tint-40 { background: color-mix(in oklch, var(--brand) 40%, white); }
+  .tint-20 { background: color-mix(in oklch, var(--brand) 20%, white); }
+
+  .shade-80 { background: color-mix(in oklch, var(--brand) 80%, black); }
+  .shade-60 { background: color-mix(in oklch, var(--brand) 60%, black); }
+`}
+</CodeBlock>
+
+Every one of these derives from the single `--brand` variable. Change `--brand` once — every tint and shade that references it recomputes automatically, in every place it's used.
+
+<RainbowDivider />
+
+## Try It Live
+
+Pick any base color — every swatch below, tints and shades alike, is generated from that one value with `color-mix()`. Nothing is a stored palette; change the color and watch all ten swatches recompute instantly.
+
+<Sandbox slug="color-mix-dynamic-tints" readOnly />
+
+<RainbowDivider />
+
+## Why `in oklch`
+
+<CodeBlock language="css">
+{`
+  color-mix(in srgb, var(--brand) 50%, white);   /* mixes in the sRGB color space */
+  color-mix(in oklch, var(--brand) 50%, white);  /* mixes in OKLCH instead */
+`}
+</CodeBlock>
+
+The color space `color-mix()` interpolates in changes the result, not just the syntax. `srgb` (the default if omitted) can produce muddy, desaturated midpoints for some color pairs — a known issue with mixing colors in RGB generally. `oklch` is a *perceptually uniform* color space designed so that interpolating between two colors in it produces visually even, vivid intermediate steps instead. For generating a tint/shade ramp meant to look smooth and consistent, `in oklch` is almost always the better default.
+
+<RainbowDivider />
+
+## Mixing Two Custom Properties
+
+`color-mix()` isn't limited to mixing toward a named color — both arguments can be variables:
+
+<CodeBlock language="css">
+{`
+  .hover-state {
+    background: color-mix(in oklch, var(--brand), var(--accent) 30%);
+  }
+`}
+</CodeBlock>
+
+Useful for blending two theme colors together (a brand-to-accent gradient stop, a hover state that leans toward a secondary color) without introducing a third hardcoded value.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Generating a full tint/shade ramp for a single brand color, kept in sync automatically
+- Hover/active/focus states that should be "a bit lighter/darker" than a base color, without a second hardcoded value
+- Theming: swap one `--brand` variable and every derived color across the site updates
+- Blending two theme colors for gradients or transition states
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This computes at paint time, not build time.** Every `color-mix()` declaration is live CSS — changing the base variable via JavaScript (as the sandbox above does) or a class toggle recomputes every dependent color instantly, with no rebuild step.
+* **Percentages don't have to add up to 100%** — `color-mix(in oklch, var(--brand) 30%, white)` is valid even though 30% + (the implicit 70% white) is the only way to read it; when only one percentage is given, the other is inferred as the remainder.
+* **Accessibility still needs checking manually.** A generated tint/shade ramp doesn't guarantee sufficient contrast between any two steps — verify contrast ratios for actual text/background pairings the same way you would with a hand-picked palette.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 111+, Firefox 113+, Safari 16.4+) as of this writing — safe to adopt broadly at this point.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`color-mix()` turns a hardcoded palette into a formula — pick one brand color, derive every tint and shade from it algorithmically, and rebranding becomes changing one variable instead of re-picking ten hex values by hand.

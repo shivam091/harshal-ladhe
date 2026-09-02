@@ -744,6 +744,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "color-mix-dynamic-tints",
+    title: "Generating Tints and Shades with color-mix()",
+    excerpt: "One brand color, a whole palette derived from it — recomputed live, no hardcoded hex ramp.",
+    description: "color-mix() blends a base CSS variable toward white or black by any percentage, generating a full tint/shade ramp from a single color that stays in sync automatically when the base color changes.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "color-mix",
+      "oklch",
+      "design-tokens",
+      "theming",
+      "modern-css",
+      "color-spaces"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/color-mix-dynamic-tints/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A row of color swatches forming a tint and shade ramp, all generated from a single base color via the CSS color-mix() function."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

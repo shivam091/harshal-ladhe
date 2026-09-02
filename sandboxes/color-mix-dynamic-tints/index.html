@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>color-mix() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Dynamic Tints with color-mix()</h1>
+        <p>Pick a base color — every swatch below is generated from it, live, with no palette stored anywhere.</p>
+      </header>
+
+      <label class="picker-row" for="brand-picker">
+        Base color
+        <input type="color" id="brand-picker" value="#3b82f6" />
+      </label>
+
+      <div class="ramp-block">
+        <p class="ramp-label">Tints — mixed toward white</p>
+        <div class="ramp">
+          <div class="swatch tint-1"><span>20%</span></div>
+          <div class="swatch tint-2"><span>40%</span></div>
+          <div class="swatch tint-3"><span>60%</span></div>
+          <div class="swatch tint-4"><span>80%</span></div>
+          <div class="swatch tint-5"><span>100%</span></div>
+        </div>
+      </div>
+
+      <div class="ramp-block">
+        <p class="ramp-label">Shades — mixed toward black</p>
+        <div class="ramp">
+          <div class="swatch shade-1"><span>20%</span></div>
+          <div class="swatch shade-2"><span>40%</span></div>
+          <div class="swatch shade-3"><span>60%</span></div>
+          <div class="swatch shade-4"><span>80%</span></div>
+          <div class="swatch shade-5"><span>100%</span></div>
+        </div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

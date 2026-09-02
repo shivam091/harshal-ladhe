@@ -1,0 +1,97 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --brand: #3b82f6;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.playground-header h1 {
+  font-size: 1.25rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 72%);
+}
+
+.picker-row input[type="color"] {
+  width: 2.5rem;
+  height: 1.75rem;
+  border: 1px solid hsl(213, 12%, 28%);
+  border-radius: 0.25rem;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ramp-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  color: hsl(210, 12%, 55%);
+}
+
+.ramp {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+}
+
+.swatch {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 3.5rem;
+  border-radius: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+.swatch span {
+  font-size: 0.6875rem;
+  color: rgba(0, 0, 0, 0.55);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Every swatch below is derived from the SAME --brand variable — change it once, everything updates. */
+.tint-1 { background: color-mix(in oklch, var(--brand) 20%, white); }
+.tint-2 { background: color-mix(in oklch, var(--brand) 40%, white); }
+.tint-3 { background: color-mix(in oklch, var(--brand) 60%, white); }
+.tint-4 { background: color-mix(in oklch, var(--brand) 80%, white); }
+.tint-5 { background: var(--brand); }
+
+.shade-1 { background: color-mix(in oklch, var(--brand) 80%, black); }
+.shade-2 { background: color-mix(in oklch, var(--brand) 60%, black); }
+.shade-3 { background: color-mix(in oklch, var(--brand) 40%, black); }
+.shade-4 { background: color-mix(in oklch, var(--brand) 20%, black); }
+.shade-5 { background: color-mix(in oklch, var(--brand) 5%, black); }
+
+.shade-3 span, .shade-4 span, .shade-5 span {
+  color: rgba(255, 255, 255, 0.75);
+}

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "color-mix-dynamic-tints",
+    title: "Dynamic Tints with color-mix()",
+    description: "Pick a base color — a full tint and shade ramp generates live from it via color-mix(), with no stored palette.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "light-dark-color-scheme",
     title: "light-dark()",
     description: "Toggle color-scheme on a panel and watch every light-dark() value re-resolve instantly — background, text, and border, from one declaration each.",
