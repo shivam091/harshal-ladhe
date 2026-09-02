@@ -870,6 +870,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "scope-styling-boundaries",
+    title: "Limiting Selector Reach with @scope",
+    excerpt: "Reuse generic class names like .title and .button across components with zero collisions.",
+    description: "@scope gives a CSS rule an explicit DOM boundary instead of relying on BEM naming or CSS-in-JS generated class names — the same generic .title/.button styled independently per component, plus donut-scoping and proximity-based specificity.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "at-scope",
+      "bem",
+      "css-in-js",
+      "specificity",
+      "modern-css",
+      "component-styling"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/scope-styling-boundaries/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Two card components using the identical generic class names .title and .button, styled independently without collision via CSS @scope."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,122 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("scope-styling-boundaries");
+
+## Introduction
+
+`.title` and `.button` are two of the most-reused class names in any codebase — which is exactly why plain CSS makes them dangerous. A global `.title { color: blue; }` rule doesn't know or care which component it's inside; it applies everywhere, immediately, the moment two unrelated components both happen to use the name.
+
+BEM (`.card__title`, `.card--warning__title`) and CSS-in-JS (auto-generated unique class names) both solve this the same way: make every class name globally unique so collisions become structurally impossible. **`@scope`** solves it differently — by giving a *rule*, not a class name, an explicit boundary.
+
+<RainbowDivider />
+
+## The Core Syntax
+
+<CodeBlock language="css">
+{`
+  @scope (.card) {
+    .title {
+      color: blue;
+    }
+  }
+`}
+</CodeBlock>
+
+`.title` here only matches inside a `.card` — a `.title` anywhere else on the page, in an entirely unrelated component, is untouched. No renaming required; the same generic class name means something different depending on which `@scope` block it's evaluated inside.
+
+<RainbowDivider />
+
+## Limiting How Deep It Reaches
+
+<CodeBlock language="css">
+{`
+  @scope (.card) to (.nested-card) {
+    .title {
+      color: blue; /* applies inside .card, but NOT inside a .nested-card within it */
+    }
+  }
+`}
+</CodeBlock>
+
+The `to (...)` clause sets a *lower* boundary — a "donut scope." Useful when a component can contain another instance of a similar component (a card containing a nested card, a list containing a nested list) and you want the outer styling to stop at that inner boundary instead of cascading into it.
+
+<RainbowDivider />
+
+## Try It Live
+
+Both cards below use the identical class names `.title` and `.button` — no BEM prefix, no unique generated names. Two separate `@scope` blocks style them independently with zero collision. The warning card also nests an unrelated inner card whose own `.title` sits outside the `to (...)` boundary and stays untouched.
+
+<Sandbox slug="scope-styling-boundaries" readOnly />
+
+<RainbowDivider />
+
+## Scoped Specificity: `:scope`
+
+Inside a scope, `:scope` refers back to the root element the scope was declared on:
+
+<CodeBlock language="css">
+{`
+  @scope (.card) {
+    :scope {
+      border: 1px solid #ccc; /* styles .card ITSELF, not something inside it */
+    }
+
+    .title {
+      color: blue;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Proximity: Nearer Rules Win, Regardless of Specificity Order
+
+<CodeBlock language="css">
+{`
+  @scope (.theme-dark) {
+    .button { background: black; }
+  }
+
+  @scope (.theme-dark .card) {
+    .button { background: navy; } /* WINS inside .card — its scoping root is closer to .button */
+  }
+`}
+</CodeBlock>
+
+When two scoped rules have equal specificity and would normally tie (resolved by source order), `@scope` adds one more tiebreaker first: the rule whose scoping root is *closer* in the DOM to the matched element wins — regardless of which `@scope` block appears earlier in the source.
+
+<RainbowDivider />
+
+## Comparison with BEM and CSS-in-JS
+
+| | BEM | CSS-in-JS | `@scope` |
+| :--- | :--- | :--- | :--- |
+| **How it prevents collisions** | Naming convention (`.block__elem`) | Auto-generated unique class names | An explicit DOM boundary on the rule itself |
+| **Requires a build step** | No | Usually yes | No |
+| **Class names in markup** | Long, convention-driven | Auto-generated, opaque | Stay short and generic |
+| **Runtime cost** | None | Style injection at runtime (in most implementations) | None — native CSS |
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Component libraries where generic class names (`.title`, `.header`, `.button`) would otherwise need BEM-style prefixing
+- Theming: multiple `@scope` blocks targeting the same class names differently per theme/variant root
+- Third-party or legacy CSS integration, where wrapping it in a scope prevents it from leaking into your own styles (or vice versa)
+- Donut-scoping nested instances of the same component (a card inside a card, a list inside a list)
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`@scope` doesn't reduce specificity** — it adds a matching boundary on top of normal specificity/cascade rules. Two rules inside the same scope still resolve conflicts by specificity exactly as before.
+* **This isn't Shadow DOM style encapsulation.** Styles outside a scope can still target elements inside it with a normal unscoped selector — `@scope` limits what a *scoped rule* can reach, not what can reach *into* the scoped subtree from outside.
+* **Combine with `:where()` inside a scope** to keep specificity flat within the boundary, the same way you might outside one — `@scope` and specificity management are complementary, not a replacement for each other.
+* **Browser support is solid in Chrome/Edge and Safari** (Chrome/Edge 118+, Safari 17.4+) as of this writing; Firefox has landed it more recently — check your target matrix.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`@scope` gives plain CSS what BEM and CSS-in-JS have been faking with naming conventions and generated class names: a genuine boundary on where a rule applies. Reach for it when generic, reusable class names keep colliding across components, without the verbosity of BEM or the runtime cost of CSS-in-JS.

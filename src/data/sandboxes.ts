@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "scope-styling-boundaries",
+    title: "@scope Styling Boundaries",
+    description: "Two cards share the identical .title/.button class names, styled independently by separate @scope blocks — including a nested unrelated card left untouched by the outer scope's boundary.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "anchor-positioning-tooltips",
     title: "Native Anchor Positioning",
     description: "Three tooltips tethered to different edges of their trigger buttons via anchor() — no JS positioning library, with a graceful fallback note for unsupported browsers.",

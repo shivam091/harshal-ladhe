@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@scope Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>@scope — Styling Boundaries</h1>
+        <p>Both cards below use the exact same generic class names — .title, .button — with no BEM prefixing.</p>
+      </header>
+
+      <div class="card card-warning">
+        <p class="title">Warning Card</p>
+        <p class="body">This card's .title and .button are styled only by its own @scope block.</p>
+        <button class="button" type="button">Acknowledge</button>
+
+        <div class="nested-card">
+          <p class="title">Nested unrelated card</p>
+          <p class="hint">This inner .title is OUTSIDE the scope's "to" boundary, so it's untouched.</p>
+        </div>
+      </div>
+
+      <div class="card card-info">
+        <p class="title">Info Card</p>
+        <p class="body">A completely separate @scope block styles THIS card's .title and .button — no naming collision.</p>
+        <button class="button" type="button">Got it</button>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

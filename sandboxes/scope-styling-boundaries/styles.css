@@ -1,0 +1,99 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 26rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.card {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(213, 12%, 24%);
+}
+
+.body {
+  margin: 0.375rem 0 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 70%);
+}
+
+.nested-card {
+  margin-top: 0.875rem;
+  padding: 0.75rem;
+  border: 1px dashed hsl(213, 12%, 30%);
+  border-radius: 0.375rem;
+}
+
+.hint {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: hsl(210, 12%, 55%);
+}
+
+/* Scopes .title/.button styling to ONLY this card, stopping at .nested-card's boundary — the
+   inner card's own .title is outside the scope's "to" limit and stays completely untouched. */
+@scope (.card-warning) to (.nested-card) {
+  .title {
+    color: hsl(35, 80%, 65%);
+    font-weight: 700;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .button {
+    border: 1px solid hsl(35, 70%, 45%);
+    background: hsl(35, 60%, 45%, 0.16);
+    color: hsl(35, 80%, 72%);
+    padding: 0.4rem 0.875rem;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    cursor: pointer;
+  }
+}
+
+/* A completely separate scope, styling the SAME class names with no collision — no BEM prefix
+   needed to keep these two rule sets from fighting each other. */
+@scope (.card-info) {
+  .title {
+    color: hsl(213, 85%, 68%);
+    font-weight: 700;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .button {
+    border: 1px solid hsl(213, 80%, 54%);
+    background: hsl(213, 80%, 54%, 0.14);
+    color: hsl(213, 85%, 68%);
+    padding: 0.4rem 0.875rem;
+    border-radius: 0.375rem;
+    font-size: 0.8125rem;
+    cursor: pointer;
+  }
+}
