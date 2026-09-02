@@ -1,0 +1,100 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+  text-align: center;
+}
+
+.text-input {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid hsl(213, 12%, 24%);
+  border-radius: 0.375rem;
+  background: hsl(213, 20%, 10%);
+  color: hsl(210, 10%, 92%);
+  font-size: 0.9375rem;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: hsl(213, 80%, 54%);
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: center;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 75%);
+  cursor: pointer;
+}
+
+.step input {
+  accent-color: hsl(213, 80%, 54%);
+  width: 0.9rem;
+  height: 0.9rem;
+  cursor: pointer;
+}
+
+.output {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.875rem 1rem;
+  border: 1px solid hsl(213, 12%, 24%);
+  border-radius: 0.5rem;
+  background: hsl(213, 20%, 10%);
+}
+
+.output-label {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: hsl(210, 12%, 55%);
+}
+
+.output-value {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.9375rem;
+  color: hsl(213, 85%, 68%);
+  word-break: break-all;
+}

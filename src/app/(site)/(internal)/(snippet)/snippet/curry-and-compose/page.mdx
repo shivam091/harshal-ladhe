@@ -1,0 +1,112 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("curry-and-compose");
+
+## Introduction
+
+Currying and composition are two small functional-programming primitives that, together, let you build complex behavior out of small, single-purpose functions instead of one long imperative block.
+
+* **Currying** turns a function that takes multiple arguments into a chain of functions that each take one, letting you supply arguments incrementally.
+* **Composition** chains single-argument functions together, feeding each one's output into the next.
+
+Neither is exotic — they're just functions that return functions — but together they enable a genuinely different way to structure transformations.
+
+<RainbowDivider />
+
+## Currying
+
+<CodeBlock language="js">
+{`
+  function curry(fn) {
+    return function curried(...args) {
+      if (args.length >= fn.length) return fn(...args);
+      return (...more) => curried(...args, ...more);
+    };
+  }
+
+  const add3 = (a, b, c) => a + b + c;
+  const curriedAdd3 = curry(add3);
+
+  curriedAdd3(1, 2, 3);     // 6 — called with everything at once, same as the original
+  curriedAdd3(1)(2)(3);     // 6 — supplied one at a time
+  curriedAdd3(1, 2)(3);     // 6 — supplied in any grouping
+`}
+</CodeBlock>
+
+`fn.length` — the number of *declared* parameters a function has — is what `curry` uses to know when it's received enough arguments to actually call `fn`. Every recursive call to `curried` just accumulates more arguments until that threshold is met.
+
+<RainbowDivider />
+
+## Composition: `compose` and `pipe`
+
+<CodeBlock language="js">
+{`
+  const compose = (...fns) => (arg) => fns.reduceRight((acc, fn) => fn(acc), arg);
+  const pipe = (...fns) => (arg) => fns.reduce((acc, fn) => fn(acc), arg);
+
+  const shout = (s) => s.toUpperCase() + "!";
+  const trim = (s) => s.trim();
+
+  compose(shout, trim)("  hi  "); // shout(trim("  hi  ")) → "HI!"  (right to left)
+  pipe(trim, shout)("  hi  ");    // shout(trim("  hi  ")) → "HI!"  (left to right, same result)
+`}
+</CodeBlock>
+
+`compose` and `pipe` do the exact same thing — chain single-argument functions together — they just read in opposite directions. `compose` mirrors mathematical function composition notation (`f(g(x))`); `pipe` mirrors the order you'd say the steps out loud ("trim it, then shout it").
+
+<RainbowDivider />
+
+## Typed Signatures
+
+<CodeBlock language="ts">
+{`
+  function curry<A, B, R>(fn: (a: A, b: B) => R): (a: A) => (b: B) => R;
+  function curry<A, B, C, R>(fn: (a: A, b: B, c: C) => R): (a: A) => (b: B) => (c: C) => R;
+
+  function compose<T>(...fns: Array<(arg: T) => T>): (arg: T) => T;
+  function pipe<T>(...fns: Array<(arg: T) => T>): (arg: T) => T;
+`}
+</CodeBlock>
+
+This `compose`/`pipe` signature keeps every function in the chain working on the *same type* `T` (e.g. a pipeline of `string => string` steps) — simple to read and covers most real pipelines. A fully general version that lets each step change type (`string => number => boolean`) needs a distinct overload per chain length, which is why most utility libraries (Lodash/fp, Ramda) ship that version pre-written rather than expecting you to hand-write it.
+
+<RainbowDivider />
+
+## Try It Live
+
+Toggle transformation steps on or off — `pipe()` runs whichever are enabled, in order, against your input text.
+
+<Sandbox slug="curry-and-compose" readOnly />
+
+<RainbowDivider />
+
+## Where Currying Earns Its Keep
+
+Currying is most useful for building specialized functions out of general ones by fixing some arguments in advance:
+
+<CodeBlock language="js">
+{`
+  const multiply = curry((a, b) => a * b);
+  const double = multiply(2);   // a specialized function, argument already fixed
+  const triple = multiply(3);
+
+  [1, 2, 3].map(double); // [2, 4, 6]
+`}
+</CodeBlock>
+
+This shows up constantly with array methods (`.map`, `.filter`, `.reduce`), where you need a single-argument function and a curried multi-argument one gives you exactly that, pre-configured.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`fn.length` breaks with default parameters and rest parameters.** `(a, b = 1) => a + b` has `fn.length === 1`, not 2 — default-valued parameters aren't counted. If you're currying a function with defaults, either don't rely on arity detection, or specify the expected argument count explicitly (`curry(fn, 2)`).
+* **Currying makes debugging stack traces slightly less direct** — a curried call chain is several function calls deep instead of one. Worth it for the flexibility it buys, but be aware when reading a stack trace.
+* **For real projects**, reach for a battle-tested library — Lodash's `_.curry`/`_.flow`, or Ramda's `R.curry`/`R.compose` — over a hand-rolled version. They handle the `fn.length` edge cases and ship a fully polymorphic `compose`/`pipe` typing that this simplified snippet doesn't attempt.
+* **Composition assumes single-argument functions.** If a step in your pipeline genuinely needs multiple arguments, curry it first so it fits the `(arg: T) => T` shape `compose`/`pipe` expect.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Curry and compose aren't tools you reach for on every function — they earn their keep specifically when you're building specialized functions from general ones, or chaining a sequence of same-shaped transformations. Used well, they turn a wall of imperative logic into a short, readable pipeline.

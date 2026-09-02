@@ -390,6 +390,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "curry-and-compose",
+    title: "Curry and Compose: Functional Composition Utilities",
+    excerpt: "Build specialized functions from general ones, and chain transformations into a pipeline.",
+    description: "A curry() implementation using fn.length to detect arity, plus compose() and pipe() for chaining single-argument transformations — the two primitives functional pipelines are built from.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "currying",
+      "function-composition",
+      "functional-programming",
+      "typescript",
+      "pipe",
+      "compose",
+      "higher-order-functions"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/curry-and-compose/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Diagram of small single-purpose functions chained together into a left-to-right pipeline, illustrating function composition."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "curry-and-compose",
+    title: "Composable Pipeline",
+    description: "Toggle trim, lowercase, reverse, and truncate steps on and off — pipe() runs whichever are enabled, left to right, against your input text.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "promise-all-settled-error-handling",
     title: "Promise.all vs. Promise.allSettled",
     description: "Run six tasks with a ~40% failure rate through both strategies and compare: Promise.all discards everything on the first failure, Promise.allSettled reports every outcome.",
