@@ -794,6 +794,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "accent-color-native-controls",
+    title: "Theming Native Controls with accent-color",
+    excerpt: "Brand-matched checkboxes, radios, sliders, and progress bars — without replacing them.",
+    description: "The accent-color property themes the checked/filled state of native checkboxes, radios, range sliders, and progress bars to any color, keeping real browser controls with full native behavior and accessibility intact.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "accent-color",
+      "forms",
+      "native-controls",
+      "theming",
+      "accessibility",
+      "modern-css"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/accent-color-native-controls/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Native checkboxes, a radio group, a range slider, and a progress bar all themed to a green brand color via the CSS accent-color property."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

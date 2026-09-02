@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>accent-color Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Theming Native Controls with accent-color</h1>
+        <p>Every control below is the browser's own native element — nothing here is a custom-built replacement.</p>
+      </header>
+
+      <label class="picker-row" for="theme-picker">
+        Theme color
+        <input type="color" id="theme-picker" value="#22c55e" />
+      </label>
+
+      <div class="controls-block">
+        <label class="control-row">
+          <input type="checkbox" checked />
+          Subscribe to updates
+        </label>
+
+        <label class="control-row">
+          <input type="checkbox" checked />
+          Enable notifications
+        </label>
+
+        <fieldset class="radio-group">
+          <legend>Plan</legend>
+          <label class="control-row">
+            <input type="radio" name="plan" value="basic" checked />
+            Basic
+          </label>
+          <label class="control-row">
+            <input type="radio" name="plan" value="pro" />
+            Pro
+          </label>
+        </fieldset>
+
+        <label class="control-row range-row">
+          Volume
+          <input type="range" min="0" max="100" value="65" />
+        </label>
+
+        <label class="control-row">
+          Upload progress
+          <progress value="70" max="100"></progress>
+        </label>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

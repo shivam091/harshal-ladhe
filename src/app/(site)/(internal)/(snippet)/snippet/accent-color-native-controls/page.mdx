@@ -1,0 +1,84 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("accent-color-native-controls");
+
+## Introduction
+
+Native checkboxes, radio buttons, range sliders, and progress bars ship with the operating system's default blue (or gray) — and for years, the only way to match them to a brand color was replacing them entirely: hiding the real input, building a custom-styled `<div>` in its place, and re-implementing keyboard navigation, focus states, and accessibility semantics by hand.
+
+**`accent-color`** themes the native controls directly. One property, real `<input>` elements, full native behavior kept.
+
+<RainbowDivider />
+
+## The Property
+
+<CodeBlock language="css">
+{`
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  progress {
+    accent-color: #22c55e;
+  }
+`}
+</CodeBlock>
+
+`accent-color` tells the browser which color to use for the "on" state of these controls — the checkmark fill, the selected radio dot, the filled portion of a range track, the completed portion of a progress bar. The browser still renders its own native control shape and interaction behavior; only the accent color changes.
+
+<RainbowDivider />
+
+## Set It Once, Inherit Everywhere
+
+<CodeBlock language="css">
+{`
+  :root {
+    accent-color: var(--brand);
+  }
+`}
+</CodeBlock>
+
+`accent-color` inherits, so setting it once on `:root` (or any container) themes every native control inside it — no need to target `input[type="checkbox"]`, `input[type="radio"]`, etc. individually unless a specific control needs to override the inherited value.
+
+<RainbowDivider />
+
+## Try It Live
+
+Pick any theme color — every native control below (checkboxes, radio buttons, a range slider, a progress bar) re-themes instantly from one `accent-color` declaration on their shared container.
+
+<Sandbox slug="accent-color-native-controls" readOnly />
+
+<RainbowDivider />
+
+## What It Doesn't Change
+
+`accent-color` only affects the "filled/selected" state's color. It doesn't change:
+
+* The control's **size or shape** — still whatever the OS/browser renders natively
+* The **unchecked/track background** color — that's still the browser default (though it's often styleable separately via other properties depending on the control and browser)
+* **Text labels** — `accent-color` has no effect on a `<label>`'s text color
+
+For deeper customization (a completely custom checkbox shape, a track with a specific background gradient), you're back to either accepting the native look with just the accent themed, or a full custom replacement — `accent-color` specifically covers the middle ground of "keep it native, just match my brand."
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Forms where checkboxes/radios need to match brand color without a full custom-control rebuild
+- Settings/preferences screens with toggles, sliders, and progress indicators
+- Any place currently using a custom-styled checkbox/radio replacement purely for color, where native behavior would otherwise be preferable
+- Quick brand-matching for admin dashboards and internal tools where a full design system isn't justified
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Contrast still matters.** Picking an `accent-color` too close to the background can make a checked checkbox hard to distinguish from an unchecked one — verify contrast the same way you would for any other UI color.
+* **This is genuinely the native control, not a lookalike** — screen readers, keyboard navigation, and browser autofill all continue to work exactly as they do for an unstyled input, since nothing about the element's semantics or behavior changed.
+* **Rendering differs slightly across browsers/OSes** — `accent-color` tells each browser's own native rendering what color to use, but the exact shape and animation of the checked state is still up to that browser/OS. This is a feature (native, familiar, accessible) as much as a limitation (you can't pixel-perfect-match a comp with it).
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 93+, Firefox 92+, Safari 15.4+) as of this writing — safe to adopt broadly.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`accent-color` is the answer to "I just need this checkbox to match my brand color" — reach for it before reaching for a full custom-control replacement, and save the heavier rebuild for cases that genuinely need a shape or interaction native controls can't provide.

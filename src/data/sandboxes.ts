@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "accent-color-native-controls",
+    title: "Theming Native Controls",
+    description: "Pick a theme color and watch native checkboxes, radios, a range slider, and a progress bar re-theme instantly from one accent-color declaration.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "text-wrap-balance-pretty",
     title: "text-wrap: balance / pretty",
     description: "Drag the width slider to compare default wrapping against balance (even headline lines) and pretty (no orphaned last word) at every width.",
