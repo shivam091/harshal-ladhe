@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "custom-hook-use-debounce",
+    title: "useDebounce Search",
+    description: "Type into the search box and watch the keystroke count race ahead of the search count — the debounced value (and the search it triggers) only updates once you pause.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "css-gradient-overlays",
     title: "Hero Overlay Playground",
     description: "Switch between flat, fade, diagonal, radial, and split overlay patterns, tune colors/opacity and angle, and toggle a background-blend-mode live to see how legible the heading stays over a busy photo.",

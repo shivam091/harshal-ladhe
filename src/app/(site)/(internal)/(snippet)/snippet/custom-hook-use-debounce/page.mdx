@@ -1,0 +1,115 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("custom-hook-use-debounce");
+
+## Introduction
+
+Every keystroke in a controlled input triggers a re-render — fine on its own, but a problem the moment that value drives something expensive: a search API call, a filter over a large list, a validation check.
+
+Type "banana" and you don't want six requests, one per letter. You want **one**, fired after the user actually stops typing.
+
+`useDebounce` solves this generically. It wraps any fast-changing value and returns a copy that only updates once the value has stopped changing for a set delay.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="ts">
+{`
+  import { useEffect, useState } from "react";
+
+  function useDebounce(value, delayMs) {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+
+    useEffect(() => {
+      const timeoutId = setTimeout(() => setDebouncedValue(value), delayMs);
+
+      // Cancel the pending update if value changes again before the delay elapses
+      return () => clearTimeout(timeoutId);
+    }, [value, delayMs]);
+
+    return debouncedValue;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Typed Signature
+
+<CodeBlock language="ts">
+{`
+  export function useDebounce<T>(value: T, delayMs: number): T;
+`}
+</CodeBlock>
+
+The generic `<T>` means it works on strings, numbers, objects, arrays — whatever value you're debouncing, the return type matches it exactly.
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Track a delayed copy:** `debouncedValue` starts equal to `value` and only changes inside the effect.
+2. **Schedule an update:** every time `value` changes, a `setTimeout` is queued to copy it over after `delayMs`.
+3. **Cancel on the next change:** the effect's cleanup function clears that timeout. If `value` changes again before it fires, the stale update never happens — only the *last* pending timeout in a burst ever runs.
+
+This cancel-on-cleanup step is the entire trick. Without it you'd get one delayed update per keystroke instead of one delayed update per pause.
+
+<RainbowDivider />
+
+## Example Usage
+
+### Debouncing a Search Input
+
+<CodeBlock language="jsx">
+{`
+  import { useState, useEffect } from "react";
+  import { useDebounce } from "./useDebounce";
+
+  function SearchBox() {
+    const [query, setQuery] = useState("");
+    const debouncedQuery = useDebounce(query, 500);
+
+    useEffect(() => {
+      if (!debouncedQuery) return;
+
+      // Only runs once per pause in typing, not once per keystroke
+      fetch(\`/api/search?q=\${debouncedQuery}\`)
+        .then((res) => res.json())
+        .then((data) => console.log(data));
+    }, [debouncedQuery]);
+
+    return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+  }
+`}
+</CodeBlock>
+
+Below is a live version of exactly this pattern. Type into the box and compare the keystroke count against the search count — the search only advances once you pause.
+
+<Sandbox slug="custom-hook-use-debounce" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Search-as-you-type inputs
+- Live form validation (e.g. checking username availability)
+- Autosave on text or rich-text editors
+- Filtering large lists or tables as a user types
+- Resize/scroll-driven values that trigger layout work
+- Any `useEffect` whose dependency changes far more often than the work it triggers should run
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Debouncing vs. throttling:** debouncing waits for a pause before firing; throttling fires at most once per interval regardless of pauses. Use debounce for "wait until they're done" (search, validation) and throttle for "keep up with a continuous stream" (scroll position, drag coordinates).
+* **Pick a delay for the job:** 300–500ms suits typing-driven search. Something like resize handling can go lower (100–150ms) since the cost per fire is usually cheaper than a network request.
+* **Stale requests can still land out of order:** debouncing cuts the *number* of requests, but a slow debounced request can still resolve after a newer one if the network is unpredictable. Pair this with request cancellation (`AbortController`) or a request-id check when correctness under race conditions matters.
+* **Don't debounce the input itself:** keep the input's `value` bound to the raw, un-debounced state so typing stays instant — only the *consumer* of the value (the effect, the derived list) should read the debounced copy.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useDebounce` turns a noisy stream of updates into one clean signal that fires after things settle. It's one of the smallest hooks you'll write and one of the most reused — reach for it any time a value changes faster than the work it should trigger.

@@ -156,6 +156,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-08-05", change: "Initial publication with Full Jitter implementation." }
     ]
+  },
+  {
+    slug: "custom-hook-use-debounce",
+    title: "Custom Hook: useDebounce",
+    excerpt: "Delay updating a value until the user stops typing, in a reusable hook.",
+    description: "A generic React hook that debounces any fast-changing value — trim wasted search requests, filtering, and validation runs down to one call per pause in input.",
+    category: ["React"],
+    tags: [
+      "react",
+      "hooks",
+      "custom-hooks",
+      "use-debounce",
+      "typescript",
+      "performance",
+      "search-input",
+      "debounce"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/custom-hook-use-debounce/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Illustration of a search input with keystrokes settling into a single debounced request, representing the useDebounce React hook."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
