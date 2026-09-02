@@ -49,5 +49,17 @@ export const goodies: Goodie[] = [
     description: "Draggable cubic-bezier() editor with a slide/scale/opacity/rotate preview animation, presets from the CSS Easing Functions guide, and CSS/Tailwind/React code export.",
     icon: "easingCurve",
     href: "/goodies/easing-curve-editor"
+  },
+  {
+    name: "Text Effects Generator",
+    description: "Layered text-shadow editor with an optional gradient text fill, neon/3D/glitch/chrome presets, and CSS/Tailwind/React code export.",
+    icon: "textEffects",
+    href: "/goodies/text-effects-generator"
+  },
+  {
+    name: "Fluid Type Calculator",
+    description: "Min/max viewport → clamp() font-size calculator with an arbitrary list of named steps, a draggable viewport-width live preview, and CSS custom-property/Tailwind/React export.",
+    icon: "fluidType",
+    href: "/goodies/fluid-type-calculator"
   }
 ];

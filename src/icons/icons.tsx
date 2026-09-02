@@ -523,6 +523,35 @@ export const icons = {
       </>
     )
   },
+  // A bold "A" with an offset silhouette behind it — the same "cast shadow behind the real shape" language as the boxShadow icon, applied to a glyph instead of a card, so the two read as related but distinct effects.
+  textEffects: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <text x="7" y="19" fontSize="20" fontWeight="800" opacity="0.35">
+          A
+        </text>
+        <text x="4" y="16" fontSize="20" fontWeight="800">
+          A
+        </text>
+      </>
+    )
+  },
+  // A small "A" growing into a large "A" along a dashed ramp — the same dual-text-element language as the textEffects icon, here reading as a glyph scaling up rather than a shadow cast behind it.
+  fluidType: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M6 19 L18 7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="0.5 3" />
+        <text x="2" y="21" fontSize="9" fontWeight="800">
+          A
+        </text>
+        <text x="11" y="15" fontSize="17" fontWeight="800">
+          A
+        </text>
+      </>
+    )
+  },
   facebook: {
     viewBox: "0 0 24 24",
     children: (
