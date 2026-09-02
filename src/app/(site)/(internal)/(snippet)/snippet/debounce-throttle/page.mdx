@@ -1,0 +1,180 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("debounce-throttle");
+
+## Introduction
+
+Debounce and throttle both exist to answer the same question — "this event fires too often, how do I call less often?" — but they answer it in opposite ways, and mixing them up produces subtly broken UI.
+
+* **Debounce** waits for a pause. It fires once, after the events stop for a set duration.
+* **Throttle** enforces a rate. It fires at most once per interval, no matter how continuously events arrive.
+
+Both are simple in concept and easy to get wrong in implementation — the two most common bugs are losing the caller's `this` binding and dropping arguments. This snippet builds both correctly.
+
+<RainbowDivider />
+
+## Debounce
+
+<CodeBlock language="ts">
+{`
+  function debounce(fn, waitMs) {
+    let timeoutId;
+
+    function debounced(...args) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn.apply(this, args), waitMs);
+    }
+
+    debounced.cancel = () => clearTimeout(timeoutId);
+
+    return debounced;
+  }
+`}
+</CodeBlock>
+
+Every call cancels the previous pending timeout and schedules a new one. Only the *last* call in a burst ever actually runs `fn` — with the arguments from that last call.
+
+<RainbowDivider />
+
+## Throttle
+
+<CodeBlock language="ts">
+{`
+  function throttle(fn, waitMs) {
+    let lastCallTime = 0;
+    let timeoutId;
+    let trailingArgs;
+
+    function throttled(...args) {
+      const now = Date.now();
+      const remaining = waitMs - (now - lastCallTime);
+
+      if (remaining <= 0) {
+        lastCallTime = now;
+        fn.apply(this, args);
+        return;
+      }
+
+      trailingArgs = args;
+      if (!timeoutId) {
+        timeoutId = setTimeout(() => {
+          timeoutId = undefined;
+          lastCallTime = Date.now();
+          fn.apply(this, trailingArgs);
+          trailingArgs = undefined;
+        }, remaining);
+      }
+    }
+
+    throttled.cancel = () => {
+      clearTimeout(timeoutId);
+      timeoutId = undefined;
+      trailingArgs = undefined;
+    };
+
+    return throttled;
+  }
+`}
+</CodeBlock>
+
+The first call in any window fires immediately. Calls that land inside the cooldown update `trailingArgs` and get picked up by a single trailing call scheduled for the moment the window ends — this is what makes it a "trailing" throttle: no call is silently dropped, but you still never get more than one call per `waitMs`.
+
+<RainbowDivider />
+
+## The `this`/Arguments Bug
+
+The naive version of either utility looks like this:
+
+<CodeBlock language="js">
+{`
+  function debounce(fn, waitMs) {
+    let timeoutId;
+    return (...args) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => fn(...args), waitMs); // fn() loses "this"
+    };
+  }
+`}
+</CodeBlock>
+
+Calling `fn(...args)` instead of `fn.apply(this, args)` silently drops whatever `this` the original call site had. It's invisible in demos that only ever debounce plain functions or arrow functions, and then breaks the moment someone debounces a method:
+
+<CodeBlock language="js">
+{`
+  const obj = {
+    label: "obj",
+    log(msg) { console.log(this.label, msg); } // needs "this"
+  };
+
+  obj.log = debounce(obj.log, 300);
+  obj.log("hi"); // naive version: TypeError, this.label is undefined
+`}
+</CodeBlock>
+
+`fn.apply(this, args)` inside the `setTimeout` callback (an arrow function, so it inherits `this` from `debounced`/`throttled`) fixes this for both utilities.
+
+<RainbowDivider />
+
+## Typed Signature
+
+<CodeBlock language="ts">
+{`
+  function debounce<This, Args extends unknown[]>(
+    fn: (this: This, ...args: Args) => void,
+    waitMs: number
+  ): ((this: This, ...args: Args) => void) & { cancel: () => void };
+
+  function throttle<This, Args extends unknown[]>(
+    fn: (this: This, ...args: Args) => void,
+    waitMs: number
+  ): ((this: This, ...args: Args) => void) & { cancel: () => void };
+`}
+</CodeBlock>
+
+The two type parameters mean the wrapped function keeps exactly the parameter types and `this` type of whatever you pass in — TypeScript infers both from `fn` and won't let you call the debounced/throttled version with the wrong arguments.
+
+<RainbowDivider />
+
+## Compared Side by Side
+
+Move your pointer across the panel below — the raw counter increments on every single `mousemove`, while the debounced and throttled counters show how differently each strategy responds to the exact same stream of events.
+
+<Sandbox slug="debounce-throttle" readOnly />
+
+| | Debounce | Throttle |
+| :--- | :--- | :--- |
+| **Fires** | Once, after events stop | Repeatedly, at a fixed max rate |
+| **First event** | Waits — nothing happens immediately | Fires immediately |
+| **Best for** | Search input, resize-end, autosave | Scroll position, drag coordinates, rate-limited APIs |
+| **Guarantee** | "Call me once things settle" | "Never call me more than once per N ms" |
+
+<RainbowDivider />
+
+## Where Should You Use Each?
+
+**Debounce:**
+- Search-as-you-type
+- Form validation as the user finishes typing
+- Window resize handlers that trigger expensive relayout
+- Autosave
+
+**Throttle:**
+- Scroll-position tracking (parallax, sticky headers, infinite scroll triggers)
+- Mouse-drag coordinate updates
+- Rate-limiting clicks on a button that triggers an API call
+- Analytics/telemetry events on a continuous stream
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Leading vs. trailing throttle:** the implementation above fires leading (immediately) and trailing (once more at the window's end). Some use cases only want leading (e.g., a submit button — first click counts, nothing more) or only trailing (e.g., scroll — you rarely care about the very first pixel). Adjust by skipping the immediate branch or the trailing schedule accordingly.
+* **Always expose `.cancel()`:** without it, a component that debounces/throttles inside an event handler and then unmounts can still fire a stale callback later (a classic source of "setState on unmounted component" warnings). Call `.cancel()` in a cleanup function.
+* **Don't create a new debounced/throttled function on every render** in a React component — it defeats the whole purpose, since each render gets its own `timeoutId` closure. Memoize it (`useMemo`) or create it outside the component.
+* **Lodash's `debounce`/`throttle`** already handle these details (plus leading/trailing options, `maxWait`) — reach for it in production rather than re-implementing, once you understand what it's doing under the hood.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Debounce answers "wait until it's quiet." Throttle answers "never more than once per interval." Picking the wrong one produces UI that feels either sluggish (throttling something that should debounce) or unresponsive (debouncing something that should throttle) — the fix is almost never the implementation, it's picking the right one for the event in question.

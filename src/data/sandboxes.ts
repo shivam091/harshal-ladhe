@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "debounce-throttle",
+    title: "Debounce vs. Throttle",
+    description: "Move your pointer across the panel and compare how often the raw, debounced, and throttled counters actually increment.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "error-boundary-with-fallback",
     title: "Error Boundary with Fallback",
     description: "Increment a counter that throws at 3 — the error boundary catches the crash and swaps in a fallback UI with a working reset button.",

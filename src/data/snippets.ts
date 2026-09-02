@@ -234,6 +234,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "debounce-throttle",
+    title: "Debounce and Throttle, Implemented Correctly",
+    excerpt: "The classic pair, with proper this/argument forwarding and a cancel method.",
+    description: "Build debounce and throttle from scratch — correct this-binding and argument forwarding via fn.apply, a trailing-call guarantee for throttle, and a cancel() escape hatch for both.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "debounce",
+      "throttle",
+      "performance",
+      "event-handling",
+      "closures",
+      "typescript",
+      "rate-limiting"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/debounce-throttle/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Comparison of raw, debounced, and throttled event streams, showing how each strategy reduces call frequency differently."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
