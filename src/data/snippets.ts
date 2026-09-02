@@ -1196,6 +1196,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-transition-non-blocking-updates",
+    title: "Keeping Input Responsive with useTransition",
+    excerpt: "Mark an expensive re-render as non-urgent so typing itself never lags behind it.",
+    description: "useTransition lets an expensive state update be marked non-urgent and interruptible, so a fast-changing input stays responsive while a costly derived re-render (like filtering a large list) catches up shortly after, with isPending acknowledging the gap.",
+    category: ["React"],
+    tags: [
+      "react",
+      "use-transition",
+      "concurrent-rendering",
+      "performance",
+      "is-pending",
+      "react-18",
+      "search-input"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/use-transition-non-blocking-updates/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A search input staying responsive while a deliberately expensive list filter lags a beat behind, marked non-urgent via useTransition, versus the same filter blocking the input when run synchronously."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

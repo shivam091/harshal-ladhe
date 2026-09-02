@@ -1,0 +1,82 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-transition-non-blocking-updates");
+
+## Introduction
+
+Typing into a search box that re-filters a large list on every keystroke is a classic way to make an input feel laggy — not because the input itself is slow, but because React (correctly) processes both state updates — the input's own value, and the expensive re-render the new value triggers — as equally urgent, in the same synchronous pass. The keystroke doesn't show up on screen until the expensive work finishes.
+
+**`useTransition`** lets you say which updates aren't urgent. Mark the expensive one as a transition, and React keeps the input itself responsive, doing the heavy re-render in the background — interruptibly, so a second fast keystroke can cut off in-progress work for the first.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="tsx">
+{`
+  function Search({ items }) {
+    const [query, setQuery] = useState("");
+    const [results, setResults] = useState(items);
+    const [isPending, startTransition] = useTransition();
+
+    function handleChange(e) {
+      const value = e.target.value;
+      setQuery(value); // urgent — always applied immediately
+
+      startTransition(() => {
+        setResults(expensiveFilter(items, value)); // marked non-urgent
+      });
+    }
+
+    return (
+      <>
+        <input value={query} onChange={handleChange} />
+        {isPending && <Spinner />}
+        <ResultsList items={results} />
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+`setQuery` (outside the transition) updates immediately, same as always — the input never waits on anything. `setResults` (inside `startTransition`) is marked as work React is free to deprioritize: if it's still rendering the results for an old query when a new keystroke arrives, React abandons that in-progress render and starts fresh, rather than finishing stale work first.
+
+<RainbowDivider />
+
+## isPending: Showing That Work Is Still Catching Up
+
+<CodeBlock language="tsx">
+{`
+  const [isPending, startTransition] = useTransition();
+
+  // isPending is true for the entire span between startTransition() being
+  // called and the transition's own state update actually committing.
+  {isPending && <span className="stale-badge">Updating…</span>}
+`}
+</CodeBlock>
+
+`isPending` is what lets the UI acknowledge that the list on screen is momentarily stale without blocking on making it current — dim the old results, show a small inline indicator, or leave it alone entirely. React doesn't hide the previous results by default; showing them (possibly dimmed) is usually a better experience than a blank state.
+
+<RainbowDivider />
+
+## Try It Live
+
+Type quickly into the box below, filtering 4,000 deliberately-expensive-to-filter items. With the transition on, typing itself stays smooth — the list visibly lags a beat behind. Turn the toggle off and the same filter now runs synchronously with each keystroke, and typing itself starts to stutter.
+
+<Sandbox slug="use-transition-non-blocking-updates" readOnly />
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`startTransition` doesn't make the work itself faster** — it changes *scheduling*, not algorithmic cost. A transition around an O(n²) operation is still O(n²); it's just less likely to block the keystroke that triggered it. Fix genuinely slow computations first; `useTransition` is for keeping the UI responsive around unavoidable cost, not a substitute for optimizing it.
+* **Only state updates can go inside a transition** — synchronous side effects (a `fetch` call, a `console.log`, mutating a ref) aren't deprioritized by being inside `startTransition`; only the resulting state updates are.
+* **`isPending` reflects the transition, not any particular async operation.** If the function passed to `startTransition` is itself `async` and awaits something, `isPending` covers that whole span, not just the synchronous state update at the end.
+* **Don't wrap the input's own `setQuery` call in the transition** — that's the one update that needs to stay urgent. Only the expensive *derived* update belongs inside `startTransition`.
+* **This complements, not replaces, actual optimization** — memoizing the expensive computation, virtualizing a long list, or debouncing the filter are all still valid, and often stack well with a transition rather than being alternatives to it.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useTransition` gives React the information it needs to keep an interface responsive under real computational load: which updates are urgent (typing, clicking, dragging) and which can lag a beat and be interrupted by newer urgent input. The input stays instantly responsive; the expensive part catches up shortly after, with `isPending` there to acknowledge the gap instead of blocking on closing it.

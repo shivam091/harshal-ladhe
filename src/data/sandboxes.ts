@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "use-transition-non-blocking-updates",
+    title: "Keeping Input Responsive with useTransition",
+    description: "Type quickly to filter 4,000 deliberately expensive items — with the transition on, typing stays smooth while the list lags a beat behind; turn it off and typing itself starts to stutter.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "use-optimistic-updates",
     title: "Instant Feedback with useOptimistic",
     description: "Post comments and watch each appear instantly in a dimmed pending state — about a third fail on purpose, rolling back on their own once the simulated server responds.",
