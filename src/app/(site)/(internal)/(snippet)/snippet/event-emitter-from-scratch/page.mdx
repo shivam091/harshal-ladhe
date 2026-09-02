@@ -1,0 +1,116 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("event-emitter-from-scratch");
+
+## Introduction
+
+An event emitter decouples the code that *produces* an event from the code that *reacts* to it. The producer doesn't need to know who's listening, or how many listeners there are — it just calls `emit`. Listeners subscribe and unsubscribe independently, without the producer's code ever changing.
+
+Node.js ships this as `events.EventEmitter`. Browsers have `EventTarget`. This snippet builds the same idea from scratch, in about 30 lines, with full TypeScript event-shape checking.
+
+<RainbowDivider />
+
+## The Emitter
+
+<CodeBlock language="ts">
+{`
+  class EventEmitter {
+    listeners = {};
+
+    on(event, listener) {
+      const set = this.listeners[event] ?? new Set();
+      set.add(listener);
+      this.listeners[event] = set;
+      return () => this.off(event, listener);
+    }
+
+    once(event, listener) {
+      const wrapped = (...args) => {
+        this.off(event, wrapped);
+        listener(...args);
+      };
+      return this.on(event, wrapped);
+    }
+
+    off(event, listener) {
+      this.listeners[event]?.delete(listener);
+    }
+
+    emit(event, ...args) {
+      // Snapshot to an array first so a listener that unsubscribes mid-emit doesn't skip a sibling.
+      for (const listener of Array.from(this.listeners[event] ?? [])) {
+        listener(...args);
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Typed Signature
+
+The real value of building this yourself in TypeScript is that event names and their payloads become fully checked:
+
+<CodeBlock language="ts">
+{`
+  class EventEmitter<Events extends Record<string, unknown[]>> {
+    on<K extends keyof Events>(event: K, listener: (...args: Events[K]) => void): () => void;
+    once<K extends keyof Events>(event: K, listener: (...args: Events[K]) => void): () => void;
+    off<K extends keyof Events>(event: K, listener: (...args: Events[K]) => void): void;
+    emit<K extends keyof Events>(event: K, ...args: Events[K]): void;
+  }
+
+  interface AppEvents {
+    message: [text: string];
+    "user:login": [userId: string, timestamp: number];
+    // An index signature is required — Events extends Record<string, unknown[]>, and TypeScript
+    // needs it to confirm every possible key maps to an argument tuple, not just the ones listed.
+    [event: string]: unknown[];
+  }
+
+  const bus = new EventEmitter<AppEvents>();
+  bus.on("message", (text) => console.log(text));         // text: string
+  bus.emit("user:login", "u_123", Date.now());              // typo'd event name or wrong args → compile error
+`}
+</CodeBlock>
+
+`Events` maps each event name to the exact argument tuple its listeners receive. Get the event name or argument types wrong anywhere and TypeScript catches it — no more guessing what payload shape an event carries.
+
+<RainbowDivider />
+
+## Try It Live
+
+Publish a message below — only the subscribers currently listening receive it. Toggle a subscriber off, publish again, and toggle it back on to see it pick up only messages sent *after* it resubscribed.
+
+<Sandbox slug="event-emitter-from-scratch" readOnly />
+
+<RainbowDivider />
+
+## How `once` Is Built on Top of `on`
+
+Notice `once` isn't a separate implementation — it wraps the given `listener` in a function that unsubscribes itself as its first action, then calls through to the original. This is a common pattern for building a family of related APIs on one primitive instead of duplicating logic three times.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Decoupling modules that shouldn't import each other directly (e.g. a notification system reacting to state changes anywhere in the app)
+- A lightweight pub/sub layer inside a library, without pulling in a full state-management dependency
+- Wrapping a class-based service (a WebSocket connection, a game loop) with a typed event surface
+- Testing — emit synthetic events to simulate external triggers without mocking a whole subsystem
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Always store `on`'s return value if you plan to unsubscribe.** It's easy to forget, and forgetting is how memory leaks happen — a component that subscribes on mount and never unsubscribes on unmount keeps a live reference to it (and everything it closes over) for the emitter's entire lifetime.
+* **The `Array.from(...)` copy inside `emit` matters.** Without it, a listener that calls `off` on itself (or another listener) *during* iteration would mutate the `Set` mid-loop — `Set` iteration in JS reflects live mutations, so a naive `for...of this.listeners[event]` can skip a sibling listener that hasn't run yet.
+* **This emitter is synchronous.** Every listener runs immediately, in order, on the same call stack as `emit` — an exception thrown by one listener stops the rest from running. Wrap listener bodies in `try/catch` inside `emit` if one broken subscriber shouldn't be able to break every other one.
+* **For real production systems**, Node's built-in `EventEmitter` (or the browser's `EventTarget`) already solves this with more features (max-listener warnings, `error` event semantics) — reach for those over a hand-rolled version unless you specifically need the fully-typed event map this version provides.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+An event emitter is one of the smallest possible implementations of the observer pattern — a `Map`/`Set` of listeners and three methods to add, remove, and notify them. Once you've built one, you'll recognize the same shape in Node's `EventEmitter`, the DOM's event system, and most pub/sub libraries.

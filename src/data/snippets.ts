@@ -312,6 +312,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "event-emitter-from-scratch",
+    title: "Event Emitter from Scratch",
+    excerpt: "A minimal, fully-typed pub/sub implementation in about 30 lines.",
+    description: "Build a typed EventEmitter with on/once/off/emit — event names and payload shapes checked by TypeScript, plus the mid-emit mutation bug most hand-rolled versions get wrong.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "event-emitter",
+      "pub-sub",
+      "observer-pattern",
+      "typescript",
+      "design-patterns",
+      "decoupling",
+      "eventtarget"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/event-emitter-from-scratch/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Diagram of a publisher broadcasting an event to multiple independent subscribers, illustrating the observer/pub-sub pattern."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

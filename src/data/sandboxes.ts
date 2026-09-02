@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "event-emitter-from-scratch",
+    title: "Event Emitter: Pub/Sub",
+    description: "Publish a message and watch only the currently-subscribed listeners receive it — toggle subscribers on and off to see live (un)subscription in action.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "memoize-function-results",
     title: "Memoized Expensive Function",
     description: "Run a deliberately slow computation through a memoize() wrapper — repeat an input to see a near-instant cache hit versus a fresh, visibly slower computation.",
