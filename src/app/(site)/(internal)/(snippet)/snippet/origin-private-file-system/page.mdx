@@ -1,0 +1,127 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("origin-private-file-system");
+
+## Introduction
+
+Storing real files client-side — a cached dataset, an exported document, a large blob you don't want to re-fetch — has meant reaching for IndexedDB: opening a database, defining an object store, versioning migrations, wrapping every read/write in a transaction. All of that just to persist something conceptually as simple as "write these bytes to a file, read them back later."
+
+The **Origin Private File System** (OPFS) gives origins a real, private file system — actual files and directories, addressed with a normal file-handle API, persisted across reloads — with none of IndexedDB's schema or transaction machinery.
+
+<RainbowDivider />
+
+## Getting the Root Directory
+
+<CodeBlock language="js">
+{`
+  const root = await navigator.storage.getDirectory();
+  // root is a FileSystemDirectoryHandle — the entry point to this origin's
+  // own private file system, invisible to the user's regular file system.
+`}
+</CodeBlock>
+
+That's the entire setup. No database name, no version number, no `onupgradeneeded` handler — just a directory handle, scoped privately to the current origin.
+
+<RainbowDivider />
+
+## Writing and Reading a File
+
+<CodeBlock language="js">
+{`
+  const root = await navigator.storage.getDirectory();
+
+  // Write
+  const fileHandle = await root.getFileHandle("notes.txt", { create: true });
+  const writable = await fileHandle.createWritable();
+  await writable.write("Hello from OPFS");
+  await writable.close();
+
+  // Read (in a later session, after a reload)
+  const readHandle = await root.getFileHandle("notes.txt");
+  const file = await readHandle.getFile();
+  const text = await file.text();
+  // "Hello from OPFS"
+`}
+</CodeBlock>
+
+`getFileHandle(name, { create: true })` creates the file if it doesn't exist. `createWritable()` returns a `FileSystemWritableFileStream` — write to it like any writable stream, then `.close()` to commit. Reading it back later is a plain `getFile()` → the exact same `File` object you'd get from an `<input type="file">`, with `.text()`, `.arrayBuffer()`, and `.stream()` all available on it.
+
+<RainbowDivider />
+
+## Directories, Just Like a Real File System
+
+<CodeBlock language="js">
+{`
+  const root = await navigator.storage.getDirectory();
+  const cacheDir = await root.getDirectoryHandle("cache", { create: true });
+  const file = await cacheDir.getFileHandle("data.json", { create: true });
+
+  // List everything at the root
+  for await (const name of root.keys()) {
+    console.log(name); // "cache", "notes.txt", ...
+  }
+
+  // Remove a file or an entire (empty, unless { recursive: true }) directory
+  await root.removeEntry("notes.txt");
+`}
+</CodeBlock>
+
+Nested directories work exactly like a real file system's do — `getDirectoryHandle` for folders, `getFileHandle` for files, both accepting `{ create: true }` to create-if-missing rather than throwing on a fresh origin.
+
+<RainbowDivider />
+
+## Try It Live
+
+Save some text to a named file, reload the sandbox's preview, and load it back — it's still there. List the root directory to see every file currently stored, and delete one to see it disappear from that list.
+
+<Sandbox slug="origin-private-file-system" readOnly />
+
+<RainbowDivider />
+
+## High-Performance Sync Access, in a Worker
+
+<CodeBlock language="js">
+{`
+  // Inside a Worker — createSyncAccessHandle is worker-only, and much faster
+  // than the async API above because it can bypass the usual OS file lock/flush overhead.
+  const root = await navigator.storage.getDirectory();
+  const fileHandle = await root.getFileHandle("large-dataset.bin", { create: true });
+  const accessHandle = await fileHandle.createSyncAccessHandle();
+
+  const buffer = new Uint8Array(1024);
+  accessHandle.read(buffer, { at: 0 });
+  accessHandle.write(buffer, { at: 0 });
+  accessHandle.flush();
+  accessHandle.close();
+`}
+</CodeBlock>
+
+For workloads that genuinely need fast, synchronous file I/O — a WASM SQLite build, a large binary asset being streamed in chunks — `createSyncAccessHandle()` exists specifically for that, but only inside a Worker; calling it on the main thread throws.
+
+<RainbowDivider />
+
+## Comparison
+
+| | OPFS | IndexedDB |
+| :--- | :--- | :--- |
+| **Setup** | `navigator.storage.getDirectory()` — no schema | Database name + version + `onupgradeneeded` migration logic |
+| **API shape** | File/directory handles, like a real file system | Object stores, indexes, cursors, transactions |
+| **Best for** | Whole files/blobs, large binary data | Structured, queryable records |
+| **Sync access** | Yes, via `createSyncAccessHandle` (Workers only) | No — always asynchronous |
+| **Visible to the user** | No — private to the origin, not the user's real file system | No — also origin-private |
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **OPFS storage counts against the origin's storage quota**, same as IndexedDB and `localStorage` — it isn't unlimited, and the browser can evict it under storage pressure unless the origin has been granted [persistent storage](https://developer.mozilla.org/en-US/docs/Web/API/StorageManager/persist).
+* **`createWritable()`'s writes aren't visible to other readers until `.close()` is called** — it buffers to a temporary location and swaps it in atomically on close, so a concurrent read never sees a half-written file.
+* **`createSyncAccessHandle()` is exclusive** — while a Worker holds one open on a given file, no other handle (sync or async) can open that same file until it's closed. Design around one owner per file at a time if multiple Workers might touch the same data.
+* **This is private storage, not exportable by the user** — OPFS files don't show up in the OS file picker or the user's Downloads folder. If the feature needs "let the user save this file to their real disk," that's a separate flow (`showSaveFilePicker()` from the File System Access API, or a plain download link), not OPFS.
+* **Browser support**: Baseline since 2023 for the core directory/file-handle API (Chrome 108+, Firefox 111+, Safari 15.2+ with some early-version quirks). Feature-detect with `"getDirectory" in navigator.storage` before relying on it.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+OPFS replaces IndexedDB's schema-and-transaction ceremony with the API shape everyone already knows — handles, directories, read/write streams — for the specific case of storing real files client-side. Reach for it any time the data is naturally file-shaped (a blob, a document, a dataset) rather than a set of queryable records, and IndexedDB was only ever being used as a place to stash bytes.

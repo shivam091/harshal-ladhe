@@ -1121,6 +1121,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "origin-private-file-system",
+    title: "Fast Client-Side Files with OPFS",
+    excerpt: "Real file handles and directories, persisted per-origin — no IndexedDB schema or transactions.",
+    description: "The Origin Private File System gives an origin a real private file system — file and directory handles, read/write streams, and a worker-only synchronous access mode — replacing IndexedDB's schema and transaction boilerplate for file-shaped data.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "opfs",
+      "origin-private-file-system",
+      "file-system-access-api",
+      "indexeddb",
+      "browser-storage",
+      "client-side-storage"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/origin-private-file-system/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A text file being written to and read back from the Origin Private File System's root directory, with no IndexedDB schema or transaction involved."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

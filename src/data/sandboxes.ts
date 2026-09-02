@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "origin-private-file-system",
+    title: "Writing Files with OPFS",
+    description: "Save text to a named file at the OPFS root, reload the preview, and load it back — still there. List the root directory and delete files to see the origin-private file system in action.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "structured-concurrency-abortsignal-any",
     title: "Composing Cancellation with AbortSignal.any()",
     description: "Start a task combined from a manual cancel button and an adjustable AbortSignal.timeout() — whichever fires first is what the log reports, read straight off the combined signal's reason.",
