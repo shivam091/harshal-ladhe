@@ -1271,6 +1271,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "after-function-background-work",
+    title: "Background Work After the Response with after()",
+    excerpt: "Log, notify, or analyze after the response is sent — without a fire-and-forget call risking getting cut off.",
+    description: "next/server's after() schedules a callback to run once the response has been sent, without delaying it — and unlike a bare fire-and-forget call, guarantees the execution context stays alive until that callback finishes, even on serverless/edge platforms.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "next-after",
+      "background-work",
+      "analytics",
+      "route-handlers",
+      "server-actions",
+      "app-router"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/after-function-background-work/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A page response streaming to the client immediately while an analytics logging call scheduled with after() runs afterward on the server, illustrating next/server's after() function."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

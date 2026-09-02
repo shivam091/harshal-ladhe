@@ -1,0 +1,121 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("after-function-background-work");
+
+## Introduction
+
+Logging a page view, recording analytics, writing an audit log — none of it is something the client needs to wait on, but `await`ing it inline in a Server Component, Route Handler, or Server Action does exactly that: the response doesn't go out until that logging call finishes, even though its result is never used to render anything.
+
+**`after()`** schedules a callback to run *after* the response has been sent, without holding the response open for it — and, critically, without the surrounding server function's execution context being torn down before that callback finishes.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="tsx">
+{`
+  import { after } from "next/server";
+
+  export default async function ProductPage({ params }: { params: { id: string } }) {
+    const product = await getProduct(params.id);
+
+    after(() => {
+      // Runs after the response is sent — doesn't delay the user seeing the page.
+      logPageView({ productId: params.id, timestamp: Date.now() });
+    });
+
+    return <ProductDetails product={product} />;
+  }
+`}
+</CodeBlock>
+
+The response streams to the client as soon as `product` is ready — `logPageView` runs afterward, on the server, without the visitor waiting on it. Compare this to `await logPageView(...)` placed inline: correct, but it adds the logging call's own latency directly to the response time for zero user-facing benefit.
+
+<RainbowDivider />
+
+## Why Not Just "Fire and Forget"?
+
+<CodeBlock language="tsx">
+{`
+  export default async function ProductPage({ params }: { params: { id: string } }) {
+    const product = await getProduct(params.id);
+
+    logPageView({ productId: params.id }); // no await — looks like the same idea
+    return <ProductDetails product={product} />;
+  }
+`}
+</CodeBlock>
+
+This looks equivalent to `after()`, but on serverless/edge platforms it isn't safe: the moment the response finishes, the execution environment can be frozen or torn down — an un-awaited promise still in flight has no guarantee it actually completes. `after()` exists specifically to tell the platform "keep this execution alive until this callback settles, even though the response has already gone out" — a guarantee a bare fire-and-forget call doesn't have.
+
+<RainbowDivider />
+
+## Works in Route Handlers, Server Actions, and Middleware
+
+<CodeBlock language="tsx">
+{`
+  // Route Handler
+  export async function POST(request: Request) {
+    const body = await request.json();
+    const result = await createOrder(body);
+
+    after(() => sendOrderConfirmationEmail(result.orderId));
+    return Response.json(result);
+  }
+
+  // Server Action
+  async function submitFeedback(formData: FormData) {
+    "use server";
+    const feedback = await saveFeedback(formData);
+
+    after(() => notifySlackChannel(feedback));
+    return { success: true };
+  }
+`}
+</CodeBlock>
+
+Same API, same guarantee, wherever it's called from — the response (or the action's return value reaching the client) isn't held up by whatever's scheduled inside `after()`.
+
+<RainbowDivider />
+
+## Multiple after() Calls
+
+<CodeBlock language="tsx">
+{`
+  export default async function CheckoutPage() {
+    const order = await processOrder();
+
+    after(() => logAnalyticsEvent("checkout_complete", order.id));
+    after(() => updateInventoryCache(order.items));
+    after(() => sendConfirmationEmail(order.customerEmail));
+
+    return <OrderConfirmation order={order} />;
+  }
+`}
+</CodeBlock>
+
+Each `after()` call queues its own independent piece of background work — they don't block each other, and none of them block the response that already went out before any of them ran.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Analytics and page-view logging that shouldn't add latency to the actual response
+- Audit logging / write-behind logging after a mutation (a Server Action that saves data, then logs who changed what)
+- Non-critical notifications (a Slack ping, an internal alert) that shouldn't block a form submission's response
+- Cache warming or secondary cache invalidation that doesn't need to complete before the user sees the result of their action
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Errors inside `after()` don't surface to the client** — the response has already been sent by the time an `after()` callback might throw. Log/handle errors inside the callback itself; there's no way for a failure there to become a visible error on the page that triggered it.
+* **This isn't a durable job queue.** There's no retry, no persistence if the callback itself crashes hard, no guarantee across a true process crash (as opposed to normal request-scoped teardown, which `after()` does protect against). For work that must eventually succeed even through a hard failure, a real background job system is still the right tool.
+* **Runtime support varies by deployment target** — behavior (and whether the "keep alive until settled" guarantee is fully honored) depends on the hosting platform's support for the underlying primitive Next.js builds `after()` on (`waitUntil` on Vercel, for example). Self-hosted deployments should verify current support before relying on it for anything important.
+* **Still doesn't make an expensive callback free** — `after()` moves cost off the response's critical path, it doesn't make the work itself cheaper. A callback that's genuinely resource-heavy still consumes real compute, just after the user has already moved on.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`after()` gives Next.js server code a proper answer to "run this, but don't make the user wait for it" — safer than a bare fire-and-forget call on serverless/edge platforms where the execution context can vanish the moment a response finishes, and simpler than standing up a separate job queue for work that just needs to happen shortly after, not reliably eventually.
