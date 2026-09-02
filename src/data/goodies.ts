@@ -43,5 +43,11 @@ export const goodies: Goodie[] = [
     description: "Live CSS Grid and Flexbox editor — container and per-item controls, editable grid tracks, a Holy Grail layout preset, and CSS/Tailwind/React code export.",
     icon: "gridLayout",
     href: "/goodies/layout-playground"
+  },
+  {
+    name: "Easing Curve Editor",
+    description: "Draggable cubic-bezier() editor with a slide/scale/opacity/rotate preview animation, presets from the CSS Easing Functions guide, and CSS/Tailwind/React code export.",
+    icon: "easingCurve",
+    href: "/goodies/easing-curve-editor"
   }
 ];

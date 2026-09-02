@@ -504,6 +504,25 @@ export const icons = {
       </>
     )
   },
+  // An S-shaped ease curve inside a corner frame, plus its two control-point dots — the same visual language as BezierGraph's own axis+curve+handle plot, at icon scale.
+  easingCurve: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3 3 L3 21 L21 21" />
+        <path d="M4 19 C 9 19, 8 5, 20 5" />
+        <circle cx="9" cy="19" r="1.4" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="5" r="1.4" fill="currentColor" stroke="none" />
+      </>
+    )
+  },
   facebook: {
     viewBox: "0 0 24 24",
     children: (
