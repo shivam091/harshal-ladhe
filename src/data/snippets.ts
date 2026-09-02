@@ -1446,6 +1446,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "intersection-observer-lazy-reveal",
+    title: "Scroll-Triggered Reveal with IntersectionObserver",
+    excerpt: "Reveal elements as they enter view, without a throttled scroll listener doing the math by hand.",
+    description: "IntersectionObserver reports when an element's visibility relative to a container (viewport or a specific scrollable ancestor) changes, replacing a manually-throttled scroll event listener for reveal animations, lazy-loading, and infinite-scroll triggers.",
+    category: ["HTML"],
+    tags: [
+      "html",
+      "intersection-observer",
+      "scroll-reveal",
+      "lazy-loading",
+      "infinite-scroll",
+      "performance",
+      "browser-apis"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/intersection-observer-lazy-reveal/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A stack of cards inside a scrollable container fading and sliding into view one by one as they cross a visibility threshold, watched by a single IntersectionObserver instead of a scroll event listener."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

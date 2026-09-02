@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "intersection-observer-lazy-reveal",
+    title: "Scroll-Triggered Reveal with IntersectionObserver",
+    description: "Scroll the box to watch each card fade and slide into place the moment it crosses 40% visibility inside this specific scroll container, tracked by a single shared IntersectionObserver.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "declarative-shadow-dom",
     title: "Declarative vs. Imperative Shadow DOM",
     description: "One card uses <template shadowrootmode=\"open\"> and is present the instant the HTML parses; the other calls attachShadow() from a script deliberately delayed 1.8s — watch which one appears first.",

@@ -1,0 +1,107 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("intersection-observer-lazy-reveal");
+
+## Introduction
+
+"Reveal this element when it scrolls into view" — or "start loading this image only once it's about to be visible" — used to mean a `scroll` event listener, manually reading `getBoundingClientRect()` on every scroll tick, throttled or debounced by hand to keep it from tanking scroll performance. It worked, but it was always more code, and more main-thread cost, than the actual question ("is this element visible yet?") should have required.
+
+**`IntersectionObserver`** answers that question directly, asynchronously, off the scroll event entirely — the browser tells you when an element's visibility relative to a container changes, instead of you polling for it on every scroll frame.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+      }
+    }
+  });
+
+  document.querySelectorAll(".reveal-box").forEach((box) => observer.observe(box));
+`}
+</CodeBlock>
+
+One observer, `.observe()`'d against as many elements as needed — the callback fires with a batch of `entries` whenever any of them cross the configured visibility threshold, in either direction (entering or leaving).
+
+<RainbowDivider />
+
+## Revealing Once, Then Stopping
+
+<CodeBlock language="js">
+{`
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("visible");
+        observer.unobserve(entry.target); // done — stop paying attention to this one
+      }
+    }
+  });
+`}
+</CodeBlock>
+
+For a one-time reveal animation (as opposed to something that should re-trigger every time an element re-enters view), `unobserve()` inside the callback stops the browser from continuing to track that specific element — there's no reason to keep computing intersection for a card that's already permanently revealed.
+
+<RainbowDivider />
+
+## Configuring root, threshold, and rootMargin
+
+<CodeBlock language="js">
+{`
+  const observer = new IntersectionObserver(callback, {
+    root: null,        // null = the browser viewport; or a specific scrollable ancestor element
+    threshold: 0.5,     // fire once 50% of the target is visible (0 = any pixel, 1 = fully visible)
+    rootMargin: "0px 0px -10% 0px", // shrinks/grows the root's effective bounds before intersecting
+  });
+`}
+</CodeBlock>
+
+`root` lets you watch intersection against a specific scrollable container instead of the whole viewport — essential for a scrollable panel that isn't the page itself. `threshold` controls exactly how much of the element needs to be visible before it counts. `rootMargin` adjusts the root's effective bounding box, commonly used to trigger a reveal slightly *before* an element would otherwise become visible (a negative bottom margin, as above, effectively raises the trigger line).
+
+<RainbowDivider />
+
+## Try It Live
+
+Scroll the box below — each card starts invisible and offset, then fades and slides into place the moment it crosses 40% visibility inside this specific scroll container (not the page viewport), watched by a single shared `IntersectionObserver`.
+
+<Sandbox slug="intersection-observer-lazy-reveal" readOnly />
+
+<RainbowDivider />
+
+## Comparison
+
+| | Scroll event listener | IntersectionObserver |
+| :--- | :--- | :--- |
+| **Fires** | Every scroll tick — needs manual throttling | Only when actual intersection state changes |
+| **Cost per check** | Synchronous `getBoundingClientRect()` per element, per tick | Computed asynchronously by the browser itself |
+| **Cross-container watching** | Manual math against the container's own scroll position | Built in, via the `root` option |
+| **Code required** | A throttled handler, position math, threshold logic | A callback and an options object |
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Scroll-triggered reveal/entrance animations, exactly as in the demo above
+- Lazy-loading images or heavy components only once they're about to enter the viewport (`rootMargin` with a positive value triggers loading slightly *before* the element is actually visible, hiding the load behind the scroll)
+- Infinite-scroll pagination — observe a sentinel element at the bottom of a list, load the next page when it intersects
+- Pausing/resuming expensive work (video playback, animations, polling) based on whether an element is actually on screen
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`entries` can contain multiple elements in one callback call** — always loop over `entries`, don't assume the callback fires once per element. A user scrolling quickly past several targets at once delivers them as a single batch.
+* **`entry.isIntersecting` is the direct answer to "is it visible right now" — `entry.intersectionRatio` gives the precise proportion**, useful when a binary in/out isn't enough (a progress-style reveal, or triggering different behavior at different visibility levels).
+* **Disconnect the observer when it's no longer needed** (`observer.disconnect()`) — in a component-based app, this belongs in whatever cleanup hook corresponds to unmount, the same as removing any other event listener or subscription.
+* **The default `root: null` watches the browser viewport** — a very common mistake is expecting intersection against a scrollable `<div>` without explicitly passing that div as `root`; against the viewport instead, elements inside a scrolled inner container may register as "intersecting" from the browser's perspective even when they're not actually visible within that container.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`IntersectionObserver` replaces "poll the DOM on every scroll event and compute visibility by hand" with "ask the browser to tell you when visibility actually changes" — cheaper, simpler, and correct against arbitrary scroll containers (not just the page viewport) via the `root` option, for anything that needs to react to an element entering or leaving view.

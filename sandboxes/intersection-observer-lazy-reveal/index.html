@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IntersectionObserver Reveal Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Scroll-Triggered Reveal, No Scroll Listener</h1>
+        <p>Scroll the box below — each card fades and slides in the moment it enters view, watched by a single IntersectionObserver.</p>
+      </header>
+
+      <div class="scroll-area" id="scroll-area">
+        <div class="spacer"></div>
+        <div class="reveal-box">Card 1</div>
+        <div class="reveal-box">Card 2</div>
+        <div class="reveal-box">Card 3</div>
+        <div class="reveal-box">Card 4</div>
+        <div class="reveal-box">Card 5</div>
+        <div class="reveal-box">Card 6</div>
+        <div class="spacer"></div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
