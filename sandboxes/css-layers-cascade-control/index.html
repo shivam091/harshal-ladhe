@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@layer Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>@layer — Cascade Layers</h1>
+        <p>
+          Both panels apply a low-specificity <code>.bg-override</code> utility class over a higher-specificity
+          <code>.card .button</code> component rule.
+        </p>
+      </header>
+
+      <div class="demo-row">
+        <div class="demo-col no-layer">
+          <p class="demo-label">Without @layer</p>
+          <div class="card">
+            <button class="button" type="button">Base</button>
+            <button class="button bg-override" type="button">Override attempt</button>
+          </div>
+          <p class="result">Stays blue — the component selector's higher specificity wins.</p>
+        </div>
+
+        <div class="demo-col with-layer">
+          <p class="demo-label">With @layer</p>
+          <div class="card">
+            <button class="button" type="button">Base</button>
+            <button class="button bg-override" type="button">Override attempt</button>
+          </div>
+          <p class="result">Turns red — the utilities layer wins, specificity inside each layer no longer matters.</p>
+        </div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

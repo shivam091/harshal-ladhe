@@ -1,0 +1,113 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-layers-cascade-control");
+
+## Introduction
+
+Every large CSS codebase eventually hits the same wall: a low-specificity utility class (`.text-red`, `.mt-4`) needs to override a higher-specificity component rule (`.card .title`, `#sidebar .button`), and specificity says no. The usual escapes — `!important`, piling on extra classes, upping selector specificity to match — all trade one problem for a worse one.
+
+**`@layer`** gives the cascade a second, higher-priority axis to sort on: layer order. Get your layers in the right order once, and specificity conflicts *within* and *between* layers become far easier to reason about.
+
+<RainbowDivider />
+
+## The Core Rule
+
+<CodeBlock language="css">
+{`
+  @layer reset, components, utilities; /* declares the order — later layers win ties */
+
+  @layer components {
+    .card .button {          /* specificity (0,2,0) — normally unbeatable by a single class */
+      background: blue;
+    }
+  }
+
+  @layer utilities {
+    .bg-red {                 /* specificity (0,1,0) — normally loses to the rule above */
+      background: red;        /* WINS — utilities was declared after components */
+    }
+  }
+`}
+</CodeBlock>
+
+**Layer order is checked before specificity.** A rule in a later layer beats a rule in an earlier layer *regardless of which one has higher specificity* — specificity only breaks ties *within* the same layer, exactly like it always has.
+
+<RainbowDivider />
+
+## Try It Live
+
+Both panels below apply the exact same two rules — a higher-specificity `.card .button` component rule, and a lower-specificity `.bg-override` utility class. The only difference is whether they're wrapped in `@layer`.
+
+<Sandbox slug="css-layers-cascade-control" readOnly />
+
+Without layers, the utility class can never win — its specificity is simply lower. Inside layers declared in the right order, it wins every time, with the exact same selectors.
+
+<RainbowDivider />
+
+## Declaring Layer Order Upfront
+
+<CodeBlock language="css">
+{`
+  /* At the top of your stylesheet — declares the order before any layer has actual rules in it */
+  @layer reset, base, components, utilities, overrides;
+`}
+</CodeBlock>
+
+This single statement is often the most valuable line in the whole file: it establishes the priority order once, in one place, regardless of what order the actual `@layer name { ... }` blocks appear in afterward — or even across separate files/imports. A `@layer utilities { ... }` block appearing physically *before* a `@layer components { ... }` block in your source still loses to it, because the order was already fixed by the upfront declaration.
+
+<RainbowDivider />
+
+## Unlayered CSS Always Wins
+
+<CodeBlock language="css">
+{`
+  @layer components {
+    .button { background: blue; }
+  }
+
+  /* Not inside any @layer at all */
+  .button { background: green; } /* WINS — unlayered styles beat ALL layered styles */
+`}
+</CodeBlock>
+
+Any CSS not wrapped in a layer is treated as if it were in its own implicit layer *after every named layer* — the highest priority of all. This matters for third-party CSS and inline `style` attributes, which stay unlayered and can still override your layers unless you explicitly wrap them too.
+
+<RainbowDivider />
+
+## A Typical Layer Order for an App
+
+<CodeBlock language="css">
+{`
+  @layer reset, tokens, base, components, utilities;
+`}
+</CodeBlock>
+
+* **`reset`** — a CSS reset/normalize, lowest priority so anything can override it
+* **`tokens`** — custom property definitions (colors, spacing scale) — usually no visual rules, just `:root { --... }`
+* **`base`** — bare element defaults (`body`, `a`, `h1`-`h6`)
+* **`components`** — your actual component styles
+* **`utilities`** — single-purpose override classes, highest priority so they always win over components
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Design systems where utility classes need to reliably override component defaults
+- Integrating third-party CSS (a widget's stylesheet) without it fighting your own styles for priority
+- Large codebases where specificity has crept upward over time and conflicts are common
+- Any project currently reaching for `!important` to solve ordering problems
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`@layer` doesn't reduce specificity — it changes what gets checked first.** Selectors inside a layer keep their normal specificity for resolving conflicts *within* that layer; layers just take priority over that entirely when comparing *across* layers.
+* **Declare the full layer order upfront, in your first stylesheet, before anything else.** Once a layer's relative order is established anywhere, it's fixed for the whole cascade — later `@layer name { ... }` blocks with the same name merge into the already-ordered layer rather than re-ordering it.
+* **`!important` inside a layer reverses layer priority** — an `!important` declaration in an *earlier* layer beats one in a later layer (the opposite of normal layer order), matching how `!important` already inverts author-vs-user-agent priority. This is rarely intuitive; avoid mixing `!important` with layers unless you've specifically reasoned through this.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 99+, Firefox 97+, Safari 15.4+) as of this writing — safe to adopt broadly at this point.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`@layer` gives large codebases an explicit priority order that specificity alone can't express — the fix for "this utility class should always win" stops being `!important` or a specificity arms race, and becomes "declare `utilities` after `components`, once."

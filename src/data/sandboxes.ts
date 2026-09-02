@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-layers-cascade-control",
+    title: "@layer Cascade Layers",
+    description: "The same low-specificity utility class fails to override a component rule without @layer, and wins reliably with it — side by side, identical selectors.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "view-transitions-api",
     title: "View Transitions API",
     description: "Click a color swatch to watch it morph smoothly into a detail card via view-transition-name — close it to see the reverse morph.",

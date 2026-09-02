@@ -567,6 +567,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-layers-cascade-control",
+    title: "Managing Specificity Wars with @layer",
+    excerpt: "Layer order beats specificity — the fix for utility classes that can't override components.",
+    description: "@layer gives the cascade a priority axis that's checked before specificity, so a low-specificity utility class can reliably override a higher-specificity component rule without !important or selector escalation.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "cascade-layers",
+      "specificity",
+      "at-layer",
+      "modern-css",
+      "design-systems",
+      "cascade"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/css-layers-cascade-control/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A low-specificity utility class overriding a higher-specificity component rule because it lives in a later CSS cascade layer, illustrating @layer priority."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
