@@ -19,5 +19,11 @@ export const goodies: Goodie[] = [
     description: "Linear, radial, and conic gradient editor with multi-stop control, OKLCH/HSL/RGB interpolation, and multi-format code export.",
     icon: "gradient",
     href: "/goodies/gradient-generator"
+  },
+  {
+    name: "Box-Shadow Generator",
+    description: "Layered box-shadow editor with inset toggle, per-layer offset/blur/spread control, and live neumorphism/soft-UI presets.",
+    icon: "boxShadow",
+    href: "/goodies/box-shadow-generator"
   }
 ];
