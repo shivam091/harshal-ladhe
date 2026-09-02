@@ -1346,6 +1346,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "const-type-parameters",
+    title: "Literal-Preserving Inference with const Type Parameters",
+    excerpt: "Get as const's precision on every call site — without requiring callers to write as const.",
+    description: "A const modifier on a generic type parameter infers the narrowest possible literal type for every call automatically, moving the effect of `as const` from something each caller has to remember into a default the function's own signature guarantees.",
+    category: ["TypeScript"],
+    tags: [
+      "typescript",
+      "const-type-parameters",
+      "generics",
+      "as-const",
+      "type-inference",
+      "literal-types",
+      "typescript-5-0"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/const-type-parameters/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A generic function inferring the exact literal union of an array argument's values automatically via a const type parameter, with no as const needed at the call site."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

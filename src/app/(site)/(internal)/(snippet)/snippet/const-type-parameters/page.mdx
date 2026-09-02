@@ -1,0 +1,111 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("const-type-parameters");
+
+## Introduction
+
+Passing an array literal into a generic function has always widened it — `["red", "green", "blue"]` infers as `string[]` once it crosses a generic parameter, not the literal union `"red" | "green" | "blue"`. The usual fix was the caller adding `as const` at the call site — which works, but only if the caller remembers to, and a library author has no way to require it.
+
+**`const` type parameters** move that behavior into the function's own signature: mark a type parameter `const`, and every call infers the narrowest possible type automatically — no `as const` needed from the caller at all.
+
+<RainbowDivider />
+
+## The Problem: Widening on the Way In
+
+<CodeBlock language="ts">
+{`
+  function pickRandom<T>(options: T[]): T {
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
+  const color = pickRandom(["red", "green", "blue"]);
+  // color: string — not "red" | "green" | "blue"
+`}
+</CodeBlock>
+
+`T` gets inferred as `string` here — TypeScript widens the array literal's element type the moment it flows into a plain (non-`const`) type parameter. The specific values are gone from the type; all that's left is "some string."
+
+<RainbowDivider />
+
+## The Old Fix: as const at the Call Site
+
+<CodeBlock language="ts">
+{`
+  const color = pickRandom(["red", "green", "blue"] as const);
+  // color: "red" | "green" | "blue" — but only because the CALLER remembered as const
+`}
+</CodeBlock>
+
+This works, but the burden is entirely on whoever calls the function — miss the `as const` once, anywhere it's called, and that call site silently gets the widened `string` type instead. A library author writing `pickRandom` has no way to make this the default behavior for every caller.
+
+<RainbowDivider />
+
+## With a const Type Parameter
+
+<CodeBlock language="ts">
+{`
+  function pickRandom<const T extends readonly unknown[]>(options: T): T[number] {
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
+  const color = pickRandom(["red", "green", "blue"]);
+  // color: "red" | "green" | "blue" — no as const needed at the call site at all
+`}
+</CodeBlock>
+
+The `const` modifier on `T` tells TypeScript to infer the narrowest type it can for that type parameter, as if every caller had written `as const` — without requiring them to. The function definition opts every call site into precise inference, once, in one place.
+
+<RainbowDivider />
+
+## A More Realistic Example
+
+<CodeBlock language="ts">
+{`
+  function getNamesExactly<const T extends readonly { name: string }[]>(items: T): T[number]["name"][] {
+    return items.map((item) => item.name);
+  }
+
+  const names = getNamesExactly([
+    { name: "saoirse" },
+    { name: "zaid" },
+    { name: "anaya" },
+  ]);
+  // names: ("saoirse" | "zaid" | "anaya")[] — literal, without as const anywhere
+`}
+</CodeBlock>
+
+Without the `const` modifier, `T` would infer as `{ name: string }[]`, and the return type would be the far less useful `string[]`. The `const` modifier is what makes `T[number]["name"]` resolve to the actual literal union of names present in the array that was passed in.
+
+<RainbowDivider />
+
+## const T vs. as const: Different Places, Related Effect
+
+<CodeBlock language="ts">
+{`
+  // as const: an assertion the CALLER applies to one specific expression
+  const a = ["x", "y"] as const;
+
+  // const type parameter: a signal the FUNCTION AUTHOR applies once,
+  // affecting every call site automatically, no caller action needed
+  function identity<const T>(value: T): T { return value; }
+  const b = identity(["x", "y"]); // inferred as readonly ["x", "y"], same effect as as const
+`}
+</CodeBlock>
+
+Both push TypeScript toward the narrowest possible literal type — `as const` does it per-expression, at the call site; a `const` type parameter does it per-function, in the definition, automatically covering every call. They're not competing features so much as the same underlying inference behavior, available from two different places depending on who's in a position to add it.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This is purely a type-inference signal — it has zero runtime effect.** No `const` keyword shows up in the emitted JavaScript; `<const T>` erases completely, same as every other generic type parameter.
+* **It doesn't make the argument actually immutable at runtime.** `readonly`/`const`-inferred types are a compile-time-only guarantee, same as everywhere else in TypeScript — the underlying array or object can still be mutated by code that doesn't go through the type system (or that uses a type assertion to bypass it).
+* **Combine with `extends readonly unknown[]`** (or a similarly readonly-shaped constraint) when the type parameter should specifically be an array/tuple — the constraint controls *what* can be passed, the `const` modifier controls *how precisely* it's inferred.
+* **Doesn't replace `as const` entirely** — for a specific expression that isn't flowing into a `const`-parameterized generic function (e.g. a plain object literal assigned to a variable), `as const` is still the tool for locking in literal types.
+* **Requires TypeScript 5.0+** — for older TypeScript versions, `as const` at every relevant call site remains the only way to get this behavior, with the burden staying on the caller.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A `const` type parameter shifts "keep the literal type, don't widen" from something every caller has to remember to a default the function itself guarantees — the same underlying `as const` behavior, moved from the call site (where it's easy to forget) into the function signature (where a library author can make it automatic for everyone).
