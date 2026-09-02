@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "light-dark-color-scheme",
+    title: "light-dark()",
+    description: "Toggle color-scheme on a panel and watch every light-dark() value re-resolve instantly — background, text, and border, from one declaration each.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "middleware-auth-redirect",
     title: "Edge Middleware: Auth Gating",
     description: "Pick a path and toggle authentication state to see the exact decision a real middleware.ts would make — allow the request through, or redirect to /login.",

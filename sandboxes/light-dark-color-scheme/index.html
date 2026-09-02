@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>light-dark() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>light-dark()</h1>
+        <p>One declaration per property — no duplicate variable sets, no media query.</p>
+      </header>
+
+      <button id="toggle-btn" class="secondary-btn" type="button">Force dark scheme</button>
+
+      <div class="panel" id="panel">
+        <h3>light-dark() Panel</h3>
+        <p>Background, text, and border all come from a single declaration each:</p>
+        <code>background: light-dark(#ffffff, #1a1a1a);</code>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
