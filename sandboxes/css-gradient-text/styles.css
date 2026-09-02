@@ -1,0 +1,82 @@
+.text-preview {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.gradient-demo {
+  --gradient-angle: 90deg;
+  --gradient-start: #ff6a00;
+  --gradient-end: #ee0979;
+  --stroke-width: 2px;
+
+  max-width: 320px;
+  margin: 0;
+  font-size: clamp(1.5rem, 6vw, 2.4rem);
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  color: var(--gradient-start); /* Fallback for browsers without background-clip: text */
+  background: linear-gradient(var(--gradient-angle), var(--gradient-start), var(--gradient-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: background 0.1s ease;
+}
+
+.gradient-demo.mode-animated {
+  background: linear-gradient(var(--gradient-angle), var(--gradient-start), var(--gradient-end), var(--gradient-start));
+  background-size: 200% auto;
+  animation: gt-shine 3s linear infinite;
+}
+
+@keyframes gt-shine {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.gradient-demo.mode-stroke {
+  -webkit-text-stroke: var(--stroke-width) transparent;
+  color: transparent;
+}
+
+/* The multi-line fix: without it, a wrapped gradient stretches across every line as one shape. */
+.gradient-demo.wrap-fix {
+  display: inline;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: var(--pg-text);
+  cursor: pointer;
+}
+
+.checkbox-field:first-of-type {
+  margin-top: 0;
+}
+
+.checkbox-field input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.checkbox-field code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+@media (max-width: 480px) {
+  .text-preview {
+    padding: 16px 8px;
+  }
+}

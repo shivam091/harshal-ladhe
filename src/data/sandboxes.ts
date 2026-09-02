@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-gradient-text",
+    title: "Gradient Text Playground",
+    description: "Switch between linear, animated, and stroke gradient text, tune the angle and colors live, and toggle the multi-line wrap fix to see box-decoration-break in action.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "custom-hook-use-debounce",
     title: "useDebounce Search",
     description: "Type into the search box and watch the keystroke count race ahead of the search count — the debounced value (and the search it triggers) only updates once you pause.",

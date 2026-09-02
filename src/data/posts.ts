@@ -381,6 +381,24 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-01", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-gradient-text",
+    title: "CSS Gradient Text Guide: Background-Clip, Animation & Advanced Tricks",
+    excerpt: "Create stunning gradient text effects with CSS",
+    description: "Learn how to create CSS gradient text using background-clip, animation, stroke effects, multi-line fixes, and responsive techniques with real-world examples.",
+    category: ["CSS"],
+    tags: ["css", "gradient-text", "typography", "background-clip", "text-effects", "css-animation", "frontend-development", "web-design", "responsive", "advanced-css", "svg"],
+    image: {
+      path: "/assets/img/posts/css/css-gradient-text/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Cover image with a vibrant blue-to-purple gradient background and glowing neon light waves"
+    },
+    signoff: "Getting the wrap-fix demo to visibly snap together line-by-line (instead of just describing box-decoration-break in prose) took a few passes, and I hope dragging that toggle makes the multi-line trick click the way it did for me. Thanks for reading all the way to the last gradient stop. 🌈",
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication" }
+    ]
   }
 ];
 

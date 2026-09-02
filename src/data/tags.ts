@@ -346,6 +346,22 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Streamlined Styling with SCSS and Preprocessors",
     description: "Optimize your CSS workflow using SCSS (Sass) features like variables, nesting, mixins, and modular imports for scalable and maintainable code."
   },
+  "gradient-text": {
+    title: "CSS Gradient Text Techniques",
+    description: "Guides on clipping gradients to typography with background-clip: text, from static headings to animated and stroke-outlined text effects."
+  },
+  "background-clip": {
+    title: "Mastering the CSS background-clip Property",
+    description: "Deep dives into background-clip: text and border-box/padding-box tricks for gradient text, gradient borders, and other clipped background effects."
+  },
+  "text-effects": {
+    title: "Creative CSS Text Effects",
+    description: "Techniques for styling typography beyond flat color, including gradients, strokes, shadows, and other CSS-only text treatments."
+  },
+  "typography": {
+    title: "Web Typography Techniques and Best Practices",
+    description: "Articles on styling and structuring text on the web, from font fundamentals to advanced, CSS-driven visual treatments for headings and body copy."
+  },
   "async-javascript": {
     title: "Asynchronous JavaScript Explained",
     description: "Guides to writing non-blocking JavaScript using callbacks, promises, and async/await, along with the event loop concepts that tie them together.",

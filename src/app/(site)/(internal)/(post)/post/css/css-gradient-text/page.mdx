@@ -1,0 +1,605 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-gradient-text");
+
+CSS does not provide a native `color: gradient` property. However, with a few clever techniques, you can apply
+gradients directly to text and create visually striking typography.
+
+This guide explains **how gradient text works**, **why certain tricks are needed**, and **when to use each
+approach**, from basic linear gradients to animated, masked, and blended effects.
+
+<Success title="The core secret">
+  Apply the gradient to a background and clip it to the shape of the text. Every technique in this post is a
+  variation on that one idea.
+</Success>
+
+Before diving in, it's helpful to understand how gradients work in CSS →
+[Mastering CSS Gradients: Types, Use Cases, and Best Practices](/post/css/mastering-css-gradients)
+
+## How to Create Gradient Text in CSS
+
+Creating gradient text in CSS follows a simple 4-step process:
+
+1. Apply a gradient as a background
+2. Clip the background to the text using `background-clip: text`
+3. Make the text transparent using `-webkit-text-fill-color: transparent`
+4. Add a fallback solid color for unsupported browsers
+
+<CodeBlock language="css">
+{`
+  .gradient-text {
+    color: #ff7e5f; /* Fallback */
+    background: linear-gradient(90deg, #ff7e5f, #feb47b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Essentials: Visual Techniques
+
+Rather than just listing properties, let's explore the different "flavors" of gradient text and when they work
+best in modern UI design.
+
+### Linear Gradient Text
+
+The industry standard for production. It uses a background image clipped to the text.
+
+<CodeBlock language="css">
+{`
+  .linear-gradient {
+    color: #fda085; /* 1. Solid fallback for old browsers */
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent; /* 2. Standard trick */
+  }
+`}
+</CodeBlock>
+
+`color: transparent` is what *enables* the effect. The **fallback** is actually a solid color that should be
+declared *before* the gradient properties, so that if `background-clip` isn't supported, the text remains
+readable.
+
+**Why it works:**
+
+- The gradient acts as the background layer.
+- `background-clip: text` restricts the background so it only shows through the text characters.
+- Setting the text color to `transparent` (via fill-color) allows the background to become visible.
+
+**When to use:** blog headings, marketing pages, simple static gradient effects.
+
+### Animated Gradient Text
+
+Perfect for high-impact hero sections. By making the background larger than the element and animating its
+position, the colors appear to flow.
+
+<CodeBlock language="css">
+{`
+  .animated-gradient {
+    background: linear-gradient(90deg, #ff6a00, #ee0979, #00c6ff, #ff6a00);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: shine 3s linear infinite;
+  }
+
+  @keyframes shine {
+    to {
+      background-position: 200% center;
+    }
+  }
+`}
+</CodeBlock>
+
+**When to use:** hero titles, highlighted callouts, attention-grabbing UI elements.
+
+<Warning title="Don't overuse it">
+  Avoid animating long paragraphs of gradient text — the constant motion competes with reading, and repaints
+  large blocks of the page on every frame.
+</Warning>
+
+### Gradient Stroke Text
+
+Instead of filling the text, this technique applies a gradient to the outline. This is excellent for logos or
+futuristic "cyberpunk" aesthetics.
+
+<CodeBlock language="css">
+{`
+  .stroke-gradient {
+    background: linear-gradient(90deg, #00dbde, #fc00ff);
+    -webkit-text-stroke: 1.5px transparent;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+`}
+</CodeBlock>
+
+**Best use cases:** logos, large display text, neon or futuristic designs.
+
+### Conic & Radial Gradients
+
+Conic gradients create a "color wheel" effect, while radial gradients radiate from a specific focal point. These
+are best used for decorative, experimental UI.
+
+<CodeBlock language="css">
+{`
+  .conic-gradient {
+    background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+`}
+</CodeBlock>
+
+**When to use:** decorative headings, experimental UI designs, visual demos and showcases.
+
+If you're new to gradient types like linear, radial, and conic, check out my detailed guide on gradient
+fundamentals → [Mastering CSS Gradients: Types, Use Cases, and Best Practices](/post/css/mastering-css-gradients)
+
+### Masked Layering for Shadows
+
+If you want gradient text with a `text-shadow`, the standard method fails because the shadow appears *over* the
+gradient. Use a pseudo-element to layer the effect.
+
+<CodeBlock language="css">
+{`
+  .masked-gradient {
+    position: relative;
+    color: transparent;
+    /* The shadow is on the parent */
+    filter: drop-shadow(4px 4px 2px rgba(0, 0, 0, 0.5));
+  }
+
+  .masked-gradient::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, #fff, #64748b);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+`}
+</CodeBlock>
+
+**Why use this:** combining multiple visual layers, mixing gradients with shadows or blur.
+
+### Blend Modes
+
+Using `mix-blend-mode` allows you to blend text colors with the background image or color behind it. Blend modes
+don't work well on unpredictable backgrounds.
+
+<CodeBlock language="css">
+{`
+  .blend-container {
+    background: url("carbon-fibre-texture.png");
+    padding: 10px;
+  }
+
+  .blend-gradient {
+    color: #ff0055;
+    background: linear-gradient(to right, #00ffcc, #333);
+    mix-blend-mode: color-dodge;
+  }
+`}
+</CodeBlock>
+
+<Warning title="Use carefully">
+  Blend modes depend heavily on the colors behind them and can be unpredictable — always preview against the
+  actual background you'll ship with.
+</Warning>
+
+### Video & GIF Backgrounds
+
+Since we're using `background-clip`, you aren't limited to CSS gradients. Any moving image (GIF) or video can be
+clipped to your text using the same logic.
+
+<CodeBlock language="css">
+{`
+  .gif-gradient {
+    background: url("gradient-background.gif");
+    background-size: cover;
+    background-position: center;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+`}
+</CodeBlock>
+
+<Warning title="GIFs are heavy">
+  GIF backgrounds can be large and impact performance. In production, prefer optimized video formats like WebM
+  or MP4 for better compression and smoother playback.
+</Warning>
+
+<CodeBlock language="html">
+{`
+  <video autoplay muted loop playsinline class="video-bg">
+    <source src="/assets/videos/gradient.webm" type="video/webm">
+    <source src="/assets/videos/gradient.mp4" type="video/mp4">
+  </video>
+
+  <h1 class="video-text">Gradient Text</h1>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .video-bg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+  }
+
+  .video-text {
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+`}
+</CodeBlock>
+
+**Best for:** landing pages, creative portfolios, experimental typography.
+
+### The "Window" Effect (Fixed Attachment)
+
+This is a subtle, high-end effect often seen on premium landing pages. By using `background-attachment: fixed`,
+the gradient is pinned to the **viewport** rather than the text itself. As the user scrolls, the text acts like a
+"moving window," revealing different parts of the static gradient.
+
+<CodeBlock language="css">
+{`
+  .parallax-gradient {
+    background: linear-gradient(45deg, #00f2fe 0%, #4facfe 100%);
+    background-attachment: fixed; /* The secret sauce */
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+
+    /* Ensure the background covers the whole screen */
+    background-size: cover;
+  }
+`}
+</CodeBlock>
+
+**Why it's a hidden gem:**
+
+- **Depth:** it creates a sense of parallax motion without using JavaScript.
+- **Consistency:** if you have multiple gradient headers on a page, they'll all feel like they're "cut out" from
+  the same giant background.
+
+**Best use cases:** long-form storytelling pages, portfolio sections with large bold headings, a "reveal" effect
+as the user scrolls.
+
+<Info title="Viewport scroll only">
+  The "window effect" only works with viewport scroll, not container scroll — `background-attachment: fixed`
+  pins to the browser viewport, so it has nothing to lock onto inside a scrollable `<div>`.
+</Info>
+
+<RainbowDivider />
+
+## Gradient Text Techniques Comparison
+
+| Technique         | Performance | Browser Support | Best Use Case             | Complexity |
+| ----------------- | ----------- | ---------------- | -------------------------- | ---------- |
+| Linear Gradient    | Excellent   | Excellent         | Headings, UI highlights     | Easy       |
+| Animated Gradient  | Good        | Excellent         | Hero sections               | Medium     |
+| Stroke Gradient    | Good        | Good              | Logos, display text         | Medium     |
+| Conic/Radial       | Good        | Good              | Decorative UI                | Medium     |
+| Masked Gradient    | Fair        | Good              | Layered effects              | Hard       |
+| Blend Mode         | Fair        | Fair              | Creative designs             | Hard       |
+| GIF/Video          | Fair        | Good              | Portfolios, landing pages    | Medium     |
+| SVG Gradient       | Excellent   | Excellent         | Logos, production assets     | Medium     |
+
+## Responsive Gradient Text
+
+Gradients scale naturally with text, but font size and line-height matter.
+
+<CodeBlock language="css">
+{`
+  .responsive-gradient {
+    font-size: clamp(2rem, 8vw, 5rem);
+    background: linear-gradient(90deg, #ff6a00, #ee0979);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    word-wrap: break-word;
+  }
+`}
+</CodeBlock>
+
+This ensures gradient text looks good across devices.
+
+## Dynamic Gradients with CSS Variables
+
+CSS variables allow theme-based or runtime gradient changes.
+
+<CodeBlock language="css">
+{`
+  :root {
+    --gradient-start: #ff6a00;
+    --gradient-end: #ee0979;
+  }
+
+  .variable-gradient {
+    background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+`}
+</CodeBlock>
+
+Combined with JavaScript, this enables live gradient updates — exactly the trick the
+[playground](#interactive-playground) further down this post uses to update colors as you drag its controls.
+
+<RainbowDivider />
+
+## Pro Tips: Solving Common Production Issues
+
+Applying a gradient is easy; making it work across all browsers and edge cases is the hard part.
+
+### The Multi-Line Wrap Fix
+
+**The problem:** when gradient text wraps to a new line, the gradient often stretches across the entire height of
+the container, making the individual lines look "disconnected."
+
+**The solution:** use `display: inline` and `box-decoration-break: clone`. This forces the browser to render the
+gradient for each line fragment individually.
+
+<CodeBlock language="css">
+{`
+  .wrap-fix {
+    display: inline;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+`}
+</CodeBlock>
+
+You can see this exact toggle live in the [playground](#interactive-playground) below — force the demo text to
+wrap, then flip the fix on and off to watch the gradient snap from one stretched shape into a clean per-line clip.
+
+### Feature Detection with `@supports`
+
+Always provide a solid color fallback for older browsers that don't support background clipping.
+
+<CodeBlock language="css">
+{`
+  h1 {
+    color: #333; /* Solid fallback */
+  }
+
+  @supports (-webkit-background-clip: text) or (background-clip: text) {
+    h1 {
+      background: linear-gradient(to right, #6366f1, #ec4899);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  }
+`}
+</CodeBlock>
+
+### The SVG Fail-Safe
+
+For high-reliability branding (like a company logo), CSS can sometimes be finicky. SVG gradients are the gold
+standard for cross-browser stability and performance. They're more performant and render identically across
+almost every mobile browser.
+
+<CodeBlock language="xml">
+{`
+  <svg width="100%" height="100">
+    <defs>
+      <linearGradient id="svgGrad">
+        <stop offset="0%" stop-color="#ff7e5f" />
+        <stop offset="100%" stop-color="#feb47b" />
+      </linearGradient>
+    </defs>
+    <text x="0" y="50" fill="url(#svgGrad)" font-size="40">SVG Gradient Text</text>
+  </svg>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## When Not to Use Gradient Text
+
+While gradient text is visually appealing, it isn't always the right choice. Avoid it when:
+
+- **Long paragraphs:** reduces readability and causes eye strain
+- **Low contrast backgrounds:** makes content inaccessible
+- **Critical UI elements:** buttons, forms, and navigation should remain clear
+- **Performance-sensitive pages:** avoid heavy animations on low-end devices
+- **Professional or formal interfaces:** overuse can feel distracting
+
+<Warning title="Use sparingly">
+  Use gradient text sparingly for emphasis, not as a default text style — it's a spotlight, and everything looks
+  flat once you point a spotlight at all of it.
+</Warning>
+
+## Performance Considerations
+
+Gradient text is visually appealing, but it comes with trade-offs.
+
+- **Avoid over-animating:** animating gradients on large blocks of text can trigger frequent repaints, which
+  causes scrolling lag. Reserve animations for short headings.
+- **Contrast ratios:** gradients can make text hard to read. Always ensure your gradient colors provide enough
+  contrast against the background to meet WCAG AA standards.
+- **Hardware acceleration:** use `will-change: background-position` sparingly to let the browser optimize
+  animated gradients.
+
+<CodeBlock language="css">
+{`
+  .animated-gradient {
+    will-change: background-position;
+  }
+`}
+</CodeBlock>
+
+## Accessibility Considerations
+
+Gradient text can reduce readability if contrast is poor. Best practices:
+
+- Always test contrast against backgrounds
+- Avoid light gradients on light backgrounds
+- Provide fallback colors for older browsers
+
+<CodeBlock language="css">
+{`
+  .gradient-text {
+    color: #ff7e5f; /* fallback */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Real-World Example: Gradient Text in My Hero Section
+
+All the techniques discussed above aren't just demos — they're used in production on this blog's homepage hero
+section.
+
+If you visit the homepage, you'll see an animated gradient applied to the main heading:
+
+<CodeBlock language="html">
+{`
+  <section class="hero">
+    <div class="hero-content">
+      <h1 class="hero-heading">Hi, I'm Harshal LADHE 👋</h1>
+      <div class="hero-subheading">A showcase of my technical blog posts, coding insights, and open source projects.</div>
+      <p class="hero-typed">
+        I'm ...
+      </p>
+    </div>
+  </section>
+`}
+</CodeBlock>
+
+### Animated Gradient on the Main Heading
+
+The `.hero-heading` uses a flowing linear gradient with background animation:
+
+<CodeBlock language="css">
+{`
+  .hero-heading {
+    background: linear-gradient(
+      90deg,
+      var(--color-fg-attention),
+      var(--color-fg-success),
+      var(--color-fg-danger),
+      var(--color-fg-accent),
+      var(--color-fg-attention)
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: bg-slide 3s linear infinite;
+  }
+`}
+</CodeBlock>
+
+This creates a smooth sliding gradient effect across the text — perfect for a high-impact first impression.
+
+### Gradient Highlight for Typed Roles
+
+The dynamically typed roles use a separate gradient treatment:
+
+<CodeBlock language="css">
+{`
+  .hero-highlight {
+    background-image: linear-gradient(
+      45deg,
+      var(--color-fg-danger) 20%,
+      var(--color-fg-success) 45%,
+      var(--color-fg-attention) 70%
+    );
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+`}
+</CodeBlock>
+
+This version uses CSS variables for theme consistency, avoids animation (since the typing effect already
+provides motion), and keeps contrast strong for readability.
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Experience the power of gradient text in this live example — switch between linear, animated, and stroke
+styles, drag the color pickers to see how CSS variables can dynamically update the gradient in real time, and
+toggle the multi-line wrap fix to watch `box-decoration-break: clone` in action.
+
+<Sandbox slug="css-gradient-text" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Does gradient text work in all browsers?">
+  Gradient text works in all modern browsers using `-webkit-background-clip: text`. However, older browsers may
+  not support it, so always provide a solid fallback color.
+</Details>
+
+<Details summary="Why is my gradient text not visible?">
+  This usually happens when `-webkit-text-fill-color: transparent` is missing, the background isn't applied
+  correctly, or a `color` declaration is overriding the gradient.
+</Details>
+
+<Details summary="How do I fix gradient text on multiple lines?">
+  Use:
+
+  <CodeBlock language="css">
+{`
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+`}
+  </CodeBlock>
+
+  This ensures each line renders the gradient correctly.
+</Details>
+
+<Details summary="Is gradient text bad for performance?">
+  Static gradient text is cheap. However, animated gradients can cause repaint issues, so use them only for
+  small elements like headings.
+</Details>
+
+<Details summary="Can I use gradient text with dark mode?">
+  Yes. Use CSS variables to dynamically change gradient colors based on theme.
+</Details>
+
+<Details summary="Should I use SVG instead of CSS gradients?">
+  Use SVG when you need pixel-perfect consistency, it's part of branding (logos), or you want better
+  cross-browser reliability.
+</Details>
+
+<RainbowDivider />
+
+## Conclusion
+
+Mastering gradient text isn't just about a single CSS property; it's about understanding how to layer
+backgrounds, clips, and fallbacks to create a seamless experience. By combining `background-clip` with modern
+features like CSS variables, `clamp()`, and `@supports`, you ensure your typography is both visually stunning and
+technically resilient.
+
+Start with a simple linear transition, and only layer in motion or complex masks when it enhances the user's
+journey.
