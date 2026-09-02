@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Container Queries Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Container Queries vs. Media Queries</h1>
+        <p>Drag the slider to resize just the left card's wrapper — not the browser viewport.</p>
+      </header>
+
+      <label class="slider-row" for="width-slider">
+        Wrapper width: <span id="width-value">600px</span>
+        <input type="range" id="width-slider" min="220" max="600" value="600" />
+      </label>
+
+      <div class="demo-row">
+        <div class="demo-col">
+          <p class="demo-label">@container — responds to its own wrapper</p>
+          <div id="container-wrapper" class="resizable-wrapper">
+            <div class="card cq-card">
+              <div class="card-media"></div>
+              <div class="card-body">
+                <h3>Container Query Card</h3>
+                <p>Switches to a horizontal layout once its own wrapper is wide enough — regardless of the browser window.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-col">
+          <p class="demo-label">@media — only responds to the viewport</p>
+          <div class="resizable-wrapper static-wrapper">
+            <div class="card mq-card">
+              <div class="card-media"></div>
+              <div class="card-body">
+                <h3>Media Query Card</h3>
+                <p>Ignores the slider entirely — try resizing your actual browser window instead.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

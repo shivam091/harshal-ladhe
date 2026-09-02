@@ -416,6 +416,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "container-queries-responsive-cards",
+    title: "Component-Level Responsiveness with Container Queries",
+    excerpt: "@container queries respond to a component's own space, not the browser viewport.",
+    description: "Use @container instead of @media to make a component reflow based on its own wrapper's width — so it looks right in a sidebar, a wide column, or a modal alike, regardless of the browser window size.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "container-queries",
+      "responsive-design",
+      "component-driven",
+      "modern-css",
+      "layout",
+      "design-systems"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/container-queries-responsive-cards/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A card component reflowing from a stacked layout to a horizontal layout as its own container width increases, independent of the browser viewport."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,110 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("container-queries-responsive-cards");
+
+## Introduction
+
+A media query answers one question: how wide is the browser viewport? That's fine for page-level layout, but it breaks down for a component meant to be reused in different contexts — a card in a wide main column, the same card in a narrow sidebar, the same card again inside a modal. The viewport is identical in all three places. The available *space* isn't.
+
+**Container queries** answer the question components actually need answered: how wide is *my own container* — regardless of where I happen to be placed on the page?
+
+<RainbowDivider />
+
+## Setting Up a Container
+
+Any element becomes a query container by giving it a `container-type`:
+
+<CodeBlock language="css">
+{`
+  .card-wrapper {
+    container-type: inline-size; /* query the container's width */
+    container-name: card-wrapper; /* optional, but recommended once you have more than one */
+  }
+`}
+</CodeBlock>
+
+`container-type: inline-size` means "let descendants query this element's inline (horizontal) size." Once set, any descendant can respond to *that specific ancestor's* width with `@container` instead of the viewport's:
+
+<CodeBlock language="css">
+{`
+  .card {
+    display: flex;
+    flex-direction: column; /* stacked by default */
+  }
+
+  @container card-wrapper (min-width: 420px) {
+    .card {
+      flex-direction: row; /* switches to horizontal once the CONTAINER is wide enough */
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Key Difference
+
+<CodeBlock showCopyButton={false}>
+{`
+  @media (min-width: 900px) { ... }
+  ── asks: "is the BROWSER WINDOW at least 900px?"
+
+  @container card-wrapper (min-width: 420px) { ... }
+  ── asks: "is THIS SPECIFIC ANCESTOR at least 420px?"
+`}
+</CodeBlock>
+
+A component wrapped in a container query looks right no matter where it's placed — a sidebar, a wide column, a narrow modal — because it's reacting to its actual available space, not the whole page's.
+
+<RainbowDivider />
+
+## Try It Live
+
+Two identical cards, two different queries. Drag the slider — it resizes only the left card's wrapper. Watch the container-query card reflow as its own space changes, while the media-query card stays put (it only reacts to your actual browser window).
+
+<Sandbox slug="container-queries-responsive-cards" readOnly />
+
+<RainbowDivider />
+
+## Container Query Units
+
+Alongside `@container`, CSS adds a matching set of length units relative to the nearest query container instead of the viewport:
+
+| Unit | Relative to |
+| :--- | :--- |
+| `cqw` | 1% of the container's width |
+| `cqh` | 1% of the container's height |
+| `cqi` | 1% of the container's inline size |
+| `cqb` | 1% of the container's block size |
+| `cqmin` / `cqmax` | Smaller/larger of `cqi` and `cqb` |
+
+<CodeBlock language="css">
+{`
+  .card-title {
+    font-size: clamp(0.875rem, 4cqi, 1.25rem); /* scales with the CONTAINER's width, not the viewport */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Design-system components meant to be dropped into sidebars, main columns, and modals alike
+- Dashboard widgets/cards that get resized or dragged into different grid slots
+- Any component library where "how much space do I actually have" matters more than "how wide is the page"
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **A container can't query itself.** `container-type` has to be set on an *ancestor* of the element using `@container` — typically a dedicated wrapper, since most components don't want to also become the query boundary for their own children.
+* **`container-type: inline-size` removes the element from normal inline-size-based layout calculations that depend on its own content** in some edge cases (it establishes a new formatting context similar to `contain: layout`) — verify nothing inside relies on intrinsic sizing behavior that assumption changes.
+* **Naming containers matters once you nest them.** Without `container-name`, a `@container` query matches the *nearest* ancestor container, which may not be the one you intended once containers are nested two or three levels deep.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 105+, Firefox 110+, Safari 16+) as of this writing — check your actual support matrix before relying on it without a fallback for older targets.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Media queries answer a page-level question; container queries answer a component-level one. Reach for `@container` any time a component's ideal layout depends on the space it's actually given, not the size of the browser window it happens to be running in.

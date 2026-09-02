@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "container-queries-responsive-cards",
+    title: "Container Queries vs. Media Queries",
+    description: "Drag a slider to resize just one card's wrapper — the @container card reflows with it while the @media card only reacts to the actual browser viewport.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "curry-and-compose",
     title: "Composable Pipeline",
     description: "Toggle trim, lowercase, reverse, and truncate steps on and off — pipe() runs whichever are enabled, left to right, against your input text.",
