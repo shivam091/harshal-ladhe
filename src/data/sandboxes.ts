@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "view-transitions-api",
+    title: "View Transitions API",
+    description: "Click a color swatch to watch it morph smoothly into a detail card via view-transition-name — close it to see the reverse morph.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "subgrid-alignment",
     title: "Subgrid Alignment",
     description: "Three cards with mismatched title/body lengths — toggle subgrid to watch their internal rows snap into shared, aligned tracks across the row.",

@@ -542,6 +542,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "view-transitions-api",
+    title: "Smooth Transitions with the View Transitions API",
+    excerpt: "Native shared-element morphing between two page states — no animation library, no FLIP math.",
+    description: "document.startViewTransition() and view-transition-name let the browser morph an element between two DOM states automatically — a thumbnail expanding into a detail card, with graceful fallback where unsupported.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "view-transitions-api",
+      "view-transition-name",
+      "animation",
+      "shared-element-transitions",
+      "modern-css",
+      "javascript"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/view-transitions-api/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A small color swatch morphing smoothly into a large detail card, illustrating a shared-element transition via the View Transitions API."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

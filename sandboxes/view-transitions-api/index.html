@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>View Transitions API Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>View Transitions API</h1>
+        <p>Click a swatch — it morphs smoothly into the detail card via view-transition-name, no animation library involved.</p>
+      </header>
+
+      <div class="grid" id="grid">
+        <button class="swatch" data-id="1" style="background: #f87171" type="button">1</button>
+        <button class="swatch" data-id="2" style="background: #fb923c" type="button">2</button>
+        <button class="swatch" data-id="3" style="background: #facc15" type="button">3</button>
+        <button class="swatch" data-id="4" style="background: #4ade80" type="button">4</button>
+        <button class="swatch" data-id="5" style="background: #22d3ee" type="button">5</button>
+        <button class="swatch" data-id="6" style="background: #818cf8" type="button">6</button>
+      </div>
+
+      <div class="detail hidden" id="detail">
+        <div class="detail-card" id="detail-card"></div>
+        <button id="close-btn" class="secondary-btn" type="button">Close</button>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

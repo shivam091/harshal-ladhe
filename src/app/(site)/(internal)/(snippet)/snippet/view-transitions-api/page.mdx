@@ -1,0 +1,115 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("view-transitions-api");
+
+## Introduction
+
+Smoothly animating between two states of a page — a thumbnail expanding into a detail view, a list reordering, a whole page swapping content — has historically meant either a JavaScript animation library computing before/after positions by hand (the "FLIP" technique), or accepting an instant, jarring cut.
+
+The **View Transitions API** does this natively: capture what the page looks like before a DOM change, capture what it looks like after, and let the browser generate the transition between the two — including a genuine shared-element morph, without you calculating a single position.
+
+<RainbowDivider />
+
+## The Core API
+
+<CodeBlock language="js">
+{`
+  document.startViewTransition(() => {
+    // Make your DOM change here — anything: add/remove elements, swap classes, update content.
+    updateTheDOM();
+  });
+`}
+</CodeBlock>
+
+`startViewTransition` takes a screenshot of the current page, runs your callback to make the actual DOM change, takes a screenshot of the result, and cross-fades between them by default — automatically, for the *entire page*, with one function call.
+
+<RainbowDivider />
+
+## Shared-Element Morphing
+
+The more striking capability is per-element morphing: tag an element with `view-transition-name` before the change, and tag whatever replaces it with the *same name* after. The browser animates size and position between the two automatically.
+
+<CodeBlock language="js">
+{`
+  // Before the transition: tag the element as it currently is
+  thumbnail.style.viewTransitionName = "hero-image";
+
+  document.startViewTransition(() => {
+    thumbnail.style.viewTransitionName = ""; // untag the old one
+    showDetailView();
+    detailImage.style.viewTransitionName = "hero-image"; // tag its replacement with the SAME name
+  });
+`}
+</CodeBlock>
+
+As long as exactly one element carries a given `view-transition-name` in the "before" snapshot and exactly one carries it in the "after" snapshot, the browser treats them as the same visual object and morphs between their size, position, and border-radius — even though they're two entirely different DOM elements, possibly with different tag names.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click any swatch below — it morphs smoothly into the detail card, expanding from its exact position and size in the grid. Close it, and the reverse morph plays. Every bit of that motion is the browser interpolating between two snapshots; nothing here is a hand-written animation.
+
+<Sandbox slug="view-transitions-api" readOnly />
+
+<RainbowDivider />
+
+## Feature-Detecting Gracefully
+
+<CodeBlock language="js">
+{`
+  function withTransition(update) {
+    if (document.startViewTransition) {
+      document.startViewTransition(update);
+    } else {
+      update(); // no transition — the DOM change still happens, just instantly
+    }
+  }
+`}
+</CodeBlock>
+
+Because the API degrades to "just update the DOM" when unsupported, it's safe to adopt incrementally — browsers without support see an instant change instead of an error.
+
+<RainbowDivider />
+
+## Styling the Transition
+
+The browser generates pseudo-elements you can target directly with CSS:
+
+<CodeBlock language="css">
+{`
+  ::view-transition-old(*),   /* the "before" snapshot, for any transition-named element */
+  ::view-transition-new(*) {  /* the "after" snapshot */
+    animation-duration: 0.4s;
+  }
+
+  ::view-transition-old(hero-image),  /* target ONE specific named element by its view-transition-name */
+  ::view-transition-new(hero-image) {
+    animation-timing-function: ease-in-out;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Thumbnail-to-detail expansions (image galleries, card-to-modal, list-item-to-page)
+- Multi-page apps — same-document transitions today, and (where supported) genuine cross-document transitions between full page navigations
+- Filter/sort transitions where items reflow and you want the reflow to animate instead of jump
+- Theme or layout toggles (light/dark, grid/list view) that should feel continuous rather than instant
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Only one element per `view-transition-name` per snapshot.** If two elements accidentally share a name at the same moment, the transition throws and falls back to an instant change — always clear a name from the outgoing element before (or as part of) assigning it to the incoming one.
+* **Names must be unique and stable across the transition, not globally unique in your app** — reusing `hero-image` for a *different* logical transition later (once the previous one has finished and cleared it) is completely fine.
+* **Browser support is still uneven** — solid in Chrome/Edge since 2023, shipped in Safari 18 (2024), and landed in Firefox more recently. Always wrap calls in the `document.startViewTransition` feature check shown above so unsupported browsers get a functioning (if unanimated) experience.
+* **Respect `prefers-reduced-motion`** — the browser doesn't automatically shorten these transitions for users who've asked for less motion; wrap the `animation-duration` override in a `@media (prefers-reduced-motion: no-preference)` query, or skip calling `startViewTransition` and just run the update directly when reduced motion is requested.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+The View Transitions API turns "animate this state change" from a JavaScript positioning problem into a two-line declaration: wrap the DOM update, optionally tag the elements that should morph. It degrades gracefully where unsupported, which makes it safe to adopt today as a progressive enhancement.
