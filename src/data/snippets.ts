@@ -845,6 +845,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "anchor-positioning-tooltips",
+    title: "Native Tooltips with CSS Anchor Positioning",
+    excerpt: "Tether a tooltip to its trigger element's edge — no Popper, no Floating UI.",
+    description: "anchor-name and position-anchor let CSS tether an element to another element's edge natively, with anchor() reference points and position-try-fallbacks for automatic flip-to-fit — the native answer to what JS positioning libraries solve.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "anchor-positioning",
+      "tooltips",
+      "popovers",
+      "modern-css",
+      "floating-ui",
+      "positioning"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/anchor-positioning-tooltips/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Three tooltips tethered to their respective trigger buttons at different edges, illustrating native CSS anchor positioning."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

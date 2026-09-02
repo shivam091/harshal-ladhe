@@ -1,0 +1,102 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem 6rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.playground-header h1 {
+  font-size: 1.25rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.support-note {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid hsl(35, 40%, 32%);
+  border-radius: 0.375rem;
+  background: hsl(35, 40%, 12%);
+  color: hsl(35, 65%, 72%);
+  font-size: 0.75rem;
+}
+
+.buttons-row {
+  display: flex;
+  gap: 4rem;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+.anchor-btn {
+  padding: 0.5rem 1.125rem;
+  border: 1px solid hsl(213, 80%, 54%);
+  border-radius: 0.375rem;
+  background: hsl(213, 80%, 54%, 0.14);
+  color: hsl(213, 85%, 68%);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.tooltip {
+  position: absolute;
+  padding: 0.4rem 0.625rem;
+  border-radius: 0.375rem;
+  background: hsl(213, 20%, 16%);
+  border: 1px solid hsl(213, 12%, 30%);
+  color: hsl(210, 10%, 90%);
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  width: max-content;
+  max-width: 10rem;
+  white-space: normal;
+}
+
+/* Tethered above its anchor, horizontally centered on it, with a small gap. */
+.tooltip-top {
+  bottom: anchor(top);
+  left: anchor(center);
+  translate: -50% -0.5rem;
+}
+
+/* Tethered to the right of its anchor, vertically centered on it. */
+.tooltip-right {
+  left: anchor(right);
+  top: anchor(center);
+  translate: 0.5rem -50%;
+}
+
+/* Tethered below its anchor, horizontally centered on it. */
+.tooltip-bottom {
+  top: anchor(bottom);
+  left: anchor(center);
+  translate: -50% 0.5rem;
+}
+
+/* Fallback for browsers without anchor positioning support: stack tooltips inline instead of
+   floating them off in unpredictable positions with no anchor to resolve against. */
+@supports not (anchor-name: --a) {
+  .tooltip {
+    position: static;
+    margin-top: 0.5rem;
+    translate: none;
+  }
+}

@@ -1,0 +1,103 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("anchor-positioning-tooltips");
+
+## Introduction
+
+Positioning a tooltip or popover relative to the element that triggered it — "appear above this button, centered on it, flip to below if there's no room above" — has always needed JavaScript. `position: absolute` alone can't tether an element to another arbitrary element unless that element is a positioned ancestor, which a button rarely is. Libraries like Popper and Floating UI exist specifically to compute this positioning in JavaScript, on every scroll and resize.
+
+**CSS Anchor Positioning** does this natively: name an element as an anchor, and position anything else relative to it — directly in CSS, recalculated by the browser's own layout engine.
+
+<RainbowDivider />
+
+## Naming an Anchor
+
+<CodeBlock language="css">
+{`
+  .trigger-button {
+    anchor-name: --my-anchor;
+  }
+`}
+</CodeBlock>
+
+Any element can become a named anchor. The name (a custom ident starting with `--`, same syntax as a custom property) is how other elements will refer back to it.
+
+<RainbowDivider />
+
+## Positioning Relative to It
+
+<CodeBlock language="css">
+{`
+  .tooltip {
+    position: absolute;
+    position-anchor: --my-anchor;   /* "position relative to THIS anchor" */
+
+    top: anchor(bottom);             /* my top edge = anchor's bottom edge */
+    left: anchor(center);            /* my left edge = anchor's horizontal center */
+    translate: -50% 0.5rem;          /* nudge to actually center + add a gap */
+  }
+`}
+</CodeBlock>
+
+`anchor(side)` resolves to that side's position on the referenced anchor element — no matter where either element sits in the DOM tree, and no JavaScript computing coordinates on scroll/resize. The browser keeps them tethered automatically as the page scrolls or the anchor moves.
+
+<RainbowDivider />
+
+## Try It Live
+
+Three buttons, three tooltips, each tethered to a different side of its own button purely through `anchor()`. Scroll the sandbox (if it scrolls) and notice the tooltips track their anchors without any JavaScript involved.
+
+<Sandbox slug="anchor-positioning-tooltips" readOnly />
+
+<RainbowDivider />
+
+## `anchor()` Reference Points
+
+<CodeBlock showCopyButton={false}>
+{`
+  anchor(top)      anchor(bottom)     anchor(left)      anchor(right)
+  anchor(center)   anchor(start)      anchor(end)       anchor(50%)  ← any percentage
+`}
+</CodeBlock>
+
+`top`/`bottom`/`left`/`right` reference the anchor's physical edges; `start`/`end` are the logical equivalents (writing-mode aware); `center` is the midpoint; and any percentage lets you anchor to an arbitrary point along an edge, not just its ends or middle.
+
+<RainbowDivider />
+
+## Automatic Fallback Positioning
+
+<CodeBlock language="css">
+{`
+  .tooltip {
+    position-anchor: --my-anchor;
+    top: anchor(bottom);
+    position-try-fallbacks: flip-block; /* if there's no room below, try ABOVE instead */
+  }
+`}
+</CodeBlock>
+
+`position-try-fallbacks` is the native answer to "flip to the other side if there's no room" — the exact problem Popper/Floating UI were built to solve in JavaScript. The browser tries your primary position first, and falls back automatically if it would overflow the viewport.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Tooltips, popovers, and dropdown menus tethered to their trigger element
+- Context menus that need to stay attached to a right-clicked element while scrolling
+- Any UI currently using Popper.js or Floating UI purely for "attach element B to element A's edge"
+- Custom `<select>`-style comboboxes needing their option list anchored to the trigger
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Browser support is still narrow** — anchor positioning shipped in Chrome/Edge 125 (2024) and, as of this writing, hasn't landed in Firefox or Safari. Feature-detect with `@supports (anchor-name: --a)` (or the `CSS.supports()` JS equivalent) and provide a static fallback, exactly as the sandbox above does.
+* **This doesn't replace `popover`/`<dialog>` for behavior** — anchor positioning only solves *placement*. Dismiss-on-outside-click, focus trapping, and top-layer stacking are separate concerns, often solved by pairing anchor positioning with the HTML `popover` attribute.
+* **An anchor and its positioned element don't need any DOM relationship** — they can be siblings, cousins, anywhere in the tree; the connection is purely the shared `anchor-name`/`position-anchor` pair, not proximity in markup.
+* **Until support is broader, this is best used as progressive enhancement** — ship a JS-based positioning fallback (or an acceptable static position) for unsupported browsers, and let anchor positioning take over natively where available.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Native anchor positioning moves "tether this element to that element's edge, and keep it tethered" out of a JavaScript library and into the browser's own layout engine — for tooltips and popovers specifically, it's the first CSS-only answer to a problem that's needed a JS dependency for over a decade. Support is still young; treat it as progressive enhancement for now.

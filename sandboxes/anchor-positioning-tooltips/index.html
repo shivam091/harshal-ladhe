@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anchor Positioning Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Native Anchor Positioning</h1>
+        <p>Each tooltip is tethered to its button with anchor()/position-anchor — no JS positioning library.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>
+        Your browser doesn't support CSS anchor positioning yet (Chrome/Edge 125+) — the tooltips below will show without their live-tethered position.
+      </p>
+
+      <div class="buttons-row">
+        <button class="anchor-btn" id="btn-top" style="anchor-name: --anchor-top" type="button">Top</button>
+        <button class="anchor-btn" id="btn-right" style="anchor-name: --anchor-right" type="button">Right</button>
+        <button class="anchor-btn" id="btn-bottom" style="anchor-name: --anchor-bottom" type="button">Bottom</button>
+      </div>
+
+      <div class="tooltip tooltip-top" style="position-anchor: --anchor-top">Placed above via anchor(bottom)</div>
+      <div class="tooltip tooltip-right" style="position-anchor: --anchor-right">Placed right via anchor(right)</div>
+      <div class="tooltip tooltip-bottom" style="position-anchor: --anchor-bottom">Placed below via anchor(top)</div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "anchor-positioning-tooltips",
+    title: "Native Anchor Positioning",
+    description: "Three tooltips tethered to different edges of their trigger buttons via anchor() — no JS positioning library, with a graceful fallback note for unsupported browsers.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "css-trigonometric-functions",
     title: "Radial Layout with sin() / cos()",
     description: "Change the item count and rotation offset — every dot's position around the circle is computed live by native CSS sin()/cos(), no JavaScript layout math.",
