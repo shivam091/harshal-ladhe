@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "structured-clone-deep-copy",
+    title: "structuredClone() vs. JSON Round-Trip",
+    description: "Clone a sample object containing a Date, a Map, and an undefined property both ways and compare what survives — toggle a circular reference to see one method throw.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "debounce-throttle",
     title: "Debounce vs. Throttle",
     description: "Move your pointer across the panel and compare how often the raw, debounced, and throttled counters actually increment.",

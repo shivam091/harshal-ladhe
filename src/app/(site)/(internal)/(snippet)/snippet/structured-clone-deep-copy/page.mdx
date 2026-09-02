@@ -1,0 +1,135 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("structured-clone-deep-copy");
+
+## Introduction
+
+For years, the go-to trick for a "quick" deep clone in JavaScript was:
+
+<CodeBlock language="js">
+{`
+  const clone = JSON.parse(JSON.stringify(original));
+`}
+</CodeBlock>
+
+It works — right up until the object being cloned contains anything JSON can't represent. Then it fails silently, corrupting data instead of throwing where you'd notice.
+
+Since 2022, browsers and Node.js ship a purpose-built API for this: **`structuredClone()`**. It's worth knowing exactly what the JSON trick breaks, and what `structuredClone` fixes.
+
+<RainbowDivider />
+
+## What the JSON Round-Trip Silently Breaks
+
+<CodeBlock language="js">
+{`
+  const original = {
+    createdAt: new Date(),
+    scores: new Map([["alice", 10]]),
+    tags: new Set(["a", "b"]),
+    handler: () => console.log("hi"),
+    missing: undefined,
+    total: NaN,
+  };
+
+  const clone = JSON.parse(JSON.stringify(original));
+
+  clone.createdAt;   // string, not a Date — "2026-01-01T00:00:00.000Z"
+  clone.scores;      // {} — Map serializes to an empty object
+  clone.tags;        // {} — same problem for Set
+  clone.handler;      // undefined — the key is dropped entirely
+  "missing" in clone; // false — undefined values are dropped, not preserved
+  clone.total;        // null — NaN isn't valid JSON, becomes null
+`}
+</CodeBlock>
+
+And if `original` contains a circular reference — an object that references itself, directly or through a chain — `JSON.stringify` doesn't silently corrupt it, it throws:
+
+<CodeBlock language="js">
+{`
+  const node = { value: 1 };
+  node.self = node;
+
+  JSON.stringify(node); // TypeError: Converting circular structure to JSON
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## What `structuredClone()` Fixes
+
+<CodeBlock language="js">
+{`
+  const clone = structuredClone(original);
+
+  clone.createdAt instanceof Date; // true
+  clone.scores instanceof Map;     // true
+  clone.tags instanceof Set;       // true
+  "missing" in clone;               // true — undefined is preserved
+
+  const node = { value: 1 };
+  node.self = node;
+  structuredClone(node).self === structuredClone(node); // handles the cycle without throwing
+`}
+</CodeBlock>
+
+`structuredClone` uses the [structured clone algorithm](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) — the same one browsers use internally to pass data through `postMessage`, `IndexedDB`, and Web Workers. It correctly handles `Date`, `Map`, `Set`, `RegExp`, `ArrayBuffer`/typed arrays, `Blob`, `File`, and circular references.
+
+<RainbowDivider />
+
+## What Neither Approach Can Do
+
+Both methods still can't clone **functions** — `structuredClone` throws a `DataCloneError` if a function appears anywhere in the value, where the JSON approach just quietly drops it. Neither preserves **class instance prototypes**: cloning an instance of a custom class with either method gives you back a *plain object* with the same own properties, not an instance of that class — its methods are gone.
+
+<CodeBlock language="js">
+{`
+  class Point {
+    constructor(x, y) { this.x = x; this.y = y; }
+    distanceFromOrigin() { return Math.hypot(this.x, this.y); }
+  }
+
+  const p = new Point(3, 4);
+  const cloned = structuredClone(p);
+
+  cloned instanceof Point;      // false — plain object now
+  cloned.distanceFromOrigin;    // undefined — method is gone
+  cloned.x, cloned.y;           // 3, 4 — own data properties survive fine
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Try It Live
+
+Run the same sample object — a `Date`, a `Map`, and an `undefined` property — through both cloning strategies and compare what each one preserves. Toggle the circular-reference checkbox to see the JSON method throw where `structuredClone` doesn't.
+
+<Sandbox slug="structured-clone-deep-copy" readOnly />
+
+<RainbowDivider />
+
+## Comparison
+
+| | `JSON.parse(JSON.stringify())` | `structuredClone()` |
+| :--- | :--- | :--- |
+| **`Date`** | Becomes an ISO string | Stays a `Date` |
+| **`Map` / `Set`** | Becomes `{}` | Preserved |
+| **`undefined` properties** | Dropped | Preserved |
+| **`NaN` / `Infinity`** | Becomes `null` | Preserved |
+| **Circular references** | Throws `TypeError` | Handled correctly |
+| **Functions** | Silently dropped | Throws `DataCloneError` |
+| **Class instances** | Plain object, no prototype | Plain object, no prototype |
+| **Browser/Node support** | Universal, no polyfill needed | Node 17+, all modern browsers |
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Prefer `structuredClone` by default.** It's a native, dependency-free, standardized API — reach for the JSON trick only when you specifically *want* its lossy behavior (e.g. stripping functions/undefined on purpose before sending data somewhere JSON-only).
+* **Neither clones functions or DOM nodes.** If your data legitimately contains callbacks or references to live objects, you need a manual clone that copies only the serializable parts, or restructure so functions live outside the cloned data.
+* **Class instances lose their prototype either way.** If you need a cloned class instance with working methods, clone the plain data and re-wrap it: `Object.assign(new Point(0, 0), structuredClone(p))` (or a dedicated `.clone()` method on the class).
+* **Deep-equality libraries (like Lodash's `cloneDeep`) predate `structuredClone`** and fill similar gaps with different tradeoffs (they *do* handle some class instances). If you're already depending on Lodash, its `cloneDeep` is a reasonable alternative — but for new code with no existing dependency, `structuredClone` needs nothing extra installed.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`JSON.parse(JSON.stringify())` isn't a deep clone — it's a lossy serialization round-trip that happens to work for plain data. `structuredClone()` is the real thing: reach for it first, and only fall back to the JSON trick when you specifically want its stripping behavior.

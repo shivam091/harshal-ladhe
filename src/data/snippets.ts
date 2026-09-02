@@ -260,6 +260,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "structured-clone-deep-copy",
+    title: "structuredClone() vs. JSON Round-Trip Cloning",
+    excerpt: "Native deep cloning, and exactly what the JSON.parse(JSON.stringify()) trick silently breaks.",
+    description: "Compare the native structuredClone() API against the classic JSON.parse(JSON.stringify()) trick — Dates, Maps, Sets, undefined values, and circular references handled correctly vs. silently corrupted.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "structuredClone",
+      "deep-clone",
+      "json",
+      "serialization",
+      "immutability",
+      "circular-reference",
+      "browser-apis"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/structured-clone-deep-copy/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Side-by-side comparison of an object cloned via JSON.stringify losing its Date and Map types versus structuredClone preserving them."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
