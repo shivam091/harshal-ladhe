@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Subgrid Alignment Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Subgrid Alignment</h1>
+        <p>Three cards with mismatched content lengths. Toggle subgrid to align their titles, bodies, and buttons across the row.</p>
+      </header>
+
+      <button id="toggle-subgrid-btn" class="secondary-btn" type="button">Enable subgrid alignment</button>
+
+      <div class="cards-grid" id="cards-grid">
+        <article class="card">
+          <h3 class="card-title">Short Title</h3>
+          <p class="card-body">Short body text.</p>
+          <button class="card-cta" type="button">Learn more</button>
+        </article>
+        <article class="card">
+          <h3 class="card-title">A Much Longer Title That Wraps Onto Two Lines</h3>
+          <p class="card-body">Short body.</p>
+          <button class="card-cta" type="button">Learn more</button>
+        </article>
+        <article class="card">
+          <h3 class="card-title">Title</h3>
+          <p class="card-body">
+            A much longer body paragraph with several sentences of filler content, pushing this card's height up
+            noticeably compared to its siblings so the alignment difference is obvious.
+          </p>
+          <button class="card-cta" type="button">Learn more</button>
+        </article>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

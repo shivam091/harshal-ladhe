@@ -1,0 +1,105 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 42rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.playground-header h1 {
+  font-size: 1.25rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.secondary-btn {
+  align-self: flex-start;
+  padding: 0.4rem 0.875rem;
+  border: 1px solid hsl(213, 80%, 54%);
+  border-radius: 0.375rem;
+  background: hsl(213, 80%, 54%, 0.12);
+  color: hsl(213, 85%, 62%);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.secondary-btn:hover {
+  background: hsl(213, 80%, 54%, 0.22);
+}
+
+/* Row tracks (title / body / footer) live at the PARENT level so cards can subgrid into them. */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto auto;
+  gap: 1rem;
+}
+
+.card {
+  display: grid;
+  grid-row: span 3;
+  gap: 0.5rem;
+  align-content: start;
+  padding: 1rem;
+  border: 1px solid hsl(213, 12%, 24%);
+  border-radius: 0.5rem;
+  background: hsl(213, 20%, 10%);
+}
+
+/* Without this, each card sizes its OWN rows to its own content — titles/bodies/buttons across
+   siblings don't line up even though the cards themselves are the same height. */
+.cards-grid.subgrid-enabled .card {
+  grid-template-rows: subgrid;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.card-body {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 65%);
+}
+
+.card-cta {
+  align-self: end;
+  padding: 0.4rem 0.75rem;
+  border: 1px solid hsl(213, 12%, 28%);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: hsl(210, 12%, 78%);
+  font-size: 0.75rem;
+  cursor: pointer;
+  justify-self: start;
+}
+
+@media (max-width: 640px) {
+  .cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    grid-row: auto;
+  }
+}

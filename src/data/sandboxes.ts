@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "subgrid-alignment",
+    title: "Subgrid Alignment",
+    description: "Three cards with mismatched title/body lengths — toggle subgrid to watch their internal rows snap into shared, aligned tracks across the row.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "css-nesting-native",
     title: "Native CSS Nesting",
     description: "Hover, focus, or toggle .active on a card styled entirely by one natively nested CSS rule, shown alongside the demo for reference.",

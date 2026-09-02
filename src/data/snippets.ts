@@ -517,6 +517,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "subgrid-alignment",
+    title: "Aligning Nested Grids with Subgrid",
+    excerpt: "Line up each card's title, body, and footer across a row, no matter how its content length differs.",
+    description: "grid-template-rows: subgrid lets a nested grid inherit its parent's row (or column) tracks instead of sizing its own — the fix for card titles/bodies/footers drifting out of alignment across a row.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "subgrid",
+      "css-grid",
+      "layout",
+      "alignment",
+      "modern-css",
+      "cards"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/subgrid-alignment/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A row of cards with mismatched title lengths, showing their internal title/body/footer rows snapping into shared aligned tracks via CSS subgrid."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

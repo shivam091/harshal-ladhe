@@ -1,0 +1,91 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("subgrid-alignment");
+
+## Introduction
+
+A row of cards with a title, a body, and a button each — a design so common it barely needs describing. The cards themselves line up fine in a CSS Grid. The problem shows up *inside* them: if one card's title wraps to two lines and another's doesn't, their bodies and buttons drift out of alignment across the row, even though the cards are the same height.
+
+Each card is its own little grid, sizing its own rows independently. Nothing connects "row 1 of card A" to "row 1 of card B" — they just happen to often line up by coincidence when content lengths are similar.
+
+<RainbowDivider />
+
+## The Old Workarounds
+
+Before subgrid, fixing this meant either abandoning the per-card grid and manually positioning every title/body/button into one giant shared grid (losing the natural "each card is a unit" structure), or JavaScript that measured every card's title height and force-set a fixed height on all of them to match the tallest. Both work. Neither is CSS.
+
+<RainbowDivider />
+
+## Subgrid
+
+<CodeBlock language="css">
+{`
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: auto auto auto; /* title / body / footer tracks, defined at the PARENT */
+    gap: 1rem;
+  }
+
+  .card {
+    display: grid;
+    grid-row: span 3;              /* this card participates in all 3 parent row tracks */
+    grid-template-rows: subgrid;    /* ...and inherits their SIZE instead of defining its own */
+  }
+`}
+</CodeBlock>
+
+`grid-template-rows: subgrid` tells a nested grid: "don't size your own rows — use the row tracks handed down from your parent grid instead." Every card's title now sits in the *same* row track as every sibling's title, sized to whichever one needs the most space. Same for the body row, same for the footer row.
+
+<RainbowDivider />
+
+## Try It Live
+
+Three cards with deliberately mismatched title/body lengths. Toggle subgrid on to see every card's title, body, and button snap into shared row tracks — the tallest title in the row now sets the title-row height for every card, not just its own.
+
+<Sandbox slug="subgrid-alignment" readOnly />
+
+<RainbowDivider />
+
+## `subgrid` Works for Columns Too
+
+The same idea applies along the other axis with `grid-template-columns: subgrid` — useful for aligning a form's labels and inputs into shared columns across multiple `<fieldset>` groups, each of which is its own nested grid.
+
+<CodeBlock language="css">
+{`
+  .form {
+    display: grid;
+    grid-template-columns: 8rem 1fr; /* label column / input column */
+  }
+
+  fieldset {
+    display: grid;
+    grid-column: span 2;
+    grid-template-columns: subgrid; /* inherit the label/input columns from .form */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Card grids where title/body/footer sections should align across the row regardless of content length
+- Multi-column forms split across `<fieldset>` groups that still need shared label/input alignment
+- Comparison tables built from card components instead of `<table>`
+- Any "repeated component in a grid" pattern where the *internal* structure should align across siblings
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The parent must actually be a grid with enough row (or column) tracks defined** for the child to subgrid into — `grid-row: span 3` on the card and `grid-template-rows: auto auto auto` (3 tracks) on the parent need to agree on the count, or the extra rows just won't have anything to subgrid against.
+* **Gaps are inherited too**, unless overridden — a subgridded child's `gap` defaults to matching its parent's, which is usually what you want for consistent spacing, but can surprise you if you expected the nested grid's own `gap` value to apply.
+* **Subgrid only propagates track *sizing*, not content.** Each card still needs its own title/body/button placed into the inherited tracks — subgrid doesn't duplicate content across cards, it just gives them a shared sizing reference.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 117+, Firefox 71+, Safari 16+) as of this writing — it was Firefox's earliest modern grid feature and reached the other engines more recently, so check your target matrix.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Subgrid solves a specific, common problem: components repeated in a grid whose *internal* sections should align across siblings, without hand-flattening them into one giant shared grid or measuring heights in JavaScript. Reach for it any time "each card is its own grid" and "everything should still line up" are both true at once.
