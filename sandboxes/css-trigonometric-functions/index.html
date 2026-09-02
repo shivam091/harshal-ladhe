@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Trigonometric Functions Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Radial Layout with sin() / cos()</h1>
+        <p>Every dot's position is computed by CSS itself — no JavaScript layout math, only the item count and index.</p>
+      </header>
+
+      <label class="slider-row" for="count-slider">
+        Item count: <span id="count-value">8</span>
+        <input type="range" id="count-slider" min="3" max="16" value="8" />
+      </label>
+
+      <label class="slider-row" for="rotation-slider">
+        Rotation offset: <span id="rotation-value">0°</span>
+        <input type="range" id="rotation-slider" min="0" max="360" value="0" />
+      </label>
+
+      <div class="circle-stage" id="stage" style="--total: 8; --rotation: 0deg;"></div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

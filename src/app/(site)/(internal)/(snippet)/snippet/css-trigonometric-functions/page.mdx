@@ -1,0 +1,104 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-trigonometric-functions");
+
+## Introduction
+
+Arranging N items evenly around a circle — icons around a hub, hour marks on a clock face, avatars in a "team orbit" graphic — has always been geometry: divide 360° by the item count, and place each one at the resulting angle. Doing that in CSS used to mean either a fixed set of hardcoded `nth-child` angles (breaks the moment the count changes) or JavaScript computing `left`/`top` for every item.
+
+CSS now has the actual trig functions built in: `sin()`, `cos()`, `tan()`, and `atan2()`. The geometry can live entirely in CSS.
+
+<RainbowDivider />
+
+## The Core Formula
+
+<CodeBlock language="css">
+{`
+  .dot {
+    --angle: calc((360deg / var(--total)) * var(--i));
+    --radius: 42%;
+
+    position: absolute;
+    top: calc(50% + sin(var(--angle)) * var(--radius));
+    left: calc(50% + cos(var(--angle)) * var(--radius));
+  }
+`}
+</CodeBlock>
+
+This is the standard "point on a circle" formula — `x = centerX + cos(angle) * radius`, `y = centerY + sin(angle) * radius` — written directly in CSS. `--total` is how many items there are, `--i` is this specific item's index (0-based), and `--angle` divides the full circle evenly between them.
+
+<RainbowDivider />
+
+## Setting `--i` Per Item
+
+CSS has no built-in "index of this element" value, so `--i` still needs to come from somewhere — either JavaScript setting it as each item is created, or (for a fixed, known count) `nth-child` selectors:
+
+<CodeBlock language="css">
+{`
+  /* Fixed count — no JS needed */
+  .dot:nth-child(1) { --i: 0; }
+  .dot:nth-child(2) { --i: 1; }
+  .dot:nth-child(3) { --i: 2; }
+  /* ...and so on */
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  // Dynamic count — set inline per element as they're created
+  items.forEach((item, i) => {
+    item.style.setProperty("--i", i);
+  });
+`}
+</CodeBlock>
+
+Either way, once `--i` and `--total` are set, every actual position calculation — the trig, the radius, the centering — happens in CSS.
+
+<RainbowDivider />
+
+## Try It Live
+
+Change the item count and watch every dot's position recompute — the angle formula, the `sin()`/`cos()` calls, and the centering are pure CSS. The rotation slider adds an offset to every dot's angle at once, sweeping the whole arrangement around the circle.
+
+<Sandbox slug="css-trigonometric-functions" readOnly />
+
+<RainbowDivider />
+
+## `atan2()`: Angle From a Direction
+
+The three functions above (`sin`, `cos`, `tan`) go from an angle to a ratio/position. `atan2(y, x)` goes the other way — from a direction (a y and x offset) back to an angle:
+
+<CodeBlock language="css">
+{`
+  .needle {
+    --pointer-angle: atan2(var(--pointer-y), var(--pointer-x));
+    transform: rotate(var(--pointer-angle));
+  }
+`}
+</CodeBlock>
+
+This is the building block for anything that needs to "point at" a coordinate — a compass needle, an arrow following a cursor position, a clock hand computed from a time value's x/y offset from center.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Radial/circular layouts: icon rings, avatar orbits, radial navigation menus
+- Clock-style UI: hour/minute hand rotation, circular progress indicators with a moving marker
+- Custom color wheels, radial charts, or any UI arranging items by angle instead of a grid
+- Direction indicators (compass, "pointing toward" arrows) via `atan2()`
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **CSS trig functions take an angle with a unit** (`deg`, `rad`, `turn`, `grad`) — unlike `Math.sin()` in JavaScript, which expects radians as a plain number. `sin(90deg)` and `sin(0.25turn)` both work directly; there's no manual degrees-to-radians conversion needed.
+* **These functions work anywhere `calc()` does** — inside `transform`, `width`, custom properties, `clip-path`, gradient angles — not just `top`/`left`. The radial-layout use case is the most visually obvious, but they're general-purpose math functions.
+* **A fixed, small item count can skip JavaScript entirely** via `nth-child` as shown above — reach for this when the count genuinely never changes (a 12-hour clock face, a fixed 6-icon ring); reach for the JS version when the count is dynamic.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 111+, Firefox 108+, Safari 15.4+) as of this writing — safe to adopt broadly.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+CSS trigonometric functions move genuinely geometric layout — points on a circle, angles from directions — out of JavaScript and into the same declarative system that already handles the rest of layout. Any time "arrange N things around a circle" or "point this element at that coordinate" comes up, this is the native tool for it.

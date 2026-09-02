@@ -1,0 +1,74 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 24rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 70%);
+}
+
+.slider-row input[type="range"] {
+  flex: 1;
+  accent-color: hsl(213, 80%, 54%);
+}
+
+.circle-stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px dashed hsl(213, 12%, 26%);
+  border-radius: 50%;
+}
+
+.dot {
+  --angle: calc((360deg / var(--total)) * var(--i) + var(--rotation, 0deg));
+  --radius: 42%;
+
+  position: absolute;
+  /* The actual trig: offset from center by radius * cos/sin of this dot's angle. */
+  top: calc(50% + sin(var(--angle)) * var(--radius));
+  left: calc(50% + cos(var(--angle)) * var(--radius));
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: hsl(213, 80%, 54%);
+  color: white;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}

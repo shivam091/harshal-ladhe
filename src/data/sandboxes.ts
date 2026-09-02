@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-trigonometric-functions",
+    title: "Radial Layout with sin() / cos()",
+    description: "Change the item count and rotation offset — every dot's position around the circle is computed live by native CSS sin()/cos(), no JavaScript layout math.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "accent-color-native-controls",
     title: "Theming Native Controls",
     description: "Pick a theme color and watch native checkboxes, radios, a range slider, and a progress bar re-theme instantly from one accent-color declaration.",

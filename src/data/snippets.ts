@@ -819,6 +819,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-trigonometric-functions",
+    title: "Radial Layouts with CSS Trigonometric Functions",
+    excerpt: "sin(), cos(), and atan2() move circular layout math out of JavaScript and into CSS.",
+    description: "Native sin()/cos()/atan2() CSS functions for arranging items evenly around a circle and computing angles from a direction — the building blocks for radial layouts, clock-style UI, and pointer/compass indicators.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "trigonometric-functions",
+      "sin",
+      "cos",
+      "atan2",
+      "radial-layout",
+      "modern-css",
+      "calc"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/css-trigonometric-functions/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A ring of numbered dots evenly spaced around a circle, their positions computed with native CSS sin() and cos() trigonometric functions."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
