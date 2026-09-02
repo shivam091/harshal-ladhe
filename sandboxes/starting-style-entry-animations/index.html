@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@starting-style Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>@starting-style — Entry Animations</h1>
+        <p>Both toasts get added to the DOM the same way — only one has a defined starting state to transition from.</p>
+      </header>
+
+      <div class="buttons-row">
+        <button id="show-plain-btn" class="secondary-btn" type="button">Show Toast (no @starting-style)</button>
+        <button id="show-animated-btn" class="primary-btn" type="button">Show Toast (with @starting-style)</button>
+      </div>
+
+      <div class="toast-stage" id="stage"></div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

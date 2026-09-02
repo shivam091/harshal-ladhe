@@ -1,0 +1,103 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("starting-style-entry-animations");
+
+## Introduction
+
+CSS transitions only ever fire on a *state change* — one value to another. An element that's newly added to the DOM (a toast, a modal, a dropdown) doesn't have a "before" state to transition from; it simply appears already at whatever styles it was given. Even with a `transition` declared, there was no way to make an element fade or slide in on its very first paint — only well-known JavaScript workarounds (add the element with the "from" styles, force a reflow, then apply the "to" styles a tick later) got around it.
+
+**`@starting-style`** gives an element an actual "before" state for its first render, so transitions can finally run on entry.
+
+<RainbowDivider />
+
+## The Problem, Concretely
+
+<CodeBlock language="css">
+{`
+  .toast {
+    opacity: 1;
+    transition: opacity 0.35s ease;
+  }
+`}
+</CodeBlock>
+
+Add an element with this class to the DOM, and it just appears at `opacity: 1` immediately — the transition has nothing to transition *from*. Transitions only run when a property's value changes on an element that's already rendered; going from "not in the DOM" to "in the DOM" was never a state change a transition could observe.
+
+<RainbowDivider />
+
+## The Fix
+
+<CodeBlock language="css">
+{`
+  .toast {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+
+    @starting-style {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+  }
+`}
+</CodeBlock>
+
+`@starting-style` defines what this element's properties are *before* its first real render — the state the browser treats as already having existed the instant before paint. On first appearance, the browser transitions from these starting values to the element's normal declared values, using whatever `transition` is set. Every subsequent style change (hover, a class toggle, anything else) transitions normally — `@starting-style` only governs that very first frame.
+
+<RainbowDivider />
+
+## Try It Live
+
+Both buttons add a toast to the DOM the same way. One has a `@starting-style` block; the other doesn't — same `transition` declared on both, but only the one with a defined starting state actually has something to transition from.
+
+<Sandbox slug="starting-style-entry-animations" readOnly />
+
+<RainbowDivider />
+
+## Also Works for `display: none` → Visible
+
+<CodeBlock language="css">
+{`
+  .dialog {
+    display: none;
+    opacity: 1;
+    transition: opacity 0.3s, display 0.3s allow-discrete;
+
+    &[open] {
+      display: block;
+    }
+
+    @starting-style {
+      &[open] {
+        opacity: 0;
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+Transitioning to/from `display: none` was the other half of this problem — a property that's normally impossible to animate (`display` is either "on" or "off," nothing in between) can now participate in a transition via `allow-discrete`, paired with `@starting-style` for the entry side.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Toasts and notification banners appearing without a `display:none` → animate-in hack
+- Modals and dialogs (paired with the native `<dialog>` element or `popover` attribute) fading/scaling in on open
+- Dropdown menus and popovers that should ease in rather than snap into existence
+- Any dynamically-inserted element (infinite scroll items, newly loaded list entries) that should visibly announce its arrival
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`@starting-style` only affects the very first render, once.** It doesn't replay on every subsequent style change — an element that's shown, hidden, and shown again does *not* re-run the starting-style transition on the second show, unless it's genuinely removed from the DOM and re-added (or `display` toggles with `allow-discrete`, which does count as a fresh entry).
+* **A `transition` still has to be declared normally.** `@starting-style` only supplies the "from" values; without an actual `transition` property on the element, nothing animates — it'll just jump straight to its final state, same as before.
+* **Pairing with `allow-discrete` is what unlocks animating `display` and other previously non-animatable discrete properties** — without it, `@starting-style` still works for continuous properties (`opacity`, `transform`) but can't help an element that's toggling `display: none`.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 117+, Firefox 129+, Safari 17.5+) as of this writing — safe to adopt broadly.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`@starting-style` closes the one gap transitions always had: no "before" state for a freshly-rendered element. What used to require a JavaScript double-render trick (or just not animating entrances at all) is now a native CSS block sitting right next to the `transition` it completes.

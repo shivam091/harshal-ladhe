@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "starting-style-entry-animations",
+    title: "@starting-style Entry Animations",
+    description: "Two toasts get added to the DOM identically — only the one with a @starting-style block actually fades and slides in on its first render.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "scope-styling-boundaries",
     title: "@scope Styling Boundaries",
     description: "Two cards share the identical .title/.button class names, styled independently by separate @scope blocks — including a nested unrelated card left untouched by the outer scope's boundary.",

@@ -895,6 +895,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "starting-style-entry-animations",
+    title: "Entry Animations with @starting-style",
+    excerpt: "Give a freshly-added element an actual 'before' state, so its transition has something to animate from.",
+    description: "@starting-style defines a first-render starting state for an element, finally letting transitions run on entry — no display:none hacks or JavaScript double-render tricks, and pairs with allow-discrete to animate display itself.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "starting-style",
+      "transitions",
+      "entry-animations",
+      "allow-discrete",
+      "modern-css",
+      "toasts"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/starting-style-entry-animations/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A toast notification fading and sliding into view on its first render, illustrating a CSS @starting-style entry animation."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
