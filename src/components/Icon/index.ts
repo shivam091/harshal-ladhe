@@ -78,6 +78,7 @@ export const SunIcon = createIcon("sun");
 export const TagIcon = createIcon("tag");
 export const TelegramIcon = createIcon("telegram");
 export const TrashIcon = createIcon("trash");
+export const TriangleIcon = createIcon("triangle");
 export const TwitterIcon = createIcon("twitter");
 export const UndoIcon = createIcon("undo");
 export const WaveDividerIcon = createIcon("waveDivider");

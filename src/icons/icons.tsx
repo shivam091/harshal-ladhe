@@ -561,6 +561,15 @@ export const icons = {
       </>
     )
   },
+  // A single solid upward-pointing triangle — the shape this generator itself produces, at icon scale.
+  triangle: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M12 3 L21 20 L3 20 Z" />
+      </>
+    )
+  },
   // A bold "A" with an offset silhouette behind it — the same "cast shadow behind the real shape" language as the boxShadow icon, applied to a glyph instead of a card, so the two read as related but distinct effects.
   textEffects: {
     viewBox: "0 0 24 24",

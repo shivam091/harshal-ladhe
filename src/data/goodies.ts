@@ -79,5 +79,11 @@ export const goodies: Goodie[] = [
     description: "Bidirectional cron builder — per-field mode widgets generate the 5-field string, a plain-English description reads it back, and a live next-5-runs preview with crontab/GitHub Actions/Kubernetes export.",
     icon: "cron",
     href: "/goodies/cron-expression-builder"
+  },
+  {
+    name: "CSS Triangle / Arrow Generator",
+    description: "Triangle and chevron/arrow shapes comparing two CSS techniques side by side — the classic border trick and clip-path polygon() — with direction/size/color controls and real-world tooltip/breadcrumb/carousel-arrow presets.",
+    icon: "triangle",
+    href: "/goodies/triangle-generator"
   }
 ];
