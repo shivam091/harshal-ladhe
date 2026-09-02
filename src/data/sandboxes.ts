@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "use-optimistic-updates",
+    title: "Instant Feedback with useOptimistic",
+    description: "Post comments and watch each appear instantly in a dimmed pending state — about a third fail on purpose, rolling back on their own once the simulated server responds.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "use-hook-suspense-data",
     title: "Reading Promises and Context with use()",
     description: "Switch users to see a cached-per-id promise re-suspend the Suspense boundary on first load (and resolve instantly on repeat), then toggle a checkbox to see use(context) read conditionally.",

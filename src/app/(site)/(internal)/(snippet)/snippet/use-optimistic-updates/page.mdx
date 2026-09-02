@@ -1,0 +1,81 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-optimistic-updates");
+
+## Introduction
+
+Waiting for a server round-trip before updating the UI — a "like" not filling in until the request completes, a new comment not appearing until it's saved — makes an app feel slower than its actual network latency justifies. The standard fix, optimistic UI, has always been possible to hand-roll: update local state immediately, then reconcile (or roll back) once the real response arrives. Getting the rollback right, especially under a fast sequence of updates, is the part that's easy to get subtly wrong.
+
+**`useOptimistic`** builds that pattern in: render a predicted new value immediately, and automatically fall back to the real state the moment the underlying async update finishes — success or failure.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="tsx">
+{`
+  function CommentList({ comments, addComment }) {
+    const [optimisticComments, addOptimisticComment] = useOptimistic(
+      comments,
+      (state, newComment) => [...state, newComment]
+    );
+
+    async function handleSubmit(text) {
+      addOptimisticComment({ id: "temp", text, pending: true });
+      await addComment(text); // the real state (comments) updates once this resolves
+    }
+
+    return optimisticComments.map((c) => <Comment key={c.id} {...c} />);
+  }
+`}
+</CodeBlock>
+
+`useOptimistic(state, updateFn)` takes the real state and an updater, and returns a derived optimistic value plus a function to push a predicted change into it. `optimisticComments` renders the prediction *immediately* — the moment the parent's real `comments` state actually updates (or the surrounding transition finishes without it updating), React reverts to whatever the real state says, discarding the guess.
+
+<RainbowDivider />
+
+## The Automatic Revert on Failure
+
+<CodeBlock language="tsx">
+{`
+  async function handleSubmit(text) {
+    startTransition(async () => {
+      addOptimisticComment({ id: "temp", text, pending: true });
+      try {
+        const saved = await postComment(text); // rejects sometimes
+        setComments((prev) => [...prev, saved]); // only reached on success
+      } catch {
+        setError("Failed to post — comment removed");
+        // optimisticComments already reverted on its own — the failed
+        // prediction never touched the real comments state at all
+      }
+    });
+  }
+`}
+</CodeBlock>
+
+This is the part that used to be manual bookkeeping: on failure, nothing needs to explicitly "undo" the optimistic comment. Because the real `comments` state was never updated with it, `optimisticComments` simply falls back to `comments` as-is once the transition settles — the failed guess just disappears.
+
+<RainbowDivider />
+
+## Try It Live
+
+Post a few comments — each appears instantly, dimmed with a "sending…" label. About a third fail on purpose: watch a failed one vanish on its own once the (simulated) server responds, with no explicit rollback code involved.
+
+<Sandbox slug="use-optimistic-updates" readOnly />
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The optimistic update function must be called inside a transition** (`startTransition`, or automatically via a `<form action>`'s pending state) — calling `addOptimisticComment` outside one won't correctly revert once the async work finishes.
+* **`optimisticComments` is derived, not stored** — don't treat it as the source of truth to read from elsewhere in the app. `comments` (the real state) is still what persists; `optimisticComments` exists purely for this render.
+* **Multiple optimistic updates in flight stack correctly** — post three comments quickly, and each renders as its own pending entry; they resolve (or roll back) independently based on their own underlying async call, not as a batch.
+* **This isn't validation.** `useOptimistic` predicts what the UI *should* look like assuming success — it doesn't check whether the update will actually succeed. Pair it with real error handling (as in the sandbox above) for the failure path, not just the happy path.
+* **Requires React 19** — `useOptimistic` was one of the hooks introduced alongside `useActionState` and `useFormStatus` as part of React's Actions model.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useOptimistic` turns "show the predicted result immediately, then reconcile with the server" from a manual state-tracking exercise into a single hook call — predict, render, and let React handle falling back to reality once the real update either lands or doesn't. The UI feels instant on the happy path, and self-corrects without extra code on the unhappy one.

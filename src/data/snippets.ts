@@ -1171,6 +1171,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-optimistic-updates",
+    title: "Instant Feedback with useOptimistic",
+    excerpt: "Render the predicted result immediately, then let React revert it automatically on failure.",
+    description: "useOptimistic renders a predicted new value immediately while a real async update is in flight, then automatically falls back to the real state once it settles — success or failure — with no manual rollback code.",
+    category: ["React"],
+    tags: [
+      "react",
+      "use-optimistic",
+      "optimistic-ui",
+      "react-19",
+      "server-actions",
+      "use-transition",
+      "forms"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/use-optimistic-updates/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A comment appearing instantly in dimmed pending state, then either confirming or automatically rolling back once a simulated server response arrives, illustrating useOptimistic."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
