@@ -1,0 +1,119 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("memoize-function-results");
+
+## Introduction
+
+Memoization trades memory for speed: cache a function's result the first time it's called with a given set of arguments, and return the cached value on every subsequent call with those same arguments instead of recomputing it.
+
+It's a good fit for **pure functions** — ones whose output depends only on their input, with no side effects — where the same call is likely to happen more than once with identical arguments: expensive calculations, parsing, formatting, or derived-data lookups.
+
+<RainbowDivider />
+
+## A Generic Memoize Wrapper
+
+<CodeBlock language="ts">
+{`
+  function memoize(fn, options = {}) {
+    const resolver = options.resolver ?? ((...args) => JSON.stringify(args));
+    const { maxSize, ttlMs } = options;
+    const cache = new Map();
+
+    function memoized(...args) {
+      const key = resolver(...args);
+      const cached = cache.get(key);
+
+      if (cached && (!ttlMs || Date.now() - cached.cachedAt < ttlMs)) {
+        // Re-insert to move this key to the "most recently used" end of the Map's order.
+        cache.delete(key);
+        cache.set(key, cached);
+        return cached.value;
+      }
+
+      const value = fn(...args);
+      cache.set(key, { value, cachedAt: Date.now() });
+
+      if (maxSize && cache.size > maxSize) {
+        const oldestKey = cache.keys().next().value;
+        cache.delete(oldestKey);
+      }
+
+      return value;
+    }
+
+    memoized.clear = () => cache.clear();
+    memoized.size = () => cache.size;
+
+    return memoized;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Typed Signature
+
+<CodeBlock language="ts">
+{`
+  interface MemoizeOptions<Args extends unknown[]> {
+    resolver?: (...args: Args) => string;
+    maxSize?: number;
+    ttlMs?: number;
+  }
+
+  function memoize<Args extends unknown[], R>(
+    fn: (...args: Args) => R,
+    options?: MemoizeOptions<Args>
+  ): ((...args: Args) => R) & { clear: () => void; size: () => number };
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Key resolution.** Every call's arguments are turned into a single string key — by default via `JSON.stringify(args)`, which works for primitives and plain objects but breaks down for arguments that don't serialize meaningfully (functions, class instances, `Map`/`Set`). Pass a custom `resolver` when the default isn't good enough — e.g. `(user) => user.id` to key on an object's identity field instead of its full serialized shape.
+2. **Cache lookup.** If a non-expired entry exists for that key, it's returned immediately — `fn` never runs.
+3. **LRU eviction.** `Map` iterates keys in insertion order, so re-inserting a key on every hit keeps recently-used entries at the end. Once the cache exceeds `maxSize`, the *first* key in iteration order — the least recently used — gets evicted.
+4. **TTL expiry.** If `ttlMs` is set, an entry older than that is treated as a miss and recomputed, even though it's still technically cached.
+
+<RainbowDivider />
+
+## Try It Live
+
+`expensiveCompute` below deliberately burns CPU cycles so the timing difference is visible. Run it with the same input a few times — the first call computes, every call after it returns from cache in a fraction of the time. Change the input to force a fresh computation, or clear the cache to start over.
+
+<Sandbox slug="memoize-function-results" readOnly />
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="js">
+{`
+  const getExchangeRate = memoize(
+    (from, to) => fetchRateFromApi(from, to),
+    { ttlMs: 60_000 } // rates go stale after a minute
+  );
+
+  await getExchangeRate("USD", "EUR"); // hits the API
+  await getExchangeRate("USD", "EUR"); // cache hit, no network call
+  // ...61 seconds later
+  await getExchangeRate("USD", "EUR"); // TTL expired, hits the API again
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Only memoize pure functions.** If `fn` reads mutable external state, makes a network call whose result can legitimately change, or has side effects, caching its result can serve stale or wrong data. `ttlMs` mitigates this for time-sensitive data, but doesn't make an impure function safe to memoize in general.
+* **The default `JSON.stringify` resolver has real limits:** it can't distinguish `undefined` from a missing key, doesn't handle `Map`/`Set`/functions meaningfully, and key order in object arguments matters (`{a:1,b:2}` and `{b:2,a:1}` produce different keys despite being equivalent). Supply a resolver whenever arguments are anything beyond simple primitives.
+* **Unbounded caches are a memory leak waiting to happen.** Always set `maxSize` for any memoized function called with a wide or unbounded range of arguments (e.g. keyed on user input).
+* **This isn't `React.useMemo`.** `useMemo` caches a single value across renders of one component instance and is cleared whenever its dependency array changes; the `memoize` here caches *many* results, keyed by arguments, for as long as the wrapped function exists. They solve related but different problems — this snippet's `memoize` is the one you reach for outside component render logic.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Memoization is one of the highest-leverage optimizations available for pure, expensive, frequently-repeated calls — but it's not free: it trades memory for speed, and applying it to an impure function trades *correctness* for speed. Reach for it deliberately, with a cache-size or TTL bound in place.

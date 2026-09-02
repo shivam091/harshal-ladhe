@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "memoize-function-results",
+    title: "Memoized Expensive Function",
+    description: "Run a deliberately slow computation through a memoize() wrapper — repeat an input to see a near-instant cache hit versus a fresh, visibly slower computation.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "structured-clone-deep-copy",
     title: "structuredClone() vs. JSON Round-Trip",
     description: "Clone a sample object containing a Date, a Map, and an undefined property both ways and compare what survives — toggle a circular reference to see one method throw.",

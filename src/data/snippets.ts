@@ -286,6 +286,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "memoize-function-results",
+    title: "Generic Memoization Wrapper with Cache Invalidation",
+    excerpt: "Cache expensive pure-function results with a custom resolver, an LRU size cap, and TTL expiry.",
+    description: "A reusable memoize() wrapper: a custom key resolver for non-primitive arguments, an LRU-style maxSize eviction policy, and TTL-based expiry — plus clear() and size() for cache invalidation.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "memoization",
+      "caching",
+      "performance",
+      "lru-cache",
+      "typescript",
+      "pure-functions",
+      "optimization"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/memoize-function-results/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Diagram of a function call flowing into a cache lookup, showing a fast cache-hit path and a slower compute-and-store path."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
