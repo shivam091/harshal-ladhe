@@ -617,6 +617,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "generate-static-params-dynamic",
+    title: "generateStaticParams for Dynamic Segments",
+    excerpt: "Pre-render the known pages at build time, let dynamicParams decide what happens to the rest.",
+    description: "generateStaticParams tells Next.js which dynamic route params to pre-render at build time — paired with dynamicParams and revalidate for ISR-style on-demand rendering and background refresh of the long tail.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "app-router",
+      "generateStaticParams",
+      "ssg",
+      "isr",
+      "static-generation",
+      "dynamic-routes"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/generate-static-params-dynamic/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A dynamic route generating a known set of static pages at build time, with additional pages rendered on demand and cached, illustrating generateStaticParams and ISR."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,120 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("generate-static-params-dynamic");
+
+## Introduction
+
+A dynamic route like `app/blog/[slug]/page.tsx` can render any slug — but by default, Next.js has no way to know *which* slugs actually exist until a request for one comes in. `generateStaticParams` tells it upfront: here's the exact list of params to pre-render at build time.
+
+<RainbowDivider />
+
+## The Basic Shape
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/page.tsx
+  export async function generateStaticParams() {
+    const posts = await getAllPosts();
+
+    return posts.map((post) => ({
+      slug: post.slug,
+    }));
+  }
+
+  export default async function BlogPost({ params }: { params: { slug: string } }) {
+    const post = await getPost(params.slug);
+    return <Article post={post} />;
+  }
+`}
+</CodeBlock>
+
+`generateStaticParams` returns an array of param objects — one per page you want pre-rendered. For each one, Next.js runs the page at *build time*, generating static HTML, instead of waiting for the first real visitor to trigger the render.
+
+<RainbowDivider />
+
+## Nested Dynamic Segments
+
+For a route with more than one dynamic segment, each object in the returned array needs every segment's value:
+
+<CodeBlock language="tsx">
+{`
+  // app/[category]/[slug]/page.tsx
+  export async function generateStaticParams() {
+    const posts = await getAllPosts();
+
+    return posts.map((post) => ({
+      category: post.category,
+      slug: post.slug,
+    }));
+  }
+`}
+</CodeBlock>
+
+You can also generate the outer segment's params independently, and Next.js will call the inner segment's `generateStaticParams` once per matched outer value — useful when the inner list genuinely depends on which outer value you're in (e.g. products differ per category).
+
+<RainbowDivider />
+
+## What Happens to Params *Not* Returned
+
+This is where the actual behavior depends on a per-route export — `dynamicParams`:
+
+<CodeBlock language="tsx">
+{`
+  export const dynamicParams = true; // default — render on-demand, then cache (ISR-style)
+  // or
+  export const dynamicParams = false; // anything not in generateStaticParams() 404s
+`}
+</CodeBlock>
+
+* **`dynamicParams = true` (the default):** a request for a slug *not* in the pre-rendered list still renders — on-demand, the first time it's requested — and the result is cached for subsequent visitors. This is Incremental Static Regeneration's core idea: pre-render the popular/known pages at build time, let the long tail render lazily.
+* **`dynamicParams = false`:** anything outside the returned list 404s immediately, no on-demand rendering. Use this when the param list is authoritative and complete — an unknown value genuinely *is* a 404, not a page that just hasn't been generated yet.
+
+<RainbowDivider />
+
+## Combining with Time-Based Revalidation
+
+<CodeBlock language="tsx">
+{`
+  export const revalidate = 3600; // regenerate this page in the background at most once per hour
+
+  export async function generateStaticParams() {
+    const posts = await getAllPosts();
+    return posts.map((post) => ({ slug: post.slug }));
+  }
+`}
+</CodeBlock>
+
+`generateStaticParams` controls *which* pages exist at build time. `revalidate` controls how *stale* a generated page is allowed to get before Next.js regenerates it in the background on the next request past that window — the two combine to give you build-time generation for known content, with content that changes after deploy still staying fresh, without triggering a full rebuild.
+
+<RainbowDivider />
+
+## Comparison: The Three Rendering Strategies
+
+| | Fully static (no `generateStaticParams`) | SSG with `generateStaticParams` | SSG + `revalidate` (ISR) |
+| :--- | :--- | :--- | :--- |
+| **When pages are generated** | Never automatically for dynamic segments | At build time, for every returned param | At build time, then refreshed on a timer |
+| **Unknown params** | Render on every request (no caching) | 404 or render-once depending on `dynamicParams` | Same as SSG, plus periodic background refresh |
+| **Best for** | Truly request-dependent content | Known, mostly-static content (blog posts, docs) | Content that's mostly static but changes occasionally |
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Blog posts, documentation pages, and marketing pages with a known (or knowable-at-build-time) set of slugs
+- Product pages where the catalog is large but finite, and popular items benefit from being pre-rendered
+- Any dynamic route where most of the traffic concentrates on a predictable subset of possible params
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`generateStaticParams` runs at build time, in a Node.js environment — not in the browser.** It has full access to your data layer (database, CMS, filesystem) the same way any Server Component does, but it also means a slow data source directly slows down your build.
+* **Returning a huge list generates that many pages at build time**, which can meaningfully lengthen build duration. For very large catalogs, return only the most important/popular subset and let `dynamicParams = true` (the default) handle the long tail on-demand.
+* **`generateStaticParams` re-runs on every build**, not incrementally — if your data source is large and slow, consider caching its result at the data-fetching layer rather than re-querying everything on every deploy.
+* **This only applies to the App Router.** The Pages Router's equivalent is `getStaticPaths`, with a similar but not identical API (`fallback: true | false | "blocking"` instead of `dynamicParams`).
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`generateStaticParams` is the App Router's answer to "which pages should exist before anyone visits them" — pair it with `dynamicParams` to decide what happens outside that list, and `revalidate` to decide how long a generated page stays fresh before Next.js quietly regenerates it.
