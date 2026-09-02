@@ -208,6 +208,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "error-boundary-with-fallback",
+    title: "Error Boundary with a Custom Fallback",
+    excerpt: "Catch render-time errors in a subtree and show a recoverable fallback instead of a blank screen.",
+    description: "Build a reusable ErrorBoundary component with a typed fallback render prop, an onError hook for logging, and a reset function — so one crashing widget doesn't take down the whole page.",
+    category: ["React"],
+    tags: [
+      "react",
+      "error-boundary",
+      "error-handling",
+      "componentDidCatch",
+      "typescript",
+      "resilience",
+      "class-components",
+      "fallback-ui"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/error-boundary-with-fallback/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Illustration of a React component tree with one crashed branch isolated behind a shield, replaced by a fallback error message."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "error-boundary-with-fallback",
+    title: "Error Boundary with Fallback",
+    description: "Increment a counter that throws at 3 — the error boundary catches the crash and swaps in a fallback UI with a working reset button.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "render-props-vs-hooks",
     title: "Render Prop vs. Hook",
     description: "Toggle between a MouseTracker render-prop component and an equivalent useMousePosition hook — same tracked coordinates, two ways to consume them.",

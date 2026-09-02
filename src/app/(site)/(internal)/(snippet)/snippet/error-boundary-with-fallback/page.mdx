@@ -1,0 +1,126 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("error-boundary-with-fallback");
+
+## Introduction
+
+An uncaught error thrown during render doesn't just break the component that threw it — by default, React unmounts the entire tree above it, all the way up to the nearest error boundary (or the whole app, if there isn't one). One broken widget can blank the whole page.
+
+An **error boundary** stops that propagation at a chosen point in the tree, catching the error and rendering a fallback UI instead of letting the crash climb any further.
+
+<RainbowDivider />
+
+## Why This Has to Be a Class Component
+
+Error boundaries rely on two lifecycle methods React has never shipped a hook equivalent for: `static getDerivedStateFromError` and `componentDidCatch`. There's no `useErrorBoundary()` hook — as of today, catching a child's render error requires a class component somewhere in the tree.
+
+<RainbowDivider />
+
+## The Boundary
+
+<CodeBlock language="tsx">
+{`
+  class ErrorBoundary extends Component {
+    state = { error: null };
+
+    // Runs during the render phase — derive state from the error, no side effects here.
+    static getDerivedStateFromError(error) {
+      return { error };
+    }
+
+    // Runs after the render phase — safe for side effects like logging.
+    componentDidCatch(error, info) {
+      this.props.onError?.(error, info);
+    }
+
+    // Clears the caught error so children mount fresh on the next render.
+    reset = () => {
+      this.setState({ error: null });
+    };
+
+    render() {
+      if (this.state.error) {
+        return this.props.fallback(this.state.error, this.reset);
+      }
+
+      return this.props.children;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Typed Signature
+
+<CodeBlock language="ts">
+{`
+  interface ErrorBoundaryProps {
+    children: ReactNode;
+    fallback: (error: Error, reset: () => void) => ReactNode;
+    onError?: (error: Error, info: ErrorInfo) => void;
+  }
+`}
+</CodeBlock>
+
+`fallback` is a render prop — it receives the caught `Error` and a `reset` function, and returns whatever JSX should replace the crashed subtree. `onError` is a separate, optional hook for side effects like sending the error to a tracking service; keeping it apart from `fallback` means logging logic never has to live inside rendering logic.
+
+<RainbowDivider />
+
+## How It Works
+
+1. **A child throws during render.** Could be anywhere in the subtree — the boundary doesn't need to be a direct parent.
+2. **`getDerivedStateFromError` fires first**, during the render phase, and sets `state.error`. This is a pure function — no logging, no network calls here.
+3. **React re-renders the boundary** with `state.error` set, which renders `fallback(error, reset)` instead of `children`.
+4. **`componentDidCatch` fires after**, in the commit phase, where it's safe to call `onError` for logging.
+5. **Calling `reset`** clears `state.error`. Since the crashed subtree was already unmounted when the error propagated, the next render mounts `children` completely fresh — any local state in the crashed component (like a counter) starts over.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="jsx">
+{`
+  <ErrorBoundary
+    onError={(error) => logToSentry(error)}
+    fallback={(error, reset) => (
+      <div className="error-card">
+        <p>Something went wrong: {error.message}</p>
+        <button onClick={reset}>Try again</button>
+      </div>
+    )}
+  >
+    <Dashboard />
+  </ErrorBoundary>
+`}
+</CodeBlock>
+
+Below is a live version. The counter throws once it hits 3 — the boundary catches it, shows the fallback, and "Try again" mounts a fresh counter starting back at 0.
+
+<Sandbox slug="error-boundary-with-fallback" readOnly />
+
+<RainbowDivider />
+
+## What It Doesn't Catch
+
+Error boundaries only catch errors thrown **during rendering**, in lifecycle methods, or in constructors of the tree below them. They do **not** catch:
+
+* Errors inside **event handlers** — those never throw during render, so React never sees them. Use a regular `try/catch` inside the handler instead.
+* Errors in **asynchronous code** — `setTimeout` callbacks, promise rejections, `async` functions. Same reasoning: nothing is rendering when they fire.
+* **Server-side rendering** errors.
+* Errors thrown by the **error boundary itself** — you need a boundary further up the tree to catch that.
+
+<RainbowDivider />
+
+## Production Considerations
+
+* **Granularity matters.** One boundary around the entire app means any crash blanks everything. Wrapping at the widget level — a chart, a comment thread, a single dashboard card — means the rest of the page stays usable when one part fails.
+* **Always wire up `onError`.** Without it, caught errors vanish silently into the fallback UI with nothing logged. Send them to whatever error-tracking service you already use.
+* **`reset` doesn't fix the underlying cause.** If the error is deterministic (bad data, a broken API response), clicking "Try again" just throws again. Pair `reset` with whatever actually needs to change — refetching data, clearing a bad cache entry — before or during the reset.
+* **Consider `react-error-boundary`.** Once you understand the mechanism above, the community-maintained [`react-error-boundary`](https://github.com/bvaughn/react-error-boundary) package adds `resetKeys` (auto-reset when specified props change) and a `useErrorBoundary` hook for imperatively triggering the nearest boundary — worth reaching for in production instead of hand-rolling this repeatedly.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Error boundaries turn "one component crashed, so did the page" into "one component crashed, and here's a way to recover." They only catch render-time errors, so pair them with ordinary `try/catch` for event handlers and async code — together they cover the whole surface.
