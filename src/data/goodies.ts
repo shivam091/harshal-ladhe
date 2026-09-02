@@ -31,5 +31,11 @@ export const goodies: Goodie[] = [
     description: "8-point corner radius editor with draggable handles, a squircle/superellipse mode, and organic blob presets.",
     icon: "blob",
     href: "/goodies/border-radius-generator"
+  },
+  {
+    name: "Filter Generator",
+    description: "Filter/backdrop-filter editor with blur, saturate, and 7 more functions, a glassmorphism preset, and a live preview over a gradient or photo.",
+    icon: "frostedPanel",
+    href: "/goodies/filter-generator"
   }
 ];

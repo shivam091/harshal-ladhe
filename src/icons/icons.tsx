@@ -493,6 +493,17 @@ export const icons = {
       </>
     )
   },
+  // A frosted glass panel over a diagonal gradient sliver — currentColor's flat-fill limits mean the "gradient" is only two overlapping opacity bands, but the panel-over-backdrop composition is what reads as "filter/glassmorphism" rather than any other rounded-rect icon in this registry.
+  frostedPanel: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <rect x="1" y="1" width="22" height="22" rx="3" opacity="0.25" />
+        <rect x="10" y="1" width="13" height="22" rx="3" opacity="0.4" />
+        <rect x="5" y="7" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.9" />
+      </>
+    )
+  },
   facebook: {
     viewBox: "0 0 24 24",
     children: (

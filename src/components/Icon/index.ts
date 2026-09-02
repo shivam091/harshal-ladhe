@@ -33,6 +33,7 @@ export const EmojiSadIcon = createIcon("emojiSad");
 export const EnvelopeIcon = createIcon("envelope");
 export const ExclamationTriangleIcon = createIcon("exclamationTriangle");
 export const FacebookIcon = createIcon("facebook");
+export const FrostedPanelIcon = createIcon("frostedPanel");
 export const FileIcon = createIcon("file");
 export const FlatIcon = createIcon("flat");
 export const FolderIcon = createIcon("folder");
