@@ -1,0 +1,104 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("partial-prerendering-ppr");
+
+## Introduction
+
+A route has traditionally had to pick one rendering strategy for its *entire* response: fully static (fast, cached, but the same for everyone), or fully dynamic (personalized, but every visitor waits for the slowest data source on the page before seeing anything). A product page that's 95% identical for every visitor except a small "recommended for you" strip has never fit either option cleanly — go static and the strip can't personalize, go dynamic and the whole page pays for that one strip's latency.
+
+**Partial Prerendering (PPR)** lets a single route do both at once: a static shell, served instantly from cache, with dynamic slices streamed in around it — in one request, one route, no separate static/dynamic route split.
+
+<RainbowDivider />
+
+## Enabling It Per Route
+
+<CodeBlock language="tsx">
+{`
+  // app/product/[id]/page.tsx
+  export const experimental_ppr = true;
+
+  export default function ProductPage({ params }: { params: { id: string } }) {
+    return (
+      <>
+        <ProductDetails id={params.id} />   {/* static — same for everyone, prerendered */}
+        <Suspense fallback={<RecsSkeleton />}>
+          <Recommendations userId={params.id} /> {/* dynamic — reads cookies/headers, streamed in */}
+        </Suspense>
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+`experimental_ppr = true` opts a route into partial prerendering. The rule for what counts as "dynamic" doesn't change from streaming with Suspense generally — anything wrapped in a `<Suspense>` boundary that reads request-specific data (`cookies()`, `headers()`, uncached data fetches) is dynamic; everything else in the route is eligible to be part of the static shell.
+
+<RainbowDivider />
+
+## What Actually Happens on a Request
+
+<CodeBlock language="text">
+{`
+  1. The static shell (everything NOT inside a dynamic Suspense boundary)
+     is served immediately from the prerendered cache — no server compute,
+     same speed as a fully static page.
+  2. In parallel, the server starts rendering the dynamic Suspense boundaries
+     for this specific request (this visitor's cookies, this visitor's headers).
+  3. Each dynamic boundary streams into its fallback's place in the HTML
+     as soon as it's ready — the shell doesn't wait for all of them.
+`}
+</CodeBlock>
+
+The static shell is the same prerendered HTML for every visitor — built once, served from cache, the same performance profile as a fully static page. The dynamic slices are computed fresh per request, exactly like a normal Suspense boundary in a fully dynamic route, but scoped to just the part of the page that actually needs it.
+
+<RainbowDivider />
+
+## Not the Same as Regular Suspense Streaming
+
+<CodeBlock language="tsx">
+{`
+  // Without PPR: the WHOLE route is dynamic (any request-specific API
+  // call anywhere on the page makes the entire page dynamic), and
+  // Suspense only controls the ORDER things stream in — not whether
+  // the shell itself can be served from a build-time cache.
+
+  // With PPR: the shell is prerendered ONCE at build time and reused
+  // across every request, identical to a fully static route's shell.
+  // Suspense boundaries are what carve out the specific dynamic exceptions.
+`}
+</CodeBlock>
+
+Streaming with `<Suspense>` alone (see `loading.tsx`/granular Suspense) is about response *ordering* within a single dynamic render. PPR changes what's cacheable in the first place — the static shell is generated once and reused, not re-rendered per request, which a purely dynamic route with streaming can't do no matter how the Suspense boundaries are arranged.
+
+<RainbowDivider />
+
+## Comparison
+
+| | Fully static | Fully dynamic (with streaming) | Partial Prerendering |
+| :--- | :--- | :--- | :--- |
+| **Shell served from cache** | Yes, the whole page | No — the whole page renders per request | Yes, everything outside dynamic boundaries |
+| **Personalization** | Not possible | Anywhere on the page | Only inside dynamic Suspense boundaries |
+| **Time to first byte** | Fastest — pure cache hit | Waits on the slowest blocking data | Shell is instant; dynamic slices stream after |
+| **Per-request server compute** | None | Full page | Only the dynamic slices |
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A product/content page that's mostly identical for every visitor, with a small personalized section (recommendations, "signed in as," a cart count)
+- A marketing page with an otherwise-static hero and copy, plus a dynamic pricing widget that depends on the visitor's region or plan
+- Any route currently forced fully dynamic by one small piece of request-specific data, when the rest of the page has no reason not to be cached
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This is still an experimental/canary Next.js feature** — the API (`experimental_ppr`) and its exact rollout status change release to release. Check current docs before depending on it in a stable production app.
+* **Anything reading `cookies()`, `headers()`, or `searchParams` outside a Suspense boundary makes the whole route dynamic**, same as without PPR — the static-shell benefit only applies to the parts actually isolated behind a boundary.
+* **The static shell is generated at build time, same as any other static content** — data baked into it doesn't update until the next build/deploy, unless combined with the same `revalidate`/`use cache` mechanisms any static content would use.
+* **Granularity matters**: a single dynamic boundary wrapping almost the entire page defeats the purpose — PPR pays off in proportion to how small and specific the actually-personalized slices are.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Partial Prerendering collapses "static route" and "dynamic route" from a per-route decision into a per-*component* one: wrap the genuinely request-specific parts in Suspense, and everything else becomes part of a cached, instantly-served shell — combining the speed of static generation with the personalization of a dynamic render, in a single route.

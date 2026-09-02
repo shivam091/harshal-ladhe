@@ -1221,6 +1221,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "partial-prerendering-ppr",
+    title: "Partial Prerendering: Static Shell, Dynamic Streams",
+    excerpt: "One route, one request — a cached static shell with personalized slices streamed in around it.",
+    description: "Partial Prerendering serves a route's static shell instantly from a build-time cache while dynamic Suspense boundaries stream in per-request personalized content — combining static generation's speed with dynamic rendering's personalization in a single route.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "partial-prerendering",
+      "ppr",
+      "app-router",
+      "suspense",
+      "static-generation",
+      "streaming"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/partial-prerendering-ppr/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A page's static shell served instantly from cache while a small personalized recommendations section streams in separately, illustrating Next.js Partial Prerendering."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
