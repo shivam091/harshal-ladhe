@@ -1,0 +1,98 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-hook-suspense-data");
+
+## Introduction
+
+Reading a promise's resolved value inside a component used to mean `useEffect` plus a piece of state: kick off the fetch on mount, store the result, re-render once it arrives, handle the loading and error states by hand. Reading context was simpler, but came with a hard rule: `useContext` has to be called unconditionally, at the top of the component, every render — same as every other Hook.
+
+**`use()`** replaces both. It reads a promise (suspending the component via the nearest `<Suspense>` until it resolves) or a context — and unlike other Hooks, it can be called conditionally, inside loops, and after early returns.
+
+<RainbowDivider />
+
+## Reading a Promise
+
+<CodeBlock language="tsx">
+{`
+  function UserCard({ userPromise }: { userPromise: Promise<User> }) {
+    // Suspends here until userPromise resolves — the nearest <Suspense>
+    // above shows its fallback in the meantime. No useEffect, no useState.
+    const user = use(userPromise);
+    return <p>{user.name}</p>;
+  }
+
+  <Suspense fallback={<Spinner />}>
+    <UserCard userPromise={fetchUser(id)} />
+  </Suspense>
+`}
+</CodeBlock>
+
+`use(promise)` throws the pending promise to the nearest `Suspense` boundary while it's unresolved, returns the resolved value once it settles, and re-throws to the nearest error boundary if it rejects — the same three states `useEffect` + `useState` used to require manual wiring for.
+
+<RainbowDivider />
+
+## The Promise-Caching Rule
+
+<CodeBlock language="tsx">
+{`
+  // DON'T: a new promise is created every render — use() suspends forever,
+  // because the promise it's waiting on never resolves before the next one replaces it.
+  function Bad({ id }: { id: number }) {
+    const user = use(fetchUser(id)); // fetchUser(id) called fresh on every render
+    return <p>{user.name}</p>;
+  }
+
+  // DO: the promise is created once per id and cached, so use() eventually
+  // sees the SAME already-resolved promise on a later render.
+  const cache = new Map<number, Promise<User>>();
+  function getUserPromise(id: number) {
+    if (!cache.has(id)) cache.set(id, fetchUser(id));
+    return cache.get(id)!;
+  }
+`}
+</CodeBlock>
+
+This is the one sharp edge: `use()` doesn't fetch anything itself, it just reads whatever promise it's handed. If that promise is a brand-new one each render, the component never stops suspending. In practice, the promise usually comes from a Server Component (created once, passed down as a prop) or a cache like the one above — not created inline in a Client Component's render body.
+
+<RainbowDivider />
+
+## Reading Context Conditionally
+
+<CodeBlock language="tsx">
+{`
+  function Label({ showTheme }: { showTheme: boolean }) {
+    if (!showTheme) return null;
+
+    // Illegal with useContext (Hooks can't follow a conditional return).
+    // Legal with use() — it's explicitly exempt from that rule.
+    const theme = use(ThemeContext);
+    return <span>Theme: {theme}</span>;
+  }
+`}
+</CodeBlock>
+
+`useContext(ThemeContext)` called after that early `return null` would violate the Rules of Hooks outright. `use(ThemeContext)` doing the identical read is fine — `use()` is the one Hook-like API explicitly allowed inside conditionals, loops, and after early returns, because unlike a real Hook, it doesn't need to preserve call-order between renders the way `useState`/`useEffect` do.
+
+<RainbowDivider />
+
+## Try It Live
+
+Switch between two users to see a cached-per-id promise re-suspend the `<Suspense>` boundary on first load of each id (and resolve instantly on a repeat visit, since the promise is cached). Toggle the checkbox to see `use(ThemeContext)` read conditionally, something `useContext` can't do.
+
+<Sandbox slug="use-hook-suspense-data" readOnly />
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`use()` is not a replacement for `useContext` everywhere** — for a component that always reads a context unconditionally (the common case), `useContext` still works fine and is the more familiar API. Reach for `use(context)` specifically when the read needs to happen conditionally.
+* **Promise identity is everything.** A `use()` call that appears to "never resolve" is almost always a fresh promise being created every render rather than a genuinely slow one — check whether the promise passed in is memoized/cached first.
+* **Pairs naturally with Server Components**: a Server Component can start a fetch and pass the *promise itself* (not the awaited value) down to a Client Component, which then `use()`s it — letting the Server Component's render continue without blocking on that particular fetch.
+* **Errors propagate to the nearest error boundary**, exactly like a thrown error anywhere else in render — wrap a `use()`'d promise in an `<ErrorBoundary>` if a rejection shouldn't crash the whole tree.
+* **This requires React 19.** Earlier versions have `useContext` but no `use()` — there's no polyfill for the promise-reading half of this API since it depends on React's own Suspense internals.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`use()` collapses two previously separate concerns — reading a promise's eventual value, and reading context — into one API that plugs directly into Suspense and error boundaries, with the specific added ability to be called conditionally. The one thing to get right is promise identity: cache it, don't recreate it, or the component that's supposed to eventually render your data suspends forever instead.

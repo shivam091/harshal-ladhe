@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "use-hook-suspense-data",
+    title: "Reading Promises and Context with use()",
+    description: "Switch users to see a cached-per-id promise re-suspend the Suspense boundary on first load (and resolve instantly on repeat), then toggle a checkbox to see use(context) read conditionally.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "origin-private-file-system",
     title: "Writing Files with OPFS",
     description: "Save text to a named file at the OPFS root, reload the preview, and load it back — still there. List the root directory and delete files to see the origin-private file system in action.",

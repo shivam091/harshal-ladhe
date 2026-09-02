@@ -1,0 +1,97 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 24rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+  text-align: center;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: center;
+}
+
+.run-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid hsl(213, 80%, 54%);
+  border-radius: 0.375rem;
+  background: hsl(213, 80%, 54%, 0.12);
+  color: hsl(213, 85%, 62%);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.run-btn:hover {
+  background: hsl(213, 80%, 54%, 0.22);
+}
+
+.loading {
+  font-size: 0.8125rem;
+  color: hsl(45, 70%, 62%);
+  text-align: center;
+}
+
+.user-card {
+  padding: 0.75rem 1rem;
+  border: 1px solid hsl(213, 12%, 22%);
+  border-radius: 0.5rem;
+  background: hsl(213, 22%, 9%);
+  text-align: center;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.user-role {
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 62%);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 70%);
+  justify-content: center;
+}
+
+.theme-note {
+  font-size: 0.8125rem;
+  color: hsl(140, 55%, 65%);
+  text-align: center;
+}

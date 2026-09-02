@@ -1146,6 +1146,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-hook-suspense-data",
+    title: "Reading Promises and Context with use()",
+    excerpt: "One API for suspending on a promise or reading context — and the only one callable conditionally.",
+    description: "The use() API reads a promise (suspending via the nearest Suspense boundary until it resolves) or a context, and unlike every other Hook, can be called conditionally, in loops, and after early returns.",
+    category: ["React"],
+    tags: [
+      "react",
+      "use-hook",
+      "suspense",
+      "context",
+      "react-19",
+      "async-rendering",
+      "server-components"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/use-hook-suspense-data/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A component suspending on a cached promise via use() until it resolves, and a second component reading context conditionally inside an if statement."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
