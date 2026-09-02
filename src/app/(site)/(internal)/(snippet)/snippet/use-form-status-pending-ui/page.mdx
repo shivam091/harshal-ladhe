@@ -74,7 +74,7 @@ None of these three components receives `pending` as a prop. Each independently 
 `}
 </CodeBlock>
 
-`pending` is the one most commonly used, but `data` is worth knowing about too — it lets a nested component read the in-flight submission's values directly (e.g. to show "Saving “{data.get('title')}”…" using the actual value being submitted, not a separately-tracked copy of it).
+`pending` is the one most commonly used, but `data` is worth knowing about too — it lets a nested component read the in-flight submission's values directly (e.g. to show a "Saving <em>that exact title</em>…" message using `data.get("title")`, the actual value being submitted, not a separately-tracked copy of it).
 
 <RainbowDivider />
 
