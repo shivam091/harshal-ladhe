@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Native CSS Nesting Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Native CSS Nesting</h1>
+        <p>Hover, focus (click into) the card, or toggle .active — every rule styling it is natively nested, no preprocessor.</p>
+      </header>
+
+      <button id="toggle-active-btn" class="secondary-btn" type="button">Toggle .active</button>
+
+      <div class="card" id="demo-card" tabindex="0">
+        <h3 class="card-title">Nested Card</h3>
+        <p class="card-body">This card's hover, focus, active, and child-element styles are all defined inside one nested rule.</p>
+      </div>
+
+      <pre class="css-preview"><code>.card {
+  border: 1px solid #333;
+
+  &amp;:hover {
+    border-color: royalblue;
+  }
+
+  &amp;:focus-within {
+    outline: 2px solid royalblue;
+  }
+
+  &amp;.active {
+    background: royalblue;
+  }
+
+  .card-title {
+    font-weight: 700;
+  }
+
+  &amp;.active .card-title,
+  &amp;.active .card-body {
+    color: white;
+  }
+}</code></pre>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

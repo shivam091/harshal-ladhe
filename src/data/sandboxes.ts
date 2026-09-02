@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-nesting-native",
+    title: "Native CSS Nesting",
+    description: "Hover, focus, or toggle .active on a card styled entirely by one natively nested CSS rule, shown alongside the demo for reference.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "has-selector-parent-styling",
     title: ":has() — Parent-Based Styling",
     description: "Type an invalid email, add and remove tasks, and select a plan card — three parent elements reacting to their own descendants' state, entirely through :has().",

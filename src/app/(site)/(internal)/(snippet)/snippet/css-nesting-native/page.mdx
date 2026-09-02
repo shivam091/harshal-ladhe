@@ -1,0 +1,144 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-nesting-native");
+
+## Introduction
+
+Nesting selectors inside one another to mirror your HTML's structure has been a Sass feature for over a decade. As of 2023, it's native CSS — no preprocessor, no build step required.
+
+<CodeBlock language="scss">
+{`
+  /* Sass — needed a compiler to become real CSS */
+  .card {
+    border: 1px solid #333;
+
+    &:hover {
+      border-color: royalblue;
+    }
+
+    .card-title {
+      font-weight: 700;
+    }
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* Native CSS — this is valid, unprocessed CSS the browser parses directly */
+  .card {
+    border: 1px solid #333;
+
+    &:hover {
+      border-color: royalblue;
+    }
+
+    .card-title {
+      font-weight: 700;
+    }
+  }
+`}
+</CodeBlock>
+
+Same syntax, same output — the difference is entirely in *when* it gets resolved. Sass nesting is flattened at build time into plain selectors; native nesting is resolved by the browser itself, at parse time.
+
+<RainbowDivider />
+
+## The `&` Reference
+
+<CodeBlock language="css">
+{`
+  .button {
+    &:hover { ... }       /* .button:hover */
+    &.disabled { ... }     /* .button.disabled */
+    & + & { ... }          /* .button + .button */
+    &::before { ... }      /* .button::before */
+  }
+`}
+</CodeBlock>
+
+`&` stands in for the parent selector, exactly like in Sass — combine it with a pseudo-class, another class, a combinator, or a pseudo-element to build the equivalent compound selector.
+
+<RainbowDivider />
+
+## Try It Live
+
+Every state on the card below — `:hover`, `:focus-within`, `.active`, and its nested child-element rules — comes from one native nested `.card { ... }` block, shown alongside the demo.
+
+<Sandbox slug="css-nesting-native" readOnly />
+
+<RainbowDivider />
+
+## The Bare Type-Selector Gotcha
+
+<CodeBlock language="css">
+{`
+  .card {
+    span {           /* ambiguous to a CSS parser: a nested rule, or a property named "span"? */
+      color: blue;
+    }
+  }
+`}
+</CodeBlock>
+
+Nesting a rule that starts with a plain type selector (`span`, `div`, `p`) used to be genuinely ambiguous to parse — CSS declarations and nested rules share the same `{` syntax, and a bare identifier at the start looks like it could be either. Modern browsers resolve this correctly today, but older engines and some tooling didn't. The safe, unambiguous, and still-recommended habit is to prefix with `&`:
+
+<CodeBlock language="css">
+{`
+  .card {
+    & span {          /* unambiguous — always parses as a nested rule */
+      color: blue;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Specificity Gotcha
+
+<CodeBlock language="css">
+{`
+  .card, .banner {
+    & .title {
+      color: white;
+    }
+  }
+
+  /* This does NOT compile to the specificity of ".title" plus one class.
+     It's equivalent to: */
+  :is(.card, .banner) .title {
+    color: white;
+  }
+`}
+</CodeBlock>
+
+When the parent rule has a *comma-separated* selector list, the nested rule's specificity is computed as if the parent were wrapped in `:is(...)` — and `:is()`'s specificity is always that of its *most specific* argument. If `.card` and `.banner` have different specificities (e.g. one is `#sidebar .card`), the nested rule silently inherits the *higher* one, which can produce more specificity than it visually appears to have.
+
+<RainbowDivider />
+
+## Comparison
+
+| | Sass Nesting | Native CSS Nesting |
+| :--- | :--- | :--- |
+| **Requires a build step** | Yes | No |
+| **`&` parent reference** | Yes | Yes |
+| **Nested `@media`/`@supports`** | Yes | Yes |
+| **Variables** | `$variables` (compile-time) | `--custom-properties` (runtime, live in DevTools) |
+| **Mixins/functions/loops** | Yes | No — plain CSS has no equivalent |
+| **Bare type-selector nesting** | Always fine | Prefer `&` prefix for clarity/compatibility |
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Native nesting doesn't replace Sass entirely.** Mixins, functions, `@each`/`@for` loops, and math have no native CSS equivalent — Sass still earns its place in a build pipeline for those. Nesting alone being native just means you no longer *need* a preprocessor for that one specific feature.
+* **Deep nesting is still a readability problem either way.** The old Sass guidance — don't nest more than 3 levels deep — applies equally to native nesting. It's easy to read structurally, but it also makes the final specificity harder to predict the deeper it goes.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 112+, Firefox 117+, Safari 16.5+) as of this writing — verify your target browsers before dropping a Sass build step that's serving older ones.
+* **Existing Sass code doesn't need to migrate.** Sass still compiles nested rules to the same flat CSS it always has; native nesting is relevant when deciding whether new code needs a preprocessor for that reason at all.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Native CSS nesting gives you the readability win of mirroring your HTML structure without a build step — but it inherits the same specificity mental model as always, with one new wrinkle: a nested rule under a comma-separated parent selector list takes on the *highest* specificity in that list, not the lowest.

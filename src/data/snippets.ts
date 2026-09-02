@@ -492,6 +492,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-nesting-native",
+    title: "Native CSS Nesting vs. Sass",
+    excerpt: "Nested selectors without a build step — and the specificity gotcha that comes with them.",
+    description: "Native CSS nesting resolves at parse time instead of build time, with the same & parent reference as Sass — plus a real specificity gotcha when the parent selector is a comma-separated list.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "css-nesting",
+      "sass",
+      "specificity",
+      "modern-css",
+      "selectors",
+      "cascade"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/css-nesting-native/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Side-by-side comparison of Sass nested selectors requiring a compiler versus native CSS nesting parsed directly by the browser."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
