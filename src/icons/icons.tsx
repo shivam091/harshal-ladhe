@@ -550,6 +550,31 @@ export const icons = {
       </>
     )
   },
+  /*
+    Four side-by-side (non-overlapping) bands at decreasing opacity inside a rounded frame — a
+    currentColor-only stand-in for a gradient swatch, since the icon registry has no per-icon color
+    stops of its own. Bands must not overlap: stacking same-colored rects on top of each other
+    composites back to one solid color regardless of opacity, which is what an earlier overlapping
+    version of this icon did (rendered as a plain filled square).
+  */
+  gradient: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="2" y="4" width="20" height="16" />
+        <rect x="2" y="4" width="5" height="16" fill="currentColor" stroke="none" opacity="1" />
+        <rect x="7" y="4" width="5" height="16" fill="currentColor" stroke="none" opacity="0.7" />
+        <rect x="12" y="4" width="5" height="16" fill="currentColor" stroke="none" opacity="0.4" />
+        <rect x="17" y="4" width="5" height="16" fill="currentColor" stroke="none" opacity="0.15" />
+      </>
+    )
+  },
   github: {
     viewBox: "0 0 24 24",
     children: (

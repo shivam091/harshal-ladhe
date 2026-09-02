@@ -13,5 +13,11 @@ export const goodies: Goodie[] = [
     description: "Draggable clip-path editor with bezier curve points, shape morphing, and multi-format code export.",
     icon: "diamonds",
     href: "/goodies/clip-path-generator"
+  },
+  {
+    name: "Gradient Generator",
+    description: "Linear, radial, and conic gradient editor with multi-stop control, OKLCH/HSL/RGB interpolation, and multi-format code export.",
+    icon: "gradient",
+    href: "/goodies/gradient-generator"
   }
 ];
