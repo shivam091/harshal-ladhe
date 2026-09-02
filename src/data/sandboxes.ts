@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "declarative-shadow-dom",
+    title: "Declarative vs. Imperative Shadow DOM",
+    description: "One card uses <template shadowrootmode=\"open\"> and is present the instant the HTML parses; the other calls attachShadow() from a script deliberately delayed 1.8s — watch which one appears first.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "custom-elements-lightweight",
     title: "<like-button> — a Custom Element",
     description: "Two independent <like-button> instances, each with its own internal click count and a step attribute controlling how much each click adds — one class, no framework.",

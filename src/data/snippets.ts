@@ -1421,6 +1421,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "declarative-shadow-dom",
+    title: "SSR-Friendly Shadow DOM, No Hydration Needed",
+    excerpt: "A shadow root attached directly by the HTML parser — present from first paint, zero JavaScript required.",
+    description: "Declarative Shadow DOM lets <template shadowrootmode=\"open\"> attach a real shadow root during HTML parsing itself, making Shadow DOM genuinely server-renderable for the first time — content visible from first paint, with no script execution needed just to show it.",
+    category: ["HTML"],
+    tags: [
+      "html",
+      "shadow-dom",
+      "declarative-shadow-dom",
+      "web-components",
+      "ssr",
+      "hydration",
+      "browser-apis"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/declarative-shadow-dom/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A card's shadow DOM content appearing instantly from a declarative <template shadowrootmode> element, while an equivalent imperatively-attached shadow root is still missing while its script loads."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

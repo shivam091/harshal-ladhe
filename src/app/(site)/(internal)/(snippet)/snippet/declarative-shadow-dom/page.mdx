@@ -1,0 +1,95 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("declarative-shadow-dom");
+
+## Introduction
+
+Shadow DOM has always required JavaScript to exist — `element.attachShadow({ mode: "open" })`, then populate it. That's fine for a component that renders after the page's JS has loaded, but it's a real problem for server-rendered HTML: a shadow root that only gets attached once a script runs means a flash of missing (or unstyled) content on every page load, and `view-source`/crawlers never see what's actually inside it.
+
+**Declarative Shadow DOM** attaches a shadow root directly from HTML markup — `<template shadowrootmode="open">` — parsed by the browser's HTML parser itself, present the instant the HTML arrives, no JavaScript required at all.
+
+<RainbowDivider />
+
+## The Markup
+
+<CodeBlock language="html">
+{`
+  <div id="card">
+    <template shadowrootmode="open">
+      <style>
+        .title { color: hotpink; font-weight: 700; }
+      </style>
+      <p class="title">I'm inside a real shadow root.</p>
+    </template>
+  </div>
+`}
+</CodeBlock>
+
+The `<template>` element with a `shadowrootmode` attribute is special-cased by the HTML parser: instead of staying an inert `<template>` (the normal behavior — its content never renders), the parser attaches its contents as an actual, functioning shadow root on the parent `<div>` — styles scoped, content rendered — during the initial parse, before any script has run.
+
+<RainbowDivider />
+
+## Same Result, Read Back from JavaScript
+
+<CodeBlock language="js">
+{`
+  const card = document.getElementById("card");
+  card.shadowRoot; // a real ShadowRoot — not null, even though no JS ever called attachShadow()
+`}
+</CodeBlock>
+
+Once the parser has processed a declarative shadow root, it behaves identically to one created imperatively — `element.shadowRoot` returns it, `querySelector` inside it works the same, style scoping is enforced the same. The only difference is *when* it came to exist: at parse time, not at script-execution time.
+
+<RainbowDivider />
+
+## Try It Live
+
+Two visually similar cards — one uses `<template shadowrootmode="open">`, present the instant the HTML parses. The other calls `attachShadow()` from a script deliberately delayed 1.8 seconds. Watch the declarative one appear immediately while the imperative one is still missing.
+
+<Sandbox slug="declarative-shadow-dom" readOnly />
+
+<RainbowDivider />
+
+## Why This Matters for Server-Rendered Content
+
+<CodeBlock language="text">
+{`
+  Imperative shadow DOM + SSR:
+    1. Server sends HTML with an empty host element (no shadow content yet)
+    2. Browser parses and paints — the shadow content genuinely isn't there
+    3. JavaScript loads, runs, calls attachShadow() and populates it
+    4. Content appears — a real, user-visible flash of missing/incomplete UI
+
+  Declarative shadow DOM + SSR:
+    1. Server sends HTML with the shadow root's content already inline
+       (inside the <template shadowrootmode> element)
+    2. Browser parses and paints — the shadow content is there from the start
+    3. JavaScript loads later, if needed, to add interactivity — not to make
+       the content visible in the first place
+`}
+</CodeBlock>
+
+This is what makes Web Components genuinely SSR-friendly for the first time — a server (or static site generator) can emit a component's fully-rendered shadow DOM directly in the HTML response, with no hydration step required just to make the content visible.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Server-rendered or statically-generated pages using Web Components, where the previous choice was "no shadow DOM" or "a visible flash while JS loads"
+- Any custom element whose *initial* rendered content should be visible to `view-source`, crawlers, and users on slow connections without waiting on JavaScript
+- A design system shipping components as Custom Elements that need to work correctly inside a server-rendered framework page, not just a client-only SPA
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **A declarative shadow root only attaches once, at parse time** — `<template shadowrootmode>` markup injected later via `innerHTML` or `insertAdjacentHTML` does *not* retroactively create a shadow root; that only works for content the HTML parser processes directly during the initial page load (or via the newer `setHTMLUnsafe()`/`parseHTMLUnsafe()` APIs specifically designed to support it after the fact).
+* **Combine with a matching Custom Element class for interactivity** — declarative shadow DOM makes the *content* appear immediately; a custom element's own `connectedCallback` still runs on its own schedule for wiring up event listeners. The content not waiting on JS and the behavior not waiting on JS are two separate, complementary wins.
+* **`shadowrootmode` accepts `"open"` or `"closed"`**, matching `attachShadow()`'s own `mode` option — `"closed"` shadow roots aren't accessible via `element.shadowRoot` (it returns `null`), same restriction as the imperative API.
+* **Browser support**: Baseline since 2023 (Chrome 90+, Firefox 123+, Safari 16.4+) — broadly available, but a fallback matters for anything that must support meaningfully older browsers: an unsupported browser just renders the `<template>` as an inert element, so pairing this with a small polyfill or progressive-enhancement fallback is worth considering for wide compatibility requirements.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Declarative Shadow DOM removes the one hard requirement that kept Shadow DOM JavaScript-only: now the browser's own HTML parser can attach a shadow root and its content directly from markup, present from the first paint, with no script execution needed just to make it visible — the missing piece for genuinely server-renderable Web Components.

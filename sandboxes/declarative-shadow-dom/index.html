@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Declarative Shadow DOM Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Declarative vs. Imperative Shadow DOM</h1>
+        <p>The imperative card is deliberately delayed 1.8s to make the timing difference visible — watch which one appears first.</p>
+      </header>
+
+      <section class="block">
+        <p class="block-label">Declarative — parsed directly from HTML, present with zero JavaScript</p>
+        <div class="host">
+          <template shadowrootmode="open">
+            <style>
+              .card { padding: 0.875rem 1rem; border-radius: 0.5rem; background: hsl(213, 80%, 54%, 0.14); color: hsl(213, 85%, 70%); font-family: system-ui, sans-serif; font-size: 0.875rem; }
+            </style>
+            <p class="card">I'm already here — this shadow root was attached by the HTML parser itself.</p>
+          </template>
+        </div>
+      </section>
+
+      <section class="block">
+        <p class="block-label">Imperative — attachShadow() in JS, only appears once that script runs</p>
+        <div class="host" id="imperative-host"></div>
+      </section>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
