@@ -1321,6 +1321,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "satisfies-operator-inference",
+    title: "Validating Without Widening: the satisfies Operator",
+    excerpt: "Check a value against a type and keep its precise inferred type — instead of picking one or the other.",
+    description: "The satisfies operator validates an expression against a type while preserving its own precise inferred type afterward, instead of widening to the annotation's type the way an explicit `: Type` annotation does — validation and literal precision, no longer a trade-off.",
+    category: ["TypeScript"],
+    tags: [
+      "typescript",
+      "satisfies",
+      "type-inference",
+      "type-widening",
+      "keyof",
+      "as-const",
+      "typescript-4-9"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/satisfies-operator-inference/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A route config object validated against a Record type while keeping its exact literal keys for autocomplete, illustrating TypeScript's satisfies operator."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

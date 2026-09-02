@@ -1,0 +1,128 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("satisfies-operator-inference");
+
+## Introduction
+
+Validating an object literal against a type has always meant one of two imperfect options: annotate the variable with the type (`const config: Config = {...}`) and get validation, but lose the literal precision of what you actually wrote — every value widens to the annotation's general shape. Or don't annotate at all, and get full literal inference back, but no validation that the object actually matches what you meant it to.
+
+**`satisfies`** does both at once: it checks the expression against a type, and then keeps the *original*, most specific inferred type — not the annotation's type — for everything downstream.
+
+<RainbowDivider />
+
+## The Problem: Annotate and Lose Precision
+
+<CodeBlock language="ts">
+{`
+  type ColorConfig = Record<string, string>;
+
+  const colors: ColorConfig = {
+    primary: "#3b82f6",
+    secondary: "#8b5cf6",
+  };
+
+  colors.primary;  // type: string — not "#3b82f6", just string
+  colors.tertiary; // no error! ColorConfig says any string key is valid
+`}
+</CodeBlock>
+
+The explicit annotation validates the shape (every value must be a string) but at the cost of precision: TypeScript now only knows `colors` has *some* string keys with string values — it forgot that the actual keys are exactly `"primary"` and `"secondary"`, and that `colors.tertiary` doesn't really exist.
+
+<RainbowDivider />
+
+## Without Any Annotation: Precision, No Validation
+
+<CodeBlock language="ts">
+{`
+  const colors = {
+    primary: "#3b82f6",
+    secondar: "#8b5cf6", // typo — no error, TypeScript just infers whatever you wrote
+  };
+
+  colors.primary; // type: "#3b82f6" — exact literal, precise
+`}
+</CodeBlock>
+
+Drop the annotation and TypeScript infers exactly what's there — keys and all — but there's no longer anything checking that this object actually satisfies the shape a `ColorConfig` was supposed to have. A typo'd key (`secondar` instead of `secondary`) compiles just fine.
+
+<RainbowDivider />
+
+## With satisfies: Both at Once
+
+<CodeBlock language="ts">
+{`
+  type ColorConfig = Record<string, string>;
+
+  const colors = {
+    primary: "#3b82f6",
+    secondary: "#8b5cf6",
+  } satisfies ColorConfig;
+
+  colors.primary;    // type: "#3b82f6" — still the exact literal
+  colors.tertiary;   // Error: Property 'tertiary' does not exist — caught, because
+                      // colors' inferred type is its own literal shape, not ColorConfig
+`}
+</CodeBlock>
+
+`satisfies ColorConfig` checks that the object is assignable to `ColorConfig` (every value must be a string) — get that wrong and it's a compile error, same as the annotated version. But the type TypeScript actually assigns to `colors` afterward is still its own precise, literal-keyed shape, not the widened `ColorConfig`. Both problems, solved together.
+
+<RainbowDivider />
+
+## A More Realistic Example: Validated, Autocompletable Route Config
+
+<CodeBlock language="ts">
+{`
+  type RouteConfig = Record<string, { path: string; requiresAuth: boolean }>;
+
+  const routes = {
+    home: { path: "/", requiresAuth: false },
+    dashboard: { path: "/dashboard", requiresAuth: true },
+  } satisfies RouteConfig;
+
+  // Autocomplete offers exactly "home" | "dashboard" — not "any string key",
+  // because the literal key type was preserved by satisfies.
+  function getRoute(name: keyof typeof routes) {
+    return routes[name];
+  }
+
+  getRoute("dashboard"); // works, and autocompletes
+  getRoute("settings");  // Error: Argument of type '"settings"' is not assignable...
+`}
+</CodeBlock>
+
+`keyof typeof routes` is where the payoff shows up concretely: because `satisfies` didn't widen `routes` to `RouteConfig`, `keyof typeof routes` is the literal union `"home" | "dashboard"` — real autocomplete, real exhaustiveness checking — instead of the useless `string` it would've been with an explicit `: RouteConfig` annotation.
+
+<RainbowDivider />
+
+## Comparison
+
+| | `: Type` annotation | No annotation | `satisfies Type` |
+| :--- | :--- | :--- | :--- |
+| **Validates shape** | Yes | No | Yes |
+| **Keeps literal types** | No — widens to the annotation | Yes | Yes |
+| **`keyof` gives literal keys** | No | Yes | Yes |
+| **Catches excess/misspelled properties** | Yes | No | Yes |
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Configuration objects (route tables, theme tokens, feature flags) where you want both validation *and* precise autocomplete on the keys/values afterward
+- Anything consumed with `keyof typeof` or similar literal-type extraction, where an explicit annotation would silently defeat the whole point
+- Discriminated-union-shaped data (a map of event names to handler configs) where you want to be sure every case is covered, without losing which exact cases exist
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`satisfies` is purely a compile-time check — it has zero runtime effect.** It erases completely, same as every other TypeScript-only construct; the emitted JavaScript is identical to the object literal with no operator at all.
+* **Order matters for readability, not behavior**: `satisfies` goes after the full expression, not before like a type annotation would. `const x = {...} satisfies T`, not `const x satisfies T = {...}`.
+* **It doesn't replace explicit return-type annotations on functions** — `satisfies` is for validating a single expression's shape while preserving its inferred type; a function's return type is a separate, usually still worth being explicit about for a public API.
+* **Combining with `as const`** (`{...} as const satisfies T`) locks values down to their most literal form *and* validates the shape — useful when you want both immutability signaling and validation on the same object.
+* **Requires TypeScript 4.9+** — for anything targeting an older TypeScript version, the choice reduces back to the older trade-off: annotate for validation, or don't for precision, not both.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`satisfies` resolves what used to be a real trade-off — validate the shape, or keep the precise inferred type — by doing both without either one compromising the other. Reach for it any time an explicit type annotation would be validating correctly but throwing away exactly the literal precision (keys, string unions, exact values) the rest of the code actually wanted to keep.
