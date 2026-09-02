@@ -1,0 +1,116 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 26rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.playground-header code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.carousel {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+
+  /* The feature: auto-generate one marker per slide, grouped in a strip after the carousel. */
+  scroll-marker-group: after;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prev/next arrows, generated purely by CSS from the scroll container itself. */
+.carousel::scroll-button(left) {
+  content: "‹";
+}
+
+.carousel::scroll-button(right) {
+  content: "›";
+}
+
+.carousel::scroll-button(left),
+.carousel::scroll-button(right) {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid hsl(213, 12%, 26%);
+  background: hsl(213, 20%, 14%);
+  color: hsl(210, 10%, 90%);
+  cursor: pointer;
+}
+
+.carousel::scroll-button(left):disabled,
+.carousel::scroll-button(right):disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* The marker strip's own layout — otherwise it stacks marker dots however the UA defaults to. */
+.carousel::scroll-marker-group {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-block-start: 0.75rem;
+}
+
+.slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: 8rem;
+  border-radius: 0.5rem;
+  background: var(--bg);
+  font-size: 2rem;
+  font-weight: 700;
+  color: hsl(210, 15%, 8%);
+}
+
+/* One dot per slide, generated from the slide element itself. */
+.slide::scroll-marker {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  border-radius: 50%;
+  background: hsl(213, 12%, 30%);
+}
+
+/* The dot for whichever slide is currently snapped into view. */
+.slide::scroll-marker:target-current {
+  background: hsl(207, 90%, 65%);
+}

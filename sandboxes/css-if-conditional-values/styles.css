@@ -1,0 +1,99 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 26rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.playground-header code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem;
+  border: 1px solid hsl(213, 12%, 26%);
+  border-radius: 0.5rem;
+  background: hsl(213, 22%, 9%);
+}
+
+.card-body {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 65%);
+}
+
+.badge {
+  align-self: flex-start;
+  padding: 0.25rem 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+
+  /* Plain fallback — the declaration every browser without if() support actually uses. */
+  background: hsl(213, 10%, 40%);
+
+  /*
+    Re-declared with if(): a browser that doesn't parse if() yet treats this WHOLE declaration as
+    invalid and drops it, leaving the fallback above in effect — no @supports needed, this is just
+    how CSS has always handled an unknown value: the earlier valid declaration wins.
+  */
+  background: if(
+    style(--priority: high): hsl(356, 71%, 48%);
+    style(--priority: medium): hsl(30, 90%, 50%);
+    style(--priority: low): hsl(142, 55%, 38%);
+    else: hsl(213, 10%, 40%)
+  );
+}
+
+.controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.controls button {
+  flex: 1 1 auto;
+  padding: 0.5rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(210, 10%, 90%);
+  background: hsl(213, 20%, 14%);
+  border: 1px solid hsl(213, 12%, 26%);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.controls button[aria-pressed="true"] {
+  border-color: hsl(207, 90%, 60%);
+  color: hsl(207, 90%, 70%);
+}

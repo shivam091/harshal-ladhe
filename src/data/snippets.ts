@@ -11,6 +11,231 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "import-attributes-json",
+    title: "Importing JSON as a Module with Import Attributes",
+    excerpt: "Standard `with { type: \"json\" }` syntax, replacing bundler-specific JSON import magic.",
+    description: "Import attributes make importing a JSON file standard ES module syntax — with { type: \"json\" } tells the loader explicitly how to interpret the file, portable across bundlers and runtimes instead of relying on bundler-specific resolution.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es-modules", "import-attributes", "json", "esnext", "modules"],
+    image: {
+      path: "/assets/img/goodies/snippets/import-attributes-json/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A config.json file imported directly as an ES module using the with type json import attribute, its parsed values rendered on the page."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "uint8array-base64-native",
+    title: "Native Base64 Encoding with Uint8Array",
+    excerpt: "Uint8Array.fromBase64/toBase64 fix btoa()'s original sin: it never understood real bytes.",
+    description: "btoa()/atob() only accept Latin1 'binary strings' and throw on Unicode text. Uint8Array.prototype.toBase64()/fromBase64() operate on real bytes, working correctly for any text via TextEncoder/TextDecoder, no unescape/encodeURIComponent hack required.",
+    category: ["JavaScript"],
+    tags: ["javascript", "base64", "uint8array", "text-encoder", "binary-data", "esnext"],
+    image: {
+      path: "/assets/img/goodies/snippets/uint8array-base64-native/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Side-by-side comparison of btoa() throwing on unicode text versus Uint8Array.prototype.toBase64() encoding it correctly."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "immutable-array-methods",
+    title: "toSorted, toReversed, toSpliced, and with() — Immutable Array Updates",
+    excerpt: "Every mutating array method now has a non-mutating twin that returns a new array.",
+    description: "toSorted(), toReversed(), toSpliced(), and with() are non-mutating counterparts to sort(), reverse(), splice(), and index assignment — returning a new array instead of mutating in place, replacing the spread-into-a-copy-first pattern immutable state (React, Redux) has always needed.",
+    category: ["JavaScript"],
+    tags: ["javascript", "arrays", "immutability", "react", "esnext", "state-management"],
+    image: {
+      path: "/assets/img/goodies/snippets/immutable-array-methods/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "An original array left unchanged after several non-mutating method calls, each producing a new array shown side by side."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "set-methods-union-intersection",
+    title: "Native Set union, intersection, and difference",
+    excerpt: "Set algebra methods replace the spread-filter-rebuild pattern for comparing two Sets.",
+    description: "Set.prototype.union/intersection/difference/symmetricDifference/isSubsetOf/isSupersetOf/isDisjointFrom compute standard set operations directly, replacing the array-spread-and-filter pattern that's been the only way to compare two Sets until now.",
+    category: ["JavaScript"],
+    tags: ["javascript", "set", "data-structures", "esnext", "algorithms"],
+    image: {
+      path: "/assets/img/goodies/snippets/set-methods-union-intersection/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Two role permission sets compared with native Set methods — union, intersection, and difference results shown for each."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "promise-try-uniform-error-handling",
+    title: "Promise.try() for Uniform Sync/Async Error Handling",
+    excerpt: "Catches a synchronous throw and an async rejection in the exact same .catch().",
+    description: "A function that's usually async can still throw synchronously before returning a promise, which plain .then()/.catch() chaining won't catch. Promise.try() wraps the call so both a synchronous throw and an asynchronous rejection land in the same .catch(), without an async IIFE wrapper.",
+    category: ["JavaScript"],
+    tags: ["javascript", "promises", "error-handling", "async-await", "esnext"],
+    image: {
+      path: "/assets/img/goodies/snippets/promise-try-uniform-error-handling/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A validate() function that throws synchronously in one case and returns a rejected promise in another, both caught by the same Promise.try().catch() chain."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "array-fromasync-async-iterables",
+    title: "Array.fromAsync() for Async Iterables",
+    excerpt: "Collects an async generator's yielded values into a real array in one call.",
+    description: "Array.fromAsync() awaits an entire async iterable — a generator, a paginated fetch loop, a ReadableStream — and collects it into a real array, replacing the manual for-await-of loop pushing into an accumulator.",
+    category: ["JavaScript"],
+    tags: ["javascript", "async-await", "generators", "iterables", "esnext", "arrays"],
+    image: {
+      path: "/assets/img/goodies/snippets/array-fromasync-async-iterables/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "An async generator yielding paginated results one at a time, collected into a single array by Array.fromAsync()."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "interpolate-size-auto-animations",
+    title: "Animating Height to auto with interpolate-size",
+    excerpt: "The one CSS line that makes height:auto genuinely animatable — no JS measuring.",
+    description: "interpolate-size: allow-keywords makes height/width transitions to and from auto (and min-content/max-content/fit-content) directly animatable, replacing the grid-template-rows 0fr-to-1fr trick and scrollHeight-measuring JS every accordion has needed until now.",
+    category: ["CSS"],
+    tags: ["css", "animations", "transitions", "accordion", "layout", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/interpolate-size-auto-animations/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "An accordion panel smoothly animating its height between 0 and its natural auto content height."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "shape-function-clip-path",
+    title: "Path-Based clip-path with the shape() Function",
+    excerpt: "SVG-style path commands as real CSS syntax — calc() and custom properties work inside.",
+    description: "The shape() function brings SVG-style path drawing commands (line to, curve to, arc to) into real CSS function syntax, letting calc() and custom properties drive individual coordinates — something path()'s static SVG path-data string can never do.",
+    category: ["CSS"],
+    tags: ["css", "clip-path", "shape-function", "svg", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/shape-function-clip-path/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A speech bubble shape with a movable tail, its clip-path drawn using the shape() function with a calc()-driven coordinate."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "native-css-carousel-scroll-markers",
+    title: "CSS-Only Carousel Pagination with ::scroll-marker",
+    excerpt: "Dots and prev/next arrows generated from a scroll-snap container — zero JS.",
+    description: "::scroll-marker and ::scroll-button() generate a carousel's pagination dots and navigation arrows directly from a scroll-snap container, with the active dot tracked automatically via :target-current — replacing the JS a carousel library exists purely to provide.",
+    category: ["CSS"],
+    tags: ["css", "carousel", "scroll-snap", "pagination", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/native-css-carousel-scroll-markers/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A horizontally scrolling carousel with pagination dots and circular prev/next arrows, all generated by CSS ::scroll-marker and ::scroll-button()."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "sibling-index-count-functions",
+    title: "CSS-Only Staggered Animations with sibling-index()",
+    excerpt: "An element's own position among its siblings, usable directly inside calc().",
+    description: "sibling-index() and sibling-count() give an element its own 1-based position (and total sibling count) directly inside calc(), replacing the JS-loop-sets-a---i-custom-property pattern that's been the only way to drive staggered, index-dependent CSS animations.",
+    category: ["CSS"],
+    tags: ["css", "animations", "sibling-index", "stagger", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/sibling-index-count-functions/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A list of items fading in with a staggered delay computed purely in CSS via sibling-index()."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "typed-custom-properties-at-property",
+    title: "Animatable, Type-Checked Custom Properties with @property",
+    excerpt: "Registers a custom property's real type, turning it from an opaque string into an animatable value.",
+    description: "@property registers a custom property with a real syntax type (<angle>, <color>, <length>, and more), making it genuinely animatable — a plain custom property is an opaque string to CSS and can't be smoothly transitioned or animated at all.",
+    category: ["CSS"],
+    tags: ["css", "custom-properties", "css-variables", "animations", "houdini", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/typed-custom-properties-at-property/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Two identical conic-gradient rings — one with a typed, registered custom property smoothly animating, the other with a plain custom property snapping instantly."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "field-sizing-content-textarea",
+    title: "Auto-Growing Textareas with field-sizing: content",
+    excerpt: "The scrollHeight-measuring JS every auto-grow textarea has shipped, replaced by one CSS line.",
+    description: "field-sizing: content sizes a textarea (or input) to its own content, growing and shrinking as the user types — replacing the scrollHeight-measuring input listener that's been the only way to build an auto-growing text field until now.",
+    category: ["CSS"],
+    tags: ["css", "forms", "textarea", "field-sizing", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/field-sizing-content-textarea/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Two textareas side by side — one growing automatically with typed content via field-sizing: content, the other a plain fixed-size textarea scrolling internally."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "native-css-masonry-layout",
+    title: "Native CSS Masonry with grid-template-rows: masonry",
+    excerpt: "Pinterest-style packed columns, one Grid property, no JS measuring pass.",
+    description: "grid-template-rows: masonry packs variable-height grid items tightly into whichever column is currently shortest, in source order — replacing a JS masonry library's measure-then-reposition pass or a column-count hack that breaks reading order.",
+    category: ["CSS"],
+    tags: ["css", "grid", "masonry", "layout", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/native-css-masonry-layout/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A gallery of variable-height tiles packed tightly into three columns using grid-template-rows: masonry, compared against a plain grid layout with gaps."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "css-custom-functions-at-function",
+    title: "Reusable CSS Logic with @function",
+    excerpt: "A real, live CSS function — reusable logic without a Sass mixin or a build step.",
+    description: "@function defines a reusable, parameterized CSS function directly in a stylesheet — the same DRY win a Sass @function/mixin gives, minus the build step, and able to re-evaluate live against runtime custom property changes a compiled Sass value never could.",
+    category: ["CSS"],
+    tags: ["css", "at-function", "custom-properties", "sass", "css-2025", "design-systems"],
+    image: {
+      path: "/assets/img/goodies/snippets/css-custom-functions-at-function/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Multiple card components sharing one --space() @function-defined spacing scale, all updating together as a base-unit slider is dragged."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
+    slug: "css-if-conditional-values",
+    title: "Conditional CSS Values with the if() Function",
+    excerpt: "A single value, chosen by a media/supports/style condition, right inside a declaration.",
+    description: "The if() function picks between several values inside one CSS declaration based on a media(), supports(), or style() condition — collapsing what used to require duplicating an entire rule under @media/@supports, or a JS class toggle, into one line. Limited support as of 2025.",
+    category: ["CSS"],
+    tags: ["css", "if-function", "conditional-css", "custom-properties", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/css-if-conditional-values/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A priority badge changing color based on a custom property, driven entirely by an if(style(...)) conditional value in the stylesheet."
+    },
+    changelog: [{ date: "2026-09-02", change: "Initial publication." }]
+  },
+  {
     slug: "deep-freeze-objects",
     title: "Deep Freeze Objects in JavaScript",
     excerpt: "Recursively lock every object level for true immutability",

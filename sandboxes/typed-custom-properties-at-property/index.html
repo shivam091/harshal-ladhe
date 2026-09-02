@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@property Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Untyped vs. typed custom properties</h1>
+        <p>Both rings transition <code>--angle</code> from 0deg to 300deg on click. Only the registered one (<code>@property</code>, typed as <code>&lt;angle&gt;</code>) actually animates through the values in between.</p>
+      </header>
+
+      <div class="rings">
+        <div class="ring-block">
+          <div class="ring typed" id="typed"></div>
+          <p class="ring-label">@property — typed &lt;angle&gt;</p>
+        </div>
+        <div class="ring-block">
+          <div class="ring untyped" id="untyped"></div>
+          <p class="ring-label">plain custom property</p>
+        </div>
+      </div>
+
+      <button type="button" id="spin">Spin both to 300deg</button>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

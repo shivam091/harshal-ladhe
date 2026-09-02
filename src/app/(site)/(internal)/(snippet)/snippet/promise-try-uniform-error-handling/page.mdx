@@ -1,0 +1,87 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("promise-try-uniform-error-handling");
+
+## Introduction
+
+A function that's *supposed* to be async can still throw synchronously — before it ever returns a promise, if an early guard clause fails. Calling it inside a `.then()` chain and expecting `.catch()` to handle that case doesn't work: a synchronous throw at the call site happens outside the promise machinery entirely, and needs its own `try/catch`. **`Promise.try()`** wraps the call so both failure modes — sync throw, async reject — end up in the exact same `.catch()`.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  function validate(input) {
+    if (!input) throw new Error("empty input"); // synchronous
+    return fetch("/validate", { body: input });  // returns a promise
+  }
+
+  Promise.try(() => validate(input))
+    .then((result) => ...)
+    .catch((error) => ...); // catches EITHER failure mode
+`}
+</CodeBlock>
+
+`Promise.try()` calls the function, capturing a synchronous throw as a rejection instead of letting it escape uncaught — the function's own behavior (sometimes sync, sometimes async) becomes irrelevant to the caller.
+
+<RainbowDivider />
+
+## The Bug This Prevents
+
+<CodeBlock language="js">
+{`
+  // Looks safe — but a SYNCHRONOUS throw from validate() here is NOT caught by .catch()
+  validate(input)
+    .then((result) => ...)
+    .catch((error) => ...); // never runs for the sync-throw case — the exception is already uncaught
+`}
+</CodeBlock>
+
+If `validate` throws before it reaches its own `return fetch(...)` line, that throw happens synchronously at the call site — there's no promise yet for `.catch()` to attach to. This is a real, easy-to-miss bug in exactly the kind of function that's "usually async but sometimes bails out early."
+
+<RainbowDivider />
+
+## Try It Live
+
+`validate()` throws synchronously for one input, returns a rejected promise for another, and resolves normally for a third — all three routed through the same `Promise.try(() => validate(mode)).catch(...)`. Every path lands in the log the same way.
+
+<Sandbox slug="promise-try-uniform-error-handling" readOnly />
+
+<RainbowDivider />
+
+## The `async`-Wrapper Alternative
+
+<CodeBlock language="js">
+{`
+  // The pre-Promise.try workaround: wrap the call in an async IIFE
+  (async () => validate(input))()
+    .then((result) => ...)
+    .catch((error) => ...);
+`}
+</CodeBlock>
+
+Wrapping in an immediately-invoked `async` arrow function achieves the same result — an `async` function's own synchronous throws are automatically converted to rejections — but it's a one-off syntax trick reached for at each call site. `Promise.try()` says the same thing directly, without the IIFE ceremony.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Wrapping any function whose implementation might change between "throws early" and "returns a rejected promise" over time — validation, guard clauses, anything with an early-return fast path
+- Library/utility functions calling a user-supplied callback of unknown sync-or-async shape, where uniform error handling matters more than knowing which
+- Replacing the `(async () => fn())()` IIFE pattern anywhere it currently exists purely for this reason
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Only wraps the FUNCTION CALL itself** — `Promise.try(() => risky())`, not `Promise.try(risky())`; passing an already-invoked call gives it nothing to catch a synchronous throw from, since the throw would already have happened by the time `Promise.try` receives its argument.
+* **Additional arguments after the function are passed through** — `Promise.try(fn, arg1, arg2)` calls `fn(arg1, arg2)`, useful for avoiding an extra arrow-function wrapper when no closure is needed.
+* **Doesn't change what a `catch` block RECEIVES** — a thrown `Error` and a promise rejected with an `Error` both arrive in `.catch()` as that same `Error` object; this only unifies *whether* `.catch()` runs, not the shape of what it gets.
+* **Baseline support is solid in current engines** — safe to reach for directly rather than treating it as experimental, unlike several of the CSS features in this series.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Promise.try()` closes a real, easy-to-miss gap: a function that's usually async but occasionally throws synchronously will silently break plain `.then()/.catch()` chaining on the sync path. Wrapping the call in `Promise.try()` makes both failure modes land in the same `.catch()`, without an `async` IIFE just to get there.

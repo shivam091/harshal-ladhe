@@ -1,0 +1,85 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("uint8array-base64-native");
+
+## Introduction
+
+`btoa()`/`atob()` have been the only built-in base64 tools since the very early web — and they've always had the same landmine: `btoa()` expects a "binary string," one byte per character, and throws (or silently mangles the result, depending on the exact bytes) on anything containing a character past code point 255. Any text with accents, emoji, or non-Latin scripts hits this. **`Uint8Array.prototype.toBase64()`/`.fromBase64()`** work on real bytes, correctly, for anything.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  const bytes = new TextEncoder().encode("café ☕");
+  const base64 = bytes.toBase64();
+
+  const decoded = new TextDecoder().decode(Uint8Array.fromBase64(base64));
+  decoded === "café ☕"; // true
+`}
+</CodeBlock>
+
+Encode text to real UTF-8 bytes first (`TextEncoder`), then base64 those bytes — no code-point-range restriction, because it's operating on bytes the whole way, not on a string being asked to pretend it's bytes.
+
+<RainbowDivider />
+
+## The `btoa()` Failure Mode
+
+<CodeBlock language="js">
+{`
+  btoa("café"); // DOMException: Failed to execute 'btoa' — the string contains characters
+                // outside of the Latin1 range
+`}
+</CodeBlock>
+
+This is the famous "btoa doesn't support Unicode" problem — the usual workaround has been a `encodeURIComponent`/`unescape` round-trip hack (or a full UTF-8-to-binary-string shim) that most developers copy from Stack Overflow without fully trusting.
+
+<RainbowDivider />
+
+## Try It Live
+
+Type text containing an accent or an emoji (the default already does) and click Encode — `btoa()` throws immediately; `Uint8Array.prototype.toBase64()` encodes it correctly, and the round-trip decode matches the original exactly.
+
+<Sandbox slug="uint8array-base64-native" readOnly />
+
+<RainbowDivider />
+
+## The Hack This Replaces
+
+<CodeBlock language="js">
+{`
+  // The classic Stack-Overflow workaround for btoa + Unicode
+  function utf8ToBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  function base64ToUtf8(str) {
+    return decodeURIComponent(escape(atob(str)));
+  }
+`}
+</CodeBlock>
+
+This works, but \`unescape\`/\`escape\` are themselves deprecated legacy globals being repurposed for something they were never designed for — a hack stacked on a workaround. \`TextEncoder\`/\`TextDecoder\` + native base64 methods do the same job with APIs actually meant for byte encoding.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Encoding any user-generated or non-English text to base64 — for a data URI, a JWT payload, an API parameter — replacing the `unescape(encodeURIComponent(...))` hack
+- Base64-encoding real binary data (a `Blob`, a `File`, bytes from `crypto.getRandomValues()`) that was never text in the first place — `Uint8Array` is the natural type for it already
+- Any codebase currently carrying a small "base64 utils" file whose only job was working around `btoa()`'s Latin1 restriction
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`toBase64()`/`fromBase64()` are `Uint8Array` methods, not string methods** — text has to go through `TextEncoder`/`TextDecoder` first; for genuinely binary data (already bytes), skip that step entirely.
+* **Optional options let you pick alphabet and padding** — `bytes.toBase64({ alphabet: "base64url" })` for URL-safe output (no manual `+`/`/` replacement needed afterward), and `{ omitPadding: true }` to drop trailing `=` characters.
+* **`fromBase64()` throws `SyntaxError` on malformed input**, unlike `atob()`'s looser (and browser-inconsistent) error behavior on invalid strings — a stricter, more predictable failure mode.
+* **Support is recent** — verify your target runtimes before removing an existing `atob`/`btoa`-based fallback entirely; feature-detect with `"toBase64" in Uint8Array.prototype`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Uint8Array.prototype.toBase64()`/`.fromBase64()` fix `btoa()`/`atob()`'s original sin — operating on "binary strings" instead of real bytes — by working on actual `Uint8Array` bytes throughout. Paired with `TextEncoder`/`TextDecoder`, this replaces the `unescape(encodeURIComponent(...))` hack nearly every codebase has needed at least once.

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Carousel Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Carousel dots &amp; nav — no JS</h1>
+        <p>Scroll the strip (or drag). On a browser with <code>::scroll-marker</code>/<code>::scroll-button()</code> support, dots and prev/next arrows appear below, generated entirely by CSS. Elsewhere, it's just a plain scroll-snap row — still fully usable.</p>
+      </header>
+
+      <ul class="carousel" id="carousel">
+        <li class="slide" style="--bg: hsl(207, 70%, 55%)">1</li>
+        <li class="slide" style="--bg: hsl(280, 55%, 60%)">2</li>
+        <li class="slide" style="--bg: hsl(160, 55%, 45%)">3</li>
+        <li class="slide" style="--bg: hsl(30, 80%, 55%)">4</li>
+        <li class="slide" style="--bg: hsl(0, 65%, 55%)">5</li>
+      </ul>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

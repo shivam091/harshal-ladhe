@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@function Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>One spacing scale, one @function</h1>
+        <p>Every gap/padding/margin below is <code>--space(n)</code> — a single <code>@function</code>. Drag the slider to change its base unit; every caller updates together.</p>
+      </header>
+
+      <label class="unit-control">
+        Base unit: <output id="unit-output">0.25rem</output>
+        <input type="range" id="unit" min="12" max="32" value="16" step="1" />
+      </label>
+
+      <section class="card">
+        <h2>Card title</h2>
+        <p>padding: <code>--space(4)</code></p>
+        <div class="row">
+          <span class="chip">gap: --space(2)</span>
+          <span class="chip">gap: --space(2)</span>
+          <span class="chip">gap: --space(2)</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Another card</h2>
+        <p>margin-block: <code>--space(6)</code> between this card and the one above.</p>
+      </section>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

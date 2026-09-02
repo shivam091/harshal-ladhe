@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sibling-index() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Staggered list — no inline delays</h1>
+        <p>Every item's <code>animation-delay</code> is <code>calc(sibling-index() * 80ms)</code> — pure CSS, no per-item style, no JS loop setting <code>--i</code>.</p>
+      </header>
+
+      <button type="button" id="replay">Replay</button>
+
+      <ul class="list" id="list">
+        <li class="item">Item one</li>
+        <li class="item">Item two</li>
+        <li class="item">Item three</li>
+        <li class="item">Item four</li>
+        <li class="item">Item five</li>
+        <li class="item">Item six</li>
+      </ul>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

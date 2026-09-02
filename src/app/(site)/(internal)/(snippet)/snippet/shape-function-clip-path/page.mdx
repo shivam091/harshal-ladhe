@@ -1,0 +1,98 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("shape-function-clip-path");
+
+## Introduction
+
+`clip-path: path("M0 0 L100 0...")` has let CSS cut arbitrary shapes for years — but that path data is a plain string, copy-pasted from an SVG editor, opaque to CSS itself. Change one point and you're hand-editing SVG path syntax. **`shape()`** gives the same drawing commands (move, line, curve, arc) real CSS syntax instead — units, `calc()`, and custom properties work *inside* the shape, not just around it.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .bubble {
+    clip-path: shape(
+      from 0% 0%,
+      line to 100% 0%,
+      line to 100% 78%,
+      line to 0% 78%,
+      close
+    );
+  }
+`}
+</CodeBlock>
+
+Same drawing model as SVG paths — start a point, `line to`/`curve to`/`arc to` the next, `close` the outline — just expressed as CSS function syntax instead of a compact string format.
+
+<RainbowDivider />
+
+## The Part `path()` Can't Do
+
+<CodeBlock language="css">
+{`
+  .bubble {
+    --tail: 50%;
+    clip-path: shape(
+      from 0% 0%,
+      line to 100% 0%,
+      line to 100% 78%,
+      line to calc(var(--tail) + 10%) 78%,
+      line to var(--tail) 100%,       /* the tail's tip, driven by a live variable */
+      line to calc(var(--tail) - 10%) 78%,
+      line to 0% 78%,
+      close
+    );
+  }
+`}
+</CodeBlock>
+
+`calc()` and `var()` work at any coordinate in a `shape()` command list — `path()`'s value is a static SVG path *string*, which has no concept of a CSS custom property at all. Moving a shape's tail/notch/point used to mean swapping the entire path string (usually from JS); here it's one variable.
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag the slider — the speech bubble's tail slides along the bottom edge, its whole outline (the two slanted tail edges included) recomputed from `calc(var(--tail) ± 10%)` inside the `shape()` clip-path, driven by nothing but that one custom property.
+
+<Sandbox slug="shape-function-clip-path" readOnly />
+
+<RainbowDivider />
+
+## Relationship to `polygon()`
+
+<CodeBlock language="css">
+{`
+  /* polygon(): straight edges only, comma-separated point PAIRS */
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+
+  /* shape(): explicit commands, so curves/arcs are expressible too */
+  clip-path: shape(from 50% 0%, line to 0% 100%, line to 100% 100%, close);
+`}
+</CodeBlock>
+
+For a plain straight-edged polygon, they're equivalent — and `polygon()` is more concise for that case, with far wider support today. `shape()` is the one to reach for once you need a `curve`/`arc` command, or `calc()`/`var()` inside the coordinates the way this snippet's tail does.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A clip-path shape that needs to move/resize dynamically (a speech-bubble tail, a notch, a highlight indicator) — anywhere that today means regenerating an entire `path()` string from JS on every change
+- Migrating a hand-tuned SVG-exported `path()` clip-path into something the rest of the stylesheet (design tokens, custom properties) can actually influence
+- Custom shapes needing genuine curves (`curve to`) or arcs (`arc to`) that `polygon()`'s straight-edges-only model can't express
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Newer than `polygon()`/`path()`, both of which remain the safer default** for a shape that's genuinely static — reach for `shape()` specifically when you need live values inside the coordinates.
+* **Coordinates accept both percentages and lengths, mixed freely**, same as `polygon()` — percentages resolve against the clipped element's own border box.
+* **`curve to` takes control points exactly like SVG cubic/quadratic Béziers** (`curve to <end> with <control>`), and `arc to` mirrors SVG's arc command — if you already hand-write SVG paths, the mental model transfers directly, just with CSS's own function-call syntax.
+* **Still a clip, not a paint** — the shape only decides what's visible, same limitation `clip-path` has always had; it doesn't add a border/stroke along the cut edge on its own.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`shape()` brings `calc()` and custom properties inside clip-path coordinates for the first time — the difference between a frozen SVG path string and a shape the rest of your CSS can actually drive. For static polygons, `polygon()` is still simpler and better supported; reach for `shape()` once a point in the outline needs to move.

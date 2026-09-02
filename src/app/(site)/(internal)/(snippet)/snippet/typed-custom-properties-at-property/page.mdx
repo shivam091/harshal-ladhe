@@ -1,0 +1,92 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("typed-custom-properties-at-property");
+
+## Introduction
+
+A plain custom property (`--angle: 0deg`) is, to the browser, just an opaque string — even though `0deg` and `300deg` are both angles, CSS has no way to know that, so it can't compute anything *between* them. Try to `transition` it and nothing tweens; the value just snaps at the halfway point. **`@property`** fixes this by registering a custom property with a real syntax type, making it genuinely animatable.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  @property --angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+  }
+
+  .ring {
+    transition: --angle 700ms ease;
+  }
+`}
+</CodeBlock>
+
+All three descriptors are required: `syntax` gives the property its type (`<angle>`, `<color>`, `<length>`, `<number>`, and more), `inherits` says whether child elements pick it up, and `initial-value` is what an element gets before it's ever set explicitly — registered properties, unlike plain ones, aren't allowed to be undefined.
+
+<RainbowDivider />
+
+## Try It Live
+
+Both rings run the exact same `transition: --angle 700ms ease` on click. Only the left one registers `--angle` with `@property` first — watch it sweep smoothly through the gradient's rotation, while the right one (an ordinary, unregistered custom property) has no interpolatable value to tween through and just snaps straight to the end state.
+
+<Sandbox slug="typed-custom-properties-at-property" readOnly />
+
+<RainbowDivider />
+
+## What "Untyped" Actually Means
+
+<CodeBlock language="css">
+{`
+  /* Without @property, CSS treats --angle as an opaque token stream, not a number+unit */
+  .ring { --angle: 0deg; }
+  .ring:hover { --angle: 300deg; }
+  /* transitioning this jumps at 50%, exactly like transitioning a background-image or a
+     font-family — properties with no defined interpolation just discretely swap */
+`}
+</CodeBlock>
+
+This is the same reason `transition: background-image` between two different gradients has never smoothly cross-faded — the browser has no algorithm for interpolating between two opaque strings, custom property or built-in.
+
+<RainbowDivider />
+
+## Relationship to CSS Houdini
+
+<CodeBlock language="js">
+{`
+  // The JS equivalent — same three descriptors, registered from script instead of a stylesheet
+  CSS.registerProperty({
+    name: "--angle",
+    syntax: "<angle>",
+    inherits: false,
+    initialValue: "0deg"
+  });
+`}
+</CodeBlock>
+
+`@property` is the CSS-native syntax for exactly what `CSS.registerProperty()` (part of the Houdini Properties and Values API) does from JavaScript — the two are equivalent, and the CSS form is almost always the better fit since the registration lives right next to the styles that use it.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any custom property currently driving a `transition`/`animation` that "doesn't animate" — rotation angles, gradient stops, single numeric values used in `calc()`
+- Design tokens that should be type-checked (`syntax: "<color>"` rejects an accidental non-color value being assigned, rather than silently producing invalid CSS downstream)
+- Custom properties used purely as internal component state where `inherits: false` prevents them leaking into descendant elements unintentionally — the default (unregistered) behavior is always `inherits: true`
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`initial-value` is mandatory for most syntax types** — omitting it (where required) makes the whole `@property` rule invalid and it's ignored entirely, silently falling back to unregistered behavior; if a registered property "isn't working," check this first.
+* **A universal syntax (`syntax: "*"`) opts back into untyped, non-animatable behavior** — registering is only useful when you give it a REAL type; `*` is for cases where you want `inherits`/`initial-value` control without type-checking.
+* **Widely supported now** but still worth a `@supports (--test: 1)`-style guard or, more simply, just letting the untyped fallback be visually acceptable (a snap instead of a sweep) rather than broken.
+* **Registered properties are validated at parse time** — assigning a value that doesn't match `syntax` (e.g. `--angle: red` on a `<angle>`-typed property) is dropped as invalid, same as assigning `color: 5px` would be, instead of silently accepted the way an unregistered custom property would accept anything.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`@property` turns a custom property from an opaque string swap into a real, typed CSS value — the difference between "doesn't animate" and "animates," and between "accepts anything" and "type-checked like a built-in property." Anywhere a custom property drives a transition or animation that currently just snaps, this is almost always the fix.

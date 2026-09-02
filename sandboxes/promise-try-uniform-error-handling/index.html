@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Promise.try() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>One function, two ways to fail</h1>
+        <p><code>validate()</code> throws synchronously for bad input, but returns a rejected promise for input that fails an async check. Both routes go through the same <code>Promise.try(...).catch(...)</code> below.</p>
+      </header>
+
+      <div class="controls">
+        <button type="button" data-mode="sync-throw">Trigger sync throw</button>
+        <button type="button" data-mode="async-reject">Trigger async reject</button>
+        <button type="button" data-mode="success">Trigger success</button>
+      </div>
+
+      <ul class="log" id="log"></ul>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

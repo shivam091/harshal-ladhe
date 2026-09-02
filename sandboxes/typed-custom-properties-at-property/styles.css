@@ -1,0 +1,105 @@
+/*
+  Registers --typed-angle as a real <angle>, not an opaque string — this is what makes it
+  interpolatable. Deliberately a DIFFERENT property name from --untyped-angle below: @property
+  registration is global to the whole document, not scoped to a selector, so the only way to show
+  both behaviors side by side on this page is two distinct custom properties, one registered and
+  one left alone. inherits: false matches how a plain re-declared custom property already behaves
+  per-element; initial-value is required for any registered property.
+*/
+@property --typed-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 26rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.playground-header {
+  align-self: stretch;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.playground-header code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.rings {
+  display: flex;
+  gap: 2rem;
+}
+
+.ring-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ring {
+  inline-size: 6rem;
+  block-size: 6rem;
+  border-radius: 50%;
+}
+
+.ring.typed {
+  --typed-angle: 0deg;
+  background: conic-gradient(from var(--typed-angle), hsl(207, 90%, 60%), hsl(280, 70%, 65%), hsl(207, 90%, 60%));
+  transition: --typed-angle 700ms ease;
+}
+
+.ring.untyped {
+  --untyped-angle: 0deg;
+  background: conic-gradient(from var(--untyped-angle), hsl(207, 90%, 60%), hsl(280, 70%, 65%), hsl(207, 90%, 60%));
+  transition: --untyped-angle 700ms ease;
+}
+
+.ring-label {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.6875rem;
+  color: hsl(210, 12%, 60%);
+  text-align: center;
+}
+
+#spin {
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: hsl(210, 10%, 90%);
+  background: hsl(213, 20%, 14%);
+  border: 1px solid hsl(213, 12%, 26%);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}

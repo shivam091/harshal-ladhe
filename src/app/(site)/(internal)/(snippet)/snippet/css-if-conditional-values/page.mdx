@@ -1,0 +1,93 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-if-conditional-values");
+
+## Introduction
+
+Conditional styling in CSS has always meant reaching for JavaScript to toggle a class, or duplicating a whole rule behind `@media`/`@supports`/`@container`. The new **`if()`** function collapses that into a single property value: pick between several values, right inside a declaration, based on a condition CSS can already evaluate — a media query, a `@supports` check, or (the interesting one) the current value of a custom property.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .badge {
+    background: if(
+      style(--priority: high): crimson;
+      style(--priority: medium): darkorange;
+      else: seagreen
+    );
+  }
+`}
+</CodeBlock>
+
+Each branch is a `condition: value` pair, checked top to bottom; `else:` is the catch-all. Set `--priority` from JS (or leave it entirely author-controlled in the stylesheet) and the background follows — no class list to keep in sync.
+
+<RainbowDivider />
+
+## The Three Condition Types
+
+<CodeBlock language="css">
+{`
+  width: if(
+    media(width > 900px): 32rem;
+    supports(display: grid): 24rem;
+    else: 100%
+  );
+`}
+</CodeBlock>
+
+`media()` and `supports()` mirror `@media`/`@supports` conditions inline; `style()` checks a custom property's current value, which is what makes `if()` genuinely new — a *value*, not a block, that reacts to state.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click a priority — the badge's color is chosen entirely by the stylesheet's `if(style(--priority: ...))` chain, driven by nothing but a custom property JS sets. On a browser that doesn't parse `if()` yet, every button produces the exact same gray: the fallback `background` declared just above it in the stylesheet, left standing because a browser that can't parse `if()` drops that whole later declaration as invalid — not a `@supports` fallback, just ordinary CSS cascade behavior.
+
+<Sandbox slug="css-if-conditional-values" readOnly />
+
+<RainbowDivider />
+
+## Relationship to @media / @supports / @container
+
+<CodeBlock language="css">
+{`
+  /* Before: the same rule duplicated per breakpoint */
+  .panel { padding: 1rem; }
+  @media (width > 900px) {
+    .panel { padding: 2rem; }
+  }
+
+  /* After: one declaration */
+  .panel {
+    padding: if(media(width > 900px): 2rem; else: 1rem);
+  }
+`}
+</CodeBlock>
+
+`@media`/`@supports`/`@container` still own conditional *rules* — new selectors, new declarations, restructuring layout. `if()` is for conditional *values* inside a rule you're already writing, which is exactly the case that used to force either duplicating the whole rule or falling back to JS.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A single custom property (`--variant`, `--size`, `--state`) driving several unrelated declarations across a component, without a matching class for every combination
+- Small value swaps (a color, a spacing scale step, a font-weight) that don't justify duplicating an entire rule under `@media`/`@container`
+- Replacing a JS-driven inline `style` or class toggle whose only job was picking between a handful of known CSS values
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Support is genuinely limited as of 2025** — `if()` shipped first behind a flag in Chrome and is still rolling out; treat this as an emerging feature to watch, not something to ship without a fallback today.
+* **Always declare the plain fallback value FIRST, the `if()` version second** — a browser without `if()` support treats the whole second declaration as invalid and ignores it, silently keeping the first. Reverse the order and unsupported browsers get nothing at all.
+* **`style()` only reads custom properties, not arbitrary computed values** — you can't branch on `if(style(color: red))` for a standard property's resolved value, only on a `--custom-property`'s literal value.
+* **This is a value-level primitive, not a control-flow statement** — there's no way to conditionally omit an entire declaration or selector; for that, `@supports`/`@container`/`@media` are still what you reach for.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`if()` fills the one gap `@media`/`@supports`/`@container` never covered: a single value, inside a declaration you're already writing, chosen by a condition — most usefully the live value of a custom property. It's early and support is thin, but it's the first real answer to "just this one value should be different" that doesn't require duplicating the whole rule or reaching for JavaScript.

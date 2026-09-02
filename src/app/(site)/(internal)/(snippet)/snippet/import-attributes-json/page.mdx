@@ -1,0 +1,82 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("import-attributes-json");
+
+## Introduction
+
+Importing a JSON file as a module has always meant a bundler-specific special case — webpack, Vite, and Node each grew their own (slightly different) way to let `import data from "./config.json"` just work, none of them part of the actual JS module spec. **Import attributes** (`with { type: "json" }`) make it standard syntax: the module system is told explicitly how to interpret the file, everywhere, the same way.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  import config from "./config.json" with { type: "json" };
+
+  console.log(config.theme); // "dark" — a real object, parsed already
+`}
+</CodeBlock>
+
+The `with { type: "json" }` clause is mandatory for a JSON import, not optional decoration — it's what tells the module loader "parse this as JSON," rather than trying (and failing) to execute it as JavaScript.
+
+<RainbowDivider />
+
+## What It Replaces
+
+<CodeBlock language="js">
+{`
+  // Bundler-specific magic — worked in webpack/Vite, was never standard JS
+  import config from "./config.json";
+
+  // The portable, spec-compliant alternative before import attributes existed
+  const config = await fetch("./config.json").then((r) => r.json());
+`}
+</CodeBlock>
+
+The bare `import ... from "./config.json"` form technically worked in most bundlers, but relied entirely on bundler-specific resolution behavior — nothing in the actual ECMAScript module spec ever defined what importing a `.json` file meant. The `fetch()` form is fully portable but async, and only works at all in an environment with `fetch` (fine in a browser, an extra dependency in some server/CLI contexts).
+
+<RainbowDivider />
+
+## Try It Live
+
+`config.json` is imported directly as a module, with `type: "json"`, and rendered below — check the console to see the already-parsed object import produced.
+
+<Sandbox slug="import-attributes-json" readOnly />
+
+<RainbowDivider />
+
+## Dynamic Import Uses the Same Attribute
+
+<CodeBlock language="js">
+{`
+  const { default: config } = await import("./config.json", {
+    with: { type: "json" }
+  });
+`}
+</CodeBlock>
+
+Dynamic `import()` takes the same `type: "json"` attribute, just passed as an options object's `with` property instead of the static form's trailing clause — useful for lazily loading a JSON file only when actually needed, still without a manual `fetch`.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Loading static config/data files (feature flags, locale strings, a fixtures file for tests) that are currently imported the bundler-specific way, or fetched purely because that felt "more standard"
+- Any code meant to run identically across Node, Deno, and the browser, where a bundler-only JSON import wouldn't be portable but `with { type: "json" }` now is
+- Replacing `require("./data.json")` in code migrating from CommonJS to ESM — this is the direct, standard equivalent
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The attribute is required, not optional** — `import x from "./f.json"` with no `with` clause at all is a plain JS-module import attempt against a file that isn't JavaScript, and fails; you can't omit it and rely on the `.json` extension alone.
+* **Also supports `type: "css"`** for importing a stylesheet as a `CSSStyleSheet` constructable object (distinct from `import "./styles.css"` for side-effect bundling, which several sandboxes in this series already use) — the same mechanism, a different content type.
+* **A JSON module's default export is read-only** — you get a live parsed value, not a mutable one; attempting to reassign a property on it behaves per normal object mutability rules, but the import binding itself can't be reassigned, same as any other ES module import.
+* **Support varies by runtime and by static vs. dynamic form** — dynamic `import()` with attributes has broader support than the static form in some environments; check your actual deployment targets before relying on the static syntax as the only path.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Import attributes turn "importing JSON as a module" from bundler-specific behavior nobody could point to a spec for into standard JS syntax — `with { type: "json" }` says explicitly what a bare `import "./x.json"` always meant implicitly, and makes it portable across runtimes rather than reliant on a particular bundler's resolution rules.

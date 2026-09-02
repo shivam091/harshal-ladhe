@@ -1,0 +1,85 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("field-sizing-content-textarea");
+
+## Introduction
+
+An auto-growing textarea — the box gets taller as you type instead of scrolling internally — has always meant JavaScript: measure `scrollHeight` on every `input` event, reset `height` to `auto` first to let it shrink back down, reapply. Every rich-text-adjacent form field on the web ships some version of this same handful of lines. **`field-sizing: content`** deletes them.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  textarea {
+    field-sizing: content;
+    max-height: 12rem; /* still scrolls past this */
+  }
+`}
+</CodeBlock>
+
+That's the entire implementation. The box sizes to its content's natural height, growing as you type, shrinking if you delete — `rows` becomes just the *starting* size, not a cap.
+
+<RainbowDivider />
+
+## The JS It Replaces
+
+<CodeBlock language="js">
+{`
+  // What every auto-grow textarea has shipped until now
+  textarea.addEventListener("input", () => {
+    textarea.style.height = "auto";      // let it shrink first
+    textarea.style.height = textarea.scrollHeight + "px";
+  });
+`}
+</CodeBlock>
+
+That two-line pattern is deceptively fiddly in practice — it fights `box-sizing`, needs re-running on programmatic value changes (not just user typing), and still has a one-frame flash on the reset-to-auto step in some browsers. `field-sizing: content` has none of that, because it isn't a workaround — it's real intrinsic sizing.
+
+<RainbowDivider />
+
+## Try It Live
+
+Type past the visible edge of either box — the left one just grows; the right one is a plain `<textarea>`, scrolling internally once it runs out of room, for direct comparison.
+
+<Sandbox slug="field-sizing-content-textarea" readOnly />
+
+<RainbowDivider />
+
+## Relationship to `resize`
+
+<CodeBlock language="css">
+{`
+  /* These solve different problems and compose fine together */
+  textarea {
+    field-sizing: content; /* grows automatically with typed content */
+    resize: vertical;       /* user can STILL drag-resize on top of that */
+  }
+`}
+</CodeBlock>
+
+`resize` lets a person manually drag a handle to change the box's size; `field-sizing: content` changes what the box's size *means* — content-driven instead of fixed. A user's manual resize still works on a content-sized box; it just sets a new floor the auto-growth won't shrink below until they clear the extra space.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Comment/message boxes, especially anywhere "shrink back down after deleting text" was previously janky or missing entirely from the hand-rolled JS version
+- Any form field currently wired to a `scrollHeight`-measuring `input` listener purely for auto-grow — delete the listener, keep the `max-height` cap
+- Chat inputs, inline-editable fields, and other UI where the field's height should track its content without a fixed multi-line placeholder area wasting space when empty
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Not yet supported everywhere** — feature-detect with `CSS.supports("field-sizing", "content")` (as the sandbox's console does) and let unsupported browsers fall back to the plain scrolling textarea; that fallback is exactly what you already ship today, so there's no regression risk in adopting this progressively.
+* **`max-height` (or `max-block-size`) is still worth setting** — without a cap, a pasted wall of text grows the field indefinitely rather than switching to an internal scrollbar, which can push the rest of the form off-screen.
+* **Works on `<input>` too, not just `<textarea>`** — `field-sizing: content` on a text input sizes its *width* to its content, the same idea applied to the other axis.
+* **Interacts with `rows`/`cols`**: with `field-sizing: content`, those attributes only set the initial size before any content is typed, not an ongoing constraint — don't expect `rows="3"` to cap growth at 3 lines.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`field-sizing: content` replaces the `scrollHeight`-measuring `input` listener nearly every auto-growing textarea has shipped for years with one CSS property that does the same job as real intrinsic sizing — no reflow flash, no event listener, no manual reset-to-auto dance.

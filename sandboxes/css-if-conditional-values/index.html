@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS if() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Priority Badge — styled with CSS if()</h1>
+        <p>Pick a priority. The badge's color is chosen entirely in CSS via <code>if(style(...))</code> — if your browser doesn't support it yet, every button falls back to the same plain gray.</p>
+      </header>
+
+      <div class="card" id="card">
+        <span class="badge" id="badge">Priority: none</span>
+        <p class="card-body">This ticket's badge color is set once, in the stylesheet, for every possible priority — no per-state class list.</p>
+      </div>
+
+      <div class="controls">
+        <button type="button" data-priority="low">Low</button>
+        <button type="button" data-priority="medium">Medium</button>
+        <button type="button" data-priority="high">High</button>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

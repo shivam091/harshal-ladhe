@@ -1,0 +1,91 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("array-fromasync-async-iterables");
+
+## Introduction
+
+Collecting an async generator's yielded values into a real array has always meant a manual `for await...of` loop pushing into an accumulator — `Array.from()` exists for sync iterables but has never understood async ones. **`Array.fromAsync()`** is that same one-line collection, for anything async: a generator, a paginated fetch loop, a `ReadableStream`.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  async function* fetchPages() {
+    for (const page of PAGES) {
+      await fetch(...);
+      yield page;
+    }
+  }
+
+  const pages = await Array.fromAsync(fetchPages());
+`}
+</CodeBlock>
+
+One `await`, one call — every yielded page collected into a real array, in order, once the generator finishes.
+
+<RainbowDivider />
+
+## The Loop It Replaces
+
+<CodeBlock language="js">
+{`
+  const pages = [];
+  for await (const page of fetchPages()) {
+    pages.push(page);
+  }
+`}
+</CodeBlock>
+
+Functionally identical, but `Array.fromAsync()` says what you mean in one expression rather than three lines of manual accumulation — the same readability win `Array.from()` already gives you over a manual sync loop.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click Load — an async generator yields one "page" every 300ms, standing in for a real paginated API. `Array.fromAsync()` awaits the whole sequence and returns one flat array once it's done; open the console to watch each page arrive.
+
+<Sandbox slug="array-fromasync-async-iterables" readOnly />
+
+<RainbowDivider />
+
+## It Also Handles Sync Iterables and Promises
+
+<CodeBlock language="js">
+{`
+  // Works on sync iterables too, awaiting any promises found inside
+  const results = await Array.fromAsync([
+    fetch("/a").then((r) => r.json()),
+    fetch("/b").then((r) => r.json())
+  ]);
+
+  // Optional second argument: a map function, applied to each awaited value
+  const ids = await Array.fromAsync(fetchPages(), (page) => page.id);
+`}
+</CodeBlock>
+
+Given a plain (sync) array, it awaits each element if it's a promise — a shorter, more explicit alternative to `Promise.all()` for exactly the "array of promises → array of resolved values" case, with the same optional mapper `Array.from()` itself already supports.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Paginated API clients — collecting every page from an async generator wrapping `fetch()` + a `nextCursor` loop
+- Reading a `ReadableStream` (a file, a WebSocket, an LLM streaming response) fully into memory when you need the whole result at once, not the streaming behavior
+- Anywhere `Promise.all(arrayOfPromises)` is used today purely to resolve an array — `Array.fromAsync()` reads slightly more intention-revealing for that exact case
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Buffers the entire sequence into memory** — same tradeoff as any "collect it all" method; for a genuinely unbounded or very large async sequence, keep consuming it with `for await...of` and process items as they arrive instead.
+* **Rejects as soon as any yielded value/promise rejects**, same short-circuit behavior as `Promise.all()` — a page 3 failure discards pages 1 and 2 from the result rather than returning a partial array. Use `Promise.allSettled()`-style handling inside the generator itself if partial results should survive an error.
+* **Widely available in current engines** (Node, evergreen browsers) — check your actual deployment target's baseline, but this is well past the "experimental" stage `if()`/`shape()` above still are.
+* **The optional map function can itself be async** — `Array.fromAsync(iterable, async (x) => ...)` is valid and awaited per item, in sequence.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Array.fromAsync()` gives async iterables the same one-call collection `Array.from()` has always given sync ones — replacing a manual `for await...of` accumulator loop (or, for a plain array of promises, often replacing `Promise.all()`) with a single, explicit expression.

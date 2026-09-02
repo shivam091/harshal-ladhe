@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Native CSS Masonry Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Masonry — one grid property, no JS</h1>
+        <p>Toggle to compare: <code>grid-template-rows: masonry</code> packs items into the shortest column, like Pinterest — plain <code>grid</code> leaves gaps under short items instead.</p>
+      </header>
+
+      <button type="button" id="toggle">Switch to plain grid</button>
+
+      <div class="gallery masonry" id="gallery">
+        <div class="tile" style="--h: 90px">1</div>
+        <div class="tile" style="--h: 150px">2</div>
+        <div class="tile" style="--h: 60px">3</div>
+        <div class="tile" style="--h: 120px">4</div>
+        <div class="tile" style="--h: 200px">5</div>
+        <div class="tile" style="--h: 80px">6</div>
+        <div class="tile" style="--h: 140px">7</div>
+        <div class="tile" style="--h: 100px">8</div>
+        <div class="tile" style="--h: 70px">9</div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

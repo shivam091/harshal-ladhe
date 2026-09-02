@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>field-sizing Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Auto-growing textareas — zero JS</h1>
+        <p>Type past the visible edge of either box. The left one uses <code>field-sizing: content</code> and just grows; the right one is a plain textarea, for comparison.</p>
+      </header>
+
+      <div class="pair">
+        <div class="field">
+          <label for="auto">field-sizing: content</label>
+          <textarea id="auto" class="auto-size" rows="1">Keep typing — this box has no fixed row count.</textarea>
+        </div>
+
+        <div class="field">
+          <label for="fixed">Default (fixed rows)</label>
+          <textarea id="fixed" rows="1">Keep typing — this one scrolls instead.</textarea>
+        </div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

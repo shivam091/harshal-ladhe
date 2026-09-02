@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Import Attributes Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Importing JSON as a real module</h1>
+        <p><code>config.json</code> is loaded with a static <code>import ... with {`{ type: "json" }`}</code> — no <code>fetch()</code>, no build-tool-specific loader.</p>
+      </header>
+
+      <dl class="config" id="config"></dl>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

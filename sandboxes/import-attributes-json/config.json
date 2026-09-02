@@ -1,0 +1,5 @@
+{
+  "theme": "dark",
+  "version": 2,
+  "featureFlags": ["betaSearch", "newDashboard"]
+}

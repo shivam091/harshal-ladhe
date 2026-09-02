@@ -1,0 +1,91 @@
+/* Opts the whole document into treating auto/min-content/fit-content as animatable keyword sizes. */
+html {
+  interpolate-size: allow-keywords;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.playground-header code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.accordion {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item {
+  border: 1px solid hsl(213, 12%, 26%);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: hsl(213, 22%, 9%);
+}
+
+.trigger {
+  display: block;
+  inline-size: 100%;
+  padding: 0.75rem 1rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: start;
+  color: hsl(210, 10%, 90%);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+/*
+  The whole feature: height transitions directly between 0 and auto — no scrollHeight read, no
+  fixed max-height guess. Requires `interpolate-size: allow-keywords` above; without it, this same
+  transition would just snap instantly instead of animating.
+*/
+.panel {
+  height: 0;
+  overflow: hidden;
+  transition: height 320ms ease;
+}
+
+.panel.open {
+  height: auto;
+}
+
+.panel-body {
+  margin: 0;
+  padding: 0 1rem 0.875rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 68%);
+}

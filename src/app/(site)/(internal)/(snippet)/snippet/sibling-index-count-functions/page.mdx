@@ -1,0 +1,90 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("sibling-index-count-functions");
+
+## Introduction
+
+A staggered list animation — each item's delay a beat later than the one before — has always needed either a hand-written `:nth-child(1) { animation-delay: 0ms }`, `:nth-child(2) { animation-delay: 80ms }`, … rule per index, or a JS loop setting a `--i` custom property on every element. **`sibling-index()`** and **`sibling-count()`** give an element its own position (and its parent's total child count) directly inside `calc()` — no rule duplication, no JS loop.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .item {
+    animation: fade-in 420ms ease both;
+    animation-delay: calc(sibling-index() * 80ms);
+  }
+`}
+</CodeBlock>
+
+`sibling-index()` returns the element's 1-based position among its siblings — no selector list, no per-item rule. Every `.item` shares this one declaration and still gets its own distinct delay.
+
+<RainbowDivider />
+
+## sibling-count() for Relative Timing
+
+<CodeBlock language="css">
+{`
+  .item {
+    /* Spread evenly across a FIXED total duration, regardless of how many items there are */
+    animation-delay: calc((sibling-index() / sibling-count()) * 600ms);
+  }
+`}
+</CodeBlock>
+
+`sibling-count()` returns the total number of siblings, which makes delays that scale with list length possible — 3 items and 30 items both finish staggering in the same 600ms window, just with tighter or looser spacing between each one.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click Replay — every item's stagger delay comes from `calc(sibling-index() * 80ms)` alone; nothing in the markup or JS sets a per-item index.
+
+<Sandbox slug="sibling-index-count-functions" readOnly />
+
+<RainbowDivider />
+
+## What This Replaces
+
+<CodeBlock language="js">
+{`
+  // The JS loop this makes unnecessary
+  document.querySelectorAll(".item").forEach((el, i) => {
+    el.style.setProperty("--i", i);
+  });
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* ...paired with this CSS, reading the JS-set index back out */
+  .item { animation-delay: calc(var(--i) * 80ms); }
+`}
+</CodeBlock>
+
+That two-file pattern is extremely common specifically because CSS had no way to know an element's own position — `sibling-index()` closes that gap directly, so the JS half simply isn't needed anymore.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Staggered entrance animations (list items, grid cards, nav links) currently wired through a JS-set `--i` custom property
+- Alternating or position-dependent styling that today reaches for a long `:nth-child(3n+1)` selector chain, when the intent is really "do something with this element's own index"
+- Any `calc()` expression that wants "how many things are there" (`sibling-count()`) without a JS `children.length` read
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Very new — treat as progressive enhancement**, not a sole implementation, until support is broad; an animation that simply doesn't stagger (all items animate at once) is a reasonable, non-broken fallback for unsupported browsers.
+* **Counts ALL siblings in the same parent, not just ones matching a selector** — there's no equivalent of `:nth-child(an+b of selector)` filtering built into `sibling-index()` itself; if you need "index among only the visible ones," that filtering still has to happen elsewhere (removing hidden items from the DOM, not just hiding them).
+* **Index is 1-based**, matching `:nth-child()`'s own convention — a first-child's `sibling-index()` is `1`, not `0`.
+* **Recalculates on DOM changes** the same as any other CSS tree-relative value (`:nth-child()` included) — inserting or removing a sibling shifts every subsequent element's index live, no manual re-render needed.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`sibling-index()`/`sibling-count()` give CSS something it never had: an element's own position within its parent, usable directly in `calc()`. The main win is deleting the JS-loop-sets-a-custom-property pattern that's been the only way to drive index-dependent styling — staggered animations especially — for years.
