@@ -1,0 +1,89 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+  text-align: center;
+}
+
+.restart-btn {
+  align-self: center;
+  padding: 0.4375rem 1.125rem;
+  border: 1px solid hsl(213, 12%, 28%);
+  border-radius: 0.375rem;
+  background: transparent;
+  color: hsl(210, 12%, 78%);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.restart-btn:hover {
+  background: hsl(213, 20%, 14%);
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.section {
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid hsl(213, 12%, 24%);
+}
+
+.header {
+  background: hsl(213, 20%, 12%);
+  color: hsl(210, 10%, 88%);
+}
+
+.skeleton {
+  background: hsl(213, 18%, 11%);
+  color: hsl(210, 12%, 50%);
+  font-style: italic;
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+.loaded {
+  background: hsl(140, 30%, 12%);
+  border-color: hsl(140, 30%, 26%);
+  color: hsl(140, 45%, 72%);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}

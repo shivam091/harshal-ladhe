@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "streaming-with-suspense",
+    title: "Streaming with Suspense",
+    description: "Three sections stream in independently, each on its own delay inside its own Suspense boundary — restart to replay the sequence.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "css-layers-cascade-control",
     title: "@layer Cascade Layers",
     description: "The same low-specificity utility class fails to override a component rule without @layer, and wins reliably with it — side by side, identical selectors.",

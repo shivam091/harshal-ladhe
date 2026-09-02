@@ -1,0 +1,105 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("streaming-with-suspense");
+
+## Introduction
+
+A page with one slow database query used to mean the *entire* page waited for it — nothing rendered until every piece of data was ready. Streaming changes that: fast parts of the page render and reach the browser immediately, while slower parts stream in afterward, each showing its own loading state in the meantime.
+
+Next.js's App Router builds this on two things: the `loading.tsx` file convention, and `<Suspense>` boundaries you place yourself for finer control.
+
+<RainbowDivider />
+
+## `loading.tsx`: A Route-Level Suspense Boundary
+
+<CodeBlock language="tsx">
+{`
+  // app/dashboard/loading.tsx
+  export default function Loading() {
+    return <DashboardSkeleton />;
+  }
+
+  // app/dashboard/page.tsx
+  export default async function Dashboard() {
+    const data = await getSlowData(); // the whole page waits on this
+    return <DashboardContent data={data} />;
+  }
+`}
+</CodeBlock>
+
+Adding a `loading.tsx` file next to a `page.tsx` is really syntactic sugar — Next.js automatically wraps that route's content in `<Suspense fallback={<Loading />}>`. The navigation completes instantly (the skeleton shows immediately), and the real content streams in once `page.tsx`'s data is ready.
+
+<RainbowDivider />
+
+## Granular `<Suspense>`: Streaming *Parts* of a Page
+
+`loading.tsx` gives you one fallback for the *entire* route. Wrapping individual slow components in their own `<Suspense>` lets each one stream independently:
+
+<CodeBlock language="tsx">
+{`
+  export default function Dashboard() {
+    return (
+      <>
+        <Header />                            {/* renders instantly */}
+
+        <Suspense fallback={<CommentsSkeleton />}>
+          <Comments />                          {/* streams in on its own timeline */}
+        </Suspense>
+
+        <Suspense fallback={<AnalyticsSkeleton />}>
+          <Analytics />                         {/* streams in on ITS OWN, independent timeline */}
+        </Suspense>
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+Each `<Suspense>` boundary is independent. `Comments` finishing doesn't wait for `Analytics`, and neither blocks `Header` from rendering immediately — the slowest component on the page no longer holds the fastest ones hostage.
+
+<RainbowDivider />
+
+## Try It Live
+
+Every section below suspends on its own promise, with its own delay, inside its own `<Suspense>` boundary — using the same `use()` + `<Suspense>` primitives that power Next.js's server-side streaming, running here entirely client-side. Hit Restart to replay the sequence.
+
+<Sandbox slug="streaming-with-suspense" readOnly />
+
+<RainbowDivider />
+
+## The `use()` Hook
+
+<CodeBlock language="tsx">
+{`
+  function SlowSection({ label, delayMs }) {
+    const data = use(getData(label, delayMs)); // suspends the nearest <Suspense> until this resolves
+    return <div>{data}</div>;
+  }
+`}
+</CodeBlock>
+
+`use()` reads a promise's value directly during render. If the promise hasn't resolved yet, the component "suspends" — React shows the nearest `<Suspense>` boundary's fallback and retries the component once the promise settles. This is the same mechanism Server Components use internally to stream data from `await` calls in an `async` component; `use()` is the client-side hook version of the same idea.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Dashboards with several independent data sources of different speeds
+- Product pages where reviews/recommendations are slower than the core product data
+- Any page where one slow section currently blocks the whole page from showing anything
+- Search results pages that can show the query/filters immediately while results stream in
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Too many tiny `<Suspense>` boundaries can look worse than one bigger one** — a page with a dozen independently-popping-in skeletons can feel janky. Group content that naturally loads together under one boundary, and split out only the pieces that are meaningfully slower than the rest.
+* **`loading.tsx` applies to the whole route segment**, including nested layouts below it — it's the right tool for "this whole page is loading," while manual `<Suspense>` boundaries are the right tool for "this one section within an otherwise-ready page is loading."
+* **Errors inside a suspended component still need an Error Boundary** — Suspense handles the *loading* state, not failures. Pair streaming sections with `error.tsx` (or a manual `<ErrorBoundary>`) so a failed fetch doesn't crash the whole page.
+* **`use()` requires a stable promise across retries.** Creating a fresh, uncached promise on every render causes an infinite suspend loop — cache by key (as the fetch layer typically already does) or fetch once in a parent and pass the promise down.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Streaming turns "wait for the slowest piece" into "show what's ready, as it's ready." `loading.tsx` gives you this for free at the route level; explicit `<Suspense>` boundaries let you apply the same idea at whatever granularity actually matches how your page's data sources differ in speed.

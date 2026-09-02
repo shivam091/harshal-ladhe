@@ -642,6 +642,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "streaming-with-suspense",
+    title: "Streaming with loading.tsx and Suspense",
+    excerpt: "Fast parts of a page render instantly — slow parts stream in independently, on their own timeline.",
+    description: "loading.tsx gives a route an automatic Suspense boundary; granular <Suspense> around individual slow components streams each one in independently, so the slowest section never blocks the fastest.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "app-router",
+      "suspense",
+      "streaming",
+      "loading-ui",
+      "react-19",
+      "server-components",
+      "performance"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/streaming-with-suspense/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A page with a header rendering instantly while three independent sections stream in one after another, each inside its own Suspense boundary."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
