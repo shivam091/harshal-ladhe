@@ -1,0 +1,93 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 30rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.playground-header h1 {
+  font-size: 1.25rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: hsl(213, 20%, 14%);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 100%;
+  transform: scaleX(0);
+  transform-origin: left;
+  background: linear-gradient(90deg, hsl(213, 80%, 54%), hsl(280, 70%, 60%));
+  animation: progress-fill linear;
+  /* Driven by the scroller's own scroll position instead of a listener + rAF loop. */
+  animation-timeline: --scroller-timeline;
+}
+
+@keyframes progress-fill {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.scroller {
+  height: 20rem;
+  overflow-y: auto;
+  border: 1px solid hsl(213, 12%, 24%);
+  border-radius: 0.5rem;
+  padding: 0 1rem;
+  /* Names this element's own scroll position so descendants can drive animations off it. */
+  scroll-timeline: --scroller-timeline block;
+}
+
+.spacer {
+  height: 3rem;
+}
+
+.reveal-card {
+  margin: 1rem 0;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  border: 1px solid hsl(213, 12%, 24%);
+  background: hsl(213, 20%, 10%);
+  font-size: 0.875rem;
+  color: hsl(210, 10%, 85%);
+  animation: reveal linear both;
+  /* Ties this card's own visibility within its nearest scroll container to the animation. */
+  animation-timeline: view();
+  animation-range: entry 0% cover 40%;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

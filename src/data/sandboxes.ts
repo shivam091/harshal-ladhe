@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "scroll-driven-animations",
+    title: "Scroll-Driven Animations",
+    description: "Scroll the panel — a reading-progress bar and each card's fade-and-slide reveal are both driven purely by CSS scroll/view timelines, no JavaScript.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "container-queries-responsive-cards",
     title: "Container Queries vs. Media Queries",
     description: "Drag a slider to resize just one card's wrapper — the @container card reflows with it while the @media card only reacts to the actual browser viewport.",

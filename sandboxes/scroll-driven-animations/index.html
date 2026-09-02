@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scroll-Driven Animations Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Scroll-Driven Animations</h1>
+        <p>Scroll the panel below — the progress bar and every card's reveal are pure CSS, no JavaScript involved.</p>
+      </header>
+
+      <div class="progress-track">
+        <div class="progress-fill"></div>
+      </div>
+
+      <div class="scroller">
+        <div class="spacer"></div>
+        <div class="reveal-card">Card 1 — fades and slides in as it enters view</div>
+        <div class="reveal-card">Card 2 — same animation, driven by its own visibility</div>
+        <div class="reveal-card">Card 3 — no scroll event listeners anywhere</div>
+        <div class="reveal-card">Card 4 — animation-timeline: view()</div>
+        <div class="reveal-card">Card 5 — keep scrolling</div>
+        <div class="spacer"></div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

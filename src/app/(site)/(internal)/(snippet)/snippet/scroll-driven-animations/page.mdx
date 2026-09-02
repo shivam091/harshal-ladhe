@@ -1,0 +1,130 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("scroll-driven-animations");
+
+## Introduction
+
+Scroll-linked effects — a progress bar that fills as you scroll, a card that fades in as it enters view, a parallax background — have historically needed a `scroll` event listener, `requestAnimationFrame`, and manual math to convert a scroll offset into an animation progress value. It works, but it runs on the main thread and is easy to get janky.
+
+**Scroll-driven animations** move this entirely into CSS: an animation's progress is tied directly to a scroll position instead of to time, with no JavaScript and no event listeners.
+
+<RainbowDivider />
+
+## Two Kinds of Timeline
+
+<CodeBlock language="css">
+{`
+  /* A scroll timeline: progress = how far an element has scrolled */
+  .scroller {
+    scroll-timeline: --my-timeline block;
+  }
+  .progress-bar {
+    animation: fill linear;
+    animation-timeline: --my-timeline;
+  }
+
+  /* A view timeline: progress = how far an element has scrolled THROUGH the viewport/container */
+  .card {
+    animation: reveal linear both;
+    animation-timeline: view();
+  }
+`}
+</CodeBlock>
+
+* **`scroll()`** (or a named `scroll-timeline`) ties an animation's progress to *how far a scroll container has been scrolled* — good for a reading-progress bar.
+* **`view()`** ties an animation's progress to *how far a specific element has traveled through its nearest scrollable ancestor's viewport* — good for "reveal as it scrolls into view" effects, per-element, automatically.
+
+<RainbowDivider />
+
+## A Reading-Progress Bar
+
+<CodeBlock language="css">
+{`
+  .scroller {
+    overflow-y: auto;
+    scroll-timeline: --scroller-timeline block; /* name this element's own scroll position */
+  }
+
+  .progress-fill {
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: progress-fill linear;
+    animation-timeline: --scroller-timeline; /* progress tracks the named scroller */
+  }
+
+  @keyframes progress-fill {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+`}
+</CodeBlock>
+
+No `scroll` listener, no `element.scrollTop / (scrollHeight - clientHeight)` math — the animation's `from`/`to` keyframes map directly onto 0% and 100% scrolled.
+
+<RainbowDivider />
+
+## A Per-Element Reveal-on-Scroll
+
+<CodeBlock language="css">
+{`
+  .card {
+    animation: reveal linear both;
+    animation-timeline: view();       /* this card's own scroll-into-view progress */
+    animation-range: entry 0% cover 40%; /* animate over the first 40% of it entering view */
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+`}
+</CodeBlock>
+
+Every card with this class gets its own independent reveal, scoped to its own entry into the viewport — no `IntersectionObserver`, no per-element JavaScript setup.
+
+<RainbowDivider />
+
+## Try It Live
+
+Scroll the panel below. The progress bar at the top is driven by `scroll-timeline`; every card's fade-and-slide-in is driven by its own `view()` timeline. Nothing here is JavaScript.
+
+<Sandbox slug="scroll-driven-animations" readOnly />
+
+<RainbowDivider />
+
+## `animation-range`
+
+`animation-range` controls *which portion* of the timeline the animation plays over:
+
+| Value | Meaning |
+| :--- | :--- |
+| `entry 0% entry 100%` | Plays only while the element is entering the viewport |
+| `cover 0% cover 100%` | Plays across the element's entire time being covered by the viewport |
+| `exit 0% exit 100%` | Plays only while the element is leaving the viewport |
+
+`entry 0% cover 40%` (used above) means: start as soon as the card begins entering, and finish once it's 40% of the way through being fully covered — producing a reveal that completes shortly after the card is on screen, rather than dragging out across the entire scroll.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Reading-progress bars on articles/docs
+- Reveal-on-scroll effects for cards, list items, or sections
+- Parallax backgrounds (animate `transform` on a background layer tied to `view()`)
+- Sticky headers that shrink/fade based on scroll position
+- Image galleries with a scroll-linked "now viewing" indicator
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Browser support is newer than most CSS features on this site** — scroll-driven animations shipped in Chrome/Edge 115+ (2023) and reached Firefox and Safari more recently. Check current support before relying on it as the *only* mechanism for anything load-bearing; treat it as progressive enhancement layered over a static fallback state.
+* **Named timelines (`--my-timeline`) must be unique per scroller** you want to reference independently — reusing a name across unrelated scrollers causes elements to pick up whichever named timeline is nearest in the DOM, which can produce confusing cross-talk.
+* **`animation-timeline: view()` looks at the nearest *scrollable* ancestor**, not necessarily the one you expect if your markup has several nested overflow containers — verify which container is actually driving the timeline when nesting scrollers.
+* **This isn't a replacement for `IntersectionObserver`** when you need to run actual JavaScript logic in response to visibility (lazy-loading images, firing analytics) — scroll-driven animations are CSS-only and can't trigger script execution.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Scroll-driven animations move an entire category of effects — progress bars, scroll reveals, parallax — off the main thread and out of `scroll` event handlers entirely. Where support allows, they're strictly less code and smoother than the JavaScript equivalent for the same effect.

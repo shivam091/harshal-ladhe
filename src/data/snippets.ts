@@ -441,6 +441,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "scroll-driven-animations",
+    title: "Scroll-Driven Animations with animation-timeline",
+    excerpt: "A reading-progress bar and scroll-reveal cards, driven entirely by CSS — no scroll listeners.",
+    description: "Tie animation progress directly to scroll position with scroll-timeline and animation-timeline: view() — a reading-progress bar and per-element reveal-on-scroll effects with zero JavaScript.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "scroll-driven-animations",
+      "animation-timeline",
+      "scroll-timeline",
+      "parallax",
+      "modern-css",
+      "performance",
+      "scroll-effects"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/scroll-driven-animations/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A progress bar and a stack of cards animating in sync with scroll position, illustrating CSS scroll-driven animations."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
