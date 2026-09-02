@@ -1,0 +1,88 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 28rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+  text-align: center;
+}
+
+.toggle-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle {
+  flex: 1;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid hsl(213, 12%, 26%);
+  border-radius: 0.375rem;
+  background: hsl(213, 22%, 8%);
+  color: hsl(210, 10%, 80%);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.toggle.active {
+  border-color: hsl(213, 80%, 54%);
+  background: hsl(213, 80%, 54%, 0.14);
+  color: hsl(213, 85%, 68%);
+}
+
+.panel {
+  padding: 0.75rem 0.875rem;
+  border: 1px solid hsl(213, 12%, 22%);
+  border-radius: 0.5rem;
+  background: hsl(213, 22%, 9%);
+}
+
+.panel-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(210, 12%, 70%);
+  margin-bottom: 0.5rem;
+}
+
+.key-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+  font-size: 0.8125rem;
+  color: hsl(210, 10%, 85%);
+}
+
+.key-list code {
+  font-family: ui-monospace, monospace;
+  color: hsl(140, 55%, 65%);
+}

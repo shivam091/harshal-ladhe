@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "array-grouping-object-groupby",
+    title: "Object.groupBy vs. Map.groupBy",
+    description: "Group the same 8 transactions by a string key and then a boolean key through Object.groupBy, Map.groupBy, and a manual reduce — watch the boolean key survive intact only in the Map version.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "iterator-helpers-map-filter",
     title: "Lazy Chains Over an Infinite Generator",
     description: "Build a drop/filter/map/take chain over an infinite counting generator and run it — the pull counter proves the generator was only ever asked for as many values as the chain actually needed.",

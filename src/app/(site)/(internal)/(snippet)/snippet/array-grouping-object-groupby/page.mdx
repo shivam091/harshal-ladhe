@@ -1,0 +1,114 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("array-grouping-object-groupby");
+
+## Introduction
+
+Grouping an array by some derived key — transactions by category, users by role, log lines by severity — is one of the most common reshaping operations in everyday code, and until recently JavaScript had no built-in for it. The standard answer was `Array.prototype.reduce`, written out by hand, every time:
+
+<CodeBlock language="js">
+{`
+  function groupBy(items, keyFn) {
+    return items.reduce((groups, item) => {
+      const key = keyFn(item);
+      (groups[key] ??= []).push(item);
+      return groups;
+    }, {});
+  }
+`}
+</CodeBlock>
+
+**`Object.groupBy()`** and **`Map.groupBy()`** replace this — same idea, built into the language, with one important difference between the two that decides which one you actually want.
+
+<RainbowDivider />
+
+## Object.groupBy()
+
+<CodeBlock language="js">
+{`
+  const transactions = [
+    { category: "groceries", amount: 42 },
+    { category: "rent", amount: 1200 },
+    { category: "groceries", amount: 18 },
+  ];
+
+  const byCategory = Object.groupBy(transactions, (t) => t.category);
+  // {
+  //   groceries: [{ category: "groceries", amount: 42 }, { category: "groceries", amount: 18 }],
+  //   rent: [{ category: "rent", amount: 1200 }],
+  // }
+`}
+</CodeBlock>
+
+The result is a **null-prototype object** (like `Object.create(null)`) — no inherited `toString`, `hasOwnProperty`, etc. to accidentally collide with a group name. That detail matters because of the next one.
+
+<RainbowDivider />
+
+## The Catch: Keys Are Always Coerced to Strings (or Symbols)
+
+<CodeBlock language="js">
+{`
+  const items = [{ amount: 150 }, { amount: 40 }, { amount: 200 }];
+
+  const grouped = Object.groupBy(items, (item) => item.amount >= 100);
+  // { "true": [...], "false": [...] }   <-- keys are the STRINGS "true"/"false", not booleans
+
+  Object.keys(grouped); // ["false", "true"]
+  typeof Object.keys(grouped)[0]; // "string" — the boolean is gone
+`}
+</CodeBlock>
+
+Every plain object key is a string or symbol — always was, groupBy doesn't change that. Group by a boolean, a number, or an object reference, and `Object.groupBy` silently stringifies it via the same coercion `obj[key]` always did. That's usually fine for booleans and numbers read back as display labels, but it's a real problem if you group by object identity.
+
+<RainbowDivider />
+
+## Map.groupBy(): Keys Keep Their Real Type
+
+<CodeBlock language="js">
+{`
+  const items = [{ amount: 150 }, { amount: 40 }, { amount: 200 }];
+
+  const grouped = Map.groupBy(items, (item) => item.amount >= 100);
+  // Map(2) { true => [...], false => [...] }
+
+  grouped.get(true);  // the actual items >= 100 — a real boolean key, not "true"
+  [...grouped.keys()].map((k) => typeof k); // ["boolean", "boolean"]
+`}
+</CodeBlock>
+
+`Map.groupBy` returns a real `Map`, whose keys can be anything — booleans, numbers, `NaN`, object references, even other objects used by identity. Group by "which config object this row belongs to" and `Map.groupBy` looks the group back up by that exact reference; `Object.groupBy` can't, because the key got stringified to `"[object Object]"` for every row.
+
+<RainbowDivider />
+
+## Try It Live
+
+Group the same 8 transactions two ways — first by category (a string key), then by "amount ≥ 100" (a boolean key) — through `Object.groupBy`, `Map.groupBy`, and the manual reduce equivalent side by side. Watch the boolean case: the object version's keys become the strings `"true"`/`"false"`, the Map version's stay real booleans.
+
+<Sandbox slug="array-grouping-object-groupby" readOnly />
+
+<RainbowDivider />
+
+## Comparison
+
+| | `Object.groupBy()` | `Map.groupBy()` | Manual `reduce` |
+| :--- | :--- | :--- | :--- |
+| **Return type** | Null-prototype object | `Map` | Whatever you build (usually `{}`) |
+| **Key types** | Coerced to string/symbol | Any value, kept as-is | Depends on your implementation |
+| **Iteration** | `Object.entries()` | Native `Map` iteration (insertion order) | Depends on your implementation |
+| **Prototype pollution risk** | None (`null` prototype) | None (not applicable) | Real, if you use `{}` instead of `Object.create(null)` |
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Default to `Object.groupBy` when the key is naturally a string** (a category name, a status enum, a day-of-week label) — the result is easy to destructure, spread, and pass to APIs expecting a plain object.
+* **Reach for `Map.groupBy` the moment the key isn't a string** — booleans, numbers you don't want stringified, or object references. Coercion happening invisibly is exactly the kind of bug that only shows up when two different objects both stringify to the same key.
+* **Neither mutates the source array or its items** — both build a fresh structure, same as `.map()`/`.filter()` always have.
+* **The null prototype on `Object.groupBy`'s result is a feature, not a footgun** — it means a group literally named `"toString"` or `"constructor"` works correctly instead of colliding with `Object.prototype`, something the naive `{}` reduce version above doesn't protect against.
+* **Browser/runtime support**: Baseline since 2024 (Chrome 117+, Firefox 119+, Safari 17.4+, Node 21+). For code that must run on older engines, the manual `reduce` version — ideally built on `Object.create(null)` instead of `{}` for the same prototype-pollution protection — is still the fallback.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Object.groupBy` and `Map.groupBy` do the exact same job as the reduce-based `groupBy` helper nearly every codebase has hand-rolled at least once — the only decision left is which key type you're grouping by. String keys: `Object.groupBy`. Anything else: `Map.groupBy`, so the key doesn't silently turn into a string on you.

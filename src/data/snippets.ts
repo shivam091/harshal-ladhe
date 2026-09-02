@@ -996,6 +996,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "array-grouping-object-groupby",
+    title: "Object.groupBy() and Map.groupBy()",
+    excerpt: "Built-in array grouping that replaces the reduce-based groupBy every codebase hand-rolled once.",
+    description: "Object.groupBy() and Map.groupBy() replace the classic reduce-based groupBy helper — the same idea built into the language, with one key difference: Object.groupBy coerces keys to strings, Map.groupBy keeps them as their real type.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "object-groupby",
+      "map-groupby",
+      "array-grouping",
+      "es2024",
+      "reduce",
+      "data-transformation"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/array-grouping-object-groupby/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A flat list of items splitting into labeled groups via Object.groupBy and Map.groupBy, replacing a manual reduce-based grouping helper."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
