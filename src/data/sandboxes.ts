@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "text-wrap-balance-pretty",
+    title: "text-wrap: balance / pretty",
+    description: "Drag the width slider to compare default wrapping against balance (even headline lines) and pretty (no orphaned last word) at every width.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "color-mix-dynamic-tints",
     title: "Dynamic Tints with color-mix()",
     description: "Pick a base color — a full tint and shade ramp generates live from it via color-mix(), with no stored palette.",

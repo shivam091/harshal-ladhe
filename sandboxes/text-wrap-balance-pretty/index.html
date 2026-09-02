@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>text-wrap Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>text-wrap: balance / pretty</h1>
+        <p>Drag the width slider — watch how each wrapping strategy handles the same text differently.</p>
+      </header>
+
+      <label class="slider-row" for="width-slider">
+        Column width: <span id="width-value">320px</span>
+        <input type="range" id="width-slider" min="180" max="420" value="320" />
+      </label>
+
+      <section class="demo-block">
+        <p class="demo-label">Headline — default wrap</p>
+        <h2 class="headline default-wrap" id="headline-default" style="width: 320px">
+          Why Our New Dashboard Ships Faster Than Ever
+        </h2>
+      </section>
+
+      <section class="demo-block">
+        <p class="demo-label">Headline — text-wrap: balance</p>
+        <h2 class="headline balance-wrap" id="headline-balance" style="width: 320px">
+          Why Our New Dashboard Ships Faster Than Ever
+        </h2>
+      </section>
+
+      <section class="demo-block">
+        <p class="demo-label">Paragraph — default wrap (watch the last line)</p>
+        <p class="paragraph default-wrap" id="paragraph-default" style="width: 320px">
+          Streaming lets the fast parts of a page render immediately while the slower parts load
+          in behind them, one section at a time, on their own.
+        </p>
+      </section>
+
+      <section class="demo-block">
+        <p class="demo-label">Paragraph — text-wrap: pretty</p>
+        <p class="paragraph pretty-wrap" id="paragraph-pretty" style="width: 320px">
+          Streaming lets the fast parts of a page render immediately while the slower parts load
+          in behind them, one section at a time, on their own.
+        </p>
+      </section>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

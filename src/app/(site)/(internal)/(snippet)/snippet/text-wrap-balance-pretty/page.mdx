@@ -1,0 +1,90 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("text-wrap-balance-pretty");
+
+## Introduction
+
+Two small, common line-wrapping annoyances, both solved natively by `text-wrap` values: a headline that wraps to a lopsided "one huge line, one tiny word" split, and a paragraph whose last line is a single short, orphaned word. Neither used to have a CSS fix — you either accepted it or manually inserted a `<br>` and hoped nobody resized the viewport.
+
+<RainbowDivider />
+
+## `text-wrap: balance` — For Headlines
+
+<CodeBlock language="css">
+{`
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+`}
+</CodeBlock>
+
+Instead of wrapping greedily (filling each line as full as possible until a word doesn't fit), `balance` distributes the text across lines so they end up close to equal width. A three-word headline that would otherwise wrap as "two words" / "one word" instead balances toward "one word" / "two words," or wraps to a single line entirely if that reads better — the browser tries several wrap points and picks the most even one.
+
+<RainbowDivider />
+
+## `text-wrap: pretty` — For Paragraphs
+
+<CodeBlock language="css">
+{`
+  p {
+    text-wrap: pretty;
+  }
+`}
+</CodeBlock>
+
+`pretty` targets a different, more specific problem: the orphan — a paragraph's last line consisting of one short word, left dangling by itself. It doesn't rebalance every line the way `balance` does; it specifically avoids leaving that lonely final word, adjusting slightly earlier line breaks so the last line has more than a single word when reasonably possible.
+
+<RainbowDivider />
+
+## Why Two Separate Values
+
+<CodeBlock showCopyButton={false}>
+{`
+  balance  → optimizes for even-looking line lengths, expensive to compute
+  pretty   → optimizes for avoiding orphans specifically, cheaper to compute
+`}
+</CodeBlock>
+
+`balance` is intentionally limited by browsers to short blocks of text (typically capped around 4–6 lines) because it's more computationally expensive — it evaluates multiple wrapping arrangements to find the most even one. `pretty` is cheap enough to apply to full paragraphs and long-form body text without a length cap, since it's solving a narrower problem.
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag the width slider — watch how the balanced headline keeps its two lines roughly even at every width, while the default-wrap headline swings between very uneven splits. Same comparison below for the paragraph's last line.
+
+<Sandbox slug="text-wrap-balance-pretty" readOnly />
+
+<RainbowDivider />
+
+## Comparison
+
+| | Default (`wrap`) | `balance` | `pretty` |
+| :--- | :--- | :--- | :--- |
+| **Optimizes for** | Nothing — greedy, fills each line | Even line lengths | No single-word orphan on the last line |
+| **Typical use** | — | Headlines, short titles, pull quotes | Body paragraphs, long-form text |
+| **Length limit** | None | ~4–6 lines (browser-dependent) | None |
+| **Cost** | Cheapest | More expensive — bounded for that reason | Cheap |
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- `balance`: article headlines, card titles, hero text, pull quotes — anything short where an uneven wrap looks visibly awkward
+- `pretty`: article body copy, long-form paragraphs — anywhere a stray one-word last line looks unpolished
+- Both are purely presentational — safe to apply broadly via a base style (`h1, h2, h3 { text-wrap: balance; } p { text-wrap: pretty; }`) without touching markup
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`balance`'s line-count cap means it silently stops helping on longer content** — a heading that happens to wrap to 7+ lines in some browsers reverts to normal wrapping past the cap, by design (the computation cost isn't worth it past short text).
+* **Neither value changes the text content or inserts real line breaks** — this is purely a layout/wrapping algorithm change. Copy-pasting the text elsewhere behaves normally; no `<br>` tags are injected into the DOM.
+* **Browser support differs between the two.** `balance` has been supported longer (Chrome/Edge 114+, Safari 17.5+, Firefox behind a flag as of this writing); `pretty` is newer and currently Chrome/Edge-only. Both degrade gracefully to normal wrapping in unsupported browsers — treat them as progressive enhancement, not a dependency.
+* **Combine them where relevant** — `balance` on a heading and `pretty` on the paragraph directly below it is a common, complementary pairing; they solve different problems and don't conflict.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Two narrow, specific typography problems — lopsided headline wraps and orphaned last words — that used to have no CSS-only fix now do. `text-wrap: balance` and `text-wrap: pretty` cost nothing to apply broadly and degrade harmlessly where unsupported, making them close to a free typography upgrade.

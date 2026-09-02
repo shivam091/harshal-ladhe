@@ -769,6 +769,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "text-wrap-balance-pretty",
+    title: "Better Line Wrapping with text-wrap: balance / pretty",
+    excerpt: "Even-looking headline wraps and no more orphaned last words in paragraphs — no JS, no markup changes.",
+    description: "text-wrap: balance evens out headline line lengths; text-wrap: pretty avoids leaving a single short word stranded on a paragraph's last line — two narrow typography fixes with no CSS-only alternative until now.",
+    category: ["CSS"],
+    tags: [
+      "css",
+      "text-wrap",
+      "typography",
+      "balance",
+      "pretty",
+      "modern-css",
+      "line-wrapping"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/text-wrap-balance-pretty/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A headline wrapping into evenly balanced lines next to a paragraph avoiding a single orphaned word on its last line, illustrating text-wrap: balance and pretty."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
