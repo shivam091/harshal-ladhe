@@ -945,6 +945,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "react-compiler-memoization",
+    title: "What React Compiler Auto-Memoizes (and What Still Needs useMemo)",
+    excerpt: "Automatic memoization handles most components — a specific minority of cases still need it by hand.",
+    description: "React Compiler automatically inserts the equivalent of useMemo/useCallback/React.memo based on static data-flow analysis — this covers the vast majority of components, but untracked external state and Rules-of-React violations still need manual memoization.",
+    category: ["React"],
+    tags: [
+      "react",
+      "react-compiler",
+      "useMemo",
+      "useCallback",
+      "memoization",
+      "performance",
+      "react-19",
+      "build-tools"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/react-compiler-memoization/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A component's derived values and callbacks being automatically wrapped in memoization by React Compiler at build time, illustrating what it does versus what still needs manual useMemo."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

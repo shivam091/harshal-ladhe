@@ -1,0 +1,106 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("react-compiler-memoization");
+
+## Introduction
+
+`useMemo`, `useCallback`, and `React.memo` exist to solve one problem: avoid recomputing a value, recreating a function, or re-rendering a component when none of its actual inputs changed. Writing that memoization by hand, everywhere it would help, across a large codebase, was always tedious and easy to get subtly wrong — a missing dependency, a `useCallback` wrapping something that didn't need it, a `React.memo` that never actually helps because its props change every render anyway.
+
+**React Compiler** does this automatically, at build time — analyzing your component's actual data flow and inserting the equivalent memoization for you, without you writing `useMemo` or `useCallback` at all in most cases.
+
+<RainbowDivider />
+
+## What It Actually Does
+
+<CodeBlock language="jsx">
+{`
+  // What you write — no memoization anywhere
+  function ProductList({ products, filter }) {
+    const visibleProducts = products.filter((p) => p.category === filter);
+    const handleClick = (id) => console.log("clicked", id);
+
+    return <List items={visibleProducts} onItemClick={handleClick} />;
+  }
+`}
+</CodeBlock>
+
+The compiler analyzes this function, determines that `visibleProducts` depends only on `products` and `filter`, and that `handleClick` depends on nothing external — then generates code conceptually equivalent to wrapping each in `useMemo`/`useCallback` with exactly those dependencies, automatically. `<List>` only re-renders when the props it actually receives change, without you writing `React.memo` on it either.
+
+You don't see this generated code in your source — it happens at build time, transparently, the same way JSX compiles to `React.createElement` calls without you writing them.
+
+<RainbowDivider />
+
+## What Changes About How You Write Components
+
+The practical effect: for a component that only derives values from its own props, state, and context — the overwhelming majority of components in most codebases — you stop writing `useMemo`, `useCallback`, and `React.memo` entirely. The compiler inserts equivalent memoization automatically, based on real data-flow analysis rather than a dependency array you maintain by hand.
+
+Existing `useMemo`/`useCallback` calls in code the compiler processes aren't removed or fought — the compiler respects them and optimizes everything *else* around them. A gradual migration doesn't need a cleanup pass first.
+
+<RainbowDivider />
+
+## When You Still Need Manual Memoization
+
+**1. Values from outside React's tracked reactivity model.** The compiler only tracks data flowing through props, state, and context. A value read from a module-level mutable variable, a `ref.current`, or a browser API the compiler can't statically see changing still needs manual memoization with an explicit, correctly-maintained dependency — because the compiler has no way to know when that untracked source has actually changed.
+
+<CodeBlock language="tsx">
+{`
+  let externalCounter = 0; // lives outside React entirely
+
+  function Widget() {
+    // The compiler can't know when externalCounter changes — this still needs
+    // an explicit dependency YOU maintain, exactly as before.
+    const doubled = useMemo(() => externalCounter * 2, [externalCounter]);
+    return <span>{doubled}</span>;
+  }
+`}
+</CodeBlock>
+
+**2. Rules of React violations bail the compiler out.** Mutating props or state directly, conditionally calling hooks, or other Rules-of-React violations cause the compiler to skip optimizing that specific component or hook — often silently. `eslint-plugin-react-compiler` surfaces these as lint warnings, naming exactly which component bailed out and why. The fix is almost always fixing the violation, not manually re-adding the memoization the compiler declined to insert.
+
+**3. Non-standard hook patterns.** Hooks not named with a `use` prefix, or hook calls constructed dynamically in ways the compiler's static analysis can't follow, may not get optimized — the compiler needs to statically recognize a function as a hook to reason about its behavior.
+
+**4. Referential stability for something outside React's view.** An identity that needs to stay stable for a specific reason a third-party imperative API cares about, in a way the compiler's dependency inference wouldn't preserve on its own, is still a case for an explicit, hand-written `useMemo`/`useCallback`.
+
+<RainbowDivider />
+
+## Finding What the Compiler Skipped
+
+<CodeBlock language="bash">
+{`
+  npm install --save-dev eslint-plugin-react-compiler
+`}
+</CodeBlock>
+
+The companion ESLint plugin runs the same analysis the compiler does and reports bail-outs at lint time — which component, which line, and (usually) why. This is the actual tool for finding where manual memoization might still matter, rather than guessing or re-adding `useMemo` speculatively.
+
+<RainbowDivider />
+
+## Enabling It
+
+<CodeBlock language="js">
+{`
+  // next.config.js
+  module.exports = {
+    experimental: {
+      reactCompiler: true,
+    },
+  };
+`}
+</CodeBlock>
+
+React Compiler ships as a Babel plugin (`babel-plugin-react-compiler`), wired into Next.js via this config flag (its exact stability designation has moved quickly release to release — check current docs for whether it's still under `experimental`). It can also be adopted incrementally, directory by directory, for large existing codebases not ready to enable it everywhere at once.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **It's safe to enable broadly, because it only optimizes code that's already Rules-of-React compliant.** Non-compliant code isn't broken by the compiler — it's simply left unoptimized, exactly as it was before the compiler existed. Enabling it project-wide doesn't require auditing every component first.
+* **Removing your existing `useMemo`/`useCallback` calls isn't required, and isn't obviously beneficial either.** They're redundant with what the compiler would generate anyway in the common case, but leaving them doesn't hurt — treat cleanup as optional, not a migration prerequisite.
+* **The compiler doesn't replace `key` props, doesn't fix genuinely unnecessary re-renders caused by bad component structure, and doesn't replace `useTransition`/`useDeferredValue` for prioritizing updates.** It specifically automates *memoization* — a real but narrow slice of React performance work.
+* **Trust the lint plugin's diagnostics over intuition about what "should" be memoized.** The compiler's actual dependency analysis is more precise than a hand-maintained dependency array is likely to be — a bail-out warning is a more reliable signal than "this looks like it should be slow."
+
+<RainbowDivider />
+
+## Key Takeaway
+
+React Compiler doesn't make memoization unnecessary — it makes *writing* memoization unnecessary for the large majority of components that purely derive their output from props, state, and context. What's left for a human to handle is the minority: values genuinely outside React's reactive model, and code that violates the Rules of React the compiler depends on to reason correctly in the first place.
