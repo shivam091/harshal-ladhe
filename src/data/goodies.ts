@@ -37,5 +37,11 @@ export const goodies: Goodie[] = [
     description: "Filter/backdrop-filter editor with blur, saturate, and 7 more functions, a glassmorphism preset, and a live preview over a gradient or photo.",
     icon: "frostedPanel",
     href: "/goodies/filter-generator"
+  },
+  {
+    name: "Grid / Flexbox Playground",
+    description: "Live CSS Grid and Flexbox editor — container and per-item controls, editable grid tracks, a Holy Grail layout preset, and CSS/Tailwind/React code export.",
+    icon: "gridLayout",
+    href: "/goodies/layout-playground"
   }
 ];

@@ -642,6 +642,23 @@ export const icons = {
       </>
     )
   },
+  // A 2x2 grid of unevenly-sized cells — reads as "grid/layout" distinctly from `columns` (two equal panes, used for the diff view toggle) since this one deliberately varies cell size the way a real grid-template-columns/rows track list would.
+  gridLayout: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="9" y1="3" x2="9" y2="21" />
+        <line x1="3" y1="14" x2="21" y2="14" />
+      </>
+    )
+  },
   hamburger: {
     viewBox: "0 0 24 24",
     svgProps: {
