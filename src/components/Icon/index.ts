@@ -64,6 +64,7 @@ export const ListIcon = createIcon("list");
 export const LoaderIcon = createIcon("loader");
 export const MagicWandIcon = createIcon("magicWand");
 export const MoonIcon = createIcon("moon");
+export const PenToolIcon = createIcon("penTool");
 export const PilcrowIcon = createIcon("pilcrow");
 export const PlayIcon = createIcon("play");
 export const PlusIcon = createIcon("plus");

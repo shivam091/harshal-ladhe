@@ -15,6 +15,12 @@ export const goodies: Goodie[] = [
     href: "/goodies/clip-path-generator"
   },
   {
+    name: "SVG Path Generator",
+    description: "Draggable pen-tool path editor with open/closed strokes, bezier curve points, stroke/fill styling, and raw <path d>, standalone SVG, and React code export.",
+    icon: "penTool",
+    href: "/goodies/svg-path-generator"
+  },
+  {
     name: "Gradient Generator",
     description: "Linear, radial, and conic gradient editor with multi-stop control, OKLCH/HSL/RGB interpolation, and multi-format code export.",
     icon: "gradient",
@@ -61,6 +67,12 @@ export const goodies: Goodie[] = [
     description: "Min/max viewport → clamp() font-size calculator with an arbitrary list of named steps, a draggable viewport-width live preview, and CSS custom-property/Tailwind/React export.",
     icon: "fluidType",
     href: "/goodies/fluid-type-calculator"
+  },
+  {
+    name: "Color-Mix Space Playground",
+    description: "color-mix() editor comparing srgb/hsl/hwb/lch/oklch/lab/oklab interpolation side by side on the same two colors, a ratio-driven result swatch, and CSS/Tailwind/React code export.",
+    icon: "colorMix",
+    href: "/goodies/color-mix-playground"
   },
   {
     name: "Color Palette & Contrast Checker",

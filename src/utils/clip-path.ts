@@ -66,10 +66,17 @@ export function compilePathData(vertices: ClipPathVertex[]): string {
       continue;
     }
 
+    /*
+      A "C" command always needs its endpoint written out explicitly — even on the closing edge,
+      where `next` already wraps to vertices[0] via the modulo above, so this endpoint IS the exact
+      point Z would also close back to. Omitting it (leaving Z to "imply" the endpoint) produces
+      invalid path syntax: Z takes no coordinates, it just draws a straight line back to the
+      subpath's start, so a preceding C left without its final x,y pair is simply malformed —
+      reproducible today via the "Blob" preset, whose closing edge is curved.
+    */
     const c1 = outgoingControlPoint(current);
     const c2 = incomingControlPoint(next);
-    const endpoint = isLastEdge ? "" : `${coord(next.point.x)} ${coord(next.point.y)}`;
-    commands.push(`C ${coord(c1.x)} ${coord(c1.y)} ${coord(c2.x)} ${coord(c2.y)} ${endpoint}`.trim());
+    commands.push(`C ${coord(c1.x)} ${coord(c1.y)} ${coord(c2.x)} ${coord(c2.y)} ${coord(next.point.x)} ${coord(next.point.y)}`);
     if (isLastEdge) commands.push("Z");
   }
 
