@@ -1,0 +1,182 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("parallel-routes-modals");
+
+## Introduction
+
+A photo modal — click a thumbnail in a feed, it opens as an overlay on top of the feed; refresh the page or share that exact URL, and it should load as a full standalone page instead. Client-only modal state (`useState`) gives you the overlay but loses it on refresh. A dedicated route gives you the full page but replaces the feed entirely on every navigation, even when you wanted an overlay.
+
+Next.js's App Router solves this with two composable file-system conventions: **parallel routes** and **intercepting routes**.
+
+<RainbowDivider />
+
+## The File Structure
+
+<CodeBlock showCopyButton={false}>
+{`
+  app/
+  ├─ layout.tsx                     ← renders {children} AND {modal}
+  ├─ page.tsx                        ← feed page, links to /photo/[id]
+  ├─ photo/
+  │  └─ [id]/
+  │     └─ page.tsx                  ← the FULL standalone page
+  └─ @modal/                         ← a parallel route "slot"
+     ├─ default.tsx                  ← renders when no modal is active
+     └─ (.)photo/
+        └─ [id]/
+           └─ page.tsx                ← the INTERCEPTED modal version
+`}
+</CodeBlock>
+
+Two mechanisms, working together:
+
+* **`@modal`** is a *parallel route slot* — Next.js renders it alongside your main page content, as a separate prop your layout can place anywhere.
+* **`(.)photo`** is an *intercepting route* — when a `<Link>` navigates to `/photo/[id]` from this same level, Next.js renders *this* version instead of the real one, without leaving the current page.
+
+<RainbowDivider />
+
+## The Layout: Two Slots, Rendered Together
+
+<CodeBlock language="tsx">
+{`
+  // app/layout.tsx
+  export default function RootLayout({
+    children,
+    modal,
+  }: {
+    children: React.ReactNode;
+    modal: React.ReactNode;
+  }) {
+    return (
+      <html>
+        <body>
+          {children} {/* the matched page.tsx for the current route */}
+          {modal}     {/* whatever @modal currently matches — or nothing */}
+        </body>
+      </html>
+    );
+  }
+`}
+</CodeBlock>
+
+Next.js automatically passes each top-level `@folder`'s matched content as a prop named after the folder — `@modal` becomes the `modal` prop here. `children` is the normal page content, unaffected by whatever's happening in the modal slot.
+
+<RainbowDivider />
+
+## `default.tsx`: The Empty State
+
+<CodeBlock language="tsx">
+{`
+  // app/@modal/default.tsx
+  export default function Default() {
+    return null; // nothing to show when no photo route is active
+  }
+`}
+</CodeBlock>
+
+Every parallel route slot needs a `default.tsx` — it's what Next.js renders for that slot on any route where the slot itself has no matching segment (e.g. you're just on the feed, not viewing a photo). Without it, navigating away from a modal can produce a runtime error, since Next.js won't know what the slot should show.
+
+<RainbowDivider />
+
+## The Modal Page
+
+<CodeBlock language="tsx">
+{`
+  // app/@modal/(.)photo/[id]/page.tsx
+  "use client";
+  import { useRouter } from "next/navigation";
+
+  export default function PhotoModal({ params }: { params: { id: string } }) {
+    const router = useRouter();
+
+    return (
+      <div className="modal-overlay" onClick={() => router.back()}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <PhotoDetail id={params.id} />
+          <button onClick={() => router.back()}>Close</button>
+        </div>
+      </div>
+    );
+  }
+`}
+</CodeBlock>
+
+`router.back()` closes the modal by popping the client-side navigation stack — it lands back on the feed, and the `@modal` slot resets to `default.tsx` (nothing). This also keeps the browser's own back button behaving correctly, since the modal genuinely pushed a history entry when it opened.
+
+<RainbowDivider />
+
+## The Full Page
+
+<CodeBlock language="tsx">
+{`
+  // app/photo/[id]/page.tsx
+  export default function PhotoPage({ params }: { params: { id: string } }) {
+    return (
+      <main>
+        <PhotoDetail id={params.id} />
+      </main>
+    );
+  }
+`}
+</CodeBlock>
+
+This is a completely ordinary page — no awareness of the modal at all. It's what actually renders when the intercepting route *doesn't* apply.
+
+<RainbowDivider />
+
+## Two Rendering Paths, One URL
+
+<CodeBlock showCopyButton={false}>
+{`
+  Click <Link href="/photo/123"> from the feed
+  → soft (client-side) navigation
+  → Next.js finds the matching (.)photo/[id] intercepting route
+  → renders it in the @modal slot — feed stays mounted underneath
+
+  Visit /photo/123 directly (refresh, typed URL, shared link)
+  → hard navigation, no client-side router involved
+  → interception is bypassed entirely
+  → app/photo/[id]/page.tsx renders as a normal full page
+`}
+</CodeBlock>
+
+Both paths serve the exact same URL. Which one renders depends entirely on *how* the navigation happened, not on the URL itself — which is exactly the behavior a modal-that's-also-a-shareable-page needs.
+
+<RainbowDivider />
+
+## Choosing the Right Intercept Level
+
+<CodeBlock showCopyButton={false}>
+{`
+  (.)folder     intercept a route at the SAME level
+  (..)folder    intercept a route ONE level above
+  (..)(..)folder  intercept a route TWO levels above
+  (...)folder   intercept a route from the ROOT app directory
+`}
+</CodeBlock>
+
+The prefix is chosen based on where your intercepting folder sits *in the file tree* relative to the route it's intercepting — not based on the URL's path depth. This trips people up: `@modal` living directly under `app/` intercepting `app/photo/[id]` uses `(.)`, because the slot and the target route are siblings in the tree, even though `@modal` doesn't appear in the URL at all.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Photo/media viewers (Instagram/Pinterest-style click-to-expand)
+- "Quick view" product modals in e-commerce that are also real, linkable product pages
+- Login/signup modals that should also work as standalone pages for direct links or SEO
+- Any UI where "overlay on soft navigation, full page on hard navigation" is the actual desired behavior
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Pair the modal segment with its own `loading.tsx`** so opening it shows an instant skeleton while the photo's data streams in, rather than a blank overlay.
+* **Closing via overlay click or Escape should call the same `router.back()`** the Close button uses, so all three close paths stay consistent with the browser's actual navigation history.
+* **The full page and the modal page usually share a data-fetching component** (`PhotoDetail` above) — keep the actual content and its fetching logic in one shared component, and let the two `page.tsx` files differ only in their wrapping chrome (modal vs. full layout).
+* **This pattern is App-Router-specific** — it has no equivalent in the Pages Router, which has no parallel or intercepting route concept.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Parallel routes give you a named slot to render alongside your main content; intercepting routes decide, based on *how* a navigation happened, whether that slot shows an overlay or gets bypassed entirely. Together, they're the only way to get a modal that's simultaneously a real, shareable, refreshable page — with zero client-only modal state to keep in sync.

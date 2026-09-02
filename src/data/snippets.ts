@@ -592,6 +592,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "parallel-routes-modals",
+    title: "Modal-Over-Page Routing with Parallel and Intercepting Routes",
+    excerpt: "A modal that's a real page too — overlay on soft navigation, full page on a direct visit.",
+    description: "Combine App Router parallel routes (@modal slots) with intercepting routes ((.)folder) to build a modal that opens as an overlay from a click but still renders as a full, shareable, refreshable page on its own.",
+    category: ["Next.js"],
+    tags: [
+      "nextjs",
+      "app-router",
+      "parallel-routes",
+      "intercepting-routes",
+      "modal",
+      "routing",
+      "react"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/parallel-routes-modals/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A photo grid with one item opening as a modal overlay via a soft navigation, while the same URL renders as a full page on direct visit — illustrating Next.js intercepting routes."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
