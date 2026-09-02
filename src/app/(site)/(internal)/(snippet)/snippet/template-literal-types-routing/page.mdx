@@ -1,0 +1,113 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("template-literal-types-routing");
+
+## Introduction
+
+A route string like `` `/users/${id}` `` has always just been `string` at the type level — TypeScript had no way to say "this specific shape of string," only "any string" or one exact literal (`"foo"`). That meant a typo'd route path, a missing required param, or a param passed as the wrong type all slipped straight through the type checker; the only place they'd ever surface was at runtime, usually as a 404.
+
+**Template literal types** give string *shapes* the same precision object shapes have always had — including inferring named parts out of a pattern, which is what makes a genuinely type-safe route builder possible.
+
+<RainbowDivider />
+
+## Basic Shape Constraints
+
+<CodeBlock language="ts">
+{`
+  type ApiRoute = \`/api/\${string}\`;
+
+  function apiFetch(path: ApiRoute) {
+    return fetch(path);
+  }
+
+  apiFetch("/api/users");  // fine
+  apiFetch("/users");      // Error: doesn't start with "/api/"
+`}
+</CodeBlock>
+
+`` `/api/${string}` `` isn't `string` — it's specifically "a string starting with `/api/`, followed by anything." Passing a path that doesn't match that shape is a compile error, the same way passing a `number` where a `string` was expected always has been.
+
+<RainbowDivider />
+
+## Cross-Product Unions
+
+<CodeBlock language="ts">
+{`
+  type Size = "sm" | "md" | "lg";
+  type Variant = "solid" | "outline";
+
+  type ButtonClass = \`btn-\${Size}-\${Variant}\`;
+  // "btn-sm-solid" | "btn-sm-outline" | "btn-md-solid" | "btn-md-outline" | "btn-lg-solid" | "btn-lg-outline"
+
+  function getButtonClass(size: Size, variant: Variant): ButtonClass {
+    return \`btn-\${size}-\${variant}\`;
+  }
+`}
+</CodeBlock>
+
+Combine two unions inside a template literal type and TypeScript computes every combination as its own literal union — six exact class name strings here, generated from the two smaller unions, not hand-written out one by one.
+
+<RainbowDivider />
+
+## Extracting Route Parameters
+
+<CodeBlock language="ts">
+{`
+  type ExtractRouteParams<T extends string> = T extends \`\${string}:\${infer Param}/\${infer Rest}\`
+    ? { [K in Param | keyof ExtractRouteParams<\`/\${Rest}\`>]: string }
+    : T extends \`\${string}:\${infer Param}\`
+      ? { [K in Param]: string }
+      : {};
+
+  type UserPostParams = ExtractRouteParams<"/users/:userId/posts/:postId">;
+  // { userId: string; postId: string } — inferred entirely from the pattern string
+`}
+</CodeBlock>
+
+`infer` inside a template literal type pattern-matches pieces out of a string type, the same way destructuring pulls pieces out of a runtime value. This recursively walks the route pattern, pulling out every `:paramName` segment, and builds an object type with one required key per parameter — computed purely from the literal string `"/users/:userId/posts/:postId"`, with no manual type written for this specific route.
+
+<RainbowDivider />
+
+## A Type-Safe Route Builder
+
+<CodeBlock language="ts">
+{`
+  function buildPath<T extends string>(pattern: T, params: ExtractRouteParams<T>): string {
+    return pattern.replace(/:(\\w+)/g, (_, key) => String(params[key as keyof typeof params]));
+  }
+
+  buildPath("/users/:userId/posts/:postId", { userId: "42", postId: "7" });
+  // fine — params matches exactly what the pattern requires
+
+  buildPath("/users/:userId/posts/:postId", { userId: "42" });
+  // Error: Property 'postId' is missing
+
+  buildPath("/users/:userId", { userId: "42", extra: "oops" });
+  // Error: 'extra' does not exist in type '{ userId: string }'
+`}
+</CodeBlock>
+
+This is the actual payoff: `params`'s required shape isn't declared separately and kept in sync by hand — it's *derived* from the route pattern string itself, via `ExtractRouteParams<T>`. Change the pattern, and the required params object shape changes with it, automatically, at the same call site.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A typed wrapper around route/URL construction, so a route pattern and the params it needs can never drift out of sync
+- Constraining string props to a specific shape (`` `#${string}` `` for a CSS hex color, `` `${number}px` `` for a spacing value) instead of accepting any bare `string`
+- Generating exact variant class name unions (as in the button example) for a component library or design system, keeping every valid combination enumerable and autocompletable
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This is compile-time only — the string itself is a plain runtime string**, same as any other TypeScript type. `buildPath`'s `.replace()` call is ordinary runtime string manipulation; the type system only ever checks it, never executes anything special because of the pattern type.
+* **Deeply recursive template literal types (many route params, deeply nested patterns) can slow down type checking** noticeably on very large unions or long parameter lists — this is a real, if usually minor, cost worth being aware of on huge route tables.
+* **Widening is still a risk here too** — a route pattern read from a non-`const` variable (rather than a literal passed directly) infers as plain `string`, and `ExtractRouteParams<string>` degrades to matching nothing useful. The pattern generally needs to be a literal (or `const`-inferred — see `const` type parameters) for the extraction to produce anything precise.
+* **This doesn't validate the URL at runtime** — a malformed actual path never reaching `buildPath` (constructed some other way, or coming from user input) isn't covered by any of this; the type safety applies specifically to code that goes through the typed builder.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Template literal types turn a route pattern string from "just a string" into a real, checkable shape — and combined with `infer`, that shape can generate the exact parameter object a given pattern requires, entirely derived rather than separately maintained. The route pattern becomes the single source of truth for what params it needs, with the type checker keeping the two in sync instead of a human doing it by hand.

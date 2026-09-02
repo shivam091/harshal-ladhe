@@ -1371,6 +1371,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "template-literal-types-routing",
+    title: "Type-Safe Route Builders with Template Literal Types",
+    excerpt: "Extract a route pattern's required params as a type, derived straight from the pattern string.",
+    description: "Template literal types give string shapes the same precision object shapes have — and combined with infer, can extract named :param segments from a route pattern into a required params object type, keeping a route builder's pattern and its params in sync automatically.",
+    category: ["TypeScript"],
+    tags: [
+      "typescript",
+      "template-literal-types",
+      "infer",
+      "type-safe-routing",
+      "type-inference",
+      "generics",
+      "string-types"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/template-literal-types-routing/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A route pattern string like /users/:userId/posts/:postId being parsed at the type level into a required { userId, postId } params object, illustrating TypeScript template literal type inference."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
