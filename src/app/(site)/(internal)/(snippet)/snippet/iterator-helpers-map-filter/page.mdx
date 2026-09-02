@@ -1,0 +1,127 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("iterator-helpers-map-filter");
+
+## Introduction
+
+`.map()`, `.filter()`, and friends have always belonged to `Array.prototype`. To use them on anything else — a generator, a `Map`'s `.keys()`, a custom iterable — you first had to materialize it into an array with `[...iterable]` or `Array.from()`. For a finite, small iterable that's harmless. For an infinite generator, or one expensive to fully drain, it doesn't work at all — there's no array to build.
+
+**Iterator helpers** put `.map()`, `.filter()`, `.take()`, `.drop()`, `.flatMap()`, and more directly on `Iterator.prototype`, operating lazily on the iterator itself. No intermediate array, ever.
+
+<RainbowDivider />
+
+## The Problem They Solve
+
+<CodeBlock language="js">
+{`
+  function* naturals() {
+    let n = 1;
+    while (true) yield n++;
+  }
+
+  // Array.from(naturals()) never returns — the generator never ends.
+  // So getting "the first 5 even squares" the old way meant a manual loop:
+  function firstFiveEvenSquares() {
+    const result = [];
+    for (const n of naturals()) {
+      if (n % 2 !== 0) continue;
+      result.push(n * n);
+      if (result.length === 5) break;
+    }
+    return result;
+  }
+`}
+</CodeBlock>
+
+Correct, but it's a hand-rolled loop for something that reads like it should be one line — and the "one line" version using array methods straight-up can't exist, because there's no array to call them on until the infinite sequence has already been given up on.
+
+<RainbowDivider />
+
+## With Iterator Helpers
+
+<CodeBlock language="js">
+{`
+  function* naturals() {
+    let n = 1;
+    while (true) yield n++;
+  }
+
+  const firstFiveEvenSquares = naturals()
+    .filter((n) => n % 2 === 0)
+    .map((n) => n * n)
+    .take(5);
+
+  [...firstFiveEvenSquares]; // [4, 16, 36, 64, 100]
+`}
+</CodeBlock>
+
+Same generator, same result — but now it's a chain, and every step only runs as far as `.take(5)` actually needs. `.filter()` and `.map()` here return new iterators, not arrays; nothing executes until something (`[...spread]`, `for...of`, or `.toArray()`) actually pulls values out.
+
+<RainbowDivider />
+
+## The Full Method Set
+
+<CodeBlock language="ts">
+{`
+  interface IteratorHelpers<T> {
+    map<U>(fn: (value: T) => U): Iterator<U>;
+    filter(fn: (value: T) => boolean): Iterator<T>;
+    take(limit: number): Iterator<T>;
+    drop(count: number): Iterator<T>;
+    flatMap<U>(fn: (value: T) => Iterable<U>): Iterator<U>;
+
+    // Terminal — these actually consume the iterator and return a plain value.
+    toArray(): T[];
+    reduce<A>(fn: (acc: A, value: T) => A, initial: A): A;
+    forEach(fn: (value: T) => void): void;
+    some(fn: (value: T) => boolean): boolean;
+    every(fn: (value: T) => boolean): boolean;
+    find(fn: (value: T) => boolean): T | undefined;
+  }
+`}
+</CodeBlock>
+
+The first group is lazy and chainable — each call returns another iterator, doing no work yet. The second group is terminal: calling one of these is what actually drives the whole chain forward and produces a real value.
+
+<RainbowDivider />
+
+## Try It Live
+
+The generator below counts forever (1, 2, 3, …) and reports every value it's asked to produce. Build a chain with drop/filter/map/take and run it — the pull count proves the generator was only ever asked for as many values as the chain actually needed, never the whole infinite sequence.
+
+<Sandbox slug="iterator-helpers-map-filter" readOnly />
+
+<RainbowDivider />
+
+## Works on Anything Iterable, Not Just Generators
+
+<CodeBlock language="js">
+{`
+  const scores = new Map([["alice", 91], ["bob", 64], ["cara", 78]]);
+
+  // Map's .values() returns an iterator directly — no [...spread] needed first.
+  const passing = scores.values().filter((score) => score >= 70).toArray();
+  // [91, 78]
+
+  // Same for Set.values(), and any custom object with a [Symbol.iterator] method.
+`}
+</CodeBlock>
+
+Anything that already returns an iterator — `Map.prototype.keys/values/entries`, `Set.prototype.values`, a hand-written generator, a custom `[Symbol.iterator]()` implementation — gets these methods for free, with zero wrapping.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **These methods live on `Iterator.prototype`, not `Array.prototype` — an actual array still doesn't have `.take()` or `.drop()`.** Call `arr.values()` first (or `arr[Symbol.iterator]()`) to get an iterator to chain from, or just use `.slice()` for an array you already have in hand.
+* **The lazy methods (`map`/`filter`/`take`/`drop`/`flatMap`) do nothing on their own.** Nothing runs until a terminal operation — `.toArray()`, `.reduce()`, `for...of`, or a plain `[...spread]` — actually pulls values through the chain. Building a chain and never consuming it is a no-op, same as an unresolved promise nobody awaits.
+* **Once consumed, an iterator is spent.** Unlike an array, you can't run the same chain twice — build a fresh one (or re-derive from the original generator/collection) if you need the sequence again.
+* **Browser/runtime support is recent** (Baseline since 2025 — current Chrome, Firefox, Safari, and Node 22+). Reaching for a manual loop, or a library like `iter-tools`, is still the right call in code that has to run in older environments.
+* **`flatMap` expects each mapped value back to be iterable**, exactly like `Array.prototype.flatMap` expects an array — returning a bare non-iterable value from the callback throws, not silently flattens.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Iterator helpers move `.map()`/`.filter()`-style chains off arrays and onto iterators directly — which means they now work on infinite sequences and expensive-to-fully-drain sources, not just things you were already willing to materialize. Reach for them any time you'd reach for `[...iterable]` followed immediately by array methods just to get one value or a short prefix back out.
+

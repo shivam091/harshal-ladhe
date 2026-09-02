@@ -971,6 +971,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "iterator-helpers-map-filter",
+    title: "Native .map()/.filter()/.take() on Iterators",
+    excerpt: "Lazy chains directly on any iterator or generator — no array conversion, works on infinite sequences.",
+    description: "Iterator helpers put .map(), .filter(), .take(), .drop(), and .flatMap() directly on Iterator.prototype — lazy, chainable, and usable on infinite generators that could never be spread into an array first.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "iterator-helpers",
+      "generators",
+      "lazy-evaluation",
+      "es2025",
+      "functional-programming",
+      "iterables"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/iterator-helpers-map-filter/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "An infinite generator chained through .filter().map().take(), producing only the values actually requested, illustrating lazy native iterator helpers."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

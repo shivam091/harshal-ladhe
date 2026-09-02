@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "iterator-helpers-map-filter",
+    title: "Lazy Chains Over an Infinite Generator",
+    description: "Build a drop/filter/map/take chain over an infinite counting generator and run it — the pull counter proves the generator was only ever asked for as many values as the chain actually needed.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "use-form-status-pending-ui",
     title: "useFormStatus in Nested Components",
     description: "Submit the form and watch three independent components — a banner, a fieldset, and the submit button — react to the same pending state, each via its own useFormStatus() call.",
