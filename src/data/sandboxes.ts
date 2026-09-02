@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "use-form-status-pending-ui",
+    title: "useFormStatus in Nested Components",
+    description: "Submit the form and watch three independent components — a banner, a fieldset, and the submit button — react to the same pending state, each via its own useFormStatus() call.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "starting-style-entry-animations",
     title: "@starting-style Entry Animations",
     description: "Two toasts get added to the DOM identically — only the one with a @starting-style block actually fades and slides in on its first render.",

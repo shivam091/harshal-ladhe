@@ -920,6 +920,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-form-status-pending-ui",
+    title: "Nested Pending UI with useFormStatus",
+    excerpt: "A submit button, a fieldset, and a banner all react to one form's pending state — no prop-threading.",
+    description: "useFormStatus lets any component nested inside a <form> read that form's pending state directly, independently of sibling consumers — no isPending prop threaded down from a parent.",
+    category: ["React"],
+    tags: [
+      "react",
+      "useFormStatus",
+      "forms",
+      "pending-state",
+      "react-19",
+      "react-dom",
+      "hooks"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/use-form-status-pending-ui/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A form with three independent nested components — a banner, a fieldset, and a submit button — all reacting to the same pending state via useFormStatus."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

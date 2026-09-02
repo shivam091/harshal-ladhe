@@ -1,0 +1,100 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-form-status-pending-ui");
+
+## Introduction
+
+A form's pending state usually needs to show up in more than one place at once — the submit button should disable and relabel, the fields should lock so the user can't edit mid-submit, and maybe a banner should appear saying "saving." Wiring that up the traditional way means one `isPending` state variable in the parent, threaded down as a prop to every component that needs it.
+
+`useFormStatus` skips the prop-threading entirely — any component nested inside a `<form>` can read that form's pending state directly, independently, with zero coordination between them.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useFormStatus } from "react-dom";
+
+  function SubmitButton() {
+    const { pending } = useFormStatus();
+    return <button disabled={pending}>{pending ? "Saving…" : "Save"}</button>;
+  }
+`}
+</CodeBlock>
+
+`useFormStatus()` doesn't take the form as an argument — it reads whichever `<form>` is the *nearest ancestor* of the component calling it. This is why it only works from a component *rendered inside* a form; called from the form's own top-level component (a sibling to the `<form>`, not a descendant of it), it would read whatever form (if any) wraps *that* component instead — not the one you meant.
+
+<RainbowDivider />
+
+## Try It Live
+
+Three separate components below — `PendingBanner`, `FieldsetLock`, and `SubmitButton` — each call `useFormStatus()` on their own. None of them know the other two exist. Submit the form and watch all three react to the exact same pending state simultaneously.
+
+<Sandbox slug="use-form-status-pending-ui" readOnly />
+
+<RainbowDivider />
+
+## The Three Independent Consumers
+
+<CodeBlock language="tsx">
+{`
+  function PendingBanner() {
+    const { pending } = useFormStatus();
+    if (!pending) return null;
+    return <div className="banner">Saving your changes…</div>;
+  }
+
+  function FieldsetLock({ children }) {
+    const { pending } = useFormStatus();
+    return <fieldset disabled={pending}>{children}</fieldset>;
+  }
+
+  function SubmitButton() {
+    const { pending } = useFormStatus();
+    return <button disabled={pending}>{pending ? "Saving…" : "Save"}</button>;
+  }
+`}
+</CodeBlock>
+
+None of these three components receives `pending` as a prop. Each independently subscribes to the same underlying form status. Add a fourth consumer anywhere else inside the form later, and it needs zero changes to the existing three — just another `useFormStatus()` call.
+
+<RainbowDivider />
+
+## The Full Shape
+
+<CodeBlock language="ts">
+{`
+  interface FormStatus {
+    pending: boolean;   // true while the form's action is in flight
+    data: FormData | null; // the FormData currently being submitted, or null
+    method: string;      // "get" or "post"
+    action: string | ((formData: FormData) => void | Promise<void>) | null;
+  }
+`}
+</CodeBlock>
+
+`pending` is the one most commonly used, but `data` is worth knowing about too — it lets a nested component read the in-flight submission's values directly (e.g. to show "Saving “{data.get('title')}”…" using the actual value being submitted, not a separately-tracked copy of it).
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any form where more than one UI element needs to react to submission state (button, fields, a banner, a progress indicator)
+- Reusable form-field components that should disable themselves automatically whenever their enclosing form is submitting, without the parent form having to know about them
+- Design-system form components (a `<SubmitButton>` in a component library) that need pending awareness without requiring every consumer to pass a `pending` prop manually
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **It only works below the `<form>` in the tree — never inside the component that renders the `<form>` itself.** A common mistake: calling `useFormStatus()` directly in the same component function that returns the `<form>...</form>` JSX. At that point in the render, the form doesn't exist as an ancestor yet — split the pending-aware part into its own child component.
+* **`pending` reflects the *nearest* form, not necessarily the one you meant**, if forms are ever nested (rare, but `<form>` elements can't legally nest in HTML — a component using a `<form>` inside another form's tree via a portal or similar would still resolve to the nearest one in the actual DOM tree).
+* **Works with any `<form action>`**, not just ones wired to a Server Action — a plain client-side async function passed to `action` triggers the same pending tracking, as this sandbox demonstrates.
+* **This is a `react-dom` export, not `react`** — the import path (`from "react-dom"`, not `from "react"`) trips people up coming from other hooks that live in the `react` package itself.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useFormStatus` turns "thread `isPending` through props to every component that cares" into "any nested component reads it directly." Reach for it any time a form's pending state needs to show up in more than one place, especially across component boundaries that shouldn't need to know about each other.
