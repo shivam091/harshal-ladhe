@@ -1096,6 +1096,31 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "structured-concurrency-abortsignal-any",
+    title: "Composing Cancellation with AbortSignal.any()",
+    excerpt: "Merge a timeout, a manual cancel, and a parent's signal into one — whichever fires first wins.",
+    description: "AbortSignal.any() merges multiple abort sources — a manual AbortController, AbortSignal.timeout(), a parent operation's own signal — into a single combined signal, the building block for cascading cancellation through a multi-step async pipeline.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "abortsignal-any",
+      "abortsignal-timeout",
+      "structured-concurrency",
+      "cancellation",
+      "async-await",
+      "abortcontroller"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/structured-concurrency-abortsignal-any/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A manual cancel signal and a timeout signal merging into one combined AbortSignal via AbortSignal.any(), whichever fires first aborting the operation."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

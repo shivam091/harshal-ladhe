@@ -1,0 +1,112 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("structured-concurrency-abortsignal-any");
+
+## Introduction
+
+A single `AbortController` covers "the user clicked cancel." A single `AbortSignal.timeout(ms)` covers "this took too long." Real code frequently needs both on the same operation — a request that should stop if the user navigates away *and* stop if it takes more than 5 seconds, whichever happens first — plus, in a larger app, a *third* source: a parent operation's own signal, so cancelling the parent cancels everything it started.
+
+Before **`AbortSignal.any()`**, combining multiple abort sources meant manually wiring `addEventListener("abort", ...)` across every one of them onto a single controller. `AbortSignal.any()` does that composition natively: one array in, one combined signal out.
+
+<RainbowDivider />
+
+## The Problem: One Signal, Multiple Cancel Sources
+
+<CodeBlock language="js">
+{`
+  // Manually merging a timeout and a user-triggered abort into one signal:
+  function combineSignals(userSignal, timeoutMs) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(new DOMException("Timeout", "TimeoutError")), timeoutMs);
+
+    userSignal.addEventListener("abort", () => {
+      clearTimeout(timeoutId);
+      controller.abort(userSignal.reason);
+    });
+
+    return controller.signal;
+  }
+`}
+</CodeBlock>
+
+Functional, but it's the kind of utility every codebase either writes once and imports everywhere, or — more often — re-derives slightly differently in three different places.
+
+<RainbowDivider />
+
+## With AbortSignal.any()
+
+<CodeBlock language="js">
+{`
+  async function fetchWithLimits(url, userSignal, timeoutMs) {
+    const combined = AbortSignal.any([userSignal, AbortSignal.timeout(timeoutMs)]);
+    const response = await fetch(url, { signal: combined });
+    return response.json();
+  }
+`}
+</CodeBlock>
+
+`AbortSignal.any([...])` returns a new signal that aborts the moment *any* signal in the array aborts, and carries that signal's own `.reason` forward. `AbortSignal.timeout(ms)` — also native, no manual `setTimeout` + controller needed — creates a signal that aborts on its own after `ms`, with `.reason` set to a `DOMException` named `"TimeoutError"`.
+
+<RainbowDivider />
+
+## Telling the Sources Apart After the Fact
+
+<CodeBlock language="js">
+{`
+  try {
+    await fetchWithLimits(url, userController.signal, 5000);
+  } catch (err) {
+    if (err.name === "TimeoutError") {
+      // AbortSignal.timeout()'s own reason — this one fired because of the deadline
+    } else if (err.name === "AbortError") {
+      // whatever reason the user's own controller.abort(...) supplied
+    }
+  }
+`}
+</CodeBlock>
+
+`.reason` isn't lost in the merge — the combined signal exposes exactly the reason of whichever input signal fired, so downstream code can still distinguish "cancelled by the user" from "hit the deadline" without tracking which controller triggered it separately.
+
+<RainbowDivider />
+
+## Structured Concurrency: Cascading a Parent's Cancellation
+
+<CodeBlock language="js">
+{`
+  async function runPipeline(parentSignal) {
+    // Every step's own signal includes the parent's — cancel the parent,
+    // and every in-flight step aborts too, without each step needing a
+    // reference to "the top-level controller" threaded through by hand.
+    const stepSignal = AbortSignal.any([parentSignal, AbortSignal.timeout(10_000)]);
+
+    await stepOne(stepSignal);
+    await stepTwo(stepSignal);
+  }
+`}
+</CodeBlock>
+
+This is the piece that earns the name "structured concurrency": cancellation composes the same way scopes do. A child operation's signal is built from its parent's signal plus whatever additional limit is local to that child — cancel the parent, and cancellation flows down automatically, without a global "cancel everything" flag or manually calling `.abort()` on every child controller in turn.
+
+<RainbowDivider />
+
+## Try It Live
+
+Start a task that completes in 4 seconds, combined via `AbortSignal.any()` with an adjustable timeout and a manual cancel button. Whichever fires first — the timeout or your click — is what the log reports, read straight off the combined signal's `.reason`.
+
+<Sandbox slug="structured-concurrency-abortsignal-any" readOnly />
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`AbortSignal.any()` doesn't create a controller — you can't call `.abort()` on its result.** It's read-only, purely a merge of existing signals. If you need to abort the combined operation from a source that *isn't* one of the array's signals, add your own `AbortController` to the array instead of trying to abort the merged signal directly.
+* **The combined signal's `.aborted` becomes `true` as soon as it's created if any input signal is already aborted** — there's no race where a synchronously-already-aborted signal gets missed because the merge happened "too late."
+* **`AbortSignal.timeout()` signals aren't reusable** — each call creates a fresh timer. Don't cache one `AbortSignal.timeout(5000)` and reuse it across multiple requests expecting the countdown to restart; call it fresh per operation.
+* **Passing an empty array (`AbortSignal.any([])`)** returns a signal that's never aborted — a valid, if unusual, way to express "no cancellation sources for this particular call" without special-casing the `fetch` call itself.
+* **Browser/runtime support**: Baseline since 2024 for both `AbortSignal.any()` and `AbortSignal.timeout()` (Chrome 116+/Firefox 124+/Safari 17.4+, Node 20+ for `.any()`). For older targets, the manual merge shown above is the fallback — and it's exactly the code `AbortSignal.any()` replaces.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`AbortSignal.any()` turns "cancel this if any of these things happen" from a hand-rolled `EventTarget` wiring exercise into a one-line composition — and because the result is itself just another `AbortSignal`, it composes recursively: a child's signal can include its parent's, all the way up, which is what makes cancellation in a multi-step async pipeline behave the way scoped resource cleanup does anywhere else.

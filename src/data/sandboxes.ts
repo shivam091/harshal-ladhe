@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "structured-concurrency-abortsignal-any",
+    title: "Composing Cancellation with AbortSignal.any()",
+    description: "Start a task combined from a manual cancel button and an adjustable AbortSignal.timeout() — whichever fires first is what the log reports, read straight off the combined signal's reason.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "web-locks-api-coordination",
     title: "Coordinating Work with navigator.locks",
     description: "Fire requests for the same named lock from two simulated tabs and watch the second queue behind the first, then try a third, non-blocking request with ifAvailable.",
