@@ -1,0 +1,134 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("promise-all-settled-error-handling");
+
+## Introduction
+
+`Promise.all` and `Promise.allSettled` both run promises in parallel and wait for all of them — but they disagree sharply on what happens when one fails.
+
+<CodeBlock language="js">
+{`
+  const results = await Promise.all([taskA(), taskB(), taskC()]);
+  // If ANY of the three rejects, this line never returns a value —
+  // the whole Promise.all rejects immediately with that one error.
+  // The other two tasks' results (even if they succeeded) are lost.
+`}
+</CodeBlock>
+
+For a request where partial success is useless without every piece — "fetch all three files needed to render this page" — that fail-fast behavior is exactly right. For a request where partial success is *useful* — "sync 20 independent records, report which ones failed" — it silently throws away the successes.
+
+<RainbowDivider />
+
+## `Promise.allSettled`: Never Rejects
+
+<CodeBlock language="js">
+{`
+  const results = await Promise.allSettled([taskA(), taskB(), taskC()]);
+  // Always resolves, with one entry per promise:
+  // [
+  //   { status: "fulfilled", value: ... },
+  //   { status: "rejected", reason: ... },
+  //   { status: "fulfilled", value: ... },
+  // ]
+`}
+</CodeBlock>
+
+`allSettled` waits for every promise to either resolve or reject, then hands back an array describing *what happened to each one*. It never itself rejects — the failure information is data, not a thrown error.
+
+<RainbowDivider />
+
+## Partitioning the Results
+
+The `{ status, value | reason }` union is awkward to work with directly. A small utility turns it into two plain arrays:
+
+<CodeBlock language="ts">
+{`
+  interface SettledSummary<T> {
+    fulfilled: T[];
+    rejected: unknown[];
+  }
+
+  async function runAllSettled<T>(promises: Promise<T>[]): Promise<SettledSummary<T>> {
+    const results = await Promise.allSettled(promises);
+
+    const fulfilled: T[] = [];
+    const rejected: unknown[] = [];
+
+    for (const result of results) {
+      if (result.status === "fulfilled") fulfilled.push(result.value);
+      else rejected.push(result.reason);
+    }
+
+    return { fulfilled, rejected };
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Try It Live
+
+Six tasks run in parallel, each with roughly a 40% chance of failing. Run the comparison and watch the two strategies handle the exact same outcomes differently: `Promise.all` throws away everything the instant one task fails; `Promise.allSettled` reports every task's outcome individually.
+
+<Sandbox slug="promise-all-settled-error-handling" readOnly />
+
+<RainbowDivider />
+
+## Comparison
+
+| | `Promise.all` | `Promise.allSettled` |
+| :--- | :--- | :--- |
+| **On any rejection** | Rejects immediately with that error | Never rejects |
+| **Successful results if one fails** | Lost | Preserved, per-promise |
+| **Result shape** | Flat array of resolved values | Array of `{status, value\|reason}` |
+| **Best for** | "All-or-nothing" — every result is required | Independent tasks where partial success is useful |
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  async function syncRecords(records) {
+    const { fulfilled, rejected } = await runAllSettled(
+      records.map((record) => api.sync(record))
+    );
+
+    console.log(\`Synced \${fulfilled.length}/\${records.length} records\`);
+    if (rejected.length > 0) {
+      rejected.forEach((err) => reportToErrorTracker(err));
+    }
+
+    return fulfilled;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use Each?
+
+**`Promise.all`:**
+- Fetching multiple resources that are all required to render a page
+- A transaction-like operation where a partial result is meaningless (or actively wrong)
+- Any case where one failure should short-circuit everything else immediately
+
+**`Promise.allSettled`:**
+- Batch operations over independent items (sync N records, upload N files, notify N webhooks)
+- Health checks / status dashboards polling multiple independent services
+- Any case where "3 out of 5 succeeded" is a useful, actionable result on its own
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`Promise.all` doesn't cancel the other promises on rejection.** They keep running in the background — their results (or further failures) are just never awaited or reported. If those tasks have side effects, they still happen; `Promise.all` only stops *your code* from seeing them.
+* **`rejected` entries are `unknown`, not `Error`.** Anything can be thrown in JavaScript, not just `Error` instances. Narrow before reading `.message`: `reason instanceof Error ? reason.message : String(reason)`.
+* **`Promise.any`** is a third option worth knowing: it resolves as soon as *any* promise fulfills, and only rejects if *all* of them do. Useful for "try several redundant sources, take whichever responds first."
+* **Order is preserved** in both `Promise.all` and `Promise.allSettled` results — the output array's index always matches the input array's index, regardless of which promise actually settles first.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Reach for `Promise.all` when every result is required and a single failure should abort the whole operation. Reach for `Promise.allSettled` when the tasks are independent and you want to know the outcome of each one, successes and failures alike, without losing any of them.

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "promise-all-settled-error-handling",
+    title: "Promise.all vs. Promise.allSettled",
+    description: "Run six tasks with a ~40% failure rate through both strategies and compare: Promise.all discards everything on the first failure, Promise.allSettled reports every outcome.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "abortcontroller-cancel-fetch",
     title: "Cancelling In-Flight Requests",
     description: "Type quickly into the search box — each keystroke starts a simulated request and aborts whatever was still in flight, so only the latest one can ever resolve.",

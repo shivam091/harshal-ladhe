@@ -364,6 +364,32 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "promise-all-settled-error-handling",
+    title: "Handling Partial Failures with Promise.allSettled",
+    excerpt: "Promise.all throws away every success the instant one task fails — allSettled doesn't.",
+    description: "Compare Promise.all's fail-fast behavior against Promise.allSettled's per-task outcome reporting, plus a small utility that partitions allSettled's results into fulfilled and rejected arrays.",
+    category: ["JavaScript"],
+    tags: [
+      "javascript",
+      "promises",
+      "async-await",
+      "promise-allsettled",
+      "error-handling",
+      "parallel-async",
+      "typescript",
+      "resilience"
+    ],
+    image: {
+      path: "/assets/img/goodies/snippets/promise-all-settled-error-handling/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Comparison of Promise.all discarding all results after one rejection versus Promise.allSettled reporting every task's individual outcome."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 
