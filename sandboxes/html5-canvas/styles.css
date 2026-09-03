@@ -16,6 +16,20 @@
   cursor: crosshair;
 }
 
+#scene-3d {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: radial-gradient(circle at 50% 30%, #1d2137, #0f1220 70%);
+  cursor: grab;
+  /* Stops the browser from scrolling/zooming the page on touch-drag, since the drag itself rotates the shape. */
+  touch-action: none;
+}
+
+#scene-3d:active {
+  cursor: grabbing;
+}
+
 .fps-readout {
   position: absolute;
   top: 10px;
@@ -30,7 +44,8 @@
 }
 
 @media (max-width: 480px) {
-  #scene {
+  #scene,
+  #scene-3d {
     aspect-ratio: 4 / 3;
   }
 }

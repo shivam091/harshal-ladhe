@@ -445,7 +445,7 @@ export const sandboxes: SandboxMeta[] = [
   {
     slug: "html5-canvas",
     title: "HTML5 Canvas Playground",
-    description: "Dozens of particles react to your mouse in real time — toggle particle-to-particle collisions and switch between repel and attract to feel how each force changes the scene.",
+    description: "Dozens of particles react to your mouse in real time, or switch to a hand-rolled 3D scene — drag to spin a cube, pyramid, or octahedron and tune perspective, rotation speed, and wireframe mode live.",
     template: "vanilla",
     entry: "/index.html",
   },

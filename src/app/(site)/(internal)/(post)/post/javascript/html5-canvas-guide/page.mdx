@@ -360,6 +360,79 @@ To enter the 3D world, you switch the context from `2d` to `webgl` (Web Graphics
 
   Libraries like **Three.js** simplify WebGL by abstracting complex math, shaders, and rendering pipelines.
 
+### Faking 3D on a 2D Context (No WebGL Needed)
+
+You don't need WebGL, or a library, to get *something* 3D on screen. For simple shapes — a cube, a pyramid, a handful of
+polygons — you can run the whole pipeline by hand on a plain `2d` context: rotate points in 3D space, project them down
+to 2D, then draw with the same `fillRect`/`beginPath`/`fill` methods you already know.
+
+**Step 1 — Represent points in 3D.** Instead of `{x, y}`, model every vertex as `{x, y, z}`.
+
+**Step 2 — Rotate around an axis.** Rotating a point around the X or Y axis is just a rotation matrix applied by hand
+with `Math.cos`/`Math.sin`:
+
+<CodeBlock language="js">
+{`
+  function rotateY(point, angle) {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return {
+      x: point.x * cos + point.z * sin,
+      y: point.y,
+      z: -point.x * sin + point.z * cos,
+    };
+  }
+`}
+</CodeBlock>
+
+**Step 3 — Project onto the screen.** Once a point is rotated, flatten it into a 2D screen position with a simple
+"weak perspective" projection — points scale down the further along `z` (away from the camera) they sit:
+
+<CodeBlock language="js">
+{`
+  function project(point, perspective) {
+    const scale = perspective / (perspective + point.z);
+    return {
+      x: centerX + point.x * scale,
+      y: centerY + point.y * scale,
+    };
+  }
+`}
+</CodeBlock>
+
+The smaller `perspective` is, the more dramatic the effect — edges close to the camera balloon in size relative to
+edges further away, the same way a wide-angle lens does.
+
+**Step 4 — Draw back-to-front (the Painter's Algorithm).** If you're filling in solid faces instead of just drawing
+edges, sort them by average depth and draw the farthest face first, nearest last, so closer faces correctly paint over
+farther ones:
+
+<CodeBlock language="js">
+{`
+  const facesByDepth = faces
+    .map((face) => ({ face, avgDepth: averageZ(face) }))
+    .sort((a, b) => b.avgDepth - a.avgDepth);
+
+  for (const { face } of facesByDepth) {
+    drawFace(face); // farthest first, nearest last
+  }
+`}
+</CodeBlock>
+
+**Step 5 — Fake lighting (optional).** For flat shading, take the cross product of two of a face's edges to get its
+normal vector, then dot that against a fixed "light direction." A face pointing toward the light renders brighter; one
+angled away renders darker — no real lighting engine required.
+
+<Info title="Wireframe vs. solid">
+  Skip steps 4 and 5 entirely for a wireframe look — just connect each rotated, projected vertex with `stroke()`'d
+  lines instead of filling triangles. Faces and their fill order only matter once you want solid, shaded surfaces.
+</Info>
+
+**Try this:** Switch the [Interactive Example](#interactive-example) below to **3D Canvas** and drag the shape around
+with your mouse. Toggle **Wireframe only** off and on to compare the edges-only view from steps 2–3 against the
+depth-sorted, shaded faces from steps 4–5, and drag slowly to watch individual faces swap draw order as they rotate
+behind one another.
+
 ### Pro Level: OffscreenCanvas
 
 For high-performance applications or complex games, the biggest bottleneck is the **Main Thread**. If your JavaScript is
@@ -535,15 +608,16 @@ Use this quick reference for the most common methods you'll use in 90% of your p
 
 ## Interactive Example
 
-Theory is a great start, but the HTML5 Canvas is a medium meant for motion. This interactive playground demonstrates several concepts covered in this guide, including **dynamic particle systems, collision physics, and real-time mouse interaction**.
+Theory is a great start, but the HTML5 Canvas is a medium meant for motion. This interactive playground demonstrates several concepts covered in this guide, including **dynamic particle systems, collision physics, real-time mouse interaction, and hand-rolled 3D projection** — all on a plain `2d` context, no WebGL required.
 
-**Try this:** Move your mouse over the canvas area. You'll see the particles react to your position, showcasing how Canvas can handle dozens of individual calculations every single frame while maintaining a smooth 60 FPS.
+**Try this:** Move your mouse over the particle canvas to see it react to your position, then flip the segmented control to **3D Canvas** and drag the shape to spin it — this second mode does its own rotation matrices and perspective projection in JavaScript, the manual math underneath what a library like Three.js would otherwise hide from you.
 
 This demo combines:
 
 - Particle systems
 - Collision physics
 - Mouse interaction
+- Manual 3D rotation and perspective projection on a 2D context
 
 <Sandbox slug="html5-canvas" defaultLayout="vertical" />
 
