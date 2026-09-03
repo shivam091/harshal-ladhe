@@ -1,0 +1,51 @@
+:root {
+  --pg-radius-lg: 1rem;
+}
+
+.demo-area {
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--pg-radius-lg);
+}
+
+#scene {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: radial-gradient(circle at 50% 30%, #1d2137, #0f1220 70%);
+  cursor: crosshair;
+}
+
+#scene-3d {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: radial-gradient(circle at 50% 30%, #1d2137, #0f1220 70%);
+  cursor: grab;
+  /* Stops the browser from scrolling/zooming the page on touch-drag, since the drag itself rotates the shape. */
+  touch-action: none;
+}
+
+#scene-3d:active {
+  cursor: grabbing;
+}
+
+.fps-readout {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 3px 8px;
+  font-family: var(--pg-mono);
+  font-size: 0.7rem;
+  color: var(--pg-text-muted);
+  background: rgba(15, 18, 32, 0.65);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  #scene,
+  #scene-3d {
+    aspect-ratio: 4 / 3;
+  }
+}

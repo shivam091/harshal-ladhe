@@ -35,5 +35,9 @@ export const categoryMeta: Record<string, CategoryMeta> = {
   javascript: {
     title: "All Posts on JavaScript Programming",
     description: "Explore posts on the JavaScript programming language, including ES6+ features, operators, concepts, and techniques for modern frontend development."
+  },
+  react: {
+    title: "All Posts on React",
+    description: "Guides on building with React — hooks, component patterns, and how React's declarative model meets imperative browser APIs like Canvas."
   }
 };

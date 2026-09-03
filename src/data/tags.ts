@@ -351,5 +351,29 @@ export const tagMeta: Record<string, TagMeta> = {
   "scss": {
     title: "Streamlined Styling with SCSS and Preprocessors",
     description: "Optimize your CSS workflow using SCSS (Sass) features like variables, nesting, mixins, and modular imports for scalable and maintainable code."
+  },
+  "react": {
+    title: "All Posts Tagged React",
+    description: "Posts on building with React — component patterns, hooks, and integrating React with imperative browser APIs."
+  },
+  "react-hooks": {
+    title: "React Hooks in Practice",
+    description: "Practical guides to React hooks like useRef, useEffect, and custom hooks — including where they meet imperative APIs like Canvas that predate React entirely."
+  },
+  "html5": {
+    title: "HTML5 Elements and Browser APIs",
+    description: "Guides to HTML5 elements and the browser APIs behind them — from the <canvas> element and its drawing context to the modern features every frontend developer relies on."
+  },
+  "canvas": {
+    title: "Working with the HTML5 Canvas API",
+    description: "Guides on drawing, animating, and structuring code around the HTML5 <canvas> element, from plain JavaScript to framework integrations."
+  },
+  "canvas-api": {
+    title: "HTML5 Canvas API Reference and Techniques",
+    description: "Deep dives into specific HTML5 Canvas API methods and techniques — drawing, transforms, pixel manipulation, and performance."
+  },
+  "webgl": {
+    title: "WebGL and 3D Graphics on the Web",
+    description: "Posts touching WebGL and 3D rendering in the browser, from raw context calls to higher-level libraries like Three.js and react-three-fiber."
   }
 };

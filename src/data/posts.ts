@@ -72,7 +72,7 @@ export const posts: Post[] = [
   {
     slug: "getting-started-with-css-grid",
     title: "Getting Started with CSS Grid: A Beginner's Guide to 2D Layouts",
-    excerpt: "Lay the foundation, shape the grid.",
+    excerpt: "Lay the foundation, shape the grid, build 2D layouts.",
     description: "A beginner-friendly introduction to CSS Grid that covers core concepts and guides you through building your first 2D layouts with real-world examples.",
     category: ["CSS"],
     tags: ["css", "grid", "css-grid", "beginner", "layout", "web-design", "frontend", "2d-layouts", "devtools"],
@@ -94,7 +94,7 @@ export const posts: Post[] = [
   {
     slug: "mastering-css-grid",
     title: "Mastering CSS Grid: Grid Areas, Item Alignment, and Spanning",
-    excerpt: "Structure with clarity, align with precision.",
+    excerpt: "Name your areas, span tracks, and align with precision.",
     description: "Take your CSS Grid skills to the next level by mastering semantic layouts with grid areas, named lines, item alignment, spanning, subgrid, and accessible ordering.",
     category: ["CSS"],
     tags: ["css", "css-grid", "grid", "beginner", "layout", "grid-template-areas", "grid-alignment", "frontend", "subgrid", "named-grid-lines", "accessibility"],
@@ -117,7 +117,7 @@ export const posts: Post[] = [
   {
     slug: "responsive-css-grid-layouts",
     title: "Responsive CSS Grid Layouts: `fr` Units, `minmax()`, `auto-fill`, and `auto-fit` Explained",
-    excerpt: "Smarter layouts without rigid breakpoints.",
+    excerpt: "Build fluid, responsive grids without rigid media-query breakpoints.",
     description: 'Learn how to build truly responsive CSS Grid layouts using "fr" units, "minmax()", "auto-fit", "auto-fill", and modern media & container queries.',
     category: ["CSS"],
     tags: ["css", "grid", "beginner", "responsive", "layout", "fr-units", "minmax", "media-queries", "container-queries", "auto-fit", "auto-fill", "browser-support", "progressive-enhancement"],
@@ -140,7 +140,7 @@ export const posts: Post[] = [
   {
     slug: "css-transitions-guide",
     title: "An Interactive Guide to CSS Transitions",
-    excerpt: "Craft high-performance, responsive UI motion with CSS transitions and transforms",
+    excerpt: "Craft smooth, high-performance UI motion with CSS transitions.",
     description: "Master CSS transitions for responsive UI. Learn to use duration, delay, timing-function, and transform for GPU-accelerated performance and smooth micro-interactions.",
     category: ["Animations"],
     tags: ["css", "animation", "transition", "will-change", "performance", "gpu-acceleration", "transform", "opacity", "timing-function", "microinteractions", "ui-design"],
@@ -201,7 +201,7 @@ export const posts: Post[] = [
   {
     slug: "svg-essentials-mastering-basic-shapes",
     title: "SVG Essentials: Mastering Shapes, Coordinates, and Styling",
-    excerpt: "Build sharp, scalable graphics with basic shapes.",
+    excerpt: "Build sharp, scalable graphics with SVG shapes and coordinates.",
     description: "Learn how to build resolution-independent SVG graphics. Master the viewBox, coordinates, essential shapes, and CSS styling with fill, stroke, and hover animations.",
     category: ["SVG"],
     tags: ["svg", "graphics", "advanced-css", "frontend", "web-design", "vector-graphics", "web-graphics", "transition", "ui-development", "coordinate-system", "viewbox"],
@@ -220,7 +220,7 @@ export const posts: Post[] = [
   {
     slug: "mastering-js-operators",
     title: "Mastering JavaScript Operators: A Complete Guide with Examples",
-    excerpt: "Transform, compare, assign—write cleaner code.",
+    excerpt: "Compare, assign, and transform values with every JavaScript operator.",
     description: "A complete breakdown of all JavaScript operators including arithmetic, logical, assignment, comparison, bitwise, and special operators with syntax and real-world examples.",
     category: ["JavaScript"],
     tags: ["javascript", "operators", "es6+", "frontend", "cheatsheet", "optional-chaining", "nullish-coalescing", "spread-operator", "ternary-operator", "type-coercion"],
@@ -239,7 +239,7 @@ export const posts: Post[] = [
   {
     slug: "polygon-vs-polyline",
     title: "SVG Polygon vs Polyline: Differences, Fill Rules, and Use Cases",
-    excerpt: "Master SVG polygons, polylines, and fill rules.",
+    excerpt: "Master SVG polygons, polylines, and their tricky fill rules.",
     description: "Learn the difference between SVG polygon and polyline: points syntax, fill-rule, accessibility, and real use cases like charts, icons, and UI shapes.",
     category: ["SVG"],
     tags: ["svg", "polygon", "polyline", "graphics", "vector-graphics", "shapes", "fill-rule", "web-design", "frontend-development", "icons", "accessibility"],
@@ -258,7 +258,7 @@ export const posts: Post[] = [
   {
     slug: "css-logical-properties",
     title: "CSS Logical Properties: Writing Modes, RTL, and Direction-Aware Layouts",
-    excerpt: "Design once, adapt everywhere.",
+    excerpt: "Design once, adapt everywhere with direction-aware logical properties.",
     description: "CSS Logical Properties adapt your layout to any language, direction, or writing mode from one stylesheet — no more RTL hacks or duplicated styles.",
     category: ["CSS"],
     tags: ["css", "layout", "rtl", "logical-properties", "writing-modes", "i18n", "frontend", "accessibility"],
@@ -277,7 +277,7 @@ export const posts: Post[] = [
   {
     slug: "mastering-css-gradients",
     title: "Mastering CSS Gradients: Types, Use Cases & Best Practices",
-    excerpt: "Design modern UI backgrounds using CSS gradients",
+    excerpt: "Design modern UI backgrounds with linear, radial, conic gradients.",
     description: "A deep dive into CSS gradients—linear, radial, conic, repeating—with examples, SCSS helpers, animations, and practical best practices for modern web design.",
     category: ["CSS"],
     tags: ["css", "gradients", "background", "linear-gradient", "radial-gradient", "conic-gradient", "repeating-gradient", "modern-css", "ui-design", "color-theory", "oklch", "animation", "scss"],
@@ -291,6 +291,32 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-04", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "html5-canvas-guide",
+    title: "HTML5 Canvas Guide: Drawing, Animation, and Best Practices",
+    excerpt: "Draw, animate, and optimise graphics with the Canvas API.",
+    description: "Learn the HTML5 Canvas API from first shapes to advanced techniques — paths, transforms, animation, input, high-DPI, OffscreenCanvas, pixels, and 3D.",
+    category: ["JavaScript"],
+    tags: ["canvas", "html5", "javascript", "canvas-api", "animation", "graphics", "webgl", "performance", "accessibility", "frontend"],
+    toc: { maxLevel: 3 },
+    signoff: "Canvas rewards the habits that follow from it forgetting everything it draws — fresh paths, saved state, time-based motion — and the coordinate, arc, transform, and high-DPI diagrams are there to make those habits stick. I hope spinning that hand-rolled 3D cube in the playground shows just how far a plain 2D context can go. Thanks for drawing along with me — go paint something worth redrawing sixty times a second. 🎨",
+    changelog: [
+      { date: "2026-09-01", change: "Initial publication" },
+    ],
+  },
+  {
+    slug: "canvas-in-react",
+    title: "Canvas in React: useRef, useEffect, and Animation Loops Done Right",
+    excerpt: "Wire Canvas into React with refs, effects, and cleanup.",
+    description: "Wire HTML5 Canvas into React the right way — useRef and useEffect, ref-driven animation loops, ResizeObserver, cleanup, a reusable useCanvas hook, and OffscreenCanvas.",
+    category: ["React"],
+    tags: ["react", "canvas", "react-hooks", "animation", "performance", "webgl", "frontend"],
+    toc: { maxLevel: 3 },
+    signoff: "Watching that renders-per-second counter climb in useState mode and drop to zero in useRef mode is the whole argument of this post in one number — I hope it makes the ref-driven loop feel obvious from here on. Thanks for keeping your pixels imperative and your components declarative with me — go build a canvas React never has to re-render for. ⚛️",
+    changelog: [
+      { date: "2026-09-03", change: "Initial publication" },
+    ],
   }
 ];
 

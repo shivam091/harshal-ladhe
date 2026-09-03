@@ -16,6 +16,20 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "canvas-in-react",
+    title: "Canvas in React Playground",
+    description: "Click to drop bouncing balls with a real useCanvas hook, then flip to a rotating cube that races useState against useRef — watch the renders/sec counter spike in one and sit at zero in the other.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
+    slug: "html5-canvas",
+    title: "HTML5 Canvas Playground",
+    description: "Dozens of particles react to your mouse in real time, or switch to a hand-rolled 3D scene — drag to spin a cube, pyramid, or octahedron and tune perspective, rotation speed, and wireframe mode live.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "mastering-css-gradients",
     title: "CSS Gradients Playground",
     description: "Switch between linear, radial, conic, and repeating gradients, stack a live glassmorphism card, and preview all three animated gradient techniques from the post.",

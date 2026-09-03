@@ -1,0 +1,669 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("canvas-in-react");
+
+This post assumes you already know the Canvas API itself — the coordinate system, `fillRect`/`arc`/`stroke`, animation
+with `requestAnimationFrame`, the DPR fix for blurry canvases, and so on. If any of that isn't familiar yet, start
+with [HTML5 Canvas Guide: Drawing, Animation, and Best Practices](/post/javascript/html5-canvas-guide) first — this
+post deliberately doesn't re-explain any of it.
+
+What it *does* cover is the layer above that. React is built around describing *what* the UI should look like and
+letting React work out *how* to get the DOM there, while Canvas is built around issuing a stream of imperative drawing
+commands onto one element that remembers nothing about what you drew. Those two models don't naturally meet in the
+middle, and nearly every problem people hit wiring canvas into a React app comes from fighting that mismatch instead of
+giving canvas its own, deliberately imperative lane inside an otherwise declarative component.
+
+<Quote>
+  React owns the canvas element. Your code owns every pixel inside it.
+</Quote>
+
+This post covers:
+
+- Why `<canvas>` needs `useRef` instead of `getElementById`, and `useEffect` instead of "just draw it"
+- The lifecycle of a canvas effect, and why Strict Mode runs it twice
+- Redrawing a static canvas when props change
+- The single biggest performance trap: driving an animation loop off `useState`
+- Resizing with `ResizeObserver`, handling pointer input, and cleaning up on unmount
+- Building a reusable `useCanvas` hook — and an advanced version that never restarts its loop
+- Running OffscreenCanvas Web Workers safely inside a component
+- When to reach for `react-three-fiber` instead of raw WebGL
+- A full interactive example, built the same way this post teaches
+
+## Setting Up Canvas in React
+
+In plain JavaScript, you'd grab the canvas with `document.getElementById`. In React, you never query the DOM by hand
+for an element you rendered yourself — you get a stable handle to it with `useRef`, and you do anything that touches
+the real DOM node inside `useEffect`, since that's the one place React guarantees the node already exists and is
+attached to the page.
+
+<CodeBlock language="jsx">
+{`
+  import { useEffect, useRef } from "react";
+
+  function Canvas() {
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+
+      ctx.fillStyle = "skyblue";
+      ctx.fillRect(50, 50, 150, 100);
+    }, []); // empty deps: run once, after the canvas has mounted
+
+    return <canvas ref={canvasRef} width={400} height={300} />;
+  }
+`}
+</CodeBlock>
+
+Two details matter here, and both trip people up the first time:
+
+- **The `ref`, not `useState`, holds the canvas.** If you stored the canvas element in state instead, setting it
+  would trigger a re-render — for a DOM node that never needs to appear in JSX again once you have it. Refs exist
+  precisely for "a mutable value that doesn't drive rendering".
+- **The empty dependency array matters.** `useEffect(fn, [])` runs `fn` once, right after the first mount. Miss the
+  `[]` (or the whole array) and the effect re-runs after every single render, which for a canvas setup effect is
+  almost never what you want.
+
+<Info title="Why not draw during render?">
+  The component function runs *before* React has created or updated the DOM, so on the first render
+  `canvasRef.current` is still `null`. Rendering is also meant to be pure — React may call your component several
+  times without committing the result. Drawing is a side effect, and side effects belong in `useEffect`.
+</Info>
+
+### With TypeScript
+
+In TypeScript, give the ref its element type and handle the `null` cases explicitly — `getContext()` can return `null`
+too:
+
+<CodeBlock language="tsx">
+{`
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    ctx.fillRect(50, 50, 150, 100); // ctx is CanvasRenderingContext2D from here on
+  }, []);
+`}
+</CodeBlock>
+
+### The Lifecycle of a Canvas Effect
+
+Every canvas component in this post follows the same timeline: React renders the JSX, commits the `<canvas>` to the
+page and fills in `canvasRef.current`, then runs your effect. The effect sets up everything imperative — the context,
+listeners, the animation loop — and returns a **cleanup function** that tears all of it down again when the component
+unmounts.
+
+<CanvasEffectLifecycleDiagram />
+
+<Info title="Strict Mode runs your effect twice in development">
+  In development, Strict Mode deliberately mounts, unmounts, and *re-mounts* every component once, to surface effects
+  that aren't safe to run twice. If you see your canvas set up twice in the console during development, that's Strict
+  Mode working as intended — it doesn't happen in production, and every effect in this post is written to tolerate it,
+  because its cleanup function fully undoes whatever the effect did.
+</Info>
+
+### Accessibility Still Applies
+
+A canvas is a single opaque image to screen readers, whatever framework drew it. Give a static canvas `role="img"` and
+an `aria-label` (or fallback text as children), and pair an interactive one with real buttons and inputs:
+
+<CodeBlock language="jsx">
+{`
+  <canvas ref={canvasRef} width={400} height={200} role="img" aria-label="Monthly sales, rising from £2k in January to £9k in June">
+    Monthly sales chart
+  </canvas>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Redrawing When Props Change
+
+Not every canvas animates. A chart, a QR code, or a generated avatar only needs redrawing when its **input** changes —
+and that's exactly what an effect's dependency array is for:
+
+<CodeBlock language="jsx">
+{`
+  // values: numbers between 0 and 1, one per bar
+  function BarChart({ values, color = "#3498db" }) {
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      const barWidth = canvas.width / values.length;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = color;
+
+      values.forEach((value, i) => {
+        const barHeight = value * canvas.height;
+        ctx.fillRect(i * barWidth + 4, canvas.height - barHeight, barWidth - 8, barHeight);
+      });
+    }, [values, color]); // redraw only when the data or colour changes
+
+    return <canvas ref={canvasRef} width={400} height={200} role="img" aria-label="Bar chart" />;
+  }
+`}
+</CodeBlock>
+
+This is the one place where React's model and Canvas line up neatly: props describe *what* to draw, and the effect
+re-runs the imperative drawing whenever they change. Because the effect clears before drawing, each run leaves the
+canvas in exactly the state the current props describe.
+
+<Info title="Watch your dependency identities">
+  If the parent passes `values={[0.2, 0.8, 0.5]}` inline, it creates a **new array on every render**, so the effect
+  redraws every time the parent renders — even when the numbers are identical. For a cheap chart that rarely matters;
+  for an expensive one, keep the array in state or wrap it in `useMemo` in the parent.
+</Info>
+
+<RainbowDivider />
+
+## Animating Canvas in React (and the Trap Almost Everyone Falls Into)
+
+Animation is where "just use `useState` for everything" stops working, and understanding exactly why is the single
+most useful thing this post can teach you about canvas in React.
+
+### The Trap: State-Driven Animation
+
+<CodeBlock language="jsx">
+{`
+  // Don't do this
+  function BadBall() {
+    const canvasRef = useRef(null);
+    const [x, setX] = useState(50);
+
+    useEffect(() => {
+      const ctx = canvasRef.current.getContext("2d");
+      ctx.clearRect(0, 0, 400, 300);
+      ctx.beginPath();
+      ctx.arc(x, 150, 30, 0, Math.PI * 2);
+      ctx.fill();
+    }, [x]);
+
+    useEffect(() => {
+      const id = requestAnimationFrame(() => setX((prev) => prev + 2));
+      return () => cancelAnimationFrame(id);
+    }, [x]);
+
+    return <canvas ref={canvasRef} width={400} height={300} />;
+  }
+`}
+</CodeBlock>
+
+This *works*, in the sense that the ball moves. It also means every single frame — 60 or more times a second — runs a
+full React re-render, a reconciliation pass, and a commit, just to hand one number to an effect that could have
+updated it directly. React's re-render isn't free, and a canvas animation is exactly the kind of tight,
+high-frequency loop where that cost adds up into dropped frames — and the cost grows with every child component and
+every hook that re-runs alongside it.
+
+### The Fix: A Ref-Driven Loop
+
+<CodeBlock language="jsx">
+{`
+  function Ball() {
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      let x = 50;
+      const dx = 2;
+      let rafId;
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.arc(x, 150, 30, 0, Math.PI * 2);
+        ctx.fillStyle = "green";
+        ctx.fill();
+        x += dx;
+
+        rafId = requestAnimationFrame(animate);
+      }
+
+      rafId = requestAnimationFrame(animate);
+
+      // Cleanup: cancel the in-flight frame so the loop doesn't keep running (and
+      // eventually throw, drawing onto a canvas that no longer exists) after unmount.
+      return () => cancelAnimationFrame(rafId);
+    }, []);
+
+    return <canvas ref={canvasRef} width={400} height={300} />;
+  }
+`}
+</CodeBlock>
+
+The ball's position lives in a plain variable closed over by the effect, not in `useState` — it only ever needs to
+reach the next `ctx.arc()` call, never the JSX. React never re-renders for it, and the *only* things React manages
+here are mounting the canvas once and running the cleanup function on unmount.
+
+<CanvasRenderLoopDiagram />
+
+A plain `let` inside the effect is enough when only the loop needs the value. When *other* code — an event handler, a
+button, a second effect — also needs to read or change it, store it in a `useRef` instead: `positionRef.current` is
+just as cheap to mutate, and every part of the component sees the same object.
+
+<Info title="Moving by time, not by frame">
+  `x += dx` moves the ball a fixed distance per *frame*, so it runs twice as fast on a 120 Hz display. The
+  [Canvas Guide's frame-rate-independent motion](/post/javascript/html5-canvas-guide#frame-rate-independent-motion)
+  fix — multiply speed by the elapsed time `requestAnimationFrame` passes you — drops into this loop unchanged.
+</Info>
+
+<Info title="What if a slider needs to control the animation?">
+  Keep the slider's value in `useState` (so the input stays controlled and re-renders its own label normally), but
+  also mirror it into a `ref` on every change. The loop — set up once, with an empty dependency array — reads the
+  ref every frame and always sees the latest value, without ever needing to restart. Reading `state` directly inside
+  a loop declared with `[]` would instead capture whatever the value was at mount time forever, a classic **stale
+  closure** — updating state doesn't retroactively update a closure that already ran. The [Interactive
+  Example](#interactive-example)'s rotation-speed slider uses exactly this ref-mirroring pattern — worth reading its
+  source (`RotationRaceDemo.tsx`) if you want to see it wired up end to end.
+</Info>
+
+<RainbowDivider />
+
+## Handling Resize (and Why Cleanup Isn't Optional)
+
+A canvas doesn't automatically redraw when its element resizes — you have to listen for it, same as anywhere else.
+In a component, that listener has to be removed when the component unmounts, or it keeps firing against a canvas
+that's no longer on the page (and, across many mount/unmount cycles of the same component, silently piles up one
+leaked listener per mount):
+
+<CodeBlock language="jsx">
+{`
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    resize();
+    window.addEventListener("resize", resize);
+
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+`}
+</CodeBlock>
+
+Every `addEventListener` (or `requestAnimationFrame`, or `setInterval`, or Web Worker) started inside an effect needs
+a matching teardown in that effect's cleanup function. This is also the DPR/high-DPI fix from the Canvas Guide — the
+maths doesn't change in React, it just lives inside this same resize effect.
+
+### Production Upgrade: `ResizeObserver`
+
+The window's `resize` event only fires when the **window** changes size. In a real app, a canvas also changes size
+when a sidebar collapses, a grid reflows, or a parent animates — none of which resize the window. `ResizeObserver`
+watches the element itself:
+
+<CodeBlock language="jsx">
+{`
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+
+    const observer = new ResizeObserver(([entry]) => {
+      const dpr = window.devicePixelRatio || 1;
+      const { width, height } = entry.contentRect;
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      drawScene(ctx, width, height); // resizing wiped the bitmap — redraw straight away
+    });
+
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
+`}
+</CodeBlock>
+
+<Warning title="Give the canvas an explicit CSS size">
+  Setting `canvas.width`/`canvas.height` changes the element's *intrinsic* size. If its CSS height is `auto`, that new
+  intrinsic size changes its layout box, which fires the observer again — and the canvas can grow on every callback.
+  Size the canvas with CSS (`width: 100%` plus a fixed `height` or an `aspect-ratio`) so the attributes only ever
+  change the resolution, never the layout.
+</Warning>
+
+<RainbowDivider />
+
+## Handling Pointer Input
+
+React's own event props work perfectly well on a canvas. The only Canvas-specific part is converting the pointer's
+page position into canvas coordinates — and writing the result to a ref, not to state, if it changes every frame:
+
+<CodeBlock language="jsx">
+{`
+  function Paint() {
+    const canvasRef = useRef(null);
+    const pointerRef = useRef(null); // the animation loop reads this every frame
+
+    function handlePointerMove(event) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      // CSS pixels — the same units you draw in after the DPR setTransform()
+      pointerRef.current = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    }
+
+    function handlePointerLeave() {
+      pointerRef.current = null;
+    }
+
+    // ...a ref-driven loop (as above) reads pointerRef.current and draws
+    return <canvas ref={canvasRef} onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave} />;
+  }
+`}
+</CodeBlock>
+
+Pointer events cover mouse, touch, and pen with one handler. If you need to call `event.preventDefault()` on touch to
+stop the page scrolling while someone draws, set the CSS `touch-action: none` on the canvas instead — it's simpler and
+works with React's event handling.
+
+<RainbowDivider />
+
+## A Reusable `useCanvas` Hook
+
+Once you've written the ref-plus-effect setup a couple of times, it's worth pulling into its own hook. This is the
+idiomatic React move for "some imperative setup/teardown logic several components need":
+
+<CodeBlock language="jsx">
+{`
+  // Sets up a canvas's 2D context and hands your draw callback a resize-aware render loop, tearing
+  // both down automatically on unmount.
+  function useCanvas(draw) {
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      let rafId;
+
+      function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      function loop(now) {
+        draw(ctx, now);
+        rafId = requestAnimationFrame(loop);
+      }
+
+      resize();
+      window.addEventListener("resize", resize);
+      rafId = requestAnimationFrame(loop);
+
+      return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener("resize", resize);
+      };
+    }, [draw]);
+
+    return canvasRef;
+  }
+
+  // Usage: the component only ever thinks about drawing, not setup/teardown.
+  function Ball() {
+    const draw = useCallback((ctx) => {
+      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      ctx.beginPath();
+      ctx.arc(100, 100, 30, 0, Math.PI * 2);
+      ctx.fillStyle = "green";
+      ctx.fill();
+    }, []);
+
+    const canvasRef = useCanvas(draw);
+    return <canvas ref={canvasRef} />;
+  }
+`}
+</CodeBlock>
+
+<Info title="Why draw needs useCallback here">
+  `useCanvas`'s effect lists `draw` as a dependency, so it re-runs (tearing down and restarting the whole loop)
+  whenever `draw` changes identity. Defining `draw` inline without `useCallback` would give it a *new* identity on
+  every render, restarting the loop constantly. `useCallback` keeps the same function reference across renders as
+  long as its own dependencies haven't changed, so the loop only restarts when `draw` actually needs to.
+</Info>
+
+### Advanced: A Loop That Never Restarts
+
+`useCallback` works, but it pushes a rule onto every caller — and whenever `draw` *does* depend on props (a colour,
+a speed), each change still tears down and restarts the loop. The alternative is to keep the latest `draw` in a ref
+and let the loop call through it:
+
+<CodeBlock language="jsx">
+{`
+  function useCanvas(draw) {
+    const canvasRef = useRef(null);
+    const drawRef = useRef(draw);
+
+    // Point at the newest draw function after every render, without touching the loop
+    useEffect(() => {
+      drawRef.current = draw;
+    });
+
+    useEffect(() => {
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      let rafId;
+
+      function loop(now) {
+        drawRef.current(ctx, now); // always the latest props, never a stale closure
+        rafId = requestAnimationFrame(loop);
+      }
+
+      rafId = requestAnimationFrame(loop);
+      return () => cancelAnimationFrame(rafId);
+    }, []); // set up exactly once
+
+    return canvasRef;
+  }
+`}
+</CodeBlock>
+
+Now callers can pass an inline arrow function that reads props freely, and the loop never restarts. (Resize handling
+is left out here for brevity — it slots in exactly as before.) React 19.2's `useEffectEvent` hook formalises this
+same "latest callback" pattern, if your project is on a version that has it.
+
+<Info title="Plugging in the Canvas Guide">
+  Anything from the Canvas Guide — hand-rolled 3D rotation, `getImageData()` pixel work, particle systems — slots into
+  this exact same shape unchanged: it's still just code that runs inside `draw`, or inside the setup effect if it
+  needs its own teardown.
+</Info>
+
+<RainbowDivider />
+
+## OffscreenCanvas and Web Workers in React
+
+Moving rendering into a Web Worker with OffscreenCanvas (covered in the
+[Canvas Guide](/post/javascript/html5-canvas-guide#pro-level-offscreencanvas)) has one React-specific trap:
+`transferControlToOffscreen()` can only be called **once** per canvas element. Strict Mode's mount → unmount →
+re-mount runs your effect twice against the *same* `<canvas>`, so the second call throws an `InvalidStateError`.
+
+The robust fix is to let the effect create its own canvas element, so every run gets a fresh one:
+
+<CodeBlock language="jsx">
+{`
+  function WorkerCanvas() {
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+      // A brand-new <canvas> per effect run, so each one can be transferred exactly once
+      const canvas = document.createElement("canvas");
+      canvas.width = 400;
+      canvas.height = 300;
+      containerRef.current.appendChild(canvas);
+
+      const offscreen = canvas.transferControlToOffscreen();
+      const worker = new Worker(new URL("./render.worker.js", import.meta.url));
+      worker.postMessage({ canvas: offscreen }, [offscreen]);
+
+      return () => {
+        worker.terminate(); // stops the worker's own requestAnimationFrame loop too
+        canvas.remove();
+      };
+    }, []);
+
+    return <div ref={containerRef} />;
+  }
+`}
+</CodeBlock>
+
+`new Worker(new URL("./file.js", import.meta.url))` is the pattern modern bundlers (webpack 5, Vite, Next.js)
+recognise to bundle the worker file for you. The cleanup terminates the worker and removes the element, so the Strict
+Mode re-mount starts from a clean slate with a new canvas and a new worker.
+
+<RainbowDivider />
+
+## Canvas vs. SVG — the React-Specific Version
+
+Outside React, the Canvas-vs-SVG trade-off is about rendering model and performance. Inside React, there's a third
+axis: SVG can be written as JSX and gets to participate in React's model directly — every circle is a real element
+React can diff, style with CSS, and attach `onClick` to — while canvas content is always outside that model, drawn
+imperatively regardless of how you wire it up.
+
+| Feature            | Canvas                               | SVG (in React)                            |
+| ------------------ | ------------------------------------ | ----------------------------------------- |
+| Rendering          | Pixel-based (bitmap)                 | Vector (real DOM elements)                |
+| Performance        | Great for large animations, games    | Degrades with very high element counts    |
+| Interactivity      | Manual hit-testing (`isPointInPath`) | Native `onClick`/`onMouseEnter` per shape |
+| Accessibility      | One opaque image                     | Per-shape titles, labels, and focus       |
+| Fits React's model | No — always an escape hatch          | Yes — shapes are JSX, diffed normally     |
+
+<Info title="Use the right tool">
+  Reach for **SVG-as-JSX** when each shape is a first-class, interactive thing (a chart bar with a tooltip, a
+  draggable node) — React already does the bookkeeping for you. Reach for **Canvas** when you have hundreds or
+  thousands of things moving every frame (particles, a game board) and the bookkeeping React would otherwise do for
+  each one is exactly the cost you can't afford.
+</Info>
+
+<RainbowDivider />
+
+## Beyond 2D: WebGL, and Why You Probably Want react-three-fiber
+
+Wiring raw WebGL (shaders, buffers, the whole pipeline) into React by hand is significantly more code than the `2d`
+context needs, for the same reason it's more code outside React: WebGL is a low-level graphics API, not a drawing
+API.
+
+If you're reaching for real 3D in a React app, **[react-three-fiber](https://r3f.docs.pmnd.rs/)** — a React renderer
+for [Three.js](https://threejs.org/) — is the idiomatic choice almost everyone in the React ecosystem converges on
+instead of hand-rolling WebGL effects. It lets you describe a 3D scene *as JSX*:
+
+<CodeBlock language="jsx">
+{`
+  import { useRef } from "react";
+  import { Canvas, useFrame } from "@react-three/fiber";
+
+  function SpinningBox() {
+    const meshRef = useRef(null);
+
+    // Runs every frame, outside React rendering — the same ref-driven idea as the 2D loop above
+    useFrame((state, delta) => {
+      meshRef.current.rotation.y += delta;
+    });
+
+    return (
+      <mesh ref={meshRef} rotation={[0.4, 0.2, 0]}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color="royalblue" />
+      </mesh>
+    );
+  }
+
+  function Scene() {
+    return (
+      <Canvas>
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[2, 2, 2]} />
+        <SpinningBox />
+      </Canvas>
+    );
+  }
+`}
+</CodeBlock>
+
+Notice `useFrame` mutating `meshRef.current` directly: react-three-fiber's own documentation gives exactly the advice
+this post does — never `setState` inside a per-frame callback. (Its `<Canvas>` component also sets up the `<canvas>`
+element, resizing, and DPR for you; it isn't the HTML element of the same name.)
+
+Under the hood it's still WebGL, still imperative — react-three-fiber's whole trick is a custom React reconciler that
+translates this JSX into Three.js scene-graph calls for you, the same way `react-dom` translates JSX into real DOM
+nodes. It's a separate library with its own learning curve, not something this post covers in depth — but it's the
+answer if real 3D, rather than the Canvas Guide's hand-rolled projection maths, is where you're actually headed next.
+
+<RainbowDivider />
+
+## React-Specific Best Practices
+
+- **Refs for the node, effects for the setup:** `useRef` to reach the canvas, `useEffect` for anything that touches it.
+- **Refs for the animation, not `useState`:** a value that changes every frame doesn't belong in state — see
+  [Animating Canvas](#animating-canvas-in-react-and-the-trap-almost-everyone-falls-into) above.
+- **Dependencies for static drawings:** a canvas that only changes with its props should redraw from an effect keyed
+  on those props, not from a loop.
+- **Always clean up:** cancel every `requestAnimationFrame`, remove every listener, disconnect every observer, and
+  terminate every worker, in the same effect that created them.
+- **Stable draw functions:** either `useCallback` any draw function passed to a custom hook, or have the hook read it
+  from a ref so the loop never restarts.
+- **Observe the element, not the window:** prefer `ResizeObserver` so layout changes resize the canvas too.
+- **Tolerate Strict Mode:** write effects so mount → unmount → re-mount in development leaves you in the same state as
+  a single mount would — including creating a fresh canvas for OffscreenCanvas transfers.
+- **Server rendering is safe:** effects never run on the server, so canvas code inside them won't break SSR. In the
+  Next.js App Router, the component still needs `"use client"` at the top because it uses hooks.
+
+For the general Canvas best practices (sizing, batching draw calls, `save()`/`restore()`, accessibility) that apply
+regardless of framework, see the [Canvas Guide](/post/javascript/html5-canvas-guide#best-practices-and-guidelines).
+
+<RainbowDivider />
+
+## Interactive Example
+
+Rather than one demo split across a segmented control, this playground is two small, focused ones — each built to
+prove a single claim from this post rather than to be a feature-complete canvas app. (For a fuller demo — particle
+physics, selectable 3D shapes, wireframe/camera controls — see the [Canvas Guide's interactive
+example](/post/javascript/html5-canvas-guide#interactive-example) instead; it's the vanilla-JS version of the same
+underlying canvas techniques.)
+
+**Bouncing Balls** is the `useCanvas` hook from earlier in this post, used for real: click the canvas to drop a ball,
+and watch `useCanvas`'s `<canvas ref={canvasRef} />` plus its built-in resize-aware render loop do the rest. Every
+ball lives in a plain ref, mutated in place inside the `draw` callback — open the sandbox's `BallsDemo.tsx` to see
+how little code sits on top of the hook itself.
+
+**Try this:** Switch to **State vs. Ref** and watch the **renders/sec** counter while the cube spins. In `useState`
+mode it climbs to roughly your display's refresh rate — about 60 on most screens — one render per `setAngle()` call,
+every single frame. Switch the segmented control to `useRef` and it drops to 0, even though the cube keeps spinning
+at the same speed on the same canvas loop. Nothing about what you *see* changes; what changes is how much work React
+does to produce it. That gap, made visible, is the entire argument for keeping animation state out of `useState`.
+
+These demos combine:
+
+- The `useCanvas` hook, used by a real component instead of just shown in a code block
+- A ref-mutated ball array — hundreds of balls, zero re-renders
+- A live `useState`-vs-`useRef` comparison, with a render counter that makes the cost concrete instead of theoretical
+
+<Sandbox slug="canvas-in-react" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Canvas doesn't need React's blessing to work — it's a raw, imperative drawing surface, and the right move is almost
+always to let it stay that way rather than forcing it into a declarative shape it was never designed for. What React
+*does* give you is a clean, well-understood place to put that imperative code: a ref to reach the node, an effect
+with a cleanup function to own its lifecycle, a dependency array for drawings that follow props, and — if the
+animation needs to run fast — a plain variable or a ref instead of `useState` carrying the values that change every
+frame.
+
+Get that boundary right once, ideally behind a small `useCanvas`-style hook, and everything from the
+[Canvas Guide](/post/javascript/html5-canvas-guide) — particle systems, hand-rolled 3D, OffscreenCanvas workers — is
+just more drawing code inside the same shape.
