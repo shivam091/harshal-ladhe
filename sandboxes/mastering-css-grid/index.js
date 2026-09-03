@@ -3,6 +3,7 @@ import "./shared/segmented-control.css";
 import "./shared/range-slider.css";
 import "./styles.css";
 import { positionRangeBubble } from "./shared/range-slider.js";
+import { initSegmentedControl } from "./shared/segmented-control.js";
 
 const grid = document.getElementById("grid-preview");
 const output = document.getElementById("grid-output");
@@ -176,25 +177,7 @@ placeSelfSelect.addEventListener("change", () => {
 updateGrid();
 
 // Demo mode switcher (Alignment & Spanning vs. Template Areas)
-
-const segments = document.querySelectorAll(".segment");
-const demoModes = document.querySelectorAll(".demo-mode");
-
-function switchMode(mode) {
-  segments.forEach((segment) => {
-    const active = segment.dataset.mode === mode;
-    segment.classList.toggle("segment--active", active);
-    segment.setAttribute("aria-selected", String(active));
-  });
-
-  demoModes.forEach((el) => {
-    el.classList.toggle("active-mode", el.id === `${mode}-demo`);
-  });
-}
-
-segments.forEach((segment) =>
-  segment.addEventListener("click", () => switchMode(segment.dataset.mode))
-);
+initSegmentedControl(".segment");
 
 // Template Areas demo
 

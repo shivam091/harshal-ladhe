@@ -3,31 +3,19 @@ import "./shared/segmented-control.css";
 import "./shared/range-slider.css";
 import "./styles.css";
 import { positionRangeBubble } from "./shared/range-slider.js";
+import { initSegmentedControl } from "./shared/segmented-control.js";
 
 // Canvas mode switcher (2D Particles vs. 3D Canvas). Scoped to #canvas-mode-switch specifically
 // because the 3D panel below has its own, unrelated segmented control for picking a shape.
-const modeSegments = document.querySelectorAll("#canvas-mode-switch .segment");
-const demoModes = document.querySelectorAll(".demo-mode");
 let currentMode = "2d";
 
-// Activates the given canvas panel and resizes whichever canvas just became visible — a canvas
-// inside a hidden `.demo-mode` reports zero size until the panel is actually displayed.
-function switchCanvasMode(mode) {
+initSegmentedControl("#canvas-mode-switch .segment", (mode) => {
   currentMode = mode;
-  modeSegments.forEach((segment) => {
-    const active = segment.dataset.mode === mode;
-    segment.classList.toggle("segment--active", active);
-    segment.setAttribute("aria-selected", String(active));
-  });
-  demoModes.forEach((panel) => {
-    panel.classList.toggle("active-mode", panel.id === `${mode}-demo`);
-  });
-
+  // A canvas inside a hidden panel reports zero size until its panel is actually displayed, so
+  // whichever one just became visible needs to be resized now.
   if (mode === "2d") resizeCanvas();
   else resize3DCanvas();
-}
-
-modeSegments.forEach((segment) => segment.addEventListener("click", () => switchCanvasMode(segment.dataset.mode)));
+});
 
 /* ----------------------------- 2D particle scene ----------------------------- */
 
