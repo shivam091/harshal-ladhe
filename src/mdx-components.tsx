@@ -39,6 +39,11 @@ import GitResetDiagram from "@/components/mdx/GitResetDiagram";
 import GitBisectDiagram from "@/components/mdx/GitBisectDiagram";
 import GitObjectGraphDiagram from "@/components/mdx/GitObjectGraphDiagram";
 import GitWorkflowDiagram from "@/components/mdx/GitWorkflowDiagram";
+import GradientAxisDiagram from "@/components/mdx/GradientAxisDiagram";
+import RadialGradientDiagram from "@/components/mdx/RadialGradientDiagram";
+import ConicGradientDiagram from "@/components/mdx/ConicGradientDiagram";
+import RepeatingGradientDiagram from "@/components/mdx/RepeatingGradientDiagram";
+import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -92,6 +97,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     GitBisectDiagram,
     GitObjectGraphDiagram,
     GitWorkflowDiagram,
+    GradientAxisDiagram,
+    RadialGradientDiagram,
+    ConicGradientDiagram,
+    RepeatingGradientDiagram,
+    GradientLayeringDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
