@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "mastering-css-gradients",
+    title: "CSS Gradients Playground",
+    description: "Switch between linear, radial, conic, and repeating gradients, stack a live glassmorphism card, and preview all three animated gradient techniques from the post.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-transitions-guide",
     title: "CSS Transitions Playground",
     description: "Tune duration, delay, and timing function (preset, cubic-bezier, or steps) live against a transform + background-color transition.",
