@@ -267,6 +267,25 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-08-30", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "mastering-css-gradients",
+    title: "Mastering CSS Gradients: Types, Use Cases & Best Practices",
+    excerpt: "Design modern UI backgrounds using CSS gradients",
+    description: "A deep dive into CSS gradients—linear, radial, conic, repeating—with examples, SCSS helpers, animations, and practical best practices for modern web design.",
+    category: ["CSS"],
+    tags: ["css", "gradients", "background", "linear-gradient", "radial-gradient", "conic-gradient", "repeating-gradient", "modern-css", "ui-design", "color-theory", "oklch", "animation", "scss"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/mastering-css-gradients/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Illustrated cover image for “Mastering CSS Gradients: Types, Use Cases & Best Practices,” featuring vibrant neon CSS gradients with linear, radial, conic, and repeating gradient examples, layered gradient effects, CSS code, animated gradient waves, OKLCH color interpolation, and SCSS utilities on a dark futuristic background."
+    },
+    signoff: "The five diagrams gave me the most trouble up front—getting the off-center radial boundaries to line up with the actual math, and the conic sweep to read as clockwise-from-the-top at a glance—and turning the playground into three real tabs (gradient types plus repeating, a toggleable glass layer stack, and all three animated demos with a reduced-motion switch) took a lot more wiring than the original single-panel version. I hope dragging every one of those controls makes gradients click in a way reading about them never quite does. Thanks for gradient-ing along with me. 🌈",
+    changelog: [
+      { date: "2026-09-04", change: "Initial publication" }
+    ]
   }
 ];
 
