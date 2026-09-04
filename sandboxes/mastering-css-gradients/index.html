@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Gradients Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS Gradients Playground</h1>
+        <p>Switch between gradient types, stack layers into a glass card, and preview all three animated techniques from the post — all with the generated CSS shown live.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Playground mode" id="mode-switch">
+        <button class="tab tab--active" type="button" data-mode="types" role="tab" aria-selected="true">Gradient Types</button>
+        <button class="tab" type="button" data-mode="layering" role="tab" aria-selected="false">Layering</button>
+        <button class="tab" type="button" data-mode="animated" role="tab" aria-selected="false">Animated Demos</button>
+      </div>
+
+      <div id="types-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area" aria-label="Gradient preview">
+          <div id="gradient-preview" class="gradient-preview"></div>
+        </section>
+
+        <output id="gradient-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Gradient Type</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Gradient type">
+            <label class="segment">
+              <input type="radio" name="gradient-type" value="linear" checked>
+              <span>Linear</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="gradient-type" value="radial">
+              <span>Radial</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="gradient-type" value="conic">
+              <span>Conic</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="gradient-type" value="repeating">
+              <span>Repeating</span>
+            </label>
+          </div>
+
+          <div class="fields-grid">
+            <div id="type-options-container">
+              <div id="linear-options" class="type-group active-group">
+                <div class="field">
+                  <label for="angle-input">Angle</label>
+                  <div class="range-row">
+                    <span class="range-edge">0deg</span>
+                    <div class="range-track">
+                      <input type="range" id="angle-input" min="0" max="360" step="1" value="90">
+                      <output class="range-bubble" id="angle-value" for="angle-input">90deg</output>
+                    </div>
+                    <span class="range-edge">360deg</span>
+                  </div>
+                </div>
+              </div>
+
+              <div id="radial-options" class="type-group">
+                <div class="fields-grid">
+                  <div class="field">
+                    <label for="shape-select">Shape</label>
+                    <select id="shape-select">
+                      <option value="circle">circle</option>
+                      <option value="ellipse" selected>ellipse</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="radial-position-select">Position</label>
+                    <select id="radial-position-select">
+                      <option value="center" selected>center</option>
+                      <option value="top">top</option>
+                      <option value="bottom">bottom</option>
+                      <option value="left">left</option>
+                      <option value="right">right</option>
+                      <option value="top left">top left</option>
+                      <option value="top right">top right</option>
+                      <option value="bottom left">bottom left</option>
+                      <option value="bottom right">bottom right</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div id="conic-options" class="type-group">
+                <div class="fields-grid">
+                  <div class="field">
+                    <label for="from-angle-input">From angle</label>
+                    <div class="range-row">
+                      <span class="range-edge">0deg</span>
+                      <div class="range-track">
+                        <input type="range" id="from-angle-input" min="0" max="360" step="1" value="0">
+                        <output class="range-bubble" id="from-angle-value" for="from-angle-input">0deg</output>
+                      </div>
+                      <span class="range-edge">360deg</span>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label for="conic-position-select">Position</label>
+                    <select id="conic-position-select">
+                      <option value="center" selected>center</option>
+                      <option value="top">top</option>
+                      <option value="bottom">bottom</option>
+                      <option value="left">left</option>
+                      <option value="right">right</option>
+                      <option value="top left">top left</option>
+                      <option value="top right">top right</option>
+                      <option value="bottom left">bottom left</option>
+                      <option value="bottom right">bottom right</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div id="repeating-options" class="type-group">
+                <div class="fields-grid">
+                  <div class="field">
+                    <label for="repeat-shape-select">Shape</label>
+                    <select id="repeat-shape-select">
+                      <option value="linear" selected>linear (stripes)</option>
+                      <option value="radial">radial (rings)</option>
+                    </select>
+                  </div>
+                  <div class="field" id="repeat-angle-field">
+                    <label for="repeat-angle-input">Angle</label>
+                    <div class="range-row">
+                      <span class="range-edge">0deg</span>
+                      <div class="range-track">
+                        <input type="range" id="repeat-angle-input" min="0" max="360" step="1" value="45">
+                        <output class="range-bubble" id="repeat-angle-value" for="repeat-angle-input">45deg</output>
+                      </div>
+                      <span class="range-edge">360deg</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="field">
+                  <label for="repeat-width-input">Repeat unit width</label>
+                  <div class="range-row">
+                    <span class="range-edge">4px</span>
+                    <div class="range-track">
+                      <input type="range" id="repeat-width-input" min="4" max="60" step="2" value="20">
+                      <output class="range-bubble" id="repeat-width-value" for="repeat-width-input">20px</output>
+                    </div>
+                    <span class="range-edge">60px</span>
+                  </div>
+                </div>
+                <p class="tip">Repeating gradients use hard-edged stripes, not a smooth blend, so only the Start and End colors below are used — the midpoint color and slider are ignored.</p>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Color Stops</legend>
+          <div class="fields-grid fields-grid--3">
+            <div class="field">
+              <label for="color-start" id="color-start-label">Start (0%)</label>
+              <input type="color" id="color-start" value="#f97316">
+            </div>
+            <div class="field" id="color-mid-field">
+              <label for="color-mid">Midpoint</label>
+              <input type="color" id="color-mid" value="#14b8a6">
+            </div>
+            <div class="field" id="color-end-field">
+              <label for="color-end" id="color-end-label">End (100%)</label>
+              <input type="color" id="color-end" value="#a855f7">
+            </div>
+            <div class="field field--full" id="midpoint-field">
+              <label for="midpoint-input">Midpoint position</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="midpoint-input" min="0" max="100" step="1" value="50">
+                  <output class="range-bubble" id="midpoint-value" for="midpoint-input">50%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="tip" id="midpoint-tip">Drag the midpoint off 50% to see how an interpolation hint shifts where the color transition happens.</p>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Color Space</legend>
+          <div class="fields-grid">
+            <label class="checkbox-field" for="oklch-toggle">
+              <input type="checkbox" id="oklch-toggle">
+              <span>Interpolate in OKLCH (<code>in oklch</code>)</span>
+            </label>
+          </div>
+          <p class="tip">Toggle this on a blue → yellow gradient to see the muddy RGB midpoint disappear.</p>
+        </fieldset>
+      </div>
+
+      <div id="layering-demo" class="tab-panel">
+        <section class="demo-area glass-demo-area" aria-label="Glassmorphism layer preview">
+          <div class="glass-backdrop"></div>
+          <div id="glass-card" class="glass-card"></div>
+        </section>
+
+        <output id="glass-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Layers (top → bottom)</legend>
+          <div class="fields-grid">
+            <div class="field field--full">
+              <label class="checkbox-field layer-toggle" for="layer-sheen-toggle">
+                <input type="checkbox" id="layer-sheen-toggle" checked>
+                <span>① Light reflection — <code>linear-gradient</code></span>
+              </label>
+            </div>
+            <div class="field field--full">
+              <label class="checkbox-field layer-toggle" for="layer-glow-toggle">
+                <input type="checkbox" id="layer-glow-toggle" checked>
+                <span>② Color glow — <code>radial-gradient</code></span>
+                <input type="color" id="glow-color" value="#f472b6" aria-label="Glow color">
+              </label>
+            </div>
+          </div>
+          <p class="tip">Uncheck ① and the reflection disappears from the top of the stack first — that's the same first-listed-renders-on-top rule from the diagram above, live.</p>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Glass Effect</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="blur-input">Backdrop blur</label>
+              <div class="range-row">
+                <span class="range-edge">0px</span>
+                <div class="range-track">
+                  <input type="range" id="blur-input" min="0" max="24" step="1" value="10">
+                  <output class="range-bubble" id="blur-value" for="blur-input">10px</output>
+                </div>
+                <span class="range-edge">24px</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="opacity-input">Layer intensity</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="opacity-input" min="0" max="200" step="10" value="100">
+                  <output class="range-bubble" id="opacity-value" for="opacity-input">100%</output>
+                </div>
+                <span class="range-edge">200%</span>
+              </div>
+            </div>
+          </div>
+          <p class="tip">The striped pattern behind the card only exists so <code>backdrop-filter: blur()</code> has something to blur — drag it to 0px to see the card go flat.</p>
+        </fieldset>
+      </div>
+
+      <div id="animated-demo" class="tab-panel">
+        <div class="segmented-control" role="radiogroup" aria-label="Animated demo">
+          <label class="segment">
+            <input type="radio" name="anim-demo" value="liquid" checked>
+            <span>Liquid Flow</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="anim-demo" value="beam">
+            <span>Border Beam</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="anim-demo" value="sweep">
+            <span>Loading Sweep</span>
+          </label>
+        </div>
+
+        <section class="demo-area anim-demo-area" aria-label="Animated gradient preview">
+          <div id="liquid-flow-el" class="anim-el liquid-flow active-anim"></div>
+          <div id="border-beam-el" class="anim-el border-beam"><span>Card content</span></div>
+          <div id="sweep-loader-el" class="anim-el sweep-loader"></div>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>Animation</legend>
+          <div class="fields-grid">
+            <div class="field field--full">
+              <label for="speed-input">Duration</label>
+              <div class="range-row">
+                <span class="range-edge">1s</span>
+                <div class="range-track">
+                  <input type="range" id="speed-input" min="1" max="15" step="1" value="8">
+                  <output class="range-bubble" id="speed-value" for="speed-input">8s</output>
+                </div>
+                <span class="range-edge">15s</span>
+              </div>
+            </div>
+            <div class="field field--full">
+              <label class="checkbox-field" for="reduced-motion-toggle">
+                <input type="checkbox" id="reduced-motion-toggle">
+                <span>Simulate <code>prefers-reduced-motion: reduce</code></span>
+              </label>
+            </div>
+          </div>
+          <p class="tip" id="anim-tip">Only <code>background-position</code> is animating here — background-size: 600% 600% makes the gradient big enough that panning it looks like flowing liquid.</p>
+        </fieldset>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
