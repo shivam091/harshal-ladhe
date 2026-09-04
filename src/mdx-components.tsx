@@ -37,6 +37,11 @@ import GitResetDiagram from "@/components/mdx/GitResetDiagram";
 import GitBisectDiagram from "@/components/mdx/GitBisectDiagram";
 import GitObjectGraphDiagram from "@/components/mdx/GitObjectGraphDiagram";
 import GitWorkflowDiagram from "@/components/mdx/GitWorkflowDiagram";
+import GradientAxisDiagram from "@/components/mdx/GradientAxisDiagram";
+import RadialGradientDiagram from "@/components/mdx/RadialGradientDiagram";
+import ConicGradientDiagram from "@/components/mdx/ConicGradientDiagram";
+import RepeatingGradientDiagram from "@/components/mdx/RepeatingGradientDiagram";
+import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -89,6 +94,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     GitBisectDiagram,
     GitObjectGraphDiagram,
     GitWorkflowDiagram,
+    GradientAxisDiagram,
+    RadialGradientDiagram,
+    ConicGradientDiagram,
+    RepeatingGradientDiagram,
+    GradientLayeringDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
