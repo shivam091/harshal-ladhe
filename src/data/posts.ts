@@ -107,6 +107,7 @@ export const posts: Post[] = [
     signoff: "A lot of testing and refining went into getting these grid-area, alignment, spanning, subgrid, and accessibility examples just right, and I hope that effort shows in how clearly they click for you. Thanks for following along — hope your layouts feel a little more precise now. 📐",
     pinned: true,
     changelog: [
+      { date: "2026-09-05", change: "Added a Distributing Grid Tracks section covering justify-content/align-content/place-content (with a new diagram comparing space-between, space-around, and space-evenly), plus a matching Content Distribution tab in the interactive playground" },
       { date: "2026-09-01", change: "Added named grid lines, subgrid, and accessible-ordering sections (each with a new diagram), plus a common mistakes checklist for alignment and spanning" },
       { date: "2026-08-31", change: "Replaced ASCII diagrams with interactive SVG illustrations, linked the Holy Grail Layout snippet, and removed CodePen links" },
       { date: "2026-08-16", change: "Added a Template Areas mode to the interactive playground" },
