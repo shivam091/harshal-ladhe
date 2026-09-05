@@ -12,12 +12,13 @@
         <p>Switch between alignment/spanning and named template areas — everything below updates live.</p>
       </header>
 
-      <div class="segmented-control" role="tablist" aria-label="Demo mode">
-        <button class="segment segment--active" type="button" data-mode="alignment" role="tab" aria-selected="true">Alignment &amp; Spanning</button>
-        <button class="segment" type="button" data-mode="areas" role="tab" aria-selected="false">Template Areas</button>
+      <div class="tabs" role="tablist" aria-label="Demo mode">
+        <button class="tab tab--active" type="button" data-mode="alignment" role="tab" aria-selected="true">Alignment &amp; Spanning</button>
+        <button class="tab" type="button" data-mode="distribution" role="tab" aria-selected="false">Content Distribution</button>
+        <button class="tab" type="button" data-mode="areas" role="tab" aria-selected="false">Template Areas</button>
       </div>
 
-      <div id="alignment-demo" class="segment-panel segment-panel--active">
+      <div id="alignment-demo" class="tab-panel tab-panel--active">
         <section class="demo-area" aria-label="Grid preview">
           <div id="grid-preview" class="grid-preview"></div>
         </section>
@@ -155,7 +156,60 @@
         </fieldset>
       </div>
 
-      <div id="areas-demo" class="segment-panel">
+      <div id="distribution-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Content distribution preview">
+          <div id="distribution-preview" class="distribution-preview">
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+            <div class="distribution-track"></div>
+          </div>
+        </section>
+
+        <output id="distribution-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Distribute Tracks</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="justify-content-select">justify-content</label>
+              <select id="justify-content-select">
+                <option value="start">start</option>
+                <option value="center">center</option>
+                <option value="end">end</option>
+                <option value="stretch">stretch</option>
+                <option value="space-between" selected>space-between</option>
+                <option value="space-around">space-around</option>
+                <option value="space-evenly">space-evenly</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="align-content-select">align-content</label>
+              <select id="align-content-select">
+                <option value="start" selected>start</option>
+                <option value="center">center</option>
+                <option value="end">end</option>
+                <option value="stretch">stretch</option>
+                <option value="space-between">space-between</option>
+                <option value="space-around">space-around</option>
+                <option value="space-evenly">space-evenly</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="place-content-select">place-content <span class="shorthand-note">(shorthand)</span></label>
+              <select id="place-content-select"></select>
+            </div>
+          </div>
+
+          <p class="tip">These 6 tracks are fixed at 70×50px each inside a wider, taller container — on purpose, so there's leftover space for <code>justify-content</code>/<code>align-content</code> to distribute. Switch either to <code>stretch</code> to see it do nothing here: a fixed-size track never grows past its own size.</p>
+        </fieldset>
+      </div>
+
+      <div id="areas-demo" class="tab-panel">
         <section class="demo-area" aria-label="Template areas preview">
           <div id="areas-preview" class="areas-preview"></div>
         </section>
