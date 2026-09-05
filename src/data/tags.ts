@@ -50,7 +50,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "grid-alignment": {
     title: "Aligning Items in CSS Grid",
-    description: "Focus on alignment properties in CSS Grid like 'justify-items', 'align-items', and 'align-content' for precise component placement."
+    description: "Focus on alignment properties in CSS Grid like 'justify-items', 'align-items', 'justify-content', and 'align-content' for precise component placement."
   },
   "grid-template-areas": {
     title: "Using Grid Template Areas for Layout",

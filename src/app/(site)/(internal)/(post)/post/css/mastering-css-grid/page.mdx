@@ -16,6 +16,7 @@ We'll cover:
 
 - `grid-template-areas` and named grid lines for clean, visual layout structure
 - Alignment techniques using `place-items` and `place-self`
+- Distributing tracks with `justify-content` and `align-content` when your grid is smaller than its container
 - Spanning elements across rows and columns — and keeping visual order accessible
 - The hidden mechanics of **explicit** and **implicit** grids
 - `subgrid`, for keeping nested grids aligned to their parent's tracks
@@ -225,6 +226,49 @@ You can also use `place-self` as a shorthand — remember, the first value is `a
 </Info>
 
 👉 Try this hands-on in the **Container Alignment** and **Self-Alignment** panels of the **Alignment & Spanning** tab in the [interactive playground](#interactive-example) below.
+
+<RainbowDivider />
+
+## Distributing Grid Tracks
+
+Everything in the previous section aligned an item *within its own cell*. `justify-content` and `align-content` solve a
+different problem: what happens to the **extra space** when the grid's tracks, added together, don't fill the container?
+That only happens when tracks have a fixed size (like `100px`) instead of a flexible one (like `1fr`, which always grows
+to consume every available pixel) — so this is the first place in this post where sizing your tracks in fixed units
+instead of `fr` actually matters.
+
+- **justify-content** — distributes the grid's **columns** horizontally within the container's leftover width.
+- **align-content** — distributes the grid's **rows** vertically within the container's leftover height.
+- **place-content** — a shorthand for combining both, written **`place-content: <align-content> <justify-content>`**.
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 80px); /* Fixed tracks — 240px total, container is wider */
+    justify-content: space-between;         /* Distribute the extra horizontal space between the columns */
+  }
+`}
+</CodeBlock>
+
+Three values cause most of the confusion in practice — `space-between`, `space-around`, and `space-evenly` — and the
+difference between them is entirely about what happens at the **edges**:
+
+- `space-between` — no space before the first track or after the last; all the extra space goes strictly *between* tracks.
+- `space-around` — every track gets equal space on both sides, so the edge gaps end up **half** the size of the gaps between tracks.
+- `space-evenly` — every gap, edge or between, is exactly equal.
+
+**Visual Illustration**
+
+<GridContentDistributionDiagram />
+
+<Warning title="stretch only affects auto-sized tracks">
+  `justify-content: stretch` (or `align-content: stretch`) only stretches tracks that don't already have an explicit
+  size — a track defined as `80px` never grows past `80px`, no matter what `justify-content` says. If every track in
+  your grid has a fixed size (as in the example above), `stretch` behaves exactly like `start`.
+</Warning>
+
+👉 Try this hands-on in the new **Content Distribution** tab of the [interactive playground](#interactive-example) below.
 
 <RainbowDivider />
 
@@ -543,7 +587,7 @@ So far, every grid you've built has been self-contained — a grid item is a bla
 
 ## Common Mistakes with Alignment & Spanning
 
-- **Confusing `justify-items`/`align-items` with `justify-content`/`align-content`.** The `-items` properties align content *inside each cell*; the `-content` properties (not covered in this post) align the **entire track grid** within the container when the grid is smaller than its container. Mixing them up is one of the most common Grid debugging rabbit holes.
+- **Confusing `justify-items`/`align-items` with `justify-content`/`align-content`.** The `-items` properties align content *inside each cell*; the `-content` properties (see [Distributing Grid Tracks](#distributing-grid-tracks) above) align the **entire track grid** within the container when the grid is smaller than its container. Mixing them up is one of the most common Grid debugging rabbit holes.
 - **Off-by-one errors with line numbers.** Grid lines are numbered starting at `1`, not `0` — and a grid with `3` columns has `4` lines, not `3`. `grid-column: 1 / 3` spans two tracks (columns 1 and 2), not three.
 - **Forgetting you can count from the end.** Line `-1` always refers to the **last line** in the explicit grid, no matter how many tracks it has — `grid-column: 1 / -1` is a quick way to span an item across every column without knowing the exact count.
 - **Leaving `grid-auto-rows` / `grid-auto-columns` unitless.** Unlike `fr` on explicit tracks, implicit tracks need an explicit unit (`grid-auto-rows: 100px`, not `grid-auto-rows: 1`) — a bare number is invalid and the browser falls back to `auto`.
@@ -557,6 +601,10 @@ container-level `justify-items` / `align-items` for every cell (or flip the chec
 `place-items` / `place-self` shorthand), then self-align and span just the highlighted hero item, each in its own panel. The last
 panel raises the item count past the explicit 3×3 grid so you can watch the browser generate implicit tracks — via `grid-auto-flow`,
 `grid-auto-rows`, and `grid-auto-columns` — in real time.
+
+Switch to the **Content Distribution** tab to set `justify-content` / `align-content` (or the `place-content` shorthand) on a grid
+whose fixed-size tracks are deliberately smaller than their container, and watch `space-between`, `space-around`, and `space-evenly`
+redraw the gaps around them live.
 
 Switch to the **Template Areas** tab to revisit named regions from the top of this post — swap between a few preset layouts and
 watch the same colored blocks reflow into a completely different shape, with the generated `grid-template-areas` and `grid-area`
@@ -572,6 +620,7 @@ You've now mastered the core tools that bring **power, readability, and precisio
 
 - Named areas — and named lines — help you design layouts visually and semantically.
 - Item alignment ensures pixel-perfect placement in every cell.
+- `justify-content` / `align-content` distribute the whole track grid within its container, once you know that's a different job from aligning items.
 - Spanning techniques let you control flow and sizing beyond automatic placement — with an eye on keeping visual and DOM order in sync for accessibility.
 - Explicit vs. implicit grids give you confidence when your layout grows unexpectedly.
 - Subgrid lets nested grids inherit their parent's tracks, so content stays aligned across siblings.
