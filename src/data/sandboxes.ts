@@ -81,7 +81,7 @@ export const sandboxes: SandboxMeta[] = [
   {
     slug: "mastering-css-grid",
     title: "Grid Alignment, Spanning & Template Areas Playground",
-    description: "Set container-level justify-items/align-items (or the place-items/place-self shorthand), span and self-align a hero item, raise the item count past the explicit grid to watch implicit tracks appear, and switch to the Template Areas tab to swap between named-region layout presets.",
+    description: "Set container-level justify-items/align-items (or the place-items/place-self shorthand), span and self-align a hero item, raise the item count past the explicit grid to watch implicit tracks appear, distribute fixed-size tracks with justify-content/align-content, and switch to the Template Areas tab to swap between named-region layout presets.",
     template: "vanilla",
     entry: "/index.html"
   },
