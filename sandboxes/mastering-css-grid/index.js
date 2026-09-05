@@ -1,9 +1,9 @@
 import "./shared/playground.css";
-import "./shared/segmented-control.css";
+import "./shared/tabs.css";
 import "./shared/range-slider.css";
 import "./styles.css";
 import { updateRangeSlider } from "./shared/range-slider.js";
-import { initSegmentedControl } from "./shared/segmented-control.js";
+import { initTabs } from "./shared/tabs.js";
 
 const grid = document.getElementById("grid-preview");
 const output = document.getElementById("grid-output");
@@ -183,8 +183,46 @@ placeSelfSelect.addEventListener("change", () => {
 
 updateGrid();
 
-// Demo mode switcher (Alignment & Spanning vs. Template Areas)
-initSegmentedControl(".segment");
+// Demo mode switcher (Alignment & Spanning vs. Content Distribution vs. Template Areas)
+initTabs(".tab");
+
+// Content Distribution demo
+
+const distributionPreview = document.getElementById("distribution-preview");
+const distributionOutput = document.getElementById("distribution-output");
+const justifyContentSelect = document.getElementById("justify-content-select");
+const alignContentSelect = document.getElementById("align-content-select");
+const placeContentSelect = document.getElementById("place-content-select");
+
+// justify-content/align-content share the same value set — reuses the shorthand-select helper defined above for place-items/place-self.
+const CONTENT_VALUES = ["start", "center", "end", "stretch", "space-between", "space-around", "space-evenly"];
+populateShorthandSelect(placeContentSelect, CONTENT_VALUES);
+
+function updateDistribution() {
+  const justifyContent = justifyContentSelect.value;
+  const alignContent = alignContentSelect.value;
+
+  placeContentSelect.value = `${alignContent} ${justifyContent}`;
+
+  distributionPreview.style.justifyContent = justifyContent;
+  distributionPreview.style.alignContent = alignContent;
+
+  distributionOutput.textContent = `.grid {
+  justify-content: ${justifyContent};
+  align-content: ${alignContent};
+}`;
+}
+
+placeContentSelect.addEventListener("change", () => {
+  applyShorthand(placeContentSelect.value, alignContentSelect, justifyContentSelect, null);
+  updateDistribution();
+});
+
+[justifyContentSelect, alignContentSelect].forEach((select) =>
+  select.addEventListener("change", updateDistribution)
+);
+
+updateDistribution();
 
 // Template Areas demo
 

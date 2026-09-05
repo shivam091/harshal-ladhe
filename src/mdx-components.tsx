@@ -22,6 +22,7 @@ import GridAnatomyDiagram from "@/components/mdx/GridAnatomyDiagram";
 import GridAreasDiagram from "@/components/mdx/GridAreasDiagram";
 import GridSpanDiagram from "@/components/mdx/GridSpanDiagram";
 import GridContainerAlignmentDiagram from "@/components/mdx/GridContainerAlignmentDiagram";
+import GridContentDistributionDiagram from "@/components/mdx/GridContentDistributionDiagram";
 import GridItemAlignmentDiagram from "@/components/mdx/GridItemAlignmentDiagram";
 import GridExplicitDiagram from "@/components/mdx/GridExplicitDiagram";
 import GridImplicitDiagram from "@/components/mdx/GridImplicitDiagram";
@@ -79,6 +80,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     GridAreasDiagram,
     GridSpanDiagram,
     GridContainerAlignmentDiagram,
+    GridContentDistributionDiagram,
     GridItemAlignmentDiagram,
     GridExplicitDiagram,
     GridImplicitDiagram,
