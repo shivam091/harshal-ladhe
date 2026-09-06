@@ -1,0 +1,559 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("color-mix-and-relative-color-syntax");
+
+For years, deriving one color from another — a hover state 15% darker, a tint for a disabled button, a translucent
+overlay of your brand color — meant reaching for Sass. `lighten()`, `darken()`, `mix()`, and `rgba()` weren't just
+convenient, they were the *only* way to do real color math in a stylesheet. Plain CSS could store a color in a
+custom property, but it couldn't look inside one, adjust a single channel, or blend two of them together — until now.
+
+<Quote>
+  A custom property holding a color used to be a dead end. Relative color syntax and `color-mix()` turn it into a
+  starting point instead — one color in, a whole palette out, computed by the browser at the moment it's needed.
+</Quote>
+
+Two features, shipped within about a year of each other, close that gap completely: `color-mix()` blends two colors
+together in whichever color space you choose, and relative color syntax — `oklch(from red l c h)`,
+`hsl(from var(--brand) h s calc(l * 0.8))` — reaches into an existing color and pulls out or adjusts individual
+channels. Together they do everything a color preprocessor mixin did, natively, at runtime, against whatever color a
+custom property happens to hold at the time — something a Sass function, compiled once at build time, could never do.
+
+In this post, we'll cover:
+
+- What problem these functions solve, and why custom properties alone couldn't solve it
+- `color-mix()` syntax, the mandatory `in <color-space>` argument, and the single-percentage shorthand
+- Relative color syntax: `from`, per-channel `calc()`, and the `none` keyword
+- Building a full tint/shade/alpha ramp from a single `--brand-color` custom property
+- Rectangular vs. polar color spaces, and what changes about mixing behavior between them
+- Hue interpolation methods (`shorter hue`, `longer hue`) and why they matter
+- Alpha handling, percentage normalization, and browser support with a progressive-enhancement fallback
+- A cheat sheet mapping common Sass color functions to their native CSS equivalents
+
+## Why This Needed Solving Natively
+
+A CSS custom property can hold a color — `--brand-color: #3b5fd6;` — and any number of rules can reference it with
+`var(--brand-color)`. What it couldn't do, until recently, was get *derived*. If you wanted a lighter tint for a
+hover state or a translucent version for an overlay, plain CSS had no operation for "take this color and change it a
+bit." You either hardcoded a second, unrelated hex value (which drifts out of sync the moment the brand color
+changes) or you reached for Sass, where `lighten($brand, 15%)` ran at *build time*, against a *build-time* variable —
+never against something that could change at runtime, like a custom property flipped by a dark-mode media query or a
+user-selectable theme color.
+
+<Info title="Build time vs. runtime">
+  Sass color functions execute once, when the stylesheet compiles. `color-mix()` and relative color syntax execute in
+  the browser, every time the rule is applied — so they can derive a color from a custom property that changes after
+  the CSS has already shipped, which a Sass mixin fundamentally cannot do.
+</Info>
+
+That's the gap `color-mix()` and relative color syntax close: native, runtime color derivation, against whatever
+color is actually in play — a custom property, a `currentcolor`, a value passed down through a component's props —
+not just a value known in advance.
+
+<RainbowDivider />
+
+## color-mix(): Blending Two Colors Natively
+
+`color-mix()` takes two colors, a color space to do the mixing in, and an optional percentage for each color, and
+returns a single blended color:
+
+<CodeBlock language="css">
+{`
+  color-mix(in <color-space>, <color1> [<percentage1>], <color2> [<percentage2>])
+`}
+</CodeBlock>
+
+The simplest use is a straight 50/50 blend — tinting a brand color toward white to get a lighter variant, or toward
+black to get a darker one:
+
+<CodeBlock language="css">
+{`
+  .button {
+    --brand-color: #3b5fd6;
+    background: var(--brand-color);
+  }
+
+  .button:hover {
+    /* Halfway between the brand color and white — a lighter hover tint, computed on the fly */
+    background: color-mix(in srgb, var(--brand-color), white);
+  }
+
+  .button:active {
+    /* Halfway between the brand color and black — a darker pressed state */
+    background: color-mix(in srgb, var(--brand-color), black);
+  }
+`}
+</CodeBlock>
+
+With no percentages given at all, `color-mix()` splits the difference evenly — 50% of each color. Nudge the
+percentage to control the ratio instead:
+
+<CodeBlock language="css">
+{`
+  /* Mostly the brand color, just a hint of white mixed in — a subtle tint, not a full pastel */
+  .button-subtle-hover {
+    background: color-mix(in srgb, var(--brand-color) 85%, white 15%);
+  }
+`}
+</CodeBlock>
+
+<Warning title="The color-space argument is mandatory">
+  Unlike `linear-gradient()`'s optional `in oklch` (which quietly defaults to plain interpolation if you leave it
+  off), `color-mix()`'s `in <color-space>` clause is a **required** part of the syntax — there's no default to fall
+  back on. Writing `color-mix(var(--a), var(--b))` without an `in` clause is invalid and the whole declaration is
+  dropped, not silently corrected.
+</Warning>
+
+### The `in <color-space>` Argument
+
+The color space you name changes *how* the two colors are numerically blended, which changes the visible result —
+sometimes dramatically, as the [Rectangular vs. Polar Color Spaces](#rectangular-vs-polar-color-spaces) section below
+demonstrates. Start with the space you already know:
+
+<CodeBlock language="css">
+{`
+  /* srgb: the same familiar 0-255 red/green/blue channels every hex color already uses */
+  .tint-srgb {
+    background: color-mix(in srgb, royalblue, white 30%);
+  }
+`}
+</CodeBlock>
+
+Once that's comfortable, swap in `oklch` — a perceptually uniform space that tends to produce more vivid, more
+predictable blends, for reasons the [gray dead zone](#the-gray-dead-zone-revisited) section explains in depth:
+
+<CodeBlock language="css">
+{`
+  /* oklch: same call, same two colors, a different (often nicer) blend */
+  .tint-oklch {
+    background: color-mix(in oklch, royalblue, white 30%);
+  }
+`}
+</CodeBlock>
+
+Nothing else about the syntax changes between the two — only the space name after `in`.
+
+### Single-Percentage Shorthand
+
+You don't have to give both colors a percentage. Give only one, and the other is computed automatically as
+whatever's left over to reach 100%:
+
+<CodeBlock language="css">
+{`
+  /* Only the 2nd color has a percentage — the 1st is implicitly 100% - 40% = 60% */
+  color-mix(in srgb, red, blue 40%);
+
+  /* Exactly equivalent, written out in full */
+  color-mix(in srgb, red 60%, blue 40%);
+`}
+</CodeBlock>
+
+This is the form you'll write most often in practice — "mostly A, X% B" reads more naturally than spelling out both
+numbers, and it's exactly how percentages work in a `linear-gradient()` color stop, if that's a mental model you
+already have.
+
+<RainbowDivider />
+
+## Relative Color Syntax: Deriving a Color From Itself
+
+`color-mix()` blends *two* colors. Relative color syntax does something different: it takes *one* existing color,
+decomposes it into its individual channels, and lets you reassemble it with some of those channels changed. The
+`from` keyword is what triggers this — it appears right after the function name, in place of the usual list of
+channel values:
+
+<CodeBlock language="css">
+{`
+  /* "from" a color that already exists, reusing that color's own l, c, and h channel values unchanged */
+  oklch(from red l c h)
+`}
+</CodeBlock>
+
+That specific line is a no-op — it rebuilds `red` out of its own unchanged channels — but it demonstrates the shape:
+`l`, `c`, and `h` inside the parentheses aren't new numbers you're inventing, they're **channel keywords** that refer
+back to the color named after `from`. Change one of them and only that channel moves:
+
+<CodeBlock language="css">
+{`
+  /* Same hue and chroma as red, but only 70% as light */
+  oklch(from red calc(l * 0.7) c h)
+`}
+</CodeBlock>
+
+The source color doesn't have to be a literal keyword — it's just as often a custom property, which is where this
+becomes genuinely useful instead of a curiosity:
+
+<CodeBlock language="css">
+{`
+  .card {
+    --brand: #3b5fd6;
+    background: var(--brand);
+  }
+
+  .card--muted {
+    /* Same hue as --brand, saturation cut by 20%, lightness bumped up by 15% relative to its current value */
+    background: hsl(from var(--brand) h calc(s * 0.8) calc(l + 15%));
+  }
+`}
+</CodeBlock>
+
+Every color function that supports `from` uses its **own** channel names, matching whatever channels that function
+normally takes — `hsl()`'s channels are `h`, `s`, `l`; `oklch()`'s are `l`, `c`, `h`; `rgb()`'s are `r`, `g`, `b`; and
+so on for `hwb()`, `lab()`, `lch()`, `oklab()`, and `color()`. There's no cross-function borrowing — `hsl(from red l
+c h)` is invalid, because `l`, `c`, and `h` are `oklch()`'s channel names, not `hsl()`'s.
+
+**Visual Illustration**
+
+<RelativeColorChannelDiagram />
+
+### `calc()` Inside a Channel
+
+Any channel slot in a relative color function accepts a full `calc()` expression, not just a bare number — which is
+what makes "80% as light" or "hue rotated 30 degrees" possible instead of only "hue set to exactly this constant":
+
+<CodeBlock language="css">
+{`
+  /* Multiply chroma down to almost nothing — a near-grayscale version of the same hue and lightness */
+  oklch(from var(--brand) l calc(c * 0.1) h)
+
+  /* Rotate the hue by a fixed offset — a triadic accent color, 120deg around the wheel from the brand color */
+  oklch(from var(--brand) l c calc(h + 120))
+`}
+</CodeBlock>
+
+<Details summary="Why calc(l * 0.7) instead of just writing a smaller number directly?">
+  You *can* write a constant directly — `oklch(from var(--brand) 0.4 c h)` is perfectly valid and simply overrides
+  lightness to exactly `0.4`, discarding whatever the source color's own lightness was. The reason to reach for
+  `calc(l * 0.7)` instead is that it stays *relative* to the source: if `--brand` changes to a color with a
+  different starting lightness, the derived color adjusts proportionally instead of always landing on the same fixed
+  number regardless of the input. Whether you want that depends entirely on the case — a fixed override is exactly
+  right for a fully authored spot color, and a `calc()` expression is exactly right for a value that should always
+  track a token.
+</Details>
+
+### The `none` Keyword
+
+Some colors don't have a meaningful value for every channel. A fully desaturated color — pure white, pure black, any
+shade of gray — has zero chroma, and a hue on a color with zero chroma is undefined: there's no "direction" to a
+point sitting exactly at the center of the color wheel. When you pull a channel like that out with `from`, CSS gives
+you back the keyword `none` instead of a number:
+
+<CodeBlock language="css">
+{`
+  /* white has zero chroma, so its hue channel is powerless — h resolves to "none" here, not a number */
+  oklch(from white l c h)
+`}
+</CodeBlock>
+
+`none` behaves like zero almost everywhere it's used in further math (`calc(none + 10)` doesn't error, it just stays
+`none`), and it renders identically to a real hue of any value would render at zero chroma — because at zero chroma,
+every hue looks the same anyway. You'll mostly encounter it when a derived-color formula happens to run on an
+achromatic input; it's worth recognizing on sight rather than being surprised the browser printed a keyword where
+you expected a number.
+
+<RainbowDivider />
+
+## Building a Full Design-Token Ramp From One Brand Color
+
+This is the payoff. A single `--brand-color` custom property, plus `color-mix()` and relative color syntax, is enough
+to generate an entire ramp of tints, shades, alpha variants, and a muted variant — no second custom property to
+maintain, no design tool export, and every derived value updates automatically the instant `--brand-color` itself
+changes:
+
+<CodeBlock language="css">
+{`
+  :root {
+    --brand-color: oklch(58% 0.19 262);
+
+    /* Tints — blend toward white in oklch, so the ramp stays vivid instead of turning pastel-gray */
+    --brand-tint-1: color-mix(in oklch, var(--brand-color), white 20%);
+    --brand-tint-2: color-mix(in oklch, var(--brand-color), white 40%);
+    --brand-tint-3: color-mix(in oklch, var(--brand-color), white 60%);
+
+    /* Shades — blend toward black the same way */
+    --brand-shade-1: color-mix(in oklch, var(--brand-color), black 20%);
+    --brand-shade-2: color-mix(in oklch, var(--brand-color), black 40%);
+    --brand-shade-3: color-mix(in oklch, var(--brand-color), black 60%);
+
+    /* Alpha variants — relative color syntax touches the alpha channel directly, no mixing required */
+    --brand-alpha-90: oklch(from var(--brand-color) l c h / 0.9);
+    --brand-alpha-50: oklch(from var(--brand-color) l c h / 0.5);
+    --brand-alpha-10: oklch(from var(--brand-color) l c h / 0.1);
+
+    /* A muted variant — same hue and lightness, most of the chroma pulled out via calc() */
+    --brand-muted: oklch(from var(--brand-color) l calc(c * 0.35) h);
+  }
+`}
+</CodeBlock>
+
+Notice the two techniques are doing genuinely different jobs, side by side: `color-mix()` blends *toward a second
+color* (white, black), which is what "lighten" and "darken" actually mean — moving toward one of the two ends of the
+lightness scale. Relative color syntax adjusts *a channel of the original color directly*, which is what alpha
+adjustment and desaturation actually mean — no second color is involved at all. Reaching for the wrong tool for
+either job still mostly works, but recognizing which one a task actually calls for makes the resulting CSS read more
+clearly.
+
+<Success title="One custom property, one source of truth">
+  Change `--brand-color` — a seasonal rebrand, a user-selected accent color, a dark-mode override — and every tint,
+  shade, alpha variant, and muted color in this ramp recomputes automatically. Nothing here is a second hardcoded
+  hex value waiting to drift out of sync.
+</Success>
+
+<RainbowDivider />
+
+## Rectangular vs. Polar Color Spaces
+
+The `<color-space>` you pick for `color-mix()` (or for relative color syntax's channel names) falls into one of two
+families, and which family it's in changes what "mixing" actually means:
+
+- **Rectangular spaces** — `srgb`, `srgb-linear`, `lab`, `oklab` — describe a color with three independent axes that
+  don't wrap around. Mixing two colors is a straight-line average: each channel of the result sits directly between
+  the same channel of the two inputs.
+- **Polar spaces** — `hsl`, `hwb`, `lch`, `oklch` — describe a color with one *angular* channel (hue) that wraps
+  around a circle, plus one or two straight-line channels. Mixing two colors' hues isn't a straight average anymore —
+  it's a choice of which way around the circle to travel, which is exactly what the
+  [hue interpolation methods](#hue-interpolation-methods) below control.
+
+The visible difference is easiest to see side by side, blending the same two colors both ways:
+
+**Visual Illustration**
+
+<ColorMixBlendDiagram />
+
+Both rows above are `color-mix()` calls between the exact same blue and the exact same yellow — only the `in`
+argument differs. The `srgb` row treats blue and yellow as three independent 0–255 numbers and averages them
+directly, which is precisely why its 50% swatch lands on a flat, exact mid-gray: red, green, and blue's channels
+each average to the same middle value. The `oklch` row never does that averaging in the first place — chroma and
+lightness stay roughly level across the blend, and only the hue rotates from blue's to yellow's, passing through a
+vivid teal along the way instead of collapsing toward gray.
+
+<Info title="Rule of thumb">
+  Reach for a rectangular space (`srgb` is the familiar default) when you want a literal, predictable average of two
+  colors' raw numbers. Reach for a polar space — `oklch` in particular — when you want a blend that stays visually
+  vivid across its whole range, especially between two colors far apart in hue.
+</Info>
+
+<RainbowDivider />
+
+## Hue Interpolation Methods
+
+Every polar color space has a hue channel that wraps at 360deg back to 0deg — which means, given two hues, there are
+always *two* possible paths between them around the circle: the short way and the long way. `color-mix()` (and
+gradients interpolated in a polar space) let you pick which one explicitly, with a keyword placed right after the
+color space:
+
+<CodeBlock language="css">
+{`
+  color-mix(in oklch shorter hue, oklch(65% 0.2 40), oklch(55% 0.22 250));
+  color-mix(in oklch longer hue, oklch(65% 0.2 40), oklch(55% 0.22 250));
+`}
+</CodeBlock>
+
+- **`shorter hue`** (the default if you omit the keyword entirely) — always takes whichever arc is 180deg or less.
+- **`longer hue`** — always takes whichever arc is *more* than 180deg — deliberately the long way around.
+- **`increasing hue`** — always travels from the first hue toward larger numbers, wrapping past 360deg back to 0 if
+  needed, regardless of which arc that happens to be shorter.
+- **`decreasing hue`** — the mirror image: always travels toward smaller numbers, wrapping past 0deg back to 360.
+
+The two colors above never change — only the keyword does — and yet the colors *between* them are completely
+different, because the arc passes through a different slice of the hue wheel each time:
+
+**Visual Illustration**
+
+<HueInterpolationDiagram />
+
+Between a 40deg amber and a 250deg blue-violet, the shorter arc (150deg) travels backward through magenta and
+violet, while the longer arc (210deg) travels forward through green, cyan, and blue — a `color-mix()` at the 50%
+mark produces a muted rose-violet with `shorter hue` and a teal-leaning blue with `longer hue`, from the *exact same*
+two input colors. This is the one setting in this whole post most likely to produce a surprising result if you don't
+know it's there — a designer picking two brand colors rarely thinks about which arc a browser will travel between
+them by default.
+
+### The Gray Dead Zone, Revisited
+
+The [mastering CSS gradients](/post/css/mastering-css-gradients#modern-color-spaces-oklch-and-the-gray-dead-zone)
+post covers the "gray dead zone" in detail — the muddy, desaturated midpoint that `linear-gradient()` produces when
+interpolating two vibrant hues in plain RGB, and how switching a gradient's interpolation to `oklch` fixes it. Every
+word of that explanation applies here unchanged: `color-mix()` and `linear-gradient()` are both, fundamentally,
+color interpolation, just packaged differently — one returns a single blended color, the other paints a whole
+image's worth of them. The [ColorMixBlendDiagram](#rectangular-vs-polar-color-spaces) above is the same phenomenon
+from the gradients post, just demonstrated with `color-mix()`'s discrete percentage stops instead of a continuous
+gradient.
+
+<RainbowDivider />
+
+## Alpha and Transparency in color-mix()
+
+Both colors passed to `color-mix()` can carry their own alpha, and the function handles it sensibly rather than
+requiring you to compute a combined alpha by hand:
+
+<CodeBlock language="css">
+{`
+  /* Mixing toward the transparent keyword fades a color out, without touching opacity separately */
+  .fade-out {
+    background: color-mix(in srgb, royalblue, transparent 40%);
+  }
+`}
+</CodeBlock>
+
+Mixing toward `transparent` is the native equivalent of Sass's `transparentize()` / `rgba($color, X)` pattern —
+except it works on whatever color a custom property currently holds, not just a value known at build time. Browsers
+special-case `transparent`'s non-alpha channels during this kind of mix specifically so a fade-to-transparent doesn't
+also drag the visible hue toward black — only the alpha channel moves.
+
+### Percentage Normalization
+
+When both percentages are given and they *don't* sum to exactly 100%, `color-mix()` normalizes them rather than
+erroring:
+
+- If they sum to **more** than 100% (say, `60%` and `70%`), both are scaled down proportionally until they sum to
+  100 — so `60%`/`70%` behaves identically to `46.15%`/`53.85%`.
+- If they sum to **less** than 100% (say, `30%` and `30%`), they're scaled up the same way to sum to 100 — but the
+  *resulting color's alpha* is also multiplied by that original sum. `color-mix(in srgb, red 30%, blue 30%)`
+  produces a 50/50 red-blue mix at only 60% opacity, not a fully opaque one.
+
+<Warning title="An easy mistake to miss">
+  Two percentages that don't add up to 100% is valid, legal CSS — it won't produce an error, a warning, or a dropped
+  declaration. It'll just silently render more transparent than you probably intended, which is a much harder bug to
+  notice in a code review than a straightforward typo.
+</Warning>
+
+<RainbowDivider />
+
+## From Sass to Native CSS: A Migration Cheat Sheet
+
+If you're coming from Sass, here's the direct mapping from the color functions you already know to their native CSS
+equivalents:
+
+| Sass function | Purpose | Native CSS equivalent |
+| --- | --- | --- |
+| `lighten($color, 20%)` | Lighten toward white | `color-mix(in oklch, $color, white 20%)` |
+| `darken($color, 20%)` | Darken toward black | `color-mix(in oklch, $color, black 20%)` |
+| `mix($color1, $color2, 50%)` | Blend two colors | `color-mix(in oklch, $color1, $color2 50%)` |
+| `rgba($color, 0.5)` / `transparentize()` | Set/adjust alpha | `oklch(from $color l c h / 0.5)` |
+| `saturate($color, 20%)` | Increase chroma/saturation | `oklch(from $color l calc(c * 1.2) h)` |
+| `desaturate($color, 20%)` | Decrease chroma/saturation | `oklch(from $color l calc(c * 0.8) h)` |
+| `adjust-hue($color, 30deg)` | Rotate hue | `oklch(from $color l c calc(h + 30))` |
+| `complement($color)` | Rotate hue 180deg | `oklch(from $color l c calc(h + 180))` |
+| `grayscale($color)` | Remove all chroma | `oklch(from $color l 0 h)` |
+
+<RainbowDivider />
+
+## Common Mistakes Checklist
+
+- **Omitting `in <color-space>` entirely.** It's mandatory syntax, not an optional modifier like it is on
+  `linear-gradient()` — leaving it out invalidates the whole declaration.
+- **Mixing channel names across functions.** `l`, `c`, `h` belong to `oklch()`/`lch()`; `h`, `s`, `l` belong to
+  `hsl()`; `r`, `g`, `b` belong to `rgb()`. Using the wrong set for the function you're calling is invalid.
+- **Forgetting percentages need a `%` sign.** `color-mix(in srgb, red, blue 40)` is invalid — `40` isn't a
+  `<percentage>` token without the sign.
+- **Assuming two percentages that don't sum to 100% is an error.** It isn't — see
+  [Percentage Normalization](#percentage-normalization) above. It silently adds unwanted transparency instead.
+- **Picking a polar space without thinking about hue direction.** Two brand colors far apart in hue can blend two
+  very different ways depending on `shorter hue` vs. `longer hue` — worth checking explicitly rather than trusting
+  the default.
+- **Reaching for `color-mix()` when relative color syntax is the better fit.** Adjusting alpha or desaturating a
+  single color doesn't need a second color at all — `oklch(from $color l c h / 0.5)` is more direct than mixing
+  toward `transparent`.
+
+<RainbowDivider />
+
+## When You Might Still Reach for a Preprocessor
+
+None of this makes Sass pointless — it changes *which* jobs it's still the right tool for:
+
+- **Build-time constant folding.** A Sass variable resolves once, at compile time, into a literal value baked into
+  the shipped CSS — zero runtime cost. `color-mix()` and relative color syntax are computed by the browser on every
+  paint that needs them; for a value that will genuinely never change, that's work with no corresponding benefit.
+- **Non-color computation.** Sass's `@function`, loops, and math work over numbers, strings, and lists generally —
+  spacing scales, generated grid templates, breakpoint maps. None of that overlaps with what `color-mix()` or
+  relative color syntax do; they're color-specific tools, not general-purpose preprocessing.
+- **Older browser support matrices.** If a project's support matrix includes browsers from before these features
+  shipped and a build-time fallback is non-negotiable, a Sass mixin that emits plain hex/rgba values remains a valid
+  choice — paired, ideally, with the `@supports` progressive-enhancement pattern below rather than instead of it.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Always name a color space explicitly.** There's no default to fall back on for `color-mix()` — treat the `in`
+  clause as non-optional, because it is.
+- **Prefer `oklch` for tints, shades, and blends between visually distant hues.** It's the space least likely to
+  produce an unexpectedly muddy or gray result, for the same reason covered in the gradients post.
+- **Use `color-mix()` for "blend toward a second color" and relative color syntax for "adjust a channel of this
+  color."** They solve different problems — picking the one that matches the actual intent keeps the CSS readable.
+- **Be explicit about hue interpolation when blending distant hues in a polar space.** Don't rely on the
+  `shorter hue` default without checking it produces the arc you actually want.
+- **Build ramps from one source custom property, not several hardcoded values.** The whole point of doing this
+  natively is a single source of truth that recomputes automatically.
+- **Watch for percentages that don't sum to 100%.** It's valid CSS that silently adds transparency — verify your
+  math if a mixed color renders more washed-out than expected.
+- **Gate on `@supports`, not on browser sniffing.** The fallback pattern below is a few lines of CSS, no JavaScript
+  required.
+
+<RainbowDivider />
+
+## Browser Support
+
+`color-mix()` and relative color syntax shipped in modern browsers within roughly a year of each other, but not on
+identical timelines — `color-mix()` landed first, across Chrome, Edge, Firefox, and Safari through the first half of
+2023, reaching Baseline "widely available" status in 2024. Relative color syntax took a little longer to reach full
+cross-browser parity, with Firefox the last of the major engines to catch up, in mid-2024. If your support matrix
+includes browsers from meaningfully earlier than that, treat relative color syntax as the more conservative of the
+two features and gate it accordingly.
+
+The progressive-enhancement pattern is the same one this site's other modern-CSS posts use: ship a flat fallback
+color first, then upgrade it behind an `@supports` check:
+
+<CodeBlock language="css">
+{`
+  .button {
+    /* Fallback: a flat color every browser understands, including ones without color-mix() support */
+    background: #3b5fd6;
+  }
+
+  @supports (color: color-mix(in srgb, red, red)) {
+    .button {
+      background: color-mix(in oklch, var(--brand-color), white 15%);
+    }
+  }
+`}
+</CodeBlock>
+
+<Info title="Why test color-mix(in srgb, red, red) specifically">
+  `@supports` needs a value it can actually try to parse and apply. Testing the exact function you intend to use —
+  with harmless, guaranteed-valid arguments — confirms real support for `color-mix()` itself, rather than just
+  confirming the browser understands the `color` property in general.
+</Info>
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading the syntax is one thing — watching the same two colors produce a completely different blend as the color
+space changes is another. The playground below has two tabs: **Color Mix** blends two colors you pick with a color
+picker, lets you drag the mix percentage, switch between `srgb`, `hsl`, and `oklch`, and (for the two polar spaces)
+choose a hue interpolation method — try blue and yellow in `srgb` at 50% to see the gray dead zone form, then flip to
+`oklch` and watch it disappear. **Relative Color** lets you pick a base color and derive a new one from it live,
+scaling its lightness, chroma (or saturation, in `hsl` mode), hue, and alpha with sliders, with the generated
+`oklch(from ...)` / `hsl(from ...)` CSS shown as you drag.
+
+<Sandbox slug="color-mix-and-relative-color-syntax" defaultLayout="vertical" />
+
+For the same "native, at-runtime" shift applied to a completely different problem — sizing and cropping media
+instead of deriving color — the companion piece on
+**[object-fit, object-position, and aspect-ratio](/post/css/taming-image-and-video-boxes)** covers taming image
+and video boxes without a single `background-image` hack.
+
+<RainbowDivider />
+
+## Conclusion
+
+`color-mix()` and relative color syntax move color derivation out of the build step and into the browser, where it
+belongs whenever the color being derived from can change at runtime — a custom property, a theme token, a
+user-selected accent. A single `--brand-color` is now enough to generate an entire ramp of tints, shades, alpha
+variants, and hue-shifted accents, recomputed automatically the instant that one source value changes — no second
+hardcoded hex value to keep in sync, and no design tool export standing between a color decision and the CSS that
+implements it.
+
+None of this erases what a preprocessor is good at — constant folding, non-color computation, and older support
+matrices are still real reasons to reach for one. But for the specific job of deriving one color from another, native
+CSS finally does the whole thing itself.

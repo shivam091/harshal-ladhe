@@ -16,6 +16,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "color-mix-and-relative-color-syntax",
+    title: "color-mix() & Relative Color Playground",
+    description: "Blend two colors across srgb/hsl/oklch with a live hue-method switch, or derive a color live from relative color syntax with L/C/H/alpha sliders, generated CSS shown throughout.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "taming-image-and-video-boxes",
     title: "Image & Video Box Playground",
     description: "Tune object-fit, object-position, and box aspect-ratio live against a landscape photo, a portrait photo, and a mock video frame, then replay the aspect-ratio CLS fix on demand.",

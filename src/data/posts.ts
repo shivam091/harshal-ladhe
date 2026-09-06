@@ -316,6 +316,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "color-mix-and-relative-color-syntax",
+    title: "color-mix() and Relative Color Syntax: The New Color Functions",
+    excerpt: "Derive colors natively — no Sass required.",
+    description: "A beginner-to-advanced guide to CSS color-mix() and relative color syntax, covering color-space interpolation, hue methods, and native design-token theming.",
+    category: ["CSS"],
+    tags: ["css", "modern-css", "color-theory", "oklch", "color-mix", "relative-color-syntax", "design-tokens", "theming", "hue-interpolation", "scss", "advanced", "browser-support", "progressive-enhancement", "frontend"],
+    signoff: "Getting the srgb-vs-oklch comparison diagram's 50% swatch to land on a real, provable mid-gray — not just an eyeballed one — took more color math than any diagram since the gradients post, and the hue-interpolation wheel needed a redraw once I realized 'shorter' and 'longer' only make sense once you can actually see both arcs at once. I hope dragging one brand color through the Relative Color tab makes an entire token ramp feel like one property instead of ten. Thanks for deriving a palette with me. 🎨",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 

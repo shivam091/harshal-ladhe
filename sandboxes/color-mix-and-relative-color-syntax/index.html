@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>color-mix() and Relative Color Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>color-mix() &amp; Relative Color Playground</h1>
+        <p>Blend two colors natively, switch the interpolation color space and hue method, or derive a color straight from another with relative color syntax — the generated CSS is shown live, and every preview is the browser's own computed color.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Playground mode" id="mode-switch">
+        <button class="tab tab--active" type="button" data-mode="mix" role="tab" aria-selected="true">Color Mix</button>
+        <button class="tab" type="button" data-mode="relative" role="tab" aria-selected="false">Relative Color</button>
+      </div>
+
+      <div id="mix-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area" aria-label="color-mix preview">
+          <div id="mix-preview" class="color-preview"></div>
+        </section>
+
+        <output id="mix-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Base Colors</legend>
+          <div class="fields-grid fields-grid--3">
+            <div class="field">
+              <label for="mix-color-a">Color A (0%)</label>
+              <input type="color" id="mix-color-a" value="#0000ff">
+            </div>
+            <div class="field">
+              <label for="mix-color-b">Color B (100%)</label>
+              <input type="color" id="mix-color-b" value="#ffff00">
+            </div>
+            <div class="field">
+              <label for="mix-percent-input">Mix (% of B)</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="mix-percent-input" min="0" max="100" step="1" value="50">
+                  <output class="range-bubble" id="mix-percent-value" for="mix-percent-input">50%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Interpolation Color Space</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Color space">
+            <label class="segment">
+              <input type="radio" name="mix-space" value="srgb" checked>
+              <span>srgb</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="mix-space" value="hsl">
+              <span>hsl</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="mix-space" value="oklch">
+              <span>oklch</span>
+            </label>
+          </div>
+
+          <div class="fields-grid" id="hue-method-field">
+            <div class="field">
+              <label for="hue-method-select">Hue interpolation method</label>
+              <select id="hue-method-select">
+                <option value="shorter hue" selected>shorter hue (default)</option>
+                <option value="longer hue">longer hue</option>
+                <option value="increasing hue">increasing hue</option>
+                <option value="decreasing hue">decreasing hue</option>
+              </select>
+            </div>
+          </div>
+
+          <p class="tip" id="mix-tip">Try blue → yellow in srgb: the 50% mark collapses to an exact mid-gray. Switch to oklch and it never turns gray at all.</p>
+        </fieldset>
+      </div>
+
+      <div id="relative-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Relative color preview">
+          <div class="relative-swatches">
+            <div class="swatch-column">
+              <div id="relative-base-preview" class="color-preview color-preview--small"></div>
+              <span class="swatch-label">base</span>
+            </div>
+            <div class="relative-arrow" aria-hidden="true">→</div>
+            <div class="swatch-column">
+              <div id="relative-derived-preview" class="color-preview color-preview--small"></div>
+              <span class="swatch-label">derived</span>
+            </div>
+          </div>
+        </section>
+
+        <output id="relative-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Base Color &amp; Function</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="relative-base-color">Base color</label>
+              <input type="color" id="relative-base-color" value="#3b5fd6">
+            </div>
+            <div class="field">
+              <label for="relative-function-select">Function</label>
+              <select id="relative-function-select">
+                <option value="oklch" selected>oklch(from ...)</option>
+                <option value="hsl">hsl(from ...)</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Channel Adjustments</legend>
+          <div class="fields-grid">
+            <div class="field field--full">
+              <label for="l-scale-input">Lightness — <code id="l-formula-label">calc(l * X)</code></label>
+              <div class="range-row">
+                <span class="range-edge">0.2×</span>
+                <div class="range-track">
+                  <input type="range" id="l-scale-input" min="0.2" max="1.8" step="0.05" value="1">
+                  <output class="range-bubble" id="l-scale-value" for="l-scale-input">1.00×</output>
+                </div>
+                <span class="range-edge">1.8×</span>
+              </div>
+            </div>
+
+            <div class="field field--full" id="c-scale-field">
+              <label for="c-scale-input">Chroma — <code>calc(c * X)</code></label>
+              <div class="range-row">
+                <span class="range-edge">0×</span>
+                <div class="range-track">
+                  <input type="range" id="c-scale-input" min="0" max="2" step="0.05" value="1">
+                  <output class="range-bubble" id="c-scale-value" for="c-scale-input">1.00×</output>
+                </div>
+                <span class="range-edge">2×</span>
+              </div>
+            </div>
+
+            <div class="field field--full" id="s-scale-field" hidden>
+              <label for="s-scale-input">Saturation — <code>calc(s * X)</code></label>
+              <div class="range-row">
+                <span class="range-edge">0×</span>
+                <div class="range-track">
+                  <input type="range" id="s-scale-input" min="0" max="2" step="0.05" value="1">
+                  <output class="range-bubble" id="s-scale-value" for="s-scale-input">1.00×</output>
+                </div>
+                <span class="range-edge">2×</span>
+              </div>
+            </div>
+
+            <div class="field field--full">
+              <label for="h-shift-input">Hue — <code>calc(h + X)</code></label>
+              <div class="range-row">
+                <span class="range-edge">-180deg</span>
+                <div class="range-track">
+                  <input type="range" id="h-shift-input" min="-180" max="180" step="1" value="0">
+                  <output class="range-bubble" id="h-shift-value" for="h-shift-input">0deg</output>
+                </div>
+                <span class="range-edge">180deg</span>
+              </div>
+            </div>
+
+            <div class="field field--full">
+              <label for="alpha-input">Alpha</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="alpha-input" min="0" max="100" step="1" value="100">
+                  <output class="range-bubble" id="alpha-value" for="alpha-input">100%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="tip">Every slider maps directly onto a channel inside the same <code>from</code> formula — drag Lightness to 0.2× to see how little of the original color survives, or Hue by 180 to flip it to its complement.</p>
+        </fieldset>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

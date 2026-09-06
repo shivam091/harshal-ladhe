@@ -379,5 +379,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "cls": {
     title: "Cumulative Layout Shift (CLS) and Fixes",
     description: "Understanding Cumulative Layout Shift, a Core Web Vital, and the CSS techniques — like aspect-ratio — that prevent it."
+  },
+  "color-mix": {
+    title: "Mastering the CSS color-mix() Function",
+    description: "Blending two colors natively in CSS with color-mix(), including color-space selection, percentage shorthand, and alpha normalization."
+  },
+  "relative-color-syntax": {
+    title: "CSS Relative Color Syntax Explained",
+    description: "Deriving a new color from an existing one with the from keyword, per-channel calc(), and the none keyword — no preprocessor required."
+  },
+  "design-tokens": {
+    title: "Building Design Tokens with Native CSS",
+    description: "Using custom properties and modern color functions to build maintainable, single-source-of-truth design token systems."
+  },
+  "theming": {
+    title: "CSS Theming Techniques and Patterns",
+    description: "Approaches to theming web UI natively in CSS, from custom-property-driven palettes to runtime color derivation."
+  },
+  "hue-interpolation": {
+    title: "Hue Interpolation in Polar Color Spaces",
+    description: "How shorter hue, longer hue, increasing hue, and decreasing hue change the path a blend or gradient takes around the color wheel."
   }
 };

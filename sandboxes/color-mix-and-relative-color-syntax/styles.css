@@ -1,0 +1,82 @@
+:root {
+  --pg-radius-lg: 1rem;
+}
+
+.color-preview {
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--pg-radius-lg);
+  box-shadow: var(--pg-shadow-sm);
+  transition: background 0.15s ease;
+}
+
+/* ----------------------------- Relative Color panel ----------------------------- */
+
+.relative-swatches {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.swatch-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+}
+
+.color-preview--small {
+  aspect-ratio: 1 / 1;
+  max-inline-size: 9rem;
+}
+
+.swatch-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
+  font-family: var(--pg-mono);
+}
+
+.relative-arrow {
+  flex: 0 0 auto;
+  font-size: 1.5rem;
+  color: var(--pg-text-muted);
+}
+
+input[type="color"] {
+  inline-size: 100%;
+  block-size: 2.625rem;
+  padding: 0.25rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  cursor: pointer;
+}
+
+/*
+  A `.field` from the shared playground styles sets its own `display`, which normally beats the `[hidden]`
+  user-agent rule regardless of specificity — this re-asserts `display: none` as an author rule so
+  `el.hidden = true` actually hides these fields instead of silently doing nothing.
+*/
+.field[hidden],
+.fields-grid[hidden] {
+  display: none;
+}
+
+@media (max-width: 30rem) {
+  .color-preview {
+    aspect-ratio: 4 / 3;
+  }
+
+  .relative-swatches {
+    flex-direction: column;
+  }
+
+  .relative-arrow {
+    transform: rotate(90deg);
+  }
+}
