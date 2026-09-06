@@ -351,5 +351,33 @@ export const tagMeta: Record<string, TagMeta> = {
   "scss": {
     title: "Streamlined Styling with SCSS and Preprocessors",
     description: "Optimize your CSS workflow using SCSS (Sass) features like variables, nesting, mixins, and modular imports for scalable and maintainable code."
+  },
+  "object-fit": {
+    title: "CSS object-fit Explained",
+    description: "Guides to the object-fit property — how it scales and crops replaced elements like img, video, and canvas inside a fixed-size box."
+  },
+  "object-position": {
+    title: "Positioning Media with object-position",
+    description: "Using object-position to control where a cropped image or video's visible content sits within its box."
+  },
+  "aspect-ratio": {
+    title: "CSS aspect-ratio Explained",
+    description: "Reserving layout space and locking proportions for images, video, and containers with the aspect-ratio property."
+  },
+  "images": {
+    title: "Working with Images on the Web",
+    description: "Techniques for sizing, cropping, and optimizing images in modern CSS and HTML layouts."
+  },
+  "responsive-images": {
+    title: "Responsive Images Techniques",
+    description: "Making images adapt cleanly across screen sizes and containers without distortion or wasted bandwidth."
+  },
+  "video": {
+    title: "Styling Video on the Web",
+    description: "CSS techniques for sizing, cropping, and embedding video content responsively alongside images and canvas."
+  },
+  "cls": {
+    title: "Cumulative Layout Shift (CLS) and Fixes",
+    description: "Understanding Cumulative Layout Shift, a Core Web Vital, and the CSS techniques — like aspect-ratio — that prevent it."
   }
 };

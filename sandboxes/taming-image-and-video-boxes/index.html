@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image & Video Box Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Image & Video Box Playground</h1>
+        <p>Tune object-fit, object-position, and the box's own aspect-ratio live against a landscape photo, a portrait photo, and a mock video frame — all three share one box size, so you can see how the same settings crop very differently-shaped media.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Playground mode" id="mode-switch">
+        <button class="tab tab--active" type="button" data-mode="fit" role="tab" aria-selected="true">Fit &amp; Position</button>
+        <button class="tab" type="button" data-mode="cls" role="tab" aria-selected="false">CLS Demo</button>
+      </div>
+
+      <div id="fit-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area media-demo-area" aria-label="object-fit preview">
+          <figure class="media-item">
+            <div id="landscape-box" class="media-box">
+              <img id="landscape-img" alt="A wide illustrated landscape scene with a sun, hills, and a field" />
+            </div>
+            <figcaption>Landscape photo — 800 × 450 intrinsic</figcaption>
+          </figure>
+
+          <figure class="media-item">
+            <div id="portrait-box" class="media-box">
+              <img id="portrait-img" alt="A tall illustrated scene of a lighthouse on a pier at dusk" />
+            </div>
+            <figcaption>Portrait photo — 450 × 800 intrinsic</figcaption>
+          </figure>
+
+          <figure class="media-item">
+            <!--
+              This is a styled <img> wearing a play-button overlay and a fake control bar, NOT a real
+              <video> element — the sandbox stays self-contained with no video asset to fetch. The CSS
+              below applies identically to a real <video> or <canvas> element; only the markup differs.
+            -->
+            <div id="video-mock-box" class="media-box video-mock-box">
+              <img id="video-mock-img" alt="" />
+              <span class="video-mock-play" aria-hidden="true">▶</span>
+              <span class="video-mock-bar" aria-hidden="true"></span>
+            </div>
+            <figcaption>Mock &lt;video&gt; frame — same CSS, no real video file</figcaption>
+          </figure>
+        </section>
+
+        <output id="fit-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>object-fit</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="fit-select">Value</label>
+              <select id="fit-select">
+                <option value="fill">fill</option>
+                <option value="contain">contain</option>
+                <option value="cover" selected>cover</option>
+                <option value="none">none</option>
+                <option value="scale-down">scale-down</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>object-position</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="pos-preset-select">Preset</label>
+              <select id="pos-preset-select">
+                <option value="center" selected>center</option>
+                <option value="top left">top left</option>
+                <option value="top right">top right</option>
+                <option value="bottom left">bottom left</option>
+                <option value="bottom right">bottom right</option>
+                <option value="custom">custom (drag sliders)</option>
+              </select>
+            </div>
+          </div>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="pos-x-input">Horizontal (X)</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="pos-x-input" min="0" max="100" step="1" value="50">
+                  <output class="range-bubble" id="pos-x-value" for="pos-x-input">50%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="pos-y-input">Vertical (Y)</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="pos-y-input" min="0" max="100" step="1" value="50">
+                  <output class="range-bubble" id="pos-y-value" for="pos-y-input">50%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+          </div>
+          <p class="tip">object-position only moves the image within its box when there's slack to move into — try <code>none</code> or <code>cover</code> first; <code>fill</code> never has any slack to show it.</p>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Box</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="ratio-select">aspect-ratio</label>
+              <select id="ratio-select">
+                <option value="16-9" selected>16 / 9</option>
+                <option value="4-3">4 / 3</option>
+                <option value="1-1">1 / 1</option>
+                <option value="3-4">3 / 4</option>
+                <option value="21-9">21 / 9</option>
+                <option value="auto">auto (set a fixed height)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="width-input">Box width</label>
+              <div class="range-row">
+                <span class="range-edge">30%</span>
+                <div class="range-track">
+                  <input type="range" id="width-input" min="30" max="100" step="5" value="70">
+                  <output class="range-bubble" id="width-value" for="width-input">70%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+          </div>
+          <div class="fields-grid" id="height-field" hidden>
+            <div class="field field--full">
+              <label for="height-input">Box height (aspect-ratio: auto)</label>
+              <div class="range-row">
+                <span class="range-edge">80px</span>
+                <div class="range-track">
+                  <input type="range" id="height-input" min="80" max="320" step="10" value="180">
+                  <output class="range-bubble" id="height-value" for="height-input">180px</output>
+                </div>
+                <span class="range-edge">320px</span>
+              </div>
+            </div>
+          </div>
+          <p class="tip">All three boxes always share the same size — only the photo inside each one is a different shape, so you can see the same object-fit value crop each one differently.</p>
+        </fieldset>
+      </div>
+
+      <div id="cls-demo" class="tab-panel">
+        <section class="demo-area cls-demo-area" aria-label="Cumulative Layout Shift comparison">
+          <div class="cls-column">
+            <p class="cls-column-label">✕ No <code>aspect-ratio</code></p>
+            <div class="cls-card">
+              <div class="cls-title-bar"></div>
+              <div id="cls-unreserved-slot" class="cls-slot cls-slot--unreserved"></div>
+              <p class="cls-paragraph">This paragraph sits directly under the image slot. Watch it jump down the instant the photo below finishes loading — that's a real layout shift.</p>
+            </div>
+          </div>
+
+          <div class="cls-column">
+            <p class="cls-column-label">✓ <code>aspect-ratio: 16 / 9</code></p>
+            <div class="cls-card">
+              <div class="cls-title-bar"></div>
+              <div id="cls-reserved-slot" class="cls-slot cls-slot--reserved"></div>
+              <p class="cls-paragraph">This paragraph never moves, because the box above it already reserved its final 16 / 9 footprint before the photo ever arrived.</p>
+            </div>
+          </div>
+        </section>
+
+        <div class="cls-controls">
+          <button type="button" id="cls-reload-btn" class="toggle-btn">Simulate slow photo load</button>
+          <p class="tip" id="cls-status">Click to load both photos on a ~900ms delay and compare.</p>
+        </div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

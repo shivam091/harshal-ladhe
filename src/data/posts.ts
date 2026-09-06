@@ -304,6 +304,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "taming-image-and-video-boxes",
+    title: "object-fit, object-position, and aspect-ratio: Taming Image and Video Boxes",
+    excerpt: "Fit it, crop it, reserve its space.",
+    description: "A beginner-to-advanced guide to object-fit, object-position, and aspect-ratio — how browsers size and crop images, video, and canvas, and how to reserve layout space up front to eliminate layout shift.",
+    category: ["CSS"],
+    tags: ["css", "layout", "responsive", "beginner", "advanced", "frontend", "browser-support", "progressive-enhancement", "modern-css", "accessibility", "object-fit", "object-position", "aspect-ratio", "images", "responsive-images", "video", "cls"],
+    signoff: "The aspect-ratio/CLS diagram ended up being the trickiest of the three — getting a 'before' row that visibly jumps and an 'after' row that visibly doesn't, without any actual animation to lean on, took more iterating than a static SVG usually asks for. I hope watching one shared object-fit/object-position/aspect-ratio setting crop a landscape photo, a portrait photo, and a mock video frame all at once in the playground makes it click faster than five keyword definitions ever could on their own. Thanks for taming a few boxes with me. 🖼️",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 

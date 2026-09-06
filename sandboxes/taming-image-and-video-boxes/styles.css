@@ -1,0 +1,203 @@
+:root {
+  --pg-radius-lg: 0.75rem;
+}
+
+/*
+  `.fields-grid` sets its own `display: grid`, which normally beats the `[hidden]` user-agent rule
+  regardless of specificity (author styles always win over UA styles for the same property) — this
+  re-asserts `display: none` as an author rule so `el.hidden = true` actually hides the height field
+  instead of silently doing nothing (same fix mastering-css-gradients's sandbox needed for `.field[hidden]`).
+*/
+.fields-grid[hidden] {
+  display: none;
+}
+
+/* ----------------------------- Fit & Position panel ----------------------------- */
+
+.media-demo-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.media-item {
+  flex: 1 1 12.5rem;
+  min-inline-size: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.media-item figcaption {
+  font-size: 0.75rem;
+  color: var(--pg-text-muted);
+  text-align: center;
+}
+
+.media-box {
+  position: relative;
+  inline-size: 70%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: var(--pg-radius-lg);
+  transition: inline-size 0.15s ease, aspect-ratio 0.15s ease, block-size 0.15s ease;
+}
+
+.media-box img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  transition: object-fit 0.1s ease, object-position 0.15s ease;
+}
+
+.video-mock-box {
+  background: #101010;
+}
+
+.video-mock-play {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline-start: 0.1875rem;
+  font-size: 1rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 0.09375rem solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.video-mock-bar {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  block-size: 0.3125rem;
+  background: rgba(255, 255, 255, 0.25);
+  pointer-events: none;
+}
+
+.video-mock-bar::after {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 35%;
+  background: var(--pg-primary);
+}
+
+@media (max-width: 30rem) {
+  .media-demo-area {
+    flex-direction: column;
+  }
+
+  .media-box {
+    inline-size: 100% !important;
+  }
+}
+
+/* ----------------------------- CLS Demo panel ----------------------------- */
+
+.cls-demo-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.cls-column {
+  flex: 1 1 12.5rem;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cls-column-label {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.cls-column:first-child .cls-column-label {
+  color: #f87171;
+}
+
+.cls-column:last-child .cls-column-label {
+  color: #4ade80;
+}
+
+.cls-card {
+  padding: 0.875rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: var(--pg-radius-lg);
+}
+
+.cls-title-bar {
+  inline-size: 60%;
+  block-size: 0.75rem;
+  margin-block-end: 0.75rem;
+  background: var(--pg-border);
+  border-radius: 0.1875rem;
+}
+
+/* No aspect-ratio reserved: the slot has zero height (and doesn't even render) until a photo is placed
+   inside it — exactly like an <img> with no width/height/aspect-ratio before it finishes downloading. */
+.cls-slot--unreserved {
+  margin-block-end: 0.75rem;
+}
+
+.cls-slot--unreserved.cls-slot--loaded {
+  margin-block-end: 0.75rem;
+}
+
+/* aspect-ratio reserved up front: the slot has its final footprint from the very first frame, whether or
+   not a photo has loaded into it yet. */
+.cls-slot--reserved {
+  aspect-ratio: 16 / 9;
+  margin-block-end: 0.75rem;
+  background: var(--pg-surface-muted);
+  border: 0.0625rem dashed var(--pg-border);
+  border-radius: 0.5rem;
+}
+
+.cls-slot--reserved.cls-slot--loaded {
+  border-style: solid;
+}
+
+.cls-slot img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+.cls-paragraph {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+}
+
+.cls-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+@media (max-width: 30rem) {
+  .cls-demo-area {
+    flex-direction: column;
+  }
+}

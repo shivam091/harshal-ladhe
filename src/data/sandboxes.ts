@@ -16,6 +16,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "taming-image-and-video-boxes",
+    title: "Image & Video Box Playground",
+    description: "Tune object-fit, object-position, and box aspect-ratio live against a landscape photo, a portrait photo, and a mock video frame, then replay the aspect-ratio CLS fix on demand.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "container-queries-deep-dive",
     title: "Container Queries Playground",
     description: "Drag a container past a breakpoint while its title scales in cqi, retarget a named @container query between two nested containers, and flip a --theme custom property to trigger a live style query.",

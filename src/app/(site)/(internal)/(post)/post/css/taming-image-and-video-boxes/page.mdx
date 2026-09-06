@@ -1,0 +1,712 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("taming-image-and-video-boxes");
+
+Every `<img>` and `<video>` you've ever placed in a box that didn't match its own shape has forced the same
+decision on the browser: stretch it, crop it, or leave gaps. For years the only real answer was a hack —
+swap the tag for a `background-image` and fight `background-size`/`background-position` instead. CSS now
+answers this directly, on the element itself, with three small properties that do exactly what their names
+say.
+
+<Quote>
+  object-fit doesn't resize your image — it tells the browser how to paint the image it already has inside
+  a box you've already sized. The box and the picture are two separate problems, and that's the whole point.
+</Quote>
+
+That separation is the idea this entire post is built around: the box's size is one decision, and how the
+media fills that box is a completely different one. Once those two stop being tangled together, cropping a
+photo, embedding a responsive video, and stopping a page from jumping around while images load all turn out
+to be the same small set of rules, applied in different places.
+
+In this post, we'll cover:
+
+- What problem `object-fit` and `object-position` solve, and the `background-image` hack they replace
+- All five `object-fit` keyword values, compared side by side on the same photo
+- Positioning the crop with `object-position` — keywords, percentages, and art direction
+- Why `aspect-ratio` exists: reserving layout space before media loads, and killing layout shift
+- Using these three properties on `<video>` and `<canvas>` — identical behavior, different tags
+- Gotchas: replaced elements only, needing an explicit box size, and CLS-safe `<img>` markup
+- Advanced ground: `aspect-ratio` inside flex/grid sizing, `object-view-box`, `image-rendering`, and
+  container-query media grids
+- Browser support, common mistakes, and an interactive playground to tune all three live
+
+## What Problem Do object-fit and object-position Solve?
+
+Before any of these three properties existed, fitting a photo into a fixed-size box meant giving up on the
+`<img>` tag entirely. You'd set the photo as a `background-image` on a `<div>` instead, then reach for
+`background-size: cover` and `background-position: center` to crop it the way you wanted:
+
+<CodeBlock language="css">
+{`
+  /* The old workaround: no <img> at all, just a div wearing a photo as its background */
+  .photo-box {
+    background-image: url("photo.jpg");
+    background-size: cover;
+    background-position: center;
+  }
+`}
+</CodeBlock>
+
+It worked, but it quietly threw away everything that makes `<img>` an `<img>`: no `alt` text for screen
+readers, no right-click "save image," no participation in lazy-loading or `srcset`, and nothing for a
+browser's image-download heuristics to find in the markup at all. You were solving a *painting* problem
+(how should this rectangle of pixels fill that box?) by giving up a *content* element, purely because the
+painting problem had no answer anywhere else.
+
+`object-fit` and `object-position` close that gap. They're the `background-size`/`background-position` of
+*replaced elements* — `<img>`, `<video>`, and `<canvas>` — so you get exactly the same cropping and
+positioning power, without leaving the semantic, accessible element behind:
+
+<CodeBlock language="css">
+{`
+  /* The modern answer: a real <img>, cropped in place */
+  .photo-box img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+`}
+</CodeBlock>
+
+<Success title="Key insight">
+  `object-fit` and `object-position` don't replace `width`/`height` — they sit on top of them. The box's own
+  size is still set the normal way (fixed dimensions, percentages, `aspect-ratio`, whatever fits your
+  layout); these two properties only decide how the image's actual pixels are mapped into whatever box size
+  you already chose.
+</Success>
+
+<RainbowDivider />
+
+## The Five object-fit Values
+
+`object-fit` accepts exactly five keywords, and every one of them answers the same question differently:
+*given a box size that doesn't match the image's own proportions, what should happen to the parts that
+don't line up?* The diagram below crops the same 200×140 landscape photo inside an identical square box
+under all five values, so the difference is visible at a glance instead of only in prose.
+
+**Visual Illustration**
+
+<ObjectFitModesDiagram />
+
+### fill (the default)
+
+<CodeBlock language="css">
+{`
+  img {
+    object-fit: fill;
+  }
+`}
+</CodeBlock>
+
+`fill` is what happens if you never touch `object-fit` at all — it's the initial value. The image is
+stretched (non-uniformly, if it has to be) until it exactly matches the box in both dimensions. Nothing is
+cropped and no empty space is left over, but if the box's aspect ratio doesn't match the photo's, the photo
+visibly distorts — round things stop being round.
+
+<Warning title="fill is rarely what you want for a photo">
+  Because `fill` is the default, it's also the value beginners hit by accident: set `width`/`height` on an
+  `<img>` that don't match its natural proportions, and the photo silently squishes with no error or
+  warning. If a photo you've sized ever looks "stretched," check whether you've set `object-fit` at all
+  before suspecting anything else.
+</Warning>
+
+### contain
+
+<CodeBlock language="css">
+{`
+  img {
+    object-fit: contain;
+  }
+`}
+</CodeBlock>
+
+`contain` scales the image *uniformly* (same factor on both axes, so proportions stay correct) until the
+whole thing fits inside the box. Whichever axis needed the smaller scaling factor determines the final
+size — the other axis ends up with room to spare, which shows as empty space (letterboxing) above/below or
+left/right of the image, depending on which way the box and the photo disagree.
+
+**Use case:** logos, diagrams, and product shots where cropping *any* part of the image is unacceptable —
+letterboxing is the honest tradeoff for guaranteeing nothing gets cut off.
+
+### cover
+
+<CodeBlock language="css">
+{`
+  img {
+    object-fit: cover;
+  }
+`}
+</CodeBlock>
+
+`cover` is `contain`'s mirror image: it also scales uniformly, but by whichever factor is *larger*, so the
+image grows enough to fill the box completely in both dimensions. The axis that needed the larger factor
+lands exactly on the box's edge; the other axis overflows the box and gets cropped away.
+
+<Info title="The most common value in real layouts">
+  `cover` is the default assumption for hero images, card thumbnails, and avatar photos — anywhere a design
+  calls for a box that's always fully covered by an image regardless of the photo's own shape. Pair it with
+  `object-position` (next section) whenever the cropped-away part matters.
+</Info>
+
+### none
+
+<CodeBlock language="css">
+{`
+  img {
+    object-fit: none;
+  }
+`}
+</CodeBlock>
+
+`none` skips scaling entirely. The image renders at its real, intrinsic size, centered in the box by
+default (more on that in the next section) — if the photo is bigger than the box, most of it simply gets
+clipped away; if it's smaller, it sits in the middle surrounded by empty space, exactly like `contain`'s
+letterboxing but without any resizing at all.
+
+### scale-down
+
+<CodeBlock language="css">
+{`
+  img {
+    object-fit: scale-down;
+  }
+`}
+</CodeBlock>
+
+`scale-down` is the one value that's actually defined *in terms of the other four*: the spec says to render
+the content as if `none` or `contain` had been used, whichever one produces the smaller final size. In
+practice that means: if the photo is already smaller than the box, `scale-down` behaves exactly like `none`
+(no upscaling, ever); if the photo is bigger than the box — the far more common case, and the one shown in
+the diagram above — it behaves exactly like `contain`.
+
+<Details summary="Why does scale-down exist if it's just none or contain?">
+  Because which of the two applies depends on the *photo's own size relative to the box*, not on anything
+  you can know up front in the stylesheet. A single `object-fit: scale-down` rule automatically does the
+  right thing for both a tiny icon (never blown up past its real size) and a huge photo (safely shrunk to
+  fit) dropped into the same component — `none` alone would let the huge photo overflow, and `contain` alone
+  would blow the tiny icon up past its real resolution.
+</Details>
+
+<RainbowDivider />
+
+## Positioning the Crop: object-position
+
+Whenever `object-fit` leaves the image bigger *or* smaller than the box — `cover`'s crop, `none`'s overflow,
+`contain`'s letterboxing — something has to decide *where* the visible part sits. That's `object-position`.
+It defaults to `50% 50%` (dead center), and accepts the same value types as `background-position`: keywords
+(`top`, `left`, `center`, `bottom right`, …), percentages, or fixed lengths.
+
+The diagram below isolates `object-position` from `object-fit` by using `object-fit: none` — the photo is
+never scaled, only slid around inside a box smaller than it in both directions, so you can see exactly how
+each value moves the crop:
+
+**Visual Illustration**
+
+<ObjectPositionDiagram />
+
+The mental model that makes every value click at once: **a percentage pins a matching point on the image to
+that same point on the box.** `object-position: 100% 100%` doesn't mean "push the image 100% to the
+bottom-right" — it means "the image's own bottom-right corner should land on the box's bottom-right corner."
+`0% 0%` pins top-left to top-left. `50% 50%` (the default) pins center to center. Once that clicks, any
+percentage — including values with no keyword equivalent, like the diagram's `25% 75%` — stops needing
+memorization.
+
+<CodeBlock language="css">
+{`
+  .avatar img {
+    object-fit: cover;
+    /* Pin faces near the top of a cover-cropped portrait instead of losing them off the bottom */
+    object-position: 50% 20%;
+  }
+`}
+</CodeBlock>
+
+### Art direction: keeping a subject in frame
+
+Combining `object-fit: cover` with a non-default `object-position` is the single most useful pattern in
+this whole post for real photography — it lets a fixed-aspect-ratio grid of cards (avatars, product tiles,
+a photo gallery) crop every image identically without guillotining the one part of each photo that actually
+matters:
+
+<CodeBlock language="css">
+{`
+  .team-card img {
+    inline-size: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    /* Faces tend to sit in the upper third of a portrait photo, not dead center */
+    object-position: center 25%;
+  }
+`}
+</CodeBlock>
+
+<Warning title="object-position needs somewhere to move">
+  If `object-fit: fill` is set, the image is stretched to match the box exactly on both axes — there's
+  never any slack left over, so `object-position` has nothing to do and silently has no visible effect.
+  It's meaningful with `contain`, `cover`, and `none`, but not `fill`.
+</Warning>
+
+<RainbowDivider />
+
+## Reserving Space Before Media Loads: aspect-ratio and CLS
+
+Everything so far assumes the box already has a size. But an `<img>`'s intrinsic size isn't known until its
+file has actually downloaded — before that happens, an unstyled image has no width or height for the layout
+engine to reserve. If a paragraph is sitting right below that image in the markup, it renders as if the
+image weren't there at all, then gets shoved downward the instant the photo arrives. That sudden reflow is
+exactly what **Cumulative Layout Shift (CLS)** — one of Google's Core Web Vitals — measures, and it's one of
+the most common, most fixable causes of a bad CLS score on an otherwise fast page.
+
+**Visual Illustration**
+
+<AspectRatioClsDiagram />
+
+`aspect-ratio` fixes this by letting the browser reserve the box's final footprint *before* the image has
+loaded at all — using nothing but the ratio and whichever single dimension the layout already knows (a
+percentage width, most commonly):
+
+<CodeBlock language="css">
+{`
+  img {
+    inline-size: 100%;
+    aspect-ratio: 16 / 9;
+  }
+`}
+</CodeBlock>
+
+The syntax is a plain `width / height` ratio, and it's genuinely just division — `16 / 9` means "for every
+16 units of width, reserve 9 units of height." Whatever width the layout resolves to (a percentage, a fixed
+value, whatever), the browser multiplies by `9 / 16` to get the height, and reserves that space immediately,
+long before any bytes of the actual photo have arrived.
+
+<CodeBlock language="css">
+{`
+  /* All equivalent ratios — aspect-ratio just divides width by height, so any two numbers in that
+     proportion produce the same shape. */
+  .widescreen { aspect-ratio: 16 / 9; }
+  .widescreen-decimal { aspect-ratio: 1.778; }
+  .square { aspect-ratio: 1 / 1; }
+  .portrait { aspect-ratio: 3 / 4; }
+`}
+</CodeBlock>
+
+### Replacing the padding-top percentage hack
+
+Before `aspect-ratio` shipped, reserving a responsive box's proportions required a genuinely strange trick:
+percentage `padding-top` on a block-level element resolves against the *width* of its containing block, not
+its own width, which people exploited to force a ratio-shaped box out of pure padding math.
+
+<CodeBlock language="css">
+{`
+  /* The old hack: 56.25% is 9 ÷ 16 — the percentage that padding-top needs to fake a 16:9 box */
+  .video-embed-wrapper {
+    position: relative;
+    padding-top: 56.25%;
+  }
+
+  .video-embed-wrapper iframe {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* The modern equivalent — no wrapper, no absolute positioning, no percentage math to reverse-engineer */
+  .video-embed iframe {
+    inline-size: 100%;
+    aspect-ratio: 16 / 9;
+  }
+`}
+</CodeBlock>
+
+<Success title="One less wrapper element">
+  The padding-top hack needed an extra wrapper `<div>` purely to host the padding trick, plus
+  `position: absolute` on the embedded content to escape it. `aspect-ratio` needs neither — it's one
+  property on the element that actually needs the ratio.
+</Success>
+
+### When only one of width or height is auto
+
+`aspect-ratio`'s real trick is deciding a *missing* dimension from a *known* one — but it only has a
+missing dimension to fill when exactly one of `width`/`height` is `auto` (the default for most elements).
+If you set both `width` and `height` explicitly, there's nothing left for `aspect-ratio` to solve, and the
+box simply may not match the stated ratio at all — the explicit lengths win.
+
+<CodeBlock language="css">
+{`
+  /* Works as expected: height is auto, so aspect-ratio computes it from the 100% width */
+  .responsive-figure img {
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 16 / 9;
+  }
+
+  /* Has no effect on the rendered box: both dimensions are already pinned, nothing is auto to solve for */
+  .fixed-figure img {
+    inline-size: 300px;
+    block-size: 150px;
+    aspect-ratio: 16 / 9; /* 300 / 150 = 2 / 1, not 16 / 9 — this line changes nothing */
+  }
+`}
+</CodeBlock>
+
+### The width/height attributes still matter
+
+`aspect-ratio` in CSS reserves space for elements CSS controls, but it isn't the only tool for this job —
+and for a plain `<img>` with no surrounding CSS at all, it isn't even the first one browsers reach for.
+Setting the old HTML `width`/`height` attributes directly on the tag lets the browser compute the correct
+aspect ratio *from the markup itself*, before a single line of your stylesheet has even been parsed:
+
+<CodeBlock language="html">
+{`
+  <!-- The browser derives a 1200 / 800 aspect ratio from these two attributes alone -->
+  <img src="photo.jpg" width="1200" height="800" alt="A description of the photo" />
+`}
+</CodeBlock>
+
+Modern browsers use exactly those two numbers to set a default `aspect-ratio` on the image internally (as
+if you'd written `aspect-ratio: attr(width) / attr(height)` yourself), which is why the single
+highest-leverage CLS fix for ordinary content images is often just: **stop omitting `width`/`height` on
+`<img>`, even when the display size is entirely controlled by CSS.**
+
+<CodeBlock language="css">
+{`
+  /* The browser already knows this image's aspect ratio from its width/height attributes — this CSS just
+     controls the *display* size, and the reserved space tracks it automatically. */
+  img {
+    inline-size: 100%;
+    block-size: auto;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## object-fit and aspect-ratio on Video and Canvas
+
+Every property covered so far is defined for **replaced elements** in general, not for `<img>` specifically
+— and `<video>` and `<canvas>` are replaced elements too. The exact same rules, the exact same five
+`object-fit` keywords, and the exact same `object-position`/`aspect-ratio` behavior all apply, unchanged:
+
+<CodeBlock language="css">
+{`
+  video {
+    inline-size: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  canvas {
+    inline-size: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+  }
+`}
+</CodeBlock>
+
+For `<video>`, this is exactly how "responsive video that crops instead of letterboxing" is done in
+practice — a portrait phone-recorded clip embedded in a landscape hero slot, cropped to fill with
+`object-fit: cover`, is the same crop as a portrait photo in the same slot. For `<canvas>`, it matters
+because a canvas's drawing buffer resolution (set via its `width`/`height` attributes) and its *displayed*
+CSS size are two entirely separate numbers — `object-fit` controls how the rendered buffer maps into
+whatever CSS box you've given the canvas, exactly like an image file mapping into an `<img>`'s box.
+
+<Info title="Try it yourself">
+  The [Interactive Playground](#interactive-playground) further down this post applies every control to a
+  landscape photo, a portrait photo, *and* a mock video frame side by side, using one shared set of
+  `object-fit`/`object-position`/`aspect-ratio` values — watch how identically all three respond.
+</Info>
+
+<RainbowDivider />
+
+## Gotchas: Replaced Elements, Explicit Sizing, and Layout Shift
+
+A handful of details trip people up specifically because these properties look like they should apply more
+broadly than they actually do.
+
+**`object-fit` only affects replaced elements.** Setting it on a `<div>`, a `<span>`, or any other ordinary
+element does absolutely nothing — there's no "replaced content" (an external image, video frame, or canvas
+buffer) for it to fit. It's valid CSS on any selector, so the browser won't warn you; it just silently has
+no visible effect anywhere except `<img>`, `<video>`, `<canvas>`, and a small handful of rarer replaced
+elements like `<embed>` and `<object>`.
+
+**It also needs the box to actually have a size.** `object-fit` decides how content fills a box — if the box
+itself has no defined size (no `width`/`height`, no `aspect-ratio`, nothing constraining it), there's no box
+to fit anything into, and the property has nothing to do. This is the same root cause as the `fill`
+surprise from earlier, just from the other direction: no explicit sizing means the replaced element falls
+back to rendering at its own intrinsic size, same as if `object-fit` had never been set at all.
+
+<Warning title="Checklist when object-fit 'isn't working'">
+  In order: is this a replaced element (`img`/`video`/`canvas`)? Does the element have an actual, non-auto
+  box size in at least one dimension (via `width`/`height`, percentages, or `aspect-ratio`)? Is the value
+  something other than `fill` if you expect `object-position` to matter? Nine times out of ten, one of these
+  three is the real answer.
+</Warning>
+
+**For CLS specifically, `aspect-ratio` and the `width`/`height` HTML attributes solve overlapping but
+different halves of the problem.** The attributes give the *browser* an aspect ratio to reserve before CSS
+is even parsed and before any bytes of the image download; `aspect-ratio: auto` (the initial value) simply
+lets that browser-computed ratio through unopposed. Writing an explicit `aspect-ratio` in CSS *overrides*
+whatever the attributes implied — which is exactly what you want when CSS is deliberately cropping to a
+different ratio (a square avatar cropped from a landscape source file, say), but is a bug if it happens by
+accident on ordinary content images, where you actually want the attributes' real ratio to be preserved.
+
+<RainbowDivider />
+
+## Advanced: aspect-ratio: auto in Flex and Grid
+
+`aspect-ratio`'s initial value is `auto`, not `1 / 1` — meaning "use whatever ratio the element would
+naturally have" (its intrinsic ratio for a photo, or no fixed ratio at all for something like a `<div>`).
+Explicitly writing `aspect-ratio: auto` restores that default, which matters the moment a set ratio starts
+fighting with a flex or grid container's own sizing algorithm instead of cooperating with it.
+
+Inside a flex container, a flex item with both a set `aspect-ratio` and `flex-basis`/`flex-grow` can end up
+with the *ratio* and the *flex sizing* wanting different final sizes — when that happens, the spec has flex
+layout win on the main axis, and lets `aspect-ratio` only fill in the cross-axis size from whatever the main
+axis resolved to. A ratio you expected to hold exactly can look "wrong" here in a way that's actually
+correct, just resolved by a different algorithm than the one you were thinking about:
+
+<CodeBlock language="css">
+{`
+  .flex-row {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .flex-row img {
+    flex: 1 1 0; /* flex-basis: 0 — every image starts from zero and grows to fill available space */
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    min-inline-size: 0; /* Without this, flex items refuse to shrink below their intrinsic content size */
+  }
+`}
+</CodeBlock>
+
+In a grid, `aspect-ratio` interacts more predictably with track sizing — because grid resolves track sizes
+first and then lays out items into the resulting cells, a grid item's `aspect-ratio` mostly just determines
+its own box within whatever cell size the grid already decided, without feeding back into the track sizing
+algorithm the way it can in flex.
+
+<Details summary="Why doesn't a set aspect-ratio ever change how big a flex/grid container itself is?">
+  Because `aspect-ratio` only ever resolves a *missing* dimension from a *known* one on the element it's set
+  on — it participates in that element's own box calculation, but it isn't a sizing input the *container*
+  reads back to decide track sizes or flex-basis distribution. If your grid tracks or flex sizing look
+  unaffected by an item's `aspect-ratio`, that's expected: the ratio is downstream of the container's
+  sizing decision, not upstream of it.
+</Details>
+
+<RainbowDivider />
+
+## object-view-box: A Peek at What's Next
+
+A newer property worth knowing about — with real caveats — is `object-view-box`. Where `object-position`
+only *slides* the existing crop window around, `object-view-box` lets you specify an entirely custom
+sub-rectangle of the source image (via an `inset()` or other basic shape) as the "viewport" that
+`object-fit` then fits into the box, instead of always using the image's full intrinsic bounds:
+
+<CodeBlock language="css">
+{`
+  img {
+    object-fit: cover;
+    /* Crop to the middle 60% of the source image, then apply object-fit to *that* sub-rectangle */
+    object-view-box: inset(20% 20%);
+  }
+`}
+</CodeBlock>
+
+<Warning title="Limited browser support — treat as progressive enhancement only">
+  `object-view-box` is genuinely new and, at the time of writing, only implemented in Chromium-based
+  browsers — Firefox and Safari don't support it at all. It's worth knowing the shape of where `object-fit`
+  is heading, but don't reach for it as your only cropping mechanism yet; confirm current support on MDN
+  before using it for anything beyond a harmless enhancement layered on top of `object-position`.
+</Warning>
+
+<RainbowDivider />
+
+## image-rendering for Pixel Art
+
+`object-fit` decides *what area* of an image ends up in the box; it says nothing about *how the pixels in
+between get resampled* when that area is scaled up or down. For photographs, the browser's default smoothing
+is exactly what you want. For deliberately low-resolution pixel art, that same smoothing blurs every crisp
+edge into a soft, muddy mess — which is what `image-rendering` exists to override:
+
+<CodeBlock language="css">
+{`
+  .pixel-art-sprite {
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    /* Keep hard pixel edges when this sprite is scaled up instead of letting the browser smooth them */
+    image-rendering: pixelated;
+  }
+`}
+</CodeBlock>
+
+The two properties are entirely independent — `object-fit` and `object-position` decide the crop and
+placement exactly as covered earlier, and `image-rendering: pixelated` (or the older `crisp-edges` keyword,
+kept for wider engine support) just changes the resampling algorithm used whenever that content ends up
+scaled to a non-native size, whether by `object-fit` or by plain CSS sizing.
+
+<RainbowDivider />
+
+## Responsive Media Grids with Container Queries
+
+`aspect-ratio` and container queries solve two different halves of the same responsive-media problem:
+`aspect-ratio` keeps each card's own proportions locked no matter what width it lands at, and a container
+query lets that card change its *internal layout* based on the width it actually receives from the grid —
+not the viewport, which a card in a sidebar vs. a card in a wide main column can disagree with entirely.
+
+<CodeBlock language="css">
+{`
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+  }
+
+  .card {
+    container-type: inline-size;
+  }
+
+  .card img {
+    inline-size: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+
+  /* Once a card's own width crosses this line, stack its image above the text instead of beside it —
+     driven by the card's rendered width, not the viewport's */
+  @container (min-width: 28rem) {
+    .card {
+      display: grid;
+      grid-template-columns: 12rem 1fr;
+    }
+
+    .card img {
+      aspect-ratio: 1 / 1;
+    }
+  }
+`}
+</CodeBlock>
+
+Every card keeps a clean, jump-free `aspect-ratio`-reserved image slot regardless of which layout the
+container query switches it into — the two features compose cleanly precisely because `aspect-ratio` only
+ever cares about the box it's set on, never about the viewport or the query condition around it.
+
+<RainbowDivider />
+
+## Common Mistakes Checklist
+
+- **Forgetting `object-fit` has a default.** `fill` is what you get for free, and it's rarely the right
+  choice for a photo — an image that looks "squished" almost always means no `object-fit` was set at all.
+- **Setting `object-fit` on a non-replaced element.** It's valid CSS anywhere, so nothing warns you when it
+  quietly does nothing on a `<div>` or a `<span>`.
+- **Setting `object-fit` with no box size to fit into.** Without a `width`/`height`/`aspect-ratio` on the
+  element, there's no box for the property to have any visible effect on.
+- **Expecting `object-position` to do anything under `object-fit: fill`.** `fill` leaves no slack to move
+  into — `object-position` needs `contain`, `cover`, or `none` to have room to work with.
+- **Writing `aspect-ratio` when both dimensions are already explicit.** With `width` and `height` both
+  pinned, there's no `auto` dimension left for the ratio to solve for, and it silently has no effect.
+- **Omitting `width`/`height` attributes on ordinary `<img>` tags "because CSS controls the size anyway."**
+  The attributes are what let the browser reserve space *before* your stylesheet is even parsed — CSS
+  sizing and the HTML attributes solve overlapping but different timing problems, not the same one.
+- **Assuming `aspect-ratio` on a flex item behaves like it does in a normal block context.** Flex-basis and
+  flex-grow can win over the ratio on the main axis — reach for `min-inline-size: 0` and test the actual
+  rendered result rather than assuming the ratio holds unconditionally.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Always set `object-fit` explicitly on cropped photos** — don't rely on the `fill` default and hope the
+  box happens to match the photo's aspect ratio.
+- **Reach for `cover` + a deliberate `object-position` for art direction**, instead of `contain` with
+  awkward letterboxing, whenever a subject (a face, a product) needs to stay reliably in frame.
+- **Set `width`/`height` attributes on every `<img>`, even when CSS controls the display size** — it's the
+  cheapest, most broadly effective fix for image-related layout shift available.
+- **Use `aspect-ratio` for anything CSS is deliberately cropping to a non-native ratio** — an avatar square
+  cropped from a landscape source, a 16:9 video embed, a consistent card grid — and let the HTML attributes
+  handle everything else.
+- **Treat `object-view-box` as a progressive enhancement, not a dependency**, until support broadens past
+  Chromium-only.
+- **Pair `image-rendering: pixelated` with `object-fit: contain`** for pixel art, never the browser's
+  default smoothing.
+- **Test aspect-ratio inside real flex/grid layouts**, not just in isolation — the sizing algorithm it's
+  embedded in can change the outcome in ways a standalone example won't show.
+
+<RainbowDivider />
+
+## Browser Support
+
+`object-fit`, `object-position`, and `aspect-ratio` are all Baseline and safe to use unconditionally in any
+current browser — the era of `object-fit` needing an `<img>`-shaped polyfill for old Internet Explorer is
+long over. `object-view-box`, covered above, is the one genuine exception: it's Chromium-only today.
+
+For the rare case where you still need to support an ancient engine, `@supports` lets you ship a graceful
+fallback rather than nothing at all:
+
+<CodeBlock language="css">
+{`
+  .photo-box img {
+    /* Fallback: a plain full-box image with no cropping guarantee */
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  @supports (object-fit: cover) {
+    .photo-box img {
+      object-fit: cover;
+      object-position: center;
+    }
+  }
+
+  @supports (aspect-ratio: 1 / 1) {
+    .photo-box {
+      aspect-ratio: 16 / 9;
+      block-size: auto;
+    }
+  }
+`}
+</CodeBlock>
+
+<Info title="Check before you commit">
+  Confirm current numbers on MDN's compatibility tables for each property before assuming support in a
+  project with an unusually old browser matrix — Baseline status can still lag a specific corporate or
+  embedded browser target by a surprising margin.
+</Info>
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading five `object-fit` values and a handful of `object-position` percentages is one thing — watching them
+respond live, on more than one photo shape at once, is another. The **Fit & Position** tab applies one shared
+`object-fit`, `object-position`, and box `aspect-ratio`/width to a wide landscape photo, a tall portrait
+photo, and a mock video frame simultaneously, so you can see exactly how the *same* settings crop very
+differently-shaped source media — with the generated CSS shown live in the readout. The **CLS Demo** tab
+replays the before/after from the diagram above for real: click to simulate a slow photo load and watch
+which card's paragraph actually jumps.
+
+<Sandbox slug="taming-image-and-video-boxes" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Conclusion
+
+`object-fit`, `object-position`, and `aspect-ratio` all solve the same underlying problem from different
+angles: a box has a size, media has its own shape, and something has to reconcile the two — cleanly,
+without hacks, and without the browser having to guess at your intent. `object-fit` picks a strategy
+(stretch, shrink-to-fit, grow-to-fill, or leave alone), `object-position` says where the interesting part of
+the crop should sit, and `aspect-ratio` makes sure the box itself never needs to change size once the media
+actually arrives.
+
+None of these three properties do anything especially clever in isolation — the depth here is entirely in
+how predictably they compose: with each other, with `<video>` and `<canvas>` exactly as much as `<img>`,
+with flex and grid sizing, and with the plain HTML attributes that already existed. Reach for them by
+default on every image and video box you write, and the old `background-image` cropping hack — along with
+the layout jumps it never actually prevented — stops being something you need at all.
