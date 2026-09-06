@@ -499,6 +499,249 @@ export const svgDemos: SvgDemoMeta[] = [
   <!-- Guide points: every vertex of the current preset. -->${guidePoints}
 </svg>`;
     }
+  },
+  {
+    slug: "stagger-demo",
+    title: "Interactive Example - Staggered Dots",
+    controls: [
+      { id: "count", label: "Dot count", type: "range", min: 2, max: 8, step: 1, defaultValue: 3 },
+      { id: "delayStep", label: "Delay per dot (s)", type: "range", min: 0.05, max: 0.5, step: 0.05, defaultValue: 0.15 },
+      { id: "duration", label: "Duration (s)", type: "range", min: 0.4, max: 2, step: 0.1, defaultValue: 1 },
+      { id: "amplitude", label: "Bounce height", type: "range", min: 4, max: 20, step: 1, defaultValue: 10 },
+      { id: "color", label: "Color", type: "color", defaultValue: "#6366f1" }
+    ],
+    // Same rationale as radar-demo: the preview pane is replaced wholesale via innerHTML, so every
+    // dot's offset is baked into its own inline animation-delay rather than relying on :nth-child.
+    render: (values) => {
+      const count = Math.max(2, Math.round(Number(values.count)));
+      const delayStep = Number(values.delayStep);
+      const duration = Number(values.duration);
+      const amplitude = Number(values.amplitude);
+      const color = String(values.color);
+      const spacing = 100 / (count + 1);
+
+      const dots = Array.from({ length: count }, (_, i) => {
+        const cx = (spacing * (i + 1)).toFixed(2);
+        const delay = (i * delayStep).toFixed(2);
+        return `  <circle class="dot" cx="${cx}" cy="20" r="7" fill="${color}" style="animation-delay: ${delay}s" />`;
+      }).join("\n");
+
+      return `
+<svg viewBox="0 0 100 40" width="280" height="112">
+  <style>
+    .dot {
+      animation: bounce ${duration}s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%,
+      100% {
+        transform: translateY(0);
+        opacity: 0.4;
+      }
+
+      50% {
+        transform: translateY(-${amplitude}px);
+        opacity: 1;
+      }
+    }
+  </style>
+${dots}
+</svg>`;
+    }
+  },
+  {
+    slug: "gradient-crossfade-demo",
+    title: "Interactive Example - Gradient Crossfade",
+    controls: [
+      { id: "colorA", label: "Base gradient color", type: "color", defaultValue: "#6366f1" },
+      { id: "colorB", label: "Alt gradient color", type: "color", defaultValue: "#ec4899" },
+      { id: "duration", label: "Duration (s)", type: "range", min: 1, max: 8, step: 0.5, defaultValue: 4 }
+    ],
+    /*
+      Same rationale as radar-demo: the cross-fade's animation has to be a CSS @keyframes tied to fresh
+      markup. Both gradients are complete and static — only the top rect's opacity ever animates, so this
+      never depends on a browser being able to animate stop-color (or a custom property feeding it) at all.
+    */
+    render: (values) => {
+      const colorA = String(values.colorA);
+      const colorB = String(values.colorB);
+      const duration = Number(values.duration);
+
+      return `
+<svg viewBox="0 0 100 60" width="280" height="168">
+  <defs>
+    <linearGradient id="gradientBase" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="${colorA}" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+    <linearGradient id="gradientAlt" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="${colorB}" />
+      <stop offset="100%" stop-color="#4338ca" />
+    </linearGradient>
+  </defs>
+  <style>
+    .gradient-fade {
+      animation: crossfade-gradient ${duration}s ease-in-out infinite;
+    }
+
+    @keyframes crossfade-gradient {
+      0%,
+      100% {
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+  </style>
+  <rect x="10" y="15" width="80" height="30" fill="url(#gradientBase)" />
+  <rect class="gradient-fade" x="10" y="15" width="80" height="30" fill="url(#gradientAlt)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "motion-path-demo",
+    title: "Interactive Example - Orbiting Comet",
+    controls: [
+      { id: "duration", label: "Orbit duration (s)", type: "range", min: 1, max: 8, step: 0.5, defaultValue: 3 },
+      { id: "trackRadius", label: "Track radius", type: "range", min: 20, max: 45, step: 1, defaultValue: 40 },
+      { id: "rotate", label: "Follow curve (offset-rotate: auto)", type: "checkbox", defaultValue: true },
+      { id: "color", label: "Color", type: "color", defaultValue: "#f59e0b" }
+    ],
+    // Same rationale as radar-demo: orbit speed becomes an animation-duration and the track radius is
+    // baked into the path data itself, since the preview pane is replaced wholesale on every change.
+    render: (values) => {
+      const duration = Number(values.duration);
+      const radius = Number(values.trackRadius);
+      const rotate = Boolean(values.rotate) ? "auto" : "0deg";
+      const color = String(values.color);
+      const top = (50 - radius).toFixed(2);
+      // A full-circle arc back to its own starting point is degenerate, so the endpoint lands 0.1 units short.
+      const track = `M50,${top} A${radius},${radius} 0 1,1 49.9,${top}`;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <style>
+    .track {
+      fill: none;
+      stroke: var(--color-border-default);
+      stroke-width: 0.5;
+      opacity: 0.3;
+    }
+
+    .comet {
+      offset-path: path("${track}");
+      offset-rotate: ${rotate};
+      animation: orbit ${duration}s linear infinite;
+    }
+
+    @keyframes orbit {
+      to {
+        offset-distance: 100%;
+      }
+    }
+  </style>
+  <path class="track" d="${track}" />
+  <g class="comet">
+    <circle cx="0" cy="0" r="4" fill="${color}" />
+    <path d="M-12,0 L-3,-2.5 L-3,2.5 Z" fill="${color}" opacity="0.5" />
+  </g>
+</svg>`;
+    }
+  },
+  {
+    slug: "blob-morph-demo",
+    title: "Interactive Example - Shape Morph",
+    controls: [
+      { id: "squareness", label: "Squareness", type: "range", min: 0, max: 100, step: 1, defaultValue: 0 },
+      { id: "fill", label: "Fill", type: "color", defaultValue: "#6366f1" },
+      { id: "stroke", label: "Stroke", type: "color", defaultValue: "#4338ca" }
+    ],
+    /*
+      Both shapes share the same "M + 4 C + Z" command sequence — only the coordinates differ. Lerping
+      every coordinate directly (rather than relying on a CSS `transition: d`, which can't animate across
+      the wholesale innerHTML replace every control change triggers) morphs the circle into a rounded
+      square continuously as the slider moves.
+    */
+    render: (values) => {
+      const t = Number(values.squareness) / 100;
+      const fill = String(values.fill);
+      const stroke = String(values.stroke);
+
+      const circle = [
+        [80, 66.6, 66.6, 80, 50, 80],
+        [33.4, 80, 20, 66.6, 20, 50],
+        [20, 33.4, 33.4, 20, 50, 20],
+        [66.6, 20, 80, 33.4, 80, 50]
+      ];
+      const square = [
+        [80, 72, 72, 80, 50, 80],
+        [28, 80, 20, 72, 20, 50],
+        [20, 28, 28, 20, 50, 20],
+        [72, 20, 80, 28, 80, 50]
+      ];
+
+      const segments = circle.map((seg, i) => seg.map((from, j) => (from + (square[i][j] - from) * t).toFixed(2)).join(","));
+
+      const d = `M80,50 C${segments[0]} C${segments[1]} C${segments[2]} C${segments[3]} Z`;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <path d="${d}" fill="${fill}" fill-opacity="0.3" stroke="${stroke}" stroke-width="2" />
+</svg>`;
+    }
+  },
+  {
+    slug: "svg-line-draw-demo",
+    title: "Interactive Example - Draw-On Animation",
+    controls: [
+      { id: "duration", label: "Duration (s)", type: "range", min: 0.5, max: 5, step: 0.1, defaultValue: 1.5 },
+      { id: "strokeWidth", label: "Stroke width", type: "range", min: 2, max: 10, step: 1, defaultValue: 6 },
+      { id: "stroke", label: "Stroke color", type: "color", defaultValue: "#10b981" },
+      { id: "loop", label: "Loop (draw + erase)", type: "checkbox", defaultValue: true }
+    ],
+    // Same rationale as radar-demo: the preview pane is replaced wholesale via innerHTML, so the animation
+    // has to be a CSS @keyframes tied to fresh markup rather than a JS rAF loop that would never run.
+    render: (values) => {
+      const duration = Number(values.duration);
+      const strokeWidth = Number(values.strokeWidth);
+      const stroke = String(values.stroke);
+      const loop = Boolean(values.loop);
+      const iterationCount = loop ? "infinite" : "1";
+      const fillMode = loop ? "none" : "forwards";
+      const keyframes = loop
+        ? `0%, 100% { stroke-dashoffset: 100; } 50% { stroke-dashoffset: 0; }`
+        : `from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; }`;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <style>
+    @keyframes draw-line {
+      ${keyframes}
+    }
+
+    #draw-path {
+      animation: draw-line ${duration}s ease-in-out ${iterationCount};
+      animation-fill-mode: ${fillMode};
+    }
+  </style>
+  <!-- Shape: pathLength="100" normalizes the path to 100 units regardless of its real geometry, so stroke-dasharray/stroke-dashoffset can always run 0-100. -->
+  <path id="draw-path" d="M20,55 L42,77 L82,27" pathLength="100" fill="none" stroke="${stroke}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="100" stroke-dashoffset="100" />
+
+  <!-- Guidelines: a faint preview of the full path, visible ahead of the drawing animation. -->
+  <path d="M20,55 L42,77 L82,27" fill="none" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
+
+  <!-- Guide points: the path's three vertices. -->
+  <circle cx="20" cy="55" r="3" fill="${stroke}" opacity="0.2" />
+  <circle cx="20" cy="55" r="2" fill="${stroke}" />
+  <circle cx="42" cy="77" r="3" fill="${stroke}" opacity="0.2" />
+  <circle cx="42" cy="77" r="2" fill="${stroke}" />
+  <circle cx="82" cy="27" r="3" fill="${stroke}" opacity="0.2" />
+  <circle cx="82" cy="27" r="2" fill="${stroke}" />
+</svg>`;
+    }
   }
 ];
 

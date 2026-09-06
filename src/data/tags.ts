@@ -124,6 +124,54 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Articles on User Interface (UI) Design Principles",
     description: "Content covering the visual and interactive elements of interface design, where animation plays a key role in communicating state and flow."
   },
+  "keyframes": {
+    title: "Animating with CSS `@keyframes`",
+    description: "Using the `@keyframes` at-rule to build multi-step, self-running animation timelines, independent of `:hover` or other state-driven transitions."
+  },
+  "transform-origin": {
+    title: "Controlling Pivot Points with `transform-origin`",
+    description: "Setting the `transform-origin` property to control the pivot point for rotation and scaling, including the quirks unique to animating SVG elements."
+  },
+  "transform-box": {
+    title: "The `transform-box` Property for SVG Animation",
+    description: "Understanding `transform-box` and how switching an SVG element's reference frame to its own bounding box fixes unexpected rotation and scaling behavior."
+  },
+  "stroke-dasharray": {
+    title: "Dashed Strokes with SVG `stroke-dasharray`",
+    description: "Using `stroke-dasharray` to break an SVG stroke into a repeating pattern of dashes and gaps, the foundation of the line-drawing animation technique."
+  },
+  "stroke-dashoffset": {
+    title: "Line-Draw Animations with `stroke-dashoffset`",
+    description: "Animating `stroke-dashoffset` to create the classic self-drawing line effect, paired with `stroke-dasharray` and the `pathLength` attribute."
+  },
+  "clip-path": {
+    title: "Revealing Shapes with CSS `clip-path`",
+    description: "Animating the `clip-path` property to wipe a shape, image, or entire group into view, using `inset()` and other clip-region shapes."
+  },
+  "text-path": {
+    title: "Animating Text Along a Path",
+    description: "Laying text along a curve with SVG's `<textPath>` element, and moving text along a path with `offset-path` where animation is the goal."
+  },
+  "animation-timeline": {
+    title: "Scroll-Driven Animation with `animation-timeline`",
+    description: "Tying `@keyframes` progress to scroll position instead of time using `animation-timeline` and `animation-range`, with no scroll event listener required."
+  },
+  "animation-delay": {
+    title: "Staggering Animations with `animation-delay`",
+    description: "Using `animation-delay` to offset when each element in a group starts its animation, turning synchronized motion into a rippling, staggered wave."
+  },
+  "offset-path": {
+    title: "Motion Path Animation with `offset-path`",
+    description: "Moving an element along an arbitrary SVG path using `offset-path`, `offset-distance`, and `offset-rotate`, without hand-rolled trigonometry."
+  },
+  "motion-path": {
+    title: "CSS Motion Path Techniques",
+    description: "Guides on animating elements along a defined path in space, covering `offset-path`, `offset-distance`, and `offset-rotate` for curved motion."
+  },
+  "shape-morphing": {
+    title: "Morphing SVG Shapes by Animating `d`",
+    description: "Techniques for smoothly transforming one SVG path into another by animating the `d` attribute, and when that trade-off is worth its performance cost."
+  },
   "git": {
     title: "All Articles Tagged Git",
     description: "Everything tagged Git — staging, committing, branching, merging, rebasing, and the advanced commands that come up once a repo gets real."
