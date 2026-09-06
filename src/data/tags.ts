@@ -435,5 +435,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "canvas": {
     title: "Working with the HTML <canvas> Element",
     description: "Guides to the HTML canvas element and its 2D drawing context — immediate-mode bitmap rendering, pixel manipulation, and when it's the better fit over DOM-based graphics like SVG."
+  },
+  "react": {
+    title: "React: The Full Guide to Modern Component Architecture",
+    description: "Articles covering React's component model, from foundational concepts to Server Components and the architectural decisions that decide what runs where."
+  },
+  "react-server-components": {
+    title: "React Server Components (RSC) Explained",
+    description: "Guides to RSC — the Server/Client Component split, composition rules, and the streaming payload format."
+  },
+  "nextjs": {
+    title: "Next.js App Router and RSC in Practice",
+    description: "Guides to Next.js — the App Router's file conventions, rendering model, and how it builds on React Server Components in practice."
+  },
+  "ssr": {
+    title: "Server-Side Rendering (SSR) Explained",
+    description: "How servers render component trees to HTML before the client takes over, and how that idea evolved into streaming and Server Components."
+  },
+  "hydration": {
+    title: "Client Hydration in React",
+    description: "How React reconciles server-rendered HTML with client-side interactivity, attaching event handlers and state to markup that already exists."
   }
 };

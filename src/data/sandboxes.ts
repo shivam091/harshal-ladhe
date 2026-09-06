@@ -16,6 +16,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "react-server-components-explained",
+    title: "Component Tree Client-Boundary Visualizer",
+    description: "A real, interactive React app visualizing how \"use client\" propagates down a component tree and its running JS-shipped tally — not literal RSC execution, which no browser sandbox can run.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  },
+  {
     slug: "canvas-vs-svg",
     title: "Canvas vs SVG Playground",
     description: "The same seeded field of circles rendered as real SVG elements and as a canvas bitmap behind one shared shape-count slider — watch SVG's DOM-node count and render time climb while canvas stays flat, then compare native hover/click on SVG against manual distance-based hit-testing on canvas.",

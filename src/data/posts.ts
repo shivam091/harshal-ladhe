@@ -364,6 +364,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "react-server-components-explained",
+    title: "React Server Components, Explained: What Actually Runs Where",
+    excerpt: "What runs where, and what actually ships.",
+    description: "A beginner-to-advanced guide to React Server Components — the Server/Client Component split, the composition rule that decides which way imports can flow, and what the RSC payload actually is at the protocol level.",
+    category: ["React"],
+    tags: ["react", "react-server-components", "nextjs", "ssr", "hydration", "frontend", "advanced", "beginner"],
+    signoff: "This is the first post on this site where the honest answer to \"can the playground actually run this\" was no — a real Server Component, by definition, never reaches a browser, so the tree visualizer had to be built as a real React app that models the propagation rule instead of one that executes it. I hope clicking UserMenu and watching Avatar get dragged along despite never being toggled directly makes that rule land harder than the explanation alone. Thanks for tracing the boundary with me. 🌳",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 

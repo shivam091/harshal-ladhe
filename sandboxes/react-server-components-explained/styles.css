@@ -1,0 +1,140 @@
+:root {
+  --tree-server-bg: rgba(34, 197, 94, 0.16);
+  --tree-server-border: #22c55e;
+  --tree-client-bg: rgba(129, 140, 248, 0.3);
+  --tree-client-border: var(--pg-primary);
+  --tree-kb-fill: linear-gradient(90deg, var(--pg-primary), #f472b6);
+}
+
+.tree-demo-area {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tree-node-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.tree-connector {
+  inline-size: 0.125rem;
+  block-size: 1rem;
+  background: var(--pg-border);
+}
+
+.tree-connector--small {
+  block-size: 0.75rem;
+}
+
+.tree-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.tree-row--nested {
+  gap: 0.625rem;
+}
+
+.tree-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.tree-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  font-family: inherit;
+  color: var(--pg-text);
+  background: var(--tree-server-bg);
+  border: 0.09375rem solid var(--tree-server-border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.tree-node:hover {
+  transform: translateY(-0.0625rem);
+}
+
+.tree-node:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.125rem;
+}
+
+.tree-node-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.tree-node-kb {
+  font-size: 0.65rem;
+  font-family: var(--pg-mono);
+  color: var(--pg-text-muted);
+}
+
+/* Client-only-by-inheritance: dashed border. Own toggle (below) upgrades it to solid. */
+.tree-node--client {
+  background: var(--tree-client-bg);
+  border-color: var(--tree-client-border);
+  border-style: dashed;
+}
+
+.tree-node--client.tree-node--own {
+  border-style: solid;
+}
+
+/* ----------------------------- Shipped JS meter ----------------------------- */
+
+.kb-meter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-block-end: 0.875rem;
+}
+
+.kb-meter-track {
+  position: relative;
+  block-size: 0.75rem;
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.kb-meter-fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: 0%;
+  background: var(--tree-kb-fill);
+  transition: inline-size 0.25s ease;
+}
+
+.kb-meter-label {
+  font-size: 0.78rem;
+  font-family: var(--pg-mono);
+  color: var(--pg-text-muted);
+}
+
+@media (max-width: 30rem) {
+  .tree-node-label {
+    font-size: 0.76rem;
+  }
+}

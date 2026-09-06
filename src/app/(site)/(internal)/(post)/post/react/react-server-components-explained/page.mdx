@@ -1,0 +1,450 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("react-server-components-explained");
+
+For most of React's history, "rendering on the server" meant one thing: Server-Side Rendering (SSR). The server would
+render your component tree once to produce HTML for the first paint, and the browser would then download the
+**exact same component code**, run it a second time, and "hydrate" that HTML into a live, interactive app. Every
+component's JavaScript shipped to the client — its logic, its dependencies, sometimes even the code it used to fetch
+its own data — whether or not that component ever did anything more interesting than display a paragraph of text.
+
+React Server Components (RSC) change what "component" means. It isn't a rendering strategy layered on top of the same
+component model — it's a genuinely new kind of component: one that runs **only** on the server, ships **zero**
+JavaScript to the browser for itself, and can reach directly into backend resources (a database, the filesystem, an
+API key you'd never want sitting in a browser) with no API layer standing in between.
+
+<Quote>
+  A Server Component isn't "a component that renders on the server" — it's a component that never runs in the
+  browser at all. That's the entire idea.
+</Quote>
+
+That distinction is small to say and large in consequence, and almost everything else in this post is just working
+out its implications: what each kind of component can and can't do, which direction they're allowed to compose in,
+and what's actually being sent over the wire once you stop thinking of "the server" as just a place that produces HTML.
+
+In this post, we'll cover:
+
+- Why SSR alone never solved the "shipping too much JS" problem
+- The two component types that coexist in one RSC tree — what each can and can't do
+- The composition rule that decides which direction imports are allowed to flow
+- How data fetching moves directly into components instead of living in effects
+- What actually crosses the server/client boundary, and why it has to be serializable
+- What "runs where" means at the protocol level — and how streaming and Suspense fit in
+- What RSC is *not* — and where a framework still has to do the real wiring
+
+<RainbowDivider />
+
+## The Problem RSC Solves: SSR Was Never About Shipping Less Code
+
+Before RSC, every component in your tree was the same kind of thing, and SSR only changed *when* it first ran, not
+*where* its code eventually had to live. Take a typical blog post page: an article renderer, a syntax highlighter for
+code samples, a "Like" button, and a comments section. Only one of those — the Like button — genuinely needs to run
+in the browser; everything else is just static output once it's been computed. But pre-RSC React has no way to
+express that difference. Every component is built from the same material, so the bundler has no choice but to treat
+the whole tree as potentially interactive and ship all of it: the article renderer's code, the syntax highlighter's
+(often sizeable) dependency, and the Like button, bundled together and downloaded by every visitor, hydrated in full,
+whether or not 95% of that tree ever calls `setState` even once.
+
+<Info title="SSR and RSC answer different questions">
+  Server-Side Rendering answers "what should the user see on the very first paint?" React Server Components answer a
+  completely different question: "which parts of this component tree need to exist in the browser at all?" A
+  framework can — and typically does — use both at once; they aren't competing solutions to the same problem.
+</Info>
+
+This is the gap RSC actually closes. It doesn't make SSR faster or add a new lifecycle hook — it introduces a second
+kind of component that the bundler can statically recognize as *never needing to leave the server*, so its code,
+its dependencies, and its data-fetching logic never ship to the browser in the first place. The Like button still
+ships its JS, because it genuinely needs to. Everything else, for the first time, doesn't have to.
+
+<RainbowDivider />
+
+## Two Kinds of Components, One Tree
+
+This is the mental model the rest of this post hangs on: in an RSC-enabled tree, two kinds of components coexist,
+and the difference between them isn't stylistic — it's about where each one is allowed to run.
+
+### Server Components
+
+A Server Component is the **default** in every framework that implements RSC — you don't opt into it, you opt out
+of it. It renders exactly once, on the server, and its rendered output is serialized and sent to the client; it
+never re-renders in the browser, because it never runs there. That gives it a few traits that flow directly from
+"this code only ever executes on a machine you control":
+
+- It **can** be declared `async` and `await` directly in its function body — no effect, no loading state.
+- It **can** import server-only modules: a database client, Node's `fs`, an SDK that embeds a secret API key —
+  none of it is ever bundled for the browser, because the browser never runs this code.
+- It has **no** access to `useState`, `useEffect`, event handlers, `useContext`, or any browser API (`window`,
+  `localStorage`, and so on) — none of those make sense for code that only ever runs once, on a server.
+
+<CodeBlock language="tsx">
+{`
+  // A Server Component — no directive needed, this is the default in a framework that implements RSC.
+  import { db } from "@/lib/db";
+
+  export default async function PostList() {
+    const posts = await db.post.findMany({ take: 10 });
+
+    return (
+      <ul>
+        {posts.map((post) => (
+          <li key={post.id}>{post.title}</li>
+        ))}
+      </ul>
+    );
+  }
+`}
+</CodeBlock>
+
+### Client Components
+
+A Client Component is what you get when you explicitly opt in with a directive — `"use client"`, as implemented by
+frameworks like Next.js — placed at the very top of a file, before any imports. It behaves like the React you
+already know: it's part of the initial HTML (typically still rendered once up front, then **hydrated**), and from
+that point on it runs in the browser exactly like a "classic" pre-RSC component.
+
+<CodeBlock language="tsx">
+{`
+  // A Client Component — the directive opts the whole file into the browser.
+  "use client";
+
+  import { useState } from "react";
+
+  export default function LikeButton({ postId }: { postId: string }) {
+    const [liked, setLiked] = useState(false);
+
+    return (
+      <button onClick={() => setLiked((prev) => !prev)}>
+        {liked ? "♥ Liked" : "♡ Like"}
+      </button>
+    );
+  }
+`}
+</CodeBlock>
+
+**Visual Illustration**
+
+<ServerClientComponentDiagram />
+
+<Success title="Key insight">
+  If a component doesn't need state, effects, event handlers, or a browser API, its natural home is a Server
+  Component — that's the default, and it's the one you should reach for first. Reach for `"use client"` only once
+  you hit something on the client-only list above.
+</Success>
+
+<RainbowDivider />
+
+## The Composition Rule That Trips Everyone Up
+
+Once you accept that two kinds of components exist, the next question is: can they freely render each other? The
+answer is asymmetric, and the asymmetry is the single most common source of confusion for anyone learning RSC.
+
+### The Rule: Server Can Import Client, Never the Reverse
+
+A **Server Component can import and render any Client Component** — that's normal, expected, and how most trees are
+actually built: a server-rendered page composing a handful of small, interactive client "islands."
+
+A **Client Component cannot import a Server Component**. Once a file has `"use client"` at the top, the bundler
+treats that file — and everything it imports — as belonging to the client's module graph. There's no server left to
+run a Server Component's code on at that point; if the imported file uses `await`, a database client, or anything
+else server-only, there's no execution environment on the client capable of running it. In practice, you'll either
+hit a build-time error, or the "Server Component" quietly stops being one — it gets pulled into the client bundle and
+loses every one of the server-only traits from the previous section, defeating the entire point of writing it that way.
+
+**Visual Illustration**
+
+<CompositionBoundaryDiagram />
+
+<Warning title="A confusing error you'll eventually hit">
+  If you see a build error about a server-only import (a database client, `fs`, a secrets module) turning up inside
+  a client bundle, the actual bug is almost always upstream: some file in that import chain has `"use client"` at
+  the top, and something it imports — directly or several files removed — is server-only. Trace the import chain
+  from the offending module back up to the nearest `"use client"` file; that's where the fix belongs.
+</Warning>
+
+### The Escape Hatch: Composition via Props, Not Imports
+
+The fix isn't to avoid combining server and client code — it's to change *how* you hand a Server Component to a
+Client Component. Instead of importing it, a Server Component can render a Client Component and pass another Server
+Component into it as `children` (or any other prop). The Client Component never imports the Server Component's
+module at all; it just receives an already-rendered React element and displays it.
+
+<CodeBlock language="tsx">
+{`
+  // ServerParent.tsx — a Server Component. It's the one place that imports both of the below.
+  import ClientWrapper from "./ClientWrapper";
+  import ServerChild from "./ServerChild";
+
+  export default function ServerParent() {
+    return (
+      <ClientWrapper>
+        <ServerChild />
+      </ClientWrapper>
+    );
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // ClientWrapper.tsx — a Client Component. It never imports ServerChild — it just renders
+  // whatever was handed to it as children, which happens to be a Server Component's output.
+  "use client";
+
+  import { useState } from "react";
+
+  export default function ClientWrapper({ children }: { children: React.ReactNode }) {
+    const [open, setOpen] = useState(true);
+
+    return (
+      <div>
+        <button onClick={() => setOpen((prev) => !prev)}>Toggle</button>
+        {open && children}
+      </div>
+    );
+  }
+`}
+</CodeBlock>
+
+This works because, from the bundler's point of view, `ClientWrapper.tsx` doesn't reference `ServerChild.tsx`
+anywhere — `ServerParent`, which is still a Server Component, is the one doing the importing and rendering. All
+`ClientWrapper` receives is a value: an already-constructed React element, handed down through `props.children`
+exactly the way any other prop would be.
+
+<Details summary="Why can't the bundler just figure out which parts are safe automatically?">
+  It would need to prove, for every module in your dependency graph, that nothing it imports (directly or through
+  any number of intermediate files) ever touches a server-only API — and that proof would have to hold up across
+  every future change to every one of those files. That's a much harder and much less stable guarantee than an
+  explicit, greppable marker. `"use client"` exists precisely so the boundary is a fact you can search for in your
+  editor, not an inference the bundler has to re-derive (and could get wrong) on every build.
+</Details>
+
+<RainbowDivider />
+
+## Data Fetching Moves Into Components
+
+Because a Server Component can be `async`, data fetching stops being a separate concern bolted onto the component
+with an effect and a loading flag — it becomes part of the component itself.
+
+<CodeBlock language="tsx">
+{`
+  // Before RSC: fetch in an effect, track your own loading state, render a spinner in the meantime.
+  function Post({ id }: { id: string }) {
+    const [post, setPost] = useState(null);
+
+    useEffect(() => {
+      fetch(\`/api/posts/\${id}\`)
+        .then((res) => res.json())
+        .then(setPost);
+    }, [id]);
+
+    if (!post) return <Spinner />;
+    return <article>{post.title}</article>;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // As a Server Component: fetch directly, await it, and return the real markup — no client-visible
+  // loading state, no separate API route required just to shuttle data from the DB to the browser.
+  async function Post({ id }: { id: string }) {
+    const post = await db.post.findUnique({ where: { id } });
+    return <article>{post.title}</article>;
+  }
+`}
+</CodeBlock>
+
+Nothing about `await`ing directly in a component body parallelizes work automatically, though — that part is still
+on you. Two independent queries awaited one after another still run sequentially:
+
+<CodeBlock language="tsx">
+{`
+  // Sequential — getPosts() doesn't even start until getUser() has already finished.
+  export default async function Page() {
+    const user = await getUser();
+    const posts = await getPosts();
+
+    return <Profile user={user} posts={posts} />;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // Parallel — both requests are in flight at the same time.
+  export default async function Page() {
+    const [user, posts] = await Promise.all([getUser(), getPosts()]);
+
+    return <Profile user={user} posts={posts} />;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Serialization Boundary
+
+A Server Component rendering a Client Component isn't an ordinary in-process function call anymore — the props
+between them cross a real boundary, get encoded into a serialized format, and get reconstructed on the other side.
+That means whatever you pass has to survive that trip.
+
+<CodeBlock language="tsx">
+{`
+  // Server Component
+  export default function Parent() {
+    const formatDate = (d: Date) => d.toLocaleDateString(); // a function
+
+    return (
+      <ClientChild
+        title="Hello"              // fine — a plain string
+        publishedAt={new Date()}   // fine — a Date
+        onFormat={formatDate}      // NOT fine — a function can't cross the boundary
+      />
+    );
+  }
+`}
+</CodeBlock>
+
+Primitives, plain objects and arrays, and values like `Date` typically make the trip without any trouble. Functions
+and class instances generally don't — a function has no meaningful serialized form, and a class instance loses its
+prototype and its methods, arriving on the other side as a plain data bag at best. (Server Actions are the one
+sanctioned exception to "no functions": the framework turns a specially-marked server function into a serializable
+*reference* to itself, rather than trying to serialize the function's code — a distinct mechanism from anything
+covered here, worth knowing exists so it doesn't look like a contradiction if you run into it elsewhere.)
+
+<Warning title="This isn't a lint rule — it's a real boundary">
+  A prop that "doesn't serialize" isn't a style violation; it's a value that can't exist on the other side of a real
+  encode/decode step. If you find yourself wanting to pass a function or a rich class instance from a Server
+  Component into a Client Component, that's usually a sign the logic belongs on the client side of the boundary
+  instead — passed as plain data for a Client Component's own code to act on.
+</Warning>
+
+<RainbowDivider />
+
+## What "Runs Where" Actually Means: The RSC Payload
+
+Here's the part that's easy to gloss over: the server isn't sending old-style HTML for the Server Component part of
+your tree. It's sending a special serialized description of the rendered tree — informally, and even inside React's
+own source, referred to by the codename **"Flight"** (you'll see it in package names like
+`react-server-dom-webpack/server` if you go digging) — as a stream of tagged rows describing the element tree,
+references to whichever Client Component modules need to be mounted, and the serialized data those elements need.
+The client reads that stream and reconciles it into the app you actually see.
+
+Streaming a description instead of a finished document is what makes progressive rendering possible: a `<Suspense>`
+boundary lets a slow, `async` Server Component's subtree resolve independently, without blocking everything else in
+the payload from being sent.
+
+<CodeBlock language="tsx">
+{`
+  import { Suspense } from "react";
+
+  export default function Page() {
+    return (
+      <>
+        <Shell />
+        <Suspense fallback={<CommentsSkeleton />}>
+          <Comments postId="123" />
+        </Suspense>
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+`Shell` streams immediately. `Comments` — an `async` Server Component doing its own slow query — sends its fallback
+first, then a replacement chunk once its data resolves, patched into the tree in place. This is the real
+relationship between RSC and Suspense: Suspense isn't just a loading-spinner primitive here, it's the mechanism that
+lets the server describe "this part isn't ready yet" without holding up everything else.
+
+**Visual Illustration**
+
+<RSCStreamingDiagram />
+
+<RainbowDivider />
+
+## What RSC Is Not
+
+It's worth being precise about the edges of this, because RSC gets oversold in both directions online.
+
+- **Not a replacement for SSR.** Server Components are about component *architecture* — which parts of the tree run
+  where, and what code ships for them — not directly about whether the user gets HTML on first load. Those are
+  separate concerns; a framework typically layers both, using SSR to produce the initial HTML and RSC to decide what
+  that HTML (and the JS behind it) is even made of.
+- **Not automatically faster.** A slow database query in a Server Component is still a slow database query — RSC
+  gives you Suspense to keep it from blocking unrelated UI, but it doesn't make the query itself faster. The benefit
+  is architectural (less shipped JS, more direct data access), not a blanket performance win for every page.
+- **Doesn't remove the need for client-side interactivity.** Anything genuinely stateful or interactive still needs
+  a Client Component; RSC's contribution is making it clear which parts of your tree actually need to be that,
+  instead of defaulting everything to it.
+- **Requires framework-level wiring.** React the library doesn't ship a bundler that splits server and client module
+  graphs, or a server runtime that executes Server Components, on its own — that integration is built by a framework
+  (via packages like `react-server-dom-webpack` in coordination with its build tooling). Next.js's App Router is
+  where most developers meet RSC in practice today; a companion post covers how it specifically wires these concepts
+  together.
+
+<RainbowDivider />
+
+## Common Mistakes
+
+- **Accidentally importing a server-only module into a file that ends up in a Client Component's tree.** A helper
+  module with no directive of its own can still get pulled into the client bundle if something upstream of it has
+  `"use client"` — and if that helper imports a database client or a Node built-in, you'll get a confusing
+  build-time or runtime error pointing at the wrong-looking file. The real fix is almost always to trace the import
+  chain back to the nearest `"use client"` boundary, not to patch the module that happened to trip the error.
+- **Assuming `"use client"` only affects the one component you wrote below it.** The directive marks the entire
+  **file** — every export from it — and everything that file imports, transitively, as belonging to the client
+  graph. It's easy to add one small interactive component to a file and forget that every sibling export, and every
+  module that file pulls in, just became client code too.
+- **Ecosystem maturity.** Some libraries — especially older UI and animation libraries — were built assuming a
+  classic, always-client-rendered React tree: reading `document` at module scope, expecting Context to be available
+  immediately, or exporting a single component with no clean way to isolate the client-only parts. Using them inside
+  a Server Component tree sometimes takes an extra `"use client"` wrapper of your own around just the pieces that
+  need it, rather than working unmodified out of the box.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Default to Server Components; push `"use client"` as far down the tree as it will go.** Mark the smallest leaf
+  components that truly need interactivity, not the whole page or section around them.
+- **Fetch data where it's used.** Let the Server Component that needs a piece of data fetch it directly, instead of
+  lifting fetches up artificially the way client-only data fetching often encouraged.
+- **Parallelize independent fetches deliberately.** `await`ing directly reads cleanly, but it's still sequential
+  unless you reach for `Promise.all` (or start the promises before awaiting any of them).
+- **Wrap slow subtrees in `<Suspense>` with a real fallback.** One slow query shouldn't hold up parts of the page
+  that have nothing to do with it.
+- **Keep props crossing the server/client boundary small and serializable.** Pass an ID and let the Client Component
+  fetch or derive what it needs, rather than passing large objects (or, worse, functions) across.
+- **Don't assume a third-party library "just works" inside a Server Component tree.** Check whether it expects a
+  classic client-rendered environment first, and isolate it behind your own `"use client"` boundary if it does.
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading about "use client" propagation is one thing — watching it happen is another. The playground below is a
+real, interactive React app: a component tree you can click through, node by node, to toggle `"use client"` on or
+off. It recomputes, live, which downstream nodes get dragged into the client bundle by an ancestor's toggle — even
+ones you never clicked directly — and keeps a running tally of the (illustrative) KB of JS that decision would ship.
+
+<Sandbox slug="react-server-components-explained" defaultLayout="vertical" />
+
+Everything here has been framework-agnostic React theory. The companion post,
+**[The App Router Rendering Model](/post/react/app-router-rendering-model)**, applies these exact same
+Server/Client concepts to Next.js's App Router specifically — where `"use client"` boundaries actually belong in
+a real app, the special files that shape rendering, and Server Actions.
+
+<RainbowDivider />
+
+## Conclusion
+
+React Server Components aren't a performance trick or a new hook — they're a new answer to an old question: which
+parts of a component tree actually need to exist in the browser? Server Components run once, on the server, ship no
+JS of their own, and can reach directly into backend resources. Client Components are the ones that opt in to
+everything the browser is for: state, effects, event handlers, and re-rendering. The rule that connects them — server
+can import client, client can only *receive* server as already-rendered data — isn't an arbitrary restriction; it
+falls directly out of what each side is actually capable of running.
+
+None of this replaces SSR, and none of it removes the need for interactive, stateful UI where it's genuinely
+required. What it does is give you a real, load-bearing distinction between "this needs to run in the browser" and
+"this never did" — one that, before RSC, your component tree had no way to express at all.
