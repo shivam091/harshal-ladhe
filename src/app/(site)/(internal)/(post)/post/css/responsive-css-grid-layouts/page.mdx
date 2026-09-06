@@ -225,6 +225,11 @@ Here's the HTML structure:
   Most modern browsers support container queries (except older Safari/Firefox versions). Always check compatibility if building for production.
 </Warning>
 
+This covers the basics — enough to reflow a single component at one breakpoint. For the advanced end of container queries (named
+containers for nested layouts, container query units like `cqi` for fluid sizing, and the newer `@container style()` for
+theming a component off a custom property instead of its size), see the dedicated
+**[Container Queries Deep Dive](/post/css/container-queries-deep-dive)** post.
+
 👉 Try this hands-on in the **@container** panel of the [interactive playground](#interactive-example) below — drag the container width past the breakpoint and watch the card reflow based on its own width, not the viewport's.
 
 <RainbowDivider />
