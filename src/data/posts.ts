@@ -352,6 +352,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "canvas-vs-svg",
+    title: "<canvas> vs SVG: The Decision Framework, Not Just a Feature List",
+    excerpt: "Ask the right questions, not just compare feature lists.",
+    description: "A decision framework for choosing between SVG and Canvas, anchored in one distinction — retained-mode DOM vs. immediate-mode bitmap — covering interactivity, scale, accessibility, the hybrid pattern real chart libraries use, and OffscreenCanvas.",
+    category: ["SVG"],
+    tags: ["svg", "canvas", "graphics", "vector-graphics", "web-graphics", "performance", "accessibility", "ui-development", "beginner", "advanced", "frontend"],
+    signoff: "Watching the SVG side's real DOM-node count keep pace with the shape-count slider while the canvas side's render time barely moves is the argument this whole post is trying to make, and getting both measurements to feel trustworthy rather than hand-wavy took longer than either rendering path on its own. I hope dragging that one slider all the way up makes the decision framework feel earned rather than asserted. Thanks for asking the right questions with me instead of just picking a side. 🖼️",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 

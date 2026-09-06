@@ -1,0 +1,87 @@
+.playground {
+  max-inline-size: 46rem;
+}
+
+.playground-header p code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+/* Side-by-side SVG/Canvas columns — collapses to one column on narrow viewports below. */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.demo-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.demo-column-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--pg-text);
+}
+
+.dot {
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.dot--svg {
+  background: #818cf8;
+}
+
+.dot--canvas {
+  background: #fbbf24;
+}
+
+/* Fixed-height frame both the <svg> and <canvas> scale to fill, so the two columns line up exactly. */
+.scene-area {
+  padding: 0;
+  block-size: 13.75rem;
+  display: flex;
+  overflow: hidden;
+}
+
+.scene {
+  inline-size: 100%;
+  block-size: 100%;
+  display: block;
+  background: var(--pg-bg);
+}
+
+/* SVG circles: real elements, so hover/focus states are plain CSS — no JavaScript involved at all. */
+#svg-scene circle {
+  cursor: pointer;
+  transition: filter 0.1s ease, stroke-width 0.1s ease;
+}
+
+#svg-scene circle:hover,
+#svg-scene circle:focus-visible {
+  stroke: #ffffff;
+  stroke-width: 2;
+  filter: brightness(1.35);
+  outline: none;
+}
+
+/* Canvas has no elements to style — a crosshair cursor is the only affordance CSS alone can offer here. */
+#canvas-scene {
+  cursor: crosshair;
+}
+
+@media (max-width: 40rem) {
+  .compare-grid {
+    grid-template-columns: 1fr;
+  }
+}

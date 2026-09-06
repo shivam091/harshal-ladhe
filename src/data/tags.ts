@@ -431,5 +431,9 @@ export const tagMeta: Record<string, TagMeta> = {
   "css-architecture": {
     title: "CSS Architecture for Large Codebases",
     description: "Structuring CSS at scale — reset/base/component/utility layering schemes, naming conventions, and taming third-party styles."
+  },
+  "canvas": {
+    title: "Working with the HTML <canvas> Element",
+    description: "Guides to the HTML canvas element and its 2D drawing context — immediate-mode bitmap rendering, pixel manipulation, and when it's the better fit over DOM-based graphics like SVG."
   }
 };

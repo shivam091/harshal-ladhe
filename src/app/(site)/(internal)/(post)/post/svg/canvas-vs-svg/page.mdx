@@ -1,0 +1,521 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("canvas-vs-svg");
+
+Almost every "SVG vs Canvas" article you'll find stacks two columns side by side — SVG supports this, Canvas
+supports that — and leaves you to somehow average the columns into a decision. That's the wrong shape for the
+problem. The right question was never which technology has more checkmarks; it's what your specific scene
+actually needs, asked in the right order, until an answer falls out on its own.
+
+<Quote>
+  SVG asks the browser's DOM to remember your picture for you. Canvas asks you to remember it yourself.
+</Quote>
+
+Everything in this post — every "use SVG here, use Canvas there" verdict — traces back to that one sentence.
+Once you understand *why* a DOM has to remember things and a bitmap doesn't, you stop needing a feature table
+at all: you can derive the right answer for a case this post never explicitly mentions, just by asking the
+same questions again.
+
+In this post, we'll cover:
+
+- The one architectural distinction — retained-mode DOM vs. immediate-mode bitmap — everything else in this post follows from
+- A six-question decision framework, each question resolving toward SVG or toward Canvas, with the reasoning shown, not just asserted
+- Worked examples per question, including the hybrid pattern real chart and visualization libraries actually reach for
+- An accessibility deep dive: SVG's native semantics vs. Canvas's fallback-content and manual-focus techniques
+- How to verify a decision instead of guessing, with browser DevTools
+- OffscreenCanvas and Web Workers, SVG's own performance limits, and a brief, correctly-scoped signpost to WebGL/WebGPU
+- A compact recap checklist and a set of best practices for whichever side you land on
+
+## The One Distinction Everything Else Follows From
+
+Strip away every feature list you've seen, and "SVG vs Canvas" comes down to one architectural choice made
+decades ago in how each technology represents what's on screen.
+
+**SVG is retained-mode.** When you write `<circle cx="50" cy="50" r="30" />`, you're not asking the browser to
+paint a circle and forget about it — you're creating a real node in the document tree, exactly like a `<div>`
+or a `<button>`. The browser *retains* it. It has a tag name, attributes, a computed style, a position in the
+accessibility tree, and a place in the event-dispatch path. You can come back a minute later and run
+`document.querySelector('circle')` and get that exact circle back. Because the browser is storing *math*
+(a center point and a radius) rather than *pixels*, it can re-rasterize that circle at any zoom level, any
+screen density, or any print resolution without ever looking blurry — the same resolution-independence covered
+in [SVG Essentials](/post/svg/svg-essentials-mastering-basic-shapes#the-viewbox-understanding-user-units).
+
+**Canvas is immediate-mode.** When you write `ctx.arc(50, 50, 30, 0, Math.PI * 2); ctx.fill();`, you're issuing
+a one-time instruction: "paint these pixels, right now." The moment that call returns, the browser has no
+memory that a circle was ever involved — only that some pixels in the canvas's backing bitmap ended up a
+certain color. There is no node to select later, no "circle" object living anywhere in the DOM. If you want to
+know what's drawn where, *you* have to have kept track of it yourself, in your own JavaScript. And because
+that backing store is a fixed grid of pixels rather than math, canvas is **resolution-dependent**: its
+`width`/`height` attributes set the actual pixel grid you're drawing into, which is a separate thing from the
+CSS size the element is displayed at. Size it up without accounting for that and you get exactly what you'd
+expect from stretching a bitmap — soft, blurry edges, especially visible on high-density ("Retina"/HiDPI)
+displays.
+
+<CodeBlock language="js">
+{`
+  // Naive: canvas.width/height default to the CSS-displayed size in CSS pixels, so on a
+  // devicePixelRatio: 2 screen, everything you draw is upscaled 2x by the browser and looks soft.
+  const canvas = document.querySelector("canvas");
+  const ctx = canvas.getContext("2d");
+
+  // Fix: size the backing store to the DEVICE pixel count, keep the CSS size the same, then scale
+  // the drawing context so your drawing code can keep using CSS-pixel coordinates unchanged.
+  const dpr = window.devicePixelRatio || 1;
+  const cssWidth = 300;
+  const cssHeight = 200;
+
+  canvas.width = cssWidth * dpr;
+  canvas.height = cssHeight * dpr;
+  canvas.style.width = \`\${cssWidth}px\`;
+  canvas.style.height = \`\${cssHeight}px\`;
+  ctx.scale(dpr, dpr);
+
+  // From here, draw calls using cssWidth/cssHeight-scale coordinates render crisply at native pixel density.
+  ctx.fillRect(10, 10, 80, 40);
+`}
+</CodeBlock>
+
+<Details summary="Why doesn't the browser just handle this automatically, the way it does for SVG?">
+  SVG's `viewBox` already separates "the coordinate math" from "the physical size on screen," so the browser
+  re-derives crisp pixels at whatever density it's painting to — that's the whole point of a vector format.
+  Canvas has no equivalent second coordinate system built in: `width`/`height` **are** the pixel grid, full
+  stop. The devicePixelRatio dance above is you manually reintroducing the same separation SVG gives you for
+  free, which is a good one-sentence summary of the trade-off this whole post is about.
+</Details>
+
+<Info title="The one-sentence version">
+  If you can still ask the browser "what shape is this?" after it's drawn, you're looking at SVG. If the
+  browser can only tell you "this pixel is this color," you're looking at Canvas.
+</Info>
+
+**Visual Illustration**
+
+<RetainedVsImmediateModeDiagram />
+
+<RainbowDivider />
+
+## The Decision Framework: Six Questions, Not Two Columns
+
+None of the six questions below are about which technology is "better." Each one describes a property your
+actual use case either has or doesn't, and each resolves toward SVG or Canvas *because of* the retained-vs-immediate
+distinction above — not as an arbitrary rule to memorize. Work through them in order; for most real projects,
+one of the first two or three already settles it.
+
+### Question 1: Do individual elements need independent interactivity or accessibility?
+
+Does a single shape need its own hover state, its own click handler, its own keyboard focus stop, or its own
+screen-reader label — independent of every other shape in the scene?
+
+**→ SVG.** Every shape is a real DOM node, so `:hover`, `:focus-visible`, `addEventListener`, `tabindex`, and
+ARIA attributes all attach to it directly, exactly like they would to a `<button>`. The browser is already
+doing hit-testing for you as part of normal event dispatch — a click on a circle simply *is* a click on that
+`<circle>` element; nothing in your code has to figure out which shape was under the pointer.
+
+**→ Canvas.** A click anywhere on the canvas fires one event on the `<canvas>` element itself — the whole
+surface is one opaque region as far as the DOM is concerned. To answer "which shape did the user click,"
+*you* loop over your own record of what you drew and where, testing the click coordinates against each
+shape's stored geometry. Accessibility needs the same kind of manual work: fallback content inside the tag, or
+a parallel set of real (usually visually hidden) elements you keep in sync yourself. Both techniques are
+covered in the accessibility deep dive further down.
+
+### Question 2: How many objects, and does that count grow — especially at runtime?
+
+Is this a few dozen icons, or a real-time chart with tens of thousands of points, a particle system, or a game
+with hundreds of moving entities?
+
+**→ SVG**, comfortably, for counts up to roughly the low thousands of live nodes. Each `<circle>` or `<path>`
+does cost something — a place in the DOM, a computed style, participation in layout — but that cost is small
+and the payoff (free interactivity, free CSS styling, free accessibility) is usually worth it at this scale.
+
+**→ Canvas**, once the count climbs into the tens of thousands or keeps growing at runtime. A `fillRect()` or
+`arc()` call has no DOM node behind it and therefore no per-object bookkeeping at all — drawing 100,000 circles
+in a loop costs roughly "100,000 draw calls," not "100,000 elements' worth of style recalculation, layout, and
+paint," which is a fundamentally different, much flatter cost curve.
+
+**Visual Illustration**
+
+<ElementCountPerformanceDiagram />
+
+<Warning title="This is a trend, not a hard number">
+  There's no single "safe" node count that applies to every page — it depends on how complex each element's
+  style is, how often the count changes, and what else is competing for the main thread. Treat "a few thousand"
+  as an order-of-magnitude warning sign worth profiling, not a hard ceiling. The [Measure, don't guess](#measure-dont-guess)
+  section below shows exactly how to check on your own scene instead of trusting a number from a blog post.
+</Warning>
+
+### Question 3: Does it need to stay crisp at any zoom level or print resolution?
+
+Is this an icon, a logo, a technical diagram, or anything else that might be viewed zoomed in, printed, or
+displayed across wildly different screen densities?
+
+**→ SVG.** It's stored as math, not pixels, so the browser re-rasterizes it fresh at whatever scale it's
+displayed — a `viewBox="0 0 24 24"` icon looks exactly as sharp at 16px as it does printed at 300 DPI.
+
+**→ Canvas** only if you're prepared to redraw at the new resolution yourself. The bitmap has a fixed pixel
+count the moment you draw into it; zooming in on the *displayed* canvas element just stretches those existing
+pixels, the same as zooming into any raster image. There's no way to "ask" a canvas for a sharper version of
+what's already been painted — the only fix is running your draw calls again at a larger backing-store size.
+
+### Question 4: Is the work continuous pixel manipulation, or discrete state changes?
+
+Are you doing real-time filters, a particle system, a physics/game loop touching thousands of positions every
+frame, or per-pixel image processing? Or is it more like "redraw when the data changes" or "highlight one node
+on hover"?
+
+**→ Canvas** for the continuous case. There's no "just update this one attribute" shortcut for a scene that's
+fundamentally about pixels changing every frame — direct pixel access via `getImageData()`/`putImageData()`,
+and drawing the entire frame fresh via `requestAnimationFrame`, is the native way to do this kind of work, and
+it's the only one of the two APIs built for it.
+
+**→ SVG** (or CSS transitions/animations layered on top of SVG attributes) for the discrete case. A chart
+re-rendering because new data arrived, or a diagram highlighting one path on hover, only ever needs the
+browser's normal style/layout machinery to update the one or two nodes that actually changed — machinery that's
+already heavily optimized for exactly that job, and that a full-scene redraw would be reinventing badly.
+
+### Question 5: Do you need to style it with CSS or query it with normal DOM APIs?
+
+Do you want `:hover` rules in a stylesheet, theme-driven colors via CSS custom properties, or the ability to
+run `document.querySelectorAll` / event delegation against your shapes the way you would against any other
+part of the page?
+
+**→ SVG.** It *is* the DOM — every CSS selector, every `querySelector`, every framework's virtual-DOM diffing
+strategy already knows how to work with it, because as far as the browser's rendering pipeline is concerned,
+an `<svg>` subtree isn't a special case.
+
+**→ Canvas** means none of that exists to query — there's no element to select, no computed style to inspect,
+no CSS rule that will ever touch a shape you drew. If your application logic needs to reason about "the
+shapes on screen" (which one is selected, which one is nearest the cursor, which ones are currently visible),
+you maintain that as your own plain JavaScript data structure — a "scene graph" or shape registry you update
+in parallel with what you draw, since the browser won't remember any of it for you.
+
+### Question 6: Does it need to render with no JavaScript at all?
+
+Progressive enhancement, a print stylesheet, an email client that strips `<script>` tags, or simply the moment
+before your bundle has finished loading and hydrating — does the graphic need to exist without any JS running?
+
+**→ SVG.** It's markup. The browser paints it from the HTML/XML alone, the same as an `<img>` or a `<div>` — no
+script has to run first.
+
+**→ Canvas** cannot do this. A `<canvas>` element with no JavaScript is a blank, empty box — there is nothing
+to paint until a script acquires its 2D (or WebGL) context and issues draw calls. The only content a
+script-free canvas can show at all is its fallback content — markup nested inside the `<canvas>...</canvas>`
+tags — which exists for exactly this situation but isn't automatically kept in sync with whatever a script
+*would* have drawn.
+
+<Success title="If you only remember one shortcut">
+  Question 1 (interactivity/accessibility) eliminates one option outright far more often than performance
+  ever does. Most real disagreements about "should this be Canvas" get settled the moment someone asks "does
+  the user need to click on an individual thing in here?" — reach for that question first.
+</Success>
+
+<RainbowDivider />
+
+## Putting the Framework to Work
+
+The six questions above are the "why." This section is the "what it looks like" — the same reasoning applied
+to a couple of concrete, worked cases, including the pattern that real charting and visualization libraries
+actually reach for once they've worked through this same framework themselves.
+
+### Worked Example: The Same Line Chart at Two Scales
+
+Say you're building a line chart and every point needs a hover tooltip — that's Question 1 settled toward SVG
+before you've thought about performance at all.
+
+<CodeBlock language="js">
+{`
+  // Under ~1,000 points: a real <circle> per data point, each one carrying its own value as a data
+  // attribute. Hover handling is a single delegated listener — the browser has already figured out
+  // which point the pointer is over by the time this callback runs.
+  chartSvg.addEventListener("mouseover", (event) => {
+    if (event.target.tagName !== "circle") return;
+    showTooltip(event.target.dataset.value, event.clientX, event.clientY);
+  });
+`}
+</CodeBlock>
+
+That's Question 2's territory now, though: a chart with 800 points is comfortably inside SVG's budget, but a
+chart with 100,000 points is a different scene entirely, even though the *feature* (a hover tooltip per point)
+hasn't changed. Two honest ways forward once the count climbs that high:
+
+- **Move the dense rendering to Canvas**, and re-derive "which point is the cursor over" with the same
+  distance-based hit-testing math shown in the [Interactive Playground](#interactive-playground) below —
+  you're trading SVG's free hit-testing for Canvas's flat per-object cost.
+- **Keep SVG, but window it** — only ever create DOM nodes for the roughly-1,000 points currently visible in
+  the viewport (a scroll or zoom range), discarding and recreating nodes as the visible window moves. This
+  keeps the *live* node count low without giving up any of SVG's native interactivity for the points that
+  actually exist on screen at once.
+
+Neither option is "wrong" — which one wins usually comes down to whether your data is naturally spatial (a
+map, a scatter plot someone pans around) or naturally sequential (a time series someone scrubs through),
+since that shapes how easy "windowing" is to implement well.
+
+### Worked Example: Accessibility, Side by Side
+
+Question 1 said SVG wins outright when individual elements need their own accessible name or role. Here's what
+"native" versus "manual" actually looks like in code.
+
+**SVG** — the same `<title>`/`role="img"` pattern from
+[SVG Essentials](/post/svg/svg-essentials-mastering-basic-shapes#making-svgs-accessible), just applied per
+shape instead of to the whole graphic:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 100">
+    <circle cx="30" cy="50" r="10" role="img" tabindex="0">
+      <title>Q1 revenue: $42,000</title>
+    </circle>
+    <circle cx="70" cy="50" r="14" role="img" tabindex="0">
+      <title>Q2 revenue: $58,000</title>
+    </circle>
+  </svg>
+`}
+</CodeBlock>
+
+Every one of those circles is independently focusable and independently announced — a screen reader user can
+Tab from data point to data point and hear each value, with zero JavaScript involved in the accessibility
+layer itself.
+
+**Canvas** has no per-shape semantics to attach anything to, so the two real techniques both involve building
+that layer yourself:
+
+<CodeBlock language="html">
+{`
+  <!-- Fallback content: rendered by browsers that don't support canvas at all, and exposed to
+       assistive technology as a description of what the canvas contains. It is NOT kept in sync
+       automatically — if the drawn data changes, you update this markup yourself, or it goes stale. -->
+  <canvas id="revenue-chart" width="300" height="200">
+    <table>
+      <caption>Quarterly revenue</caption>
+      <tr><th>Q1</th><td>$42,000</td></tr>
+      <tr><th>Q2</th><td>$58,000</td></tr>
+    </table>
+  </canvas>
+`}
+</CodeBlock>
+
+The second technique — used by more sophisticated canvas-based charts and games — is a **parallel, visually
+hidden DOM tree**: real (but visually off-screen) elements that mirror the canvas's shapes one-to-one purely
+so assistive technology has something to read and focus, updated by hand every time the drawn scene changes.
+It works, but notice what it actually is: recreating SVG's retained DOM tree by hand, specifically for the
+subset of your scene (Question 1's "individual elements") that needed it.
+
+### The Pattern Real Chart Libraries Actually Use
+
+Put Questions 1 and 2 side by side on a real dashboard: thousands of data points (→ Canvas, by Question 2) that
+also need individual tooltips and keyboard access on a handful of them — the current selection, a highlighted
+outlier, an axis label (→ SVG, by Question 1). Taken as an all-or-nothing choice, the two answers seem to
+contradict each other. They don't, because nothing says the whole scene has to be one technology.
+
+The pattern most production charting and visualization libraries land on is a **hybrid**: a dense Canvas layer
+underneath, handling the bulk of the drawing every frame, with a sparse SVG (or plain HTML) layer stacked
+directly on top via `position: absolute` — carrying only the handful of elements that actually need to be
+individually interactive or accessible.
+
+<CodeBlock language="css">
+{`
+  .chart-stack {
+    position: relative;
+  }
+
+  /* Canvas: the dense, performance-critical layer. Draws thousands of points every frame. */
+  .chart-stack canvas {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* SVG: the sparse, interactive layer. A handful of real, hoverable, focusable elements. */
+  .chart-stack svg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none; /* let clicks fall through to real shapes; re-enable per-element below */
+  }
+
+  .chart-stack svg circle {
+    pointer-events: auto;
+  }
+`}
+</CodeBlock>
+
+The `pointer-events: none` on the SVG layer itself (with `pointer-events: auto` re-enabled only on the shapes
+that actually need it) is the detail that makes this work smoothly: the mostly-empty SVG overlay doesn't
+swallow clicks meant for the canvas underneath it, while the few real circles on top still catch their own
+events natively.
+
+**Visual Illustration**
+
+<HybridLayeringDiagram />
+
+You rarely have to pick exactly one. Once you've worked through Questions 1 and 2 separately and gotten two
+different answers, that's usually the signal that you're looking at a hybrid scene, not a contradiction.
+
+<RainbowDivider />
+
+## Verifying, Optimizing, and Knowing When to Go Further
+
+Everything above is reasoning you can do at design time, before writing a line of rendering code. This section
+is what to do once code exists — how to check whether your Question-2 assumption actually holds on your real
+scene, how to keep Canvas responsive under heavy load, where SVG's own costs hide, and where the ceiling above
+2D Canvas itself sits.
+
+### Measure, Don't Guess
+
+"A few thousand nodes" from Question 2 is a rule of thumb, not a measurement of *your* page. Two concrete ways
+to check:
+
+- **Count live SVG nodes directly**: `document.querySelectorAll('svg *').length` tells you exactly how many
+  elements are in play right now. Pair that number with the browser's **Performance panel** — record a real
+  interaction (a hover, a data update) and look at the time spent in **Recalculate Style** and **Layout**; if
+  those categories are growing roughly in step with your node count, you're watching Question 2's trend happen
+  live on your own scene, not a diagram's illustration of it.
+- **Measure Canvas frame time directly**: wrap your draw loop in `performance.now()` calls and log the delta,
+  or watch the **Frames**/FPS track in the Performance panel while your scene is animating. A canvas scene
+  that's dropping frames is telling you the *script* time inside your draw loop is the bottleneck — which
+  points you at optimizing what you draw (fewer state changes, batched paths) rather than at switching
+  technologies at all.
+
+The [Interactive Playground](#interactive-playground) below surfaces both of these numbers live, for exactly
+this reason — read them on your own machine rather than trusting any specific millisecond figure from a blog
+post, this one included.
+
+### Taking Canvas Off the Main Thread: OffscreenCanvas and Web Workers
+
+A heavy Canvas draw loop — a large particle system, real-time image processing — still runs on the main
+thread by default, competing with scrolling, input handling, and everything else the page is doing.
+**OffscreenCanvas** lets you hand a canvas's rendering control to a Web Worker, so the drawing happens on a
+background thread entirely:
+
+<CodeBlock language="js">
+{`
+  // main.js — runs on the main thread
+  const canvas = document.querySelector("canvas");
+  const offscreen = canvas.transferControlToOffscreen();
+  const worker = new Worker("draw-worker.js");
+
+  // The canvas is a Transferable — ownership of its rendering context moves to the worker.
+  worker.postMessage({ canvas: offscreen }, [offscreen]);
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  // draw-worker.js — runs on a background thread, main thread stays free for input/scroll/layout
+  self.onmessage = (event) => {
+    const ctx = event.data.canvas.getContext("2d");
+
+    function frame() {
+      // heavy per-frame drawing work happens here, off the main thread entirely
+      requestAnimationFrame(frame);
+    }
+
+    frame();
+  };
+`}
+</CodeBlock>
+
+There's no SVG equivalent to reach for here, and that's not an oversight — the DOM (and therefore SVG) only
+exists on the main thread by design, so "move the DOM to a worker" isn't a capability any browser offers.
+OffscreenCanvas is available specifically *because* Canvas never depended on the DOM in the first place.
+
+### SVG Isn't Infinitely Free Either
+
+Everything said in favor of SVG above assumes reasonably-sized, reasonably-simple markup. A few real ways SVG
+can get slow on its own:
+
+<Warning title="Common SVG performance pitfalls">
+  - **Complex or animated `<filter>` chains** (stacked `feGaussianBlur`, `feColorMatrix`, etc.) are expensive
+    to composite, and animating one every frame can drop the browser out of GPU-accelerated compositing
+    entirely.
+  - **Heavy `clip-path`/`mask` usage**, especially on many elements or large areas, forces per-pixel work the
+    same as a raster mask would.
+  - **Enormous `d` path data** — thousands of commands exported from a design tool without cleanup — increases
+    parse and paint cost even for a *single* element; running exported paths through an optimizer (e.g. SVGO)
+    before shipping them is cheap insurance.
+  - **Deeply nested groups with independent transforms**, at large node counts, still cost the same style
+    recalculation and layout work any large DOM subtree would.
+</Warning>
+
+None of this contradicts the framework above — it's the same Question 2 logic applied one level deeper:
+"more nodes and more per-node work costs more" is true of SVG exactly as it's true of anything else living in
+the DOM.
+
+### When Even Canvas Isn't Enough: WebGL and WebGPU
+
+Everything in this post has been about the 2D canvas context — `canvas.getContext("2d")`. Once a scene needs
+real 3D geometry, per-object shading and lighting, or genuinely massive object counts driven directly by the
+GPU (hundreds of thousands of particles, a real game engine), 2D canvas itself becomes the bottleneck the same
+way SVG's DOM did at Question 2 — and the next tier up is a GPU-native API: **WebGL**, broadly supported today
+and built on the same underlying model as OpenGL ES, or its modern successor **WebGPU**, which exposes the GPU
+more directly and is still rolling out across browsers. That's a large enough topic — shaders, buffers, a
+whole rendering pipeline — to be its own post entirely; the only thing worth taking from it here is knowing
+where it sits in the landscape: past 2D canvas, not instead of it.
+
+<RainbowDivider />
+
+## The Framework, Recapped
+
+Not a feature table — a sequence. Work top to bottom; for most real scenes, one of the first few rows already
+resolves it.
+
+| # | Question | If that's true for your scene | Reach for |
+| - | -------- | ------------------------------ | --------- |
+| 1 | Does an individual element need its own interactivity, hover state, or ARIA semantics? | Yes | **SVG** — real DOM nodes the browser already hit-tests and exposes to assistive tech |
+| 2 | Does the object count run into the tens of thousands, or keep growing at runtime? | Yes | **Canvas** — no per-object DOM/style bookkeeping to scale |
+| 3 | Must it stay crisp at any zoom level or print resolution? | Yes | **SVG** — stored as math, re-rasterized fresh at any scale |
+| 4 | Is it continuous, high-frequency pixel work (filters, particles, a game loop)? | Yes | **Canvas** — direct pixel access, built for per-frame redraws |
+| 5 | Do you need to style it with CSS, or query/manipulate it with normal DOM APIs? | Yes | **SVG** — it *is* the DOM |
+| 6 | Must it render with zero JavaScript (progressive enhancement, print, email)? | Yes | **SVG** — markup alone paints it |
+| — | Did Questions 1 and 2 point in different directions for the same scene? | Yes | **Both** — the hybrid pattern: Canvas underneath, a sparse SVG/HTML layer on top |
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Ask Question 1 first.** Interactivity and accessibility requirements eliminate an option outright more
+  often, and more cheaply, than a performance concern you haven't measured yet.
+- **Don't reach for Canvas "for performance" before you've counted your nodes.** A few hundred interactive SVG
+  elements with rich CSS styling will outperform a hastily hand-rolled Canvas hit-testing layer that's buggy
+  around its edges. Measure first.
+- **Always account for `devicePixelRatio` in Canvas work.** Skipping it is the single most common reason a
+  canvas-based UI looks subtly "off" on high-density displays, and it costs one small helper function to fix.
+- **Keep a real JavaScript scene-graph for anything Canvas needs to reason about later** — selection state,
+  hit-testing data, undo history. The browser will not remember any of it for you.
+- **If you go hybrid, gate pointer events deliberately.** `pointer-events: none` on the sparse overlay layer,
+  re-enabled only on the elements that need it, is what keeps clicks from getting swallowed by an otherwise
+  empty SVG sitting on top of your canvas.
+- **Run exported SVG paths through an optimizer** before shipping them — design-tool exports routinely carry
+  far more path data than the shape needs, and it costs real parse/paint time at scale.
+- **Profile on the actual scene you're shipping, not a rule of thumb from a blog post** — including this one.
+  DevTools' Performance panel and a plain `document.querySelectorAll('svg *').length` are both one line away.
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading a `dx*dx + dy*dy <= r*r` hit-test is one thing; watching the difference between "the browser already
+knew what you clicked" and "a loop had to go find out" is another. The playground below renders the exact same
+seeded field of circles twice — once as real SVG `<circle>` elements, once drawn onto a canvas bitmap — behind
+one shared shape-count slider. Drag it from 10 toward 5,000 and watch the SVG side's live DOM-node count and
+render time move while the canvas side's render time stays comparatively flat. Then hover and click directly
+on an SVG circle (native `:hover`, zero extra JavaScript) versus clicking anywhere on the canvas (a manual
+distance-based hit-test runs and logs exactly what it checked).
+
+<Sandbox slug="canvas-vs-svg" defaultLayout="vertical" />
+
+If SVG's side of this comparison is new to you, **[SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes)**
+covers the fundamentals — the viewBox, coordinate system, and basic shapes — that this post's SVG examples build on.
+
+<RainbowDivider />
+
+## Conclusion
+
+"SVG vs Canvas" was never a feature-count contest — it's a question about what your scene fundamentally is.
+A retained DOM tree remembers your shapes for you, at the cost of carrying one live node per shape. A bitmap
+remembers nothing at all once the pixels are painted, at the cost of you rebuilding whatever bookkeeping you
+need yourself. Every question in this framework — interactivity, object count, resolution, continuous versus
+discrete work, DOM APIs, script-free rendering — is really just that same trade-off, asked from a different
+angle each time.
+
+Work the six questions in order, trust the hybrid pattern when two of them disagree, and measure instead of
+guessing once real code exists. That's the whole framework — and it'll keep working on a scene this post never
+mentioned, because it was never really about SVG or Canvas as technologies. It was about what you're actually
+trying to draw.

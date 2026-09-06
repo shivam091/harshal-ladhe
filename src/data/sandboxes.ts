@@ -16,6 +16,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "canvas-vs-svg",
+    title: "Canvas vs SVG Playground",
+    description: "The same seeded field of circles rendered as real SVG elements and as a canvas bitmap behind one shared shape-count slider — watch SVG's DOM-node count and render time climb while canvas stays flat, then compare native hover/click on SVG against manual distance-based hit-testing on canvas.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-cascade-layers",
     title: "Cascade Layers Specificity War",
     description: "Assign four real CSS rules of different specificity to declared layers, reorder the layers, and toggle !important per rule — a live stylesheet lets a real browser decide the winner while a readout explains exactly why.",
