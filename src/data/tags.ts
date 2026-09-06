@@ -419,5 +419,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "blur": {
     title: "CSS Blur Effects",
     description: "Using blur() and backdrop-filter's blur to soften rendered content or whatever sits behind an element."
+  },
+  "cascade-layers": {
+    title: "CSS Cascade Layers (@layer) Explained",
+    description: "Guides to CSS cascade layers — controlling priority by declared layer order instead of specificity, for taming large-codebase specificity conflicts."
+  },
+  "specificity": {
+    title: "CSS Specificity Explained",
+    description: "How CSS specificity is calculated and how it interacts with layer order, source order, and !important in the cascade."
+  },
+  "css-architecture": {
+    title: "CSS Architecture for Large Codebases",
+    description: "Structuring CSS at scale — reset/base/component/utility layering schemes, naming conventions, and taming third-party styles."
   }
 };

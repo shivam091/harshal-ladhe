@@ -16,6 +16,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-cascade-layers",
+    title: "Cascade Layers Specificity War",
+    description: "Assign four real CSS rules of different specificity to declared layers, reorder the layers, and toggle !important per rule — a live stylesheet lets a real browser decide the winner while a readout explains exactly why.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "backdrop-filter-and-css-filters",
     title: "Filters & Glassmorphism Playground",
     description: "Chain 8 filter functions onto a photo, tune a real backdrop-filter glass card over a patterned backdrop, and compare a CSS blend-mode duotone against a real SVG feComponentTransfer filter — generated CSS shown live.",

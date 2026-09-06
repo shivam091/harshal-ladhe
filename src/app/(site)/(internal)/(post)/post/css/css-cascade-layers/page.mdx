@@ -1,0 +1,365 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-cascade-layers");
+
+Every large CSS codebase eventually arrives at the same standoff: a reset stylesheet, a handful of base element styles, a component library, a pile of utility classes, and somebody else's third-party widget CSS — all fighting over the same elements, all sharing one cascade. Nobody designed this conflict on purpose. It just accumulates, one `!important` and one extra `.wrapper` at a time, until changing a single button's color means grepping the whole codebase to find out which of six competing rules is actually winning.
+
+`@layer` — **cascade layers** — is CSS's own fix for exactly this. It doesn't add a new kind of specificity, and it doesn't replace the cascade. It adds a second, *explicit* axis of priority that sits in front of specificity entirely: you declare an order for named groups of rules, and a rule in an earlier-declared group loses to a rule in a later-declared group, full stop — no matter how specific the earlier group's selector is.
+
+<Quote>
+  Specificity answers "which selector is more specific." Cascade layers answer a completely different question first: "which group of rules do we even trust more?" — and CSS asks your question second, only if layers don't already settle it.
+</Quote>
+
+That reordering — asking "which layer" before "which selector" — is the whole idea. It's also why this post spends real time on the parts that surprise people once they start relying on it: unlayered styles have a special, absolute priority of their own; `!important` doesn't just apply inside a layer, it flips the whole layer order upside down; and a layer's position, once fixed, can't be moved by a later statement that looks like it should move it.
+
+In this post, we'll cover:
+
+- The specificity arms race `@layer` exists to end, and what layer order actually means
+- Basic syntax: declaring an order up front, then filling layers in
+- The rule that trips up almost everyone at first: unlayered styles always win
+- Anonymous layers, nested layers, and importing third-party CSS straight into a layer
+- Why `!important` reverses layer priority — and why that's not a design tool
+- The complete, precise cascade sort order with `@layer` correctly placed inside it
+- A practical migration scheme for an existing large codebase
+- The "utilities last" pattern teams increasingly rely on, and why it works
+- A common-mistakes checklist, browser support, and an honest note on feature detection
+
+## The Specificity Arms Race
+
+Picture a fairly ordinary mid-size app. Somewhere in the stylesheet, in roughly this order, you have:
+
+<CodeBlock language="css">
+{`
+  /* 1. A reset/normalize stylesheet, probably vendored in */
+  *, *::before, *::after { box-sizing: border-box; }
+  button { font: inherit; }
+
+  /* 2. Base element defaults for the whole app */
+  body { color: #1f2937; font-family: system-ui, sans-serif; }
+
+  /* 3. A component library's button */
+  .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; background: #e5e7eb; }
+  .btn--primary { background: #2563eb; color: white; }
+
+  /* 4. A utility class, meant to be a quick one-off override */
+  .bg-slate-100 { background: #f1f5f9; }
+
+  /* 5. Somebody's "just this once" fix, six months later */
+  #app .card .btn.btn--primary.bg-slate-100 { background: #f1f5f9 !important; }
+`}
+</CodeBlock>
+
+Nothing here is written by a careless developer. Every single rule was a reasonable decision *in isolation*. The reset needs to run first. The component library reasonably assumes its own class names are enough. The utility class is deliberately a single class, because utilities are supposed to be small and composable. And rule 5 exists because someone, at some point, needed `.bg-slate-100` to actually apply over `.btn--primary`, discovered specificity wouldn't let it, and reached for the two tools that always "work": a longer selector, and `!important`.
+
+That's the arms race. Specificity is a *selector-shaped* measurement — it only cares how a rule is written, never which "kind" of rule it is or where it lives in your architecture. A one-class utility can never outrank a compound component selector on specificity terms alone, so the instant a team wants utilities to reliably win, they're forced to either inflate the utility's selector (defeating the point of a utility) or bolt on `!important` (which then needs its own, even less pleasant escalation once two `!important` rules collide).
+
+Cascade layers exist because this fight is fundamentally about *priority between architectural groups* — reset vs. base vs. components vs. utilities vs. emergency overrides — and specificity was never built to express that. `@layer` lets you say the quiet part out loud: "utilities always outrank components, full stop," with no selector gymnastics and no `!important` required.
+
+<RainbowDivider />
+
+## What `@layer` Actually Changes
+
+A cascade layer is a named (or anonymous) group of CSS rules. You can declare the **order** those groups take priority in, completely separately from writing the rules themselves:
+
+<CodeBlock language="css">
+{`
+  /* Declares the order up front — no rules yet, just names. */
+  @layer reset, base, components, utilities;
+`}
+</CodeBlock>
+
+Later — anywhere in the same stylesheet, or even in a different one — you fill each layer in by re-using its name:
+
+<CodeBlock language="css">
+{`
+  @layer reset {
+    *, *::before, *::after { box-sizing: border-box; }
+  }
+
+  @layer components {
+    .btn { padding: 0.5rem 1rem; border-radius: 0.375rem; background: #e5e7eb; }
+    .btn--primary { background: #2563eb; color: white; }
+  }
+
+  @layer utilities {
+    .bg-slate-100 { background: #f1f5f9; }
+  }
+`}
+</CodeBlock>
+
+Here's the entire point, stated as plainly as possible: **because `utilities` was declared after `components`, every rule inside `utilities` outranks every rule inside `components` — regardless of specificity.** `.bg-slate-100` (one class, about as low-specificity as a real-world selector gets) now beats `.btn--primary` (also one class, same specificity) *and* would keep beating it even if `.btn--primary` were rewritten as `#app .card .btn.btn--primary` tomorrow. Layer order is checked first; specificity is never even compared once two rules are known to be in different layers.
+
+**Visual Illustration**
+
+<LayerSpecificityDiagram />
+
+<Success title="The mental model that actually sticks">
+  Specificity answers "who wins within a layer." Layer order answers "which layer wins," and that question gets asked first. Once two rules are known to live in different layers, their specificity literally never gets compared — layer order alone decides it.
+</Success>
+
+<RainbowDivider />
+
+## The Rule That Trips Up Almost Everyone: Unlayered Styles Always Win
+
+Here's the surprise: any CSS rule that *isn't* inside any layer — plain, ordinary, "unlayered" CSS, the kind every stylesheet was entirely made of before `@layer` existed — has a special, absolute priority of its own. **For normal (non-`!important`) declarations, unlayered styles always beat every layered style, no matter how the layers are ordered.**
+
+<CodeBlock language="css">
+{`
+  @layer utilities {
+    /* This layer was declared LAST, so you might expect it to win against anything. */
+    .text-accent { color: teal; }
+  }
+
+  /* This rule isn't inside any @layer block at all. */
+  .text-accent { color: crimson; }
+`}
+</CodeBlock>
+
+An element matching both rules renders **crimson**, not teal — even though `utilities` is the last-declared (and therefore, among layers, the highest-priority) layer. Unlayered beats it anyway, because unlayered styles sit above the entire layer system, not merely at one end of it.
+
+<Warning title="This is exactly backwards from most people's first guess">
+  It's tempting to assume the last-declared layer is "the most powerful thing in the stylesheet." It isn't — anything you simply forget to put in a layer outranks it. This is genuinely useful during a gradual migration (your not-yet-migrated legacy CSS keeps winning, by design, until you deliberately move it into a layer too), but it's also the single most common source of "why isn't my layer working?!" confusion. If a layered rule doesn't seem to apply, check for a plain, unlayered rule targeting the same property first.
+</Warning>
+
+<RainbowDivider />
+
+## Anonymous and Nested Layers
+
+Not every layer needs a name. An **anonymous layer** is written with no identifier at all:
+
+<CodeBlock language="css">
+{`
+  @layer {
+    /* A one-off group of rules, ordered exactly where this block sits, but never addressable by name again. */
+    p { margin-block: 1rem; }
+  }
+`}
+</CodeBlock>
+
+It still takes a fixed position in the overall layer order (wherever it appears, relative to every named layer around it), and it still obeys every rule in this post — it just can't be reopened later, because there's no name left to reference. Each anonymous `@layer` block you write creates a brand-new layer, even if the previous one looked identical.
+
+Layers can also be **nested**, using dot notation to reach inside an already-declared layer:
+
+<CodeBlock language="css">
+{`
+  @layer components {
+    @layer button, card, modal;
+  }
+
+  /* Later, append more rules to the nested "button" sub-layer: */
+  @layer components.button {
+    .btn { padding: 0.5rem 1rem; }
+  }
+`}
+</CodeBlock>
+
+This is the tool for design systems that need fine-grained order *within* one architectural tier — for example, giving `card` a higher priority than `button` inside `components`, without those two sub-systems needing to know or care about the app's top-level `reset` / `base` / `components` / `utilities` order at all.
+
+<Details summary="Can you reopen an anonymous layer to add more rules later?">
+  No — an anonymous layer has no name to re-declare, so every bare `@layer` block (nothing after the keyword) introduces a distinct, brand-new layer at that exact point in the source, even back-to-back. If you'll ever need to append rules to a group later, give it a name, even a throwaway one — a named layer can always be re-opened by re-using its name, and doing so only appends rules; it never changes that layer's already-fixed position.
+</Details>
+
+<RainbowDivider />
+
+## Importing Third-Party CSS Straight Into a Layer
+
+This is the single most practical tool `@layer` gives you for a large codebase: `@import` accepts an optional `layer()` function, which drops an entire external stylesheet into one named layer as a unit:
+
+<CodeBlock language="css">
+{`
+  @layer reset, vendor, base, components, utilities;
+
+  /* The ENTIRE imported stylesheet lands inside the "vendor" layer — every one of its
+     selectors, however specific, now only outranks whatever "reset" contains. */
+  @import url("some-ui-kit.css") layer(vendor);
+`}
+</CodeBlock>
+
+Third-party CSS is exactly the kind of thing teams historically fought with `!important` and ID-selector overrides, because you don't control its selectors and can't always predict how specific they'll be. Importing it directly into a named layer sidesteps that problem entirely: no matter what selectors that vendor file contains — even `#id .deeply .nested .selector` — every one of them is now capped at `vendor`'s fixed position in your layer order. Put `vendor` early, and your own `components`/`utilities` layers reliably beat it without a single `!important` anywhere.
+
+<Info title="This also works for your own legacy CSS">
+  The same trick applies to an old, unruly stylesheet you haven't fully refactored yet: wrap it in `@import url("legacy.css") layer(legacy);` and declare `legacy` early in your order. You immediately contain its specificity chaos to one named tier, instead of needing to touch a single selector inside it.
+</Info>
+
+<RainbowDivider />
+
+## `!important` Reverses Layer Priority
+
+This is the one rule in this entire post most worth slowing down for: **`!important` doesn't just apply on top of layers — it reverses the priority order of the layers themselves.**
+
+For normal declarations, a later-declared layer beats an earlier one. For `!important` declarations, it's the exact opposite: **the earlier-declared layer wins.**
+
+<CodeBlock language="css">
+{`
+  @layer base, utilities;
+
+  @layer base {
+    .card .title.title { color: royalblue !important; }
+  }
+
+  @layer utilities {
+    .text-accent { color: var(--accent) !important; }
+  }
+`}
+</CodeBlock>
+
+Both declarations are now `!important`. With that flag on both, `base` — declared *first* — wins, exactly the opposite of what the same two rules would do without `!important`. Nothing else changed: same selectors, same specificities, same declared layer order.
+
+**Visual Illustration**
+
+<LayerImportantReversalDiagram />
+
+<Warning title="Don't design around this reversal — treat it as an emergency exit only">
+  It's tempting to use this reversal deliberately — "I'll put my true overrides in the first layer and mark them `!important`, so they always win no matter what gets added later." Resist it. Stacking `!important` declarations across layers just rebuilds the exact arms race `@layer` exists to end, one tier removed. Reach for this only when you're stuck overriding CSS you truly can't restructure (a vendor stylesheet's own `!important`, for instance) — and even then, treat it as a last resort, not a pattern.
+</Warning>
+
+<RainbowDivider />
+
+## The Complete Cascade Sort Order
+
+It's worth restating the full picture precisely, because `@layer` is easy to misfile as some kind of fourth, independent tiebreaker sitting alongside specificity and source order. It isn't. Cascade layers are a sub-ordering *inside* the very first step of the cascade — origin and importance — and only ever apply among rules that already share the same author origin and the same importance.
+
+Reading from highest priority to lowest:
+
+1. **Transition declarations** — a property actively animating via a CSS transition (outranks everything else, including `!important`)
+2. **`!important` — user-agent** styles (the browser's own `!important` defaults; rare)
+3. **`!important` — user** styles (user stylesheets or browser extensions, `!important`)
+4. **`!important` — author** styles — *this is where `@layer` applies:* unlayered is the **lowest** priority of this tier; among layers, the **earlier-declared** one wins
+5. **Normal — author** styles — *`@layer` applies here too:* unlayered is the **highest** priority of this tier; among layers, the **later-declared** one wins
+6. **Normal — user** styles
+7. **Normal — user-agent** styles (the browser's own built-in defaults — lowest priority of all)
+
+Only within steps 4 and 5 does layer order get consulted at all, and only as the *first* of three tiebreakers, in this exact order: **① layer order, ② specificity, ③ source order.** Two rules in the same layer (or both unlayered) still fall back to ordinary specificity, and two rules tied on both layer and specificity still fall back to whichever one appears later in the source — cascade layers change *which* rules get compared this way, not what happens once they are.
+
+<CascadeSortOrderDiagram />
+
+<RainbowDivider />
+
+## Migrating a Large Codebase to Cascade Layers
+
+A layering scheme doesn't need to be clever, just consistent. A scheme that works for most component-library-plus-utilities codebases:
+
+<CodeBlock language="css">
+{`
+  @layer reset, base, components, utilities, overrides;
+`}
+</CodeBlock>
+
+- **`reset`** — a normalize/reset stylesheet, or `@import ... layer(reset);` of a vendored one
+- **`base`** — bare element defaults (`body`, `a`, `h1`–`h6`, form controls) with no classes involved
+- **`components`** — your design system / component library's own classes
+- **`utilities`** — small, single-purpose classes meant to override components on a case-by-case basis
+- **`overrides`** — a narrow, rarely-used escape hatch for the rare one-off exception, declared last on purpose
+
+Because unlayered CSS always wins over anything in a layer (for normal declarations), migration is safe to do incrementally **as long as you migrate in the right direction**: move `reset` and `base` into their layers first. These are the styles everything else is *expected* to override anyway, so having them lose to whatever's still unlayered elsewhere in your app causes no visible regression. Save `components` and `utilities` for once you're confident nothing unlayered is still relying on beating them — moving a component's styles into a layer while a competing, unlayered override still exists elsewhere will make that override start winning *unconditionally*, which is the one direction this migration can visibly break something.
+
+<Warning title="You can't insert a layer between two already-declared ones">
+  Layer order is append-only for the lifetime of the page: once `base` and `components` are declared (in that order), there's no way to later slot a new layer *between* them. If you suspect you'll eventually need a tier between two existing ones, declare it up front — even empty — rather than trying to retrofit it once real rules already depend on the order around it.
+</Warning>
+
+<RainbowDivider />
+
+## Utility Classes Last: Ending the Specificity Fight for Good
+
+Here's the pattern more and more teams reach for once they've adopted layers: put utility classes in the **last** — and therefore highest normal-priority — layer, deliberately.
+
+<CodeBlock language="css">
+{`
+  @layer reset, base, components, utilities;
+
+  @layer components {
+    .card .title { font-weight: 600; color: #111827; }
+  }
+
+  @layer utilities {
+    /* A single class, declared in the LAST layer — it now wins unconditionally. */
+    .text-accent { color: var(--accent); }
+  }
+`}
+</CodeBlock>
+
+Without layers, `.card .title` (two selectors, specificity `0, 2, 0`) beats a plain `.text-accent` (`0, 1, 0`) every single time, forcing exactly the workaround this post opened with — a longer selector, or `!important` on the utility. This is precisely why utility-first frameworks have historically needed their own escape hatches (an `important: true` config flag, or a `!` prefix on individual utility classes) just to make a one-class utility reliably win against component CSS.
+
+With `utilities` declared last, none of that is necessary. `.text-accent` wins against `.card .title` — and against any component selector, however specific — purely because of layer order. Teams get to keep writing genuinely tiny, single-purpose utility classes (the entire premise of a utility-class system) without ever needing to inflate a selector or reach for `!important` just to make one apply.
+
+<Success title="Why this specific pattern is worth adopting even if you don't migrate anything else">
+  This is the highest-leverage, lowest-risk starting point for a team mixing component CSS with utility classes: wrap your *existing* component stylesheet in one layer and your utilities in a later one, and the entire "utility class silently doesn't apply" class of bug disappears — without touching a single selector in either stylesheet.
+</Success>
+
+<RainbowDivider />
+
+## Common Mistakes Checklist
+
+- **Assuming `@layer` changes specificity math.** It doesn't, anywhere. Specificity is calculated exactly the same with or without layers — it's just no longer consulted *across* layers. Two rules in the *same* layer (or both unlayered) still resolve by ordinary specificity, then source order, precisely as before.
+- **Forgetting unlayered CSS always wins.** For normal declarations, any plain rule outside every layer beats all of them, regardless of how the layers are ordered. If a layered rule "isn't applying," look for an unlayered rule targeting the same property before suspecting the layer order itself.
+- **Forgetting `!important` reverses the order.** Among `!important` declarations, the *earliest*-declared layer wins, and unlayered `!important` is the *lowest* priority of that tier — both the opposite of the normal-declaration behavior covered everywhere else in this post.
+- **Letting a layer's position get fixed by accident.** A layer's place in the order is locked the very first time its name is mentioned *anywhere* in the source — whether that's an explicit order statement or simply the first named `@layer` block the parser encounters. A later order statement cannot move a name that was already mentioned earlier:
+
+<CodeBlock language="css">
+{`
+  /* WRONG — utilities is mentioned first (right here), fixing it as the very first
+     layer overall. The statement below can only order the names it hasn't seen yet. */
+  @layer utilities {
+    .text-accent { color: var(--accent); }
+  }
+
+  @layer reset, base, components, utilities;
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* RIGHT — the full order is declared before any layer is ever mentioned by name. */
+  @layer reset, base, components, utilities;
+
+  @layer utilities {
+    .text-accent { color: var(--accent); }
+  }
+`}
+</CodeBlock>
+
+  In the "wrong" example, `utilities` ends up as the very *first* — and therefore lowest-priority — layer in the whole stylesheet, the opposite of what the trailing order statement seems to promise. Put your full `@layer name1, name2, ...;` order statement at the very top of your stylesheet, before any layer's contents are written anywhere — including in a file that gets concatenated or imported before it.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Declare the full order in one place, first.** One `@layer reset, base, components, utilities, overrides;` statement at the top of your entry stylesheet, before any layer's rules are written anywhere.
+- **Give third-party CSS its own layer.** `@import url(...) layer(vendor);` contains a vendor stylesheet's unpredictable specificity to one fixed, low-priority tier — no selector-matching required.
+- **Put utilities last, on purpose.** It's the lowest-effort, highest-payoff layering decision for any codebase mixing component CSS with utility classes.
+- **Reserve `!important` for genuine emergencies, not architecture.** Its reversed layer priority is an escape hatch, not a design pattern — stacking it across layers rebuilds the same arms race one level up.
+- **Migrate outward from the edges, not the middle.** Move `reset`/`base` into layers first (they're expected to lose anyway); save `components`/`utilities` for once nothing unlayered still depends on beating them.
+- **Treat layer order as append-only.** You can't insert a new layer between two already-declared ones — if you suspect you'll need a tier later, declare it (even empty) up front.
+- **Remember specificity still fully applies within a layer.** Layers change what gets compared *across* groups, not the rules for resolving a tie *inside* one.
+
+<RainbowDivider />
+
+## Browser Support
+
+`@layer` reached **Baseline: widely available** in March 2022 — Chrome 99, Firefox 97, and Safari 15.4 all shipped support within weeks of each other, and every major browser has supported it since.
+
+<Warning title="There's no reliable @supports test for @layer itself">
+  `@layer` is a syntax feature — an at-rule shaping how the cascade is sorted — not a property/value pair, so the ordinary `@supports (property: value)` feature query has nothing to test here. A `@supports at-rule(...)` conditional query has been discussed for exactly this gap, but it isn't implemented in any shipping browser, so don't rely on it. Be skeptical of any snippet claiming to "detect" `@layer` support with a `@supports` check — it isn't testing what it claims to.
+</Warning>
+
+The realistic fallback story is more important to get right than any feature-detection trick would be: in a browser that doesn't recognize `@layer`, the **entire** contents of a named `@layer` block — every rule inside it — is dropped outright, not silently unwrapped into ordinary CSS. This is standard CSS error recovery for any at-rule a parser doesn't recognize, and it's a meaningfully harsher failure mode than "the layering just stops working" — anything written *only* inside a layer simply never reaches that browser at all. Given how long `@layer` has been Baseline, this mostly matters if your analytics show real traffic from browsers older than early 2022; if it does, keep anything load-bearing (a working, if imperfect, layout and readable text) available as plain unlayered CSS rather than exclusively inside a layer, or reach for a build-time tool that flattens layers into ordinary cascade-safe CSS for your oldest supported targets.
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading about layer order beating specificity is one thing — watching a real browser make that call, live, is another. The playground below renders four real CSS rules of increasing specificity, all targeting the exact same paragraph's color. Assign each one to a layer (or leave it unlayered), reorder the declared layers with the up/down controls, and toggle `!important` per rule — a live `<style>` tag is rewritten on every change, so the color you see is the actual browser's cascade decision, and the readout below explains exactly why that rule won.
+
+<Sandbox slug="css-cascade-layers" defaultLayout="vertical" />
+
+Cascade layers aren't the only recent CSS feature built for taming large, component-driven codebases — the
+**[Container Queries Deep Dive](/post/css/container-queries-deep-dive)** post covers another one: styling a
+component based on the space it's actually given, instead of the viewport it happens to be rendered in.
+
+<RainbowDivider />
+
+## Conclusion
+
+`@layer` doesn't make specificity go away, and it isn't a bigger hammer than `!important`. It's a second, explicit axis of priority that gets checked *before* specificity ever comes up — a way to say, once, "this architectural tier always outranks that one," instead of re-litigating the question selector by selector, forever. The handful of rules that make it work — unlayered always wins, `!important` reverses the order, and a layer's position locks in at first mention — are exactly the parts worth internalizing before you reach for it in a real codebase, because they're also exactly where an otherwise-correct mental model quietly breaks.
+
+Start small: wrap your existing component stylesheet in one layer and your utility classes in a later one. That single change ends the specificity fight this whole post opened with — no selector rewritten, no `!important` added anywhere.

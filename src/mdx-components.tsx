@@ -56,6 +56,9 @@ import HueInterpolationDiagram from "@/components/mdx/HueInterpolationDiagram";
 import FilterVsBackdropFilterDiagram from "@/components/mdx/FilterVsBackdropFilterDiagram";
 import FilterChainOrderDiagram from "@/components/mdx/FilterChainOrderDiagram";
 import DuotoneMappingDiagram from "@/components/mdx/DuotoneMappingDiagram";
+import LayerSpecificityDiagram from "@/components/mdx/LayerSpecificityDiagram";
+import LayerImportantReversalDiagram from "@/components/mdx/LayerImportantReversalDiagram";
+import CascadeSortOrderDiagram from "@/components/mdx/CascadeSortOrderDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -127,6 +130,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     FilterVsBackdropFilterDiagram,
     FilterChainOrderDiagram,
     DuotoneMappingDiagram,
+    LayerSpecificityDiagram,
+    LayerImportantReversalDiagram,
+    CascadeSortOrderDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with

@@ -340,6 +340,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-cascade-layers",
+    title: "Cascade Layers (@layer): Taming Specificity Wars in Large Codebases",
+    excerpt: "Priority by declaration order, not by selector warfare.",
+    description: "How CSS @layer lets you control cascade priority by declared layer order instead of specificity — ending the !important arms race in large codebases, design systems, and utility-class stacks.",
+    category: ["CSS"],
+    tags: ["css", "cascade-layers", "specificity", "css-architecture", "modern-css", "advanced", "browser-support", "progressive-enhancement", "frontend", "scss"],
+    signoff: "The sandbox rewrites a real <style> tag on every control change instead of faking the outcome, so the four rules genuinely fight it out in your own browser's cascade — getting the plain-English \"why\" readout to name the actual deciding rule (layer order, specificity, the !important reversal, or unlayered-wins) took more edge-case testing than any playground logic I've written for this site. I hope watching a real browser make that call live sticks better than the sort-order table alone. Thanks for picking a side in the specificity war with me. 🗂️",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 
