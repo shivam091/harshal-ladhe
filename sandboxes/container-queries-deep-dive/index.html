@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Container Queries Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Container Queries Playground</h1>
+        <p>Drag containers, retarget a named query, and flip a themed custom property — all three panels below show the generated CSS live.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Playground mode" id="mode-switch">
+        <button class="tab tab--active" type="button" data-mode="size" role="tab" aria-selected="true">Size Queries</button>
+        <button class="tab" type="button" data-mode="named" role="tab" aria-selected="false">Named Containers</button>
+        <button class="tab" type="button" data-mode="style" role="tab" aria-selected="false">Style Queries</button>
+      </div>
+
+      <div id="size-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area" aria-label="Size query card preview">
+          <div id="size-container" class="size-container">
+            <div class="size-card">
+              <h3 id="size-card-title" class="size-card-title">Dashboard Widget</h3>
+              <div class="size-card-meta">Updated 5 mins ago</div>
+              <div class="size-card-body">This card's layout AND its title size respond to the container's own width — resize it and the viewport never enters the equation.</div>
+            </div>
+          </div>
+        </section>
+
+        <output id="size-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>@container</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="size-width-input">Container width</label>
+              <div class="range-row">
+                <span class="range-edge">220px</span>
+                <div class="range-track">
+                  <input type="range" id="size-width-input" min="220" max="720" step="10" value="340">
+                  <output class="range-bubble" id="size-width-value" for="size-width-input">340px</output>
+                </div>
+                <span class="range-edge">720px</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="size-breakpoint-input">@container min-width</label>
+              <div class="range-row">
+                <span class="range-edge">220px</span>
+                <div class="range-track">
+                  <input type="range" id="size-breakpoint-input" min="220" max="720" step="10" value="480">
+                  <output class="range-bubble" id="size-breakpoint-value" for="size-breakpoint-input">480px</output>
+                </div>
+                <span class="range-edge">720px</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="size-font-input">Title size <span>(cqi)</span></label>
+              <div class="range-row">
+                <span class="range-edge">4cqi</span>
+                <div class="range-track">
+                  <input type="range" id="size-font-input" min="4" max="12" step="0.5" value="7">
+                  <output class="range-bubble" id="size-font-value" for="size-font-input">7cqi</output>
+                </div>
+                <span class="range-edge">12cqi</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="tip">Drag the container past the breakpoint to switch from a stacked to a side-by-side layout, then drag the <code>cqi</code> slider — the title scales with the CONTAINER's width, so it stays proportional at every size instead of needing its own breakpoint.</p>
+        </fieldset>
+      </div>
+
+      <div id="named-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Named container preview">
+          <div id="outer-container" class="outer-container">
+            <span class="container-tag">.layout-grid</span>
+            <div id="inner-container" class="inner-container">
+              <span class="container-tag container-tag--inner">.component-wrapper</span>
+              <div id="named-card" class="named-card">
+                <div class="named-card-title">Card</div>
+                <div class="named-card-body">Reflows at 400px — but 400px of <em>which</em> container?</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <output id="named-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>@container name</legend>
+
+          <div class="segmented-control" role="radiogroup" aria-label="Query target">
+            <label class="segment">
+              <input type="radio" name="named-target" value="component-wrapper" checked>
+              <span>component-wrapper (nearest)</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="named-target" value="layout-grid">
+              <span>layout-grid (named)</span>
+            </label>
+          </div>
+
+          <div class="fields-grid">
+            <div class="field">
+              <label for="outer-width-input">.layout-grid width</label>
+              <div class="range-row">
+                <span class="range-edge">300px</span>
+                <div class="range-track">
+                  <input type="range" id="outer-width-input" min="300" max="700" step="10" value="450">
+                  <output class="range-bubble" id="outer-width-value" for="outer-width-input">450px</output>
+                </div>
+                <span class="range-edge">700px</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="inner-width-input">.component-wrapper width</label>
+              <div class="range-row">
+                <span class="range-edge">200px</span>
+                <div class="range-track">
+                  <input type="range" id="inner-width-input" min="200" max="500" step="10" value="360">
+                  <output class="range-bubble" id="inner-width-value" for="inner-width-input">360px</output>
+                </div>
+                <span class="range-edge">500px</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="tip">The card's <code>@container (min-width: 400px)</code> rule never changes — only which named ancestor it targets does. Switch targets without touching either slider and watch the same card flip layout, because it's now measuring the other box's width.</p>
+        </fieldset>
+      </div>
+
+      <div id="style-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Style query card preview">
+          <div id="style-container" class="style-container">
+            <div id="style-card" class="style-card">
+              <div class="style-card-title">Themed Card</div>
+              <div class="style-card-body">This card's colors come entirely from <code>@container style(--theme: dark)</code> — no class toggle, no JS-applied theme class.</div>
+            </div>
+          </div>
+        </section>
+
+        <output id="style-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>--theme</legend>
+
+          <div class="segmented-control" role="radiogroup" aria-label="Container theme">
+            <label class="segment">
+              <input type="radio" name="theme" value="light" checked>
+              <span>light</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="theme" value="dark">
+              <span>dark</span>
+            </label>
+          </div>
+
+          <p class="tip">Flipping this only ever changes one custom property on the container above — <code>.style-card</code> itself has no theme class of its own. The style query reads that property's computed value directly.</p>
+        </fieldset>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

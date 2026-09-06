@@ -1,0 +1,346 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("container-queries-deep-dive");
+
+For a decade, responsive design meant one thing: media queries tied to the viewport. That model works well for
+page-level decisions — a header, a nav, a global column count — but it quietly breaks down the moment a component
+gets reused somewhere its author didn't plan for. Drop a card designed for a wide main column into a narrow
+sidebar, and a viewport-based breakpoint has no way to know the difference. It fires (or doesn't) based on the
+*window*, while the actual problem is the *box the component happens to be sitting in*.
+
+**Container Queries (`@container`)** close that gap. They let an element query its nearest containing ancestor's
+size — or, as of recently, its computed style — instead of the viewport, which is what makes truly modular,
+drop-in-anywhere components possible.
+
+[Part 3 of the CSS Grid Fundamentals series](/post/css/responsive-css-grid-layouts#beyond-media-queries-container-queries)
+already introduced the basics: add `container-type` to a parent, write an `@container` rule, done. This post picks
+up right where that left off — the parts of container queries that only matter once you're building a real,
+reusable design system: containment types and their pitfalls, named containers for nested layouts, container
+query units, and the newest addition to the spec, style queries.
+
+In this post, we'll cover:
+
+- The difference between `inline-size` and `size` containment — and the pitfall that catches almost everyone
+- Named containers, for when a component needs to skip past its nearest ancestor
+- Container query units (`cqi`, `cqb`, `cqmin`, `cqmax`) for fluid, container-relative sizing
+- `@container style()` — querying a custom property instead of a dimension
+- A real case study: simplifying inline SVG icons based on their container, not the screen
+- Best practices, browser support, and safe fallbacks
+
+<RainbowDivider />
+
+## The Core Logic: Containment Contexts
+
+Before a child can ask "how big is my parent?", the parent has to explicitly opt in to being asked. Nothing is a
+query container by default — you declare one with `container-type`, and only *then* does `@container` inside it
+have anything to resolve against.
+
+<CodeBlock language="css">
+{`
+  .card-wrapper {
+    container-type: inline-size;
+  }
+`}
+</CodeBlock>
+
+There are two values worth knowing, and they watch different things:
+
+- **`inline-size`** *(the one you'll use almost every time)* — watches only the container's own inline dimension
+  (width, in a standard horizontal writing mode). Height stays completely free to grow with content, exactly like
+  it always has.
+- **`size`** — watches both the inline and block dimensions (width *and* height).
+
+<Warning title="size containment needs a definite height">
+  A container can only report a dimension it actually has. With `container-type: size`, the element is
+  **block-size contained** — its height can no longer be determined by its children's content, because that would
+  let a child's `@container` rule change the child's size, which could change the parent's height, which could
+  change what the `@container` rule matches — an infinite loop the spec sidesteps entirely by requiring you to set
+  an explicit height yourself. Skip that, and the container silently collapses to `0px` instead of erroring.
+</Warning>
+
+**Visual Illustration**
+
+<ContainerContainmentDiagram />
+
+In practice, that warning is also the whole reason `inline-size` is the default reach for nearly every real
+component. A card, a sidebar widget, a product tile — none of them have a height you'd want to hard-code, so
+`inline-size` lets width-based rules do their job while leaving height exactly as flexible as plain CSS already
+makes it.
+
+<Details summary="So when is container-type: size ever the right call?">
+  When the height genuinely *is* fixed by the layout, not by content — a video player locked to a 16:9 box, a
+  dashboard tile inside a CSS Grid cell with an explicit row height, a fixed-size avatar frame. In those cases the
+  height isn't a mystery the browser has to solve; you already know it, so there's no containment loop to worry
+  about.
+</Details>
+
+<RainbowDivider />
+
+## Advanced Technique: Named Containers
+
+By default, `@container` resolves against the **nearest** ancestor that has a `container-type` set — full stop. That
+works right up until you have containers nested inside other containers, and a deeply nested component needs to
+respond to an *outer* box's width instead of the one immediately wrapping it.
+
+`container-name` solves this by giving a container an address you can query directly, skipping past anything
+nearer:
+
+<CodeBlock language="css">
+{`
+  .grandparent {
+    container-type: inline-size;
+    container-name: layout-grid;
+  }
+
+  .parent {
+    container-type: inline-size;
+    container-name: component-wrapper;
+  }
+
+  /* Specifically targets .grandparent, bypassing .parent even though it's nearer */
+  @container layout-grid (min-width: 800px) {
+    .child {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+`}
+</CodeBlock>
+
+**Visual Illustration**
+
+<NamedContainerDiagram />
+
+This is the one concept in this post that's easy to nod along to and then get wrong the first time you actually
+need it, because the failure mode is silent: an `@container` rule with a name that doesn't match *any* ancestor
+container just never matches, with no warning in the console. If a rule you wrote seems to do nothing, check that
+the name in `@container <name> (...)` is spelled exactly like some ancestor's `container-name` — and that the
+ancestor in question actually has a `container-type` set at all, not just a name.
+
+<Success title="Named containers are additive, not exclusive">
+  Setting `container-name` doesn't stop the *unnamed* form of `@container` from resolving to that same element
+  when it's the nearest one. A container can be both "the nearest container" for one rule and "the specifically
+  named target" for another, at the same time — naming it doesn't remove it from the default lookup.
+</Success>
+
+This is exactly the pattern behind complex dashboards: a widget nested inside a column, inside a section, inside a
+top-level grid, where the widget occasionally needs to know about the grid's width specifically — not the column
+it happens to be sitting in that week.
+
+<RainbowDivider />
+
+## Container Query Units: the `cq*` Family
+
+Container units are the fluid-sizing counterpart to container queries themselves. They behave like `vw`/`vh`, but
+instead of measuring the viewport, they measure the nearest query container — which means a value written once in
+`cqi` stays proportional no matter where that component ends up living.
+
+| Unit | Measures |
+|---|---|
+| `cqi` | 1% of the container's **inline size** (width, in a standard writing mode) |
+| `cqb` | 1% of the container's **block size** (height) |
+| `cqmin` | Whichever of `cqi` / `cqb` is **smaller** |
+| `cqmax` | Whichever of `cqi` / `cqb` is **larger** |
+
+**Visual Illustration**
+
+<ContainerUnitsDiagram />
+
+`cqmin` and `cqmax` trip people up at first because they don't measure a dimension of their own — they're just a
+shorthand for "whichever axis is smaller/larger right now," which can flip as a container's own proportions
+change. Most of the time, the unit you actually reach for is `cqi`:
+
+<CodeBlock language="css">
+{`
+  .hero-banner__title {
+    /* Always 10% of THIS banner's own width, wherever it's placed */
+    font-size: 10cqi;
+  }
+`}
+</CodeBlock>
+
+<Info title="Why cqi beats a fixed px value here">
+  A `font-size` in `px` is identical whether the banner sits in a full-width hero or a 300px sidebar teaser — which
+  is exactly the viewport-only problem container queries exist to solve, just applied to typography instead of
+  layout. `10cqi` scales automatically with wherever the component actually ends up.
+</Info>
+
+<Warning title="cqi/cqb only resolve inside a query container">
+  These units read from the *nearest* container established by `container-type` — not the viewport, and not just
+  any ancestor. Use them on an element whose containing context never got a `container-type`, and the browser
+  falls back to treating the query container as the initial containing block (roughly, the viewport) — which
+  quietly defeats the entire point. Double-check the ancestor chain if a `cqi` value looks viewport-driven instead
+  of component-driven.
+</Warning>
+
+<RainbowDivider />
+
+## The Frontier: Style Queries
+
+Everything so far queries **size**. `@container style()` queries something different entirely: a **computed CSS
+custom property value** on the container, regardless of its dimensions.
+
+<CodeBlock language="css">
+{`
+  .card-wrapper {
+    --theme: dark;
+  }
+
+  /* Matches based on the VALUE of --theme, not the wrapper's size */
+  @container style(--theme: dark) {
+    .card {
+      background: #121212;
+      color: white;
+      border: 1px solid #333;
+    }
+  }
+`}
+</CodeBlock>
+
+**Visual Illustration**
+
+<StyleQueryDiagram />
+
+This turns a component's *aesthetic*, not just its layout, into something that adapts to context. A single card
+component can pick up a light or dark treatment purely from a `--theme` variable set somewhere above it — no theme
+class, no JavaScript, no prop threading through a component tree. Set the variable once at whatever level makes
+sense (a section, a whole page, a single card slot) and every style-query rule below it resolves independently.
+
+<Info title="Style queries on custom properties are the well-supported slice">
+  As of early 2026, style queries against **custom properties** (`--theme: dark`, `--density: compact`, and so on)
+  have solid support across current browsers. Querying *standard* CSS properties directly (`style(color: red)`) is
+  part of the same specification but is still landing unevenly — reach for a custom property as the thing you
+  query, even when the underlying decision is really about a built-in property, and you're on much safer ground.
+</Info>
+
+<RainbowDivider />
+
+## Case Study: Simplifying Inline SVG Icons by Container
+
+Container queries aren't only for text and grid columns — they're just as useful wrapped around an inline SVG.
+The trick is the same one used everywhere else in this post: instead of asking "how big is the *screen*?", ask
+"how big is the box this icon actually got rendered into?"
+
+<CodeBlock language="css">
+{`
+  .icon-wrapper {
+    container-type: inline-size;
+  }
+
+  /* Below 50px, drop the fine detail entirely rather than let it turn to noise */
+  @container (max-width: 50px) {
+    .complex-logo .detailed-paths {
+      display: none;
+    }
+  }
+`}
+</CodeBlock>
+
+A logo icon dropped into a dense toolbar at 24px and the same icon used as a 200px hero mark are the same file,
+but they don't need the same amount of detail — past a certain size, fine paths just render as a blurry smudge
+instead of the extra polish they're meant to be. Wrapping the `<svg>` in a container lets the icon simplify *itself*
+below that threshold, on a 4K monitor exactly as reliably as on a phone, because the decision is about the icon's
+own rendered box, not the display it happens to be on.
+
+<Details summary="Why not just swap in a simpler SVG file at small sizes?">
+  You can, and for drastically different icon sets that's often the right call — but a single `@container` rule
+  avoids maintaining two files, keeps one source of truth for the artwork, and reacts instantly to layout changes
+  that a `srcset`-style swap can't (a sidebar being resized by the user, for instance, with no page reload in
+  between).
+</Details>
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading about a breakpoint tied to a container instead of the viewport is one thing; feeling it is another. The
+playground below has three tabs: **Size Queries** drags a card's own container past a breakpoint while its title
+scales live in `cqi`; **Named Containers** keeps one fixed `@container` rule on a card but lets you retarget which
+of two nested, independently resizable containers it actually measures; and **Style Queries** flips a `--theme`
+custom property and watches `@container style(--theme: dark)` match or stop matching in real time.
+
+<Sandbox slug="container-queries-deep-dive" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Best Practices for Container Queries
+
+- **Reach for `inline-size` by default.** `size` containment has a real, easy-to-hit pitfall (the height-collapse
+  warning above) — only use it when the height is genuinely fixed by the surrounding layout, not by content.
+- **Name containers as soon as you nest them.** The moment a second `container-type` shows up inside another one,
+  add `container-name` to both — it costs nothing today and saves a confusing "why didn't this match" moment
+  later.
+- **Prefer `cqi` for typography and spacing inside components.** It keeps a component visually consistent
+  wherever it's dropped, the same benefit `fr` and `minmax()` bring to Grid tracks.
+- **Use style queries for theme/variant switches, not one-off exceptions.** They shine when the same component
+  needs to react to a variable set by something else (a section theme, a density setting) — for a single
+  component's own internal state, a plain class or attribute selector is still simpler.
+- **Don't reach for a container query when a media query is actually correct.** Global chrome — the site header,
+  primary nav, overall page column count — genuinely depends on the viewport. Container queries solve the
+  *component reused in different-sized boxes* problem specifically; using them everywhere just trades one kind of
+  rigidity for a different one.
+
+<RainbowDivider />
+
+## Browser Support & Fallbacks
+
+Size-based container queries (`container-type: inline-size`/`size` plus `@container`) and container query units
+have strong support across all current major browsers. `@container style()` against custom properties is newer but
+already broadly usable; style queries against standard properties are the one piece still worth double-checking
+before relying on it in production.
+
+For an older browser or a progressively enhanced layout, wrap the enhancement in a feature query so unsupported
+browsers just get your fallback instead of a rule that silently never applies:
+
+<CodeBlock language="css">
+{`
+  /* Fallback: simple stacked layout, applies everywhere */
+  .card {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  /* Only registers container-type where @container itself is supported */
+  @supports (container-type: inline-size) {
+    .card-wrapper {
+      container-type: inline-size;
+    }
+
+    @container (min-width: 400px) {
+      .card {
+        grid-template-columns: 2fr 1fr;
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Conclusion
+
+Media queries answer "how big is the screen?" — a question that made perfect sense when we designed pages, and
+still does for genuinely global layout decisions. Container queries answer a different, more honest question for
+everything else: "how big is the box I'm actually sitting in?" Named containers extend that question past the
+nearest ancestor when a component needs to reach further; container units make sizing inside a component scale
+with it automatically; and style queries extend the whole idea from size to appearance.
+
+Put together, these four pieces are what turn a component from "works in the layout I originally tested it in"
+into something that genuinely doesn't care where it's dropped — a sidebar, a wide main column, a dense dashboard
+tile, or a hero banner, all from the same markup and the same CSS.
+
+<RainbowDivider />
+
+## What's Next: From Static Layout to Motion
+
+Container queries solve *what a component looks like* at a given size or theme. The next natural question is
+*how it gets there* — what happens in the moment a card actually crosses that breakpoint, rather than snapping
+instantly from one layout to the other.
+
+In an upcoming post for the **[Animations category](/category/animations)**, we'll explore:
+
+- **Transitioning layout-affecting properties** across a container query breakpoint, not just color and opacity
+- **`@starting-style`** for animating an element the instant it's inserted into a newly-matched container
+- **Combining container queries with `@container` + view transitions** for a genuinely fluid reflow
+
+_That deep dive is currently in the works — stay tuned to the Animations category for the update!_

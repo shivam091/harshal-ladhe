@@ -16,6 +16,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "container-queries-deep-dive",
+    title: "Container Queries Playground",
+    description: "Drag a container past a breakpoint while its title scales in cqi, retarget a named @container query between two nested containers, and flip a --theme custom property to trigger a live style query.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "mastering-css-gradients",
     title: "CSS Gradients Playground",
     description: "Switch between linear, radial, conic, and repeating gradients, stack a live glassmorphism card, and preview all three animated gradient techniques from the post.",

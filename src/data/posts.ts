@@ -292,6 +292,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-04", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "container-queries-deep-dive",
+    title: "Container Queries Deep Dive: Component-Level Responsive Design",
+    excerpt: "Build components that don't care where they're dropped.",
+    description: "Go beyond basic @container syntax with containment types and their pitfalls, named containers, container query units (cqi/cqb/cqmin/cqmax), and the new @container style() queries — plus a real inline-SVG case study.",
+    category: ["CSS"],
+    tags: ["css", "container-queries", "responsive-design", "component-driven-design", "container-units", "style-queries", "named-containers", "modern-css", "cqi", "svg"],
+    signoff: "The named-container diagram took the most redrawing—getting an arrow to visually 'skip past' the nearer box without looking like it was just pointing at the wrong thing turned out to be harder than the math-heavy gradient diagrams. The sandbox's middle tab is the one I'm most pleased with: the exact same @container rule and breakpoint number, and flipping one radio button alone is enough to change which box gets measured. I hope that makes the nearest-vs-named distinction click faster than the CSS alone ever could. Thanks for containing yourself with me. 📦",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 
