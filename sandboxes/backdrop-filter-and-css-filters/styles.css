@@ -1,0 +1,110 @@
+:root {
+  --pg-radius-lg: 1rem;
+}
+
+input[type="color"] {
+  inline-size: 100%;
+  block-size: 2.625rem;
+  padding: 0.25rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  cursor: pointer;
+}
+
+/* ----------------------------- Filters panel ----------------------------- */
+
+.filter-demo-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+.demo-photo {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  transition: filter 0.1s ease;
+}
+
+/* ----------------------------- Glassmorphism panel ----------------------------- */
+
+.glass-demo-area {
+  position: relative;
+  min-block-size: 15rem;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* A busy, colorful pattern behind the card — exists only to give backdrop-filter: blur() something
+   to blur. Nothing here is a photo; it's pure CSS so the whole sandbox stays asset-free. */
+.glass-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(45deg, #f97316 0, #f97316 1.25rem, #a855f7 1.25rem, #a855f7 2.5rem),
+    conic-gradient(from 0deg at 70% 30%, #14b8a6, #f472b6, #facc15, #14b8a6);
+  background-blend-mode: overlay;
+}
+
+.glass-card {
+  position: absolute;
+  inset: 14% 12%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1.25rem;
+  border-radius: 1rem;
+  transition: background-color 0.15s ease, backdrop-filter 0.15s ease, border 0.15s ease;
+}
+
+.glass-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.glass-card-body {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ----------------------------- Duotone panel ----------------------------- */
+
+.duotone-demo-area {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+.duotone-layer {
+  display: none;
+  inline-size: 100%;
+  block-size: 100%;
+  aspect-ratio: 4 / 3;
+}
+
+.duotone-layer--active {
+  display: block;
+}
+
+#duotone-css-layer {
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+}
+
+@media (max-width: 30rem) {
+  .demo-photo {
+    aspect-ratio: 16 / 10;
+  }
+
+  .glass-demo-area {
+    min-block-size: 12.5rem;
+  }
+}

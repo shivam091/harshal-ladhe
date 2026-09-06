@@ -1,0 +1,526 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("backdrop-filter-and-css-filters");
+
+For most of CSS's history, if you wanted a dimmed thumbnail, a frosted-glass panel, or a duotone photo effect, you
+reached for an image editor and shipped a pre-processed file. Two properties — `filter` and `backdrop-filter` — moved
+all of that into the browser itself, computed live, on real content. They look almost identical on the page (both
+take the same list of function names, both go by a one-word property), and that resemblance is exactly what causes
+the most common bug in this entire corner of CSS: reaching for the wrong one and getting confused when nothing
+looks the way you expected.
+
+<Quote>
+  `filter` repaints the element you put it on. `backdrop-filter` repaints whatever was already behind it. They share
+  a vocabulary, not a target.
+</Quote>
+
+That single sentence is the crux of this whole post. Everything else — glassmorphism cards, duotone photo effects,
+chaining multiple functions together, the performance tradeoffs, the browser-support gaps — falls out naturally
+once that one distinction is solid.
+
+In this post, we'll cover:
+
+- What the `filter` property is, its full function list, and what "applies to the element and its descendants"
+  actually means
+- What `backdrop-filter` is, and the crucial difference between it and `filter`
+- Building a real glassmorphism card with `backdrop-filter`
+- Chaining multiple filter functions, and why the order you write them in can change the result
+- `drop-shadow()` versus `box-shadow` — and why they aren't interchangeable
+- Building a duotone effect two ways: a cheap CSS approximation, and a precise SVG `feColorMatrix`/`feComponentTransfer` filter
+- Performance, GPU compositing, and the stacking-context side effect both properties share
+- Browser support, an `@supports` fallback, and a common mistakes checklist
+- An interactive playground to chain filters, tune a glass card, and compare both duotone techniques live
+
+## What Is the `filter` Property?
+
+`filter` takes one or more **filter functions** and applies them to however an element is already rendered — its own
+box, plus every descendant painted inside it. Nine functions cover the vast majority of real-world use:
+
+- **`blur(radius)`** — softens edges by averaging nearby pixels; a bigger radius means more averaging, and a more
+  smeared result
+- **`brightness(amount)`** — scales every pixel's value toward black (`0%`) or blown-out white (past `100%`);
+  `100%` is the unmodified original
+- **`contrast(amount)`** — pushes pixel values away from (or toward) mid-gray; `0%` is a flat gray, `100%` is
+  unmodified, higher values push shadows darker and highlights brighter
+- **`grayscale(amount)`** — desaturates toward a luminance-weighted gray; `100%` is fully grayscale
+- **`hue-rotate(angle)`** — rotates every pixel's hue around the color wheel by the given angle, leaving lightness
+  and saturation alone
+- **`invert(amount)`** — flips each channel toward its opposite; `100%` is a full photographic negative
+- **`opacity(amount)`** — fades the element's own rendering toward transparent, functionally close to the
+  `opacity` property but evaluated as part of the filter chain
+- **`saturate(amount)`** — scales color intensity; `0%` matches `grayscale(100%)`, values past `100%` oversaturate
+- **`sepia(amount)`** — shifts toward a warm brown-toned look, like an aged photograph
+- **`drop-shadow(offset-x offset-y blur-radius color)`** — a shadow that follows the element's actual rendered
+  shape, covered in detail later in this post
+
+A quick, common example — dimming a thumbnail until it's hovered:
+
+<CodeBlock language="css">
+{`
+  .thumbnail {
+    filter: brightness(0.7);
+    transition: filter 0.15s ease;
+  }
+
+  .thumbnail:hover {
+    filter: brightness(1);
+  }
+`}
+</CodeBlock>
+
+Or softening a background photo so foreground text stays readable without a separate overlay image:
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-image: url("photo.jpg");
+    background-size: cover;
+  }
+
+  .hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    backdrop-filter: none; /* this is a background photo, not something sitting over other content */
+  }
+
+  .hero-photo {
+    filter: blur(6px) brightness(0.6);
+  }
+`}
+</CodeBlock>
+
+<Success title="Key insight">
+  `filter` doesn't just affect the element you set it on — it affects that element's entire rendered subtree,
+  descendants included, as if the whole thing were flattened into one image first and then processed. Blur an
+  element with five child nodes inside it, and all five blur together, exactly as one unit.
+</Success>
+
+That "flattened into one image first" framing is worth sitting with for a moment, because it's the exact same
+mental model that makes the next section click: `filter` always has *something* to process, because the element
+always has its own rendered content. `backdrop-filter` doesn't work that way at all.
+
+<RainbowDivider />
+
+## backdrop-filter: The Property Everyone Confuses With filter
+
+`backdrop-filter` accepts the exact same list of filter functions as `filter` — `blur()`, `brightness()`,
+`saturate()`, and the rest all work identically here. What changes is *what gets processed*. Where `filter`
+repaints the element and its own descendants, `backdrop-filter` reaches **behind** the element, into whatever was
+already painted there by everything underneath it, and processes that instead — leaving the element's own content
+completely untouched.
+
+This is the single most important distinction in this whole post, so it's worth stating plainly, twice, in two
+different ways:
+
+- `filter` answers: "how should *this element and everything inside it* be repainted?"
+- `backdrop-filter` answers: "how should *whatever is already behind this element* be repainted, before this
+  element's own content is drawn on top of it?"
+
+**Visual Illustration**
+
+<FilterVsBackdropFilterDiagram />
+
+The classic showcase for `backdrop-filter` is a glassmorphism card — a panel that looks like frosted glass,
+blurring whatever scrolls or sits underneath it while its own text stays perfectly sharp:
+
+<CodeBlock language="css">
+{`
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(12px) saturate(1.8);
+    -webkit-backdrop-filter: blur(12px) saturate(1.8); /* still required today — more on this later */
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 16px;
+  }
+`}
+</CodeBlock>
+
+Three ingredients make that card actually read as "glass," and all three matter:
+
+1. **A semi-transparent `background-color`.** Fully opaque hides the blurred backdrop completely; fully
+   transparent leaves nothing for the tint to soften. Something in between — often `0.15` to `0.35` alpha — is
+   what makes it look like frosted glass instead of either a plain photo or a plain solid card.
+2. **`backdrop-filter: blur(...)`,** usually paired with `saturate()` pushed above `100%`. Blur alone tends to look
+   flat and washed out; a little extra saturation restores some of the vibrance the blur softens away, which is
+   why real glassmorphism examples almost always chain the two together instead of using blur alone.
+3. **A subtle, light `border`.** A hairline border (often a low-alpha white, regardless of theme) is doing the
+   job of a highlight along the glass's edge — it's a small detail, but its absence is part of why a
+   hastily-built "glass" card often reads as just "a blurry box" instead.
+
+<Info title="Complementary, not competing, with layered gradients">
+  If you've read the [gradients post](/post/css/mastering-css-gradients#layered-gradients-the-glassmorphism-secret),
+  its glassmorphism section builds the same "frosted glass" *look* out of stacked, semi-transparent
+  `linear-gradient()`/`radial-gradient()` layers alone — a different mechanism that fakes the appearance without
+  touching what's actually behind the element. The two techniques compose well together: gradients for the
+  directional light-reflection sheen, `backdrop-filter` for the actual blur of real content underneath. This post
+  covers the `backdrop-filter` half specifically.
+</Info>
+
+<Warning title="backdrop-filter needs something to blur">
+  If a `backdrop-filter`'d element sits over a single flat, solid-colored background, applying `blur()` to it will
+  visibly do nothing — there's no texture or detail behind the element for the blur to soften. This is one of the
+  most common "why isn't backdrop-filter working?" reports, and the fix is never in the CSS: it's giving the card
+  something with actual visual texture underneath it — a photo, a gradient, or scrollable content.
+</Warning>
+
+<RainbowDivider />
+
+## Chaining Filter Functions — And Order Can Change the Result
+
+Both `filter` and `backdrop-filter` accept a **space-separated list** of functions, not just one:
+
+<CodeBlock language="css">
+{`
+  .stylized-photo {
+    filter: contrast(120%) saturate(140%) sepia(20%);
+  }
+`}
+</CodeBlock>
+
+Each function processes the *output* of the function before it, left to right — not the original element
+independently, three separate times. `contrast(120%)` runs first, against the untouched source; `saturate(140%)`
+then runs against contrast's already-adjusted result; `sepia(20%)` runs last, against whatever `saturate` produced.
+That "each stage feeds the next" behavior is exactly why swapping the order of two functions can change the final
+result, even though both orderings use the identical numbers:
+
+**Visual Illustration**
+
+<FilterChainOrderDiagram />
+
+Blurring a hard, crisp edge first turns it into a soft gray gradient band — and *then* running `contrast()` has
+real gray midtones to push toward black or white, producing a narrower, harder-edged ring than a plain blur alone
+would. Running `contrast()` first, before anything has been blurred, is close to a no-op on a crisp, already
+binary-looking edge (there are no midtones yet to push anywhere) — so blurring *afterward* just produces an
+ordinary, wide, evenly soft edge, as if `contrast()` had never been written at all.
+
+<Details summary="Does function order matter for every combination?">
+  Not always as dramatically. `brightness()` chained with `saturate()`, for instance, mostly commute — swapping
+  their order rarely changes the visible result much, because neither one reshapes the image's spatial detail the
+  way `blur()` does. Order matters most whenever one of the functions changes the *spatial* structure of the image
+  (`blur()` is the main one) and another reacts to *pixel values* (`contrast()`, `brightness()`, `invert()`) —
+  running the spatial one first gives the value-based one something different to work with than running it last.
+</Details>
+
+<RainbowDivider />
+
+## drop-shadow() vs box-shadow
+
+`drop-shadow()` is a filter function, which makes it easy to assume it's just `box-shadow` under a different name.
+It isn't — the two solve genuinely different problems, and the difference matters the moment you're shadowing
+anything that isn't a plain rectangle.
+
+`box-shadow` always draws around the element's **box** — its border-box rectangle (or rounded-rectangle, if
+`border-radius` is set). It has no idea what's actually rendered inside that box; a transparent PNG of a single
+star icon still casts a rectangular shadow, because `box-shadow` shadows the box, not the pixels.
+
+`drop-shadow()` shadows the element's **actual rendered alpha channel** — whatever shape the content really is,
+transparency included. A star-shaped icon on a transparent background casts a star-shaped shadow; a circular
+avatar with rounded corners via a clip, not `border-radius`, still gets a correctly-shaped shadow, because
+`drop-shadow()` looks at what's actually opaque, not at the box.
+
+<CodeBlock language="css">
+{`
+  /* box-shadow: shadows the rectangular box, ignoring the transparent parts of the PNG */
+  .icon-box-shadow {
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  /* drop-shadow: shadows the icon's actual silhouette — no shadow where the PNG is transparent */
+  .icon-drop-shadow {
+    filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.4));
+  }
+`}
+</CodeBlock>
+
+`drop-shadow()` has a second advantage that follows directly from being a filter function rather than a separate
+property: it **chains and animates alongside every other filter function**, in the same declaration, on the same
+timeline. A hover state that both blurs a decorative icon and grows its shadow needs only one `filter` value and
+one `transition: filter`; the same pairing with `box-shadow` needs two separate properties kept in sync by hand.
+
+<Info title="When box-shadow is still the right choice">
+  For an ordinary rectangular or rounded-rectangle card — the overwhelming majority of UI shadows — `box-shadow`
+  is cheaper to compute and has no filter-related side effects (see the stacking-context note further down).
+  Reach for `drop-shadow()` specifically when the shape casting the shadow isn't the element's own box: icons,
+  irregular SVG shapes, or anything shadowed alongside other chained filter functions.
+</Info>
+
+<RainbowDivider />
+
+## Building a Duotone Effect
+
+A duotone effect remaps every pixel's grayscale luminance into a two-color gradient — pure black becomes a
+"shadow" color, pure white becomes a "highlight" color, and every gray in between becomes the matching blend. It's
+a distinctive, punchy look (think classic gig-poster photography), and CSS can build it two genuinely different
+ways: a cheap layered approximation, and an exact per-pixel remap.
+
+**Visual Illustration**
+
+<DuotoneMappingDiagram />
+
+### The Cheap Approximation: Blend Modes
+
+The pure-CSS version leans on `background-blend-mode`, not a filter function at all. Put the photo and a two-color
+gradient on the *same* element as two background layers, then blend them:
+
+<CodeBlock language="css">
+{`
+  .duotone-approx {
+    /* First-listed paints on top (same rule as regular layered background-image stacks) */
+    background-image:
+      linear-gradient(to bottom, #fde68a, #1e1b4b),
+      url("photo.jpg");
+    background-blend-mode: color;
+    background-size: cover;
+  }
+`}
+</CodeBlock>
+
+The `color` blend mode is doing very specific, deliberate work here: per the CSS Compositing spec, it takes the
+*hue and saturation* from whichever layer is on top (the gradient) and the *luminosity* from whichever layer is
+underneath (the photo). That's exactly the "shadow/highlight color, mapped by the photo's own brightness" behavior
+a duotone needs — no separate `grayscale()` step required, because the blend mode already discards the photo's
+own hue and saturation on its own.
+
+<Warning title="This is an approximation, not an exact remap">
+  Because the gradient's colors vary by *position* (top-to-bottom, say), not by the photo's actual luminance at
+  each point, this technique only looks convincing when the gradient's direction roughly tracks where the photo is
+  actually bright and dark — a photo lit from above works well with a top-to-bottom gradient; a photo with its
+  brightest point in a corner won't line up nearly as cleanly. It's cheap, requires no extra markup beyond one
+  element, and is good enough for a lot of real designs — but it isn't computing a true per-pixel luminance
+  remap.
+</Warning>
+
+### The Real Technique: An SVG Filter
+
+An exact duotone needs to look at each pixel's actual luminance value, independent of where that pixel sits — and
+that's precisely what SVG filter primitives are built for. Two primitives, chained, do the whole job:
+
+<CodeBlock language="html">
+{`
+  <svg style="position: absolute; width: 0; height: 0;">
+    <filter id="duotone">
+      <!-- Step 1: collapse to luminance-weighted grayscale (R = G = B = brightness, alpha untouched) -->
+      <feColorMatrix
+        type="matrix"
+        values="0.2126 0.7152 0.0722 0 0
+                0.2126 0.7152 0.0722 0 0
+                0.2126 0.7152 0.0722 0 0
+                0      0      0      1 0"
+        result="gray"
+      />
+      <!-- Step 2: remap 0 -> shadow color, 1 -> highlight color, per channel, linearly in between -->
+      <feComponentTransfer in="gray">
+        <feFuncR type="table" tableValues="0.118 0.992" /> <!-- #1e1b4b -> #fde68a, red channel -->
+        <feFuncG type="table" tableValues="0.106 0.902" /> <!-- green channel -->
+        <feFuncB type="table" tableValues="0.294 0.541" /> <!-- blue channel -->
+      </feComponentTransfer>
+    </filter>
+  </svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .duotone-real {
+    filter: url(#duotone);
+  }
+`}
+</CodeBlock>
+
+`feColorMatrix` first replaces every pixel's R, G, and B channels with the same luminance-weighted value — the
+same `0.2126 / 0.7152 / 0.0722` coefficients browsers use internally for `grayscale()` itself. Then
+`feComponentTransfer`'s `type="table"` remaps each channel through a lookup curve: with exactly two table values,
+that curve is a straight line from the first value (what `0` maps to) to the second (what `1` maps to) — so `0`
+luminance lands on the shadow color's channel, `1` lands on the highlight color's channel, and everything between
+is a precise linear blend, calculated per pixel from that pixel's *actual* brightness, with zero dependence on
+where it sits in the image.
+
+<Details summary="Why an SVG filter instead of a CSS filter function for this?">
+  CSS's own filter functions have no equivalent to `feComponentTransfer`'s per-channel remap table — `grayscale()`,
+  `sepia()`, and friends are all fixed, single-purpose transforms with no way to plug in two arbitrary colors as
+  endpoints. Referencing an SVG `<filter>` from `filter: url(#id)` is the sanctioned way CSS lets you reach past
+  its own built-in function list into the much larger set of primitives SVG filters expose — the reference works
+  on any HTML element, not just inside an `<svg>` document, exactly as used above.
+</Details>
+
+<Success title="The tradeoff, in one line">
+  The blend-mode approximation is one property, no extra markup, and good enough whenever the gradient direction
+  roughly matches the photo's lighting. The SVG filter is exact regardless of the photo's lighting, at the cost of
+  an inline `<svg>` block and a slightly higher conceptual bar to set up.
+</Success>
+
+<RainbowDivider />
+
+## Performance: filter and backdrop-filter Are Expensive
+
+Both properties are among the more expensive things you can ask a browser's rendering pipeline to do, for a
+reason that's easy to miss: unlike `transform` or `opacity`, most filter functions genuinely can't be handled as a
+cheap compositor-only operation. `blur()` in particular requires sampling a neighborhood of pixels around every
+single pixel in the affected area — the bigger the blurred region and the larger the blur radius, the more work
+that is, every single frame it's recalculated.
+
+A few concrete implications:
+
+- **Avoid animating `filter`/`backdrop-filter` over large areas.** A `blur()` transition on a small icon or a
+  fixed-size card is cheap; the same transition on a full-viewport hero background can visibly drop frames,
+  especially on lower-powered devices.
+- **`backdrop-filter` in particular re-samples whatever's behind the element on every repaint** — including while
+  scrolling. A `backdrop-filter`'d element pinned over scrolling content (a sticky header, a fixed nav) recomputes
+  its blur continuously as the content underneath moves, which is measurably more expensive than a `backdrop-filter`
+  over a static backdrop.
+- **`will-change: filter` / `will-change: backdrop-filter` promote the element to its own compositor layer ahead
+  of time,** which can help avoid a jank spike at the moment an animation starts — but every promoted layer costs
+  memory, and a page with many `will-change` elements can trade one performance problem for another. Apply it
+  narrowly, to elements that are actually about to animate, and prefer removing it again afterward over leaving it
+  on permanently.
+
+<Warning title="Test on real hardware, not just your dev machine">
+  Filter effects are exactly the kind of feature that performs fine on a high-end laptop and visibly stutters on a
+  mid-range phone. If a filter-heavy design needs to feel smooth everywhere, profile it on the least powerful
+  device in your actual audience, not the fastest one on your desk.
+</Warning>
+
+<RainbowDivider />
+
+## backdrop-filter's Practical Quirks
+
+A handful of details are specific to `backdrop-filter` and catch people who've already internalized how plain
+`filter` behaves.
+
+**It only does anything visible when there's real content behind the element.** Covered above as a warning, worth
+repeating here as a category: a solid-color background, an element with nothing painted underneath it at all, or
+a `backdrop-filter` applied before any content has scrolled into view behind it will all look like the property
+"isn't working," when really it's working correctly on an empty input.
+
+**The `-webkit-backdrop-filter` prefix is still required for full support, even today.** This is unusual — most
+CSS properties this well-established long ago dropped their vendor-prefixed forms entirely. `backdrop-filter`
+hasn't: write both the prefixed and unprefixed declarations together, always, with the unprefixed one listed
+second so it wins in engines that support both:
+
+<CodeBlock language="css">
+{`
+  .glass-card {
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+`}
+</CodeBlock>
+
+**Support arrived meaningfully later than plain `filter`, and unevenly across engines.** Plain `filter` has been
+safe to use unconditionally for years. `backdrop-filter` took much longer to reach the same status — Firefox in
+particular shipped it well after Chromium and Safari had already supported it, so a browser matrix that includes
+any older or more conservative browser is worth checking before you rely on `backdrop-filter` for anything beyond
+a visual enhancement.
+
+That gap is exactly what `@supports` progressive enhancement exists for — ship a solid, fully opaque card as the
+baseline, then layer the glass effect on top only where it's actually supported:
+
+<CodeBlock language="css">
+{`
+  .glass-card {
+    /* Baseline: a plain, fully opaque card — looks correct with zero backdrop-filter support at all */
+    background-color: #1e1b4b;
+  }
+
+  @supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+    .glass-card {
+      background-color: rgba(30, 27, 75, 0.35);
+      backdrop-filter: blur(12px) saturate(1.8);
+      -webkit-backdrop-filter: blur(12px) saturate(1.8);
+    }
+  }
+`}
+</CodeBlock>
+
+**Both `filter` and `backdrop-filter` create a new stacking context.** This is a shared quirk, not specific to
+either property alone, but it surprises people most often on `backdrop-filter`'d cards: any non-`none` value of
+either property — even something as small as `filter: blur(0.01px)` — forces the element to establish its own
+stacking context, exactly like `position: relative` with a `z-index`, or `opacity` less than `1`. A `z-index` set
+on a descendant that's supposed to reach above some *other* part of the page can suddenly stop working the moment
+a `filter`/`backdrop-filter` is added to one of its ancestors, because that ancestor's new stacking context now
+contains it.
+
+<RainbowDivider />
+
+## Common Mistakes Checklist
+
+- **Forgetting the `-webkit-` prefix.** `backdrop-filter` is the rare property that still needs it for full
+  support — write both declarations, unprefixed last.
+- **Expecting `backdrop-filter` to blur the element's own text or content.** It doesn't, ever — that's what plain
+  `filter` is for. If text inside a "glass" card looks blurry, `filter` was set by mistake where `backdrop-filter`
+  was intended.
+- **Using `backdrop-filter` on an element with nothing behind it, then being confused when nothing visibly
+  happens.** Confirm there's real visual texture underneath — a photo, a gradient, or scrolling content — before
+  assuming the CSS itself is wrong.
+- **Not accounting for the new stacking context `filter`/`backdrop-filter` creates.** A `z-index` that stopped
+  working the moment one of these properties was added to an ancestor is very often this, not a specificity or
+  ordering bug.
+- **Assuming `drop-shadow()` and `box-shadow` are interchangeable.** They shadow different things — the rendered
+  alpha shape versus the element's box — and swapping one for the other changes the result the moment the content
+  isn't a plain filled rectangle.
+- **Animating `filter`/`backdrop-filter` over large, full-viewport areas** without checking real-device
+  performance first.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Reach for `filter` when the element's own content should change; reach for `backdrop-filter` when only what's
+  behind it should.** If you're ever unsure which one a design calls for, ask "should the text/icon itself look
+  different, or just the surface underneath it?" — the answer picks the property.
+- **Always pair `backdrop-filter` with a semi-transparent background and a light border** for a convincing glass
+  effect — blur alone, on an otherwise plain box, rarely reads as "glass."
+- **Write both `-webkit-backdrop-filter` and `backdrop-filter`,** unprefixed last, every time.
+- **Gate `backdrop-filter` behind `@supports`** and ship a fully opaque, still-legible fallback background color as
+  the baseline.
+- **Keep blurred/backdrop-filtered regions small,** and avoid animating either property across large areas —
+  profile on real, modest hardware before shipping a filter-heavy design.
+- **Pick the duotone technique that matches your actual need:** the blend-mode approximation for a quick, one-off
+  stylistic touch; the SVG `feComponentTransfer` filter when the result needs to be pixel-accurate regardless of
+  the source photo's lighting.
+- **Remember the stacking-context side effect** before debugging a `z-index` issue anywhere near a
+  `filter`/`backdrop-filter`'d ancestor.
+
+<RainbowDivider />
+
+## Browser Support
+
+Plain `filter` has been safe to use without any fallback for a long time — every function covered in this post is
+Baseline and broadly supported. `backdrop-filter` is the one property in this post that still needs care: it
+reached broad support meaningfully later than `filter` did, Firefox lagged noticeably behind Chromium and Safari
+in shipping it, and — as covered above — Safari still requires the `-webkit-` prefix for it to take effect even in
+current releases. Always check current numbers on MDN's compatibility tables before assuming unconditional
+support in a project with an unusually conservative browser matrix, and reach for the `@supports` pattern from
+earlier in this post whenever `backdrop-filter` is anything more than a cosmetic enhancement.
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading a list of filter functions is one thing; watching them chain together on a real photo is another. The
+**Filters** tab chains all eight filter functions covered in this post onto one demo photo live, with the
+generated `filter` declaration shown in the readout. The **Glassmorphism** tab tunes `backdrop-filter` blur,
+saturation, background alpha, and the border on a real glass card sitting over a busy, colorful backdrop — drag
+blur down to `0px` to feel exactly why `backdrop-filter` needs something behind it. The **Duotone** tab toggles
+between the blend-mode approximation and the real SVG `feComponentTransfer` filter on the same photo, with two
+color pickers driving both techniques at once, so you can compare them directly.
+
+<Sandbox slug="backdrop-filter-and-css-filters" defaultLayout="vertical" />
+
+`backdrop-filter` isn't the only way to build a glass card — the **[Mastering CSS Gradients](/post/css/mastering-css-gradients#layered-gradients-the-glassmorphism-secret)**
+post builds the same effect entirely out of layered, semi-transparent gradients instead. The two techniques are
+complementary rather than competing: gradients simulate light and depth on the card's own surface, while
+`backdrop-filter` genuinely distorts whatever is behind it — real designs often combine both.
+
+<RainbowDivider />
+
+## Conclusion
+
+`filter` and `backdrop-filter` share a function vocabulary and a one-word name, and that resemblance is the entire
+source of confusion around them — but the mental model that resolves it is genuinely simple once it's stated
+plainly: `filter` repaints the element and everything inside it; `backdrop-filter` repaints only what's already
+behind it, leaving the element's own content untouched. Everything else in this post — glassmorphism cards,
+duotone photo effects, chained filter order, `drop-shadow()`'s real advantage over `box-shadow`, even the
+performance and stacking-context caveats — is a direct consequence of that one distinction, not a separate set of
+rules to memorize on top of it.

@@ -16,6 +16,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "backdrop-filter-and-css-filters",
+    title: "Filters & Glassmorphism Playground",
+    description: "Chain 8 filter functions onto a photo, tune a real backdrop-filter glass card over a patterned backdrop, and compare a CSS blend-mode duotone against a real SVG feComponentTransfer filter — generated CSS shown live.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "color-mix-and-relative-color-syntax",
     title: "color-mix() & Relative Color Playground",
     description: "Blend two colors across srgb/hsl/oklch with a live hue-method switch, or derive a color live from relative color syntax with L/C/H/alpha sliders, generated CSS shown throughout.",

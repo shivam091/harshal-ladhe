@@ -328,6 +328,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "backdrop-filter-and-css-filters",
+    title: "backdrop-filter and Filters: Blur, Glassmorphism, and Duotone Effects",
+    excerpt: "Blur what's behind it, not what's on it.",
+    description: "A beginner-to-advanced guide to CSS filter and backdrop-filter — the full function list, the crucial distinction between the two properties, chaining order, drop-shadow() vs box-shadow, and building glassmorphism cards and duotone effects both as a CSS approximation and a real SVG filter.",
+    category: ["CSS"],
+    tags: ["css", "filters", "backdrop-filter", "glassmorphism", "duotone", "blur", "ui-design", "modern-css", "browser-support", "progressive-enhancement", "performance", "gpu-acceleration", "advanced", "beginner", "frontend", "svg"],
+    signoff: "Getting the real SVG feComponentTransfer duotone filter to update live from two color pickers — rewriting its transfer-function tables on every input instead of just swapping a precomputed image — took more wiring than the CSS-approximation tab sitting right next to it. I hope toggling between filter and backdrop-filter on the exact same blurred scene makes that one distinction click faster than the definitions alone ever could. Thanks for blurring the right layer with me. 🪟",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 

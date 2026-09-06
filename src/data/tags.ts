@@ -399,5 +399,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "hue-interpolation": {
     title: "Hue Interpolation in Polar Color Spaces",
     description: "How shorter hue, longer hue, increasing hue, and decreasing hue change the path a blend or gradient takes around the color wheel."
+  },
+  "filters": {
+    title: "CSS Filter Effects",
+    description: "Guides to the CSS filter property and its function list — blur, brightness, contrast, and the rest — for processing an element's own rendered content."
+  },
+  "backdrop-filter": {
+    title: "backdrop-filter Explained",
+    description: "Using backdrop-filter to process whatever is already painted behind an element, distinct from filter's effect on the element's own content."
+  },
+  "glassmorphism": {
+    title: "Glassmorphism UI Effects",
+    description: "Building frosted-glass UI panels with backdrop-filter, translucent backgrounds, and subtle borders."
+  },
+  "duotone": {
+    title: "Duotone Image Effects",
+    description: "Remapping grayscale luminance into a two-color gradient, via CSS blend modes or a precise SVG feComponentTransfer filter."
+  },
+  "blur": {
+    title: "CSS Blur Effects",
+    description: "Using blur() and backdrop-filter's blur to soften rendered content or whatever sits behind an element."
   }
 };

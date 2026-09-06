@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>backdrop-filter & Filters Playground</title>
+  </head>
+  <body>
+    <!-- Hidden SVG filter definition powering the "real" duotone technique in the Duotone tab. Its
+         feComponentTransfer tableValues are rewritten live by index.js whenever a color picker
+         changes, so this markup only needs to exist once. -->
+    <svg aria-hidden="true" focusable="false" style="position: absolute; width: 0; height: 0; overflow: hidden;">
+      <defs>
+        <filter id="duotone-svg-filter" color-interpolation-filters="sRGB">
+          <!-- Standard luminance-weighted grayscale matrix — collapses R/G/B to the same value per
+               pixel (equal to that pixel's perceived brightness), alpha untouched. -->
+          <feColorMatrix
+            type="matrix"
+            values="0.2126 0.7152 0.0722 0 0
+                    0.2126 0.7152 0.0722 0 0
+                    0.2126 0.7152 0.0722 0 0
+                    0      0      0      1 0"
+            result="duotone-gray"
+          />
+          <!-- Each channel's 2-stop table remaps 0 -> that channel of the shadow color and
+               1 -> that channel of the highlight color, linearly interpolating in between. -->
+          <feComponentTransfer in="duotone-gray">
+            <feFuncR id="duotone-func-r" type="table" tableValues="0 1" />
+            <feFuncG id="duotone-func-g" type="table" tableValues="0 1" />
+            <feFuncB id="duotone-func-b" type="table" tableValues="0 1" />
+          </feComponentTransfer>
+        </filter>
+      </defs>
+    </svg>
+
+    <main class="playground">
+      <header class="playground-header">
+        <h1>backdrop-filter &amp; Filters Playground</h1>
+        <p>Chain filter functions onto a photo, tune a real glassmorphism card, and compare a CSS-only duotone against a real SVG filter — all with the generated CSS shown live.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Playground mode" id="mode-switch">
+        <button class="tab tab--active" type="button" data-mode="filters" role="tab" aria-selected="true">Filters</button>
+        <button class="tab" type="button" data-mode="glass" role="tab" aria-selected="false">Glassmorphism</button>
+        <button class="tab" type="button" data-mode="duotone" role="tab" aria-selected="false">Duotone</button>
+      </div>
+
+      <div id="filters-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area filter-demo-area" aria-label="Filter preview">
+          <img id="filters-photo" class="demo-photo" alt="A schematic mountain landscape used to demonstrate CSS filter functions" />
+        </section>
+
+        <output id="filters-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Filter Functions</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="blur-input">blur()</label>
+              <div class="range-row">
+                <span class="range-edge">0px</span>
+                <div class="range-track">
+                  <input type="range" id="blur-input" min="0" max="20" step="0.5" value="0">
+                  <output class="range-bubble" id="blur-value" for="blur-input">0px</output>
+                </div>
+                <span class="range-edge">20px</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="brightness-input">brightness()</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="brightness-input" min="0" max="200" step="1" value="100">
+                  <output class="range-bubble" id="brightness-value" for="brightness-input">100%</output>
+                </div>
+                <span class="range-edge">200%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="contrast-input">contrast()</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="contrast-input" min="0" max="200" step="1" value="100">
+                  <output class="range-bubble" id="contrast-value" for="contrast-input">100%</output>
+                </div>
+                <span class="range-edge">200%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="saturate-input">saturate()</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="saturate-input" min="0" max="300" step="1" value="100">
+                  <output class="range-bubble" id="saturate-value" for="saturate-input">100%</output>
+                </div>
+                <span class="range-edge">300%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="hue-rotate-input">hue-rotate()</label>
+              <div class="range-row">
+                <span class="range-edge">0deg</span>
+                <div class="range-track">
+                  <input type="range" id="hue-rotate-input" min="0" max="360" step="1" value="0">
+                  <output class="range-bubble" id="hue-rotate-value" for="hue-rotate-input">0deg</output>
+                </div>
+                <span class="range-edge">360deg</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="grayscale-input">grayscale()</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="grayscale-input" min="0" max="100" step="1" value="0">
+                  <output class="range-bubble" id="grayscale-value" for="grayscale-input">0%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="sepia-input">sepia()</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="sepia-input" min="0" max="100" step="1" value="0">
+                  <output class="range-bubble" id="sepia-value" for="sepia-input">0%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="invert-input">invert()</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="invert-input" min="0" max="100" step="1" value="0">
+                  <output class="range-bubble" id="invert-value" for="invert-input">0%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+          </div>
+          <p class="tip">Every slider chains onto the same <code>filter</code> declaration, in the order shown — this is the element's OWN content being reprocessed, not what's behind it.</p>
+          <button class="toggle-btn" type="button" id="filters-reset-btn">Reset all</button>
+        </fieldset>
+      </div>
+
+      <div id="glass-demo" class="tab-panel">
+        <section class="demo-area glass-demo-area" aria-label="Glassmorphism preview">
+          <div class="glass-backdrop"></div>
+          <div id="glass-card" class="glass-card">
+            <span class="glass-card-title">Glass card</span>
+            <span class="glass-card-body">backdrop-filter blurs what's behind me. This text stays crisp.</span>
+          </div>
+        </section>
+
+        <output id="glass-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Backdrop Filter</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="glass-blur-input">backdrop-filter blur</label>
+              <div class="range-row">
+                <span class="range-edge">0px</span>
+                <div class="range-track">
+                  <input type="range" id="glass-blur-input" min="0" max="30" step="1" value="12">
+                  <output class="range-bubble" id="glass-blur-value" for="glass-blur-input">12px</output>
+                </div>
+                <span class="range-edge">30px</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="glass-saturate-input">backdrop-filter saturate</label>
+              <div class="range-row">
+                <span class="range-edge">100%</span>
+                <div class="range-track">
+                  <input type="range" id="glass-saturate-input" min="100" max="300" step="1" value="180">
+                  <output class="range-bubble" id="glass-saturate-value" for="glass-saturate-input">180%</output>
+                </div>
+                <span class="range-edge">300%</span>
+              </div>
+            </div>
+            <div class="field">
+              <label for="glass-alpha-input">Background alpha</label>
+              <div class="range-row">
+                <span class="range-edge">0%</span>
+                <div class="range-track">
+                  <input type="range" id="glass-alpha-input" min="0" max="100" step="1" value="25">
+                  <output class="range-bubble" id="glass-alpha-value" for="glass-alpha-input">25%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+            <div class="field field--full">
+              <label class="checkbox-field" for="glass-border-toggle">
+                <input type="checkbox" id="glass-border-toggle" checked>
+                <span>Show <code>border</code></span>
+              </label>
+            </div>
+          </div>
+          <p class="tip">Drag blur to 0px — the card goes flat, because there's nothing left for <code>backdrop-filter</code> to do. The busy pattern behind the card exists only to give it something to blur.</p>
+        </fieldset>
+      </div>
+
+      <div id="duotone-demo" class="tab-panel">
+        <section class="demo-area duotone-demo-area" aria-label="Duotone preview">
+          <div id="duotone-css-layer" class="duotone-layer duotone-layer--active"></div>
+          <img id="duotone-svg-layer" class="duotone-layer demo-photo" alt="The same mountain landscape run through a two-color duotone remap" />
+        </section>
+
+        <output id="duotone-output" class="readout" aria-live="polite"></output>
+
+        <fieldset class="control-group">
+          <legend>Technique</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Duotone technique">
+            <label class="segment">
+              <input type="radio" name="duotone-technique" value="css" checked>
+              <span>CSS approximation</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="duotone-technique" value="svg">
+              <span>SVG filter (real)</span>
+            </label>
+          </div>
+          <p class="tip" id="duotone-tip">A grayscale-then-tinted gradient, blended with <code>background-blend-mode: color</code> — cheap and simple, but only as convincing as the match between the gradient's direction and the photo's own lighting.</p>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Duotone Colors</legend>
+          <div class="fields-grid fields-grid--3">
+            <div class="field">
+              <label for="duotone-shadow-input">Shadow color</label>
+              <input type="color" id="duotone-shadow-input" value="#1e1b4b">
+            </div>
+            <div class="field">
+              <label for="duotone-highlight-input">Highlight color</label>
+              <input type="color" id="duotone-highlight-input" value="#fde68a">
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
