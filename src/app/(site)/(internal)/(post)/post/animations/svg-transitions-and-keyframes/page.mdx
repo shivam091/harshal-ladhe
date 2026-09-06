@@ -1,0 +1,551 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("svg-transitions-and-keyframes");
+
+## Introduction
+
+In [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes), we covered the six core shapes, the coordinate system, and how `fill`/`stroke` presentation attributes work. Everything in that post was static — shapes that sit on the page exactly as drawn.
+
+This post picks up right where the styling section left off: animating those same shapes with plain CSS. No JavaScript, no SMIL (`<animate>`), no animation libraries — just `transition`, `@keyframes`, and a couple of properties that behave a little differently once the element they're attached to is SVG instead of HTML.
+
+If you need a refresher on `transition-property`, `transition-duration`, timing functions, or `will-change` first, [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) covers that ground in depth. This post assumes that foundation and focuses on what changes when the element you're transitioning is a `<path>` or a `<circle>` instead of a `<div>`.
+
+<RainbowDivider />
+
+## Transitions vs Keyframes, for SVG
+
+Both tools animate a property over time, but they answer different questions:
+
+| | `transition` | `@keyframes` |
+| --- | --- | --- |
+| **Starts when...** | A property's value actually changes (`:hover`, a class toggle, a JS style update) | `animation` is applied to the element — no trigger needed |
+| **States** | Exactly two: the current value and the new one | Any number of steps, defined as percentage stops |
+| **Looping** | Not natively — you'd have to re-trigger it | Built in, via `animation-iteration-count: infinite` |
+
+That split maps directly onto the three demos below. The heart and the sun only need to react to `:hover` — one state, one new state, so a `transition` is all it takes. The radar sweep never stops moving and has nothing to hover — it needs its own timeline, so it's `@keyframes` from the start.
+
+<RainbowDivider />
+
+## The `transform-origin` Trap
+
+Unlike HTML elements — where the center of the element is the default transform origin — SVG elements default to the **top-left `(0,0)` of the entire canvas**, not their own bounding box. Rotate or scale a shape without accounting for this, and it appears to swing wildly from the corner of the SVG instead of spinning in place.
+
+<Warning title="The transform-origin Warning">
+  If you try to rotate or scale a shape without setting `transform-origin`, it will appear to "swing" wildly from
+  the SVG's top-left corner rather than spinning in place — because that corner, not the shape itself, is the
+  default origin.
+</Warning>
+
+The modern fix is a two-property combo:
+
+<CodeBlock language="css">
+{`
+  .icon {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+`}
+</CodeBlock>
+
+`transform-box: fill-box` tells the browser to use the shape's **own bounding box** as the reference frame, rather than the SVG canvas — at which point `transform-origin: center` behaves exactly the way it would on an HTML `div`.
+
+That shortcut has a blind spot, though: it centers on the bounding box of whatever it's applied to. If that element is a single, roughly-symmetric shape, the bounding-box center and the point you actually want to rotate around usually line up. But apply it to a `<g>` that groups something asymmetric — say, a wedge that only reaches from the center of a circle to its edge — and the bounding box of that group is *not* centered on the circle at all. `fill-box` will faithfully rotate around the wrong point.
+
+In that case, skip the shortcut and set the origin explicitly, in the SVG's own coordinate space:
+
+<CodeBlock language="css">
+{`
+  .sweep {
+    transform-origin: 50px 50px;
+  }
+`}
+</CodeBlock>
+
+You'll see both approaches below — `fill-box` on the sun icon, where it just works, and an explicit coordinate on the radar sweep, where it has to.
+
+<Info title="Why not animate viewBox for a zoom effect?">
+  It looks like the obvious way to build a "zoom into the canvas" effect, but `viewBox` isn't a CSS property — it's
+  a plain presentation attribute with no CSS equivalent to transition or keyframe. A `transition: viewBox` or a
+  `@keyframes` step that targets it does nothing in any current engine. Wrap the content you want to zoom in a `<g>`
+  and animate `transform: scale(...)` on that group instead — visually identical to zooming the canvas, and
+  something CSS actually knows how to animate.
+</Info>
+
+<RainbowDivider />
+
+## Case Study: The Heart Shape
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <style>
+      .icon-heart {
+        fill: #f43f5e;
+        fill-opacity: 0.2;
+        stroke: #e11d48;
+        stroke-width: 1;
+        cursor: pointer;
+        transition: fill 0.3s ease, transform 0.3s ease;
+        transform-origin: center;
+      }
+
+      .icon-heart:hover {
+        fill: #e11d48;
+        transform: scale(1.1);
+      }
+    </style>
+    <path class="icon-heart" d="M10 30 A20 20 0 0 1 50 30 A20 20 0 0 1 90 30 Q90 60 50 90 Q10 60 10 30 Z" />
+  </svg>
+`}
+</SvgSnippet>
+
+A single `<path>` has a bounding box that's already centered on the shape you can see, so plain `transform-origin: center` — no `transform-box` needed — puts the pivot exactly where you'd expect. Hovering triggers a `transition` on `fill` and `transform` at once: the fill deepens and the heart scales up by 10%, both settling back to their resting state the moment the pointer leaves.
+
+<RainbowDivider />
+
+## Case Study: The Sun Icon
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 100" width="200" height="200" class="canvas">
+    <style>
+      .sun-icon-rays {
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+      }
+
+      .canvas:hover .sun-icon-rays {
+        transform: rotate(90deg) scale(1.1);
+      }
+    </style>
+    <g class="sun-icon-rays" stroke="#f59e0b" stroke-width="4" stroke-linecap="round">
+      <circle cx="50" cy="50" r="18" fill="#f59e0b" fill-opacity="0.2" stroke-width="3" />
+      <line x1="50" y1="10" x2="50" y2="22" />
+      <line x1="50" y1="78" x2="50" y2="90" />
+      <line x1="10" y1="50" x2="22" y2="50" />
+      <line x1="78" y1="50" x2="90" y2="50" />
+      <line x1="21" y1="21" x2="29" y2="29" />
+      <line x1="71" y1="71" x2="79" y2="79" />
+      <line x1="21" y1="79" x2="29" y2="71" />
+      <line x1="71" y1="29" x2="79" y2="21" />
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+This one groups eight rays and a center circle inside a single `<g class="sun-icon-rays">` — and it's exactly the symmetric case the `transform-box: fill-box` shortcut from [above](#the-transform-origin-trap) is built for. The rays radiate evenly around `(50, 50)`, so the group's bounding-box center happens to land right on the point you want it to spin around. Hovering the whole canvas rotates and grows that group with a single `transform`, entirely on `:hover`, entirely via `transition`.
+
+<RainbowDivider />
+
+## Keyframes on SVG: The Radar Scanner
+
+A small case study that combines a few of the basic shapes — concentric circles for the rings, lines for the crosshair, and a rotating group for the sweep — but this time driven by `@keyframes` instead of `:hover`. The sweep (`.sweep`) rotates a full turn via `radar-sweep`, and the core dot (`.core`) grows and shrinks via `radar-pulse` — both plain CSS `@keyframes`, no JavaScript loop involved, and neither one waits for a hover to start.
+
+This is the asymmetric group from [The `transform-origin` Trap](#the-transform-origin-trap): `.sweep` wraps a wedge and a spoke that only reach from the center toward the top edge, so `transform-box: fill-box` would rotate the group around *its own* bounding-box center — nowhere near the radar's actual center. Setting `transform-origin: 50px 50px` directly, in the SVG's own coordinate space, sidesteps that entirely and pins the rotation to the right point.
+
+Rotation speed maps to `radar-sweep`'s `animation-duration`, and pulse intensity maps to `radar-pulse`'s peak `scale()`:
+
+<InteractiveSvgPanel slug="radar-demo" />
+
+<RainbowDivider />
+
+## Drawing Lines with `stroke-dasharray` and `stroke-dashoffset`
+
+`stroke-dasharray` — introduced back in [the basic shapes post](/post/svg/svg-essentials-mastering-basic-shapes#presentation-attributes-vs-css) as a way to make dashed lines — takes on a second life once you pair it with `stroke-dashoffset` and a keyframe animation: the classic effect of a line appearing to draw itself.
+
+The idea:
+
+* **`stroke-dasharray`** splits the stroke into a repeating pattern of dashes and gaps. Set it to a single large number and you get one "dash" the length of the entire path, followed by one long gap.
+* **`stroke-dashoffset`** shifts where that dash pattern *starts* along the path. Push the offset out far enough and the single dash slides entirely past the end of the path — nothing visible remains.
+
+Set `stroke-dasharray` and `stroke-dashoffset` to the same value (the path's own length) and the line starts completely hidden. Animate `stroke-dashoffset` down to `0` and the dash slides back into view, tracing the path from start to end as it goes.
+
+<Info title="Where does 'the path's own length' come from?">
+  Traditionally, from JavaScript — calling `path.getTotalLength()` on the element and hardcoding that number into
+  your CSS. It works, but it's fragile: nudge the path's coordinates or the `viewBox`, and the number silently
+  goes stale.
+</Info>
+
+SVG has a purpose-built escape hatch for exactly this: the `pathLength` attribute. Set it, and the browser stops measuring the path in its own coordinate units and instead treats it as if it were exactly that many units long — for every dash-related calculation. Set `pathLength="100"`, and `stroke-dasharray`/`stroke-dashoffset` always run on a scale of `0` to `100`, no matter the path's real geometry, units, or how the `viewBox` scales it.
+
+<CodeBlock language="xml">
+{`
+  <path
+    d="M20,55 L42,77 L82,27"
+    pathLength="100"
+    stroke-dasharray="100"
+    stroke-dashoffset="100"
+  />
+`}
+</CodeBlock>
+
+From there, a single keyframe animates `stroke-dashoffset` from `100` (fully hidden) to `0` (fully drawn):
+
+<CodeBlock language="css">
+{`
+  @keyframes draw-line {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  #draw-path {
+    animation: draw-line 1.5s ease-in-out forwards;
+  }
+`}
+</CodeBlock>
+
+Try it below — the duration, stroke width, and color are all live, and the loop toggle switches between a continuous draw-and-erase cycle and a single draw-once-and-hold pass (the difference is `animation-iteration-count` and `animation-fill-mode`, not the keyframes themselves):
+
+<InteractiveSvgPanel slug="svg-line-draw-demo" />
+
+<RainbowDivider />
+
+## Revealing Shapes with `clip-path`
+
+`stroke-dasharray`/`stroke-dashoffset` only draws a stroke into view — it can't reveal a filled shape, a group, or an image the same way. `clip-path` does the equivalent job on anything: animate the clip region itself, and whatever sits inside it wipes into view along with it.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 60" width="240" height="144" class="canvas">
+    <style>
+      .banner {
+        clip-path: inset(0 100% 0 0);
+        transition: clip-path 0.6s ease-out;
+      }
+
+      .canvas:hover .banner {
+        clip-path: inset(0 0% 0 0);
+      }
+    </style>
+    <rect x="0" y="0" width="100" height="60" fill="#1e293b" />
+    <g class="banner">
+      <rect x="0" y="0" width="100" height="60" fill="#6366f1" />
+      <text x="50" y="34" font-size="10" fill="#f8fafc" text-anchor="middle">Hover me</text>
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+`inset(top right bottom left)` describes a rectangle clipped in from each edge. At rest, `inset(0 100% 0 0)` clips the entire width away from the right edge inward, hiding the group underneath completely; hovering animates that to `inset(0 0% 0 0)` — no clipping at all — and the banner wipes in from the left as the clip region grows to match the full shape.
+
+<Info title="clip-path clips groups, not just single shapes">
+  Unlike `stroke-dasharray`, which only ever applies to one stroked path at a time, `clip-path` on a `<g>` clips
+  everything inside it as a single unit — the rectangle and the text above wipe in together, driven by one
+  animated property.
+</Info>
+
+<RainbowDivider />
+
+## Staggering Multiple Elements with `animation-delay`
+
+A single `@keyframes` animation only gets interesting once it's reused. Apply the same animation to several elements and give each one a different `animation-delay`, and what would otherwise read as one synchronized blob of motion turns into a wave rippling across the group — a loading indicator's three dots, a chart's bars rising one after another, a fan of spokes lighting up in sequence.
+
+The trick is that every element shares the exact same `bounce` keyframes and the exact same duration — the only difference between them is *when* each one starts, via `:nth-child` and `animation-delay`. Scale that up to however many elements you actually have (bars, spokes, dots) and a small, consistent offset per item is usually enough to read as a deliberate wave rather than everything twitching in place at once.
+
+Dot count, the delay between each one, the bounce duration, and the bounce height are all live below:
+
+<InteractiveSvgPanel slug="stagger-demo" />
+
+<Info title="Negative delays start mid-animation">
+  A negative `animation-delay` — `-0.5s` on a `2s` animation, say — doesn't wait before starting; it starts the
+  element as if it had already been running for that long. That's the trick behind staggered *looping* animations
+  that need to look like they've always been in motion, rather than every element snapping to its first frame in
+  sync the moment the page loads.
+</Info>
+
+### Scaling to Any Number of Elements
+
+Three `:nth-child` rules is nothing, but that approach doesn't scale — twenty bars means twenty near-identical selectors. A single custom property sidesteps that entirely: set one property per element, and let `calc()` do the multiplication once.
+
+<CodeBlock language="css">
+{`
+  .dot {
+    animation: bounce 1s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 0.15s);
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <circle class="dot" style="--i: 0" cx="25" cy="20" r="7" />
+  <circle class="dot" style="--i: 1" cx="50" cy="20" r="7" />
+  <circle class="dot" style="--i: 2" cx="75" cy="20" r="7" />
+`}
+</CodeBlock>
+
+Every element shares the exact same rule now — only the inline `--i` changes between them — so adding a twenty-first bar means adding one more element with `style="--i: 20"`, not one more CSS selector.
+
+<RainbowDivider />
+
+## Animating Gradients
+
+Gradients are defined by `<stop>` elements inside a `<linearGradient>` or `<radialGradient>`, and their `stop-color`/`offset` values can be transitioned or keyframed the same way any other presentation attribute can, as long as you can target the `<stop>` with a selector:
+
+<CodeBlock language="html">
+{`
+  <svg viewBox="0 0 100 100" width="200" height="60">
+    <defs>
+      <linearGradient id="animatedGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop id="gradient-stop-a" offset="0%" stop-color="#6366f1" />
+        <stop offset="100%" stop-color="#4338ca" />
+      </linearGradient>
+    </defs>
+    <style>
+      @keyframes shift-gradient {
+        0%,
+        100% {
+          stop-color: #6366f1;
+        }
+
+        50% {
+          stop-color: #ec4899;
+        }
+      }
+
+      #gradient-stop-a {
+        animation: shift-gradient 4s ease-in-out infinite;
+      }
+    </style>
+    <rect x="10" y="15" width="80" height="30" fill="url(#animatedGradient)" />
+  </svg>
+`}
+</CodeBlock>
+
+<Warning title="Check your target browsers">
+  Support for animating `<stop>` properties directly through CSS has landed in evergreen browsers only fairly
+  recently, and rollout timing differs between engines. If you need a version that's guaranteed to work regardless
+  of that support, cross-fade two separate gradients with `opacity` instead — covered next — or fall back to
+  animating the color with plain JavaScript.
+</Warning>
+
+### A Guaranteed-Safe Version: Cross-Fading Two Gradients
+
+Rather than animate a single gradient's `stop-color` — which needs the browser support the warning above calls out — layer two complete, static gradients on top of each other and cross-fade between them with `opacity`. Every engine that animates `opacity` at all runs this version identically.
+
+Two identically-sized `<rect>`s sit exactly on top of each other, each filled with its own complete gradient. The bottom one (`gradientBase`) just sits at its default `opacity: 1` the whole time. The top one (`gradientAlt`) is the one that actually animates, fading from invisible to fully opaque and back. At the animation's midpoint the top rect is fully opaque and hides the one underneath completely; everywhere else, the bottom gradient shows through — so what reads as "the gradient changing color" is really one gradient disappearing while another appears in the exact same spot.
+
+Try both gradients and the cycle duration below:
+
+<InteractiveSvgPanel slug="gradient-crossfade-demo" />
+
+<Info title="Why not animate a custom property instead?">
+  A CSS custom property registered with `@property` and a typed `syntax` does animate smoothly wherever it's
+  consumed by an ordinary CSS property — `background-color`, `color`, and the rest all pick up the interpolated
+  value correctly. `stop-color` on an SVG `<stop>`, though, doesn't reliably do the same in every current engine,
+  even while the custom property itself is animating correctly everywhere else. The cross-fade above sidesteps
+  that gap entirely: nothing but `opacity` — the one property every engine already animates identically — ever
+  changes.
+</Info>
+
+<RainbowDivider />
+
+## Moving a Shape Along a Path with `offset-path`
+
+Every animation so far has moved a shape through `transform` — a rotation, a scale, a translation implied by `translateY()`. CSS motion path goes a step further and moves an element along an arbitrary curve, using the same path-data syntax SVG's own `d` attribute uses.
+
+* **`offset-path`** — the track to follow, written as `path("...")` with an SVG path data string.
+* **`offset-distance`** — how far along that track the element currently sits, as a `%` or length. This is the property you actually animate.
+* **`offset-rotate`** — whether the element turns to face the direction of travel (`auto`) or holds a fixed orientation (`0deg`) as it moves.
+
+The `<g class="comet">` never touches `cx`/`cy` at all — `offset-path` and `offset-distance` handle the positioning, and `offset-rotate: auto` keeps the comet's tail pointed backward along the curve automatically, something a hand-rolled `cx`/`cy` animation would need real trigonometry to fake.
+
+Toggle "Follow curve" off below to see exactly what that tail is doing for you — without it, the comet keeps a fixed orientation and visibly slides sideways through the turn instead of banking into it:
+
+<InteractiveSvgPanel slug="motion-path-demo" />
+
+<Info title="Why does the track path end 0.1 units short of where it starts?">
+  An elliptical arc (`A`) command that returns to its own starting point has no arc left to draw — both endpoints
+  are identical, so there's nothing to sweep between them. Ending the arc `0.1` units short of a full loop keeps
+  the two endpoints distinct enough for the arc math to resolve, while staying visually indistinguishable from a
+  fully closed circle.
+</Info>
+
+Support for `offset-path` on SVG elements specifically has historically lagged a step behind its support on HTML elements, so it's worth checking your actual target browsers before shipping this in production — evergreen browsers handle it today, but "evergreen" and "your users' actual browsers" aren't always the same list.
+
+<RainbowDivider />
+
+## Animating Text Along a Path
+
+SVG's `<textPath>` element lays text along a curve, but it's built for a static layout, not motion — there's no reliably-supported way to animate a `<textPath>`'s position through CSS today. `offset-path`, already covered above for the orbiting comet, works on `<text>` exactly the same way it works on any other element, which makes it the more dependable route to actually moving text along a curve.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 40" width="240" height="96">
+    <style>
+      .caption {
+        font-size: 8px;
+        fill: var(--color-fg-accent);
+        text-anchor: middle;
+        offset-path: path("M5,30 Q50,0 95,30");
+        offset-rotate: 0deg;
+        animation: slide-caption 3s ease-in-out infinite alternate;
+      }
+
+      @keyframes slide-caption {
+        to {
+          offset-distance: 100%;
+        }
+      }
+    </style>
+    <path d="M5,30 Q50,0 95,30" fill="none" stroke="var(--color-border-muted)" stroke-width="0.5" />
+    <text class="caption">Following the curve</text>
+  </svg>
+`}
+</SvgSnippet>
+
+Setting `offset-rotate: 0deg` instead of `auto` keeps the caption upright as it travels — worth doing for text specifically, since `auto` would tilt every letter to match the curve's angle underneath it, and legibility drops fast once text starts leaning.
+
+<RainbowDivider />
+
+## Morphing Shapes by Animating `d`
+
+The [Performance Notes](#performance-notes-for-svg-animation) section below treats a shape's own geometry attributes — `cx`, `r`, `d`, and the rest — as expensive to animate, and that's the right default. But there's exactly one place that expense buys you something `transform` can't: morphing one shape into a genuinely different shape, rather than just moving or scaling the one you've already got.
+
+The catch is that the browser doesn't understand shapes, only numbers. Animating `d` from one value to another only produces a smooth morph when both path strings are built from the **same sequence of commands** — so every number in the "before" path has a matching number in the "after" path to travel toward. Add, remove, or reorder a command, and most browsers give up on interpolating and just snap between the two states instead.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 100" width="200" height="200">
+    <style>
+      .blob {
+        fill: #6366f1;
+        fill-opacity: 0.3;
+        stroke: #4338ca;
+        stroke-width: 2;
+        cursor: pointer;
+        transition: d 0.4s ease;
+        d: path("M80,50 C80,66.6 66.6,80 50,80 C33.4,80 20,66.6 20,50 C20,33.4 33.4,20 50,20 C66.6,20 80,33.4 80,50 Z");
+      }
+
+      .blob:hover {
+        d: path("M80,50 C80,72 72,80 50,80 C28,80 20,72 20,50 C20,28 28,20 50,20 C72,20 80,28 80,50 Z");
+      }
+    </style>
+    <path class="blob" d="M80,50 C80,66.6 66.6,80 50,80 C33.4,80 20,66.6 20,50 C20,33.4 33.4,20 50,20 C66.6,20 80,33.4 80,50 Z" />
+  </svg>
+`}
+</SvgSnippet>
+
+Both path strings above are built the same way: one `M`, four `C` curves, one `Z`. The resting state uses the same control-point offset on every curve, which is what makes it read as a circle; hovering pulls each curve's control points toward flatter, squarer corners, which is what makes it read as a rounded square. Because the *structure* of the command sequence never changes — only the coordinates inside it — the browser interpolates every one of those coordinates in lockstep, and the circle visibly rounds itself into a square instead of one shape vanishing while another fades in.
+
+<Info title="Setting d from CSS, not just the attribute">
+  Notice `d` is set inside the `<style>` block above (`d: path("...")`), not only as the `d="..."` attribute on
+  the `<path>` — the CSS property is what makes it eligible for a `transition` in the first place. The attribute
+  is still there, as a static fallback for the instant before the stylesheet applies.
+</Info>
+
+<Warning title="No built-in shape normalization">
+  CSS won't reconcile two structurally different paths for you — there's no automatic "closest point" matching
+  between, say, a 4-point square and an 8-point star. Morphing between shapes you didn't deliberately build with
+  matching commands means reaching for a JavaScript library (Flubber and similar) that normalizes both paths
+  first — outside the plain-CSS scope of this post.
+</Warning>
+
+<RainbowDivider />
+
+## Scroll-Driven Animation with `animation-timeline`
+
+Every animation on this page so far runs on its own internal clock — a `transition`, a fixed `animation-duration`, a delay. `animation-timeline` replaces that clock with scroll position: the same `@keyframes` still drive the animation, but progress through them now tracks how far a scroller has moved, rather than how much time has passed.
+
+<SvgSnippet>
+{`
+  <div style="height: 160px; overflow-y: auto; border: 1px solid var(--color-border-muted); border-radius: 0.5rem;">
+    <div style="height: 220px;"></div>
+    <svg viewBox="0 0 100 100" width="150" height="150" style="display: block; margin: 0 auto;">
+      <style>
+        .fill-bar {
+          transform: scaleY(0);
+          transform-origin: bottom;
+          animation: fill-up linear;
+          animation-timeline: view();
+          animation-range: entry 0% cover 50%;
+        }
+
+        @keyframes fill-up {
+          to {
+            transform: scaleY(1);
+          }
+        }
+      </style>
+      <rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--color-border-muted)" />
+      <rect class="fill-bar" x="20" y="20" width="60" height="60" fill="#6366f1" />
+    </svg>
+    <div style="height: 220px;"></div>
+  </div>
+`}
+</SvgSnippet>
+
+Scroll the box above: `animation-timeline: view()` ties the rectangle's `fill-up` keyframes to its own visibility inside that scroller, and `animation-range: entry 0% cover 50%` maps the fill to the stretch between "just entering view" and "halfway scrolled past." No scroll event listener, no JavaScript, and no dependency on how tall the surrounding page happens to be.
+
+<Warning title="Check your target browsers">
+  `animation-timeline` and `animation-range` are the newest technique on this page, and rolled out to different
+  engines on different schedules. Confirm support against your actual target browsers, and give any scroll-driven
+  animation the same `prefers-reduced-motion` fallback as every other looping animation here (covered next) — a
+  scroll-linked effect can still be exactly the kind of large, continuous motion that setting exists to scale back.
+</Warning>
+
+<RainbowDivider />
+
+## Performance Notes for SVG Animation
+
+The same Layout → Paint → Composite pipeline that governs HTML animation performance governs SVG too, but SVG adds its own trap: several geometry-defining presentation attributes — `cx`, `cy`, `r`, `x`, `y`, `width`, `height`, `points`, `d` — are technically animatable through CSS in modern browsers. "Animatable" doesn't mean "cheap," though. Changing any of them forces the browser to recompute the shape's actual geometry on every single frame, the same class of expensive work as animating `width` or `top` on an HTML element.
+
+`transform` and `opacity`, by contrast, are compositor-only on SVG exactly like they are on HTML: the browser paints the shape once, then the GPU slides, scales, or fades that already-painted layer on every frame with no recomputation at all. `clip-path` generally gets the same treatment in modern engines. Most of the demos on this page — the heart, the sun, the radar sweep, the draw-on line, the banner reveal — animate `transform`, `opacity`, `clip-path`, or `stroke-dashoffset` (which shifts an existing paint rather than recomputing geometry) for exactly that reason.
+
+`offset-distance`, used for the [orbiting comet](#moving-a-shape-along-a-path-with-offset-path) above, isn't guaranteed compositor-only the way `transform` is — how well an engine optimizes motion-path animation varies. It's still far cheaper than animating `cx`/`cy` by hand every frame to fake the same movement; just don't assume it's free on every browser the way `transform` is.
+
+The one demo that animates a geometry attribute on purpose is the [blob morph](#morphing-shapes-by-animating-d): `d` changes because morphing into a different shape is the entire point, and no compositor-only property can produce that effect. That trade-off is worth paying for one shape reacting to a single hover — it stops being worth it the moment you're morphing dozens of shapes at once, or running the animation continuously instead of on a one-off interaction.
+
+<Info title="Rule of thumb">
+  Need to move or resize an SVG shape smoothly? Wrap it in a `<g>` and animate `transform` on the group, rather
+  than animating the shape's own `cx`/`cy`/`r`/`x`/`y`/`width`/`height` attributes. Same visual result, without
+  forcing a geometry recalculation every frame.
+</Info>
+
+<RainbowDivider />
+
+## Accessibility: Respecting Motion Preferences
+
+The radar sweep and the draw-on line both loop forever by default — exactly the kind of large, continuous motion that `prefers-reduced-motion: reduce` exists to scale back for users with vestibular disorders:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) {
+    .sweep,
+    .core {
+      animation: none;
+    }
+
+    #draw-path {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
+  }
+`}
+</CodeBlock>
+
+Notice the draw-on line doesn't just get `animation: none` — it also gets `stroke-dashoffset: 0` set explicitly. Without that second line, removing the animation would freeze the path wherever its *default* dash offset happens to be (fully hidden, per the markup above), not wherever the animation would have left it. Whenever you disable a looping animation for reduced motion, make sure the element's static fallback state is the one you actually want the user to see — usually the finished, settled state rather than the starting one.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Every animation on this page is built from the same six shapes and the same `fill`/`stroke` attributes covered in the basic shapes post — the only new ingredients are `transition`, `@keyframes`, and a handful of properties that behave a little differently on SVG:
+
+* **Transitions vs Keyframes:** Reach for `transition` when a state genuinely changes (`:hover`, a class toggle); reach for `@keyframes` when the motion should run continuously on its own.
+* **`transform-origin`:** SVG elements default to the canvas's top-left corner, not their own center. `transform-box: fill-box` fixes that for a single, roughly-symmetric shape or group — but an asymmetric group (like the radar sweep) needs an explicit coordinate instead. `viewBox` itself isn't animatable at all — for a "zoom" effect, animate `transform: scale()` on a wrapping `<g>` instead.
+* **`stroke-dasharray` + `stroke-dashoffset`:** Together, and paired with `pathLength="100"`, they produce the classic self-drawing line effect without ever needing to measure the path by hand.
+* **`clip-path`:** Animates the clip region itself to reveal a filled shape, an image, or an entire group at once — the equivalent of the stroke-drawing trick for content `stroke-dasharray` can't touch.
+* **Staggering:** Apply the same `@keyframes` animation to a group of elements and vary only `animation-delay` — often via `:nth-child` for a handful of elements, or a single `calc(var(--i) * delay)` rule once that count grows — to turn synchronized motion into a rippling wave.
+* **Motion path:** `offset-path` + `offset-distance` move an element — including `<text>` — along an arbitrary SVG path, with `offset-rotate` controlling whether it turns to face the curve or holds a fixed orientation.
+* **Scroll-driven animation:** `animation-timeline` swaps an animation's internal clock for scroll position, so the same `@keyframes` play as the user scrolls instead of over fixed time — no scroll listener required.
+* **Shape morphing:** Animating `d` directly is the one deliberate exception to the performance rule below — reserved for genuinely changing a shape's structure, and only smooth when both path strings share the same command sequence.
+* **Gradient color changes:** Cross-fade two complete, static gradients with `opacity` rather than trying to animate a single gradient's `stop-color` directly — it sidesteps engine-support gaps entirely, since `opacity` already animates identically everywhere.
+* **Performance:** `transform`, `opacity`, and `stroke-dashoffset` are cheap; a shape's own geometry attributes (`cx`, `r`, `d`, `points`, …) are not, and `offset-distance` sits somewhere in between depending on the engine. Wrap a shape in a `<g>` and transform that instead of animating its geometry — unless, like the blob morph above, changing the geometry is the actual point.
+* **Accessibility:** Respect `prefers-reduced-motion`, and land on a deliberate static state — not an accidental mid-animation one — when you turn an animation off.
+
+For the shapes and coordinate math these animations are built on top of, see [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes). For a closer look at `<polygon>` and `<polyline>` specifically — including `fill-rule` and winding order — see [SVG Polygon vs Polyline: Differences, Fill Rules, and Use Cases](/post/svg/polygon-vs-polyline).
