@@ -376,6 +376,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "app-router-rendering-model",
+    title: "The App Router Rendering Model: Server vs Client Components, and the Boundary Between",
+    excerpt: "Server by default, client at the leaves.",
+    description: "A beginner-to-advanced guide to the Next.js App Router's rendering model — the server-by-default convention, where \"use client\" boundaries really belong, the special files (layout/loading/error/template), Server Actions, and streaming with Suspense.",
+    category: ["React"],
+    tags: ["react", "nextjs", "app-router", "server-actions", "streaming-ssr", "ssr", "hydration", "frontend", "advanced"],
+    signoff: "Pairing this with the Server Components post meant building a second, independent tree visualizer rather than reusing the first one outright, so the streaming-timeline panel next to it could carry its own weight — watching the shell bar snap to \"painted\" while the data bar sits on its loading.tsx fallback is the one interaction in this post I'd point a skimming reader to first. Thanks for following the boundary all the way down to a real file tree with me. 🗺️",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 

@@ -16,6 +16,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "app-router-rendering-model",
+    title: "App Router Rendering Model Simulator",
+    description: "Click nodes in a simulated app/ tree to toggle \"use client\" and watch server/client propagate, then toggle streaming on/off to compare a blocking page load against one that streams its shell immediately.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  },
+  {
     slug: "react-server-components-explained",
     title: "Component Tree Client-Boundary Visualizer",
     description: "A real, interactive React app visualizing how \"use client\" propagates down a component tree and its running JS-shipped tally — not literal RSC execution, which no browser sandbox can run.",

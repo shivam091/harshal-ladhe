@@ -455,5 +455,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "hydration": {
     title: "Client Hydration in React",
     description: "How React reconciles server-rendered HTML with client-side interactivity, attaching event handlers and state to markup that already exists."
+  },
+  "app-router": {
+    title: "The Next.js App Router Explained",
+    description: "Guides to Next.js's App Router — file conventions, route segments, layouts, and the rendering model built on Server Components."
+  },
+  "server-actions": {
+    title: "Next.js Server Actions",
+    description: "Using \"use server\" functions to mutate data directly from Client Components, without a hand-rolled API layer."
+  },
+  "streaming-ssr": {
+    title: "Streaming Server-Side Rendering",
+    description: "Streaming HTML to the browser in chunks via Suspense boundaries, so a fast shell can paint before slower, data-dependent sections resolve."
   }
 };

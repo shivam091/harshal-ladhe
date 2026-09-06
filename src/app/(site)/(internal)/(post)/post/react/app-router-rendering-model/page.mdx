@@ -1,0 +1,338 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("app-router-rendering-model");
+
+Next.js's App Router didn't just add a new folder convention on top of React — it flipped a default that had held since the very first `create-react-app` scaffold. Every component you write in `app/` now renders on the server unless you explicitly tell it not to, and that one reversal reshapes almost every decision you make about where code lives, when it runs, and how much JavaScript your visitor actually downloads.
+
+<Quote>
+  The App Router isn't "React, but with a router bolted on." It's a rendering pipeline that happens to use React's component model — and the file you drop into a folder decides which half of that pipeline it runs in.
+</Quote>
+
+This post assumes you already know the shape of the Server/Client Component split in general React terms — if you haven't read it yet, the companion piece **React Server Components, Explained** covers the split itself and the internals behind it in framework-agnostic terms. Here, the job is narrower and more concrete: what that split actually looks like once it's wired into a real Next.js project, file by file.
+
+In this post, we'll cover:
+
+- The App Router's server-by-default file convention, and why it's a bigger shift than it sounds
+- Where `"use client"` actually belongs in a real component tree — and where it doesn't
+- What `layout.tsx`, `loading.tsx`, `error.tsx`, and `template.tsx` each mean for rendering
+- Route groups, and a brief signpost toward parallel and intercepting routes
+- Server Actions as the App Router's answer to client-to-server mutations
+- Streaming SSR and Suspense boundaries, with a concrete file structure that achieves them
+- The caching and revalidation model, at a conceptual level
+- Real error messages you'll hit at the boundary, and the fix each one maps to
+
+## The Core Model: Server by Default
+
+If you've worked with the older Pages Router, or with a plain Create React App / Vite React project, every component you wrote was ultimately a **client** component, whether or not it needed to be. Sure, Next.js's Pages Router pre-rendered your pages to HTML on the server — but the entire component tree still shipped to the browser as JavaScript and re-ran there during hydration. There was no way to write a component that rendered *only* on the server and sent zero bytes of its own code to the client. The App Router changes that from the ground up.
+
+A quick map of the territory, if App Router itself is new to you: the `app/` directory is where routing lives, and every folder inside it is a **route segment**. A `page.tsx` file inside a folder is the UI for that route; a `layout.tsx` file is a shared shell that wraps that page and every page nested beneath it. Nest folders to nest routes — `app/dashboard/settings/page.tsx` becomes the UI for `/dashboard/settings`.
+
+Now the default that matters most: **every file under `app/` is a Server Component**, unless that file — or an ancestor boundary above it — opts into `"use client"`. Not "pre-rendered and then hydrated as a client component," but genuinely server-only: it never ships to the browser, never re-executes there, and can't hold `useState`, run `useEffect`, or attach an `onClick`. This is the single biggest mental-model shift for anyone coming from the Pages Router or from CRA/Vite-style React, where the assumption "every component is a client component" was so baked-in it never needed a name.
+
+If you haven't read the companion post on Server Components, here's the two-sentence version you need going forward: a **Server Component** renders only on the server and ships no JavaScript for itself to the browser — its job is to produce output (usually by reading data directly), not to hold onto interactivity. A **Client Component** is the opposite: it hydrates in the browser and can hold state, run effects, and respond to events, at the cost of shipping its code as JS. The App Router's whole file convention exists to make that split something you declare with a directive rather than something you reason about implicitly.
+
+<Info title="Why this matters more than it sounds">
+  A component that never ships to the browser can also do things a Client Component structurally can't — read from a database or the filesystem directly, keep API keys and secrets out of client bundles entirely, and add zero kilobytes to the JavaScript your visitor has to parse and execute. None of that is exotic; it just wasn't the default before.
+</Info>
+
+<RainbowDivider />
+
+## Where `"use client"` Actually Belongs
+
+The single most common mistake developers make moving into the App Router isn't forgetting `"use client"` — it's using it too early, and too broadly. The instinct, especially under a deadline, is to slap `"use client"` at the top of an entire `page.tsx` the moment *any* part of that page needs interactivity. That one directive opts the whole file — and everything it renders directly — out of server rendering, even the header, the footer, and every static paragraph of content that never needed a single byte of client JavaScript.
+
+The real skill here is pushing the boundary as far **down** the tree as it will go — down to the smallest leaf component that actually needs `useState`, `useEffect`, a browser API, or an event handler. A like button. A dropdown menu. A form field with local validation state. Everything above that leaf — the page shell, the layout, the article body, the sidebar — has no reason to be a Client Component at all, and every level you push the boundary down is more of the tree that stays server-rendered, ships zero JS, and can fetch its own data directly instead of waiting on a client-side `useEffect` to go get it.
+
+**Visual Illustration**
+
+<ClientBoundaryPlacementDiagram />
+
+Concretely, this usually means extracting the interactive sliver into its own small file:
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/LikeButton.tsx
+  "use client";
+
+  import { useState } from "react";
+  import { likePost } from "./actions";
+
+  export default function LikeButton({ postId, initialCount }: { postId: string; initialCount: number }) {
+    const [count, setCount] = useState(initialCount);
+
+    return (
+      <button
+        onClick={async () => {
+          setCount((c) => c + 1);
+          await likePost(postId);
+        }}
+      >
+        Like ({count})
+      </button>
+    );
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/page.tsx — a Server Component that renders the Client leaf above
+  import LikeButton from "./LikeButton";
+  import { getPost } from "./data";
+
+  export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+    const post = await getPost(params.slug); // fetched directly, no client-side loading state needed
+
+    return (
+      <article>
+        <h1>{post.title}</h1>
+        <div dangerouslySetInnerHTML={{ __html: post.html }} />
+        <LikeButton postId={post.id} initialCount={post.likeCount} />
+      </article>
+    );
+  }
+`}
+</CodeBlock>
+
+`BlogPostPage` never has `"use client"` anywhere near it. It `await`s its data directly in the component body — no `useEffect`, no loading spinner state, no client-side data-fetching library — and the only JavaScript the browser ever downloads for this page is the small `LikeButton` bundle. Everything else, including the full article body, is HTML the server already produced.
+
+<Warning title="Server Components can render Client Components, not the other way around">
+  A Server Component can import and render a Client Component (as above). A Client Component **cannot** import a Server Component and render it directly — once you're inside a `"use client"` file, every component you import and render yourself is pulled into the client bundle too. The one exception is passing a Server Component in as `children` (or another prop) from a parent that's still a Server Component — the Client Component only renders the slot, it never imports the Server Component's own module.
+</Warning>
+
+<RainbowDivider />
+
+## The Special Files: `layout`, `loading`, `error`, and `template`
+
+Every route segment folder can hold a handful of specially-named files, and each one plugs into rendering at a different point:
+
+### `layout.tsx` — the shell that persists
+
+A layout wraps its segment's `page.tsx` and every nested route beneath it. The detail that trips people up: a layout **does not remount** when you navigate between its child routes. If `app/dashboard/layout.tsx` renders a sidebar with its own open/closed state, that state survives a navigation from `/dashboard/overview` to `/dashboard/settings` — React sees the layout as the same component instance across both routes, because it is. This matters for anything holding local UI state you don't want reset on every navigation: scroll position, an open accordion, a form draft in a persistent panel.
+
+### `loading.tsx` — an automatic Suspense boundary
+
+Drop a `loading.tsx` next to a `page.tsx`, and Next.js automatically wraps that page in a `<Suspense>` boundary using `loading.tsx`'s export as the fallback. You don't write the `<Suspense>` yourself — the file's presence *is* the boundary. This ties directly into streaming, which the next section covers in more depth: it's what lets a visitor see something immediately while the page's data is still being fetched on the server.
+
+### `error.tsx` — a Client Component, no exceptions
+
+Every segment can define an `error.tsx` to catch rendering errors anywhere beneath it, the same way a React error boundary always has. And here's the one case in this whole post where you have genuinely no choice about the boundary: **`error.tsx` must be a Client Component.** Error boundaries are implemented with class-component lifecycle methods (`getDerivedStateFromError` / `componentDidCatch` under the hood) and hold their own "did an error occur" state — neither of which a Server Component can do. The framework doesn't just recommend `"use client"` here; omitting it is a build error.
+
+<CodeBlock language="tsx">
+{`
+  // app/dashboard/error.tsx
+  "use client"; // required — error boundaries need component state
+
+  export default function DashboardError({
+    error,
+    reset
+  }: {
+    error: Error & { digest?: string };
+    reset: () => void;
+  }) {
+    return (
+      <div role="alert">
+        <p>Something went wrong loading the dashboard.</p>
+        <button onClick={reset}>Try again</button>
+      </div>
+    );
+  }
+`}
+</CodeBlock>
+
+### `template.tsx` — like a layout, but it remounts
+
+A `template.tsx` wraps its children the same way a layout does, but with the opposite remount behavior: Next.js creates a **new instance** of a template (and everything inside it) on every navigation, resetting any state it holds and re-running its effects. This is the rare-use-case option of the two — reach for it only when you specifically need that reset-on-navigation behavior (a per-navigation enter/exit animation is the classic example), and default to `layout.tsx` otherwise.
+
+**Visual Illustration**
+
+<AppRouterFileTreeDiagram />
+
+### Route groups: organizing without touching the URL
+
+Wrapping a folder name in parentheses — `(marketing)`, `(admin)` — creates a **route group**: it lets you organize segments and share a layout across them without that folder name ever appearing in the URL. This site's own repository is a real, live example of the convention stacked several levels deep: this very post lives at `src/app/(site)/(internal)/(post)/post/react/app-router-rendering-model/page.mdx`, and none of `(site)`, `(internal)`, or `(post)` shows up in the URL — they exist purely to group related routes and share layout boundaries between them during development.
+
+<Details summary="A brief signpost: parallel and intercepting routes">
+  Two more advanced routing conventions exist once you outgrow the basics — **parallel routes** (`@slot` folders, for rendering more than one independent page simultaneously in the same layout, like a dashboard with independently-loading panes) and **intercepting routes** (`(.)folder` and its variants, for rendering a route in a modal overlay while preserving the underlying page, like an image opening in a lightbox without losing the feed behind it). Both solve real problems, and both are meaningfully more involved than everything else in this post — treat them as tools to reach for once route groups and nested layouts start feeling limiting, not as day-one App Router knowledge.
+</Details>
+
+<RainbowDivider />
+
+## Server Actions: Mutations Flow Back Up
+
+Server Components solve half the story: data flows down from the server without a client-side fetch. But a Client Component eventually needs to talk back — submit a form, like a post, delete a row — and doing that by hand-rolling a REST endpoint (a `route.ts` handler, a `fetch()` call, manual loading/error state) is exactly the kind of boilerplate the App Router set out to remove.
+
+**Server Actions** are the answer: an async function marked with `"use server"`, callable from client code exactly like any other function, that's actually a network call to the server under the hood. Next.js generates the endpoint, serializes the arguments, and handles the round-trip — you just write and call a function.
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/actions.ts
+  "use server";
+
+  import { revalidatePath } from "next/cache";
+  import { db } from "@/lib/db";
+
+  export async function likePost(postId: string) {
+    await db.likes.increment(postId);
+    revalidatePath(\`/blog/\${postId}\`); // tell the App Router this route's cached data is now stale
+  }
+
+  export async function createComment(formData: FormData) {
+    const body = formData.get("body");
+    await db.comments.create({ postId: formData.get("postId"), body });
+    revalidatePath(\`/blog/\${formData.get("postId")}\`);
+  }
+`}
+</CodeBlock>
+
+A Server Action can be called two ways, and both show up constantly in real code. From a Client Component's event handler, it's just an `await`ed function call — the `LikeButton` earlier in this post already does exactly that. Or, passed directly to a `<form>`'s `action` prop, it becomes a **progressively-enhanced form submission**: the form works even before JavaScript loads (a real HTTP POST, no client JS required), and once hydrated, Next.js intercepts the submission to avoid a full page reload.
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/CommentForm.tsx — still a Server Component; no "use client" needed here
+  import { createComment } from "./actions";
+
+  export default function CommentForm({ postId }: { postId: string }) {
+    return (
+      <form action={createComment}>
+        <input type="hidden" name="postId" value={postId} />
+        <textarea name="body" required />
+        <button type="submit">Post comment</button>
+      </form>
+    );
+  }
+`}
+</CodeBlock>
+
+<Success title="The complete round trip">
+  Put together, Server Components and Server Actions cover the whole data lifecycle without a separate API layer for simple cases: data flows **down** into the tree via `async` Server Components reading directly from your database or backend, and mutations flow **back up** via Server Actions the client calls directly. `revalidatePath` / `revalidateTag` are the bridge between the two — they tell the App Router that the data a Server Component read earlier is now stale, so the next render picks up the change.
+</Success>
+
+<RainbowDivider />
+
+## Streaming and Suspense in the App Router
+
+Server rendering traditionally meant "the whole page waits for its slowest piece of data before any HTML reaches the browser." The App Router's streaming model breaks that constraint: a fast page shell can paint immediately, while a slower, data-dependent section streams in afterward, replacing a fallback exactly where React's `<Suspense>` says it should.
+
+Walk through a concrete case: a dashboard with a fast header/nav (no data dependency) and a slow report table (a multi-second database query). The file structure that gets you real streaming looks like this:
+
+<CodeBlock language="text">
+{`
+  app/dashboard/
+  ├─ layout.tsx        # fast — renders the nav immediately
+  ├─ page.tsx           # wraps the slow table in <Suspense>
+  ├─ loading.tsx        # fallback shown automatically during navigation TO this route
+  ├─ DataTable.tsx      # async Server Component — awaits the slow query directly
+  └─ DataTableSkeleton.tsx
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // app/dashboard/page.tsx
+  import { Suspense } from "react";
+  import DataTable from "./DataTable";
+  import DataTableSkeleton from "./DataTableSkeleton";
+
+  export default function DashboardPage() {
+    return (
+      <>
+        <h1>Dashboard</h1>
+        <Suspense fallback={<DataTableSkeleton />}>
+          <DataTable />
+        </Suspense>
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // app/dashboard/DataTable.tsx — an async Server Component
+  import { getSlowReportData } from "@/lib/reports";
+
+  export default async function DataTable() {
+    const rows = await getSlowReportData(); // e.g. a multi-second aggregation query
+    return (
+      <table>
+        {rows.map((row) => <tr key={row.id}>{/* ... */}</tr>)}
+      </table>
+    );
+  }
+`}
+</CodeBlock>
+
+The `<h1>` and the layout's nav have no `await` in their path, so React can flush their HTML the moment it's ready — it doesn't need to wait on `DataTable`'s slow query. `DataTable` streams in later, as its own HTML chunk, and the `<Suspense>` boundary swaps `DataTableSkeleton` out for the real table the instant it arrives. `loading.tsx` handles the same idea one level up: it's what a visitor sees for the whole route during a *navigation* to `/dashboard`, automatically, without you writing a `<Suspense>` around `page.tsx` yourself. The explicit `<Suspense>` inside `page.tsx` is what makes the *initial* server render itself stream, not just client-side navigations into the route.
+
+**Visual Illustration**
+
+<StreamingWaterfallDiagram />
+
+### Caching and revalidation, conceptually
+
+The App Router also caches aggressively by default at several layers — `fetch()` requests, the rendered output of routes, and the client-side Router Cache all participate — and gives you `revalidatePath()`, `revalidateTag()`, and time-based revalidation (a `next: { revalidate: N }` option, or a segment-level `export const revalidate = N`) to control when that cached data is considered stale.
+
+<Warning title="The exact defaults have changed across major versions — verify against your version's docs">
+  Next.js's caching defaults are genuinely one of the most-changed parts of the App Router across major releases — what `fetch()` caches by default, whether GET Route Handlers are cached, and how aggressive the client Router Cache is have all shifted meaningfully between versions. Rather than risk stating a specific default confidently here and being wrong for the version you're actually running, take the conceptual model above as durable (there is caching, at multiple layers, and you have levers to invalidate it) and check the current Next.js documentation for your installed version's exact defaults before relying on any of them in production.
+</Warning>
+
+**Partial Prerendering (PPR)** is worth knowing the name of, even if you never touch it directly: it's an evolving, experimental Next.js feature aimed at combining a statically-prerendered page shell with dynamically-streamed content in a single response — essentially automating the shell-now/slow-part-later pattern this section just walked through by hand. It's changed shape across the versions it's been available in, so treat it as something to look up fresh rather than something this post pins down.
+
+<RainbowDivider />
+
+## Troubleshooting the Boundary
+
+A handful of errors show up constantly once you start drawing Server/Client boundaries for real, and each one maps to a specific fix.
+
+<Details summary="You're importing a component that needs useState. It only works in a Client Component...">
+  The full message names the hook and points at the offending import chain. It means exactly what it says: something in a Server Component's render path is calling `useState`, `useEffect`, or another hook that only exists for Client Components — often because a component using one of those hooks is missing its own `"use client"` directive, or because a Server Component is importing and directly rendering something that has it. The fix is almost always adding `"use client"` to the file that actually needs the hook, and checking that the file isn't imported and rendered directly *from* a Server Component in a way that pulls the hook upstream.
+</Details>
+
+<Details summary="Event handlers cannot be passed to Client Component props.">
+  This one shows up when a Server Component tries to pass a function — an `onClick`, an `onChange` — as a prop to a Client Component, but the function itself was defined in the Server Component's own (server-only) scope rather than the client. Functions can't cross the server/client serialization boundary as props; only serializable data can. The fix is to define the handler *inside* the Client Component itself (or pass a Server Action instead, which is specifically designed to cross that boundary).
+</Details>
+
+<Info title="A quick sanity check when you're not sure which side a file is on">
+  If a file has no `"use client"` at its top and no ancestor layout/page above it in the render tree has one either, it's a Server Component — full stop. There's no partial state; a file is one or the other, and the directive (or its absence, plus checking every ancestor) is the entire answer.
+</Info>
+
+<RainbowDivider />
+
+## Common Mistakes
+
+- **`"use client"` at the top of a whole page, "just to be safe."** This is the mistake the entire "Where `"use client"` Actually Belongs" section above exists to prevent — it silently opts an entire page tree out of server rendering, even the 95% of it that never touches state or an event handler.
+- **Forgetting that `error.tsx` (and its root-level sibling `global-error.tsx`) must be Client Components.** Both implement error-boundary lifecycle behavior, which requires component state no Server Component can hold — this isn't a style preference, the framework enforces it.
+- **Fetching data in a top-level layout when only one page actually needs it.** A layout's data fetch runs for every route nested beneath it, so a fetch that belongs to one specific page — but gets hoisted into `app/layout.tsx` for convenience — ends up re-running (or blocking navigation) for routes that never needed that data at all. Scope a fetch to the `page.tsx` (or nested component) that actually consumes it.
+- **Treating every Client Component as an island that can't read server data at all.** A Client Component can still receive server-fetched data — just as props, passed down from a Server Component parent that fetched it. The rule isn't "Client Components can't have data," it's "Client Components can't fetch server-only data themselves."
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Default to a Server Component and prove you need `"use client"`**, not the other way around — it should feel like an opt-in every time, not a reflexive first line.
+- **Push the client boundary to the smallest leaf that needs it.** A single interactive button inside a large static page should be the only Client Component on that page.
+- **Reach for `layout.tsx` first, `template.tsx` only when you specifically need remount-on-navigation behavior.**
+- **Use Server Actions for mutations before reaching for a hand-rolled API route** — they cover form submissions and client-triggered mutations with less boilerplate and built-in progressive enhancement.
+- **Wrap genuinely slow, non-critical sections in their own `<Suspense>`**, rather than letting one slow `await` block an entire page's first paint.
+- **Check your installed Next.js version's docs before relying on a specific caching default** — this is one of the fastest-moving parts of the framework across major versions.
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading about where a "use client" boundary belongs is one thing — watching a whole page tree light up client-side the moment you move the directive up one level is another. The playground below has two panels: the first lets you toggle `"use client"` on and off across a small `app/` page tree (layout, page, a couple of nested components, plus `loading.tsx`/`error.tsx` shown in context) and re-highlights which nodes are server-rendered versus client-boundary-affected as you click; the second simulates the streaming timeline from this post's Streaming section, with a toggle for a "slow data section" that animates the shell painting immediately against the whole page waiting for everything at once.
+
+<Sandbox slug="app-router-rendering-model" defaultLayout="vertical" />
+
+This post assumed the Server/Client Component split rather than deriving it — for the general React theory behind
+it (the composition rule, the serialization boundary, what an RSC payload actually is), see the companion post,
+**[React Server Components, Explained](/post/react/react-server-components-explained)**.
+
+<RainbowDivider />
+
+## Conclusion
+
+The App Router's rendering model comes down to one reversed default and a handful of files that plug into it: everything is a Server Component unless you say otherwise, `"use client"` belongs at the smallest leaf that genuinely needs it, and `layout`/`loading`/`error`/`template` each answer a specific question about persistence, fallbacks, and error handling rather than being interchangeable ways to wrap a page. Server Actions close the loop by giving Client Components a way to write back to the server without a hand-rolled API layer, and Suspense-driven streaming means a slow query no longer has to block a fast shell from painting.
+
+None of this replaces understanding React's Server/Client split itself — it's what that split looks like once it's load-bearing in a real file tree, with real route segments, real navigations, and real errors to debug. Push the boundary down, question every `"use client"` you write, and the rest of the App Router's conventions tend to fall into place around that one habit.
