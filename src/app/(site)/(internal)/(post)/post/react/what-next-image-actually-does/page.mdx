@@ -1,0 +1,492 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("what-next-image-actually-does");
+
+A plain `<img>` tag has no idea what device it's being downloaded to. Point it at a 4000×3000 photo
+straight off a camera, and a visitor on a 360px phone screen downloads every one of those pixels
+anyway — decodes them, discards nearly all of them, and pays for the bytes regardless. The file format
+is whatever you happened to export, the size is whatever the source file happens to be, and none of it
+adapts to the one thing that's actually different from visitor to visitor: the screen the image is
+about to render on.
+
+<Quote>
+  next/image doesn't make your images smaller. It makes the browser stop downloading pixels nobody was
+  ever going to see.
+</Quote>
+
+That's the whole idea this post is built around. `next/image`'s `<Image>` component wraps a real
+`<img>` tag, but by the time that tag reaches the browser, it's carrying a `srcset` with several
+resized variants, a request path that can serve a modern compressed format instead of the original,
+and a loading strategy that defers anything off-screen. None of that is magic — it's a specific,
+inspectable mechanism, and the point of this post is to actually look at it: what request goes out,
+what decides which file comes back, and which parts of the "optimization" are the browser's job rather
+than the server's.
+
+In this post, we'll cover:
+
+- The problem a plain `<img>` can't solve on its own, and how `<Image>` wraps it
+- Required props, and how `width`/`height` reserve layout space before the file even loads
+- How `next/image` actually builds a `srcset` and `sizes` attribute — and why the *browser* picks the
+  variant, not the server
+- Format negotiation: how the same source file becomes AVIF, WebP, or the original, based on a request
+  header
+- Lazy loading by default, and why `priority` is for exactly one image per page, not "all of them"
+- The blur-up placeholder — instant, low-fidelity, real — and where its base64 preview actually comes from
+- The real request path through `/_next/image`, the `remotePatterns` allowlist, custom loaders, and
+  the `unoptimized` escape hatch
+- Common mistakes, browser support, and an interactive playground to build a real `srcset` string live
+
+## The Problem: A `<img>` Has No Idea What It's Being Downloaded To
+
+Every `<img>` tag ships whatever file you pointed it at, at whatever resolution and in whatever format
+that file happens to be — regardless of the viewport it's rendering into, the device's pixel density,
+or whether the visitor's browser could decode something smaller. A photo exported once at
+2400×1600 gets downloaded at that same size by a phone showing it at 360 CSS pixels wide and by a
+4K monitor showing it at 1200 — one of those visits is wasting well over 90% of the bytes it downloads.
+
+`next/image`'s `<Image>` component exists to close that gap. It renders a real `<img>` under the hood —
+nothing about accessibility, right-click "save image," or the underlying DOM semantics changes — but it
+wraps that tag with build-time and request-time logic that decides, per visitor, what actually gets
+downloaded: which width variant, which format, and when.
+
+<CodeBlock language="tsx">
+{`
+  // A remote or otherwise dynamic image: width, height, and alt are all required.
+  import Image from "next/image";
+
+  export default function Avatar({ src, name }: { src: string; name: string }) {
+    return (
+      <Image
+        src={src}
+        alt={\`\${name}'s avatar\`}
+        width={96}
+        height={96}
+      />
+    );
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // A static import: width and height are inferred automatically from the file itself at build time.
+  import Image from "next/image";
+  import heroPhoto from "./hero.jpg";
+
+  export default function Hero() {
+    return <Image src={heroPhoto} alt="A misty mountain ridge at sunrise" />;
+  }
+`}
+</CodeBlock>
+
+`alt` is mandatory in both cases — there's no way to render an `<Image>` without it, which is a
+deliberate choice to stop decorative-vs-content ambiguity from ever reaching the DOM unaddressed. For a
+remote or otherwise dynamically-sourced image, `width` and `height` are mandatory too; a static import
+is the one case where Next.js can read the file's real dimensions off disk at build time and skip
+asking you for them.
+
+<Info title="Why width/height matter beyond just satisfying the type checker">
+  Setting `width`/`height` up front is exactly what lets the browser reserve the image's final layout
+  footprint before a single byte of the file has downloaded — the same Cumulative Layout Shift fix this
+  site's [object-fit, object-position, and aspect-ratio post](/post/css/taming-image-and-video-boxes)
+  covers in depth for a plain `<img>`. `next/image` doesn't invent a new mechanism for this; it just
+  makes the dimensions structurally required so the CLS-safe path is the only path available.
+</Info>
+
+<RainbowDivider />
+
+## What next/image Actually Generates: srcset and sizes
+
+This is the part that's easy to wave your hands at — "it makes images responsive" — without ever
+looking at what actually ends up in the DOM. Inspect a rendered `<Image>` in your browser's devtools
+and you'll find an ordinary `<img>` carrying two attributes doing all the real work: `srcset` and
+`sizes`.
+
+`srcset` lists several resized variants of the same source file, each labeled with its own pixel
+width:
+
+<CodeBlock language="html">
+{`
+  <img
+    srcset="
+      /_next/image?url=%2Fhero.jpg&w=640&q=75 640w,
+      /_next/image?url=%2Fhero.jpg&w=828&q=75 828w,
+      /_next/image?url=%2Fhero.jpg&w=1200&q=75 1200w,
+      /_next/image?url=%2Fhero.jpg&w=1920&q=75 1920w
+    "
+    sizes="(max-width: 768px) 100vw, 50vw"
+    src="/_next/image?url=%2Fhero.jpg&w=1920&q=75"
+    alt="A misty mountain ridge at sunrise"
+  />
+`}
+</CodeBlock>
+
+The widths Next.js generates come from two config arrays — `deviceSizes` and `imageSizes` — that you
+can override in `next.config.js`. As of the versions this post was verified against, the defaults are:
+
+<CodeBlock language="tsx">
+{`
+  // next.config.js defaults — confirm the exact numbers against your installed version's docs,
+  // since this is genuinely config, not a hardcoded constant, and can be overridden per-project.
+  images: {
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384]
+  }
+`}
+</CodeBlock>
+
+`deviceSizes` drives the full-viewport-width case — an image whose display size genuinely varies with
+the viewport, where you supply a `sizes` prop describing that relationship. `imageSizes` covers the
+smaller, fixed-size case: icons and thumbnails that render at one size regardless of viewport, where
+Next.js only needs to generate close-enough 1x/2x variants rather than the entire breakpoint ladder.
+Omit `sizes` entirely, and `next/image` assumes the image renders at a fixed size (its given `width`)
+and only generates that narrower set of variants — which is exactly why the `sizes` prop matters: it's
+not a hint for humans reading your code, it's the input that decides which breakpoint list is even
+generated.
+
+**The critical detail, and the one most worth sitting with:** the *browser* picks which `srcset` entry
+to actually download, using the element's rendered size (resolved from the `sizes` attribute against
+the current viewport) and the screen's device pixel ratio — not the server, and not `next/image`
+itself. Next.js's only job here is generating the candidate list and describing, through `sizes`, how
+wide the image will render at different viewport widths; the browser's native image-loading algorithm
+does the actual matching, the same algorithm it's always used for a hand-written `srcset` on a plain
+`<img>`.
+
+**Visual Illustration**
+
+<SrcsetGenerationDiagram />
+
+<Success title="Key insight">
+  next/image doesn't ship one "smart" file that adapts itself — it ships several real, physically
+  different-sized files and a plain HTML attribute. The adaptivity is the browser's `srcset`
+  algorithm, which already existed before Next.js touched any of this; `next/image`'s contribution is
+  generating the list and the `sizes` description automatically, from one source file, instead of you
+  hand-exporting and hand-writing four or five variants yourself.
+</Success>
+
+<RainbowDivider />
+
+## Format Negotiation: One File In, AVIF or WebP Out
+
+Resizing solves the "wrong dimensions" half of the problem. The other half is format: AVIF and WebP
+both meaningfully out-compress JPEG and PNG at equivalent visual quality, but neither is guaranteed to
+be decodable by every browser hitting your site.
+
+`next/image` solves this the same way it solves resizing — from the *same single source file*, with no
+separate manual export per format. When a request for an optimized image hits the optimization
+endpoint, it inspects that specific request's `Accept` header (every browser sends one automatically,
+listing the image formats it can decode) and returns whichever format the config allows and the
+browser accepts, in preference order:
+
+<CodeBlock language="bash">
+{`
+  # A browser that supports AVIF sends something like this — note image/avif listed first
+  Accept: image/avif,image/webp,image/apng,image/*,*/*;q=0.8
+
+  # The optimization endpoint responds with an AVIF-encoded image, not the original JPEG,
+  # even though the request URL and the file on disk never changed.
+`}
+</CodeBlock>
+
+Which formats are even eligible is controlled by the `formats` config option — `next.config.js`'s
+`images.formats`, defaulting to trying AVIF before WebP — and a browser that accepts neither (an older
+browser, or a request from something that isn't a browser at all, like a naive HTML scraper) simply
+gets the source file's original format back. Nothing breaks; it's a strict fallback chain, not a hard
+requirement.
+
+**Visual Illustration**
+
+<ImageFormatNegotiationDiagram />
+
+<Info title="This is content negotiation, not a build step">
+  It's tempting to picture format conversion as something that happens once, at build time, like
+  minification — but it doesn't. The same URL can return AVIF to one visitor and the original JPEG to
+  another, in the same minute, purely based on each request's own `Accept` header. That's genuinely
+  per-request negotiation, the same mechanism HTTP has always supported for content types — Next.js
+  just wires it up for images specifically, and caches each resulting variant so it isn't re-transformed
+  on every single request.
+</Info>
+
+<RainbowDivider />
+
+## Lazy Loading by Default, and What priority Actually Buys You
+
+Every `<Image>` renders with `loading="lazy"` unless you explicitly opt out — meaning the browser defers
+fetching it until it's getting close to entering the viewport, rather than downloading every image on
+the page immediately regardless of scroll position. This is the standard `loading` attribute browsers
+already implement natively; `next/image` doesn't reimplement viewport-proximity detection itself, it
+just sets the attribute for you by default, the same way it would if you'd written the plain `<img>` by
+hand. (Some earlier eras of browser support relied on a JavaScript-driven `IntersectionObserver` to
+approximate this before native lazy loading existed everywhere; current browsers handle it internally,
+without your page's JS ever running an observer of its own for this purpose.)
+
+<CodeBlock language="tsx">
+{`
+  // Below-the-fold — leave loading alone. It's already "lazy" by default.
+  <Image src={productPhoto} alt="Wireless headphones, side profile" width={480} height={480} />
+
+  // The one image actually visible above the fold on first paint — and a real LCP candidate.
+  <Image src={heroPhoto} alt="A misty mountain ridge at sunrise" width={1920} height={1080} priority />
+`}
+</CodeBlock>
+
+`priority` is the opt-out: it disables lazy loading for that one image and hints the browser to
+preload it, fetching it as early and eagerly as possible instead of waiting for layout to determine
+whether it's near the viewport. That's exactly the right behavior for the single image most likely to
+be your page's **Largest Contentful Paint (LCP)** candidate — typically a hero image or banner visible
+without scrolling — and actively counterproductive for anything else.
+
+<Warning title="priority is a scarce resource, not a safety net">
+  Setting `priority` on every image "just to be safe" defeats lazy loading sitewide and can make real
+  LCP *worse*: the browser now preload-contends across every image on the page at once instead of
+  prioritizing the one that actually blocks first paint of visible content. Reserve `priority` for the
+  one image you can point to and say "this is the LCP candidate" — if you can't name which image that
+  is, you probably don't need `priority` anywhere yet.
+</Warning>
+
+<RainbowDivider />
+
+## The Blur-Up Placeholder
+
+`placeholder="blur"` renders a tiny, heavily-compressed, blurred preview of the image instantly —
+before the real file has downloaded at all — then swaps to the sharp, fully-loaded image the moment
+it's ready. The effect only works because that preview is real image data, not a solid color or a
+skeleton box: it's a genuine (if minuscule) base64-encoded copy of the actual photo, inlined directly
+into the page's HTML, so it's available on the very first paint with zero extra network request.
+
+<CodeBlock language="tsx">
+{`
+  // Static import: blurDataURL is generated automatically at build time — Next.js reads the file
+  // off disk and produces a tiny base64 preview for you.
+  import Image from "next/image";
+  import heroPhoto from "./hero.jpg";
+
+  export default function Hero() {
+    return <Image src={heroPhoto} alt="A misty mountain ridge at sunrise" placeholder="blur" />;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // Remote or otherwise dynamic src: Next.js has no file to read at build time, so you supply
+  // blurDataURL yourself — usually a tiny, pre-generated base64 string stored alongside the image's
+  // other metadata (e.g. in a CMS or database record).
+  <Image
+    src={photo.url}
+    alt={photo.alt}
+    width={photo.width}
+    height={photo.height}
+    placeholder="blur"
+    blurDataURL={photo.blurDataURL}
+  />
+`}
+</CodeBlock>
+
+**Visual Illustration**
+
+<BlurUpTimelineDiagram />
+
+<Details summary="Why doesn't the blur-up preview also get auto-generated for a remote src?">
+  Auto-generating a blur placeholder means reading the actual file's pixel data and downsampling it —
+  something Next.js can only do at build time for a static import, because that file already sits on
+  disk in your repository when the build runs. A remote `src` is just a URL string until request time;
+  there's no file for the build step to read ahead of time, so there's nothing to generate a preview
+  from without fetching the whole image up front, which would defeat the point. Supplying your own
+  `blurDataURL` — generated once, wherever the image itself was uploaded or processed — is the tradeoff
+  that keeps this genuinely a build-time-free operation for dynamic sources.
+</Details>
+
+<RainbowDivider />
+
+## Advanced: The Real Request Path
+
+Everything above describes *what* gets requested. Here's what actually happens once that request
+leaves the browser.
+
+### `/_next/image` — an on-the-fly transform, not a static file
+
+For a remote or otherwise dynamic image, the browser doesn't request the origin file directly — it
+requests something shaped like this:
+
+<CodeBlock language="text">
+{`
+  /_next/image?url=https%3A%2F%2Fcdn.example.com%2Fphotos%2Fhero.jpg&w=1200&q=75
+`}
+</CodeBlock>
+
+That request hits Next.js's built-in image optimization endpoint (or, on a hosting target that
+supports it, a platform-level equivalent), which fetches the origin file, resizes it to the requested
+width, re-encodes it in whichever format the request's `Accept` header earns it, and caches the result
+— so the *next* request for that same URL/width/format combination is served from cache rather than
+re-transformed from scratch. The origin file itself is never served as-is to a visitor requesting an
+optimized image; every response is a generated variant.
+
+### remotePatterns — an allowlist, not an inconvenience
+
+Optimizing an image from an external host requires that host to be explicitly allowlisted in
+`next.config.js`, via `remotePatterns` (the current option; `domains` was the older, simpler
+predecessor and is deprecated in favor of it in more recent major versions — check which your installed
+version expects):
+
+<CodeBlock language="tsx">
+{`
+  // next.config.js
+  module.exports = {
+    images: {
+      remotePatterns: [
+        {
+          protocol: "https",
+          hostname: "cdn.example.com",
+          pathname: "/photos/**"
+        }
+      ]
+    }
+  };
+`}
+</CodeBlock>
+
+This is deliberate, not bureaucratic: without an allowlist, `/_next/image?url=...` would let anyone
+pass *any* URL through your server's optimization endpoint, turning your own infrastructure into an
+open image-transforming proxy for arbitrary third-party content. Forgetting to add a new external host
+here is one of the most common first errors anyone hits the moment they add an image from a domain
+they haven't used before — the fix is almost always exactly this config entry, not anything wrong with
+the `<Image>` usage itself.
+
+### Custom loaders — delegating to a different image CDN entirely
+
+Not every hosting target runs Next.js's own server-side image optimizer (a static export has no server
+process to run it at all). The `loader` prop — or its project-wide equivalent, a `loaderFile` in
+`next.config.js` — lets you swap in a different URL-building function entirely, so `next/image` still
+generates the `srcset`/`sizes` markup, but the URLs it builds point at a third-party image CDN
+(Cloudinary, imgix, Akamai, and others are supported by name, alongside a fully custom function) instead
+of `/_next/image`:
+
+<CodeBlock language="tsx">
+{`
+  // A minimal custom loader — next/image calls this to build each srcset URL itself, delegating the
+  // actual resize/reformat work to a third-party image CDN instead of /_next/image.
+  const cloudinaryLoader = ({ src, width, quality }: { src: string; width: number; quality?: number }) =>
+    \`https://res.cloudinary.com/demo/image/upload/w_\${width},q_\${quality ?? 75}/\${src}\`;
+
+  <Image loader={cloudinaryLoader} src="hero.jpg" alt="A misty mountain ridge at sunrise" width={1920} height={1080} />
+`}
+</CodeBlock>
+
+### unoptimized — when the transform genuinely isn't worth it
+
+`unoptimized` skips the entire pipeline: no resizing, no format negotiation, no `/_next/image` request
+at all — just the plain `src` you gave it. It exists because the optimization step has a real cost:
+every distinct width/format/quality combination has to actually be computed (CPU time re-encoding an
+image) and then cached (storage), and neither of those is free at scale. That cost is almost always
+worth paying for photographic content, but not universally:
+
+- **Already-tiny icons and UI glyphs** — there's little left to shrink, and the request-path overhead
+  of hitting the optimizer for a handful of extra bytes saved isn't worth it.
+- **Animated GIFs** — the optimization pipeline operates on static raster data; resizing or reformatting
+  an animated GIF this way risks losing the animation entirely, so Next.js excludes GIFs from
+  optimization rather than silently flattening them.
+- **SVGs** — a vector format has no "resize to fewer pixels" operation the way a raster photo does, so
+  by default `next/image` doesn't route SVGs through the transform pipeline either (serving them
+  requires explicitly opting in via `dangerouslyAllowSVG`, precisely because an SVG can contain
+  script content and deserves the same scrutiny as any other user-influenced markup, not because
+  resizing it would help).
+
+<Warning title="Don't assume next/image always shrinks the file">
+  If a source image is already smaller than every generated breakpoint, or already in as efficient a
+  format as the negotiation would produce anyway, wrapping it in `<Image>` adds the request-path and
+  caching overhead for little or no real benefit. The component is a net win for the common case —
+  full-size photographic content served at a range of viewport sizes — not a universal one.
+</Warning>
+
+<RainbowDivider />
+
+## Common Mistakes
+
+- **Forgetting `remotePatterns` for a new external image host.** This is the single most common
+  first-time error — the fix is a config entry, not a change to the `<Image>` usage that's already
+  correct.
+- **Setting `priority` on every image "just to be safe."** It defeats lazy loading sitewide and can
+  genuinely hurt real LCP by making the browser preload-contend across too many resources — reserve it
+  for the one actual LCP candidate.
+- **Assuming next/image always makes every image smaller.** For a source already smaller than every
+  generated breakpoint, or already in an optimal format, the wrapping adds overhead for little or no
+  benefit — it isn't a universal win, just a strong default for typical photographic content.
+- **Reaching for `unoptimized` reflexively on any error, instead of diagnosing it.** A `remotePatterns`
+  or format-support issue is almost always the real cause of an image failing to load through the
+  optimizer — `unoptimized` silences the symptom without addressing why the pipeline rejected the
+  request in the first place.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Always set `width`/`height` (or use a static import) — never treat them as optional friction.**
+  They're what lets the browser reserve layout space before the file loads, exactly the mechanism this
+  site's [object-fit/aspect-ratio post](/post/css/taming-image-and-video-boxes) covers for plain
+  `<img>`.
+- **Reserve `priority` for the genuine LCP candidate only** — usually one image per page, sometimes
+  none.
+- **Set `sizes` deliberately whenever an image's rendered width actually varies with the viewport.**
+  Omitting it silently narrows which breakpoints get generated at all.
+- **Use `placeholder="blur"` for real above-the-fold photographic content**, and supply a real
+  `blurDataURL` for remote sources rather than skipping the prop because it "only works for static
+  imports."
+- **Allowlist a new external host in `remotePatterns` the moment you add it**, rather than discovering
+  the error at build or request time.
+- **Reach for `unoptimized` deliberately, for specific formats/sizes where the transform adds little
+  value** — not as a first response to any image-related error.
+
+<RainbowDivider />
+
+## Browser Support
+
+The mechanisms `next/image` builds on are all broadly supported today, though with the usual caveats
+worth checking for your specific browser matrix. Native `loading="lazy"` is Baseline-supported across
+every current major browser engine. `srcset`/`sizes` responsive image selection has been supported
+essentially everywhere for years — it's not a new or fragile feature. AVIF and WebP support is the one
+genuinely moving target: WebP is close to universal at this point, while AVIF support arrived later and
+still varies more by browser and version than the others.
+
+<Info title="Check before you commit">
+  None of this requires a fallback you write yourself — format negotiation and the `unoptimized`
+  original-format path already cover an unsupported browser automatically. But if you're validating a
+  specific corporate or embedded browser target, confirm current AVIF/WebP numbers on MDN or caniuse
+  rather than assuming universal support, the same way you would for any other evolving feature.
+</Info>
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading about a generated `srcset` string is one thing — watching the exact string change as you drag
+a width or quality input is another, and scrolling a real lazy-loaded image into view yourself makes
+that mechanism land in a way a description never quite does. The playground below is a real, running
+React app: a genuine `IntersectionObserver` gates a real scroll-triggered "load," an actual blurred
+preview swaps for a sharp one after a real timed delay, and a live `srcset`/`sizes` string is built from
+real string logic mirroring next/image's own device-size breakpoints. The one thing no browser sandbox
+can do for real is the server-side resize/reformat transform itself — that part stays illustrated in the
+diagrams above, clearly called out as such in the playground's own header.
+
+<Sandbox slug="what-next-image-actually-does" defaultLayout="vertical" />
+
+`next/image`'s required `width`/`height` reserve layout space the same way the underlying `<img>` always could — for
+the full CSS-level story on sizing, cropping, and killing layout shift, see
+**[object-fit, object-position, and aspect-ratio](/post/css/taming-image-and-video-boxes)**.
+
+<RainbowDivider />
+
+## Conclusion
+
+`next/image` isn't one optimization — it's four independent mechanisms wearing one component: a real
+`srcset`/`sizes` pair that lets the browser's own selection algorithm pick a width variant, per-request
+format negotiation off a single stored file, a lazy-loading default that defers anything off-screen,
+and a blur-up placeholder that gives the user something real to look at before the sharp image arrives.
+None of them are server-only magic — the request path is a plain, inspectable URL, the `srcset` the
+browser reads is a plain HTML attribute, and the config that controls all of it (`deviceSizes`,
+`remotePatterns`, `formats`, `loader`) is just `next.config.js`.
+
+Once you can see each of those four mechanisms separately — instead of "next/image makes images
+faster" as one undifferentiated fact — the actual decisions get easier: which image gets `priority`,
+when `unoptimized` is the right call, and what a `remotePatterns` error is actually telling you the
+first time you hit one.

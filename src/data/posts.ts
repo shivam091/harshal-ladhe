@@ -388,6 +388,42 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "middleware-deep-dive",
+    title: "Middleware Deep Dive: Auth, Redirects, and A/B Testing at the Edge",
+    excerpt: "Redirects, rewrites, and the one function that decides.",
+    description: "A beginner-to-advanced guide to Next.js Middleware — the Edge Runtime it runs on, the next()/redirect()/rewrite() response types, and worked examples for auth-gating, cookie-based A/B testing, and matcher performance.",
+    category: ["React"],
+    tags: ["react", "nextjs", "ssr", "frontend", "advanced", "beginner", "browser-support", "middleware", "edge-runtime", "ab-testing", "authentication", "redirects"],
+    signoff: "The A/B bucketing tab's hash function had to actually be deterministic and stable across renders for the demo to prove anything — a fake random assignment that changed every click would've undercut the entire point of cookie-based bucketing. I hope watching next(), redirect(), and rewrite() resolve against the exact same mocked request, tab by tab, makes that one distinction stick better than the definitions alone. Thanks for gatekeeping a few requests with me. 🚪",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
+  },
+  {
+    slug: "incremental-static-regeneration",
+    title: "Incremental Static Regeneration: Rebuilding Pages Without a Full Redeploy",
+    excerpt: "Stale now, fresh next time.",
+    description: "A beginner-to-advanced guide to Next.js Incremental Static Regeneration (ISR) — the revalidate option, stale-while-revalidate, on-demand revalidation with revalidatePath/revalidateTag, and how caching behavior has shifted across App Router versions.",
+    category: ["React"],
+    tags: ["react", "nextjs", "ssr", "frontend", "advanced", "beginner", "browser-support", "server-actions", "isr", "static-site-generation", "caching", "revalidation"],
+    signoff: "Getting the simulator's timing to actually teach the lesson — a request landing mid-rebuild has to read as \"still stale, a rebuild is already running\" rather than silently doing nothing or double-triggering — took more state-machine care than the slider controls let on. I hope dragging that fake clock past the window makes stale-while-revalidate click in a way the timeline diagram alone couldn't quite finish. Thanks for waiting one request behind the rebuild with me. ⏳",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
+  },
+  {
+    slug: "what-next-image-actually-does",
+    title: "What next/image Actually Does: An Optimization Deep Dive",
+    excerpt: "Bandwidth for the pixels you actually need.",
+    description: "A beginner-to-advanced deep dive into what next/image actually does — real srcset/sizes generation, Accept-header format negotiation, lazy loading, the blur-up placeholder, and the real request path through the image optimization endpoint.",
+    category: ["React"],
+    tags: ["react", "nextjs", "frontend", "advanced", "beginner", "performance", "browser-support", "accessibility", "images", "responsive-images", "cls", "image-optimization", "lazy-loading", "next-image"],
+    signoff: "Wiring a real IntersectionObserver into the lazy-load tab so scrolling — not a timer, not a fake animation — is what actually triggers the load turned out to be the one piece of this playground I was least willing to fake. I hope having to scroll to see it happen makes lazy loading feel like a real browser mechanism next/image quietly opts you into, rather than a setting you take on faith. Thanks for scrolling all the way down with me. 🖼️",
+    changelog: [
+      { date: "2026-09-06", change: "Initial publication" }
+    ]
   }
 ];
 

@@ -467,5 +467,53 @@ export const tagMeta: Record<string, TagMeta> = {
   "streaming-ssr": {
     title: "Streaming Server-Side Rendering",
     description: "Streaming HTML to the browser in chunks via Suspense boundaries, so a fast shell can paint before slower, data-dependent sections resolve."
+  },
+  "middleware": {
+    title: "Next.js Middleware Explained",
+    description: "Guides to middleware.ts — the function that runs before routing and rendering on every matched request."
+  },
+  "edge-runtime": {
+    title: "The Edge Runtime Explained",
+    description: "What the Edge Runtime restricts versus Node.js, and why that trade-off enables low-latency, globally distributed execution."
+  },
+  "ab-testing": {
+    title: "Cookie-Based A/B Testing",
+    description: "Bucketing visitors deterministically with cookies and serving different content via rewrites."
+  },
+  "authentication": {
+    title: "Authentication Patterns on the Web",
+    description: "Session cookies, auth gates, and where authorization checks genuinely need to live."
+  },
+  "redirects": {
+    title: "HTTP Redirects and Rewrites",
+    description: "The difference between a visible redirect and an invisible rewrite, and when each belongs."
+  },
+  "isr": {
+    title: "Incremental Static Regeneration (ISR) Explained",
+    description: "Guides to ISR — regenerating a statically generated Next.js page in the background after a configurable window, without a full redeploy."
+  },
+  "static-site-generation": {
+    title: "Static Site Generation (SSG)",
+    description: "Building HTML once at build time and serving it identically to every visitor until the next deploy."
+  },
+  "caching": {
+    title: "Web Caching Strategies",
+    description: "How caching layers — fetch-level, route-level, CDN — decide what gets served instantly versus regenerated."
+  },
+  "revalidation": {
+    title: "Cache Revalidation Techniques",
+    description: "Time-based and on-demand strategies for telling a cache its content is no longer fresh."
+  },
+  "image-optimization": {
+    title: "Image Optimization on the Web",
+    description: "Techniques for reducing image payload and improving load performance, from responsive srcset markup to server-side resize/reformat pipelines."
+  },
+  "lazy-loading": {
+    title: "Lazy Loading Images and Content",
+    description: "Deferring offscreen image and content loads via native browser lazy loading or IntersectionObserver, and when eager loading is the better call instead."
+  },
+  "next-image": {
+    title: "next/image Explained",
+    description: "Guides to Next.js's Image component — srcset/format generation, lazy loading, the blur-up placeholder, and the /_next/image optimization endpoint."
   }
 };

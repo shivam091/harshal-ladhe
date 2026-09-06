@@ -68,6 +68,15 @@ import RSCStreamingDiagram from "@/components/mdx/RSCStreamingDiagram";
 import AppRouterFileTreeDiagram from "@/components/mdx/AppRouterFileTreeDiagram";
 import ClientBoundaryPlacementDiagram from "@/components/mdx/ClientBoundaryPlacementDiagram";
 import StreamingWaterfallDiagram from "@/components/mdx/StreamingWaterfallDiagram";
+import MiddlewareRequestFlowDiagram from "@/components/mdx/MiddlewareRequestFlowDiagram";
+import RedirectVsRewriteDiagram from "@/components/mdx/RedirectVsRewriteDiagram";
+import AbBucketingDiagram from "@/components/mdx/AbBucketingDiagram";
+import ISRTimelineDiagram from "@/components/mdx/ISRTimelineDiagram";
+import RenderingStrategiesDiagram from "@/components/mdx/RenderingStrategiesDiagram";
+import RevalidationStrategiesDiagram from "@/components/mdx/RevalidationStrategiesDiagram";
+import SrcsetGenerationDiagram from "@/components/mdx/SrcsetGenerationDiagram";
+import ImageFormatNegotiationDiagram from "@/components/mdx/ImageFormatNegotiationDiagram";
+import BlurUpTimelineDiagram from "@/components/mdx/BlurUpTimelineDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -151,6 +160,15 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     AppRouterFileTreeDiagram,
     ClientBoundaryPlacementDiagram,
     StreamingWaterfallDiagram,
+    MiddlewareRequestFlowDiagram,
+    RedirectVsRewriteDiagram,
+    AbBucketingDiagram,
+    ISRTimelineDiagram,
+    RenderingStrategiesDiagram,
+    RevalidationStrategiesDiagram,
+    SrcsetGenerationDiagram,
+    ImageFormatNegotiationDiagram,
+    BlurUpTimelineDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with

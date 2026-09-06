@@ -1,0 +1,538 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("middleware-deep-dive");
+
+Every request to a Next.js app hits routing and rendering eventually — but before any of that happens, it can pass
+through one function you write yourself: `middleware.ts`. It runs on every request that matches its configuration,
+before a single Server Component renders or a single Route Handler executes, and it gets to decide, for each request,
+whether anything about routing should change at all.
+
+That's a small surface area on paper — one function, three possible outcomes — but it's also the mechanism behind a
+surprising amount of real infrastructure: auth gates that redirect an anonymous visitor before a protected page ever
+starts rendering, geolocation-aware redirects, and cookie-based A/B tests that serve two different pages from one
+URL. Almost everything middleware does comes down to correctly choosing between those three outcomes, and knowing
+exactly what each one costs.
+
+<Quote>
+  Middleware doesn't render anything. It's a gatekeeper that runs before rendering even starts, and its entire job is
+  to answer one question: should this request continue exactly as it arrived, get sent somewhere else, or get served
+  different content without anyone's address bar knowing?
+</Quote>
+
+In this post, we'll cover:
+
+- What `middleware.ts` is, when it runs, and why it runs on the Edge Runtime instead of the Node.js runtime
+- The three response types — `next()`, `redirect()`, and `rewrite()` — and the one distinction beginners mix up most
+- A full worked auth-gate example: redirecting an anonymous visitor and preserving where they were headed
+- Reading and writing cookies and headers, including passing data downstream to a Server Component
+- A complete cookie-based A/B testing example, with a real hash-based bucketing algorithm
+- What the Edge Runtime actually restricts, and why that trade-off exists
+- Matcher syntax, and the performance cost of forgetting to scope middleware down
+- Why there's only one middleware file per app, and how real projects branch multiple concerns inside it
+- A security caveat: why middleware is a first line of defense, not your only one
+
+<RainbowDivider />
+
+## What Middleware Actually Is
+
+`middleware.ts` (or `.js`) is a single file you place at the root of your project — or inside `src/`, if that's
+where your app already lives — sitting next to `app/`, not inside it. There's no per-route middleware file the way
+there's a `page.tsx` per route; Next.js recognizes exactly one middleware entry point for the whole app.
+
+<CodeBlock language="text">
+{`
+  project-root/
+  ├─ middleware.ts     # or src/middleware.ts, if your app lives under src/
+  ├─ app/
+  │  └─ ...
+  └─ package.json
+`}
+</CodeBlock>
+
+Its shape, at the absolute minimum, is one exported function and a `config` object that scopes which requests it
+actually runs on:
+
+<CodeBlock language="ts">
+{`
+  import { NextResponse } from "next/server";
+  import type { NextRequest } from "next/server";
+
+  export function middleware(request: NextRequest) {
+    return NextResponse.next();
+  }
+
+  export const config = {
+    matcher: ["/dashboard/:path*", "/account/:path*"],
+  };
+`}
+</CodeBlock>
+
+Two details matter immediately, before anything else in this post:
+
+- **It runs before routing and rendering, on every request that matches `config.matcher`.** Not "early in the
+  render," not "as a wrapper around your page" — before any of that machinery even starts deciding what to render.
+  By the time a Server Component or Route Handler runs, middleware has already had its chance to redirect, rewrite,
+  or modify the request.
+- **It runs on the Edge Runtime, not the Node.js runtime.** This is a deliberately restricted JavaScript environment
+  — Web-standard APIs like `fetch`, `Request`/`Response`, `URL`, and `crypto.subtle` are available, but Node.js
+  built-ins (`fs`, `net`, most things that need a `node:` import) are not, and neither are the many npm packages
+  that quietly depend on them.
+
+<Info title="Why run on a restricted runtime at all?">
+  The restriction isn't arbitrary — it's what makes middleware fast and globally distributable in the first place.
+  A Web-standard-only runtime can start in a lightweight V8 isolate rather than boot a full Node.js process, which
+  means it can run at edge locations physically close to whoever's making the request, instead of in one home
+  region. Since middleware runs on every matched request, that low, consistent latency is the entire point of
+  choosing this runtime over a traditional serverless function.
+</Info>
+
+The `config.matcher` above isn't optional detail — it's the difference between middleware running only where you
+actually need it, and running (needlessly) on every single request your app receives, including every static asset.
+The "Matcher Syntax and Performance" section later in this post covers exactly what belongs in that array and why.
+
+<RainbowDivider />
+
+## The Single Most Important Distinction: `next()`, `redirect()`, and `rewrite()`
+
+A middleware function has to return one of three things, and the entire rest of this post is really just working
+out the implications of that choice.
+
+- **`NextResponse.next()`** — continue as normal. Routing and rendering proceed exactly as they would have without
+  middleware, though you can still modify the request's headers or the response's cookies on the way through.
+- **`NextResponse.redirect(url)`** — a real HTTP redirect. The browser receives a 3xx status pointing at a new URL,
+  its address bar changes, and it issues a brand-new request to get there. This costs a full round trip.
+- **`NextResponse.rewrite(url)`** — serve different content at the *same* URL. The response the visitor gets comes
+  from wherever you rewrote to, but their address bar never changes and they have no way of knowing a rewrite
+  happened at all.
+
+**Visual Illustration**
+
+<MiddlewareRequestFlowDiagram />
+
+Of those three, `redirect()` and `rewrite()` are the pair everyone new to middleware eventually confuses, because
+both of them send the visitor "somewhere else" — just not in the same sense of the word.
+
+<CodeBlock language="ts">
+{`
+  // redirect() — the browser is told to go elsewhere. A new request, a new URL, visibly.
+  return NextResponse.redirect(new URL("/login", request.url));
+`}
+</CodeBlock>
+
+<CodeBlock language="ts">
+{`
+  // rewrite() — the SAME response serves different content. No new request, no URL change, invisibly.
+  return NextResponse.rewrite(new URL("/home-variant-b", request.url));
+`}
+</CodeBlock>
+
+**Visual Illustration**
+
+<RedirectVsRewriteDiagram />
+
+<Success title="The one-sentence version">
+  If the visitor's address bar changes, it's a redirect and it cost a round trip. If it doesn't, it's a rewrite, and
+  whatever content came back is a complete secret from the URL alone. Everything else about the two follows from
+  that.
+</Success>
+
+<Warning title="A default worth double-checking against your version">
+  `NextResponse.redirect()` issues a redirect status in the 3xx range — Next.js has defaulted to 307 (Temporary
+  Redirect) in recent versions, which preserves the original request method rather than silently downgrading a POST
+  to a GET the way an older-style 302 sometimes implies. You can pass a specific status code as a second argument
+  when you need a different one. Exact defaults are exactly the kind of detail that shifts across major versions, so
+  treat this as the conceptual shape and confirm the number against your installed version's docs before depending
+  on it.
+</Warning>
+
+<RainbowDivider />
+
+## Worked Example: Gating Routes Behind Auth
+
+The most common real-world use of middleware is exactly this: check whether a visitor is allowed to be where they're
+going, before any protected page starts doing real work.
+
+<CodeBlock language="ts">
+{`
+  import { NextResponse } from "next/server";
+  import type { NextRequest } from "next/server";
+
+  const PROTECTED_PREFIXES = ["/dashboard", "/account"];
+
+  export function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+
+    if (!isProtected) {
+      return NextResponse.next();
+    }
+
+    const hasSession = request.cookies.has("session");
+    if (hasSession) {
+      return NextResponse.next();
+    }
+
+    // Preserve where the visitor was headed, so the login page can send them back afterward.
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("from", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  export const config = {
+    matcher: ["/dashboard/:path*", "/account/:path*"],
+  };
+`}
+</CodeBlock>
+
+The important detail isn't the redirect itself — it's the `?from=` parameter. Without it, every anonymous visit to a
+protected page dumps the visitor at a generic `/login`, and after they authenticate, they land back on the homepage
+instead of wherever they actually meant to go. Carrying the original `pathname` through as a query parameter is what
+lets the login page redirect them back to where they started once they've actually signed in.
+
+<Details summary="What does the login page do with ?from= once it has it?">
+  It reads it out of `searchParams`, validates that it's a same-origin relative path (never redirect to an arbitrary
+  external URL from a query parameter — that's an open-redirect vulnerability), and redirects there after a
+  successful sign-in instead of to a hardcoded destination. The middleware's only job is getting that piece of
+  information there safely; what the login page does with it is a separate, ordinary concern.
+</Details>
+
+<RainbowDivider />
+
+## Reading and Writing Cookies and Headers
+
+Middleware doesn't only decide next/redirect/rewrite — it can also read and mutate cookies and headers on the way
+through, which is how it passes information forward to the rest of the request.
+
+Reading a cookie from the incoming request is a simple lookup:
+
+<CodeBlock language="ts">
+{`
+  const sessionCookie = request.cookies.get("session"); // { name, value } | undefined
+  const hasSession = request.cookies.has("session");    // boolean
+`}
+</CodeBlock>
+
+Writing a cookie onto the outgoing response works the same way, on whichever `NextResponse` you're about to return:
+
+<CodeBlock language="ts">
+{`
+  const response = NextResponse.next();
+  response.cookies.set("last_seen", new Date().toISOString(), {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+  });
+  return response;
+`}
+</CodeBlock>
+
+Headers work a little differently, because you can't just mutate `request.headers` in place — you clone it into a
+new `Headers` object, add what you need, and hand it to `NextResponse.next()` as the request headers that should
+continue downstream:
+
+<CodeBlock language="ts">
+{`
+  export function middleware(request: NextRequest) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-visitor-id", request.cookies.get("visitor_id")?.value ?? "anonymous");
+
+    return NextResponse.next({
+      request: { headers: requestHeaders },
+    });
+  }
+`}
+</CodeBlock>
+
+That header is now readable from a Server Component further down the request, via `next/headers`:
+
+<CodeBlock language="tsx">
+{`
+  import { headers } from "next/headers";
+
+  export default async function Page() {
+    const visitorId = (await headers()).get("x-visitor-id");
+    return <p>Visitor: {visitorId}</p>;
+  }
+`}
+</CodeBlock>
+
+This is the pattern behind most "middleware computed something, now the rest of the app needs to know it" use cases
+— geolocation, a feature flag, an already-resolved bucket — without reaching for a database round trip just to hand
+one small value to a component that's about to render anyway.
+
+<RainbowDivider />
+
+## A Full Worked Example: Cookie-Based A/B Testing
+
+This is the example that puts `rewrite()`, cookies, and a real bucketing decision together in one place. The goal:
+serve `/home-variant-a` or `/home-variant-b` from a single `/` URL, decide which one a given visitor sees exactly
+once, and keep them in the same bucket on every visit after that.
+
+<CodeBlock language="ts">
+{`
+  import { NextResponse } from "next/server";
+  import type { NextRequest } from "next/server";
+
+  const AB_TEST_PATHS = new Set(["/", "/home"]);
+
+  // A small, deterministic hash — the same id always lands in the same bucket, which is the whole
+  // property cookie-based bucketing depends on.
+  function hashToBucket(id: string): "a" | "b" {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+    }
+    return hash % 2 === 0 ? "a" : "b";
+  }
+
+  export function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+    if (!AB_TEST_PATHS.has(pathname)) {
+      return NextResponse.next();
+    }
+
+    const existingBucket = request.cookies.get("ab-bucket")?.value;
+    const bucket =
+      existingBucket === "a" || existingBucket === "b"
+        ? existingBucket
+        : hashToBucket(crypto.randomUUID());
+
+    const response = NextResponse.rewrite(new URL(\`/home-variant-\${bucket}\`, request.url));
+
+    // Only write the cookie on a FIRST visit — an existing bucket should never be reassigned.
+    if (!existingBucket) {
+      response.cookies.set("ab-bucket", bucket, { path: "/", maxAge: 60 * 60 * 24 * 30 });
+    }
+
+    return response;
+  }
+
+  export const config = {
+    matcher: ["/", "/home"],
+  };
+`}
+</CodeBlock>
+
+**Visual Illustration**
+
+<AbBucketingDiagram />
+
+A few details in that example are load-bearing, not incidental:
+
+- **`crypto.randomUUID()`**, not a Node-only random-id library — it's a standard Web Crypto API, available in the
+  Edge Runtime for exactly this kind of use, and a concrete example of what "Edge Runtime constraints" mean in
+  practice: reach for the Web-standard equivalent instead of a Node-specific package.
+- **The cookie is only ever set once.** An existing `ab-bucket` value always wins over a fresh hash — re-rolling the
+  bucket on every visit would make the whole test meaningless, since a visitor's experience needs to stay consistent
+  for the comparison to mean anything.
+- **This is a job for `rewrite()`, not `redirect()`.** A redirect would put `/home-variant-b` directly in the
+  visitor's address bar, which defeats the point — search engines, shared links, and the visitor's own mental model
+  of "I'm on the homepage" would all now disagree with what's actually being tested. A rewrite keeps the public URL
+  exactly `/`, no matter which variant is being served underneath it.
+
+<RainbowDivider />
+
+## The Edge Runtime, In Depth
+
+The "no Node.js APIs" restriction from earlier in this post is worth taking seriously, because it's the single most
+common source of a confusing build or runtime error once middleware starts doing real work.
+
+What's available: `fetch`, `Request`, `Response`, `Headers`, `URL`/`URLSearchParams`, `crypto.subtle` and
+`crypto.randomUUID()`, `TextEncoder`/`TextDecoder`, `ReadableStream`, and the rest of the standard Web platform
+surface a modern browser or a Web Worker would also have. What's **not** available: `fs`, `net`, `child_process`,
+and anything else that assumes a real filesystem or OS-level socket access — and, by extension, any npm package that
+depends on those under the hood, even if its own top-level API looks perfectly ordinary.
+
+<Details summary="Why can't middleware just run on Node.js like the rest of my app?">
+  It's the same trade-off from the "Why run on a restricted runtime at all?" callout earlier, taken further: a full
+  Node.js runtime needs to boot a real process — with its own memory, its own module resolution, its own startup
+  cost — before it can execute a single line of your code. A V8 isolate running only Web-standard APIs can start in
+  a fraction of that time, and it's small and self-contained enough to be deployed at many edge locations at once
+  instead of a single home region. Middleware runs on every matched request, so that startup cost and that
+  geographic distribution matter far more here than they do for an ordinary Route Handler that runs occasionally,
+  in one region, doing heavier work.
+</Details>
+
+<Warning title="An evolving option worth knowing the name of">
+  Next.js has, in recent versions, begun introducing experimental support for running middleware on the Node.js
+  runtime instead of the Edge Runtime, for cases that genuinely need a Node-only API. This is new, still evolving,
+  and not something to assume is available or stable in your installed version — check current Next.js documentation
+  before reaching for it, rather than assuming the Edge Runtime restriction described in this post is universal
+  going forward.
+</Warning>
+
+<RainbowDivider />
+
+## Matcher Syntax and Performance
+
+`config.matcher` isn't a performance nicety — it's what stands between "middleware runs where I need it" and
+"middleware runs on every request my app receives, including every image, every stylesheet, and every internal
+Next.js asset request."
+
+Matcher patterns support path-to-regexp-style syntax: named segments, optional segments, and wildcards.
+
+<CodeBlock language="ts">
+{`
+  export const config = {
+    matcher: [
+      "/dashboard/:path*",  // matches /dashboard, /dashboard/settings, /dashboard/settings/billing, ...
+      "/blog/:slug",        // matches exactly one segment: /blog/hello-world, not /blog/a/b
+      "/preview/:id?",      // the trailing ? makes that segment optional
+    ],
+  };
+`}
+</CodeBlock>
+
+For anything broader — "run on every route except a specific handful" — a single regex-shaped pattern with a
+negative lookahead is the standard approach, and it's worth knowing by sight since it shows up in almost every real
+project's middleware:
+
+<CodeBlock language="ts">
+{`
+  export const config = {
+    matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  };
+`}
+</CodeBlock>
+
+That pattern matches everything *except* API routes, Next.js's own static and image-optimization internals, and the
+favicon — which is almost always what you actually want, since none of those benefit from an auth check, a
+geolocation redirect, or an A/B bucket rewrite, and running middleware on them anyway is pure wasted latency.
+
+Beyond the matcher itself, two performance habits matter because middleware runs on **every matched request, for
+every visitor**:
+
+- **Avoid slow synchronous work.** A tight loop or a heavy computation inside middleware adds that cost to every
+  single request it touches — there's no caching layer standing between your code and the visitor here.
+- **Be judicious about any `fetch()` calls to external services.** Each one adds real network latency to every
+  matched request, site-wide. A feature-flag lookup or a geolocation API call from inside middleware is one of the
+  easiest ways to accidentally make an entire site feel slower, because the cost isn't paid once — it's paid on
+  every request middleware runs on.
+
+<RainbowDivider />
+
+## One Middleware File, Many Concerns
+
+Next.js recognizes exactly one middleware entry point per app — there's no way to register a second, separate
+`middleware.ts` scoped to just the `/dashboard` routes the way you might add a second Route Handler. Every concern
+— auth, A/B testing, geolocation redirects, anything else — has to live inside that one function, and in practice
+that means branching on `request.nextUrl.pathname` at the top of it.
+
+<CodeBlock language="ts">
+{`
+  export function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl;
+
+    if (pathname.startsWith("/dashboard") || pathname.startsWith("/account")) {
+      return authGate(request);
+    }
+
+    if (pathname === "/" || pathname === "/home") {
+      return abBucket(request);
+    }
+
+    return NextResponse.next();
+  }
+`}
+</CodeBlock>
+
+Each branch — `authGate`, `abBucket` — can be an ordinary function defined elsewhere in the same file (or imported
+from another module) that takes the request and returns a `NextResponse`, exactly like the standalone examples
+earlier in this post. The one-file constraint isn't a limitation on how many concerns middleware can handle; it's a
+constraint on where the branching logic between them has to live.
+
+<RainbowDivider />
+
+## Security: A First Line of Defense, Not the Only One
+
+Middleware is a genuinely good place to redirect an anonymous visitor away from a page they shouldn't see — it's
+fast, it runs before any real work happens, and it keeps that logic in one predictable place. It is **not** a
+substitute for checking authorization where the actual data gets fetched.
+
+<Warning title="Don't let middleware be the only lock on the door">
+  A misconfigured matcher, a rewrite that routes around it, or simply a mistake in the branching logic inside your
+  one middleware file can all mean a request reaches a Server Component or Route Handler without middleware having
+  run the check you expected. For anything genuinely sensitive — real user data, a payment action, an admin
+  operation — the code that actually fetches or mutates that data needs to verify authorization itself, rather than
+  trusting that middleware upstream always did its job correctly. Treat middleware as a fast, UX-level first pass,
+  and keep a real authorization check at the point where the sensitive work actually happens.
+</Warning>
+
+<RainbowDivider />
+
+## Common Mistakes
+
+- **Importing a Node-only package into middleware.** A database client, a JWT library that reaches into Node's
+  `crypto` module internals, or anything that transitively needs `fs` will fail to bundle or throw at runtime on the
+  Edge Runtime — even if the package's own top-level API looks perfectly ordinary. The fix is almost always a
+  Web-standard equivalent (`crypto.subtle`/`crypto.randomUUID()` instead of Node's `crypto` module, for instance),
+  not a workaround inside middleware itself.
+- **Forgetting `config.matcher` entirely.** Without it, middleware runs on every request your app receives —
+  including every `_next/static` asset, every optimized image, and the favicon — which is pure wasted latency on
+  requests that never needed a check in the first place.
+- **Expecting middleware to return arbitrary response bodies or full HTML.** Middleware's real job is redirects,
+  rewrites, and header/cookie mutation — not generating a rendered page. If you find yourself wanting middleware to
+  produce actual markup, that work belongs in a Server Component or Route Handler further down the pipeline instead.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Always set `config.matcher`, even when it feels obvious.** Scope middleware down to exactly the paths it needs,
+  and exclude static assets and internal Next.js routes explicitly with the negative-lookahead pattern shown above.
+- **Prefer `rewrite()` over `redirect()` whenever the visitor shouldn't see the URL change.** A/B tests, internal
+  routing decisions, and anything you want to look invisible from the outside are a rewrite's job, not a redirect's.
+- **Keep middleware fast, and be sparing with outbound `fetch()` calls.** Every matched request pays whatever cost
+  middleware adds — there's no per-visitor caching layer in front of it.
+- **Branch on `pathname` at the top of one function, rather than trying to split concerns across files.** There's
+  only one middleware entry point; lean into that instead of fighting it.
+- **Never treat middleware as your only authorization check for sensitive resources.** Verify again at the point
+  where the real data is actually fetched or mutated.
+- **Reach for a Web-standard API before reaching for an npm package.** `crypto.subtle`, `crypto.randomUUID()`, and
+  the rest of the Web platform surface are available in the Edge Runtime; a lot of Node-oriented packages are not.
+
+<RainbowDivider />
+
+## Browser Support
+
+This section is usually about which browsers support a given feature — but middleware never runs in a browser at
+all, so the more accurate framing is **Edge Runtime API support**: what's safe to rely on across every deployment of
+the runtime your middleware actually executes in.
+
+The Web-standard surface covered in "The Edge Runtime, In Depth" — `fetch`, `Request`/`Response`, `Headers`,
+`URL`/`URLSearchParams`, `crypto.subtle`, `crypto.randomUUID()`, `TextEncoder`/`TextDecoder`, and `ReadableStream` —
+is safe to treat as consistently available, since it's the same baseline the Edge Runtime is built around across
+regions and deployments. What's unsafe to assume is anything Node.js-specific (`fs`, `net`, `child_process`, and
+packages depending on them), and — as the earlier Warning notes — an experimental, evolving Node.js runtime option
+for middleware that shouldn't be assumed available without checking your installed version's documentation first.
+
+<RainbowDivider />
+
+## Interactive Playground
+
+The sandbox below is a real "Request Simulator." Its decision functions — the auth-gate check, the hash-based A/B
+bucketing, the geo-redirect-with-query-preservation logic — are genuine, hand-written TypeScript, executed live on
+every change you make; nothing about the branching or the hash function is faked or precomputed. What's mocked is
+the request object itself: there's no real Edge Runtime, no real network, and no actual Next.js request pipeline
+behind a browser sandbox, so a plain object built from the form controls stands in for what `request.cookies`,
+`request.nextUrl.pathname`, and a geolocation header would carry on a real request.
+
+<Sandbox slug="middleware-deep-dive" defaultLayout="vertical" />
+
+Middleware decides what happens *before* a request reaches your route tree — for what happens once it gets there,
+see **[The App Router Rendering Model](/post/react/app-router-rendering-model#server-actions-mutations-flow-back-up)**,
+which covers Server Actions, the special files, and where "use client" boundaries actually belong.
+
+<RainbowDivider />
+
+## Conclusion
+
+Middleware comes down to one function, running once per matched request, before routing or rendering ever starts,
+resolving to exactly one of three outcomes. `next()` carries on. `redirect()` sends the visitor somewhere else,
+visibly, at the cost of a real round trip. `rewrite()` serves something different from the same URL, invisibly. Once
+that distinction is solid, everything else in this post — auth gates, cookie-based A/B tests, geolocation redirects
+— is really just picking the right one of those three outcomes and wiring the right condition in front of it.
+
+The Edge Runtime constraint isn't an arbitrary inconvenience either: it's what lets that one function run fast, at
+locations close to every visitor, on every request it's scoped to. And the security caveat is worth carrying forward
+past this post specifically — middleware is a genuinely good first line of defense, but the real authorization check
+for anything sensitive still belongs at the point where the data itself gets touched.

@@ -16,6 +16,27 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "what-next-image-actually-does",
+    title: "next/image Optimization Playground",
+    description: "A real blurred-vs-blank placeholder race, a real IntersectionObserver lazy-load you have to scroll to trigger, and a live srcset/sizes string built from next/image's real deviceSizes breakpoints — the server-side resize/format transform stays illustrated in the post's diagrams.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  },
+  {
+    slug: "incremental-static-regeneration",
+    title: "ISR Timeline Simulator",
+    description: "Drag a fake clock past a configurable revalidate window and simulate a request to watch the exact stale-then-fresh sequence from the post's core diagram play out, then trigger on-demand revalidation to see it sidestep the clock entirely.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  },
+  {
+    slug: "middleware-deep-dive",
+    title: "Middleware Request Simulator",
+    description: "Real hand-written TypeScript decision logic — an auth gate, a hash-based A/B bucketing algorithm, and a geo-redirect with query preservation — run live against a mocked request object across three tabs.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  },
+  {
     slug: "app-router-rendering-model",
     title: "App Router Rendering Model Simulator",
     description: "Click nodes in a simulated app/ tree to toggle \"use client\" and watch server/client propagate, then toggle streaming on/off to compare a blocking page load against one that streams its shell immediately.",

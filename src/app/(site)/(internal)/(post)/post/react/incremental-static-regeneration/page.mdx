@@ -1,0 +1,394 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("incremental-static-regeneration");
+
+Static Site Generation gives you the fastest possible page — HTML built once, at build time, handed out identically
+to every visitor until you deploy again. Server-Side Rendering gives you the freshest possible page — HTML rebuilt
+from scratch on every single request, no matter how often the underlying data actually changes. Incremental Static
+Regeneration is Next.js's answer to the obvious question sitting between those two: what if most of your pages
+change occasionally, not on every request and not never — and rebuilding the whole site just to update one blog post
+feels like the wrong tool entirely?
+
+<Quote>
+  ISR doesn't make a static page dynamic. It makes a static page's staleness a number you configure instead of a
+  full redeploy you have to run.
+</Quote>
+
+That one sentence is doing more work than it looks like, and almost everything below is just unpacking it: what
+"a number you configure" actually triggers, why the very first request after that number elapses still gets old
+content, how to invalidate a page on your own schedule instead of a timer's, and where the exact mechanics get
+version-specific enough that this post will tell you to go check rather than guess.
+
+In this post, we'll cover:
+
+- The two extremes ISR sits between, and what problem it actually solves
+- The basic mechanism: the `revalidate` option, on a route segment or a single `fetch()` call
+- Stale-while-revalidate — the single most misunderstood detail in this entire model
+- On-demand revalidation with `revalidatePath()` and `revalidateTag()`, for content that changes unpredictably
+- Tag-based revalidation, for invalidating many related pages at once
+- Individual `fetch()` caching versus full-route caching, and why the exact mechanics are version-sensitive
+- Dynamic params that weren't known at build time, and how they get folded into the same cache
+- An honest caveat about where this cache actually *lives*, because it isn't the same everywhere
+
+<RainbowDivider />
+
+## Two Extremes, and the Middle Ground
+
+Before ISR makes sense, it's worth being precise about the two strategies it's positioned between, because most of
+the confusion about ISR comes from smuggling in an assumption from one of them.
+
+**Static Site Generation (SSG)** builds every page's HTML exactly once, when you run your build. That HTML is then
+served to every visitor, unchanged, until you run a new build and deploy it. There's no per-request work happening
+at all — a CDN can hand out that HTML directly, which is why SSG pages are typically the fastest pages you can
+serve. The tradeoff is equally direct: if the underlying data changes five minutes after you deploy, every visitor
+sees stale content until the next full deploy, whenever that happens to be.
+
+**Server-Side Rendering (SSR)** is the opposite tradeoff. Every request re-runs your page's rendering logic from
+scratch — refetching data, re-rendering components, producing brand-new HTML — so the response is always as fresh
+as your data source allows. The cost is equally direct: every single visitor pays the full cost of that render, and
+none of the work is ever reused between requests.
+
+**Incremental Static Regeneration** is what you get when you refuse to accept the false choice between those two.
+A page generated with ISR behaves like an SSG page for the overwhelming majority of requests — served instantly from
+a cache, no rendering work happening live — but that cached HTML has an expiration policy attached to it. Once it
+expires, Next.js can regenerate that one page, on its own, in the background, without you redeploying anything and
+without every other page on the site being touched at all.
+
+**Visual Illustration**
+
+<RenderingStrategiesDiagram />
+
+<Info title="ISR is a per-page decision, not a site-wide one">
+  You don't choose ISR "for the app." A given route segment is SSG (no revalidation configured at all), SSR (fully
+  dynamic, opted into per-request rendering), or ISR (statically generated with a revalidation policy) — and
+  different routes in the same app can each make that choice independently, based on how often their own data
+  actually changes.
+</Info>
+
+<RainbowDivider />
+
+## The Basic Mechanism: `revalidate`
+
+The lever that turns a plain static page into an ISR page is a single number: how many seconds have to pass before
+that page becomes *eligible* for regeneration. Two places accept it, and they operate at two different levels of
+granularity.
+
+At the route-segment level, exporting `revalidate` from a `page.tsx` (or `layout.tsx`) opts that whole segment into
+time-based regeneration:
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/page.tsx
+  export const revalidate = 60; // this page becomes eligible for regeneration 60s after it was last built
+
+  export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+    const post = await getPost(params.slug);
+    return <article>{post.title}</article>;
+  }
+`}
+</CodeBlock>
+
+At the individual `fetch()` level, the same idea attaches to one specific request for data, via the `next.revalidate`
+option Next.js adds to the standard `fetch()` signature:
+
+<CodeBlock language="tsx">
+{`
+  async function getPost(slug: string) {
+    const res = await fetch(\`https://api.example.com/posts/\${slug}\`, {
+      next: { revalidate: 60 } // this fetch's cached result is eligible for revalidation after 60s
+    });
+    return res.json();
+  }
+`}
+</CodeBlock>
+
+<Warning title="A number of seconds, not a schedule">
+  Neither of these is a cron job. `revalidate: 60` does not mean "Next.js will rebuild this page every 60 seconds,
+  guaranteed." It means "this cached page is allowed to be regenerated once 60 seconds have elapsed since it was
+  last built — the next time a request actually asks for it." The section on stale-while-revalidate below, and the
+  common mistakes near the end of this post, both come back to exactly how much that distinction matters in
+  practice.
+</Warning>
+
+<RainbowDivider />
+
+## The Core Mental Model: Stale-While-Revalidate
+
+This is the part of ISR that gets misunderstood more often than every other part of this post combined, so it's
+worth slowing all the way down for it. The behavior is called **stale-while-revalidate**, and the name is precise if
+you read it literally: the stale content is served *while* the revalidation happens, not instead of it and not
+before it.
+
+Walk through the timeline in order. A page is built — call its content **v1**. For as long as requests keep arriving
+inside the revalidate window, each one is served v1 instantly, straight from the cache, exactly like plain SSG. Then
+the window elapses. Nothing observable happens yet — nobody has asked for the page, so there's nothing to regenerate
+and nothing to serve differently. Then **Request A** arrives, the first request to show up after that window has
+elapsed.
+
+Here is the detail that trips almost everyone up the first time: **Request A still gets v1** — the same old, already
+-cached content, served exactly as instantly as it would have been served a second before the window elapsed. Nobody
+waits on a live rebuild; that's the entire point of the phrase "stale while revalidate," as opposed to something
+like "block while revalidate." What Request A *also* does, invisibly to whoever made it, is silently kick off a
+background regeneration. Some time later — however long that regeneration takes — it finishes, and the cache now
+holds fresh content: **v2**. The *next* request to arrive after that point, call it **Request B**, is the first one
+to actually receive v2.
+
+The mistake people reach for instinctively is assuming Request A itself gets the fresh page, since it's the one that
+"noticed" the page was stale. It doesn't, and it structurally can't — the whole reason ISR is fast is that no
+request ever blocks on a rebuild finishing. Precisely one request pays no cost at all for triggering the rebuild
+(Request A gets old content, exactly as fast as always); the cost of that rebuild is paid entirely in the background,
+between Request A and Request B, and no visitor ever sits there waiting for it.
+
+**Visual Illustration**
+
+<ISRTimelineDiagram />
+
+<Success title="Say it back once more, precisely">
+  The first request after expiry gets the OLD page, instantly, and silently triggers a rebuild. The NEXT request
+  after that rebuild finishes gets the NEW page. There is no request that is both "the one that noticed staleness"
+  and "the one that receives the fresh content" — those are always two different requests, separated by however long
+  the background rebuild takes.
+</Success>
+
+<RainbowDivider />
+
+## On-Demand Revalidation: Invalidating on Your Own Schedule
+
+Time-based revalidation assumes your content goes stale on a predictable clock — but a lot of real content doesn't.
+A blog post is exactly as stale as it was five seconds ago, right up until the moment an editor clicks "Publish,"
+at which point it's *instantly* stale, and no fixed `revalidate` window can express "stale the moment this specific
+event happens" cleanly. That's what **on-demand revalidation** is for: instead of waiting for a request to notice a
+window has elapsed, you tell Next.js directly, at the exact moment your content changed, that a given page (or a
+given piece of fetched data) is no longer valid.
+
+Two functions do this, both imported from `next/cache`, and both are typically called from inside a Server Action or
+a Route Handler — a webhook your CMS calls the instant an editor publishes, for example:
+
+<CodeBlock language="tsx">
+{`
+  // app/api/revalidate/route.ts — a webhook a CMS calls on publish
+  import { revalidatePath, revalidateTag } from "next/cache";
+  import { NextRequest, NextResponse } from "next/server";
+
+  export async function POST(request: NextRequest) {
+    const { slug } = await request.json();
+
+    revalidatePath(\`/blog/\${slug}\`); // invalidate one specific page's cache
+    // or: revalidateTag("posts");    // invalidate everything tagged "posts" at once
+
+    return NextResponse.json({ revalidated: true, now: Date.now() });
+  }
+`}
+</CodeBlock>
+
+`revalidatePath()` targets a specific route by its path — precise, but you have to know (and enumerate) exactly
+which paths are affected by a given change. `revalidateTag()` targets a *label* instead, which is where **tag-based
+revalidation** earns its keep: tag a `fetch()` call with a category, and one `revalidateTag()` call invalidates every
+page that read data through that tag, without you ever having to list their URLs.
+
+<CodeBlock language="tsx">
+{`
+  // Any fetch tagged "posts" — could be called from a dozen different pages
+  async function getPosts() {
+    const res = await fetch("https://api.example.com/posts", {
+      next: { tags: ["posts"] }
+    });
+    return res.json();
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // One call, and every page that fetched data tagged "posts" is invalidated —
+  // the homepage's post list, every category archive, an RSS route, all at once.
+  revalidateTag("posts");
+`}
+</CodeBlock>
+
+**Visual Illustration**
+
+<RevalidationStrategiesDiagram />
+
+<Info title="Time-based and on-demand aren't mutually exclusive">
+  A route can set `revalidate: 3600` as a safety net — so content is never more than an hour stale even if nobody
+  ever calls the webhook — while still being able to invalidate immediately via `revalidatePath()`/`revalidateTag()`
+  the moment a real publish event fires. Reach for on-demand revalidation for the events you can actually observe,
+  and a generous time-based window as the fallback for the ones you can't.
+</Info>
+
+<RainbowDivider />
+
+## Individual Fetch Caching vs. Full-Route Caching
+
+Here's where this post has to slow down and be careful, rather than confidently state one number. Next.js's caching
+model involves more than one layer — an individual `fetch()` call's result can be cached on its own, independently
+of whether the *route* it's called from is itself statically generated and cached as a whole. `revalidateTag()`
+targets the fetch-level cache directly: any `fetch()` call tagged with that string gets invalidated, regardless of
+which route called it. `revalidatePath()` operates at the route level: it tells Next.js that a specific rendered
+route's output is stale, which in turn causes it to be regenerated (re-running whatever fetches that route makes in
+the process).
+
+The distinction matters in practice because a route can read from several different `fetch()` calls with different
+tags and different revalidation windows — one piece of data revalidating hourly, another only ever on-demand — and
+the route's own overall cache entry sits on top of all of them. Exactly how these layers compose, what the default
+caching behavior is for a `fetch()` call with no `next` options at all, and whether a plain `GET` Route Handler is
+cached by default, are all things that have **changed across major Next.js versions** — sometimes significantly.
+
+<Warning title="Verify the specifics against your installed version's docs">
+  This post is confident about the conceptual model: there is more than one caching layer, `revalidateTag()` and
+  `revalidatePath()` target different levels of it, and both exist to solve real, distinct problems. It is
+  deliberately *not* confident about a specific default (does an un-configured `fetch()` cache by default in the
+  version you're running? does a Route Handler?) because those exact defaults are one of the fastest-moving parts of
+  the framework across major releases. Check the Next.js documentation for your installed version before relying on
+  any specific default in production — this is a case where being precise about the version matters more than
+  memorizing a number that may already be out of date by the time you read this.
+</Warning>
+
+<RainbowDivider />
+
+## Dynamic Params ISR Never Saw at Build Time
+
+`generateStaticParams()` tells Next.js which dynamic route params to pre-render at build time — every blog slug that
+exists right now, for example. But new content gets published after every build, and a param for it obviously
+couldn't have been generated ahead of time. `dynamicParams` (a route segment export, defaulting to `true`) decides
+what happens when a request comes in for a param that wasn't in that build-time list.
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/page.tsx
+  export const dynamicParams = true; // the default — an unlisted slug is generated on first request, then cached
+  export const revalidate = 3600;
+
+  export async function generateStaticParams() {
+    const posts = await getAllPostSlugsKnownAtBuildTime();
+    return posts.map((post) => ({ slug: post.slug }));
+  }
+
+  export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+    const post = await getPost(params.slug); // called for the FIRST request of a new slug; served from cache after
+    return <article>{post.title}</article>;
+  }
+`}
+</CodeBlock>
+
+With `dynamicParams: true`, a request for a slug that wasn't part of `generateStaticParams()`'s build-time list still
+gets handled — Next.js runs the page for that param on the very first request, exactly like an SSR request would,
+and then caches the result exactly like every other ISR page from that point on. Every subsequent request for that
+same slug is served from that cache, subject to the same `revalidate` window as everything else. Set
+`dynamicParams` to `false` instead, and a param outside the build-time list simply 404s — useful when "not in the
+list" should mean "doesn't exist" rather than "hasn't been generated yet."
+
+<Details summary="Why does the very first request for a new param feel slower than usual?">
+  Because, for that one request only, there's genuinely nothing to serve from cache — Next.js has to run the full
+  page render live, the same work an SSR request would do, before it has anything to cache at all. This is a
+  one-time cost per param, not a recurring one: the moment that first render finishes, the result is cached, and
+  every request after it (for that same param) is back to being served instantly, exactly like any other ISR page.
+</Details>
+
+<RainbowDivider />
+
+## Where Does This Cache Actually Live?
+
+It's tempting to picture "the ISR cache" as one universal mechanism, but that's the one place in this post worth
+being deliberately vague about specifics, because the honest answer is: **it depends on where you deploy.** On
+Vercel's own infrastructure, ISR is implemented with platform-specific integration between the framework and their
+edge network — the details of exactly how and where regenerated pages get persisted and distributed are part of that
+platform's own implementation. Self-hosting Next.js on a plain Node.js server is a genuinely different setup — there,
+the cache is typically written to disk on that server, which has real consequences: multiple server instances behind
+a load balancer without a shared cache layer, for instance, can each end up with their own independently-stale copy
+of a page, regenerating separately rather than sharing one source of truth. Other hosting platforms that support
+Next.js have their own adapters and their own answers to the same question.
+
+<Warning title="Don't assume one universal caching mechanism">
+  None of this is a reason to avoid ISR — it's a reason to actually read your hosting platform's documentation for
+  how it implements the Next.js cache before you rely on assumptions that only hold true on a different platform. A
+  behavior that's transparent and automatic on one host (say, a shared, distributed cache) can require deliberate
+  configuration — or simply behave differently — on another (say, per-instance disk caching with no built-in sharing
+  across replicas).
+</Warning>
+
+<RainbowDivider />
+
+## Common Mistakes
+
+- **Treating `revalidate: 60` like a guaranteed rebuild every 60 seconds.** It's a minimum staleness threshold, not
+  a scheduled job. A page that gets zero traffic during its revalidate window doesn't regenerate at the 60-second
+  mark — it stays exactly as it was until a request *actually arrives* after that window has elapsed, whether that's
+  one second later or one week later. No traffic means no trigger, for as long as that holds.
+- **Expecting the request that "notices" staleness to also receive the fresh content.** Covered at length above, but
+  worth repeating as a mistake in its own right: Request A (the one that arrives right after expiry) always gets the
+  old page. Only a later request, arriving after the background rebuild finishes, gets the new one.
+- **Reaching for a very short `revalidate` window to fake "instant" freshness.** Setting `revalidate: 1` (or worse)
+  to approximate real-time updates for content that actually changes on a handful of known, discrete events — a CMS
+  publish button, an admin toggling a feature flag — is polling dressed up as caching. It's both less accurate (a
+  visitor can still land in the gap between the change and the next poll) and more expensive (regenerating far more
+  often than the content actually changes) than just calling `revalidatePath()`/`revalidateTag()` from the event
+  itself. If you can name the exact moment content changes, invalidate at that moment — don't poll for it.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Default to a generous time-based `revalidate` window as a safety net**, and layer on-demand revalidation on top
+  for the specific events you can actually observe (a CMS webhook, a Server Action completing a mutation).
+- **Reach for `revalidateTag()` over enumerating paths by hand** whenever one underlying change legitimately affects
+  more than one rendered page — a category archive, a homepage list, and an RSS feed can all share one tag.
+- **Never use a near-zero `revalidate` window as a substitute for on-demand revalidation.** If you can name the
+  event that invalidates the content, call `revalidatePath()`/`revalidateTag()` from inside that event instead of
+  polling for it.
+- **Set `dynamicParams: false` deliberately, not by accident**, for routes where "not in the build-time list" should
+  mean the resource genuinely doesn't exist, rather than "hasn't been generated on demand yet."
+- **Read your hosting platform's own caching documentation before relying on a specific persistence mechanism** —
+  what's automatic and shared on one host can be per-instance and disk-based on another.
+- **Check your installed Next.js version's docs before relying on a specific fetch-caching default.** This is one of
+  the fastest-moving parts of the framework across major releases, and this post deliberately doesn't pin down a
+  number that's likely to have already changed by the time you're reading it.
+
+<RainbowDivider />
+
+## Browser Support
+
+This is server and build infrastructure, not a rendered-in-the-browser feature — there's no "does my visitor's
+browser support ISR" question to ask, because nothing about it runs client-side at all. The relevant compatibility
+question is really **platform and version support**: which Next.js versions expose which exact APIs (`revalidate`,
+`revalidatePath`, `revalidateTag`, `dynamicParams`, tag-based fetch caching), and which hosting platforms implement
+the underlying cache in a way that actually honors them. Both of those have moved meaningfully across major Next.js
+releases — this post has flagged the specific spots where that matters rather than asserting one fixed set of
+defaults; treat your installed version's own documentation, and your hosting platform's, as the source of truth.
+
+<RainbowDivider />
+
+## Interactive Playground
+
+None of ISR's actual mechanism — a server-side page cache, a real background rebuild — can run inside a browser
+sandbox; there's no Next.js build pipeline to host here. What the playground below simulates instead is the
+*decision logic*: a fake, user-controlled clock stands in for real wall-clock time, a configurable revalidate
+window decides whether a simulated request lands inside or outside it, and a real (if sped-up) timer stands in for
+the background rebuild actually finishing. Drag the clock past the window, press "Simulate a request arriving now,"
+and watch the exact stale-then-fresh sequence from this post's core diagram play out — then try "Trigger on-demand
+revalidation" to see how it sidesteps the clock entirely.
+
+<Sandbox slug="incremental-static-regeneration" defaultLayout="vertical" />
+
+**[The App Router Rendering Model](/post/react/app-router-rendering-model#caching-and-revalidation-conceptually)**
+touches on caching and revalidation as part of the bigger rendering picture — this post is the deep dive into
+exactly how that revalidation window behaves.
+
+<RainbowDivider />
+
+## Conclusion
+
+ISR isn't SSG with a timer bolted on, and it isn't SSR with a cache layered in front of it — it's a distinct third
+option, and the stale-while-revalidate behavior at its center is precise enough to state plainly: the first request
+after a revalidate window elapses is served the old page instantly and silently triggers a rebuild; the next request
+after that rebuild finishes is the first to receive the new one. On-demand revalidation exists for exactly the cases
+where waiting for a window to elapse is the wrong model in the first place — content that changes on a known event,
+not a predictable clock.
+
+What this post has been careful *not* to do is hand you one fixed table of exact caching defaults to memorize.
+Next.js's caching model has shifted meaningfully across major versions, and where this one actually gets deployed
+changes what "the cache" even physically is. The mental model — a page can be stale-but-served, a rebuild can be
+triggered by time or by an explicit call, and more than one cache layer can be involved at once — is the part that's
+durable. The exact numbers and mechanisms underneath it are the part worth checking fresh, for your version and your
+host, before you ship a decision that depends on them.
