@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "light-dark-color-scheme",
+    title: "light-dark()",
+    description: "Toggle color-scheme on a panel and watch every light-dark() value re-resolve instantly — background, text, and border, from one declaration each.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "mastering-css-gradients",
     title: "CSS Gradients Playground",
     description: "Switch between linear, radial, conic, and repeating gradients, stack a live glassmorphism card, and preview all three animated gradient techniques from the post.",
