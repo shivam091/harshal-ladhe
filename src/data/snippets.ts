@@ -206,6 +206,23 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-08-05", change: "Initial publication with Full Jitter implementation." }
     ]
+  },
+  {
+    slug: "light-dark-color-scheme",
+    title: "One-Line Theme-Aware Colors with light-dark()",
+    excerpt: "A single declaration per color, resolved automatically for both light and dark mode.",
+    description: "The light-dark() CSS function collapses a light value and a dark value into one declaration, resolved by color-scheme — no duplicate custom properties, no @media (prefers-color-scheme) block per themed property.",
+    category: ["CSS"],
+    tags: ["css", "light-dark", "color-scheme", "dark-mode", "theming", "modern-css", "design-tokens"],
+    image: {
+      path: "/assets/img/goodies/snippets/light-dark-color-scheme/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "One-Line Theme-Aware Colors with light-dark() cover showing light and dark mode interfaces, CSS code, and automatic theme switching."
+    },
+    changelog: [
+      { date: "2026-09-08", change: "Initial publication." }
+    ]
   }
 ];
 
