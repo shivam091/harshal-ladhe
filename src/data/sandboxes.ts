@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-math-round-mod-rem",
+    title: "round() / mod() / rem() Playground",
+    description: "Snap a raw pixel value to a 20px grid with round(), then compare mod() and rem() on the same negative angle — one wraps to a positive result, the other keeps the original sign.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "minmax-fluid-grid-tracks",
     title: "Fluid Grid Tracks Playground",
     description: "Resize the frame to watch repeat(auto-fit, minmax()) reflow its column count on its own, then drop to 2 cards to see auto-fit collapse empty tracks while auto-fill keeps reserving space for them.",

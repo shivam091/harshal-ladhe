@@ -1,0 +1,82 @@
+.control-group + .control-group {
+  margin-top: 4px;
+}
+
+.track {
+  position: relative;
+  width: 200px;
+  max-width: 100%;
+  height: 40px;
+  margin-top: 14px;
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.raw-marker {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+  opacity: 0.6;
+}
+
+/* The rounded value, drawn as a filled block from 0 up to round()'s snapped result. */
+.snapped-block {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: color-mix(in oklch, var(--pg-primary) 55%, transparent);
+  transition: width 0.05s linear;
+}
+
+.dial-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-top: 14px;
+}
+
+.dial {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+}
+
+.needle {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  width: 3px;
+  border-radius: 2px;
+  transform-origin: bottom center;
+  translate: -50% 0;
+  rotate: 0deg;
+}
+
+/* mod(): always wraps to a positive 0-360 result, so this needle only ever points "forward". */
+.needle-mod {
+  height: 36px;
+  background: var(--pg-primary);
+}
+
+/* rem(): keeps the sign of the original value, so on a negative input it points the OTHER way. */
+.needle-rem {
+  height: 26px;
+  background: #ffa94d;
+  opacity: 0.85;
+}
+
+.dial-readout {
+  margin: 0;
+  font-family: var(--pg-mono);
+  font-size: 0.8rem;
+  color: var(--pg-text-muted);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}

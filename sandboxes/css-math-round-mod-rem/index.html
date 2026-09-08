@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>round() / mod() / rem() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>round() / mod() / rem() Playground</h1>
+        <p>Drag a value and watch it snap, wrap, or leave a signed remainder — computed live in CSS, no JavaScript math.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend><code>round(up, A, 20px)</code> — snap to a 20px grid</legend>
+        <div class="field">
+          <label for="round-input">Raw value <span id="round-label">37px</span></label>
+          <div class="range-row">
+            <span class="range-edge">0px</span>
+            <div class="range-track">
+              <input type="range" id="round-input" min="0" max="200" step="1" value="37">
+              <output class="range-bubble" id="round-value" for="round-input">37px</output>
+            </div>
+            <span class="range-edge">200px</span>
+          </div>
+        </div>
+        <div class="track" id="round-track">
+          <div class="raw-marker" id="round-raw-marker"></div>
+          <div class="snapped-block" id="round-block"></div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend><code>mod(A, 360deg)</code> vs <code>rem(A, 360deg)</code> — wrapping a negative angle</legend>
+        <div class="field">
+          <label for="mod-input">Raw angle <span id="mod-label">400deg</span></label>
+          <div class="range-row">
+            <span class="range-edge">-400deg</span>
+            <div class="range-track">
+              <input type="range" id="mod-input" min="-400" max="800" step="1" value="400">
+              <output class="range-bubble" id="mod-value" for="mod-input">400deg</output>
+            </div>
+            <span class="range-edge">800deg</span>
+          </div>
+        </div>
+        <div class="dial-row">
+          <div class="dial" id="mod-dial">
+            <div class="needle needle-mod" id="mod-needle"></div>
+            <div class="needle needle-rem" id="rem-needle"></div>
+          </div>
+          <p class="dial-readout" id="mod-readout"></p>
+        </div>
+      </fieldset>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

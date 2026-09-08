@@ -307,6 +307,21 @@ export const snippets: Snippet[] = [
     },
     changelog: [{ date: "2026-09-08", change: "Initial publication." }]
   },
+  {
+    slug: "css-math-round-mod-rem",
+    title: "round(), mod(), and rem() — CSS's Other Math Functions",
+    excerpt: "Snapping to a grid and wrapping an angle, both computed live in CSS instead of JavaScript.",
+    description: "round() snaps a value to a step interval (up, down, or to the nearest), while mod() and rem() both compute a division remainder but differ on negative input — mod() always returns a result with the same sign as the divisor (useful for wrapping an angle into 0-360), while rem() preserves the original value's sign instead.",
+    category: ["CSS"],
+    tags: ["css", "round", "mod", "rem", "css-functions", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/css-math-round-mod-rem/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A value snapping to a 20px grid via round(), next to a dial comparing mod() and rem() wrapping the same negative angle in opposite directions."
+    },
+    changelog: [{ date: "2026-09-08", change: "Initial publication." }]
+  },
 ];
 
 // Look up a single snippet by its slug.

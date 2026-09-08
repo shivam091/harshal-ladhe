@@ -1,0 +1,95 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-math-round-mod-rem");
+
+## Introduction
+
+"Snap this value to a grid" and "wrap this value back into range" are both ordinary math — `Math.round()` and the `%` operator handle them without a second thought in JavaScript. CSS spent years without either: rounding a length or wrapping an angle meant reaching for a `<script>` tag for what was, underneath, simple arithmetic.
+
+[**`round()`**, **`mod()`**, and **`rem()`**](https://developer.mozilla.org/en-US/docs/Web/CSS/round) bring that arithmetic natively into CSS — usable directly in a property value or nested inside `calc()`, right alongside the `min()`/`max()`/`clamp()` family.
+
+<RainbowDivider />
+
+## round(): Snapping to a Step
+
+<CodeBlock language="css">
+{`
+  round(<strategy>, A, B)
+  /*        ^one of: nearest | up | down | to-zero */
+`}
+</CodeBlock>
+
+Rounds `A` to the nearest multiple of `B`, using whichever strategy is given:
+
+<CodeBlock language="css">
+{`
+  round(nearest, 37px, 20px); /* -> 40px  (37 is closer to 40 than to 20) */
+  round(up, 37px, 20px);      /* -> 40px  (always rounds toward +infinity) */
+  round(down, 37px, 20px);    /* -> 20px  (always rounds toward -infinity) */
+  round(to-zero, 37px, 20px); /* -> 20px  (always rounds toward zero) */
+`}
+</CodeBlock>
+
+Omitting the strategy defaults to `nearest`. The practical use is snapping a computed value to a meaningful step — a spacing scale, a grid, a fixed set of allowed sizes — without hand-picking which multiple is closest.
+
+<RainbowDivider />
+
+## mod() and rem(): Two Remainders, One Difference
+
+Both compute "the remainder of A divided by B" — they only disagree about the sign of that remainder when `A` is negative:
+
+<CodeBlock language="css">
+{`
+  mod(-30deg, 360deg); /* -> 330deg  (sign always matches the DIVISOR, so it always wraps positive here) */
+  rem(-30deg, 360deg); /* -> -30deg  (sign always matches A instead, so it stays negative) */
+`}
+</CodeBlock>
+
+`mod()` is the one that behaves like a wraparound — feed it any angle, positive or wildly negative, and it always comes back in a clean `0deg`-`360deg` range. `rem()` is closer to how many languages' native `%` operator behaves: useful when the sign of the original value needs to survive the operation, not just its magnitude.
+
+<RainbowDivider />
+
+## Try It Live
+
+The `round()` demo snaps a raw pixel value to a 20px grid. The `mod()`/`rem()` dial feeds the *same* negative angle to both — watch the two needles point in opposite directions.
+
+<Sandbox slug="css-math-round-mod-rem" readOnly />
+
+<RainbowDivider />
+
+## Practical Use: Wrapping a Hue or an Index
+
+<CodeBlock language="css">
+{`
+  .chip {
+    --hue: mod(var(--seed) * 47, 360); /* always a valid hue, no matter how large --seed gets */
+    background: hsl(var(--hue) 70% 55%);
+  }
+`}
+</CodeBlock>
+
+Anything that cycles — a hue wheel, a rotation, an index into a fixed-size palette — tends to involve "some arbitrary number, wrapped into a valid range." `mod()` does exactly that in one step, in CSS, without a JavaScript modulo pass over the data first.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Snapping a fluid or computed size to a design system's spacing/grid step with `round()`
+- Wrapping an angle, hue, or cyclic index into a valid range with `mod()`
+- Any calculation where a division remainder needs to keep the *original* value's sign — `rem()`
+- Replacing a small JavaScript helper that existed purely to round or wrap a CSS custom property before use
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`mod()` and `rem()` only differ when the two arguments have different signs.** For same-sign inputs, they return identical results — the distinction only matters once negative values enter the picture, which is precisely the "wrapping" use case.
+* **These compose with `calc()` and with `min()`/`max()`/`clamp()`,** since all of CSS's math functions are just expressions that resolve to a `<number>`/`<length>`/`<angle>` — nesting `round()` inside a `clamp()`'s preferred value, for instance, is valid.
+* **`round()`'s two arguments must be the same type** — rounding a `<length>` to a `<length>` step, an `<angle>` to an `<angle>` step, and so on; there's no implicit unit conversion between them.
+* **Browser support is more recent than most of CSS's other math functions** (Chrome/Edge 112+, Firefox 118+, Safari 17.4+ as of this writing) — check the target matrix before relying on these for anything load-bearing, and have a plain `calc()` fallback path for older engines.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`round()`, `mod()`, and `rem()` move "snap this to a step" and "wrap this into range" out of a small JavaScript helper and into the same declarative layer that already handles `min()`/`max()`/`clamp()` — see [min(), max(), and clamp()](/snippet/min-max-clamp-functions) for that half of CSS's math-function family. Reach for `round()` any time a value needs to land on a fixed step, and `mod()` any time it needs to wrap.
