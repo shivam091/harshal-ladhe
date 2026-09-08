@@ -1,0 +1,61 @@
+#width-field {
+  margin-top: -4px;
+}
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.frame {
+  width: 360px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px dashed var(--pg-border);
+  transition: width 0.05s linear;
+}
+
+.media-label {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  color: var(--pg-text-muted);
+}
+
+.media-label code {
+  font-family: var(--pg-mono);
+  color: var(--pg-text);
+}
+
+.media-box {
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--pg-surface-muted);
+}
+
+.media-box img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Keeps its 16:9 shape at ANY width — height is derived, never hardcoded. */
+.ratio-box {
+  aspect-ratio: 16 / 9;
+}
+
+.ratio-box img {
+  object-fit: cover;
+}
+
+/* The old approach: a hardcoded height that never adapts to the box's actual width. */
+.fixed-box {
+  height: 160px;
+}
+
+.fixed-box img {
+  object-fit: fill;
+}

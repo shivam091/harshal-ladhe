@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "aspect-ratio-fluid-media",
+    title: "aspect-ratio Playground",
+    description: "Resize the frame to compare an aspect-ratio: 16/9 box (always correct proportions) against an old fixed-height box (image stretches as the width changes).",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "dynamic-viewport-units",
     title: "Dynamic Viewport Units Playground",
     description: "Toggle a simulated mobile address bar to see lvh and svh stay constant while dvh alone tracks the actual visible height live.",

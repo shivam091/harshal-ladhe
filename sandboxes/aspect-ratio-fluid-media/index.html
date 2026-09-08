@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>aspect-ratio Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>aspect-ratio vs. Fixed Height</h1>
+        <p>Drag the width slider — the <code>aspect-ratio</code> box keeps its 16 / 9 shape at every width, while the fixed-height box either distorts its image or leaves it letterboxed.</p>
+      </header>
+
+      <div class="field" id="width-field">
+        <label for="width-input">Frame width <span id="width-label">360px</span></label>
+        <div class="range-row">
+          <span class="range-edge">200px</span>
+          <div class="range-track">
+            <input type="range" id="width-input" min="200" max="560" step="1" value="360">
+            <output class="range-bubble" id="width-value" for="width-input">360px</output>
+          </div>
+          <span class="range-edge">560px</span>
+        </div>
+      </div>
+
+      <section class="demo-area" aria-label="aspect-ratio comparison">
+        <div class="frame" id="frame">
+          <div class="media-block">
+            <p class="media-label"><code>aspect-ratio: 16 / 9</code> + <code>object-fit: cover</code></p>
+            <div class="media-box ratio-box">
+              <img src="landscape.svg" alt="Sample landscape graphic" />
+            </div>
+          </div>
+
+          <div class="media-block">
+            <p class="media-label"><code>height: 160px</code> (fixed) + <code>object-fit: fill</code></p>
+            <div class="media-box fixed-box">
+              <img src="landscape.svg" alt="Sample landscape graphic, stretched" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

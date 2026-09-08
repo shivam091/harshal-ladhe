@@ -277,6 +277,21 @@ export const snippets: Snippet[] = [
     },
     changelog: [{ date: "2026-09-08", change: "Initial publication." }]
   },
+  {
+    slug: "aspect-ratio-fluid-media",
+    title: "Fluid, Distortion-Free Media with aspect-ratio",
+    excerpt: "One property keeps images and embeds in-proportion at any width — no padding-hack required.",
+    description: "The aspect-ratio property reserves a shape (16/9, 1/1, 4/3) for an element and lets the browser derive its height from whatever width it actually ends up at, replacing the old 'padding-top percentage hack' for keeping images, iframes, and video embeds distortion-free as their container resizes.",
+    category: ["CSS"],
+    tags: ["css", "aspect-ratio", "responsive-design", "images", "object-fit", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/aspect-ratio-fluid-media/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "An image keeping its 16 by 9 proportions across several container widths next to the same image stretched by a fixed-height box."
+    },
+    changelog: [{ date: "2026-09-08", change: "Initial publication." }]
+  },
 ];
 
 // Look up a single snippet by its slug.

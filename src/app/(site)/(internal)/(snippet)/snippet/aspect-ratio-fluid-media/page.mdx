@@ -1,0 +1,93 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("aspect-ratio-fluid-media");
+
+## Introduction
+
+An `<img>` or `<iframe>` embed with no explicit height only knows its own size once it finishes loading — before that, the browser has nothing to reserve space with, so the rest of the page jumps down the moment it loads in. The old fix was the "padding-top percentage hack": wrap the media in a box, give the wrapper `padding-top: 56.25%` (the percentage of *width* that produces a 16:9 height), and absolutely-position the media to fill it. It works, but the percentage math has to be hand-computed for every ratio, and the markup needs an extra wrapper div purely to hold that trick.
+
+**`aspect-ratio`** replaces the whole hack with one property: tell the browser the shape you want, and it reserves the correct height from whatever width the element actually ends up at — fluidly, at every width, with no wrapper and no percentage math.
+
+<RainbowDivider />
+
+## The Core Property
+
+<CodeBlock language="css">
+{`
+  img {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* height is now DERIVED from width, whatever width turns out to be */
+  }
+`}
+</CodeBlock>
+
+Reads as "keep this box 16 units wide for every 9 units tall." Given a `width` (or a `width` that resolves from a fluid layout — a percentage, a `clamp()`, a grid track), the browser computes the matching `height` itself. Change the available width at any breakpoint, on any container, at any time — the shape never breaks.
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag the width slider — the `aspect-ratio` box keeps its 16:9 shape at every width; the fixed-height box next to it doesn't know its own width changed at all, so its image stretches to fit the mismatch.
+
+<Sandbox slug="aspect-ratio-fluid-media" readOnly />
+
+<RainbowDivider />
+
+## Pairing with `object-fit`
+
+`aspect-ratio` decides the *box's* shape; `object-fit` decides how the actual image/video fills that box once the shape no longer matches the media's native proportions:
+
+<CodeBlock language="css">
+{`
+  .thumbnail {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;    /* crops to fill the square, keeping the image's own proportions   */
+    /* object-fit: contain would letterbox it instead, keeping the whole image visible        */
+    /* object-fit: fill (the default) stretches/squashes it to match — usually NOT what you want */
+  }
+`}
+</CodeBlock>
+
+`cover` is almost always the right choice for photographic content forced into a shape it wasn't shot in — a square avatar crop, a 16:9 card thumbnail from an arbitrary source image. `contain` trades cropping for guaranteed-visible-in-full, at the cost of empty space (letterboxing) on the mismatched axis.
+
+<RainbowDivider />
+
+## Reserving Space Before the Media Loads
+
+Because `aspect-ratio` only needs a `width` to compute a `height` — not the media's actual dimensions — it reserves the correct box *before the image has loaded at all*, which is exactly what eliminates the layout-shift jump:
+
+<CodeBlock language="css">
+{`
+  iframe.embed {
+    width: 100%;
+    aspect-ratio: 16 / 9; /* space is reserved immediately, no jump once the embed's content arrives */
+    border: 0;
+  }
+`}
+</CodeBlock>
+
+This applies to anything whose real size isn't known upfront — video embeds, ads, lazy-loaded images — not just `<img>` tags.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any image/video/iframe embed that currently causes a layout jump while it loads
+- Replacing the padding-top-percentage hack anywhere it still exists in the codebase
+- Thumbnail grids that need every card's media to be the exact same shape regardless of source image proportions (pair with `object-fit: cover`)
+- Placeholder/skeleton boxes that need to reserve the correct shape before real content is ready
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **An explicit `width`/`height` attribute on an `<img>` tag already gives the browser an aspect ratio for free** — modern browsers compute one from the attributes automatically before CSS even loads. `aspect-ratio` in CSS is still worth setting explicitly when the ratio needs to differ from the image's native one (forcing a non-native crop via `object-fit: cover`), or for elements that don't have natural width/height attributes at all, like `<iframe>` or a plain `<div>`.
+* **If both `aspect-ratio` and an explicit `height` are set, `height` wins** — `aspect-ratio` only fills in whichever dimension is otherwise unconstrained. Setting both a fixed height and an `aspect-ratio` on the same element is usually a sign one of them shouldn't be there.
+* **`object-fit` does nothing without a box shape to fit into.** It only affects replaced elements (`img`, `video`, `iframe`-like elements) and only becomes visually meaningful once the box's own size (via `aspect-ratio`, a fixed height, or anything else) no longer matches the media's native proportions.
+* **Browser support is universal at this point** for `aspect-ratio` (Chrome/Edge 88+, Firefox 89+, Safari 15+) — there's no remaining reason to reach for the padding-hack in new code.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`aspect-ratio` turns "compute a percentage, wrap the media in an extra div, absolutely position it inside" into one declaration that stays correct at every width automatically. Paired with `object-fit: cover`, it's also the fix for "force this arbitrary image into a fixed shape without distorting it" — two problems that used to need separate hacks, now both one property each.
