@@ -30,6 +30,13 @@ export const sandboxes: SandboxMeta[] = [
     entry: "/index.html",
   },
   {
+    slug: "fluid-typography-and-spacing",
+    title: "Fluid Type & Spacing with clamp()",
+    description: "Drag the width slider to resize the frame like a viewport, and flip between Fluid and Stepped mode to see clamp()'s smooth scaling next to fixed-breakpoint jumps for the same heading, body text, padding, and gap.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "light-dark-color-scheme",
     title: "light-dark()",
     description: "Toggle color-scheme on a panel and watch every light-dark() value re-resolve instantly — background, text, and border, from one declaration each.",
