@@ -1,0 +1,124 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("light-dark-color-scheme");
+
+## Introduction
+
+Theming a color for both light and dark mode has usually meant one of two things: a `@media (prefers-color-scheme: dark)` block redeclaring every color property, or a full set of duplicate custom properties (`--bg-light` / `--bg-dark`) swapped via a class toggle. Both work. Both also mean every themed color exists twice in your stylesheet.
+
+**`light-dark()`** collapses that down to one declaration: give it a light value and a dark value, and it resolves to whichever one is active — reactively, with zero duplication.
+
+<RainbowDivider />
+
+## The Core Function
+
+<CodeBlock language="css">
+{`
+  :root {
+    color-scheme: light dark; /* opt in: let this element resolve BOTH schemes */
+  }
+
+  .card {
+    background: light-dark(white, #1a1a1a);
+    color: light-dark(#111, #eee);
+    border: 1px solid light-dark(#ddd, #333);
+  }
+`}
+</CodeBlock>
+
+Two things have to be true for `light-dark()` to resolve at all: the `color-scheme` property has to include both `light` and `dark` somewhere in the cascade reaching that element (declaring intent to support both), and the *actual* active scheme is then decided by whatever normally decides `color-scheme` — the user's OS/browser preference by default, or an explicit `color-scheme: light` / `color-scheme: dark` override anywhere between that element and the root.
+
+<RainbowDivider />
+
+## Try It Live
+
+Two panels, same three `light-dark()` declarations, two different ways of driving `color-scheme`. **Automatic** is just `color-scheme: light dark` and nothing else — no button, no JS — so it's genuinely following your browser/OS dark-mode preference right now; switch your system theme and it re-resolves entirely on its own. **Manual Override** starts forced light regardless of your system setting, and only the button ever changes its `color-scheme` — the same mechanism a real "force dark mode for this widget" toggle would use.
+
+<Sandbox slug="light-dark-color-scheme" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Per-Element Overrides
+
+`color-scheme` isn't limited to `:root` — setting it on any element scopes the resolution of every `light-dark()` value inside it, which is exactly what the Manual Override panel above does:
+
+<CodeBlock language="css">
+{`
+  :root {
+    color-scheme: light dark; /* page follows the user's OS preference by default */
+  }
+
+  .always-dark-sidebar {
+    color-scheme: dark; /* this subtree always resolves light-dark() as dark, regardless of OS setting */
+  }
+`}
+</CodeBlock>
+
+This is exactly how a "force dark mode for this one widget" or a manual light/dark toggle button works — you're not switching custom properties, you're changing which branch of every `light-dark()` call in that subtree is active.
+
+<RainbowDivider />
+
+## Comparison with the Old Approaches
+
+<CodeBlock language="css">
+{`
+  /* Before: @media, one full redeclaration per themed property */
+  .card {
+    background: white;
+    color: #111;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .card {
+      background: #1a1a1a;
+      color: #eee;
+    }
+  }
+
+  /* Before: duplicate custom properties + a class toggle */
+  :root {
+    --bg: white;
+    --fg: #111;
+  }
+
+  .dark-mode {
+    --bg: #1a1a1a;
+    --fg: #eee;
+  }
+
+  .card {
+    background: var(--bg);
+    color: var(--fg);
+  }
+
+  /* Now: one line per property, no duplication, no toggle class needed */
+  .card {
+    background: light-dark(white, #1a1a1a);
+    color: light-dark(#111, #eee);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Design tokens/component libraries where every color needs a light and dark variant
+- Small widgets that should always respect the user's OS scheme without a manual toggle
+- Quickly retrofitting dark mode onto an existing light-only stylesheet, one property at a time
+- Any color declaration currently duplicated across a `@media (prefers-color-scheme: dark)` block
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`color-scheme: light dark` (both) is required to actually use both branches** — setting only `color-scheme: light` makes every `light-dark()` in that scope always resolve to its light value, regardless of OS preference. This is a common early mistake: forgetting `dark` in the declaration and wondering why dark mode never kicks in.
+* **This doesn't replace `@media (prefers-color-scheme: dark)` entirely** — `light-dark()` only helps with *color values*. Structural changes (different layout, different images, different `display` values) still need the media query.
+* **It also affects native UI elements.** `color-scheme` doesn't just gate `light-dark()` — it also tells the browser to render scrollbars, form controls, and other native chrome in the matching scheme, which happens automatically as a side effect of setting it.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 123+, Firefox 120+, Safari 17.5+) as of this writing — check your target matrix, and keep a `@supports not (background: light-dark(white, black))` fallback if older browsers matter.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`light-dark()` turns "every themed color needs a light value and a dark value maintained in two places" into "every themed color needs a light value and a dark value in the same declaration." Reach for it any time dark mode support means duplicating color rules across a media query.
