@@ -231,7 +231,22 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
-  }
+  },
+  {
+    slug: "min-max-clamp-functions",
+    title: "min(), max(), and clamp() — CSS's Value-Bounding Functions",
+    excerpt: "Three comparison functions that pick a value from a rule, without a single media query.",
+    description: "min(), max(), and clamp() pick the smallest, largest, or a bounded value from a list of CSS expressions at the point of use, replacing media-query-driven overrides for readable measures, safe-area-aware insets, and bounded widths with one declaration each.",
+    category: ["CSS"],
+    tags: ["css", "clamp", "min-max", "responsive-design", "css-functions", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/min-max-clamp-functions/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Three boxes demonstrating min(), max(), and clamp() resolving to different widths and padding as a container is resized."
+    },
+    changelog: [{ date: "2026-09-08", change: "Initial publication." }]
+  },
 ];
 
 // Look up a single snippet by its slug.

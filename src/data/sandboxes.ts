@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "min-max-clamp-functions",
+    title: "min() / max() / clamp() Playground",
+    description: "Resize the frame and watch three common patterns resolve differently, live: a min(90%, 60ch) readable measure, a max(1rem, 4%) safe inset, and a clamp(200px, 50%, 500px) bounded card width.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "light-dark-color-scheme",
     title: "light-dark()",
     description: "Toggle color-scheme on a panel and watch every light-dark() value re-resolve instantly — background, text, and border, from one declaration each.",
