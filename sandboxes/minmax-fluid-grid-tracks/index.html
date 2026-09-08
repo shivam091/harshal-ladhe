@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluid Grid Tracks Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>repeat(auto-fit, minmax())</h1>
+        <p>Resize the frame — the grid reflows its column count on its own, no breakpoint set anywhere. Switch to <strong>auto-fill</strong> with only 2 cards to see the difference from <strong>auto-fit</strong>.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Repeat mode</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Repeat mode">
+          <label class="segment">
+            <input type="radio" name="repeat-mode" value="auto-fit" checked>
+            <span>auto-fit</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="repeat-mode" value="auto-fill">
+            <span>auto-fill</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="field" id="width-field">
+        <label for="width-input">Frame width <span id="width-label">640px</span></label>
+        <div class="range-row">
+          <span class="range-edge">200px</span>
+          <div class="range-track">
+            <input type="range" id="width-input" min="200" max="900" step="1" value="640">
+            <output class="range-bubble" id="width-value" for="width-input">640px</output>
+          </div>
+          <span class="range-edge">900px</span>
+        </div>
+      </div>
+
+      <label class="checkbox-field" for="fewer-cards-toggle">
+        <input type="checkbox" id="fewer-cards-toggle">
+        <span>Only 2 cards (highlights auto-fit vs auto-fill)</span>
+      </label>
+
+      <section class="demo-area" aria-label="Fluid grid preview">
+        <div class="frame" id="frame">
+          <div class="grid" id="grid">
+            <div class="card">1</div>
+            <div class="card">2</div>
+            <div class="card">3</div>
+            <div class="card">4</div>
+            <div class="card">5</div>
+            <div class="card">6</div>
+          </div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

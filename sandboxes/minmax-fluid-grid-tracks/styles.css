@@ -1,0 +1,63 @@
+#width-field {
+  margin-top: -4px;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--pg-text);
+  cursor: pointer;
+}
+
+.checkbox-field input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.frame {
+  width: 640px;
+  max-width: 100%;
+  padding: 16px;
+  border: 1px dashed var(--pg-border);
+  transition: width 0.05s linear;
+}
+
+/*
+  The whole point: ONE declaration reflows the column count for any frame width, with no
+  per-breakpoint @media rule deciding "3 columns here, 2 there, 1 below that."
+*/
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.grid.mode-auto-fill {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pg-primary);
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+  border-radius: 8px;
+}
+
+.card.hidden-card {
+  display: none;
+}

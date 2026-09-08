@@ -292,6 +292,21 @@ export const snippets: Snippet[] = [
     },
     changelog: [{ date: "2026-09-08", change: "Initial publication." }]
   },
+  {
+    slug: "minmax-fluid-grid-tracks",
+    title: "Fluid Grid Columns with repeat(auto-fit, minmax())",
+    excerpt: "One grid-template-columns declaration replaces a column-count media-query ladder.",
+    description: "repeat(auto-fit, minmax(min, 1fr)) lets the browser decide how many grid columns fit at the current width and stretch them to fill it, replacing a per-breakpoint 'N columns on mobile, M on tablet, K on desktop' media-query ladder with a single declaration — and auto-fit vs. auto-fill controls what happens to the leftover space when there aren't enough items to fill every track.",
+    category: ["CSS"],
+    tags: ["css", "css-grid", "minmax", "auto-fit", "responsive-design", "css-functions"],
+    image: {
+      path: "/assets/img/goodies/snippets/minmax-fluid-grid-tracks/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A card grid reflowing its column count smoothly as its container narrows, using repeat(auto-fit, minmax()) instead of media-query breakpoints."
+    },
+    changelog: [{ date: "2026-09-08", change: "Initial publication." }]
+  },
 ];
 
 // Look up a single snippet by its slug.

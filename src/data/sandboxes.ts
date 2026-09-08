@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "minmax-fluid-grid-tracks",
+    title: "Fluid Grid Tracks Playground",
+    description: "Resize the frame to watch repeat(auto-fit, minmax()) reflow its column count on its own, then drop to 2 cards to see auto-fit collapse empty tracks while auto-fill keeps reserving space for them.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "aspect-ratio-fluid-media",
     title: "aspect-ratio Playground",
     description: "Resize the frame to compare an aspect-ratio: 16/9 box (always correct proportions) against an old fixed-height box (image stretches as the width changes).",

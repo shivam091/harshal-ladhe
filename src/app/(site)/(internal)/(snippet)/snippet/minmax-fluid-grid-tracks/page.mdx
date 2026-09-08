@@ -1,0 +1,90 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("minmax-fluid-grid-tracks");
+
+## Introduction
+
+A card grid usually needs a different column count at different widths — three columns on desktop, two on tablet, one on mobile. The traditional way to get there is deciding those three numbers up front and hardcoding each one behind a `@media` breakpoint:
+
+<CodeBlock language="css">
+{`
+  .grid { grid-template-columns: repeat(1, 1fr); }
+  @media (min-width: 640px)  { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+`}
+</CodeBlock>
+
+This works until the grid ends up somewhere those three breakpoints weren't designed for — a sidebar, a modal, a narrower content column — where the hardcoded column count stops making sense for the space actually available.
+
+**`repeat(auto-fit, minmax())`** replaces the breakpoint ladder with a rule instead of a lookup table: give each column a minimum width, and let the browser decide how many of them fit.
+
+<Info title="Don't confuse this minmax() with the min()/max() functions">
+`minmax()` here is a **grid track-sizing function** — valid only inside `grid-template-columns`/`grid-template-rows`, defining one track's floor and ceiling. It's unrelated to the general-purpose `min()`/`max()`/`clamp()` value functions covered in [min(), max(), and clamp()](/snippet/min-max-clamp-functions), which work on any length/percentage anywhere in CSS. Same-sounding names, different jobs — one sizes a grid track, the others pick a value.
+</Info>
+
+<RainbowDivider />
+
+## The Core Pattern
+
+<CodeBlock language="css">
+{`
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+`}
+</CodeBlock>
+
+Reads in two parts. `minmax(200px, 1fr)` defines one column's shape: never narrower than 200px, otherwise share the remaining space equally (`1fr`) with its siblings. `repeat(auto-fit, ...)` then repeats that column definition as many times as currently fit, recalculating on every resize — no explicit number, no breakpoint.
+
+<RainbowDivider />
+
+## Try It Live
+
+Resize the frame and watch the column count change on its own. Then check "Only 2 cards" and flip between `auto-fit` and `auto-fill` — with fewer items than tracks, the two behave completely differently.
+
+<Sandbox slug="minmax-fluid-grid-tracks" readOnly />
+
+<RainbowDivider />
+
+## `auto-fit` vs. `auto-fill`
+
+Both compute the same number of tracks for a given width — they only disagree about what happens to a track once there's no item left to put in it:
+
+<CodeBlock language="css">
+{`
+  /* auto-fit: empty tracks COLLAPSE to zero width, so existing items stretch to fill the gap */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+  /* auto-fill: empty tracks stay reserved at their minmax() minimum, leaving visible empty space */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+`}
+</CodeBlock>
+
+With enough items to fill every available track, the two are indistinguishable. The difference only shows up the moment there's leftover space and too few items to use it — `auto-fit` gives that space to the items that exist; `auto-fill` holds it in reserve as if more items were coming.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Card grids, image galleries, or tag/chip lists that need to reflow at *any* width, not just three chosen breakpoints
+- Components reused in unpredictable contexts (sidebar, modal, main content) where a fixed column count can't account for every placement
+- Replacing a `@media`-driven column-count ladder with a single declaration
+- Choosing `auto-fit` when leftover items should stretch to fill the row, `auto-fill` when a fixed track width matters more than filling the space (e.g. a grid meant to visually align with a fixed-width sibling)
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The `minmax()` floor should account for the grid's `gap`.** A floor of exactly `200px` in a very tight space can occasionally compute a fractionally-overflowing track once `gap` is subtracted — sizing the floor a little under the "true" minimum comfortable width leaves headroom.
+* **`1fr` as the ceiling is what makes existing items stretch to fill leftover space.** Using a fixed pixel value instead (`minmax(200px, 240px)`) caps how wide a track can grow, which is useful when cards shouldn't get arbitrarily wide on an ultra-wide screen.
+* **This is unrelated to container queries.** `repeat(auto-fit, minmax())` reflows based on the grid's *own* available width in normal layout — no `container-type` needed, and it works even on a grid that isn't a query container at all.
+* **For the deeper mechanics of CSS Grid itself** — template areas, implicit tracks, alignment — see the fuller [Responsive CSS Grid Layouts](/post/css/responsive-css-grid-layouts) guide; this snippet is scoped specifically to the fluid-column pattern.
+* **Browser support is universal at this point** (Chrome/Edge 57+, Firefox 52+, Safari 10.1+ for Grid itself) — this has been safe to use for years.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`repeat(auto-fit, minmax())` turns "decide a column count per breakpoint" into "decide a minimum comfortable column width, once" — the browser handles the arithmetic of how many fit, at every width, including ones no breakpoint ever anticipated.
