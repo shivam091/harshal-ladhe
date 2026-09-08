@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Viewport Units Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Simulated Mobile Chrome</h1>
+        <p>Toggle the address bar to see how <code>lvh</code>, <code>svh</code>, and <code>dvh</code> each answer "how tall is the viewport?" differently. This mocks a phone's browser chrome — a real device does this automatically as you scroll.</p>
+      </header>
+
+      <button class="toggle-btn" id="chrome-toggle" type="button">Hide address bar</button>
+
+      <section class="demo-area" aria-label="Simulated phone viewport">
+        <div class="phone">
+          <div class="phone-screen" id="phone-screen">
+            <div class="unit-bar unit-lvh">
+              <span class="unit-name">lvh</span>
+              <span class="unit-px" id="lvh-px"></span>
+            </div>
+            <div class="unit-bar unit-svh">
+              <span class="unit-name">svh</span>
+              <span class="unit-px" id="svh-px"></span>
+            </div>
+            <div class="unit-bar unit-dvh" id="dvh-bar">
+              <span class="unit-name">dvh</span>
+              <span class="unit-px" id="dvh-px"></span>
+            </div>
+          </div>
+          <div class="phone-chrome" id="phone-chrome">address bar</div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

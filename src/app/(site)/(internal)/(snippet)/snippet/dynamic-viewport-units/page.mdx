@@ -1,0 +1,97 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("dynamic-viewport-units");
+
+## Introduction
+
+`height: 100vh` has a famous mobile bug: a full-height hero section renders taller than the screen, with its bottom edge hidden behind the browser's own address bar. The cause is a quirk of how `vh` was defined long before mobile browsers routinely hid and showed their UI on scroll — `100vh` has always meant the *largest* the viewport could possibly be, address bar retracted, even while the address bar is actually sitting on screen right now covering part of that height.
+
+CSS now has three separate viewport-height units instead of one, precisely because "how tall is the viewport" turned out to have three different useful answers on mobile.
+
+<RainbowDivider />
+
+## The Three Units
+
+<CodeBlock language="css">
+{`
+  height: 100lvh; /* Large viewport   — assumes browser UI is retracted (the OLD 100vh behavior) */
+  height: 100svh; /* Small viewport   — assumes browser UI is fully showing */
+  height: 100dvh; /* Dynamic viewport — tracks whichever is ACTUALLY true right now, live */
+`}
+</CodeBlock>
+
+`lvh` and `svh` are both *constants* for a given device — they represent the two fixed endpoints (UI hidden, UI showing) and never change based on what the browser chrome is actually doing at this instant. `dvh` is the only one of the three that's genuinely dynamic: it re-evaluates as the address bar shows or hides while scrolling, which is also why it comes with a real trade-off — see Production Considerations below.
+
+<Info title="Beginner's mental model">
+Think of a phone's screen height as having a floor and a ceiling: `svh` is the floor (UI fully showing, least space), `lvh` is the ceiling (UI hidden, most space). `dvh` is a needle that lives somewhere between the two and moves as the actual browser chrome changes — it equals `lvh` the moment the UI retracts, and drops toward `svh` the moment it reappears.
+</Info>
+
+<RainbowDivider />
+
+## Try It Live
+
+This demo mocks a phone's address bar with a toggle button, since there's no way to make a *real* mobile browser show/hide its UI inside an embedded preview. `lvh` and `svh` stay constant no matter what you click — only the `dvh` bar actually reacts.
+
+<Sandbox slug="dynamic-viewport-units" readOnly />
+
+<RainbowDivider />
+
+## The Classic Bug, Fixed
+
+<CodeBlock language="css">
+{`
+  /* Before: hero renders taller than what's actually visible until the address bar retracts */
+  .hero {
+    height: 100vh;
+  }
+
+  /* After: always matches the CURRENTLY visible height, address bar or not */
+  .hero {
+    height: 100dvh;
+  }
+`}
+</CodeBlock>
+
+This is the single most common reason to reach for `dvh`: any full-viewport section (a hero, a mobile modal, a fixed sidebar) that needs its actual, currently-visible height rather than an optimistic "if the address bar weren't there" height.
+
+<RainbowDivider />
+
+## Why `svh` Still Has a Use
+
+`dvh` sounds strictly better than `svh` — it's the "correct" one, so why would anything reach for a value that's pessimistically small? Because `dvh` recalculating on every scroll has a cost: layout that depends on it can visibly reflow while the address bar animates in or out, which is sometimes exactly the jank a fixed, non-reflowing layout wants to avoid:
+
+<CodeBlock language="css">
+{`
+  .full-bleed-lockup {
+    /* A cover image/logo lockup that should NEVER shift height mid-scroll, even at the cost of a
+       small permanent gap once the address bar retracts. */
+    height: 100svh;
+  }
+`}
+</CodeBlock>
+
+The choice between `dvh` and `svh` is really "should this element be allowed to resize as the user scrolls" — `dvh` for anything that should always fill the true visible area, `svh` for anything that should stay perfectly still.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any full-height mobile section (`100vh` hero, splash screen, fixed CTA bar) that currently gets cut off behind the address bar
+- Full-screen modals/sheets on mobile that need to match the actual visible viewport, not the optimistic maximum
+- Layouts that must *not* reflow while scrolling — reach for `svh` there instead of `dvh`
+- Any `100vh` in the codebase today is worth an audit — it's very rarely the unit that was actually intended
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`dvh` recalculates on every scroll-driven UI change**, which means anything sized or positioned from it can reflow mid-scroll. For content that must stay visually still, use `svh` (or `lvh`) instead, even though `dvh` is the "more correct" number.
+* **These units aren't limited to `height`.** `dvw`/`svw`/`lvw` are the width equivalents, and `vi`/`vb` variants exist for logical inline/block axes — the same large/small/dynamic distinction applies to all of them.
+* **Desktop browsers mostly don't show/hide chrome**, so `lvh`, `svh`, and `dvh` typically resolve identically there — this is overwhelmingly a mobile-Safari/mobile-Chrome concern, not a desktop one.
+* **Browser support is solid in every modern evergreen mobile browser** (Chrome/Edge 108+, Firefox 101+, Safari 15.4+) as of this writing — safe to adopt for the mobile-chrome problem specifically; keep a plain `100vh` fallback declared first for any browser old enough to not recognize `dvh` at all (an unsupported value is ignored, leaving the earlier declaration in effect).
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`100vh` was never wrong, exactly — it was just answering "how tall is the viewport at its largest," which mobile browsers made a poor default for "how tall is the screen right now." `dvh` answers the question most `100vh` usages actually meant to ask; `svh`/`lvh` stay useful whenever a layout specifically needs one of the two fixed endpoints instead of the live value.

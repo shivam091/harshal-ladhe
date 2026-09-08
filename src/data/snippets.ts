@@ -262,6 +262,21 @@ export const snippets: Snippet[] = [
     },
     changelog: [{ date: "2026-09-08", change: "Initial publication." }]
   },
+  {
+    slug: "dynamic-viewport-units",
+    title: "Dynamic Viewport Units: dvh, svh, and lvh",
+    excerpt: "The unit that actually tracks a mobile browser's address bar showing or hiding.",
+    description: "100vh has always meant the LARGEST possible viewport on mobile, so content sits behind the address bar until it's scrolled away. svh assumes the smallest viewport, lvh assumes the largest, and dvh is the only one of the three that tracks the browser chrome's actual current state, live.",
+    category: ["CSS"],
+    tags: ["css", "viewport-units", "dvh", "responsive-design", "mobile", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/dynamic-viewport-units/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A mobile browser's address bar showing and hiding, with lvh and svh bars staying fixed while a dvh bar resizes to match."
+    },
+    changelog: [{ date: "2026-09-08", change: "Initial publication." }]
+  },
 ];
 
 // Look up a single snippet by its slug.
