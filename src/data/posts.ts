@@ -311,6 +311,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-mastering-the-path-element",
+    title: "SVG Essentials: Mastering the Path Element",
+    excerpt: "Understand SVG paths, curves, and commands",
+    description: "A complete guide to the SVG path element — path commands, coordinates, bézier curves, arcs, compound paths and fill-rule, pathLength-based line-draw animation, CSS's path() function, stroke rendering, and the shorthand tricks behind exported path data.",
+    category: ["SVG"],
+    tags: ["svg", "path-data", "vector", "javascript", "icons", "frontend-development", "bezier-curves", "web-animation", "ui-design", "fill-rule", "stroke-dasharray", "stroke-dashoffset", "clip-path", "offset-path", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/svg/svg-essentials-mastering-the-path-element/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "SVG Essentials cover featuring a neon Bézier path, SVG code, path commands, curves, arcs, and a vector-design workspace with a laptop."
+    },
+    toc: { maxLevel: 4 },
+    signoff: "Getting ten interactive command demos, a full heart-shape decode, and the fill-rule, pathLength, and CSS path() sections to all click together took a fair share of iteration, and I hope it leaves you able to read — and write — a `d` string without flinching. Thanks for sticking with me through the whole alphabet of path commands — go draw something only you could have coded. ✏️",
+    changelog: [
+      { date: "2026-09-08", change: "Initial publication" }
+    ],
   }
 ];
 
