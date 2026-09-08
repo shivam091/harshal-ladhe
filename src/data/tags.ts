@@ -523,4 +523,24 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Reliability Engineering",
     description: "Techniques for building software that keeps working through partial failures and unpredictable conditions."
   },
+  "light-dark": {
+    title: "The CSS `light-dark()` Function",
+    description: "Using the CSS `light-dark()` function to declare light and dark colour values in a single line."
+  },
+  "color-scheme": {
+    title: "The CSS `color-scheme` Property",
+    description: "How `color-scheme` tells the browser which themes a page supports and unlocks theme-aware features like `light-dark()`."
+  },
+  "dark-mode": {
+    title: "Building Dark Mode on the Web",
+    description: "Approaches for adding dark mode to websites, from system-preference detection to theme-aware CSS colours."
+  },
+  "theming": {
+    title: "Theming Websites with CSS",
+    description: "Techniques for building switchable themes with custom properties, design tokens, and modern colour functions."
+  },
+  "design-tokens": {
+    title: "Working with Design Tokens",
+    description: "Using design tokens to keep colour, spacing, and typography consistent and easy to theme across a site."
+  },
 };
