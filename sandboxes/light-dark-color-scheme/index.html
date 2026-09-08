@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>light-dark() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>light-dark()</h1>
+        <p>One declaration per property — no duplicate variable sets, no media query.</p>
+      </header>
+
+      <section class="demo-block">
+        <p class="demo-label">Automatic — follows your system preference, no button, no JS</p>
+        <div class="panel" id="system-panel">
+          <h3>Automatic</h3>
+          <p>Background, text, and border all come from a single declaration each:</p>
+          <code>color-scheme: light dark;</code>
+        </div>
+      </section>
+
+      <section class="demo-block">
+        <p class="demo-label">Manual override — the same mechanism, applied explicitly</p>
+        <button id="toggle-btn" class="toggle-btn" type="button">Force dark scheme</button>
+        <div class="panel" id="override-panel">
+          <h3>Manual Override</h3>
+          <p>Ignores your system preference — only this button changes it:</p>
+          <code id="override-code">color-scheme: light;</code>
+        </div>
+      </section>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
