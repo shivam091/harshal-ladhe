@@ -260,6 +260,22 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Mastering the SVG viewBox and Scaling",
     description: "Learn how to use the viewBox attribute to define virtual coordinate grids (User Units) and create graphics that scale perfectly in any container."
   },
+  "path-data": {
+    title: "Mastering SVG Path Data: The 'd' Attribute",
+    description: "Detailed guides on decoding and writing SVG path data, from basic LineTo commands to complex Bézier curves and elliptical arcs."
+  },
+  "vector": {
+    title: "Working with Scalable Vector Graphics (SVG)",
+    description: "Principles of vector-based design for the web, focusing on resolution independence, mathematical paths, and sharp rendering at any scale."
+  },
+  "bezier-curves": {
+    title: "Understanding Bézier Curves in Web Graphics",
+    description: "A technical deep dive into Quadratic and Cubic Bézier curves, explaining the math and logic behind smooth, organic vector paths and animations."
+  },
+  "web-animation": {
+    title: "High-Performance Web Animation and Motion",
+    description: "Techniques for creating engaging web experiences using CSS transitions, @keyframes, and JavaScript-driven motion for SVG and UI elements."
+  },
   "javascript": {
     title: "JavaScript: The Full Guide to Modern Development Logic",
     description: "Comprehensive resources covering the entire JavaScript ecosystem, from foundational syntax and logic to advanced runtime execution and modern web patterns."
