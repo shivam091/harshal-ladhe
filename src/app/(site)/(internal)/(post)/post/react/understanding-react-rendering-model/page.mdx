@@ -1,0 +1,272 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("understanding-react-rendering-model");
+
+## Introduction
+
+Ask a room full of React developers "what happens when a component re-renders?" and you'll get answers that are all slightly wrong in the same direction: something about the DOM updating, maybe the screen flickering, maybe a re-paint. The unspoken assumption is that **render** and **the screen changing** are the same event. They aren't, and almost every confusing React behavior — a component re-rendering "for no reason," `useMemo` not helping, a `useEffect` firing in a surprising order relative to a DOM mutation, a list item's state landing on the wrong row after a reorder — traces back to not knowing exactly where React draws the line between "I called your component function" and "I touched the actual page."
+
+React actually splits the work into two phases with very different rules, plus a boundary event — the browser's paint — that sits between them:
+
+- **Render phase** — call your components, build a tree describing what the UI *should* look like. No DOM access, no side effects, can be paused or thrown away.
+- **Commit phase** — take the render phase's output and actually mutate the DOM to match it. Synchronous, side-effect-safe, ends with the browser painting.
+
+Everything downstream — `memo`, `useMemo`, `useCallback`, `useTransition`, `useDeferredValue`, why keys matter, why `useLayoutEffect` exists as a separate hook from `useEffect` — is a consequence of that split. This post walks through the split itself, then the mechanics built on top of it: reconciliation (how React decides *what* changed), bailing out (how React skips work it's already proven is unnecessary), and concurrent rendering (how the render phase's own rules make it safe to interrupt).
+
+<RainbowDivider />
+
+## The Render Phase: Calling Your Components
+
+Strip away everything else and a "render" is just this: React calls your function component and it returns some JSX. That JSX isn't HTML and it isn't the DOM — it's a plain tree of JavaScript objects, each one describing an element type, its props, and its children. `<div className="card">` becomes `{ type: "div", props: { className: "card" }, children: [...] }` — a description, not a page element.
+
+<CodeBlock language="tsx">
+{`
+function Greeting({ name }: { name: string }) {
+  // Calling this function IS the render. Nothing here touches the page.
+  return <p>Hello, {name}</p>;
+}
+`}
+</CodeBlock>
+
+Calling `Greeting({ name: "Ada" })` produces a JSX object graph. It doesn't matter whether that call happens once, five times, or not at all after being scheduled — no DOM node exists yet, so nothing on screen has changed, and nothing *needs* to be undone if React decides to discard the result.
+
+That last point matters more than it looks. Because rendering has no side effects — no reading layout, no mutating anything outside the function's own scope, no DOM writes — React is free to call a component speculatively, throw the result away, and call it again later without anything breaking. Section 8 goes into why that guarantee is the entire mechanism behind concurrent rendering, but the important thing to internalize now is: **a render happening does not mean anything visible happened.** The render phase can run, get discarded, and re-run, all before the user sees a single pixel change.
+
+<Info title="Rendering isn't recursive top-down execution">
+  React doesn't render your whole tree in one synchronous sweep the way a naive mental model suggests. It walks the tree calling components, but which components get called, in what order, and whether that work gets interrupted along the way is up to React's scheduler — see the concurrent rendering section below.
+</Info>
+
+<RainbowDivider />
+
+## What Actually Triggers a Render
+
+A component's function only gets called again for a small, specific set of reasons:
+
+1. **Its own state changes** — a `setState` call (or the equivalent from `useReducer`) that produces a new value.
+2. **Its parent re-renders** — every child inside a re-rendering component gets called again too, by default, regardless of whether that specific child's props changed.
+3. **A context value it consumes changes** — every component calling `useContext` for that context re-renders when the provider's value changes, independent of the normal parent → child render path.
+
+Notice what's *not* on that list: "its props changed" is not an independent trigger. This is the single most common inversion in how people describe React's behavior. Saying "my component re-rendered because its props changed" gets the causality backwards — a component's props only change as a *consequence* of its parent re-rendering with new values to pass down. The parent re-rendering is the trigger; the new props are just what the child receives once it's already been called.
+
+The distinction isn't pedantic — it explains real, confusing behavior. If `<Parent>` re-renders and passes `<Child prop="same value as before">`, `Child` still gets called again. Its prop value happens to be identical, but nothing in default React behavior checks that before deciding to render — it renders unconditionally because its parent rendered. The only way to change that default is to explicitly opt in with `memo`, which is exactly what section 7 covers.
+
+<Warning title="A parent re-rendering cascades to every child by default">
+  This is not a bug or an inefficiency to route around by default — most renders are cheap, and React is built assuming this is fine most of the time. It only becomes a real performance problem in specific, identifiable situations, covered in the pitfalls section near the end of this post.
+</Warning>
+
+<RainbowDivider />
+
+## Reconciliation: Diffing Two Trees
+
+Rendering produces a new JSX tree. Before React touches the DOM, it has to figure out what, if anything, actually needs to change — that comparison step is **reconciliation**: diffing the newly rendered tree against the tree from the previous render.
+
+React's diffing algorithm makes one foundational simplification: it never does a full, generic tree diff (which would be prohibively expensive at DOM scale). Instead, it compares trees level by level, and at each position it asks one question — **is the element at this position the same type as before?**
+
+- **Same type at the same position** → React reuses the existing DOM node and just updates its changed attributes.
+- **Different type at the same position** → React discards the old node (and everything inside it) and mounts an entirely new one from scratch.
+
+<CodeBlock language="tsx">
+{`
+// Before
+<div className="banner">Hello</div>
+
+// After — same type ("div"), same position: React keeps the DOM node,
+// updates just the className and text content.
+<div className="banner updated">Hello again</div>
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+// Before
+<div className="banner">Hello</div>
+
+// After — different type at the same position ("div" -> "span"): React
+// unmounts the entire <div> subtree (running cleanup, losing any state
+// inside it) and mounts a brand-new <span> subtree from scratch, even
+// though the visible text barely changed.
+<span className="banner">Hello</span>
+`}
+</CodeBlock>
+
+That second example is worth sitting with, because it explains a class of "why did my component's state reset?" bugs that have nothing to do with the component itself. Swap the wrapping element type — even conditionally, even just for one branch of a ternary — and every bit of local state, every `ref`, every effect's setup, inside that subtree is torn down and rebuilt, because as far as reconciliation is concerned, a `<div>` becoming a `<span>` at the same position isn't an update at all. It's an unmount followed by an unrelated mount.
+
+<RainbowDivider />
+
+## Keys and List Reconciliation
+
+Reconciliation's type-and-position rule runs into an ambiguity the moment you're rendering a list: position alone can't tell React which array item corresponds to which existing DOM node once the array's order changes. `key` is how you resolve that ambiguity — it gives each element a stable identity that reconciliation can track across renders independent of index.
+
+Here's the broken version, using the array index as the key — a default that looks harmless and quietly isn't:
+
+<CodeBlock language="tsx">
+{`
+function TodoList({ items }: { items: { id: string; text: string }[] }) {
+  return (
+    <ul>
+      {items.map((item, index) => (
+        // index as key: React has no way to tell "this is the same todo,
+        // just moved" from "this is a different todo that happens to be
+        // at the same position now."
+        <TodoRow key={index} text={item.text} />
+      ))}
+    </ul>
+  );
+}
+
+function TodoRow({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <li onClick={() => setExpanded((e) => !e)}>
+      {text} {expanded && "(expanded)"}
+    </li>
+  );
+}
+`}
+</CodeBlock>
+
+Expand the second row, then reorder or insert an item before it. The *text* moves correctly, because that comes fresh from `items` on every render — but `expanded` is local state living inside the `TodoRow` component instance at index `1`, and index `1` is exactly what the key stayed pinned to. React sees "same key at this position" and reuses the existing component instance, attaching its already-`expanded` state to whatever todo now happens to occupy that slot. The state didn't move with the row the user expanded — it stayed attached to the position, and a completely different todo now shows as expanded.
+
+The fix is a key drawn from the data's own stable identity — something that doesn't change when the array is reordered, filtered, or has items inserted into it:
+
+<CodeBlock language="tsx">
+{`
+{items.map((item) => (
+  // The todo's own id, not its position — this instance follows the todo
+  // wherever it ends up in the array.
+  <TodoRow key={item.id} text={item.text} />
+))}
+`}
+</CodeBlock>
+
+With a stable `id` as the key, reconciliation can correctly tell "this is the same todo, just moved" apart from "this is a new todo at this position," and each `TodoRow`'s local state — `expanded` included — follows its own todo through any reorder, insertion, or deletion.
+
+<Info title="When index-as-key is actually fine">
+  If the list is never reordered, filtered, or has items inserted/removed in the middle — a genuinely static list — index keys cause no observable problem, because position and identity never diverge. The moment any of those become possible, switch to a stable id.
+</Info>
+
+<RainbowDivider />
+
+## The Commit Phase: Touching the Real DOM
+
+Once reconciliation has decided exactly what changed, the **commit phase** is where React actually applies it: DOM nodes get inserted, removed, or have their attributes updated to match the new tree. Unlike the render phase, commit is synchronous and cannot be paused, interrupted, or abandoned partway through — once React starts committing, it runs to completion, because a half-applied DOM mutation is not a state anything should ever observe.
+
+The full sequence, in order, is one of the most commonly misremembered parts of React's model:
+
+1. **Commit** — React mutates the DOM: inserts, updates, removes nodes.
+2. **`useLayoutEffect` callbacks run** — synchronously, immediately after the DOM mutation, and critically, **before** the browser paints. This is the deliberate escape hatch for the rare case where you need to read the just-mutated DOM (measure an element, adjust scroll position) and apply a further change before the user ever sees the intermediate state.
+3. **Browser paints** — the updated DOM is finally rasterized and appears on screen. This is the actual "the screen updated" moment, and it is not the same moment as step 1.
+4. **`useEffect` callbacks run** — asynchronously, after paint. This is why `useEffect` is the right default for anything that isn't specifically about synchronizing with layout before the user sees it: data fetching, subscriptions, logging, anything that doesn't need to block paint.
+
+<RenderCommitDiagram />
+
+The ordering in that diagram is the answer to a specific, recurring confusion: "why did my `useEffect` run after the DOM already looks updated, but my `useLayoutEffect` version didn't cause a flicker?" `useLayoutEffect` runs before paint, so any DOM adjustment it makes is folded into the same paint the user eventually sees — no intermediate frame is ever shown. `useEffect` runs after paint, so if it makes a DOM change, the user genuinely sees the pre-effect state first, however briefly, then the update. Reach for `useLayoutEffect` only when that distinction actually matters (measuring layout, avoiding visible flicker); for everything else, `useEffect` is correct and doesn't block the browser from painting as soon as possible.
+
+<RainbowDivider />
+
+## Bailing Out of Re-renders: memo, useMemo, useCallback
+
+Section 3 established that a parent re-rendering calls every child by default, and that props changing isn't an independent trigger — the parent re-rendering is. `memo`, `useMemo`, and `useCallback` all exist to let you opt specific parts of that cascade out, but it's worth being precise about what they actually do: **none of them prevent a re-render from being possible.** They let React skip a render (or a recomputation) once it can *prove*, cheaply, that skipping it changes nothing — and that proof is always a reference-equality check.
+
+<CodeBlock language="tsx">
+{`
+const ExpensiveRow = memo(function ExpensiveRow({ item }: { item: Item }) {
+  // Only re-runs if \`item\` is a different reference from last render's \`item\`.
+  return <div>{item.label}</div>;
+});
+`}
+</CodeBlock>
+
+`memo` wraps a component and tells React: before calling this function again, compare its new props against last render's props with `Object.is` on each one; if every prop is reference-equal, skip the call entirely and reuse the previous output. That check is fast specifically *because* it's shallow reference equality, not a deep comparison — which is also exactly why it's so easy to accidentally defeat.
+
+<CodeBlock language="tsx">
+{`
+function Parent() {
+  const [tick, setTick] = useState(0);
+
+  // A new object literal, created fresh on every single render of Parent —
+  // even though its contents never change.
+  const style = { color: "blue" };
+
+  return <ExpensiveRow item={{ label: "Task" }} style={style} />;
+  //                          ^ also a new object every render
+}
+`}
+</CodeBlock>
+
+`{ color: "blue" }` is structurally identical every time, but it's a brand-new object in memory on every render of `Parent` — reference equality fails, `memo`'s check reports "this prop changed," and `ExpensiveRow` re-renders anyway. The same trap applies to inline arrow functions passed as props (a new function reference every render) and inline array literals. `memo` was never broken here; it did exactly what it promises — it just promises a *reference* check, and inline literals never pass one.
+
+`useMemo` and `useCallback` are the same idea applied to values and functions instead of whole components — they hold onto a previous result and hand back that same reference across renders as long as the dependency array's values are unchanged, so that something downstream doing a reference-equality check (a `memo`ized child, or another hook's dependency array) has something stable to actually compare against:
+
+<CodeBlock language="tsx">
+{`
+function Parent() {
+  const [tick, setTick] = useState(0);
+
+  // Stable across renders as long as the dependency array doesn't change —
+  // the same function reference every time \`tick\` doesn't change either.
+  const handleClick = useCallback(() => console.log("clicked"), []);
+
+  return <ExpensiveRow onClick={handleClick} />;
+}
+`}
+</CodeBlock>
+
+The throughline back to section 3: none of these hooks change *when* React is allowed to call a component. They change what React can *prove* about the inputs before deciding whether calling it again would be wasted work. If you're reaching for `useMemo`/`useCallback`/`memo` by hand across a large codebase and want that dependency-array bookkeeping done automatically instead, that's precisely the problem the [React Compiler](/snippet/react-compiler-memoization) targets — it's covered as part of the toolkit further down.
+
+Reading about a render cascade is one thing; watching one land is another. The sandbox below flashes every component the instant it re-renders. The first tree shows a parent's state update cascading to a child that takes no props at all; the second wraps that same child in `memo` and lets you flip a checkbox between passing it a stable callback and a fresh function literal every render — watch the cascade disappear, then come right back.
+
+<Sandbox slug="react-render-cascade-visualizer" />
+
+<RainbowDivider />
+
+## Concurrent Rendering: Renders Can Be Interrupted
+
+Go back to the render phase's defining property from section 2: it has no side effects. No DOM reads, no mutations, no writes outside the function's own local scope. That's not a stylistic guideline — it's the load-bearing guarantee that makes React's **concurrent rendering** possible at all.
+
+Because a render produces nothing but a tree of plain objects and touches nothing external along the way, React can safely:
+
+- **Pause** a render partway through to handle something more urgent (a keystroke, a click).
+- **Discard** a render entirely if its result is no longer relevant before it finished.
+- **Restart** a render from scratch with newer information.
+
+None of that would be safe if rendering could, say, write to the DOM incrementally as it went, or fire a network request per component call — pausing or discarding partial side effects would leave the world in some half-applied state with no clean way back. Purity is what makes "just throw this away and start over" a valid strategy instead of a bug.
+
+This is the actual mechanism underneath two hooks that otherwise look like unrelated conveniences:
+
+- **[`useTransition`](/snippet/use-transition-non-blocking-updates)** marks a state update as low-priority, telling React it's allowed to interrupt the resulting render if something more urgent — like the next keystroke in an input — comes in before it finishes.
+- **[`useDeferredValue`](/snippet/use-deferred-value-vs-transition)** solves the same problem from the receiving end, for values you don't own the setter for: it lets a value "lag behind" its real-time source by one interruptible render, without needing a `startTransition` call anywhere.
+
+Both are built directly on the render phase's interruptibility — neither one would make sense, or even be safe to implement, if rendering weren't required to be pure.
+
+<RainbowDivider />
+
+## Where the Existing Hook Snippets Fit
+
+Everything above is the model; the rest of React's newer hooks are tools built directly on top of it. Briefly, tying each back to render/commit:
+
+- **[`useTransition`](/snippet/use-transition-non-blocking-updates)** — marks an update's render as interruptible (section 8), so an expensive re-render doesn't block a more urgent one like the next keystroke.
+- **[`useDeferredValue`](/snippet/use-deferred-value-vs-transition)** — the same interruptible-render mechanism, applied to a value instead of a `setState` call, for when you don't own the setter.
+- **[`useSyncExternalStore`](/snippet/use-sync-external-store)** — the correct way to subscribe a component to state React doesn't own; it exists because a plain `useEffect` + `setState` subscription can miss updates or read stale values across an interruptible render, and `useSyncExternalStore` is specifically built to stay correct through that.
+- **[React Compiler](/snippet/react-compiler-memoization)** — automates exactly the reference-stability bookkeeping from section 7 (`memo`/`useMemo`/`useCallback`), inserting it at build time instead of by hand.
+- **[`use()`](/snippet/use-hook-suspense-data)** — reads a promise's resolved value (or a context value) directly during render, integrating with Suspense so the render phase can pause on unresolved data the same way it can pause on being interrupted.
+
+<RainbowDivider />
+
+## Common Performance Pitfalls
+
+Most React performance issues that don't come from genuinely heavy computation trace back to one of three things, all of which are direct consequences of sections 3, 5, and 7:
+
+- **Inline object, array, or function literals passed as props.** Covered in depth in section 7 — a new reference every render defeats `memo`'s reference-equality check even when the value is identical in content. If a child is wrapped in `memo` specifically to skip re-renders, every prop you pass it needs to actually be stable (via `useMemo`/`useCallback`, a module-level constant, or the compiler) or the wrapping does nothing.
+- **State lifted higher than it needs to be.** Since a re-render cascades to every child underneath it by default (section 3), state living near the root of a large tree — even state only one deeply-nested component actually cares about — forces that entire tree to re-render on every update. Colocating state as close as possible to where it's actually read shrinks the subtree that has to re-render at all.
+- **Wrong or missing list keys.** Covered in section 5 — index keys (or no keys) under a reorderable, filterable, or insertable list don't just cost performance, they cause outright incorrect behavior: state, focus, and uncontrolled input values silently attaching to the wrong row.
+
+None of these are "React is slow" problems — they're all cases where React is doing exactly what it was told, and what it was told didn't match what the code actually intended.
+
+<RainbowDivider />
+
+## Conclusion
+
+The render phase and the commit phase look like one continuous event from the outside — you call `setState`, and "the UI updates." Underneath, they're two phases with opposite rules, separated by a synchronous DOM mutation and a browser paint sandwiched in between. Render is pure and interruptible: call components, build a tree, touch nothing external, and be safe to pause, discard, or redo at any point. Commit is synchronous and final: apply the diff reconciliation already computed, run layout effects, let the browser paint, then run passive effects.
+
+Once that split is genuinely internalized, the rest of the model stops being a list of separate rules to memorize. Reconciliation's type-and-position check, why keys need stable identity, why `memo` only ever checks references, why `useTransition` and `useDeferredValue` are allowed to interrupt a render at all, why `useLayoutEffect` runs before paint and `useEffect` after — all of it falls out of the same two-phase boundary. The next time a component re-renders in a way that seems to make no sense, the question worth asking isn't "why did this re-render," but "which side of the render/commit line is this actually happening on" — the answer is almost always there.

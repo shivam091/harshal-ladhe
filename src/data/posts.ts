@@ -440,6 +440,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "understanding-react-rendering-model",
+    title: "Understanding React's Rendering Model: Renders, Commits, and Reconciliation",
+    excerpt: "Render and \"the screen updating\" are not the same event.",
+    description: "A deep dive into React's rendering model — what actually triggers a render, how reconciliation diffs two trees, why keys matter, the exact render/commit/paint/effect order, and how memoization and concurrent rendering both build on the render phase's purity.",
+    category: ["React"],
+    tags: ["react", "rendering", "reconciliation", "virtual-dom", "hooks", "performance", "memoization", "concurrent-rendering", "keys"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

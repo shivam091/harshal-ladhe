@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "react-render-cascade-visualizer",
+    title: "Render Cascade Visualizer",
+    description: "Two small component trees that flash on every render — watch a state update cascade to children regardless of their own props, then watch React.memo stop that cascade until an inline function literal breaks it again.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "accessibility-focus-order",
     title: "Focus Order & Skip Link Playground",
     description: "A nav-plus-content layout where Tab reveals a \"Skip to main content\" link only once it's focused, then moves through the nav and a button in plain DOM order — a live readout tracks which element currently has focus.",
