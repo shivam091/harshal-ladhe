@@ -1264,7 +1264,98 @@ ${dots}
   <circle cx="82" cy="27" r="2" fill="${stroke}" />
 </svg>`;
     }
-  }
+  },
+  {
+    slug: "text-anchor-baseline-demo",
+    title: "Interactive Example - text-anchor & dominant-baseline",
+    controls: [
+      { id: "x", label: "x (anchor point)", type: "range", min: 10, max: 90, step: 1, defaultValue: 50 },
+      { id: "y", label: "y (anchor point)", type: "range", min: 10, max: 90, step: 1, defaultValue: 50 },
+      { id: "textAnchor", label: "text-anchor", type: "select", options: ["start", "middle", "end"], defaultValue: "middle" },
+      { id: "dominantBaseline", label: "dominant-baseline", type: "select", options: ["auto", "middle", "hanging", "central"], defaultValue: "auto" }
+    ],
+    render: (values) => {
+      const x = Number(values.x);
+      const y = Number(values.y);
+      const anchor = String(values.textAnchor);
+      const baseline = String(values.dominantBaseline);
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Guides: a crosshair marking the (x, y) point the text is positioned against. -->
+  <line x1="${x}" y1="0" x2="${x}" y2="100" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.45" />
+  <line x1="0" y1="${y}" x2="100" y2="${y}" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.45" />
+
+  <!-- Anchor point -->
+  <circle cx="${x}" cy="${y}" r="2" fill="#6366f1" opacity="0.25" />
+  <circle cx="${x}" cy="${y}" r="1" fill="#6366f1" />
+
+  <!-- Shape: text-anchor decides horizontal alignment relative to (x, y); dominant-baseline decides vertical alignment. -->
+  <text x="${x}" y="${y}" font-size="10" font-family="sans-serif" text-anchor="${anchor}" dominant-baseline="${baseline}" fill="#4338ca">Anchor</text>
+</svg>`;
+    }
+  },
+  {
+    slug: "tspan-multiline-demo",
+    title: "Interactive Example - Multi-Line Text with tspan",
+    controls: [
+      { id: "lineSpacing", label: "Line spacing (dy)", type: "range", min: 8, max: 20, step: 1, defaultValue: 12 },
+      { id: "textAnchor", label: "text-anchor", type: "select", options: ["start", "middle", "end"], defaultValue: "start" },
+      { id: "highlightColor", label: "Highlighted word color", type: "color", defaultValue: "#f43f5e" }
+    ],
+    render: (values) => {
+      const dy = Number(values.lineSpacing);
+      const anchor = String(values.textAnchor);
+      const color = String(values.highlightColor);
+      // Each tspan repeats x so it restarts at the same horizontal position dy moved it down from, rather than continuing the previous line's ending x.
+      const x = anchor === "middle" ? 50 : anchor === "end" ? 90 : 10;
+      const startY = 25;
+
+      return `
+<svg viewBox="0 0 100 100" width="260" height="220">
+  <!-- Guides: one baseline per line, spaced by the live line-spacing value. -->
+  <line x1="5" y1="${startY}" x2="95" y2="${startY}" stroke="var(--color-border-default)" stroke-width="0.4" stroke-dasharray="2 2" opacity="0.35" />
+  <line x1="5" y1="${startY + dy}" x2="95" y2="${startY + dy}" stroke="var(--color-border-default)" stroke-width="0.4" stroke-dasharray="2 2" opacity="0.35" />
+  <line x1="5" y1="${startY + dy * 2}" x2="95" y2="${startY + dy * 2}" stroke="var(--color-border-default)" stroke-width="0.4" stroke-dasharray="2 2" opacity="0.35" />
+
+  <!-- Shape: a single <text> with three <tspan>s — x resets each line back to the anchor column, dy offsets it down by lineSpacing. -->
+  <text x="${x}" y="${startY}" font-size="9" font-family="sans-serif" text-anchor="${anchor}" fill="currentColor">
+    <tspan x="${x}" dy="0">SVG text wraps</tspan>
+    <tspan x="${x}" dy="${dy}">only where you tell it,</tspan>
+    <tspan x="${x}" dy="${dy}">one <tspan fill="${color}" font-weight="700">tspan</tspan> at a time.</tspan>
+  </text>
+</svg>`;
+    }
+  },
+  {
+    slug: "textpath-startoffset-demo",
+    title: "Interactive Example - textPath startOffset",
+    controls: [
+      { id: "startOffset", label: "startOffset (%)", type: "range", min: 0, max: 100, step: 1, defaultValue: 0 },
+      { id: "side", label: "side", type: "select", options: ["left", "right"], defaultValue: "left" }
+    ],
+    render: (values) => {
+      const offset = Number(values.startOffset);
+      const side = String(values.side);
+      const curve = "M 10 70 Q 50 10 90 70";
+
+      return `
+<svg viewBox="0 0 100 100" width="280" height="200">
+  <defs>
+    <!-- The path textPath below rides along — only referenced, never itself painted. -->
+    <path id="text-curve" d="${curve}" />
+  </defs>
+
+  <!-- Guide: a faint preview of the same curve, drawn separately since the <defs> copy has no stroke of its own. -->
+  <path d="${curve}" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.5" />
+
+  <!-- Shape: <textPath> lays this <text> along "#text-curve"; startOffset slides the start point along it, side flips which edge of the path the text sits on. -->
+  <text font-size="9" font-family="sans-serif" fill="#be185d">
+    <textPath href="#text-curve" startOffset="${offset}%" side="${side}">Riding the curve</textPath>
+  </text>
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.

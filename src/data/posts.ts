@@ -330,6 +330,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-08", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "svg-essentials-mastering-text",
+    title: "SVG Essentials: Text, tspan, and textPath",
+    excerpt: "Position, style, and curve real SVG text.",
+    description: "Learn how to position, style, and curve real SVG text — the <text> element's baseline model, text-anchor and dominant-baseline, multi-line layout with <tspan>, curved text with <textPath>, presentation attributes vs. CSS, viewBox-relative scaling, and accessibility.",
+    category: ["SVG"],
+    tags: ["svg", "text", "tspan", "textpath", "typography", "accessibility", "fill", "font-size", "viewbox", "data-visualization", "frontend-development"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
