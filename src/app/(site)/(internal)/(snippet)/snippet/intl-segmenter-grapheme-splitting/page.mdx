@@ -1,0 +1,78 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("intl-segmenter-grapheme-splitting");
+
+## Introduction
+
+Splitting a string into "characters" seems trivial until the string contains anything beyond plain ASCII. `"café".split("")` looks fine, but a family emoji (👨‍👩‍👧‍👦) is actually seven separate Unicode code points joined by zero-width-joiner characters, and a flag emoji (🇮🇳) is two "regional indicator" code points that only render as one flag together. Split either of those naively, and what a reader sees as one character comes apart into several broken fragments.
+
+**`Intl.Segmenter`** splits text the way a reader actually perceives it — by grapheme cluster, not by code point — built into the language, no library required.
+
+<RainbowDivider />
+
+## The Core API
+
+<CodeBlock language="js">
+{`
+  const text = "👨‍👩‍👧‍👦 café";
+
+  [...text].length;
+  // 12 — code points, splitting the family emoji into 7 broken fragments
+
+  const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+  [...segmenter.segment(text)].length;
+  // 6 — "👨‍👩‍👧‍👦", " ", "c", "a", "f", "é" — one item per what a reader would call a character
+`}
+</CodeBlock>
+
+`segmenter.segment(text)` returns an iterable of segment objects (each with a `.segment` string and its position); spreading it and mapping to `.segment` gives back a plain array of grapheme-cluster strings, correctly grouped.
+
+<RainbowDivider />
+
+## Try It Live
+
+Type your own text — accented letters, emoji, flags — and watch the naive code-point split fall apart while the grapheme segmenter keeps every visual character intact.
+
+<Sandbox slug="intl-segmenter-grapheme-splitting" readOnly />
+
+<RainbowDivider />
+
+## Word and Sentence Segmentation Too
+
+<CodeBlock language="js">
+{`
+  const words = new Intl.Segmenter("en", { granularity: "word" });
+  [...words.segment("Hello, world!")].map(s => s.segment);
+  // ["Hello", ",", " ", "world", "!"] — including punctuation/whitespace as their own segments
+
+  const sentences = new Intl.Segmenter("en", { granularity: "sentence" });
+  [...sentences.segment("Wait. Really? Yes!")].map(s => s.segment);
+  // ["Wait. ", "Really? ", "Yes!"]
+`}
+</CodeBlock>
+
+The same API handles word and sentence boundaries too — genuinely hard problems in languages without spaces between words (Japanese, Chinese, Thai), where a naive `.split(" ")` doesn't work at all. Passing a real locale (`"ja"`, `"th"`, ...) as the first argument lets the segmenter apply that language's actual word-boundary rules.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A character counter (tweet-style length limits) that shouldn't count one emoji as several characters
+- Reversing a string, or truncating it with an ellipsis, without splitting a multi-code-point emoji in half
+- Word/sentence boundary detection for text without spaces (CJK/Thai), instead of a naive space-based split
+- A custom text editor or "select word" implementation that needs to know real character/word boundaries
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`.length` on a string still counts UTF-16 code units, not graphemes** — `Intl.Segmenter` doesn't change what `string.length` reports; it's a separate API for when the actual displayed-character count or boundaries matter, not a replacement for `.length` everywhere.
+* **The locale argument affects word/sentence segmentation, not grapheme segmentation** — grapheme clustering follows the same Unicode rules regardless of locale, so `undefined` is a perfectly normal first argument for that granularity specifically.
+* **A segmenter instance can be reused across many calls to `.segment()`** — construct it once (outside a hot loop or per-render in a UI) rather than on every call, the same way you'd reuse an `Intl.NumberFormat` instance.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 87+, Firefox 125+, Safari 14.1+) as of this writing — safe to adopt broadly in place of a grapheme-splitting library.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Intl.Segmenter` replaces a naive `.split("")` or `[...string]` with something that actually matches what a reader perceives as one character, one word, or one sentence — worth reaching for anywhere text is counted, truncated, or reversed, since any of those operations can silently corrupt multi-code-point emoji or accented text otherwise.

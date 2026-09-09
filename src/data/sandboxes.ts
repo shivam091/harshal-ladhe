@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "intl-segmenter-grapheme-splitting",
+    title: "Intl.Segmenter",
+    description: "Type text with emoji or accents and compare [...text]'s code-point split against Intl.Segmenter's grapheme split — family/flag emoji fall apart in one column and stay intact in the other.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "proxy-reflect-metaprogramming",
     title: "Proxy + Reflect",
     description: "A settings object wrapped in a Proxy — every read is logged, and every write outside 0-100 is rejected via a strict-mode-throwing set trap before it ever reaches the real object.",

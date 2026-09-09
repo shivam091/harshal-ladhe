@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "intl-segmenter-grapheme-splitting",
+    title: "Splitting Text Correctly with Intl.Segmenter",
+    excerpt: "A naive [...text] splits family/flag emoji into broken fragments — this doesn't.",
+    description: "Intl.Segmenter splits text by grapheme cluster, word, or sentence — matching what a reader actually perceives as one character or word — replacing a naive .split(\"\")/[...text] that breaks apart multi-code-point emoji and doesn't work at all for languages without spaces between words.",
+    category: ["JavaScript"],
+    tags: ["javascript", "intl", "unicode", "strings", "internationalization", "esnext"],
+    image: {
+      path: "/assets/img/goodies/snippets/intl-segmenter-grapheme-splitting/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "The same string split two ways side by side — a naive code-point split breaking a family emoji into fragments, and Intl.Segmenter keeping it as one grapheme cluster."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "proxy-reflect-metaprogramming",
     title: "Intercepting Property Access with Proxy and Reflect",
     excerpt: "obj.value = 5 still looks like a plain assignment — a trap function decides what it actually does.",
