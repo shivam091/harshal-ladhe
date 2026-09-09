@@ -9,6 +9,12 @@ export const goodies: Goodie[] = [
     href: "/snippets"
   },
   {
+    name: "CSS Grid Template Builder",
+    description: "Visual grid-template-columns/rows/areas editor — a track list with px/rem/fr/auto/minmax() sizing, a click-and-drag named-areas painter that generates a real grid-template-areas string, a live CSS Grid preview, Holy Grail/Sidebar/Dashboard presets, and CSS/Tailwind/React code export.",
+    icon: "columns",
+    href: "/goodies/css-grid-template-builder"
+  },
+  {
     name: "Clip-Path Generator",
     description: "Draggable clip-path editor with bezier curve points, shape morphing, and multi-format code export.",
     icon: "diamonds",
