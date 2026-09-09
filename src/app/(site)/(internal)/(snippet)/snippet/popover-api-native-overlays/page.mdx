@@ -1,0 +1,112 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("popover-api-native-overlays");
+
+## Introduction
+
+A dropdown menu, a tooltip flyout, a "more options" panel — anything that needs to float above the rest of the page and close itself the moment the user clicks elsewhere has always meant assembling the same pile of JavaScript by hand: a click-outside listener, an Escape-key listener, a `z-index` high enough to clear everything else, and usually a portal to dodge `overflow: hidden` on some ancestor.
+
+The **Popover API** does all of it natively: one HTML attribute promotes an element to the browser's top layer (above everything, `overflow` and `z-index` no longer apply) and wires up outside-click/Escape dismissal automatically.
+
+<RainbowDivider />
+
+## The Core Attribute
+
+<CodeBlock language="html">
+{`
+  <button popovertarget="menu">Open menu</button>
+
+  <div id="menu" popover>
+    <p>I'm in the top layer — no z-index needed.</p>
+  </div>
+`}
+</CodeBlock>
+
+`popovertarget` on the button points at the popover's `id`; `popover` on the target element is what makes it one. Clicking the button shows it; clicking anywhere outside, or pressing Escape, hides it again — all of that dismiss behavior comes for free.
+
+<RainbowDivider />
+
+## Try It Live
+
+Two overlays, same top-layer mechanism, different dismiss behavior. Watch the log update from the native `toggle` event as each one opens and closes.
+
+<Sandbox slug="popover-api-native-overlays" readOnly />
+
+<RainbowDivider />
+
+## `auto` vs. `manual`
+
+<CodeBlock language="html">
+{`
+  <div id="menu" popover="auto">...</div>     <!-- default: light-dismiss on outside click / Esc -->
+  <div id="alert" popover="manual">...</div>  <!-- ignores outside click / Esc entirely -->
+`}
+</CodeBlock>
+
+`popover` with no value (or explicitly `"auto"`) is the light-dismissing behavior most menus/tooltips want. `"manual"` opts out of that — the popover only closes when something explicitly targets it with `popovertargetaction="hide"` (or a JS call), which is the right choice for a persistent notification or a multi-step panel that shouldn't vanish on a stray click.
+
+<RainbowDivider />
+
+## Styling the Backdrop
+
+<CodeBlock language="css">
+{`
+  #menu::backdrop {
+    background: rgba(0, 0, 0, 0.4); /* dims everything BEHIND the popover while it's open */
+  }
+`}
+</CodeBlock>
+
+`::backdrop` is a pseudo-element the browser inserts directly behind any top-layer element — the same mechanism `<dialog>`'s `showModal()` uses. It only exists while the popover is open, and only for popovers that have actually been promoted to the top layer.
+
+<RainbowDivider />
+
+## Animating Open/Close
+
+<CodeBlock language="css">
+{`
+  [popover] {
+    opacity: 0;
+    scale: 0.96;
+    transition: opacity 0.15s, scale 0.15s, display 0.15s allow-discrete, overlay 0.15s allow-discrete;
+  }
+
+  [popover]:popover-open {
+    opacity: 1;
+    scale: 1;
+  }
+
+  @starting-style {
+    [popover]:popover-open {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+`}
+</CodeBlock>
+
+A popover's `display` jumps straight from `none` to its shown value with no in-between frame to transition through — `allow-discrete` plus `@starting-style` (covered in [entry animations with @starting-style](/snippet/starting-style-entry-animations)) is what makes a smooth fade/scale-in possible instead of an instant pop.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Dropdown menus, "more options" panels, and flyout tooltips currently built with a click-outside/Escape listener by hand
+- Any overlay currently fighting `z-index` or a clipping ancestor with `overflow: hidden`
+- Non-blocking notifications/toasts (`popover="manual"`, dismissed on a timer or explicit close button)
+- Replacing a small positioning+dismiss library where the only thing it's doing is exactly this
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This solves dismissal and stacking, not placement.** A popover opens wherever it sits in normal flow (or wherever you position it) — pair it with [CSS Anchor Positioning](/snippet/anchor-positioning-tooltips) to tether it to its trigger button's edge, the same way a real dropdown or tooltip needs to be.
+* **`popovertarget` and `id` must match exactly**, and the popover element can live anywhere in the DOM — it doesn't need to be a sibling or descendant of its trigger button, since top-layer promotion removes it from normal stacking context concerns entirely.
+* **A `<button popovertarget="...">` gets an implicit `aria-expanded`/`aria-controls` relationship automatically** — one more thing that would otherwise need to be wired up by hand for accessibility.
+* **Browser support is solid in every modern evergreen browser** (Chrome/Edge 114+, Firefox 125+, Safari 17+) as of this writing — safe to adopt broadly.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+The Popover API turns "click-outside listener + Escape listener + z-index management + a portal" into one `popover` attribute and one `popovertarget` reference. Reach for it any time an overlay's entire job is "float above the page and go away when the user clicks elsewhere" — pair with anchor positioning the moment it also needs to be *tethered* somewhere specific.

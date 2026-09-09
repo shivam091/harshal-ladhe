@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Popover API Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Popover API</h1>
+        <p>Two overlays, zero JavaScript positioning/dismiss logic. Click outside the first one, then try the same on the second.</p>
+      </header>
+
+      <div class="trigger-row">
+        <button popovertarget="auto-popover" class="toggle-btn">Open Menu (auto)</button>
+        <button popovertarget="manual-popover" popovertargetaction="show" class="toggle-btn">Open Alert (manual)</button>
+      </div>
+
+      <div id="auto-popover" popover="auto" class="popover-panel">
+        <h3>Auto mode</h3>
+        <p>Click anywhere outside, or press Esc — this closes itself. No JS listener required.</p>
+      </div>
+
+      <div id="manual-popover" popover="manual" class="popover-panel">
+        <h3>Manual mode</h3>
+        <p>Outside clicks and Esc do nothing here — only an explicit action closes it.</p>
+        <button popovertarget="manual-popover" popovertargetaction="hide" class="toggle-btn">Close</button>
+      </div>
+
+      <output id="log" class="readout" aria-live="polite">Events will appear here.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

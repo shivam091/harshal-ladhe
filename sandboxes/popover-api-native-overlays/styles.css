@@ -1,0 +1,58 @@
+.trigger-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/*
+  [popover] promotes the element to the top layer when open — above everything else on the page,
+  no z-index war required — and the browser handles show/hide via the popovertarget attribute.
+*/
+.popover-panel {
+  margin: 0;
+  padding: 18px 20px;
+  max-width: 280px;
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: 10px;
+  box-shadow: var(--pg-shadow);
+  color: var(--pg-text);
+}
+
+.popover-panel h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.popover-panel p {
+  margin: 0 0 10px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+}
+
+/* Only auto-mode popovers get a dimming ::backdrop — manual-mode ones render without one here. */
+#auto-popover::backdrop {
+  background: rgba(4, 6, 15, 0.55);
+  backdrop-filter: blur(1px);
+}
+
+/* :popover-open targets the element only while it's actually showing — used here purely for the
+   entry transition; the show/hide logic itself is handled entirely by the browser. */
+[popover] {
+  opacity: 0;
+  scale: 0.96;
+  transition: opacity 0.15s ease, scale 0.15s ease, display 0.15s allow-discrete, overlay 0.15s allow-discrete;
+}
+
+[popover]:popover-open {
+  opacity: 1;
+  scale: 1;
+}
+
+@starting-style {
+  [popover]:popover-open {
+    opacity: 0;
+    scale: 0.96;
+  }
+}

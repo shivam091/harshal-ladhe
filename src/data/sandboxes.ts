@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "popover-api-native-overlays",
+    title: "Popover API Playground",
+    description: "Two overlays sharing the same top-layer mechanism — one light-dismisses on outside click/Esc, the other ignores both — with a live log of the native toggle event as each one opens and closes.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "import-attributes-json",
     title: "Importing JSON as a Module with Import Attributes",
     description: "config.json is imported directly with `with { type: \"json\" }` and rendered below — a real ES module import, not a fetch() call or bundler-specific magic.",

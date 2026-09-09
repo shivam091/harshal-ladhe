@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "popover-api-native-overlays",
+    title: "Zero-JS Dropdowns and Overlays with the Popover API",
+    excerpt: "One HTML attribute replaces the click-outside/Escape/z-index pile every overlay needed.",
+    description: "The popover attribute promotes an element to the browser's top layer and wires up outside-click/Escape dismissal natively, replacing the hand-rolled listener + z-index management every dropdown, tooltip, or flyout panel has needed until now.",
+    category: ["CSS"],
+    tags: ["css", "html", "popover", "overlays", "accessibility", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/popover-api-native-overlays/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A dropdown menu opened via the popover attribute, floating above the page in the top layer with a dimmed backdrop behind it."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "import-attributes-json",
     title: "Importing JSON as a Module with Import Attributes",
     excerpt: "Standard `with { type: \"json\" }` syntax, replacing bundler-specific JSON import magic.",
