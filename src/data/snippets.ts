@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "use-sync-external-store",
+    title: "Safely Subscribing to Outside State with useSyncExternalStore",
+    excerpt: "The tear-safe way to read a value React doesn't own, under concurrent rendering.",
+    description: "useSyncExternalStore subscribes a component to external state (a browser API, a vanilla store) via a subscribe/getSnapshot contract, guaranteed never to tear across components under concurrent rendering the way a plain useEffect plus setState subscription can.",
+    category: ["React"],
+    tags: ["react", "use-sync-external-store", "concurrent-rendering", "external-store", "hooks"],
+    image: {
+      path: "/assets/img/goodies/snippets/use-sync-external-store/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Two independent UI panels both reading the same external counter store via useSyncExternalStore, staying perfectly in sync as the store updates from outside React."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "use-deferred-value-vs-transition",
     title: "useDeferredValue vs. useTransition",
     excerpt: "Wrap the update when you own the setter, defer the value when you don't.",

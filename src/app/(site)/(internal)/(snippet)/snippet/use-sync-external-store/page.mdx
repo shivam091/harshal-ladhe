@@ -1,0 +1,83 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-sync-external-store");
+
+## Introduction
+
+Subscribing a component to a data source React doesn't own — the browser's online/offline status, a value shared across an app outside React state, a third-party store — has traditionally meant a `useEffect` that subscribes on mount and calls `setState` whenever the source changes. That pattern quietly breaks under React's concurrent rendering: a render can be paused, thrown away, or replayed, and a plain `useEffect`/`setState` subscription can end up reading a stale value mid-render, showing different components briefly out of sync with each other — a bug called *tearing*.
+
+**`useSyncExternalStore`** is the hook built specifically to subscribe to external state without that risk — it's what React itself uses internally for things like `useSyncExternalStore`-based browser API wrappers.
+
+<RainbowDivider />
+
+## The Core Hook
+
+<CodeBlock language="jsx">
+{`
+  const value = useSyncExternalStore(
+    subscribe,    // (callback) => unsubscribeFn — registers a re-render trigger
+    getSnapshot,  // () => currentValue — reads the CURRENT value, synchronously
+  );
+`}
+</CodeBlock>
+
+Any external source that can provide these two functions — a way to subscribe to changes, and a way to read the current value synchronously at any moment — can be read safely from React with this one hook, guaranteed to never tear across components even under concurrent rendering.
+
+<RainbowDivider />
+
+## Try It Live
+
+Neither panel below has its own state — both subscribe independently to the same external store, updated by a plain function call that never touches `setState`.
+
+<Sandbox slug="use-sync-external-store" readOnly />
+
+<RainbowDivider />
+
+## Building a Minimal External Store
+
+<CodeBlock language="js">
+{`
+  let count = 0;
+  const listeners = new Set();
+
+  export function subscribe(listener) {
+    listeners.add(listener);
+    return () => listeners.delete(listener);
+  }
+
+  export function getSnapshot() {
+    return count;
+  }
+
+  export function increment() {
+    count += 1;
+    listeners.forEach((listener) => listener()); // tells every subscriber to re-read the snapshot
+  }
+`}
+</CodeBlock>
+
+This is the entire contract `useSyncExternalStore` needs: a `subscribe` function matching the standard event-listener shape, and a `getSnapshot` that returns the current value with no side effects. Nothing about this store is React-specific — it works identically outside a React app entirely.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Reading browser APIs that change outside React's control (`navigator.onLine`, `window.matchMedia(...).matches`, `document.visibilityState`)
+- A vanilla-JS or framework-agnostic state store shared across an app, without wrapping it in React Context
+- Library authors building a React binding for a non-React data source — this hook exists largely for exactly that use case
+- Replacing a `useEffect` + `useState` subscription pattern that's shown any sign of tearing under concurrent rendering
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`getSnapshot` must return a stable, referentially-equal value when nothing has actually changed.** Returning a new object/array literal on every call (`() => ({ ...state })`) makes React think the value changed on every render, causing an infinite re-render loop — return the same reference until something real changes.
+* **This isn't a replacement for `useState`/`useReducer`** for state a component actually owns — it's specifically for state that lives *outside* React and needs to be read safely, not a general-purpose alternative state management hook.
+* **A third, optional `getServerSnapshot` argument exists for SSR** — without it, a store that only makes sense client-side (like `navigator.onLine`) needs one that returns a sensible default for the server-rendered pass.
+* **Requires React 18+** — this hook didn't exist before concurrent rendering did, since tearing is specifically a concurrent-rendering problem.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useSyncExternalStore` is the correct, tear-safe way to read a value that lives outside React's own state — a browser API, a vanilla store, anything with a subscribe/read shape. Reach for it any time a `useEffect` + `setState` subscription pattern is standing in for what this hook exists to do directly.

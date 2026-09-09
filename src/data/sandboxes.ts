@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "use-sync-external-store",
+    title: "useSyncExternalStore",
+    description: "Two panels with no state of their own, both subscribed to the same external counter store — click increment (a plain function call, not setState) and watch both stay perfectly in sync.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "use-deferred-value-vs-transition",
     title: "useDeferredValue",
     description: "Type quickly into 4,000 deliberately expensive items — the input stays snappy via a live query value while the filtered list reads a deferred version that lags a beat behind and dims while catching up.",
