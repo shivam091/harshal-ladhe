@@ -1,0 +1,53 @@
+.trigger-row {
+  display: flex;
+  gap: 10px;
+}
+
+dialog {
+  padding: 20px 22px;
+  max-width: 300px;
+  background: var(--pg-surface);
+  color: var(--pg-text);
+  border: 1px solid var(--pg-border);
+  border-radius: 10px;
+  box-shadow: var(--pg-shadow);
+}
+
+/* Only exists while shown as a MODAL — a non-modal dialog opened with show() never gets one. */
+dialog::backdrop {
+  background: rgba(4, 6, 15, 0.55);
+  backdrop-filter: blur(1px);
+}
+
+dialog h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+dialog p {
+  margin: 0 0 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+}
+
+dialog code {
+  font-family: var(--pg-mono);
+  color: var(--pg-text);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.dialog-actions button {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid var(--pg-border);
+  background: transparent;
+  color: var(--pg-text);
+  cursor: pointer;
+}

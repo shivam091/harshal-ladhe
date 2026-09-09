@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "dialog-element-native-modals",
+    title: "<dialog> Playground",
+    description: "The same <dialog> element opened two ways — showModal() blocks the page, traps Tab, and dims the backdrop; show() leaves the rest of the page fully interactive — plus a form method=\"dialog\" logging its returnValue on close.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "popover-api-native-overlays",
     title: "Popover API Playground",
     description: "Two overlays sharing the same top-layer mechanism — one light-dismisses on outside click/Esc, the other ignores both — with a live log of the native toggle event as each one opens and closes.",

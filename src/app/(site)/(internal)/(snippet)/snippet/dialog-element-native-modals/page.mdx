@@ -1,0 +1,88 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("dialog-element-native-modals");
+
+## Introduction
+
+A real modal — one that blocks interaction with the rest of the page, dims everything behind it, traps keyboard focus inside itself, and restores focus to whatever opened it on close — has traditionally meant a small pile of hand-written logic: an `aria-modal` div, a focus trap watching Tab/Shift+Tab, a scroll lock on `<body>`, and a manually inserted overlay for the dimmed background.
+
+The **`<dialog>`** element does all of it natively. It's the same HTML tag whether you want a true modal or a lightweight non-blocking panel — which mode you get depends entirely on which method you call to open it.
+
+<RainbowDivider />
+
+## `showModal()` vs. `show()`
+
+<CodeBlock language="js">
+{`
+  const dialog = document.getElementById("my-dialog");
+
+  dialog.showModal(); // blocks the page, traps focus, gets a ::backdrop — a REAL modal
+  dialog.show();      // just displays it in normal flow — the rest of the page stays interactive
+`}
+</CodeBlock>
+
+Same markup, same element, two completely different behaviors depending purely on which method opened it. `showModal()` is what most "modal" use cases actually want; `show()` is closer to a lightweight, non-blocking panel — closer in spirit to `popover="manual"` than to a real dialog.
+
+<RainbowDivider />
+
+## Try It Live
+
+Open the same `<dialog>` both ways, then try pressing Tab repeatedly and clicking outside it in each mode — the difference isn't cosmetic.
+
+<Sandbox slug="dialog-element-native-modals" readOnly />
+
+<RainbowDivider />
+
+## Closing Declaratively
+
+<CodeBlock language="html">
+{`
+  <dialog id="confirm-dialog">
+    <form method="dialog">
+      <p>Delete this file?</p>
+      <button value="cancel">Cancel</button>
+      <button value="confirm">Confirm</button>
+    </form>
+  </dialog>
+`}
+</CodeBlock>
+
+A `<form method="dialog">` inside a `<dialog>` closes it on submit without any JavaScript — and sets the dialog's `returnValue` to whichever button's `value` actually submitted the form, which a `close` event listener can read to find out which action the user took.
+
+<RainbowDivider />
+
+## Light Dismiss with `closedby`
+
+<CodeBlock language="html">
+{`
+  <dialog id="my-dialog" closedby="any">
+    <!-- clicking outside, or pressing Esc, now closes it — no backdrop click handler needed -->
+  </dialog>
+`}
+</CodeBlock>
+
+Historically, closing a modal `<dialog>` on an outside click meant a manual listener checking whether the click landed on the dialog itself (the backdrop area) versus its content. The `closedby` attribute makes this declarative: `"any"` enables outside-click and Escape dismissal, `"closerequest"` limits it to Escape/a close request only, and `"none"` disables both — matching the same `auto`/`manual` distinction the Popover API uses for the same underlying idea.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Confirmation dialogs, forms-in-a-modal, and any "blocks the rest of the page until dismissed" UI
+- Replacing a hand-rolled focus trap + scroll lock + overlay stack with one native element
+- Lightweight non-blocking panels via `show()`, where a full modal would be overkill
+- Any dialog currently missing proper focus return/trapping for keyboard and screen-reader users
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`showModal()` throws if the dialog is already open**, and calling `show()`/`showModal()` on an already-shown dialog is a no-op either way for the wrong method — check `dialog.open` before switching modes if a UI might call either interchangeably.
+* **Styling the backdrop only works for the modal case.** `::backdrop` is a real, separately stylable pseudo-element, but it only exists while the dialog is showing as a modal — a `show()`-opened dialog never has one, since it was never promoted to the top layer.
+* **Focus moves to the dialog automatically on `showModal()`**, and back to whatever triggered it on close — both directions happen with zero JavaScript, which is easy to get subtly wrong when building a modal by hand.
+* **`closedby` is newer than `<dialog>` itself** (Chrome/Edge 134+, Firefox 141+, Safari 18.4+ as of this writing) — for broader support today, fall back to a `click` listener checking `event.target === dialog` for the same outside-click-to-close behavior.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`<dialog>` turns "focus trap + scroll lock + overlay + return-focus logic" into one element and a choice of two open methods. Reach for `showModal()` any time the UI needs a genuine modal, `show()` for a non-blocking panel, and `closedby="any"` (with a manual fallback for older browsers) instead of a hand-written backdrop-click listener.

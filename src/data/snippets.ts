@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "dialog-element-native-modals",
+    title: "Real Modals with the <dialog> Element",
+    excerpt: "showModal() gives you focus trapping, a backdrop, and return-focus — for free.",
+    description: "The <dialog> element's showModal() method natively handles what a hand-rolled modal usually gets wrong — focus trapping, a dimmed ::backdrop, and returning focus on close — while show() opens the same element as a lightweight, non-blocking panel instead.",
+    category: ["HTML"],
+    tags: ["html", "dialog", "modals", "accessibility", "forms", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/dialog-element-native-modals/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A confirmation dialog opened with showModal(), dimming the page behind it, next to the same dialog opened with show() while the rest of the page stays interactive."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "popover-api-native-overlays",
     title: "Zero-JS Dropdowns and Overlays with the Popover API",
     excerpt: "One HTML attribute replaces the click-outside/Escape/z-index pile every overlay needed.",

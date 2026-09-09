@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&lt;dialog&gt; Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>&lt;dialog&gt;</h1>
+        <p>The SAME element, opened two different ways. Try pressing Tab repeatedly, and clicking outside it, with each.</p>
+      </header>
+
+      <div class="trigger-row">
+        <button id="open-modal" class="toggle-btn">showModal()</button>
+        <button id="open-nonmodal" class="toggle-btn">show()</button>
+      </div>
+
+      <dialog id="my-dialog" closedby="any">
+        <form method="dialog">
+          <h3>Delete this file?</h3>
+          <p id="mode-text">This dialog was opened with <code>showModal()</code>: it blocks the rest of the page, traps Tab inside itself, and dims everything behind it.</p>
+          <div class="dialog-actions">
+            <button value="cancel">Cancel</button>
+            <button value="confirm" class="toggle-btn">Confirm</button>
+          </div>
+        </form>
+      </dialog>
+
+      <output id="log" class="readout" aria-live="polite">Choose a button above.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
