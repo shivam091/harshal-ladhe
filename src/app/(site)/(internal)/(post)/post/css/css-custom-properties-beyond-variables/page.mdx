@@ -1,0 +1,278 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-custom-properties-beyond-variables");
+
+Call `--brand-color` a "CSS variable" and most people picture a labeled box holding a color, swapped in wherever `var()` appears. That mental model is close enough to write a dark-mode toggle, and it stops being useful the moment you ask a harder question: why does a custom property inherit when almost nothing else in CSS does? Why does animating one sometimes snap instead of tween? Why does an *empty* value behave completely differently from no value at all?
+
+Those aren't edge cases — they're the mechanism. A custom property isn't a stand-in for a Sass variable that happens to use different syntax. It's a live, per-element value that the browser carries through the cascade and resolves independently on every box in the tree, which is a fundamentally different kind of thing than text substitution done once at build time.
+
+This post works through what that difference actually buys you: the cascade and inheritance behavior that makes custom properties "live," the `@property` rule that gives them a real type so they can animate smoothly, the toggle trick that turns an empty value into something close to a boolean, using them as a bridge between JavaScript and CSS, designing them as a component's public API, and the specific way their timing model trips up `calc()`.
+
+<RainbowDivider />
+
+## The Cascade Is the Whole Point
+
+A Sass variable is resolved once, at compile time, by the preprocessor — by the time your CSS ships, `$primary-color` doesn't exist anymore, only whatever value it expanded to, copy-pasted into every place it was referenced. There's no way to ask a Sass variable "what are you on *this* element," because it was never a per-element concept; it's dead text by the time a browser sees it.
+
+A custom property is different in kind, not just in syntax. It's a real, if invisible, CSS property — participating in the cascade, computed per element, and (unlike almost every other CSS property) **inheriting down the tree by default** even though it has no rendering effect of its own. `color` inherits because it makes sense for text color to flow down; `margin` doesn't, because it wouldn't. Custom properties inherit unconditionally, by spec, regardless of what they're eventually used for, because the browser has no idea what they're "for."
+
+That inheritance is what makes theming with custom properties work at all:
+
+<CodeBlock language="css">
+{`:root {
+  --theme-color: #2563eb;
+}
+
+.sidebar {
+  --theme-color: #16a34a;
+}
+
+.card {
+  border-color: var(--theme-color);
+}`}
+</CodeBlock>
+
+A `.card` outside `.sidebar` inherits `--theme-color` from `:root` and resolves to blue. The exact same rule, the exact same `var(--theme-color)` reference, applied to a `.card` nested inside `.sidebar`, resolves to green — because that card inherited a different value of `--theme-color` from a closer ancestor. Nothing about the `.card` rule changed; what changed is which value it inherited. That's the cascade doing real, per-element work, not a variable getting swapped for text before the browser ever sees it.
+
+`var()` also takes a fallback, which matters more than it looks like it should:
+
+<CodeBlock language="css">
+{`.card {
+  border-color: var(--theme-color, #ccc);
+}`}
+</CodeBlock>
+
+If `--theme-color` was never set anywhere in the chain, the fallback kicks in. That sounds like an obvious convenience — it's actually load-bearing for a trick later in this post, so hold onto it.
+
+<Info title="Preprocessor variables vs. custom properties">
+A Sass variable is a compile-time find-and-replace. A custom property is a runtime value the browser recomputes per element. They solve overlapping problems but aren't interchangeable — you can't use `getComputedStyle` to read a Sass variable, because it no longer exists once your stylesheet is built.
+</Info>
+
+<RainbowDivider />
+
+## Typed, Animatable Properties with `@property`
+
+Here's a fact that trips up almost everyone the first time they try to animate a custom property: an unregistered custom property has the universal syntax (`*`), meaning the browser treats its value as an opaque token stream — text, essentially — with no idea whether it's a color, a length, or an angle. And you can't smoothly interpolate between two things if you don't know what type they are.
+
+Try animating a rotation angle stored in a plain custom property:
+
+<CodeBlock language="css">
+{`/* Broken: snaps instead of animating */
+.dial {
+  --angle: 0deg;
+  background: conic-gradient(from var(--angle), red, orange, yellow, red);
+  transition: --angle 0.6s ease;
+}
+
+.dial:hover {
+  --angle: 360deg;
+}`}
+</CodeBlock>
+
+Hovering doesn't spin the gradient smoothly — it jumps straight from `0deg` to `360deg` with no motion in between. The browser can't interpolate `0deg` toward `360deg` because, as far as it's concerned, `--angle` doesn't hold an angle. It holds an untyped token stream that happens to look like `0deg` written down.
+
+`@property` fixes this by registering a real, typed definition for the custom property:
+
+<CodeBlock language="css">
+{`@property --angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.dial {
+  --angle: 0deg;
+  background: conic-gradient(from var(--angle), red, orange, yellow, red);
+  transition: --angle 0.6s ease;
+}
+
+.dial:hover {
+  --angle: 360deg;
+}`}
+</CodeBlock>
+
+Same markup, same transition declaration — but now the gradient rotates smoothly, because the browser knows `--angle` is an `<angle>` and can compute intermediate values along the way. `@property` buys you three things at once: a real syntax the browser can interpolate, explicit control over `inherits` (independent of the "custom properties always inherit" default), and a guaranteed `initial-value` so the property has a sane fallback even on elements where nobody set it.
+
+| `syntax` value | Matches | Typical use |
+| --- | --- | --- |
+| `<color>` | Any valid color value | Theming, accent colors |
+| `<length>` | A length with a unit (`px`, `rem`, …) | Sizes, offsets |
+| `<percentage>` | A percentage value | Relative sizing, progress |
+| `<number>` | A unitless number | Multipliers, opacity-like scalars |
+| `<angle>` | `deg`, `rad`, `turn`, `grad` | Rotations, gradient angles |
+| `<integer>` | A whole number | Counters, step indices |
+| `<length-percentage>` | Either a length or a percentage | Flexible sizing props |
+| `*` | Anything (the untyped default) | Opaque tokens, no animation |
+
+<Warning title="Registration is global and can't be undone">
+Once you register `--angle` with `@property`, that registration applies everywhere the property is used on the page — you can't register it as an `<angle>` in one stylesheet and treat it as untyped in another. If a value doesn't match the declared `syntax`, the assignment is invalid and the property falls back to its `initial-value` (or nothing, if unset), so double-check every place you set it once you add `@property`.
+</Warning>
+
+<RainbowDivider />
+
+## The Toggle Trick: An Empty Value Is Not the Same as No Value
+
+This is the part of custom properties that looks like a party trick until you understand the mechanism, and then it just looks like CSS working exactly as specified.
+
+Start with the baseline rule: an unregistered custom property that has **never been assigned anywhere in the cascade** — not on the element, not on any ancestor — computes to something the spec calls the *guaranteed-invalid value*. It's not `unset`, it's not an empty string, it's a special value that exists specifically to make `var()` fail predictably.
+
+When you write `var(--x)` and `--x` is guaranteed-invalid, the *declaration* that used it becomes invalid at computed-value time — as if that one line had never been written. The browser doesn't throw an error or drop the whole rule; it falls back to whatever an earlier, less-specific cascade rule said, or to the property's own inherited or initial value if there's nothing else. That's precisely the gap `var(--x, fallback)` is built to cover: the fallback branch is used exactly when `--x` is guaranteed-invalid.
+
+Here's the part that actually enables the trick: the moment `--x` is assigned *literally anything* — including nothing, as in `--x: ;` — it stops being guaranteed-invalid. An empty value is still a value. So `var(--x, fallback)` no longer falls back to `fallback`; it substitutes the empty token stream in its place, which in a lot of contexts is indistinguishable from that part of the declaration not being there at all.
+
+That one distinction — "never assigned" versus "assigned, even to nothing" — is the entire mechanism behind the space-toggle trick: define an empty custom property only under a state class, reference it inside a value, and its mere presence (not its content) flips what the declaration resolves to.
+
+<CodeBlock language="css">
+{`.card {
+  --featured: initial; /* guaranteed-invalid again: opts back out */
+  border: 2px solid var(--featured, transparent);
+}
+
+.card.is-featured {
+  --featured: ; /* assigned — empty, but no longer guaranteed-invalid */
+  border-color: var(--featured, transparent) var(--accent-color, currentColor);
+}`}
+</CodeBlock>
+
+Without `.is-featured`, `--featured` is guaranteed-invalid, `var(--featured, transparent)` falls back to `transparent`, and the card's border is invisible. Add `.is-featured`, and `--featured` becomes an assigned-but-empty value — `var(--featured, transparent)` now substitutes *nothing* instead of falling back, which leaves `border-color` to read its second `var()` and pick up `--accent-color`. No JavaScript, no boolean type, just the difference between "unset" and "set to empty" propagating through `var()` fallback resolution.
+
+<Info title="Why bother with an empty value instead of just `1` or `true`">
+Because the trick isn't about the *value* — it's about whether `--x` was assigned at all. A number or a keyword works fine too, but reaching for an empty value keeps the intent honest: this property exists purely to be present or absent, not to carry data.
+</Info>
+
+<RainbowDivider />
+
+## Custom Properties as a JS/CSS Bridge
+
+Because a custom property is a real, live value the browser tracks per element, JavaScript can read and write it directly — `element.style.setProperty('--x', value)` to set it, `getComputedStyle(el).getPropertyValue('--x')` to read it back. That gives you a single shared channel that many unrelated CSS rules can consume, instead of JavaScript reaching into each property individually.
+
+A common case: tracking pointer position once and letting several CSS rules react to it independently.
+
+<CodeBlock language="js">
+{`const surface = document.querySelector('.interactive-surface');
+
+surface.addEventListener('pointermove', (event) => {
+  const rect = surface.getBoundingClientRect();
+  surface.style.setProperty('--mouse-x', \`\${event.clientX - rect.left}px\`);
+  surface.style.setProperty('--mouse-y', \`\${event.clientY - rect.top}px\`);
+});`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`.interactive-surface {
+  background: radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), #fff2, transparent 40%);
+}
+
+.interactive-surface .tooltip {
+  transform: translate(var(--mouse-x, 0), var(--mouse-y, 0));
+}
+
+.interactive-surface .parallax-layer {
+  transform: translate(calc(var(--mouse-x, 0) * -0.02), calc(var(--mouse-y, 0) * -0.02));
+}`}
+</CodeBlock>
+
+One `pointermove` handler, two properties written per event — and three unrelated CSS rules (a gradient highlight, a tooltip offset, a parallax drift) all read from the same source without JavaScript knowing or caring that any of them exist. Add a fourth consumer later and the JS doesn't change at all.
+
+<RainbowDivider />
+
+## Custom Properties as a Component's Public API
+
+Treat a component's custom properties as a deliberate settings panel rather than internal implementation detail, and you get a much cleaner boundary between "what a component looks like by default" and "what a consumer is allowed to change."
+
+<CodeBlock language="css">
+{`.button {
+  --button-radius: 6px;
+  --button-padding-inline: 1rem;
+
+  border-radius: var(--button-radius);
+  padding-inline: var(--button-padding-inline);
+}`}
+</CodeBlock>
+
+A consumer who wants a pill-shaped button in one specific place doesn't need to know the component's selector, fight its specificity, or reach for `!important` — they override the one property the component already exposed:
+
+<CodeBlock language="css">
+{`.hero .button {
+  --button-radius: 999px;
+}`}
+</CodeBlock>
+
+This works because the component consumes its own properties internally via `var()`, with the defaults set on its own root — so an override from outside only ever touches the values the component author intended to be touchable, and everything else stays exactly as designed. It pairs naturally with `:where()` for the component's own baseline rules, since `:where()` contributes zero specificity and leaves consumers free to override with an ordinary, low-specificity selector instead of needing to out-rank the component's own styles. See [Modern CSS Selectors: :has(), :is(), :where(), and Nesting](/post/css/modern-css-selectors-has-is-where-and-nesting) for the full treatment of `:where()`.
+
+<RainbowDivider />
+
+## Computed-Value Timing: Why `calc()` Sometimes Surprises You
+
+A `var()` reference isn't substituted once and locked in — it's substituted as a raw token stream during the cascade, then resolved per element at computed-value time. That means the same rule, written once, can genuinely resolve to different values on different elements (or on the same element in different states), because each element resolves its own inherited or overridden custom property independently. A Sass variable can't do this even in principle — it's baked into one fixed value everywhere it's referenced, decided once at compile time, identical on every element that rule ever touches.
+
+<Quote>
+A custom property isn't one value written in many places — it's one reference resolved separately, every time, by whichever element asks.
+</Quote>
+
+That timing model is exactly why `calc()` behaves the way it does with custom properties. This works:
+
+<CodeBlock language="css">
+{`.box {
+  --gap: 10;
+  margin: calc(var(--gap) * 1px);
+}`}
+</CodeBlock>
+
+After `var(--gap)` is substituted, the browser is left with plain token text — `calc(10 * 1px)` — which is an ordinary, fully-formed `calc()` expression the parser assembles and evaluates normally. Multiplying a bare number by a single real length is well-defined, so this always works regardless of what `--gap` happens to hold.
+
+This, on the other hand, does not do what it looks like it should:
+
+<CodeBlock language="css">
+{`.box {
+  --num: 10;
+  --unit: px;
+  margin: calc(var(--num) + var(--unit)); /* invalid */
+}`}
+</CodeBlock>
+
+It's tempting to read this as "10 plus px equals 10px," but `calc()` doesn't work on raw text — `+` and `-` require two fully-formed values of a compatible type on either side, and `var(--unit)` alone isn't a length; it's a dangling unit token with nothing attached to it. There's no operation defined for "a number plus a unit," so the whole `calc()` expression is invalid, and the `margin` declaration falls back the same way an invalid `var()` reference would. Multiplication avoids this specifically because "a number times one real length" is a defined operation — `calc()` doesn't need `--unit` to be a standalone value, because there isn't one; the unit is only ever attached to a literal like `1px`.
+
+| Pattern | Result | Why |
+| --- | --- | --- |
+| `calc(var(--gap) * 1px)` | Works | Bare number × one real length is well-defined |
+| `calc(var(--num) + var(--unit))` | Invalid | `+`/`-` need two compatible fully-formed values, not a number and a dangling unit |
+| `calc(var(--a) + var(--b))` where both resolve to lengths | Works | Both operands are fully-formed, compatible values |
+
+If you're building gradient angles or positions with this pattern, [Mastering CSS Gradients](/post/css/mastering-css-gradients) covers the angle math those `calc()` expressions usually feed into.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- **Theme tokens** that need to change per-section or per-component, not just globally (`--theme-color` overridden inside a `.sidebar` or `.card--dark`).
+- **Animating derived visual state** — gradient angles, dynamic colors, or scaling factors — where `@property` is required to get smooth interpolation instead of a snap.
+- **Boolean-like state flags** driven purely by CSS classes, where JavaScript shouldn't need to own a piece of state just to toggle a visual detail.
+- **Pointer- or scroll-driven effects** where one JS listener needs to feed several independent CSS rules without wiring each one up separately.
+- **Reusable component styling** where you want consumers to override specific, intentional knobs without needing to know your internal selectors.
+- **Cross-cutting design tokens** (spacing scales, radii, durations) that benefit from being read and written by both CSS and JavaScript.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **Untyped properties don't animate.** If a `transition` or `animation` on a custom property snaps instead of tweening, the fix is almost always a missing `@property` registration, not a bug in your keyframes.
+- **`@property` registration is global.** Registering `--x` with a strict `syntax` applies everywhere that property is used on the page — a value that doesn't match the syntax is dropped and falls back to `initial-value`, so audit every place you set it before tightening the syntax.
+- **Inheritance is opt-out, not opt-in.** Every unregistered custom property inherits by default, which can leak values further down the tree than intended; use `@property` with `inherits: false` when a property should stay scoped to where it's set.
+- **Guaranteed-invalid isn't the same as `unset` or `""`.** Treating "never assigned" and "assigned to empty" as the same thing will make the toggle trick (and any `var()` fallback logic) behave backwards from what you expect.
+- **`calc()` needs fully-formed values on both sides of `+`/`-`.** Splitting a number and a unit across two custom properties and adding them together doesn't work — only multiplying a bare number by one real length is defined.
+- **Custom properties aren't validated at parse time the way standard properties are.** A typo like `--themе-color` (with a lookalike Unicode character) silently creates a new, separate property instead of erroring — check computed styles in devtools if a value mysteriously "isn't applying."
+- **`var()` fallback only fires for guaranteed-invalid, not for "wrong type."** If a registered property gets an out-of-syntax value, it resolves to its `initial-value`, not to whatever fallback you wrote in a `var()` call elsewhere.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Custom properties reward the same kind of attention you'd give any other part of the cascade — once you stop treating them as "CSS variables" and start treating them as live, inherited, per-element values, a lot of behavior that looks like a bug turns out to be the spec working exactly as designed.
+
+- **The cascade is the whole point** — a custom property inherits and resolves per element, unlike a Sass variable baked into fixed text at compile time.
+- **`@property` makes properties typed and animatable** — registering a `syntax` is what turns a snapping transition into a smooth one, and also controls inheritance and initial value.
+- **The toggle trick hinges on guaranteed-invalid vs. assigned-empty** — `var()` fallback only fires when a property was never assigned anywhere, not when it was assigned to nothing.
+- **Custom properties bridge JS and CSS** — one JS-driven value can feed many independent CSS rules without wiring each one up separately.
+- **They work well as a component's public API** — expose intentional, documented knobs consumers can override without fighting your selectors.
+- **Computed-value timing explains the `calc()` gotchas** — substitution happens per element at compute time, and `+`/`-` require fully-formed compatible values, not a number and a dangling unit.

@@ -452,6 +452,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-custom-properties-beyond-variables",
+    title: "CSS Custom Properties: Beyond Simple Variables",
+    excerpt: "Variables that compute, cascade, and animate — not just store a value.",
+    description: "A deep dive into CSS custom properties beyond basic theming — the cascade and inheritance rules that set them apart from Sass variables, @property for typed, animatable, inheritance-controlled properties, fallback values, the toggle trick for boolean-like state, and where computed-value timing quietly breaks a calc().",
+    category: ["CSS"],
+    tags: ["css", "custom-properties", "css-variables", "at-property", "cascade", "theming", "design-tokens", "frontend"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
