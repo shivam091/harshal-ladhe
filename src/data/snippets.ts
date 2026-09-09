@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "broadcast-channel-cross-tab",
+    title: "Cross-Tab Messaging with BroadcastChannel",
+    excerpt: "A direct, same-origin channel between tabs — no server, no storage event side-channel.",
+    description: "BroadcastChannel opens a direct, same-origin messaging channel between tabs, windows, and workers — postMessage() on it delivers to every other open instance on that channel name instantly, replacing a localStorage 'storage' event side-channel or a server round-trip for same-origin cross-tab coordination.",
+    category: ["JavaScript"],
+    tags: ["javascript", "broadcastchannel", "cross-tab", "web-apis", "messaging"],
+    image: {
+      path: "/assets/img/goodies/snippets/broadcast-channel-cross-tab/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Two browser tab panels side by side, a message sent from one instantly appearing in the other's log via a shared BroadcastChannel."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "intl-segmenter-grapheme-splitting",
     title: "Splitting Text Correctly with Intl.Segmenter",
     excerpt: "A naive [...text] splits family/flag emoji into broken fragments — this doesn't.",

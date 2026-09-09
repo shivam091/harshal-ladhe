@@ -1,0 +1,75 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("broadcast-channel-cross-tab");
+
+## Introduction
+
+Logging a user out in one tab and needing every other open tab to notice and log out too, or syncing a "dark mode" toggle across every window a user has open, has traditionally meant routing through something external — a `localStorage` `storage` event (which only fires in *other* tabs, and only for actual storage writes), a WebSocket connection, or a server round-trip, just to get two tabs on the same origin talking to each other.
+
+**`BroadcastChannel`** is a direct, same-origin messaging channel between browsing contexts — tabs, windows, iframes, workers — with no server and no storage side effects involved.
+
+<RainbowDivider />
+
+## The Core API
+
+<CodeBlock language="js">
+{`
+  // In any tab/window/worker on the same origin:
+  const channel = new BroadcastChannel("app-events");
+
+  channel.postMessage({ type: "logout" });
+
+  channel.onmessage = (event) => {
+    console.log("received:", event.data);
+  };
+`}
+</CodeBlock>
+
+Every context that opens a `BroadcastChannel` with the same name joins the same channel. Calling `postMessage()` delivers the message to every *other* open instance on that channel — same-origin, whether that's another tab, another window, or a web worker — but never back to the sender itself.
+
+<RainbowDivider />
+
+## Try It Live
+
+Two independent `BroadcastChannel` instances, side by side — exactly as independent as the same page open in two separate browser tabs. Send from one, watch it land in the other.
+
+<Sandbox slug="broadcast-channel-cross-tab" readOnly />
+
+<RainbowDivider />
+
+## Closing the Channel
+
+<CodeBlock language="js">
+{`
+  const channel = new BroadcastChannel("app-events");
+
+  // When this component/tab no longer needs to listen:
+  channel.close();
+`}
+</CodeBlock>
+
+An unclosed channel keeps listening (and keeps its context reachable for messages) for as long as the page is open — `close()` it once whatever created it is torn down, the same way any other event listener or subscription would need cleanup.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Logging out (or logging in) across every open tab the instant it happens in one of them
+- Syncing a theme/preference toggle live across multiple open windows of the same app
+- Coordinating between a page and its own web workers without routing messages through the main thread manually
+- Cache invalidation notifications — "this data changed, refetch" — broadcast to every tab that might be showing stale data
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This is same-origin only** — it cannot communicate across different domains/origins, unlike `postMessage()` on a specific `window` reference, which can (with the right target) cross origins.
+* **Messages aren't persisted or queued** — a tab that opens its `BroadcastChannel` *after* a message was sent never sees it. This is a live, present-moment channel, not a message store; pair it with `localStorage` (or a real backend) for anything that needs to survive a tab opening late.
+* **Structured-cloneable values only** — the same restriction `postMessage()` and `structuredClone()` share. Functions, DOM nodes, and a few other types can't be sent through `postMessage()` on a channel.
+* **Browser support is universal at this point** (Chrome/Edge 54+, Firefox 38+, Safari 15.4+) — safe to adopt broadly as the default tool for same-origin cross-tab communication.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`BroadcastChannel` turns "get tabs talking to each other" from a `localStorage` event side-channel or a server round-trip into a direct, purpose-built messaging API. Reach for it any time an action in one tab needs every other same-origin tab to know about it immediately.

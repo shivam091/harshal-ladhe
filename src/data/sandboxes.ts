@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "broadcast-channel-cross-tab",
+    title: "BroadcastChannel",
+    description: "Two independent BroadcastChannel instances side by side, as independent as two real browser tabs — send a message from one and watch it land in the other's log instantly.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "intl-segmenter-grapheme-splitting",
     title: "Intl.Segmenter",
     description: "Type text with emoji or accents and compare [...text]'s code-point split against Intl.Segmenter's grapheme split — family/flag emoji fall apart in one column and stay intact in the other.",
