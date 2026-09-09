@@ -1,0 +1,239 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("optimizing-svg-svgo-and-file-size");
+
+Export an icon from Figma, drop it into your project, and open the file. There's a decent chance it's three or four times larger than it needs to be — not because the icon is complex, but because the export pipeline had no reason to care about bytes. Design tools export for fidelity and round-tripping back into the editor, not for shipping over the network.
+
+That gap matters more for SVG than it does for most asset types, because SVG is markup, not pixels. Every unnecessary attribute, every extra decimal place, every leftover editor comment is a real byte on the wire, and it's all sitting there in plain text for you to actually look at and reason about — which also means it's all fixable, if you know what you're looking at.
+
+This post covers the practical side of shrinking SVG: what design-tool exports typically get wrong, how SVGO's plugin pipeline cleans that up (and the one setting that will quietly break your layout if you're not careful), the real difference between trimming numeric precision and simplifying geometry, deduplicating repeated markup with `<use>`, and how compression and delivery choices affect what actually reaches the browser. If you haven't yet read [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes) or [SVG Essentials: Mastering the Path Element](/post/svg/svg-essentials-mastering-the-path-element), this post assumes you're comfortable with `viewBox` and `path` data — those two posts cover where that data comes from in the first place.
+
+<RainbowDivider />
+
+## Why an Exported SVG Is Bigger Than It Needs to Be
+
+Open a raw export from Illustrator, Figma, or Sketch and a few patterns show up almost every time:
+
+- **Editor-specific namespaces and metadata.** Illustrator and Inkscape both stamp their exports with `inkscape:`, `sodipodi:`, or similar namespaced attributes and XML comments that exist purely so the file round-trips back into the same editor. The browser never reads any of it.
+- **Full-precision coordinates.** A path exported at `M12.000000123 4.999999982` carries far more precision than any screen can render or any eye can distinguish — often 10+ significant digits on values that will visually round to the nearest pixel anyway.
+- **Redundant default attributes.** `fill-opacity="1"`, `stroke-linecap="butt"`, `clip-rule="nonzero"` — these are frequently written out explicitly even though they're already the spec's default value, adding bytes without changing rendering at all.
+- **Auto-generated, meaningless ids.** Something like `path-1-2-3_a3f9x` on every element, left over from the editor's internal object tracking, with no relationship to what the shape actually is.
+- **Leftover unused `<defs>` entries.** Gradients, clip paths, or masks that were part of an earlier version of the artwork and never got cleaned up, still sitting in the file even though nothing references them anymore.
+
+None of this is a rendering bug — the SVG displays correctly either way. It's pure overhead, and it compounds: an icon set with 40 icons each carrying a few hundred bytes of dead weight is a real, measurable amount of unnecessary payload.
+
+<CodeBlock language="xml">
+{`<!-- A realistic Illustrator export -->
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generator: Adobe Illustrator 27.010, SVG Export Plug-In -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+  viewBox="0 0 24.000000000 24.000000000" style="enable-background:new 0 0 24 24;"
+  xml:space="preserve">
+<style type="text/css">
+  .st0{fill-opacity:1;stroke:none;clip-rule:nonzero;}
+</style>
+<g id="path-1-2-3_a3f9x">
+  <path class="st0" fill="#1E1E1E" d="M12.000000123,2.0000000198 C6.4771525016,2.0000000198
+    2.0000000198,6.4771525016 2.0000000198,12.000000123 C2.0000000198,17.522847744
+    6.4771525016,22.000000247 12.000000123,22.000000247 C17.522847744,22.000000247
+    22.000000247,17.522847744 22.000000247,12.000000123 C22.000000247,6.4771525016
+    17.522847744,2.0000000198 12.000000123,2.0000000198 Z"/>
+</g>
+</svg>
+
+<!-- The same icon, cleaned up -->
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path fill="#1e1e1e" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z"/>
+</svg>`}
+</CodeBlock>
+
+Same icon, same rendered pixels — a fraction of the bytes. Nothing in the cleanup changed what the icon looks like; it only removed things the browser was going to ignore or recompute anyway.
+
+<RainbowDivider />
+
+## SVGO: What It Actually Does, and the One Setting to Watch
+
+[SVGO](https://github.com/svg/svgo) is the standard tool for this cleanup, and it's worth understanding as what it actually is: a pipeline of independent plugins, each responsible for one specific transformation, run in sequence over the file. You can enable, disable, or configure each plugin individually — SVGO isn't a single opaque "minify" button.
+
+Some of the plugins doing the heavy lifting:
+
+- **`removeComments`** — strips XML comments like the `Generator: Adobe Illustrator...` line above.
+- **`removeMetadata`** — removes `<metadata>` elements, which are almost always editor bookkeeping, not content.
+- **`removeEditorsNSData`** — strips editor-specific namespaced attributes and elements (`inkscape:*`, `sodipodi:*`, and similar).
+- **`convertColors`** — normalizes color notation, shortening `rgb(255,255,255)` to `#fff` where equivalent.
+- **`collapseGroups`** — removes a `<g>` that isn't doing any useful grouping work, folding its (single) child or attributes up a level.
+- **`mergePaths`** — combines multiple `<path>` elements that share the same styling into a single `d` attribute where it's safe to do so.
+- **`minifyStyles`** — runs any inline `<style>` content through CSS minification.
+- **`cleanupIds`** — shortens verbose auto-generated ids down to minimal ones (`path-1-2-3_a3f9x` becomes something like `a`).
+- **`convertPathData`** — rounds path coordinate precision and applies a handful of safe path-syntax shortcuts (converting absolute commands to relative where shorter, removing redundant command letters).
+
+<Warning title="Don't re-enable removeViewBox">
+  `removeViewBox` is a real SVGO plugin — it's just disabled by default, and for good reason. Stripping the `viewBox` attribute while `width` and `height` are still present on the root `<svg>` permanently locks the graphic to that pixel size and removes its ability to scale responsively. `viewBox` is what lets an SVG resize to fill a CSS-controlled container; deleting it without also removing `width`/`height` at the same time breaks that for good. Leave it disabled unless you have a specific reason and are removing all three together.
+</Warning>
+
+<Warning title="cleanupIds can break external references">
+  Renaming an id is safe as long as nothing outside the file depends on the old name. But an id is often a public contract: a CSS selector targeting `#logo-mark`, a `document.querySelector` call, or another SVG referencing it via `<use href="icons.svg#logo-mark">` all break silently if `cleanupIds` renames it out from under them. This is exactly the kind of cross-file id dependency covered in more depth in [SVG Essentials: g, defs, symbol, and use](/post/svg/svg-essentials-g-defs-symbol-and-use) — if an id is referenced from outside the SVG itself, either disable `cleanupIds` for that file or explicitly preserve that id in the config.
+</Warning>
+
+A minimal config that keeps both of those guardrails in mind:
+
+<CodeBlock language="js">
+{`// svgo.config.js
+module.exports = {
+  multipass: true,
+  plugins: [
+    {
+      name: "preset-default",
+      params: {
+        overrides: {
+          // Keep the viewBox no matter what — never let this run.
+          removeViewBox: false,
+          // Preserve any id an external file or script might reference.
+          cleanupIds: {
+            preserve: ["logo-mark", "icon-star"],
+          },
+        },
+      },
+    },
+  ],
+};`}
+</CodeBlock>
+
+`multipass: true` runs the whole pipeline more than once, since some plugins (like `collapseGroups`) can expose further cleanup opportunities that only become visible after an earlier pass has already run.
+
+<RainbowDivider />
+
+## Path Simplification and Precision Tradeoffs
+
+People often talk about "simplifying" an SVG's path data as one thing. It's actually two genuinely different operations, and conflating them is how a build pipeline quietly ships a visibly-degraded icon while everyone assumes it's just "the optimizer."
+
+### Numeric Precision
+
+This is what SVGO's `floatPrecision` option controls: how many decimal places a coordinate or path value keeps. `M12.847291834 4.192837465` and `M12.8473 4.1928` render identically at any normal viewing size — the extra digits are below what a screen can even display, let alone what an eye can distinguish. Trimming precision is close to free: you recover real bytes, especially on data-heavy paths with hundreds of curve commands, without losing any perceptible detail.
+
+<CodeBlock language="js">
+{`// svgo.config.js — trimming numeric precision
+module.exports = {
+  plugins: [
+    {
+      name: "preset-default",
+      params: {
+        overrides: {
+          convertPathData: {
+            floatPrecision: 2, // 2 decimal places is plenty for almost any icon
+          },
+        },
+      },
+    },
+  ],
+};`}
+</CodeBlock>
+
+### Point and Curve Simplification
+
+This is a different operation entirely: actually reducing the *number* of points or bezier segments used to describe a curve. This is what dedicated path-simplification algorithms and tools do — it's not something SVGO's own precision-focused plugins perform — and it is genuinely lossy in a way precision-trimming isn't. Fewer points means a coarser approximation of the original curve, and on a complex illustration with deliberate sharp details, that can visibly round off exactly the features that made the artwork look right.
+
+| Operation | What it changes | Data loss | Typical byte savings |
+|---|---|---|---|
+| Numeric precision (`floatPrecision`) | Decimal places on existing coordinates | Imperceptible at normal sizes | Moderate, scales with path complexity |
+| Point/curve simplification | The actual number of points or bezier segments | Real, visible on complex geometry | Can be large, but at a real cost |
+
+<Info title="Always visually diff, not just byte-diff">
+  A smaller file size is not proof that an optimization was safe. Overlay the optimized SVG on the original at the sizes it will actually render at — a 16px icon and a 400px hero illustration have very different tolerances for lost detail. This matters most after any geometry-simplifying pass, since that's the category of optimization that can change what the artwork actually looks like, not just how it's encoded.
+</Info>
+
+<RainbowDivider />
+
+## Deduplication with `<use>` Instead of Repeated Markup
+
+For an icon set — or any illustration with a repeated shape — the single biggest file-size win is often not compression at all. It's simply not writing the same path data out multiple times.
+
+If you inline the same icon five times across a page, you're shipping five full copies of that path's coordinate data. Define the shape once inside `<defs>`, wrap it in a `<symbol>` for independent per-instance sizing, and reference it with `<use>` everywhere it's needed instead:
+
+<CodeBlock language="xml">
+{`<!-- Repeated inline: full path data, five times over -->
+<svg><path d="M8 1l2.163 4.382 4.837.703-3.5 3.412.826 4.815L8 12.09
+  l-4.326 2.222.826-4.815-3.5-3.412 4.837-.703L8 1z" fill="#f59e0b"/></svg>
+<svg><path d="M8 1l2.163 4.382 4.837.703-3.5 3.412.826 4.815L8 12.09
+  l-4.326 2.222.826-4.815-3.5-3.412 4.837-.703L8 1z" fill="#f59e0b"/></svg>
+<!-- ...three more identical copies... -->
+
+<!-- Defined once, referenced five times -->
+<svg style="display:none">
+  <defs>
+    <symbol id="icon-star" viewBox="0 0 16 16">
+      <path d="M8 1l2.163 4.382 4.837.703-3.5 3.412.826 4.815L8 12.09
+        l-4.326 2.222.826-4.815-3.5-3.412 4.837-.703L8 1z"/>
+    </symbol>
+  </defs>
+</svg>
+<svg class="rating-star"><use href="#icon-star" fill="#f59e0b"/></svg>
+<svg class="rating-star"><use href="#icon-star" fill="#f59e0b"/></svg>
+<!-- ...three more, zero additional path data... -->`}
+</CodeBlock>
+
+That's roughly 80% of the star's markup gone from the last four copies, and it only gets better as the repeat count goes up. This is a structural fix, not a compression trick — no optimizer can invent this saving for you after the fact if the markup already has five separate copies of the same data baked in; it has to be authored this way (or restructured toward it) in the first place. The full mechanics of `defs`, `symbol`, and `use` — including per-instance styling and the shadow-clone behavior of `use` — are covered in [SVG Essentials: g, defs, symbol, and use](/post/svg/svg-essentials-g-defs-symbol-and-use).
+
+<RainbowDivider />
+
+## Compression and Delivery
+
+SVG is plain text — it's XML — and plain text compresses exceptionally well under gzip or brotli, often proportionally better than an already-compressed raster format like a well-optimized PNG or JPEG, because there's far more repeated structure (repeated attribute names, tag names, similar path syntax) for a text compressor to exploit. But that only helps if the server delivering the file is actually configured to serve it compressed — an `.svg` file sitting behind a static file server with `gzip` or `br` disabled for that MIME type gets none of this benefit, regardless of how well SVGO cleaned it up beforehand.
+
+There's a separate, genuinely two-sided tradeoff around *how* the SVG reaches the page: inlined directly in the HTML, or referenced as an external file.
+
+- **Inlining** avoids the extra HTTP request entirely, and it puts every internal path and shape within reach of the page's own CSS — `fill: currentColor`, a `:hover` selector targeting an internal `<path>`, a CSS variable driving a stroke color. None of that CSS control is available across a `<img src="icon.svg">` boundary.
+- **An external file** gets its own independent HTTP cache entry. Load the same icon across ten pages of a site and the browser fetches it once, then serves the rest from cache — inlined markup, by contrast, is duplicated into every single page's HTML and re-downloaded (as part of that HTML) on every navigation.
+
+<Warning title="There's no universal right answer here">
+  Inlining wins when you need CSS to reach inside the SVG or want to avoid the request; an external file wins when the same graphic repeats across many pages and cache reuse matters more than in-page style control. Pick based on which of those two properties the specific icon actually needs — not a blanket "always inline" or "always external" rule applied to every SVG in a project.
+</Warning>
+
+<RainbowDivider />
+
+## Build-Time Automation
+
+Doing this cleanup by hand, per export, relies on someone remembering to run it every single time a designer drops a new asset into the repo — and that assumption fails the first time someone's in a hurry. The more durable approach is running SVGO as an automated build step: a CLI invocation in a pre-commit hook or CI check, or a bundler plugin that runs the optimization as part of the normal build, using the same `svgo.config.js` (and the same `removeViewBox`/`cleanupIds` guardrails) every time, for every asset, without relying on manual discipline.
+
+<CodeBlock language="bash">
+{`# Optimize a whole directory of icons in one pass, using the shared config
+npx svgo --config svgo.config.js -f ./src/assets/icons -o ./src/assets/icons`}
+</CodeBlock>
+
+Some tooling goes a step further and folds SVG optimization into the same step that converts the file into a framework component — SVGR-style workflows are the well-known example of this category, taking a raw `.svg` and emitting an importable React component, typically running an SVGO pass as part of that same transform. The specific tools and their APIs shift over time, but the underlying idea is stable: optimize once, automatically, as part of turning a design export into something the codebase actually consumes, rather than as a manual step someone has to remember.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- **Any SVG exported from a design tool** — Illustrator, Figma, Sketch, and similar tools all produce markup with real, fixable overhead; running it through SVGO before it enters the codebase should be close to a default habit.
+- **Icon sets and sprite sheets**, where the same shapes repeat across many instances and `<use>`-based deduplication has the most to offer.
+- **Illustrations or icons served as standalone `.svg` files across multiple pages**, where getting compression and caching right has a real, compounding payoff.
+- **A CI or build pipeline for any project that accepts SVG assets from designers**, where automating the optimization step removes the dependency on someone doing it manually and consistently.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **`removeViewBox` is a trap for the unwary.** It's disabled by default in SVGO's preset for a reason — turning it on while `width`/`height` remain on the root permanently breaks responsive scaling for that file.
+- **`cleanupIds` needs to know about external references.** Anything outside the SVG file that targets an id by name — a CSS selector, a script, another file's `<use href="...#id">` — will silently stop working if that id gets renamed out from under it during optimization.
+- **A smaller file isn't automatically a correct one.** Point/curve simplification is lossy geometry work, not free cleanup — always visually diff against the original at real rendering sizes before trusting the output.
+- **Compression only happens if the server is configured for it.** SVGO can shrink the source file all it wants; if the hosting server isn't serving `.svg` with gzip or brotli enabled, that particular win never reaches the browser.
+- **Inlining and external-file delivery solve different problems.** Don't default to always inlining "for simplicity" — an icon repeated across many pages loses real cache reuse that way, in exchange for CSS control it may not even need.
+- **Manual optimization doesn't scale with a team.** The moment more than one person can add SVG assets to a project, running SVGO by hand stops being reliable — wire it into the build or CI instead of trusting habit.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Design-tool exports optimize for round-tripping back into the editor, not for what actually reaches the browser — closing that gap is a matter of knowing which bytes are genuinely doing work and which are just leftover bookkeeping.
+
+- **Why exports are bloated:** editor namespaces, full-precision coordinates, redundant default attributes, verbose ids, and unused `<defs>` entries all add real bytes without changing what renders.
+- **SVGO's plugin pipeline:** a configurable sequence of independent transformations — with `removeViewBox` and `cleanupIds` as the two settings that need deliberate, informed configuration rather than defaults left unexamined.
+- **Precision vs. simplification:** trimming decimal places is nearly free; reducing the actual point count of a curve is genuinely lossy geometry work that deserves a visual diff, not just a smaller file size.
+- **Deduplication with `<use>`:** the biggest win for repeated shapes often isn't compression at all — it's not writing the same path data out more than once.
+- **Compression and delivery:** SVG's plain-text nature compresses exceptionally well, but only with the server configured for it, and inlining vs. external files is a real tradeoff between CSS control and cache reuse, not a universal rule.
+- **Build-time automation:** running SVGO (and, often, an SVG-to-component step alongside it) as part of the build removes the dependency on someone remembering to optimize assets by hand.
+
+Once an SVG's file size is under control, the next question is usually how well it behaves across different container sizes — [Responsive SVG: viewBox, Intrinsic Sizing, and Container-Aware Graphics](/post/svg/responsive-svg-viewbox-and-container-aware-graphics) picks up exactly there.

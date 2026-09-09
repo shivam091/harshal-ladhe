@@ -518,6 +518,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "optimizing-svg-svgo-and-file-size",
+    title: "Optimizing SVG: SVGO, Path Simplification, and File-Size Tradeoffs",
+    excerpt: "The export button is rarely where an SVG's file size should end.",
+    description: "A practical guide to shrinking SVG file size — what actually bloats an exported SVG, configuring SVGO safely, path simplification and precision tradeoffs, the one setting that quietly breaks responsive scaling, and sprite-sheet reuse with <use> for repeated icons.",
+    category: ["SVG"],
+    tags: ["svg", "svgo", "optimization", "path-data", "performance", "vector-graphics", "frontend-development"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
