@@ -1356,6 +1356,97 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "clippath-star-reveal-demo",
+    title: "Interactive Example - clipPath Star Reveal",
+    controls: [
+      { id: "points", label: "Star points", type: "range", min: 3, max: 10, step: 1, defaultValue: 5 },
+      { id: "outerRadius", label: "Outer radius", type: "range", min: 20, max: 45, step: 1, defaultValue: 38 },
+      { id: "innerRadius", label: "Inner radius (% of outer)", type: "range", min: 20, max: 80, step: 1, defaultValue: 45 }
+    ],
+    // Builds a star polygon from points/outerRadius/innerRadius and uses it as a <clipPath> — the checkerboard
+    // "photo" stand-in is only ever visible where it overlaps the star, with no partial edge transparency.
+    render: (values) => {
+      const points = Math.round(Number(values.points));
+      const outerRadius = Number(values.outerRadius);
+      const innerRadius = outerRadius * (Number(values.innerRadius) / 100);
+      const cx = 50;
+      const cy = 50;
+      const total = points * 2;
+
+      const coords: string[] = [];
+      for (let i = 0; i < total; i++) {
+        const r = i % 2 === 0 ? outerRadius : innerRadius;
+        const angle = (Math.PI / points) * i - Math.PI / 2;
+        const x = (cx + r * Math.cos(angle)).toFixed(2);
+        const y = (cy + r * Math.sin(angle)).toFixed(2);
+        coords.push(`${x},${y}`);
+      }
+      const starPoints = coords.join(" ");
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <!-- Stand-in for a photo/illustration: a plain checkerboard pattern, easy to see the hard clip edge against. -->
+    <pattern id="clip-checker" width="10" height="10" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="#e0e7ff" />
+      <rect width="5" height="5" fill="#6366f1" opacity="0.35" />
+      <rect x="5" y="5" width="5" height="5" fill="#6366f1" opacity="0.35" />
+    </pattern>
+    <!-- The clip region: everything inside this star polygon stays, everything outside is gone with no in-between. -->
+    <clipPath id="star-clip">
+      <polygon points="${starPoints}" />
+    </clipPath>
+  </defs>
+
+  <!-- Guide: a faint outline of the clip shape itself, since the clipPath's own polygon is never painted. -->
+  <polygon points="${starPoints}" fill="none" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
+
+  <!-- Shape: the checkerboard rect hard-clipped to the star above via clip-path="url(#star-clip)". -->
+  <rect x="0" y="0" width="100" height="100" fill="url(#clip-checker)" clip-path="url(#star-clip)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "mask-gradient-fade-demo",
+    title: "Interactive Example - Mask Gradient Fade",
+    controls: [
+      { id: "angle", label: "Gradient angle (deg)", type: "range", min: 0, max: 360, step: 1, defaultValue: 0 },
+      { id: "stopPosition", label: "White → black transition (%)", type: "range", min: 0, max: 100, step: 1, defaultValue: 50 },
+      { id: "fill", label: "Shape color", type: "color", defaultValue: "#6366f1" }
+    ],
+    // Masks a solid circle with a white-to-black linear gradient — angle rotates the fade's axis, stopPosition
+    // slides where along that axis white gives way to black, and the circle's opacity follows the mask's
+    // luminance continuously in between rather than snapping fully on or off.
+    render: (values) => {
+      const angle = Number(values.angle);
+      const stopPosition = Number(values.stopPosition);
+      const fill = String(values.fill);
+      const rad = (angle * Math.PI) / 180;
+      const x1 = (50 - 50 * Math.cos(rad)).toFixed(2);
+      const y1 = (50 - 50 * Math.sin(rad)).toFixed(2);
+      const x2 = (50 + 50 * Math.cos(rad)).toFixed(2);
+      const y2 = (50 + 50 * Math.sin(rad)).toFixed(2);
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <linearGradient id="mask-fade" x1="${x1}%" y1="${y1}%" x2="${x2}%" y2="${y2}%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="${stopPosition}%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#000000" />
+    </linearGradient>
+    <!-- The mask's own luminance drives opacity: white areas of this gradient show the circle fully, black hides it, gray fades it partially. -->
+    <mask id="fade-mask">
+      <rect x="0" y="0" width="100" height="100" fill="url(#mask-fade)" />
+    </mask>
+  </defs>
+
+  <!-- Shape: a solid circle whose visible opacity follows the mask's white-to-black gradient rather than a hard edge. -->
+  <circle cx="50" cy="50" r="42" fill="${fill}" mask="url(#fade-mask)" />
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.

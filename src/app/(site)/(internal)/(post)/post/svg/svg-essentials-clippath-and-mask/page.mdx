@@ -1,0 +1,259 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("svg-essentials-clippath-and-mask");
+
+CSS already gives you `clip-path` with basic shapes like `circle()`, `ellipse()`, `inset()`, and `polygon()`. That covers a lot of ground — but every one of those functions still describes a fairly simple, hand-typed shape. The moment you want to clip or fade an element against something more elaborate — a logo mark, a hand-drawn blob, a compound shape built from several overlapping pieces, a shape whose geometry you're already animating elsewhere in the same SVG — CSS's basic shapes run out of road. That's where SVG's own `<clipPath>` and `<mask>` elements take over: they let *any* SVG content, no matter how complex, define the boundary.
+
+Before going further, it's worth being precise about what "boundary" means here, because clipping and masking answer that question very differently:
+
+* **Clipping is a hard edge.** A pixel is either inside the clip region and shown, or outside it and gone. There is no partial transparency — the edge is binary, like using a cookie cutter.
+* **Masking is soft.** A mask's own colors and alpha determine how much of the masked content shows through, pixel by pixel. White might mean fully visible, black might mean fully hidden, and every shade of gray in between produces real partial opacity — like a stencil that's fogged unevenly instead of cut cleanly.
+
+<Quote>
+  Clipping asks "is this pixel in or out?" Masking asks "how much of this pixel should show?"
+</Quote>
+
+Both mechanisms share the same superpower over their CSS counterparts: the boundary can be *any* SVG content — paths, text, gradients, even other images — not just a rectangle, circle, or polygon typed out as a CSS function. This post covers `<clipPath>` and `<mask>` on their own terms: how to define them, how to reference them, the coordinate-system options they both expose, and the production details that matter once you're shipping them for real.
+
+<Info title="Not the same as CSS mask-image">
+  If you've worked with CSS's `mask-image` property driving a gradient or a bitmap image, you've already used masking conceptually — this post covers the SVG `<mask>` *element*, referenced with `mask="url(#id)"` or the CSS `mask: url(#id)`, which lets arbitrary vector shapes (not just a gradient or an image file) act as the mask's content.
+</Info>
+
+<RainbowDivider />
+
+## The `<clipPath>` Element
+
+A `<clipPath>` is a container element that holds one or more shapes. It's never rendered on its own — like everything inside `<defs>`, it exists purely to be *referenced*. Once defined, you point another element at it, and only the parts of that element which fall inside the clip shapes remain visible.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 100">
+    <defs>
+      <clipPath id="circle-clip">
+        <circle cx="50" cy="50" r="35" />
+      </clipPath>
+    </defs>
+    <image href="photo.jpg" width="100" height="100" clip-path="url(#circle-clip)" />
+  </svg>
+`}
+</CodeBlock>
+
+Everything inside `photo.jpg` outside that 35-unit-radius circle simply disappears — not faded, not dimmed, just gone. There's no in-between pixel.
+
+### Referencing a `<clipPath>`
+
+You can point at a `<clipPath>` in two equivalent ways:
+
+* **From CSS**, using the `clip-path` property: `clip-path: url(#circle-clip);`
+* **As a presentation attribute**, directly on the element: `clip-path="url(#circle-clip)"`
+
+Both resolve the same `url(#id)` reference and produce identical results. The CSS form wins out when the clip needs to change with viewport size, a `:hover` state, or a media query; the attribute form is convenient for a one-off shape baked directly into the markup.
+
+<Info title="Same specificity rules as everywhere else">
+  Just like `fill` and `stroke`, `clip-path` as a presentation attribute behaves like a low-priority CSS rule — an external stylesheet's `clip-path` declaration will always win over the attribute.
+</Info>
+
+Try it live — the star's point count and both radii are slider-controlled, and the checkerboard rect underneath is only ever visible where it overlaps the star, with a hard edge at every boundary:
+
+<InteractiveSvgPanel slug="clippath-star-reveal-demo" />
+
+<Info title="Notice the edge">
+  However you drag the sliders, the transition from "fully visible" to "fully gone" never softens — that hard, binary edge is the entire point of `<clipPath>`. Compare it against the mask demo further down, where the same idea of "boundary shape" produces a completely different, soft result.
+</Info>
+
+<RainbowDivider />
+
+## `clipPathUnits`: `userSpaceOnUse` vs. `objectBoundingBox`
+
+`<clipPath>` accepts a `clipPathUnits` attribute that controls how its child shapes' coordinates are interpreted — the same fractional-vs-absolute choice you'll recognize from gradients and patterns.
+
+* **`userSpaceOnUse`** (the default): coordinates inside the `<clipPath>` are absolute values in the same coordinate system as the element referencing it. A `<circle r="35" />` really is 35 user units.
+* **`objectBoundingBox`**: coordinates are treated as fractions (0 to 1) of the *bounding box* of the element the clip is applied to. A `<circle r="0.5" />` here means "half the width of whatever I'm clipping," so the same `<clipPath>` definition scales automatically to fit differently-sized targets.
+
+<CodeBlock language="xml">
+{`<clipPath id="scaling-clip" clipPathUnits="objectBoundingBox">
+  <circle cx="0.5" cy="0.5" r="0.4" />
+</clipPath>`}
+</CodeBlock>
+
+Reach for `objectBoundingBox` when the same `<clipPath>` needs to be reused across elements of different sizes without redefining the shape's numbers each time; stick with the `userSpaceOnUse` default when you're clipping one specific, known-size element and want to reason in plain coordinates.
+
+<RainbowDivider />
+
+## Multiple Shapes in One `<clipPath>`
+
+A `<clipPath>` isn't limited to a single child shape. When it contains more than one, the visible region becomes their **union** — anything inside *any* of the child shapes stays visible, not just the overlap.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 100">
+    <defs>
+      <clipPath id="compound-clip">
+        <circle cx="35" cy="50" r="28" />
+        <circle cx="65" cy="50" r="28" />
+        <rect x="35" y="30" width="30" height="40" />
+      </clipPath>
+    </defs>
+    <rect x="0" y="0" width="100" height="100" fill="url(#some-image-or-color)" clip-path="url(#compound-clip)" />
+  </svg>
+`}
+</CodeBlock>
+
+Here, two overlapping circles plus a connecting rectangle form one compound clip region shaped roughly like a rounded capsule — three simple shapes combining into a silhouette none of them could produce alone. This is a genuinely different capability from CSS's basic-shape functions: `clip-path: circle() intersect polygon()`-style boolean composition doesn't exist in CSS the way it does natively here — an SVG `<clipPath>` gets it for free just by listing more than one child.
+
+<Info title="It's always a union, never an intersection">
+  Adding more shapes to a `<clipPath>` only ever *reveals more*, never less. If you need an intersection (only the overlap visible) or a subtraction (a hole cut out), you need path-level boolean operations — typically constructed as a single compound `<path>` with careful fill-rule and winding order, which is its own topic.
+</Info>
+
+<RainbowDivider />
+
+## The `<mask>` Element
+
+A `<mask>` is also a container — but instead of the binary "in the shape or not" test that `<clipPath>` runs, a `<mask>`'s content is rendered normally (shapes, gradients, images, text, anything), and then its resulting **luminance** (perceived brightness) at each pixel becomes the opacity of the element it's applied to.
+
+* **White** mask content → the masked element is **fully visible** there.
+* **Black** mask content → the masked element is **fully hidden** there.
+* **Gray** (or partially transparent) mask content → the masked element is **partially visible**, proportional to how light or dark that pixel is.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 100">
+    <defs>
+      <mask id="fade-mask">
+        <rect x="0" y="0" width="100" height="100" fill="url(#white-to-black-gradient)" />
+      </mask>
+    </defs>
+    <circle cx="50" cy="50" r="42" fill="#6366f1" mask="url(#fade-mask)" />
+  </svg>
+`}
+</CodeBlock>
+
+This is the core distinction that separates the two elements. A `<clipPath>` full of gradients would still only ever produce a hard edge — the *shape's outline* is all that matters, its fill is irrelevant. A `<mask>`, on the other hand, cares about exactly what color and alpha its content paints at every single pixel.
+
+<Quote>
+  `<clipPath>` only ever asks about a shape's outline. `<mask>` cares about every pixel's brightness.
+</Quote>
+
+Try it live — the gradient's angle and the position where it flips from white to black are both slider-controlled, and the circle's opacity follows the gradient continuously rather than snapping on or off:
+
+<InteractiveSvgPanel slug="mask-gradient-fade-demo" />
+
+<Info title="Watch the transition band">
+  Push the "white → black transition" slider toward one end and the fade compresses into a narrow soft band; push it toward the middle and the fade stretches gradually across the whole shape. That gradual band of partial opacity is exactly what `<clipPath>` can never produce.
+</Info>
+
+Just like `<clipPath>`, a `<mask>` is referenced two equivalent ways: the `mask` presentation attribute (`mask="url(#fade-mask)"`) or the CSS `mask` property (`mask: url(#fade-mask);`).
+
+<RainbowDivider />
+
+## `mask-type`: Luminance vs. Alpha
+
+By default, a mask's effect comes from its content's **luminance** — how bright each pixel is, regardless of that pixel's own transparency. Setting `mask-type="alpha"` on the `<mask>` element switches the calculation to use the mask content's **alpha channel** instead: opacity is driven directly by how transparent the mask content already is, ignoring color and brightness entirely.
+
+<CodeBlock language="xml">
+{`<mask id="alpha-mask" mask-type="alpha">
+  <image href="stencil-with-transparency.png" width="100" height="100" />
+</mask>`}
+</CodeBlock>
+
+This distinction matters most when your mask content already carries meaningful transparency of its own — a PNG with a real alpha channel, or a shape you've already given `fill-opacity` for some other reason. With the default luminance mode, a fully-opaque black shape and a fully-transparent area can end up looking identical to the mask calculation (both read as "dark," so both hide the content), which isn't what you want when the transparency itself is the signal you're trying to use. `mask-type="alpha"` tells the browser to read that transparency channel directly instead of converting everything to a brightness value first.
+
+<Info title="Rule of thumb">
+  If your mask content is shapes and gradients you're drawing specifically to *be* a mask, luminance (the default) is almost always what you want. If your mask content is an asset — a PNG, an image — that already has its own alpha channel baked in, reach for `mask-type="alpha"`.
+</Info>
+
+<RainbowDivider />
+
+## `maskUnits` and `maskContentUnits`
+
+Like `<clipPath>`, `<mask>` exposes coordinate-system attributes — but it needs two of them, because a mask has both a *region* (where the mask applies at all) and *content* (what's drawn inside that region), and each can be measured independently.
+
+* **`maskUnits`** controls the coordinate system for the mask's own bounding region (`x`, `y`, `width`, `height` on the `<mask>` element itself). Defaults to `objectBoundingBox` — fractions of the masked element's bounding box.
+* **`maskContentUnits`** controls the coordinate system for the shapes drawn *inside* the mask. Defaults to `userSpaceOnUse` — absolute coordinates, same as the surrounding document.
+
+<CodeBlock language="xml">
+{`<mask id="fade-mask" maskUnits="objectBoundingBox" maskContentUnits="userSpaceOnUse">
+  <rect x="0" y="0" width="100" height="100" fill="url(#white-to-black-gradient)" />
+</mask>`}
+</CodeBlock>
+
+Notice these two default to *different* values from each other — the mask's own region defaults to fractional, but its content defaults to absolute. In practice, most day-to-day masks never touch either attribute and just rely on the defaults; you'll typically only reach for these when a mask needs to be shared across differently-sized elements the same way an `objectBoundingBox` `clipPathUnits` value does.
+
+<RainbowDivider />
+
+## Clip vs. Mask: Choosing Between Them
+
+With both elements on the table, the decision usually comes down to one question: does the edge need to be hard, or soft?
+
+| Situation | Reach for |
+| --- | --- |
+| A simple hard-edged reveal against a custom vector shape | `<clipPath>` |
+| A soft fade, vignette, or gradual dissolve | `<mask>` |
+| Opacity should vary by brightness or existing transparency | `<mask>` |
+| A compound region built from several overlapping shapes, still hard-edged | `<clipPath>` (multiple children) |
+| The content driving the boundary already has its own alpha channel | `<mask mask-type="alpha">` |
+
+<Info title="A useful shortcut">
+  If you catch yourself reaching for a `<mask>` filled with pure black and pure white shapes and nothing gray, you can usually swap it for a `<clipPath>` instead — the result is identical, and `<clipPath>` is the simpler, cheaper tool for a purely binary edge.
+</Info>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+A few situations come up often enough to call out directly:
+
+* **Image reveals with custom vector shapes.** CSS's basic-shape `clip-path` functions cover rectangles, circles, ellipses, and polygons — the moment the reveal shape is a logo mark, an icon silhouette, or anything hand-drawn, `<clipPath>` referencing that path is the way in.
+* **Soft vignette or fade effects on photos and illustrations.** A radial or linear gradient `<mask>` behind a photo produces the classic "fade to transparent at the edges" look without needing a second, pre-baked image asset.
+* **Complex compound clip regions built from multiple overlapping shapes.** Anywhere a design calls for a hole-punched or capsule-shaped reveal built from more than one primitive, a multi-child `<clipPath>` handles it in markup rather than in a raster editor.
+
+A concrete version of that first bullet: a card component whose thumbnail should reveal through a brand mark instead of a rectangle.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 100">
+    <defs>
+      <clipPath id="brand-mark-clip">
+        <path d="M50 8 L88 30 L88 70 L50 92 L12 70 L12 30 Z" />
+      </clipPath>
+    </defs>
+    <image href="thumbnail.jpg" width="100" height="100" clip-path="url(#brand-mark-clip)" />
+  </svg>
+`}
+</CodeBlock>
+
+Nothing about that hexagonal outline is expressible as a CSS `clip-path` basic-shape function — `polygon()` could get close for a perfectly straight-edged hexagon, but the moment the mark has a curve, a notch, or an asymmetric detail, only a `<path>`-based `<clipPath>` can trace it. Because the clip lives in the same document as the image, it's also trivial to reuse across every card in a grid by pointing each one at the same `id`, or to swap in a differently-shaped mark per card by referencing a different `<clipPath>`.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+### `id` Collisions in Repeated Inline SVG
+
+`<clipPath>` and `<mask>` are referenced by `id`, exactly like gradients and patterns — which means they carry the exact same collision risk. If the same inline SVG snippet (with a `<clipPath id="fade">` inside it) gets rendered more than once on a page — through a component used in a list, say — every instance shares that one `id` in the DOM, and the browser resolves `url(#fade)` against whichever element happens to win. The fix is the same as it is for gradients: generate a unique `id` per instance (a prop, an index, a generated identifier) rather than hard-coding one.
+
+### Mask Content Is Never Rendered Directly
+
+Like everything inside a `<defs>` block, a `<mask>`'s children are never painted on the page by themselves — you will never see the white-to-black gradient rectangle in the demo above sitting on the canvas as its own visible shape. Only its *effect*, transferred onto whatever element references it with `mask="url(#id)"`, ever becomes visible. The same is true of `<clipPath>` content. If a shape inside either one needs to *also* appear on its own elsewhere, draw it a second time — reusing the same `<path>` data with `<use>`, for instance — rather than expecting the clip or mask definition itself to double as visible artwork.
+
+### Performance at Scale
+
+Both features are cheap for the common case — a handful of shapes clipping or masking a handful of elements. That stops being true once either side of the equation grows large: a `<clipPath>` or `<mask>` built from hundreds of complex paths, or the same expensive clip/mask applied to a long list of repeated elements, asks the browser to recompute that geometry (or re-rasterize that mask) for every affected element on every repaint. If a page is animating dozens of independently masked elements, or a single mask's content is procedurally generated with excessive path complexity, profile it — the fix is usually to simplify the shape's path data, cache a rasterized version where the effect doesn't need to stay vector, or reduce how many elements share the expensive clip/mask simultaneously.
+
+<Warning title="Animating the clip or mask shape itself">
+  Animating a *simple* clip or mask shape (sliding a circle's `cx`, say) is usually fine. Animating a *complex* one — a many-point star, a dense compound path — every frame is a much heavier ask, because the browser has to redo the clip or mask calculation from scratch each time rather than just repositioning something already computed.
+</Warning>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+`<clipPath>` and `<mask>` both let arbitrary SVG content define a boundary, but they answer fundamentally different questions once that boundary is drawn:
+
+* **`<clipPath>`** produces a hard, binary edge — a pixel is either inside a child shape (or the union of several) and shown, or outside and gone entirely. Reference it with `clip-path="url(#id)"` or the CSS `clip-path` property.
+* **`<mask>`** produces a soft result driven by its content's luminance by default — white shows, black hides, gray fades proportionally — with `mask-type="alpha"` available for when the mask content's own transparency should drive the effect instead of its brightness.
+* **`clipPathUnits`, `maskUnits`, and `maskContentUnits`** all offer the same `userSpaceOnUse` (absolute) vs. `objectBoundingBox` (fractional) choice you'll recognize from gradients and patterns — useful once a single clip or mask definition needs to scale across differently-sized targets.
+* **A `<clipPath>` with multiple children unions those shapes together**, letting a compound silhouette emerge from several simple primitives without any raster editing.
+* **In production**, watch for `id` collisions in repeated inline SVG, remember that a `<clipPath>` or `<mask>`'s own content never paints directly on the page, and keep an eye on performance once the shapes involved — or the number of elements sharing them — grow large.
+
+The next time a CSS `clip-path: circle()` or a flat `mask-image` gradient almost gets you the shape you want but not quite, you now know exactly which SVG element closes that gap — and whether the edge you're after should be hard or soft.

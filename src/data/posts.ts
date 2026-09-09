@@ -342,6 +342,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-clippath-and-mask",
+    title: "SVG Essentials: clipPath and mask",
+    excerpt: "Hard edges with clipPath, soft fades with mask.",
+    description: "A complete guide to SVG's <clipPath> and <mask> elements — hard-edged clipping vs. luminance- and alpha-driven masking, clipPathUnits, maskUnits/maskContentUnits, compound multi-shape clip regions, mask-type, and production gotchas like id collisions and performance at scale.",
+    category: ["SVG"],
+    tags: ["svg", "clip-path", "clippath", "mask", "masking", "luminance", "alpha-channel", "vector-graphics", "frontend", "web-design", "css"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
