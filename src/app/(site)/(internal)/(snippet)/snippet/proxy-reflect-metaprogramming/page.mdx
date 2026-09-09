@@ -1,0 +1,85 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("proxy-reflect-metaprogramming");
+
+## Introduction
+
+Validating every write to an object's properties, logging every read for debugging, or building a reactive store that notifies subscribers on change all share the same underlying need: intercepting what happens when code does something as ordinary as `obj.value = 5`. Without a language feature for that, the usual workaround is hiding the real data behind getter/setter methods (`setValue()`, `getValue()`) — which only works if every caller agrees to use them instead of plain property access.
+
+**`Proxy`** intercepts the plain property access itself — `obj.value = 5` still looks and reads like an ordinary assignment, but a trap function runs first and decides what actually happens.
+
+<RainbowDivider />
+
+## The Core Pattern
+
+<CodeBlock language="js">
+{`
+  const target = { volume: 50 };
+
+  const settings = new Proxy(target, {
+    get(obj, prop, receiver) {
+      console.log("read:", prop);
+      return Reflect.get(obj, prop, receiver); // the DEFAULT behavior, invoked explicitly
+    },
+    set(obj, prop, value, receiver) {
+      console.log("write:", prop, "=", value);
+      return Reflect.set(obj, prop, value, receiver); // apply it, same as a plain assignment would
+    },
+  });
+
+  settings.volume = 80; // logs "write: volume = 80", THEN actually sets it
+`}
+</CodeBlock>
+
+`Proxy` wraps a target object with a handler of trap functions — `get`/`set` are the two used almost everywhere, but `has`, `deleteProperty`, `ownKeys`, and others exist for the same purpose on different operations. `Reflect` is the counterpart: a plain function version of the exact default behavior a trap is intercepting, letting a trap "do the normal thing" without hardcoding `obj[prop] = value` by hand (which behaves subtly differently once inheritance or accessor properties are involved).
+
+<RainbowDivider />
+
+## Try It Live
+
+A settings object wrapped in a Proxy: every read is logged, and every write outside 0-100 is rejected before it ever reaches the real object.
+
+<Sandbox slug="proxy-reflect-metaprogramming" readOnly />
+
+<RainbowDivider />
+
+## Validation via a Rejected `set`
+
+<CodeBlock language="js">
+{`
+  const settings = new Proxy(target, {
+    set(obj, prop, value, receiver) {
+      if (prop === "volume" && (value < 0 || value > 100)) {
+        return false; // reject the write entirely
+      }
+      return Reflect.set(obj, prop, value, receiver);
+    },
+  });
+`}
+</CodeBlock>
+
+Returning `false` from a `set` trap rejects the write — the property is never actually changed. In strict mode (the default inside any ES module), a rejected `set` throws a `TypeError` rather than failing silently, which is worth wrapping in a `try`/`catch` anywhere an invalid write is expected to happen occasionally rather than being a genuine bug.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Validating writes to a plain object without converting every property into a getter/setter pair
+- Debug logging every read/write to a specific object during development
+- Building a reactive store's change-notification layer (this is roughly what Vue 3's reactivity system does under the hood)
+- Default values for missing keys, or a read-only "view" over a mutable object, via the `get`/`set` traps respectively
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **A rejected `set` throws in strict mode.** Code that writes to a proxied object and expects some writes to be silently ignored needs a `try`/`catch` around the assignment — an uncaught `TypeError` from a rejected write is easy to miss during development if nothing is actually clicking the "invalid" path yet.
+* **`Reflect.get`/`Reflect.set` need the `receiver` argument forwarded correctly** for inheritance to keep working right — omitting it (using `obj[prop]` directly instead) breaks the case where the proxy itself is used as the prototype of another object.
+* **A Proxy is NOT the same object as its target** — `proxy !== target`, and code doing an identity check or `instanceof` against the original object needs to be aware a different reference is now in play.
+* **Browser support is universal at this point** for both `Proxy` and `Reflect` (evergreen browsers since 2016-2017) — this has been safe to use in any modern codebase for years.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Proxy` intercepts ordinary property access itself, and `Reflect` gives every trap a clean way to fall back to the default behavior it's intercepting. Reach for the pair any time validation, logging, or reactivity needs to happen on plain `obj.prop` access — without asking every caller to switch to `getProp()`/`setProp()` methods instead.

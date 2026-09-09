@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "proxy-reflect-metaprogramming",
+    title: "Intercepting Property Access with Proxy and Reflect",
+    excerpt: "obj.value = 5 still looks like a plain assignment — a trap function decides what it actually does.",
+    description: "Proxy intercepts ordinary property access itself — get/set traps run before a read or write actually happens — while Reflect gives each trap a clean way to invoke the default behavior it's intercepting, enabling validation, logging, and reactivity without converting every property into a getter/setter pair.",
+    category: ["JavaScript"],
+    tags: ["javascript", "proxy", "reflect", "metaprogramming", "validation", "reactivity"],
+    image: {
+      path: "/assets/img/goodies/snippets/proxy-reflect-metaprogramming/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A settings object's volume property being read and written through a Proxy, with a log showing each get/set trap firing and an out-of-range write being rejected."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "abortsignal-timeout",
     title: "Built-In Fetch Timeouts with AbortSignal.timeout()",
     excerpt: "Replaces the controller + setTimeout + clearTimeout trio with one expression.",

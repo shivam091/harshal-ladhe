@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "proxy-reflect-metaprogramming",
+    title: "Proxy + Reflect",
+    description: "A settings object wrapped in a Proxy — every read is logged, and every write outside 0-100 is rejected via a strict-mode-throwing set trap before it ever reaches the real object.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "abortsignal-timeout",
     title: "AbortSignal.timeout()",
     description: "Every simulated request gets a fixed 2-second budget via AbortSignal.timeout(2000) — drag the response-time slider past that and watch requests time out instead of completing.",
