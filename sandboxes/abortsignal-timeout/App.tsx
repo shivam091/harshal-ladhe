@@ -18,7 +18,7 @@ export default function App() {
   function sendRequest() {
     const id = nextId.current++;
     const requestDelay = delayMs;
-    setLog((prev) => [{ id, delayMs: requestDelay, status: "pending" }, ...prev].slice(0, 6));
+    setLog((prev) => [{ id, delayMs: requestDelay, status: "pending" } satisfies LogEntry, ...prev].slice(0, 6));
 
     // AbortSignal.timeout() returns a signal that aborts itself after TIMEOUT_MS — no manual
     // setTimeout(() => controller.abort(), ms) + cleanup required to build one.
