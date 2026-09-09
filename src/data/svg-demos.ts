@@ -1447,6 +1447,67 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "pattern-dot-grid-demo",
+    title: "Interactive Example - Pattern Tile Anatomy",
+    controls: [
+      { id: "tileWidth", label: "Tile width", type: "range", min: 8, max: 40, step: 1, defaultValue: 20 },
+      { id: "tileHeight", label: "Tile height", type: "range", min: 8, max: 40, step: 1, defaultValue: 20 },
+      { id: "dotRadius", label: "Dot radius", type: "range", min: 0.5, max: (values) => Math.min(Number(values.tileWidth), Number(values.tileHeight)) / 2, step: 0.01, defaultValue: 3 }
+    ],
+    render: (values) => {
+      const tileWidth = Number(values.tileWidth);
+      const tileHeight = Number(values.tileHeight);
+      const dotRadius = Number(values.dotRadius);
+      const cx = tileWidth / 2;
+      const cy = tileHeight / 2;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <!-- Tile: one repeatable unit, sized in real user units via patternUnits="userSpaceOnUse" — width/height stay a literal tile size regardless of the fill target's own size. -->
+    <pattern id="dot-grid-tile" patternUnits="userSpaceOnUse" width="${tileWidth}" height="${tileHeight}">
+      <circle cx="${cx}" cy="${cy}" r="${dotRadius}" fill="#6366f1" />
+    </pattern>
+  </defs>
+
+  <!-- Shape: any fillable element references the tile by id through fill="url(#...)". -->
+  <rect x="5" y="5" width="90" height="90" fill="url(#dot-grid-tile)" stroke="var(--color-border-default)" stroke-width="0.5" />
+
+  <!-- Guide: outlines exactly one tile so the repeating unit is visible against the full fill. -->
+  <rect x="5" y="5" width="${tileWidth}" height="${tileHeight}" fill="none" stroke="#4338ca" stroke-width="1" stroke-dasharray="2 2" />
+</svg>`;
+    }
+  },
+  {
+    slug: "pattern-diagonal-stripes-demo",
+    title: "Interactive Example - patternTransform Rotation",
+    controls: [
+      { id: "rotation", label: "Rotation (deg)", type: "range", min: 0, max: 90, step: 1, defaultValue: 45 },
+      { id: "stripeWidth", label: "Stripe width", type: "range", min: 2, max: 10, step: 1, defaultValue: 4 },
+      { id: "gap", label: "Gap", type: "range", min: 2, max: 10, step: 1, defaultValue: 6 }
+    ],
+    // The tile itself only ever contains flat horizontal stripes — patternTransform is the only thing rotating them, kept separate on purpose.
+    render: (values) => {
+      const rotation = Number(values.rotation);
+      const stripeWidth = Number(values.stripeWidth);
+      const gap = Number(values.gap);
+      const tileHeight = stripeWidth + gap;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <!-- Tile: a plain horizontal stripe — patternTransform rotates the whole tile grid independently of how the stripe inside it is drawn. -->
+    <pattern id="diagonal-stripe-tile" patternUnits="userSpaceOnUse" width="10" height="${tileHeight}" patternTransform="rotate(${rotation})">
+      <rect x="0" y="0" width="10" height="${stripeWidth}" fill="#10b981" />
+    </pattern>
+  </defs>
+
+  <!-- Shape: the same flat-stripe tile reads as diagonal once patternTransform rotates the grid it's tiled on. -->
+  <rect x="5" y="5" width="90" height="90" fill="url(#diagonal-stripe-tile)" stroke="var(--color-border-default)" stroke-width="0.5" />
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.

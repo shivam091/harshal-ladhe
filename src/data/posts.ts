@@ -353,6 +353,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-pattern-element",
+    title: "SVG Essentials: The pattern Element",
+    excerpt: "Tile fills natively with SVG's <pattern> element.",
+    description: "A complete guide to the SVG pattern element — tile anatomy, patternUnits and patternContentUnits, patternTransform, href-based pattern inheritance, hatched chart fills for accessible data viz, and production caveats like id collisions and tiny-tile performance.",
+    category: ["SVG"],
+    tags: ["svg", "pattern", "patternunits", "patterntransform", "graphics", "vector-graphics", "data-viz", "accessibility", "frontend-development", "web-design"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
