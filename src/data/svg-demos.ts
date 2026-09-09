@@ -1588,6 +1588,61 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "marker-attachment-demo",
+    title: "Interactive Example - marker-start/mid/end",
+    controls: [
+      { id: "start", label: "marker-start", type: "select", options: ["none", "dot", "arrow"], defaultValue: "none" },
+      { id: "mid", label: "marker-mid", type: "select", options: ["none", "dot", "arrow"], defaultValue: "dot" },
+      { id: "end", label: "marker-end", type: "select", options: ["none", "dot", "arrow"], defaultValue: "arrow" }
+    ],
+    render: (values) => {
+      const start = String(values.start);
+      const mid = String(values.mid);
+      const end = String(values.end);
+      const ref = (which: string) => (which === "none" ? "none" : `url(#${which}-marker)`);
+
+      return `
+<svg viewBox="0 0 100 60" width="280" height="168">
+  <defs>
+    <marker id="dot-marker" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5">
+      <circle cx="5" cy="5" r="4" fill="#10b981" />
+    </marker>
+    <marker id="arrow-marker" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+    </marker>
+  </defs>
+
+  <!-- Shape: a 4-point polyline — marker-start touches only point 1, marker-mid touches points 2 and 3, marker-end touches point 4. -->
+  <polyline points="10,50 35,15 65,45 90,10" fill="none" stroke="var(--color-border-default)" stroke-width="2"
+    marker-start="${ref(start)}" marker-mid="${ref(mid)}" marker-end="${ref(end)}" />
+</svg>`;
+    }
+  },
+  {
+    slug: "marker-orient-units-demo",
+    title: "Interactive Example - marker orient",
+    controls: [
+      { id: "orient", label: "orient", type: "select", options: ["auto", "0", "auto-start-reverse"], defaultValue: "auto" }
+    ],
+    render: (values) => {
+      const orient = String(values.orient);
+
+      return `
+<svg viewBox="0 0 100 60" width="280" height="168">
+  <defs>
+    <!-- Same marker referenced at BOTH ends — orient decides whether the two arrows point outward correctly or not. -->
+    <marker id="orient-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="${orient}">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#f59e0b" />
+    </marker>
+  </defs>
+
+  <!-- Shape: a bent path — its two ends travel in different directions, making orient's effect obvious. -->
+  <path d="M15,45 L50,15 L85,45" stroke="#f59e0b" stroke-width="2" fill="none"
+    marker-start="url(#orient-arrow)" marker-end="url(#orient-arrow)" />
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.
