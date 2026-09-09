@@ -364,6 +364,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-g-defs-symbol-and-use",
+    title: "SVG Essentials: g, defs, symbol, and use",
+    excerpt: "SVG's native component system predates every JS framework's.",
+    description: "A complete guide to SVG's four container elements — g for grouping shared attributes, defs for reference-only definitions, symbol and use for independently-scaled, independently-styled reusable instances, nested svg for a viewport within a viewport, and switch for conditional rendering.",
+    category: ["SVG"],
+    tags: ["svg", "g", "defs", "symbol", "use", "nested-svg", "icon-sprites", "reuse", "vector-graphics", "frontend-development"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

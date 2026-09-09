@@ -1508,6 +1508,86 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "symbol-use-gallery-demo",
+    title: "Interactive Example - symbol + use Instances",
+    controls: [
+      { id: "size", label: "Instance size", type: "range", min: 12, max: 32, step: 1, defaultValue: 20 },
+      { id: "color1", label: "Instance 1 color", type: "color", defaultValue: "#f59e0b" },
+      { id: "color2", label: "Instance 2 color", type: "color", defaultValue: "#6366f1" },
+      { id: "color3", label: "Instance 3 color", type: "color", defaultValue: "#10b981" }
+    ],
+    render: (values) => {
+      const size = Number(values.size);
+      const c1 = String(values.color1);
+      const c2 = String(values.color2);
+      const c3 = String(values.color3);
+      const starPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
+
+      return `
+<svg viewBox="0 0 100 40" width="320" height="128">
+  <defs>
+    <!-- One definition, referenced three times below — its own viewBox lets each <use> rescale it independently. -->
+    <symbol id="star-icon" viewBox="0 0 24 24">
+      <path d="${starPath}" />
+    </symbol>
+  </defs>
+
+  <!-- Shape: three independent instances — same symbol, different position/size/color, none of them touching the definition or each other. -->
+  <use href="#star-icon" x="8" y="${20 - size / 2}" width="${size}" height="${size}" fill="${c1}" />
+  <use href="#star-icon" x="40" y="${20 - size / 2}" width="${size}" height="${size}" fill="${c2}" />
+  <use href="#star-icon" x="72" y="${20 - size / 2}" width="${size}" height="${size}" fill="${c3}" />
+</svg>`;
+    }
+  },
+  {
+    slug: "use-without-symbol-demo",
+    title: "Interactive Example - use Without symbol",
+    controls: [
+      { id: "duplicateHasOwnFill", label: "Give the duplicate its own fill", type: "checkbox", defaultValue: false }
+    ],
+    render: (values) => {
+      const hasOwnFill = Boolean(values.duplicateHasOwnFill);
+      const duplicateFill = hasOwnFill ? ' fill="#f59e0b"' : "";
+
+      return `
+<svg viewBox="0 0 100 60" width="280" height="168">
+  <!-- Original: colored via the WRAPPING <g>'s inherited fill, not its own attribute. -->
+  <g fill="#6366f1">
+    <path id="leaf-shape" d="M0,20 C0,8 8,0 20,0 C20,12 12,20 0,20 Z" transform="translate(10,20)" />
+  </g>
+
+  <!-- Duplicate: does NOT inherit the <g>'s blue — falls back to SVG's default black fill unless given its own. -->
+  <use href="#leaf-shape" transform="translate(55,20)"${duplicateFill} />
+</svg>`;
+    }
+  },
+  {
+    slug: "nested-svg-viewport-demo",
+    title: "Interactive Example - Nested svg Viewport",
+    controls: [
+      { id: "width", label: "Nested svg width", type: "range", min: 20, max: 70, step: 1, defaultValue: 40 },
+      { id: "height", label: "Nested svg height", type: "range", min: 20, max: 70, step: 1, defaultValue: 40 }
+    ],
+    render: (values) => {
+      const width = Number(values.width);
+      const height = Number(values.height);
+      const x = (100 - width) / 2;
+      const y = (100 - height) / 2;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- Outer content, in the OUTER 100 x 100 coordinate system. -->
+  <rect x="5" y="5" width="90" height="90" fill="none" stroke="var(--color-border-default)" stroke-width="1" />
+
+  <!-- Nested svg: its OWN independent viewBox, sized/positioned like any other element from the outer document's point of view. -->
+  <svg x="${x}" y="${y}" width="${width}" height="${height}" viewBox="0 0 10 10">
+    <rect width="10" height="10" fill="#171a2b" />
+    <circle cx="5" cy="5" r="3.5" fill="#6366f1" />
+  </svg>
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.
