@@ -26,6 +26,21 @@ export const snippets: Snippet[] = [
     changelog: [{ date: "2026-09-09", change: "Initial publication." }]
   },
   {
+    slug: "as-const-literal-types",
+    title: "Locking In Literal Types with as const",
+    excerpt: "Derive a union type from a real array instead of maintaining two lists that can drift apart.",
+    description: "as const turns off TypeScript's default literal-widening, keeping a string/array/object exactly as written — readonly and as narrow as possible — enabling the (typeof arr)[number] pattern that derives a union type from one real source-of-truth array instead of a hand-maintained type that can fall out of sync with it.",
+    category: ["TypeScript"],
+    tags: ["typescript", "as-const", "literal-types", "type-inference", "readonly"],
+    image: {
+      path: "/assets/img/goodies/snippets/as-const-literal-types/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "An array of theme names marked as const, with a Theme union type derived directly from it via (typeof THEMES)[number]."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "broadcast-channel-cross-tab",
     title: "Cross-Tab Messaging with BroadcastChannel",
     excerpt: "A direct, same-origin channel between tabs — no server, no storage event side-channel.",

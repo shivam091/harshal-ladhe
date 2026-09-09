@@ -1,0 +1,87 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("as-const-literal-types");
+
+## Introduction
+
+TypeScript widens literal values by default the moment they're assigned to a variable — `const status = "success"` looks like it should be the literal type `"success"`, but ask TypeScript and it's just `string`. That's the right default for a value expected to change (a `let`-style variable), but it's the wrong one for something meant to stay exactly what was written — a config object, a fixed tuple, an enum-like set of string options.
+
+**`as const`** turns off that widening: everything inside the expression becomes as literal and as `readonly` as TypeScript can make it.
+
+<RainbowDivider />
+
+## The Core Assertion
+
+<CodeBlock language="ts">
+{`
+  const a = "success";          // type: string
+  const b = "success" as const; // type: "success" — the exact literal, not the general type
+`}
+</CodeBlock>
+
+Without `as const`, TypeScript widens a string/number/boolean literal to its general type the moment it's assigned — reasonable, since most variables are expected to change value later. `as const` overrides that: keep exactly this value, as this exact literal type.
+
+<RainbowDivider />
+
+## Object and Array Literals
+
+<CodeBlock language="ts">
+{`
+  const config = { mode: "dark", retries: 3 };
+  // type: { mode: string; retries: number } — both fields widened
+
+  const config2 = { mode: "dark", retries: 3 } as const;
+  // type: { readonly mode: "dark"; readonly retries: 3 } — literal AND readonly, every field
+
+  const tuple = [1, 2, 3];
+  // type: number[] — a general array
+
+  const tuple2 = [1, 2, 3] as const;
+  // type: readonly [1, 2, 3] — an actual fixed-length, fixed-value tuple
+`}
+</CodeBlock>
+
+`as const` applies recursively — every property of an object, every element of an array, gets both the narrowest possible literal type and a `readonly` modifier. A plain array literal becomes a real tuple type instead of a general `T[]`.
+
+<RainbowDivider />
+
+## The Payoff: Deriving a Union from Real Values
+
+<CodeBlock language="ts">
+{`
+  const THEMES = ["light", "dark", "system"] as const;
+  // type: readonly ["light", "dark", "system"]
+
+  type Theme = (typeof THEMES)[number];
+  // type: "light" | "dark" | "system" — a real union, derived from the actual runtime array
+
+  function setTheme(theme: Theme) { /* ... */ }
+  setTheme("sepia"); // Error: Argument of type '"sepia"' is not assignable to type 'Theme'
+`}
+</CodeBlock>
+
+This is the pattern `as const` exists for: define the valid options once, as a real runtime array (usable for a `<select>`'s options, an iteration, whatever else needs the actual values) — and derive the *type* from it with `(typeof arr)[number]`, instead of maintaining a separate `type Theme = "light" | "dark" | "system"` by hand that can drift out of sync with the real list.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Deriving a union type from a real array of valid options, instead of hand-writing a matching type separately
+- Config objects passed to something expecting specific literal values (many library APIs infer better from a literal `"dark"` than a widened `string`)
+- Tuple-shaped data (`[x, y]` coordinates, `[key, value]` pairs) that should stay fixed-length and fixed-position
+- Anywhere `satisfies` is already in use — [`{...} as const satisfies T`](/snippet/satisfies-operator-inference) combines both: literal precision *and* shape validation
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`readonly` from `as const` is compile-time only.** Nothing stops `array.push()` or a property reassignment at runtime — TypeScript will flag it as a type error, but the underlying JS array/object is exactly as mutable as it always was.
+* **`as const` on a value already computed from a variable doesn't work the way it might look** — `as const` only narrows *literal* expressions (string/number/boolean/array/object literals written directly); applying it to something already typed as a wider `string` doesn't retroactively narrow it.
+* **Nested mutation methods still type-error correctly** — `readonly [1, 2, 3]` correctly rejects `.push()`/`.pop()` at the type level (they don't exist on a `readonly` tuple's type), which is part of what makes deriving a union from `(typeof arr)[number]` safe to rely on: the array can't silently grow a new value the union type wouldn't know about.
+* **This has been available since TypeScript 3.4** — broadly safe to use in virtually any TypeScript codebase still receiving updates.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`as const` turns "TypeScript widens this to its general type" into "keep exactly this value, as its most literal type, recursively." The pattern worth internalizing is deriving a union from a real array via `(typeof arr)[number]` — one source of truth for both the runtime values and the type, instead of two lists that can quietly drift apart.
