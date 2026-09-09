@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "dynamic-og-image-metadata-api",
+    title: "Generating Social Preview Images with ImageResponse",
+    excerpt: "A per-page opengraph-image.tsx replaces a stale, design-tool-exported static card.",
+    description: "An opengraph-image.tsx file generates that route's social-share preview image on the server from JSX via ImageResponse (built on Satori's flexbox-only layout engine), automatically served at the right URL with the correct meta tag injected — replacing one generic static image or a screenshot-service pipeline with a per-page image reflecting that page's real content.",
+    category: ["Next.js"],
+    tags: ["nextjs", "og-image", "metadata-api", "seo", "image-response"],
+    image: {
+      path: "/assets/img/goodies/snippets/dynamic-og-image-metadata-api/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A social share preview card generated dynamically from a post's title and a chosen gradient theme, next to the ImageResponse JSX that produces it."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "route-handlers-app-api",
     title: "Building an API with App Router Route Handlers",
     excerpt: "One function export per HTTP method, using the same Request/Response the web already has.",

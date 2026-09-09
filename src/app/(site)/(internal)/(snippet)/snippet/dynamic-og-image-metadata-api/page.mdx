@@ -1,0 +1,109 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("dynamic-og-image-metadata-api");
+
+## Introduction
+
+The social-share preview card — the image that shows up when a link is pasted into Slack, X, or iMessage — has traditionally been one static image per page at best, or a design tool export nobody remembers to update when the page's title changes. Generating a *unique* preview per post (with that post's actual title) used to mean a separate image-generation service or a headless-browser screenshot pipeline.
+
+Next.js can generate that image **on the server, from JSX**, at the exact route a social platform expects to find it — no design tool, no screenshot service.
+
+<RainbowDivider />
+
+## The Core File
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/opengraph-image.tsx
+  import { ImageResponse } from "next/og";
+
+  export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const post = await getPost(slug);
+
+    return new ImageResponse(
+      (
+        <div style={{ display: "flex", height: "100%", width: "100%", background: "#0369a1", color: "white", fontSize: 64 }}>
+          {post.title}
+        </div>
+      ),
+      { width: 1200, height: 630 }
+    );
+  }
+`}
+</CodeBlock>
+
+A file named `opengraph-image.tsx` inside a route segment is picked up automatically — Next.js generates the image, serves it at the right URL, and injects the correct `<meta property="og:image">` tag into that route's HTML, all without touching `generateMetadata` directly.
+
+<RainbowDivider />
+
+## Try It Live
+
+Type a title, pick a theme — the preview and the `ImageResponse` JSX that would actually produce it both update together.
+
+<Sandbox slug="dynamic-og-image-metadata-api" readOnly />
+
+<RainbowDivider />
+
+## Why JSX, Not an Actual Browser
+
+<CodeBlock language="tsx">
+{`
+  return new ImageResponse(
+    (
+      <div style={{ display: "flex", /* ...only flexbox layout is supported... */ }}>
+        Hello
+      </div>
+    ),
+    { width: 1200, height: 630 }
+  );
+`}
+</CodeBlock>
+
+`ImageResponse` doesn't run a real browser — it uses [Satori](https://github.com/vercel/satori) to lay out a *constrained subset* of CSS (flexbox only; no CSS Grid, no most modern layout features) and rasterizes the result to an image, which is what makes it fast enough to run per-request on the server instead of needing a headless-browser screenshot pipeline.
+
+<RainbowDivider />
+
+## Dynamic, Not Static
+
+<CodeBlock language="tsx">
+{`
+  // Static: same image every time, defined once
+  export default function Image() {
+    return new ImageResponse(<div>My Site</div>, { width: 1200, height: 630 });
+  }
+
+  // Dynamic: a DIFFERENT image per route, using that route's real data
+  export default async function Image({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    const post = await getPost(slug);
+    return new ImageResponse(<div>{post.title}</div>, { width: 1200, height: 630 });
+  }
+`}
+</CodeBlock>
+
+The file convention is identical either way — the only difference is whether the component reads `params`/fetches data before rendering its JSX, exactly like any other dynamic route segment would.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Blog posts, product pages, or any content page that should have its own accurate share-preview image, not a generic site-wide one
+- Replacing a design-tool-exported static OG image that goes stale the moment the page's title changes
+- Auto-generating preview cards for user-generated content (a shared playlist, a public profile) at scale
+- Any page currently missing an `og:image` entirely, where even a simple templated one beats none
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Only flexbox layout is supported inside the JSX** — no CSS Grid, no most modern CSS. Satori implements a constrained layout engine, not a full browser rendering pipeline; keep the design simple.
+* **Custom fonts need to be loaded and passed explicitly** — `ImageResponse` doesn't have access to a page's real fonts automatically; fetch a font file's bytes and pass them via the `fonts` option in the second argument.
+* **These regenerate on every request unless cached** — for content that changes rarely (a blog post's title, once published), consider the same caching approach used for the rest of the route, since generating an image is real server work each time otherwise.
+* **The route convention matters**: `opengraph-image.tsx` for link previews, `twitter-image.tsx` for X/Twitter-specific cards (falls back to `opengraph-image` if absent), and `icon.tsx`/`apple-icon.tsx` for favicons — all generated the same `ImageResponse` way.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`ImageResponse` turns "generate a per-page social preview image" from a design-tool export or a screenshot service into a JSX component colocated with the route it belongs to. Reach for it any time a page's share preview should reflect that page's actual content instead of one static image serving the whole site.

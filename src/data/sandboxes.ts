@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "dynamic-og-image-metadata-api",
+    title: "Dynamic OG Images",
+    description: "Type a title and pick a theme — the share-preview image and the real ImageResponse JSX that would generate it on the server both update together.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "route-handlers-app-api",
     title: "Route Handlers",
     description: "Three buttons calling functions shaped exactly like real app/api/.../route.ts exports — GET the collection, GET one by id, and POST a new one with validation and real HTTP status codes.",
