@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "env-safe-area-insets",
+    title: "env() Safe Area Playground",
+    description: "Toggle a simulated notch and home indicator to see safe-area-inset padding move header and CTA content clear of them.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "light-dark-color-scheme",
     title: "light-dark()",
     description: "Toggle color-scheme on a panel and watch every light-dark() value re-resolve instantly — background, text, and border, from one declaration each.",

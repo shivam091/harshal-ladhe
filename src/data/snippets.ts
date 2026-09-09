@@ -223,6 +223,23 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "env-safe-area-insets",
+    title: "Padding Around the Notch with env()",
+    excerpt: "Read user-agent-defined safe-area insets so fixed headers, footers, and CTAs never sit under a notch or home indicator.",
+    description: "The env() CSS function reads environment variables the browser defines outside your stylesheet — most commonly the four safe-area-inset-* values — letting fixed/sticky content pad itself around a device's notch, home indicator, or rounded corners without hardcoding per-device pixel values.",
+    category: ["CSS"],
+    tags: ["css", "env", "safe-area-inset", "notch", "viewport-fit", "responsive-design", "modern-css", "mobile-web"],
+    image: {
+      path: "/assets/img/goodies/snippets/env-safe-area-insets/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Padding Around the Notch with env() cover showing a smartphone notch and home indicator with CSS safe-area-inset code."
+    },
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication." }
+    ]
   }
 ];
 

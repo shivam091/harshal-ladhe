@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>env() Safe Area Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>env(safe-area-inset-*)</h1>
+        <p>A real notched device reports these automatically — this demo drives the same padding rule with a stand-in variable so the effect is visible on any screen.</p>
+      </header>
+
+      <section class="demo-block">
+        <button id="toggle-btn" class="toggle-btn" type="button">Apply safe-area padding</button>
+
+        <div class="phone" id="phone">
+          <div class="notch"></div>
+          <div class="screen">
+            <div class="safe-content" id="safe-content">
+              <div class="fake-header">Header</div>
+              <p class="fake-body">Screen content</p>
+              <div class="fake-cta">Continue</div>
+            </div>
+          </div>
+          <div class="home-indicator"></div>
+        </div>
+
+        <code id="inset-code">padding: 0px 1rem 0px;</code>
+      </section>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
