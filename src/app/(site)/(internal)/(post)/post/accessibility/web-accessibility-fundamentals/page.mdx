@@ -1,0 +1,328 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("web-accessibility-fundamentals");
+
+## Introduction
+
+Accessibility is usually treated as a checklist bolted onto a project near the end — an audit pass, a handful of `aria-*` attributes sprinkled in, a Lighthouse score to satisfy before shipping. That framing is backwards, and it's why so much of it ends up undone or half-done: a checklist implies a finish line, but the actual target is a **range of people**, not a rule set.
+
+Some visitors navigate entirely by keyboard, because a mouse or trackpad isn't usable for them. Some rely on a screen reader to have the page read aloud, or a screen magnifier that only ever shows a fraction of the viewport at once. Some have a motor impairment that makes fine pointer movement slow or imprecise, so a tiny click target or a UI that requires a fast double-click is a real barrier. Some are just tired, distracted, or reading on a cracked phone screen in bright sunlight — cognitive load and situational limits count too. Accessibility is the practice of designing for that actual range, rather than for one idealized visitor with perfect vision, full motor control, and unlimited attention.
+
+A useful organizing idea for the rest of this post is **POUR** — the four principles the Web Content Accessibility Guidelines (WCAG) are built around:
+
+- **Perceivable** — information and interface elements must be presentable in ways every user can perceive (not just see, or just hear).
+- **Operable** — interface components and navigation must be operable by any input method, keyboard included.
+- **Understandable** — information and UI operation must be understandable, including error messages and instructions.
+- **Robust** — content must work reliably across a wide range of browsers and assistive technologies, now and as they evolve.
+
+Every section below maps to one of these. Semantic HTML and color contrast are mostly about **Perceivable**; keyboard navigation and focus management are **Operable**; clear forms and error handling are **Understandable**; correct use of ARIA and testing across real assistive tech are what keep everything **Robust**. Keep POUR in the back of your mind — it's the "why" behind every specific rule that follows.
+
+<RainbowDivider />
+
+## Semantic HTML Is the Foundation
+
+Before reaching for ARIA, a role attribute, or a JavaScript keydown handler, ask whether an existing HTML element already does the job. Browsers have been shipping fully accessible form controls, buttons, and navigation landmarks since long before ARIA existed — using them correctly is the single highest-leverage accessibility decision you can make, and it costs nothing.
+
+### `<button>` vs. `<div onClick>`
+
+<CodeBlock language="html">
+{`
+  <!-- Costs you nothing: keyboard-focusable, Enter/Space activate it, exposed as role="button" -->
+  <button type="button">Save changes</button>
+
+  <!-- Costs you everything above, rebuilt by hand, and easy to get subtly wrong -->
+  <div onclick="save()">Save changes</div>
+`}
+</CodeBlock>
+
+A real `<button>` is part of the page's natural tab order, receives a visible focus ring by default, activates on both **Enter** and **Space**, and is announced by every screen reader as `"Save changes, button"` with zero extra markup. A `<div onclick="...">` gets none of that automatically — it's invisible to keyboard navigation (no `tabindex`, no key handling), and a screen reader announces it as plain, unlabeled text, not a control. Making the `div` version accessible means manually adding `tabindex="0"`, a `keydown` listener for both Enter and Space, `role="button"`, and a focus style — four extra concerns to get right, replicating what `<button>` gives you natively.
+
+### Native Form Controls vs. Custom-Styled Ones
+
+The same logic applies to checkboxes, radio buttons, and `<select>`. It's tempting to hide a native `<input type="checkbox">` and build a custom-styled box out of a `<div>`, because native controls are notoriously hard to restyle consistently across browsers. That's a legitimate design constraint — but the fix is to keep the real `<input>` in the DOM (visually hidden, not `display: none`, so it stays focusable and announced) and style a sibling element to represent it visually, not to throw the native element away. A fully custom re-implementation has to rebuild keyboard support, focus management, label association, and forced-colors-mode behavior all itself — testable, but easy to leave partially done.
+
+### Landmark Elements
+
+`<nav>`, `<main>`, `<header>`, `<footer>`, and `<aside>` aren't just semantic decoration — each one is exposed to assistive tech as a **landmark**, and screen reader users can jump directly between landmarks with a dedicated keystroke (no need to read through everything in between). A page built entirely out of `<div>`s, no matter how visually organized, exposes zero landmarks — a screen reader user has to read linearly through the whole thing to find "the navigation" or "the main content," because there's no structural way to skip ahead.
+
+<Info title="One `<main>` per page">
+  Use exactly one `<main>` per page, wrapping the primary content (not the nav, header, or footer). Screen readers commonly offer a "skip to main content" or "jump to main landmark" shortcut that depends on there being exactly one to jump to.
+</Info>
+
+<RainbowDivider />
+
+## The Accessibility Tree
+
+Every browser builds two trees from the same HTML: the DOM tree you already know from `document.querySelector` and DevTools' Elements panel, and a separate **accessibility tree**, computed specifically for assistive technology. The accessibility tree is derived from the DOM tree, but it isn't the same shape — it's built from each element's semantics (its tag, or an explicit ARIA `role`), its accessible **name** (from its text content, a `label`, or an `aria-label`), its state (`aria-expanded`, `aria-checked`, `disabled`, and so on), and its visibility (an element hidden with `display: none` or `aria-hidden="true"` is pruned from the tree entirely, even though it still exists in the DOM).
+
+This is the tree a screen reader actually reads from — not the DOM, not the rendered pixels. A visually perfect page can still produce an accessibility tree with gaping holes in it, and that mismatch is invisible unless you specifically go looking for it (DevTools' Accessibility pane, under Elements, shows it directly).
+
+The two diagrams below compare the exact same small UI — a message card with a heading and a "close" icon button — built two different ways, and show what each produces in the accessibility tree.
+
+**Semantic markup** — an `<h3>` and a real `<button aria-label="Close">`:
+
+<AccessibilityTreeDiagram variant="good" />
+
+Both elements produce a proper node: a `heading` with the visible text as its name, and a `button` named "Close" (the icon itself, `×`, has no readable text — the `aria-label` supplies the name a screen reader announces instead).
+
+**Div soup** — the same visual result, built from unstyled `<div>`s:
+
+<AccessibilityTreeDiagram variant="bad" />
+
+Neither div produces anything usable. There's no `role`, so assistive tech has no idea either one is interactive or structural; there's no accessible name, so even if a screen reader guessed at a role, it would have nothing to announce. Visually, the two versions can be pixel-identical. In the accessibility tree, one is fully described and the other is a hole.
+
+<RainbowDivider />
+
+## ARIA: When to Use It (and the First Rule of ARIA)
+
+ARIA (Accessible Rich Internet Applications) lets you attach roles, states, and properties to elements that don't have accessible semantics of their own — but it's a patch for gaps native HTML leaves, not a first choice. The [WAI-ARIA Authoring Practices](https://www.w3.org/TR/using-aria/#firstrule) put it directly, and it's worth internalizing as **the first rule of ARIA**: if a native HTML element or attribute already has the semantics and behavior you need, use it instead of re-purposing an element and adding ARIA to make it accessible. **No ARIA is better than bad ARIA** — an incorrect `role` or a stale `aria-expanded` actively lies to a screen reader, which is worse than saying nothing at all, because the user has no way to know the announcement is wrong.
+
+That said, some UI genuinely doesn't have a native HTML equivalent — a custom dropdown/combobox, a tab panel, a toast notification. That's ARIA's real job. A few attributes come up constantly:
+
+- **`role`** — declares what an element functionally is (`role="dialog"`, `role="tablist"`) when the tag itself doesn't say so.
+- **`aria-label`** / **`aria-labelledby`** — supplies an accessible name directly, or points at another element's id to reuse as the name.
+- **`aria-describedby`** — points at an element with supplementary description, announced after the name (commonly used for hint text or error messages — see the Forms section below).
+- **`aria-expanded`** / **`aria-controls`** — for disclosure widgets (accordions, dropdown menus): `aria-expanded` reports open/closed state, `aria-controls` points at the id of the content it toggles.
+- **`aria-live`** — marks a region whose content changes dynamically (a toast, a form-submission status) so a screen reader announces the update without the user needing to have focus there.
+
+**Before/after: a custom dropdown**
+
+<CodeBlock language="html">
+{`
+  <!-- Before: visually a dropdown, semantically nothing -->
+  <div class="dropdown">
+    <div class="dropdown-trigger" onclick="toggle()">Sort by ▾</div>
+    <ul class="dropdown-menu" style="display: none;">
+      <li onclick="select('newest')">Newest</li>
+      <li onclick="select('popular')">Most popular</li>
+    </ul>
+  </div>
+`}
+</CodeBlock>
+
+A screen reader user tabbing past this hears nothing but unlabeled text — no indication it's interactive, expandable, or a menu at all.
+
+<CodeBlock language="html">
+{`
+  <!-- After: role + name + state, kept in sync with the actual open/closed state -->
+  <div class="dropdown">
+    <button
+      type="button"
+      aria-expanded="false"
+      aria-controls="sort-menu"
+      onclick="toggle()"
+    >
+      Sort by ▾
+    </button>
+    <ul id="sort-menu" role="menu" hidden>
+      <li role="menuitem" onclick="select('newest')">Newest</li>
+      <li role="menuitem" onclick="select('popular')">Most popular</li>
+    </ul>
+  </div>
+`}
+</CodeBlock>
+
+Switching the trigger to a real `<button>` fixes keyboard focus and activation for free. `aria-expanded` (flipped to `"true"` by the same `toggle()` call that shows the menu) tells assistive tech the current state; `aria-controls` associates the trigger with the exact element it opens; `role="menu"` / `role="menuitem"` describe the list's actual function since a bare `<ul>`/`<li>` doesn't imply a menu on its own. The visual result can be identical to the "before" version — the entire difference lives in what's exposed to the accessibility tree.
+
+<Warning title="Keep ARIA state in sync">
+  <code>aria-expanded="false"</code> hardcoded in markup that never updates is arguably worse than omitting it — it tells every screen reader user the menu is always closed, even while it's open on screen. Any ARIA state attribute needs the same JS that toggles the visual state to also toggle the attribute.
+</Warning>
+
+<RainbowDivider />
+
+## Keyboard Navigation and Focus Management
+
+If a feature can't be operated with a keyboard alone — no mouse, no touch — it fails the **Operable** principle outright, regardless of how it looks. Keyboard support isn't just for screen reader users; it's the only input method some motor-impaired visitors have, and it's how many power users navigate regardless of ability.
+
+### Tab Order Follows DOM Order
+
+The browser's default tab order is simply the DOM order of focusable elements — no configuration needed, which is exactly why reordering elements purely with CSS (`order`, `flex-direction: row-reverse`, absolute positioning) is a common accessibility trap: the page can look reordered while Tab still walks through the original, now visually mismatched, DOM sequence.
+
+### `tabindex`: 0, -1, and (almost never) Positive
+
+<CodeBlock language="js">
+{`
+  element.tabIndex = 0;   // Adds the element to the NATURAL tab order (use for custom interactive widgets)
+  element.tabIndex = -1;  // Focusable via element.focus() in JS, but skipped by Tab (use for programmatic focus targets, like a skip-link destination)
+  element.tabIndex = 5;   // Almost always wrong — see below
+`}
+</CodeBlock>
+
+`tabindex="0"` is the right call when you build a genuinely custom interactive element (a `role="button"` div you couldn't avoid, a custom slider) and need it to join the natural tab order at its DOM position. `tabindex="-1"` removes an element from the Tab sequence while keeping it focusable programmatically — the standard technique for a skip link's destination, or for moving focus into a freshly-opened panel. A **positive** `tabindex` (`1`, `2`, `5`...) forces that element to the front of the tab order, ahead of every `0`-or-natural element on the page — which almost always creates a tab order that no longer matches the visual layout, and gets actively confusing the moment a second developer adds a positive `tabindex` of their own without knowing the first one exists. Treat any positive `tabindex` you find in a codebase as a bug to fix, not a feature to extend.
+
+### Focus Traps for Modals
+
+A modal dialog needs to trap Tab/Shift+Tab so focus can't silently escape to page content sitting behind the (supposedly blocking) overlay — and needs to restore focus to whatever opened it once it closes. Building that by hand means tracking every focusable element inside the modal, intercepting Tab at the boundaries, and manually saving/restoring the trigger element's focus. The native `<dialog>` element's `showModal()` does all of this automatically — see [Real Modals with the `<dialog>` Element](/snippet/dialog-element-native-modals) for the full breakdown of `showModal()` vs. `show()`, declarative closing, and the `closedby` attribute.
+
+### Visible Focus Indicators: `:focus-visible`
+
+<CodeBlock language="css">
+{`
+  /* Shows a focus ring for keyboard navigation, but not for a mouse click */
+  button:focus-visible {
+    outline: 2px solid var(--color-fg-accent);
+    outline-offset: 3px;
+  }
+`}
+</CodeBlock>
+
+`:focus-visible` (as opposed to plain `:focus`) is what makes `outline: none` on `:focus` alone such a common anti-pattern survivable to remove: the browser already distinguishes "focused via keyboard" from "focused via mouse click" and only matches `:focus-visible` for the former, so you can safely restyle focus without silently removing it for keyboard users who still need to see exactly where they are on the page.
+
+### Skip Links
+
+A skip link is the first focusable element on the page, visually hidden until it receives focus, that jumps straight to the main content — letting a keyboard user bypass a long nav on every single page load instead of tabbing through it every time.
+
+<Sandbox slug="accessibility-focus-order" readOnly />
+
+Tab into the preview above: the skip link appears the moment it's focused, the nav links after it show a clear `:focus-visible` ring, and activating the skip link moves focus straight to `<main tabindex="-1">` — past the whole nav in one step.
+
+<RainbowDivider />
+
+## Color Contrast and Visual Accessibility
+
+Low-vision users, users in bright sunlight, and users with certain color-vision deficiencies all depend on sufficient contrast between text and its background — WCAG's baseline numbers are the ones to know:
+
+| Level | Normal text | Large text (18pt+/14pt+ bold) | UI components & graphics |
+| ----- | ----------- | ------------------------------ | ------------------------- |
+| AA    | 4.5:1       | 3:1                             | 3:1                        |
+| AAA   | 7:1         | 4.5:1                           | (no AAA target defined)   |
+
+AA is the practical target for most production work; AAA is stricter and rarely required outside specific compliance mandates. "Large text" gets a lower bar because bigger glyphs remain legible at lower contrast than small ones do.
+
+<Details summary="Where to actually check these ratios">
+
+- Browser DevTools' color picker shows a live contrast ratio (and whether it passes AA/AAA) the moment you pick a foreground/background pair.
+- Automated tools (axe, Lighthouse — see the Testing section below) flag failing text/background pairs across a whole page at once.
+- For a quick one-off check, WebAIM's [Contrast Checker](https://webaim.org/resources/contrastchecker/) takes two hex values and reports the ratio directly.
+
+</Details>
+
+**Never convey information by color alone.** A form field outlined in red with no other indicator, a status dot that's green-or-red with no accompanying text, a required-field asterisk styled only in a color that reads as "just red text" to someone with red-green color blindness — each of these fails the same way: the color-blind or low-vision reader gets nothing where a sighted reader gets the whole story. Pair color with a shape, icon, underline, or text label so the information survives without it.
+
+CSS itself can respond to some of a visitor's contrast preferences directly — see [`prefers-reduced-motion`, `prefers-contrast`, and `forced-colors`](/snippet/accessibility-media-features) for the media-feature side of this: `prefers-contrast: more` lets you offer a genuinely higher-contrast mode without a manual toggle, and `forced-colors: active` is worth auditing for even if you never write a rule for it, since Windows High Contrast Mode rewrites your colors whether you've planned for it or not.
+
+<RainbowDivider />
+
+## Forms and Accessible Error Handling
+
+Forms are where accessibility gaps translate most directly into lost conversions and frustrated users — a form that's confusing for a screen reader user is usually also confusing for everyone else, just less visibly so.
+
+### Associating Labels Correctly
+
+<CodeBlock language="html">
+{`
+  <!-- Correct: clicking the label focuses the input; screen readers announce the label as its name -->
+  <label for="email">Email address</label>
+  <input type="email" id="email" name="email" />
+
+  <!-- Also correct: wrapping instead of "for"/"id" -->
+  <label>
+    Email address
+    <input type="email" name="email" />
+  </label>
+
+  <!-- Broken: visually a label, but not programmatically associated with anything -->
+  <span class="label">Email address</span>
+  <input type="email" name="email" />
+`}
+</CodeBlock>
+
+A placeholder is not a label — it disappears the moment the user starts typing, doesn't get announced the same way by every screen reader, and fails contrast requirements in most default styling. Use it as supplementary hint text alongside a real `<label>`, never as a replacement for one.
+
+### `aria-invalid` and `aria-describedby` for Errors
+
+<CodeBlock language="html">
+{`
+  <label for="email">Email address</label>
+  <input
+    type="email"
+    id="email"
+    name="email"
+    aria-invalid="true"
+    aria-describedby="email-error"
+  />
+  <p id="email-error" role="alert">Enter a valid email address.</p>
+`}
+</CodeBlock>
+
+`aria-invalid="true"` tells assistive tech the field currently fails validation; `aria-describedby` points at the error message's id so it's announced right after the field's label and value, instead of the user having to hunt for it elsewhere on the page. `role="alert"` on the message element makes a screen reader announce it immediately when it appears, without the user needing to have focus there — the same underlying idea as `aria-live`, applied specifically to validation errors.
+
+### `:user-invalid` — a Modern Bonus
+
+<CodeBlock language="css">
+{`
+  /* Unlike :invalid, doesn't match until the user has actually interacted with the field */
+  input:user-invalid {
+    border-color: var(--color-fg-danger);
+  }
+`}
+</CodeBlock>
+
+Plain `:invalid` matches the instant a field has invalid content — including an empty required field the user hasn't even reached yet, which is exactly the "every field is red before I've typed anything" problem that makes forms feel hostile. `:user-invalid` only matches after the user has interacted with the field (typically after it loses focus), giving you accurate error styling without extra JavaScript state tracking.
+
+### Grouping Related Fields
+
+<CodeBlock language="html">
+{`
+  <fieldset>
+    <legend>Shipping address</legend>
+    <label for="street">Street</label>
+    <input type="text" id="street" name="street" />
+    <label for="city">City</label>
+    <input type="text" id="city" name="city" />
+  </fieldset>
+`}
+</CodeBlock>
+
+`<fieldset>` and `<legend>` group related controls (address lines, a set of radio buttons) under one announced heading — a screen reader user tabbing into any field inside hears the `<legend>` text as context, instead of landing on an unlabeled "City" field with no idea it belongs to a shipping address.
+
+<RainbowDivider />
+
+## Testing: Screen Readers and Automated Tools
+
+No single testing method catches everything, and the three below cover genuinely different classes of problem.
+
+**Manual keyboard-only testing** — unplug the mouse (or just don't touch it) and try to complete the page's core tasks using only Tab, Shift+Tab, Enter, Space, and arrow keys. This alone surfaces most of the Keyboard Navigation issues from earlier: things that are unreachable, things with no visible focus indicator, and tab orders that don't match the visual layout.
+
+**A real screen reader spot-check** — VoiceOver (built into macOS/iOS, Cmd+F5 to toggle) or NVDA (free, Windows) reading through a page's core flow surfaces problems no automated tool catches: an icon button with no accessible name read aloud as just "button," a dynamic update that never gets announced, a heading structure that skips levels and disorients someone navigating by headings.
+
+**Automated tools** — axe (browser extension or `axe-core` in CI) and Lighthouse's accessibility audit both scan a live page and flag concrete WCAG violations automatically. They're valuable exactly because they're fast and free to run on every PR — but treat them as a **floor, not a ceiling**. Automated tools reliably catch things a machine can verify mechanically (missing `alt` text, insufficient contrast ratios, a form input with no associated label) — commonly cited estimates put that at roughly **30-40% of real-world accessibility issues**. Everything that requires judgment — whether an `aria-label` actually describes what a button does, whether a focus order makes logical sense, whether an error message is genuinely helpful — needs a human, and usually needs to be experienced with a keyboard or a screen reader to notice at all.
+
+<Info title="Layer all three">
+  Automated tools in CI catch regressions cheaply and continuously. Keyboard-only testing during development catches structural problems before they ship. A periodic real screen-reader pass catches what both of the others miss. None of the three replaces the other two.
+</Info>
+
+<RainbowDivider />
+
+## Common Anti-Patterns
+
+A few patterns show up often enough, across otherwise well-built sites, to call out explicitly:
+
+- **Removing focus outlines without a replacement** — `outline: none` on `:focus` (not `:focus-visible`) with nothing standing in for it leaves keyboard users with no visual indication of where they are on the page at all.
+- **`div`/`span` soup with click handlers** — interactive-looking elements with an `onclick` and no `role`, no `tabindex`, and no keyboard handler are invisible to keyboard and screen-reader users alike (see the Accessibility Tree section above for exactly what this produces — nothing).
+- **`aria-hidden` on focusable content** — `aria-hidden="true"` hides an element from the accessibility tree but does nothing to its actual focusability; a hidden-but-still-tabbable element lets a keyboard user tab onto something a screen reader user is told doesn't exist, a confusing and easy-to-introduce mismatch.
+- **Autoplaying media** — autoplaying video or audio (especially with sound) competes with screen reader speech output, can't be reliably interrupted by everyone, and is exactly the kind of large, unrequested motion `prefers-reduced-motion` exists to opt out of.
+- **Infinite scroll without an alternative** — a feed that only ever loads more content on scroll, with no paginated or "load more button" fallback, can trap keyboard and screen-reader users who can't easily reach a footer, a search box, or anything the infinite content pushes further and further away.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Reach for native HTML first** — `<button>`, `<nav>`, `<label>`, `<fieldset>` solve more of the problem than any amount of ARIA layered onto a `<div>`.
+- **Apply the first rule of ARIA** — no ARIA at all beats ARIA that's incorrect or falls out of sync with the actual UI state.
+- **Keep tab order matching visual order** — avoid CSS reordering (`order`, `flex-direction: row-reverse`) that visually reorders elements without reordering the DOM.
+- **Never use positive `tabindex`** — `0` and `-1` cover every legitimate use case; anything higher creates a tab order no one can reason about.
+- **Style focus with `:focus-visible`, never remove it** — keyboard users need to see where they are; mouse users don't need a ring on every click.
+- **Meet WCAG AA contrast at minimum** — 4.5:1 for normal text, 3:1 for large text and UI components — and never rely on color alone to convey information.
+- **Associate every label properly** — `for`/`id` or wrapping, never a bare `<span>` styled to look like a label.
+- **Connect errors to their field** — `aria-invalid` plus `aria-describedby`, so assistive tech announces the error as part of the field, not as disconnected page text.
+- **Test with a keyboard and a real screen reader, not just automated tools** — axe and Lighthouse are a floor (roughly 30-40% of issues), not a ceiling.
+- **Treat `aria-hidden` and focusability as two separate concerns** — hiding something from the accessibility tree doesn't remove it from the tab order; handle both.
+
+<RainbowDivider />
+
+## Conclusion
+
+Every technique in this post traces back to the same idea: the accessibility tree, not the rendered pixels, is what assistive technology actually works from — and semantic HTML is the cheapest, most reliable way to make sure that tree says something true. ARIA fills the real gaps native HTML leaves, but only earns its keep when it's correct and kept in sync; get the semantics right first, and there are fewer gaps to fill in the first place.
+
+None of this is a one-time checklist. Keyboard support, contrast, and clear error handling are properties a page either has or doesn't, continuously, as it changes — which is exactly why automated tools belong in CI, keyboard-only testing belongs in normal development, and a real screen reader pass belongs somewhere in the cycle too. Start with the sections here that map to whatever you're building next: a form gets labels and `aria-describedby`, a custom widget gets ARIA state kept in sync, a modal gets `<dialog>` instead of a hand-rolled focus trap. The range of people using what you build is wider than any one of us tests with by default — designing for it from the start is what makes the difference.

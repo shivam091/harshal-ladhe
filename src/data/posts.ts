@@ -428,6 +428,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "web-accessibility-fundamentals",
+    title: "Web Accessibility Fundamentals: Semantic HTML, ARIA, and Keyboard Navigation",
+    excerpt: "Design for how people actually use the web, not one idealized visitor.",
+    description: "A practical introduction to web accessibility — semantic HTML, the accessibility tree, ARIA done right, keyboard navigation and focus management, color contrast, accessible forms, and how to actually test for all of it.",
+    category: ["Accessibility"],
+    tags: ["accessibility", "a11y", "aria", "semantic-html", "keyboard-navigation", "focus-management", "screen-readers", "wcag", "web-standards", "testing"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

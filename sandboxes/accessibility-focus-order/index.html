@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Focus Order &amp; Skip Link Playground</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+
+    <div class="playground">
+      <header class="playground-header">
+        <h1>Focus Order &amp; Skip Link</h1>
+        <p>Click into this preview, then press Tab from the very top — the skip link is the first stop, invisible until it's focused. Keep tabbing through the nav and the button, and watch the readout track which element currently has focus.</p>
+      </header>
+
+      <nav class="site-nav" aria-label="Demo site">
+        <a href="#">Home</a>
+        <a href="#">Guides</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </nav>
+
+      <main id="main-content" tabindex="-1">
+        <h2>Main content</h2>
+        <p>The skip link's href targets this heading's container. Activating it (Enter, not a mouse click) moves focus straight here — past all four nav links above, exactly the shortcut a keyboard-only visitor needs on every page load.</p>
+        <button class="toggle-btn" type="button">Focusable action</button>
+      </main>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </div>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "accessibility-focus-order",
+    title: "Focus Order & Skip Link Playground",
+    description: "A nav-plus-content layout where Tab reveals a \"Skip to main content\" link only once it's focused, then moves through the nav and a button in plain DOM order — a live readout tracks which element currently has focus.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "dynamic-og-image-metadata-api",
     title: "Dynamic OG Images",
     description: "Type a title and pick a theme — the share-preview image and the real ImageResponse JSX that would generate it on the server both update together.",

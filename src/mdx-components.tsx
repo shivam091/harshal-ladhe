@@ -55,6 +55,7 @@ import MaskCompositeDiagram from "@/components/mdx/MaskCompositeDiagram";
 import MaskBoxRegionsDiagram from "@/components/mdx/MaskBoxRegionsDiagram";
 import OverlayStackDiagram from "@/components/mdx/OverlayStackDiagram";
 import ConditionalTypeDiagram from "@/components/mdx/ConditionalTypeDiagram";
+import AccessibilityTreeDiagram from "@/components/mdx/AccessibilityTreeDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -125,6 +126,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     MaskBoxRegionsDiagram,
     OverlayStackDiagram,
     ConditionalTypeDiagram,
+    AccessibilityTreeDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
