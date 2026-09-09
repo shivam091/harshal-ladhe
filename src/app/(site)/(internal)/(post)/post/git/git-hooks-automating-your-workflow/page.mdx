@@ -1,0 +1,276 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("git-hooks-automating-your-workflow");
+
+Git hooks are Git running your own scripts automatically at specific points in a repository's lifecycle — right before a commit is created, right after a message is written, right before anything leaves your machine on a push. Nothing about them is magic: a hook is just an executable file with a name Git recognizes, sitting in a folder Git checks at the right moment. What you put in that file is entirely up to you.
+
+If you haven't seen Git hooks before, [the Advanced Git post](/post/git/advanced-git-techniques-and-workflows#hooks) covers the basics — this post is the deep dive.
+
+That earlier section covered the shape of things: hooks live in `.git/hooks/`, a handful of names matter most, and a minimal `pre-commit` can block a bad commit. This post goes further — every local hook Git ships, in the exact order they fire; real `pre-commit`, `commit-msg`, and `pre-push` scripts you could actually drop into a project; the three real ways teams share hooks across a repo; and where the trust boundary of a "local script" actually breaks down.
+
+By the end you should be able to write a hook that only lints the files you actually staged, enforce a commit message format without a linter plugin, gatekeep pushes to a protected branch, and know exactly when `--no-verify` is a lifesaver versus a habit that quietly undoes all of it.
+
+<RainbowDivider />
+
+## The Full Lifecycle: Every Local Hook, In Order
+
+Git calls a fixed set of hook names at fixed points during normal operations. Here are the ones you'll actually use, roughly in the order they fire during a typical commit-and-push cycle:
+
+| Hook | Fires when | Typical use |
+| --- | --- | --- |
+| `pre-commit` | Before a commit message editor even opens | Lint/format staged files, block a commit outright |
+| `prepare-commit-msg` | After the default message is generated, before the editor opens | Pre-fill a message template (e.g. inject a ticket number from the branch name) |
+| `commit-msg` | After the user writes a message, before the commit is created | Enforce a message format (Conventional Commits, ticket-ID prefix) |
+| `post-commit` | Immediately after a commit is created | Notifications, triggering a local build, nothing that can block anything |
+| `pre-rebase` | Before a rebase starts | Block rebasing a branch that's already been published |
+| `post-checkout` | After `checkout` or `switch` moves `HEAD` | Reinstall dependencies, warn about stale generated files |
+| `post-merge` | After a merge completes | Re-run dependency installs if lockfiles changed |
+| `pre-push` | Before local refs are sent to a remote | Block pushes to protected branches, run the test suite |
+| `post-rewrite` | After a command that rewrites commits (`rebase`, `commit --amend`) | Update tooling that caches old SHAs |
+
+`pre-commit`, `commit-msg`, and `pre-push` are the ones you'll write yourself most often — they're the only three that can actually *stop* an operation with a non-zero exit code before it does damage.
+
+Server-side hooks also exist — `pre-receive`, `update`, and `post-receive` run on the machine that hosts the remote repository, not on a contributor's laptop. They can reject a push before it's even accepted, which makes them a real enforcement point rather than a suggestion. The catch: they only run on a server *you* administer. On a hosted platform like GitHub or GitLab you don't get shell access to run one — branch-protection rules and required CI checks are the platform's substitute for server-side hooks, and for most teams that's the actual gate, not anything living in `.git/hooks/`.
+
+<Quote>A local hook only protects the person who has it installed — everyone else's clone is a coin flip.</Quote>
+
+<RainbowDivider />
+
+## Writing a Real `pre-commit` Hook
+
+A useful `pre-commit` hook doesn't lint the whole repository — that gets slower every time the codebase grows, and it re-checks files you didn't even touch. Instead, it should look at exactly what's staged for this commit.
+
+`git diff --cached --name-only --diff-filter=ACM` does that: `--cached` compares against the index (what's staged) rather than the working directory, `--name-only` gives you bare paths, and `--diff-filter=ACM` limits the list to files that were **A**dded, **C**opied, or **M**odified — skipping deleted files, which a linter can't usefully check anyway.
+
+<CodeBlock language="bash">
+{`#!/bin/sh
+# .git/hooks/pre-commit
+
+# Collect staged JS/TS files only — never the whole tree.
+staged_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.js' '*.jsx' '*.ts' '*.tsx')
+
+if [ -z "$staged_files" ]; then
+  # Nothing relevant staged — nothing to check, let the commit through.
+  exit 0
+fi
+
+echo "Linting staged files:"
+echo "$staged_files"
+
+# Run the linter against ONLY those files, not the entire project.
+echo "$staged_files" | xargs npx eslint --max-warnings=0
+
+if [ $? -ne 0 ]; then
+  echo ""
+  echo "eslint failed on staged files — commit aborted."
+  echo "Fix the issues above, or re-stage after fixing, and commit again."
+  exit 1
+fi
+
+exit 0`}
+</CodeBlock>
+
+The exit code is the entire contract. Git doesn't parse a hook's output looking for keywords — it only checks whether the process exited `0` or non-zero. Exit `0` and the commit proceeds exactly as if the hook didn't exist. Exit anything else and Git aborts the operation the hook is guarding, before it does anything permanent — no commit object gets created. Whatever the script writes to stdout or stderr is shown directly to the user in their terminal, which is why the error message above explains what to do next rather than just failing silently.
+
+<Info title="Fast beats thorough for a local hook">
+  This script deliberately trades completeness for speed: it won't catch a bug in a file nobody touched this commit, but it also won't add ten seconds to every commit in a large repo. A full-repository lint belongs in CI, where the extra time doesn't sit between you and your next keystroke.
+</Info>
+
+<RainbowDivider />
+
+## `commit-msg`: Enforcing a Message Format
+
+Unlike `pre-commit`, which runs with no arguments, `commit-msg` receives exactly one argument: the path to a temporary file containing the message the user just drafted. Git writes whatever was typed into the editor (or passed via `-m`) to that file first, then calls the hook, then — if the hook exits `0` — uses that file's contents as the actual commit message.
+
+That means the hook's job is simple: read the file at `$1`, check its contents, and exit non-zero with a helpful message if it doesn't pass.
+
+<CodeBlock language="bash">
+{`#!/bin/sh
+# .git/hooks/commit-msg
+# $1 is the path to a temp file holding the drafted commit message.
+
+commit_msg_file="$1"
+first_line=$(head -n 1 "$commit_msg_file")
+
+# Require a Conventional-Commits-style prefix.
+pattern='^(feat|fix|chore|docs|refactor|test|perf)(\\([a-z0-9-]+\\))?: .+'
+
+if ! echo "$first_line" | grep -qE "$pattern"; then
+  echo "Commit rejected: message doesn't match the required format."
+  echo ""
+  echo "  Got:      $first_line"
+  echo "  Expected: <type>(optional-scope): description"
+  echo "  Example:  feat(auth): add refresh-token rotation"
+  echo ""
+  echo "Allowed types: feat, fix, chore, docs, refactor, test, perf"
+  exit 1
+fi
+
+exit 0`}
+</CodeBlock>
+
+This is also the right place to auto-inject information rather than just reject — a common variant reads the current branch name (`git rev-parse --abbrev-ref HEAD`), pulls a ticket ID out of it (e.g. `feature/JIRA-123-refresh-tokens`), and appends `[JIRA-123]` to the message file with `sed` before exiting `0`, instead of failing the commit at all.
+
+<RainbowDivider />
+
+## `pre-push`: Gatekeeping What Leaves Your Machine
+
+`pre-push` is the last local checkpoint before anything reaches a remote. It doesn't get its information as arguments — instead, Git writes one line to the hook's **stdin** for every ref being pushed, in the form:
+
+```
+<local ref> <local sha> <remote ref> <remote sha>
+```
+
+Reading that stream lets a single hook reason about everything in the push at once — including pushes that touch multiple branches or tags in one command.
+
+<CodeBlock language="bash">
+{`#!/bin/sh
+# .git/hooks/pre-push
+# stdin: one line per ref being pushed —
+#   <local ref> <local sha> <remote ref> <remote sha>
+
+protected_branch='refs/heads/(main|master)'
+
+while read local_ref local_sha remote_ref remote_sha; do
+  if echo "$remote_ref" | grep -qE "$protected_branch"; then
+    echo "Direct push to $remote_ref is blocked."
+    echo "Open a pull request instead."
+    exit 1
+  fi
+done
+
+# No protected branch in this push — run the fast part of the test suite
+# before letting anything leave this machine.
+npm test -- --silent
+if [ $? -ne 0 ]; then
+  echo "Tests failed — push aborted."
+  exit 1
+fi
+
+exit 0`}
+</CodeBlock>
+
+Two gotchas worth knowing: if nothing is being pushed for a given ref, `remote_sha` comes through as all zeros (`0000...`), which is how you detect "this is deleting a remote branch" rather than updating one. And because `pre-push` reads from stdin, calling another interactive command inside the hook that also wants stdin (some test runners prompt on failure) will hang waiting for input that's actually meant for Git — pass `--silent`, `--ci`, or the equivalent non-interactive flag for whatever you're running.
+
+<RainbowDivider />
+
+## Sharing Hooks Across a Team
+
+`.git/hooks/` is deliberately outside version control — it's per-clone, local-only state, so a hook you write and `chmod +x` today won't exist for anyone who clones the repo tomorrow. There are three real ways teams close that gap.
+
+### 1. Point Git at a versioned directory
+
+`core.hooksPath` tells Git to look somewhere other than `.git/hooks/` for hook scripts — typically a directory committed to the repo itself, like `.githooks/`.
+
+<CodeBlock language="bash">
+{`mkdir -p .githooks
+
+cat > .githooks/pre-commit << 'EOF'
+#!/bin/sh
+staged_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.js' '*.ts')
+[ -z "$staged_files" ] && exit 0
+echo "$staged_files" | xargs npx eslint --max-warnings=0
+EOF
+
+chmod +x .githooks/pre-commit
+
+git add .githooks
+git commit -m "chore: add versioned pre-commit hook"
+
+# Each contributor runs this once, after cloning:
+git config core.hooksPath .githooks`}
+</CodeBlock>
+
+This is the simplest option and needs no extra dependency — it's plain Git configuration. The trade-off is that `git config core.hooksPath` is itself a manual, local step; cloning the repo alone doesn't turn it on.
+
+### 2. Install hooks as part of your existing tooling
+
+Tools like **Husky** (for Node projects) or the Python **pre-commit** framework write hook files into `.git/hooks/` automatically as a side effect of a command you were already running — typically `npm install`, via a `"prepare"` script in `package.json`. Whoever runs the normal project setup gets the hooks for free, without a separate step to remember.
+
+<CodeBlock language="bash">
+{`{
+  "scripts": {
+    "prepare": "husky install"
+  }
+}`}
+</CodeBlock>
+
+### 3. A one-time manual setup script
+
+The lowest-tech option: commit a script that copies files into `.git/hooks/` and marks them executable, and document that contributors run it once after cloning.
+
+<CodeBlock language="bash">
+{`#!/bin/sh
+# scripts/setup-hooks.sh
+for hook in .githooks/*; do
+  cp "$hook" ".git/hooks/$(basename "$hook")"
+  chmod +x ".git/hooks/$(basename "$hook")"
+done
+echo "Hooks installed."`}
+</CodeBlock>
+
+| Approach | Setup effort | Auto-installs on clone? | Extra dependency |
+| --- | --- | --- | --- |
+| `core.hooksPath` | One `git config` command | No — still a manual step | None |
+| Husky / pre-commit framework | Config file + package script | Yes, on the existing install step | Yes |
+| Manual setup script | A shell script + a line in the README | No — a step someone has to remember | None |
+
+<Success title="core.hooksPath is easy to underrate">
+  Because it's built into Git itself, `core.hooksPath` works identically across every language ecosystem, adds zero dependencies, and survives a `node_modules` wipe or a `pip` reinstall untouched. It's a fine default unless you already have a package-manager install step that can carry the extra weight for you.
+</Success>
+
+<RainbowDivider />
+
+## Bypassing and Escaping
+
+Every hook that can block a commit or push can also be skipped outright with `--no-verify`:
+
+<CodeBlock language="bash">
+{`git commit --no-verify -m "hotfix: revert bad deploy"
+git push --no-verify`}
+</CodeBlock>
+
+This skips `pre-commit` and `commit-msg` on commit, and `pre-push` on push. It's genuinely the right call sometimes — a production outage where the linter is stuck on an unrelated pre-existing issue, or a hook that's simply broken and blocking everyone until it's fixed. Used for an actual emergency, it's exactly what it's there for.
+
+Used as a default, it's a different story.
+
+<Warning title="A slow hook trains people to skip it">
+  A `pre-commit` hook that takes 30 seconds doesn't make commits 30 seconds slower — it makes `--no-verify` the thing everyone reaches for automatically, because waiting half a minute for every small commit stops being tolerable. Once that becomes muscle memory, the hook is effectively dead: it still exists, but nobody's checks are actually running. The fix isn't a faster machine, it's scope — keep local hooks to staged-files-only checks that finish in a second or two, and move anything genuinely slow (a full test suite, a heavy type-check, a security scan) into CI, where there's no `--no-verify` equivalent to reach for.
+</Warning>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A `pre-commit` hook that runs a linter/formatter against staged files only, catching style issues before they're even committed.
+- A `commit-msg` hook enforcing Conventional Commits or a ticket-ID prefix, so changelogs and release tooling can parse history automatically.
+- A `pre-push` hook that blocks direct pushes to `main`/`master`, forcing changes through a pull request even for contributors who forget the branch protection rule exists.
+- A `post-checkout` or `post-merge` hook that reinstalls dependencies automatically when a lockfile changes between branches, saving a "why is nothing working" debugging session.
+- A `prepare-commit-msg` hook that pre-fills the ticket number from the current branch name, so nobody has to type it by hand.
+- `core.hooksPath` (or Husky) as a fast, cheap first line of defense in any repo with more than one contributor, backed by the same checks running again in CI.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **Hooks are a trust boundary, not an enforcement mechanism.** Anyone can pass `--no-verify`, and a fresh clone that never ran the setup step has no hooks installed at all — both fail silently, with no error telling anyone a check was skipped. Never treat "the hook would have caught it" as equivalent to "CI caught it"; CI is the actual gate for anything that matters.
+- **Hook scripts must be executable and start with a shebang.** Git will silently skip a hook file that isn't marked executable (`chmod +x`), and a missing `#!/bin/sh` (or `#!/usr/bin/env node`, etc.) leaves the OS unsure how to run it at all. This is the single most common "why isn't my hook running" bug.
+- **Shell portability is a real tax.** A hook written and tested on macOS/Linux can break on Windows — different shell, different line-ending handling (a `.sh` file with CRLF endings can fail with a cryptic `bad interpreter` error), different default `PATH`. This is a large part of why tools like Husky exist: they paper over exactly this class of cross-platform quirk instead of every team rediscovering it independently.
+- **`post-commit` and `post-checkout` can't block anything.** By the time these fire, the commit or checkout has already happened — a non-zero exit here just prints an error, it doesn't undo the operation. Use `pre-commit` / `pre-push` when the goal is actually preventing something.
+- **`pre-push` runs before the network call, not after.** A slow `pre-push` (a full test suite) adds real wall-clock time to every push, on every branch — consider scoping it to pushes targeting specific branches, or moving the check to CI and keeping `pre-push` to something fast like verifying no debug statements were left in.
+- **Server-side hooks aren't available on hosted platforms.** If you're on GitHub, GitLab, or similar, you don't get `pre-receive`/`update`/`post-receive` — branch protection rules and required status checks are doing that job instead, and they're the only checks a bypass on someone's laptop can't skip.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Git hooks turn "please remember to lint before committing" into something the tooling enforces automatically — but only for the person who has them installed, which is exactly why they pair with, rather than replace, checks that run somewhere nobody can skip.
+
+- **The full lifecycle** — nine local hooks fire at fixed points from `pre-commit` through `post-rewrite`, and only three of them (`pre-commit`, `commit-msg`, `pre-push`) can actually abort the operation they're guarding.
+- **A real `pre-commit` hook** — lint only staged files via `git diff --cached --name-only --diff-filter=ACM`, and let the exit code do the talking: zero continues, non-zero aborts.
+- **`commit-msg` for message format** — the hook receives one argument, a path to a temp file holding the drafted message, which you can validate or even rewrite before the commit is finalized.
+- **`pre-push` as a last checkpoint** — ref information arrives on stdin, one line per ref, making it the natural place to block pushes to protected branches or run tests before anything leaves your machine.
+- **Sharing hooks across a team** — `core.hooksPath` pointing at a versioned directory, a package-manager install step (Husky and friends), or a plain manual setup script are the three real options.
+- **Bypassing responsibly** — `--no-verify` is for genuine emergencies; a slow hook that gets skipped by habit isn't protecting anyone.
+
+Hooks operate on one repository at a time, from one working directory — for the related problem of juggling multiple branches without stashing or re-cloning, [Git Worktrees: Working on Multiple Branches at Once](/post/git/git-worktrees-multiple-branches) is the natural next read.

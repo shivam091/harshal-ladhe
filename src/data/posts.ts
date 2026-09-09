@@ -496,6 +496,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "git-hooks-automating-your-workflow",
+    title: "Git Hooks: Automating Your Workflow",
+    excerpt: "Let Git run your checks before a habit has to.",
+    description: "A complete guide to Git hooks — every local hook type and when it fires, writing a real pre-commit and commit-msg hook, exit-code semantics, sharing hooks across a team with core.hooksPath or Husky, and why a slow hook quietly trains people to reach for --no-verify.",
+    category: ["Git"],
+    tags: ["git", "git-hooks", "automation", "husky", "cli", "developer-workflow"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
