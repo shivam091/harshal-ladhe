@@ -1,0 +1,121 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("svg-essentials-advanced-filter-primitives");
+
+## Introduction
+
+[Filter Fundamentals](/post/svg/svg-essentials-filters-fundamentals) covered the chaining mechanism itself — `SourceGraphic`/`SourceAlpha`, named results, `feGaussianBlur`/`feOffset`/`feMerge`/`feFlood`/`feBlend`. This post picks up from there with the primitives that go beyond simple blur-and-offset: color manipulation, precise compositing, procedural noise, displacement, and lighting.
+
+<RainbowDivider />
+
+## `<feColorMatrix>`
+
+<CodeBlock language="xml">
+{`
+  <feColorMatrix type="saturate" values="0.3" />
+  <feColorMatrix type="hueRotate" values="90" />
+  <feColorMatrix type="luminanceToAlpha" />
+`}
+</CodeBlock>
+
+`type="matrix"` exposes the full 20-value RGBA transform matrix; the named shorthand types (`saturate`, `hueRotate`, `luminanceToAlpha`) cover the common cases without hand-deriving a matrix. `luminanceToAlpha` is worth remembering specifically: it converts an image's *brightness* into its *transparency*, which is exactly the mechanism behind an SVG `<mask>`'s default luminance-based behavior.
+
+<RainbowDivider />
+
+## `<feComponentTransfer>`
+
+<CodeBlock language="xml">
+{`
+  <feComponentTransfer>
+    <feFuncR type="linear" slope="1.2" intercept="0" />
+    <feFuncG type="linear" slope="1.2" intercept="0" />
+    <feFuncB type="linear" slope="1.2" intercept="0" />
+  </feComponentTransfer>
+`}
+</CodeBlock>
+
+Per-channel transfer functions (`feFuncR`/`G`/`B`/`A`), each with its own `type` (`linear`, `gamma`, `table`, `discrete`) — a levels/gamma adjustment, or (with `discrete` and a short table) a posterize effect.
+
+<RainbowDivider />
+
+## `<feComposite>`
+
+<InteractiveSvgPanel slug="fecomposite-operator-demo" />
+
+`operator` decides which parts of two inputs survive, by their alpha channels — `over` (default, normal stacking), `in` (only where both overlap, first input's color), `out` (only where the first input does NOT overlap the second), `atop` (first input, clipped to the second's shape), `xor` (only where they don't overlap). Above, a solid color flood is composited against a star's own silhouette (`SourceAlpha`) — switching `operator` changes which parts of the flood/star combination actually paint.
+
+<RainbowDivider />
+
+## `<feTurbulence>`
+
+<InteractiveSvgPanel slug="feturbulence-noise-demo" />
+
+Generates procedural noise natively — `type="fractalNoise"` (softer, cloud/marble-like) or `type="turbulence"` (harsher, more textured), `baseFrequency` controlling the noise's scale, `numOctaves` its detail level. Useful standalone as a texture, or as an input to `feDisplacementMap` next.
+
+<RainbowDivider />
+
+## `<feDisplacementMap>`
+
+<InteractiveSvgPanel slug="fedisplacementmap-demo" />
+
+<CodeBlock language="xml">
+{`
+  <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise" />
+  <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
+`}
+</CodeBlock>
+
+Uses a second input's color channels (commonly `feTurbulence`'s noise) to warp another input's pixels — `xChannelSelector`/`yChannelSelector` pick which color channel drives horizontal/vertical displacement, `scale` controls the warp's intensity. This is the mechanism behind "hand-drawn wobbly edge" and "glass distortion" effects.
+
+<RainbowDivider />
+
+## `<feDropShadow>`: The Shorthand
+
+<CodeBlock language="xml">
+{`<feDropShadow dx="4" dy="4" stdDeviation="2" flood-color="#000" flood-opacity="0.4" />`}
+</CodeBlock>
+
+One primitive combining blur + offset + color + compositing into a single element — functionally equivalent to the `feGaussianBlur` → `feOffset` → `feMerge` chain from the fundamentals post, just shorter. Reach for the shorthand when a plain drop shadow is all that's needed; build the chain by hand when the shadow needs its own independent color layer or has to feed into further primitives.
+
+<RainbowDivider />
+
+## Lighting: `<feDiffuseLighting>` and `<feSpecularLighting>`
+
+<CodeBlock language="xml">
+{`
+  <feDiffuseLighting in="bumpMap" surfaceScale="4" diffuseConstant="1" lighting-color="white">
+    <feDistantLight azimuth="235" elevation="60" />
+  </feDiffuseLighting>
+`}
+</CodeBlock>
+
+Treats an input (often a noise pattern or an alpha channel) as a bump map and simulates a light source (`feDistantLight`, `fePointLight`, or `feSpotLight` as a child) shining across it — producing an embossed or engraved look from a flat shape. A niche corner of the spec, but the only native way to fake 3D-lit texture without an actual raster/WebGL pipeline.
+
+<RainbowDivider />
+
+## `<feTile>` and `<feImage>`
+
+Brief mentions: `feTile` repeats a smaller filter result to fill the region (paired with a deliberately-cropped input); `feImage` pulls in an external image or another SVG element as a filter input, the same way `<image>`/`<use>` reference external content elsewhere in this series.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Organic/hand-drawn illustration styles — a wobbly outline via `feTurbulence` + `feDisplacementMap`
+- Procedural texture generation (marble, paper grain, static) without an image asset
+- Color grading/duotone effects via `feColorMatrix`
+- Precise venn-diagram-style compositing between two shapes via `feComposite`'s operators
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **These primitives are considerably more render-expensive than basic blur/offset**, especially `feTurbulence`/`feDisplacementMap`/lighting at large filter regions — profile before applying to anything animated or large.
+* **`feTurbulence`'s exact noise pattern isn't guaranteed pixel-identical across browser engines.** Don't rely on it for pixel-perfect cross-browser reproducibility, only for the general textured/organic look.
+* **Compositing operators need the right `in2`.** `feComposite` against `SourceAlpha` (a shape's silhouette) behaves very differently from compositing against `SourceGraphic` (the shape's actual rendered colors) — pick deliberately based on whether the *shape* or the *shape's own colors* should drive the result.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Between this post and [Filter Fundamentals](/post/svg/svg-essentials-filters-fundamentals), the full `<fe*>` primitive family is covered — chaining, blur, offset, merging, color, compositing, noise, displacement, and lighting. Every one of them is just another step in the same named-result pipeline; the effects get more elaborate, but the underlying mechanism never changes.

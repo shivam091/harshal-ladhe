@@ -1758,6 +1758,75 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "feturbulence-noise-demo",
+    title: "Interactive Example - feTurbulence",
+    controls: [
+      { id: "baseFrequency", label: "baseFrequency", type: "range", min: 0.01, max: 0.3, step: 0.01, defaultValue: 0.05 },
+      { id: "type", label: "type", type: "select", options: ["fractalNoise", "turbulence"], defaultValue: "fractalNoise" }
+    ],
+    render: (values) => {
+      const baseFrequency = Number(values.baseFrequency);
+      const type = String(values.type);
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <defs>
+    <filter id="turbulence-demo-filter">
+      <feTurbulence type="${type}" baseFrequency="${baseFrequency}" numOctaves="3" />
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="100" height="100" filter="url(#turbulence-demo-filter)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "fedisplacementmap-demo",
+    title: "Interactive Example - feDisplacementMap",
+    controls: [
+      { id: "scale", label: "scale", type: "range", min: 0, max: 40, step: 1, defaultValue: 15 }
+    ],
+    render: (values) => {
+      const scale = Number(values.scale);
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <defs>
+    <filter id="displace-demo-filter" x="-30%" y="-30%" width="160%" height="160%">
+      <!-- The noise's own color channels drive HOW MUCH (and which direction) each pixel of SourceGraphic shifts. -->
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="${scale}" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </defs>
+
+  <circle cx="50" cy="50" r="35" fill="none" stroke="#6366f1" stroke-width="4" filter="url(#displace-demo-filter)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "fecomposite-operator-demo",
+    title: "Interactive Example - feComposite Operators",
+    controls: [
+      { id: "operator", label: "operator", type: "select", options: ["over", "in", "out", "atop", "xor"], defaultValue: "in" }
+    ],
+    render: (values) => {
+      const operator = String(values.operator);
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <defs>
+    <filter id="composite-demo-filter" x="-20%" y="-20%" width="140%" height="140%">
+      <!-- A solid color flood, composited against the STAR's own alpha silhouette (not its fill) — the operator decides which parts of the flood/star survive. -->
+      <feFlood flood-color="#6366f1" result="flood-a" />
+      <feComposite in="flood-a" in2="SourceAlpha" operator="${operator}" />
+    </filter>
+  </defs>
+
+  <path d="M50,15 L61,40 L88,40 L66,57 L75,83 L50,67 L25,83 L34,57 L12,40 L39,40 Z" filter="url(#composite-demo-filter)" />
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.

@@ -408,6 +408,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-advanced-filter-primitives",
+    title: "SVG Essentials: Advanced Filter Primitives",
+    excerpt: "Color manipulation, compositing, noise, displacement, and lighting.",
+    description: "A complete guide to SVG's advanced filter primitives — feColorMatrix, feComponentTransfer, feComposite's compositing operators, feTurbulence procedural noise, feDisplacementMap warping, the feDropShadow shorthand, and the feDiffuseLighting/feSpecularLighting family.",
+    category: ["SVG"],
+    tags: ["svg", "filters", "fecolormatrix", "fecomposite", "feturbulence", "fedisplacementmap", "fedropshadow", "vector-graphics", "frontend-development"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
