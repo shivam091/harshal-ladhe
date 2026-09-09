@@ -417,6 +417,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "mastering-typescript-generics-and-the-type-system",
+    title: "Mastering TypeScript Generics and the Type System",
+    excerpt: "Type-level function parameters, from generics to conditional types.",
+    description: "A deep dive into TypeScript generics and the type system — generic functions, constraints, keyof, mapped types, conditional types, distributive conditional types, and infer — with worked examples throughout.",
+    category: ["TypeScript"],
+    tags: ["typescript", "generics", "type-system", "conditional-types", "mapped-types", "keyof", "infer", "advanced-typescript", "frontend"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

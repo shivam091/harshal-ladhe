@@ -1,0 +1,451 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("mastering-typescript-generics-and-the-type-system");
+
+## Introduction
+
+Most TypeScript beginners meet generics as an annoyance — some angle-bracket syntax that shows up in library type definitions and error messages, `Array<T>`, `Promise<T>`, `Record<K, V>`, without ever quite explaining itself. The more useful way to think about them: **generics are type-level function parameters.** A regular function takes values as parameters and uses them to compute a return value; a generic function or type takes *types* as parameters and uses them to compute another type. Same idea, one level up.
+
+Here's the problem they solve, in its smallest possible form:
+
+<CodeBlock language="ts">
+{`
+  function identity(x: any) {
+    return x;
+  }
+
+  const a = identity(42);       // type: any — the number "42" is gone
+  const b = identity("hello");  // type: any — the string "hello" is gone
+`}
+</CodeBlock>
+
+`any` makes `identity` accept anything, but the cost is total: TypeScript now knows nothing about what comes out, regardless of what went in. Every caller loses type safety the moment their value crosses into this function — `a.toFixed(2)` and `b.toUpperCase()` both "work" as far as the type checker is concerned, and so does `a.toUpperCase()`, which will crash at runtime.
+
+<CodeBlock language="ts">
+{`
+  function identity<T>(x: T): T {
+    return x;
+  }
+
+  const a = identity(42);       // type: number — preserved
+  const b = identity("hello");  // type: string — preserved
+`}
+</CodeBlock>
+
+`<T>` declares a type parameter — a placeholder that gets filled in with a real type at each call site, inferred automatically from the argument. `identity<number>` and `identity<string>` are two different, fully-typed versions of the same function, generated on demand. Nothing about `identity`'s *logic* needed to change to support both; only the type needed to become a variable. That's the whole idea generics are built on, and everything below is really just that one idea applied to progressively more interesting shapes: functions, constraints, object types, and eventually the type system's own conditional logic.
+
+<RainbowDivider />
+
+## Generic Functions
+
+The `<T>` after a function's name declares one or more type parameters, scoped to that function — usable in its parameter types, its return type, and its body's type annotations, the same way a regular parameter is scoped to the function's body.
+
+<CodeBlock language="ts">
+{`
+  function firstElement<T>(arr: T[]): T | undefined {
+    return arr[0];
+  }
+
+  const num = firstElement([1, 2, 3]);          // T inferred as number -> number | undefined
+  const str = firstElement(["a", "b", "c"]);    // T inferred as string -> string | undefined
+`}
+</CodeBlock>
+
+Most of the time, `T` doesn't need to be written out at the call site at all — TypeScript infers it from whatever argument was actually passed, the same way it infers a variable's type from its initializer. Explicit type arguments are still available when inference has nothing to go on (an empty array literal with no other context, for instance) or when being explicit reads better than relying on inference:
+
+<CodeBlock language="ts">
+{`
+  function wrapInArray<T>(value: T): T[] {
+    return [value];
+  }
+
+  const inferred = wrapInArray(5);          // T inferred as number, from the argument
+  const explicit = wrapInArray<number>(5);  // same result — T given explicitly instead of inferred
+`}
+</CodeBlock>
+
+A function isn't limited to one type parameter. Multiple independent type parameters are common wherever a function genuinely relates two (or more) unrelated types:
+
+<CodeBlock language="ts">
+{`
+  function pair<A, B>(a: A, b: B): [A, B] {
+    return [a, b];
+  }
+
+  const p1 = pair("age", 30);       // [string, number]
+  const p2 = pair(true, ["x", "y"]); // [boolean, string[]]
+`}
+</CodeBlock>
+
+`A` and `B` are inferred completely independently, one per argument position — there's no rule that they have to be related, and most of the time (as here) they aren't. The output type — the tuple `[A, B]` — is computed from both, the same way `pair`'s runtime output is computed from both of its actual argument values.
+
+<RainbowDivider />
+
+## Generic Constraints (`extends`)
+
+An unconstrained type parameter like the `T` above can be *anything* — which also means TypeScript can't assume it has any particular property or method. This is the trade-off generics make by default: total flexibility, zero assumed structure.
+
+<CodeBlock language="ts">
+{`
+  function getLength<T>(value: T): number {
+    return value.length; // Error: Property 'length' does not exist on type 'T'
+  }
+`}
+</CodeBlock>
+
+TypeScript is right to reject this — `T` could be `number`, `boolean`, or any other type with no `.length` at all, and `getLength` promises to accept literally any type. **Constraints** narrow that promise: `T extends SomeType` says "`T` can be anything, as long as it's at least shaped like `SomeType`" — trading away a little flexibility for real guarantees about structure.
+
+<CodeBlock language="ts">
+{`
+  function getLength<T extends { length: number }>(value: T): number {
+    return value.length; // fine — every T passed here is guaranteed to have .length
+  }
+
+  getLength("hello");       // fine — strings have .length
+  getLength([1, 2, 3]);     // fine — arrays have .length
+  getLength({ length: 5 }); // fine — matches the shape directly
+  getLength(42);             // Error: number doesn't have a .length property
+`}
+</CodeBlock>
+
+`T extends { length: number }` doesn't mean "`T` must literally be that interface" — it means "`T` must be *assignable to* that shape," which is satisfied by anything structurally compatible: strings, arrays, tuples, or any custom object with a numeric `length` field. This is exactly the same structural-compatibility rule TypeScript uses everywhere else; a constraint is just that rule applied to a type parameter instead of a variable.
+
+A realistic constraint problem: writing a `pluck` function that pulls one named property out of every object in an array, in a way that's actually type-checked against the objects' real shape.
+
+<CodeBlock language="ts">
+{`
+  function pluck<T, K extends keyof T>(items: T[], key: K): T[K][] {
+    return items.map((item) => item[key]);
+  }
+
+  const users = [
+    { id: 1, name: "saoirse" },
+    { id: 2, name: "zaid" },
+  ];
+
+  pluck(users, "name");  // fine, returns string[]
+  pluck(users, "email"); // Error: '"email"' is not assignable to parameter of type '"id" | "name"'
+`}
+</CodeBlock>
+
+`K extends keyof T` is a constraint that depends on *another type parameter* rather than a fixed shape — `K` can be any key that actually exists on `T`, whatever `T` turns out to be. Getting this to type-check at all needed `keyof`, which is the next piece.
+
+<RainbowDivider />
+
+## `keyof` and Indexed Access Types
+
+`keyof T` produces a union of `T`'s property names as string (or number/symbol) literal types — it turns an object *shape* into a union of the *keys* that shape has.
+
+<CodeBlock language="ts">
+{`
+  interface User {
+    id: number;
+    name: string;
+    email: string;
+  }
+
+  type UserKey = keyof User; // "id" | "name" | "email"
+`}
+</CodeBlock>
+
+`T[K]` — **indexed access** — is the type-level equivalent of a runtime property lookup: given a key type `K`, it produces the type of the value stored at that key on `T`.
+
+<CodeBlock language="ts">
+{`
+  type IdType = User["id"];       // number
+  type NameType = User["name"];   // string
+  type ValueType = User[UserKey]; // number | string — indexing with the whole key union at once
+`}
+</CodeBlock>
+
+Combined, `keyof` and indexed access are what let a function accept "any valid key of this specific object" and return the *correct, specific* type for whichever key was actually passed — not a generic union of every possible value type, the exact one:
+
+<CodeBlock language="ts">
+{`
+  function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+    return obj[key];
+  }
+
+  const user: User = { id: 1, name: "saoirse", email: "saoirse@example.com" };
+
+  const id = getProperty(user, "id");     // type: number
+  const name = getProperty(user, "name"); // type: string
+  getProperty(user, "age");                // Error: '"age"' is not a key of User
+`}
+</CodeBlock>
+
+This is a strictly more precise version of the earlier `pluck` example's constraint — `K extends keyof T` restricts which keys are valid, and `T[K]` in the return type is what lets the *specific* return type for each call site differ based on which key was passed, rather than collapsing everything to the union of every possible value.
+
+<RainbowDivider />
+
+## Generic Interfaces and Classes
+
+Type parameters aren't limited to functions — an interface, type alias, or class can declare its own, making it a reusable shape parameterized by whatever type it ends up holding.
+
+<CodeBlock language="ts">
+{`
+  interface Box<T> {
+    value: T;
+  }
+
+  const numberBox: Box<number> = { value: 42 };
+  const stringBox: Box<string> = { value: "hello" };
+`}
+</CodeBlock>
+
+`Box<T>` is one interface definition that describes infinitely many concrete shapes — `Box<number>`, `Box<string>`, `Box<User>` — the same way `identity<T>` was one function definition describing infinitely many concrete functions. A generic class follows the same pattern, with the type parameter available throughout the class body:
+
+<CodeBlock language="ts">
+{`
+  class Stack<T> {
+    private items: T[] = [];
+
+    push(item: T): void {
+      this.items.push(item);
+    }
+
+    pop(): T | undefined {
+      return this.items.pop();
+    }
+
+    get size(): number {
+      return this.items.length;
+    }
+  }
+
+  const numbers = new Stack<number>();
+  numbers.push(1);
+  numbers.push(2);
+  numbers.pop(); // type: number | undefined
+
+  const names = new Stack<string>();
+  names.push("saoirse");
+  names.push(42); // Error: Argument of type 'number' is not assignable to parameter of type 'string'
+`}
+</CodeBlock>
+
+`Stack<T>` is a genuinely reusable data structure — the push/pop logic is written exactly once, and every instantiation gets its own fully-typed `T`, with no casting and no `any` anywhere in the implementation.
+
+Type parameters can also have **defaults**, the same way regular function parameters can — useful when there's a sensible fallback type most callers won't need to override:
+
+<CodeBlock language="ts">
+{`
+  interface ApiResponse<T = unknown> {
+    data: T;
+    status: number;
+    error?: string;
+  }
+
+  function handleGeneric(response: ApiResponse) {
+    // response.data is 'unknown' here — the default, since no type argument was given
+  }
+
+  function handleUsers(response: ApiResponse<User[]>) {
+    // response.data is 'User[]' here — the caller opted into a specific type
+  }
+`}
+</CodeBlock>
+
+`unknown` (rather than `any`) is the right default for something like this — it still forces whoever eventually reads `.data` without a specific type argument to narrow it before using it, instead of silently disabling type checking on that value the way an `any` default would.
+
+<RainbowDivider />
+
+## Conditional Types
+
+Everything so far parameterizes a type over *another type*, directly. **Conditional types** add actual branching logic at the type level — a type-level `if`/`else`, evaluated at compile time based on a relationship between two types:
+
+<CodeBlock language="ts">
+{`
+  type IsString<T> = T extends string ? true : false;
+
+  type A = IsString<string>; // true
+  type B = IsString<number>; // false
+`}
+</CodeBlock>
+
+`T extends U ? X : Y` reads almost exactly like its runtime cousin: if `T` is assignable to `U`, the whole expression evaluates to type `X`; otherwise, it evaluates to type `Y`. It's worth being precise about what `extends` means here — not "is exactly," but "is assignable to" (the same structural relationship the `extends` constraint used earlier relies on), so `IsString<"hello">` is also `true`: the literal type `"hello"` is assignable to `string`.
+
+A genuinely useful example: TypeScript ships a built-in `ReturnType<T>` utility type that extracts a function's return type, but walking through what it does manually is the clearest way to actually understand `infer` (covered next) and conditional types together:
+
+<CodeBlock language="ts">
+{`
+  type MyReturnType<T extends (...args: any[]) => any> = T extends (...args: any[]) => infer R
+    ? R
+    : never;
+
+  function getUser() {
+    return { id: 1, name: "saoirse" };
+  }
+
+  type User = MyReturnType<typeof getUser>; // { id: number; name: string }
+
+  // The built-in version does exactly this:
+  type SameUser = ReturnType<typeof getUser>; // identical result
+`}
+</CodeBlock>
+
+`MyReturnType` constrains `T` to "any function," then uses a conditional type to check that shape and pull the return type back out — which is exactly what `infer` is for, and worth its own section.
+
+<RainbowDivider />
+
+## Distributive Conditional Types
+
+This is the part of conditional types that trips up nearly everyone the first time, because the behavior isn't obvious from the syntax alone: **a conditional type over a "naked" type parameter distributes over a union, checking each member independently** — instead of checking the union as one single value.
+
+<CodeBlock language="ts">
+{`
+  type ToArray<T> = T extends any ? T[] : never;
+
+  type Result = ToArray<string | number>;
+  // Result: string[] | number[]
+  //         NOT (string | number)[] — this is the part that surprises people
+`}
+</CodeBlock>
+
+The mental model that makes this click: TypeScript doesn't evaluate `ToArray<string | number>` as one check against the whole union. It splits `string | number` into `string` and `number`, evaluates `ToArray<string>` and `ToArray<number>` completely independently (each producing its own array type), and then re-joins those two independent results back into a union. The diagram below is that exact split → apply → re-join flow, for a three-member union:
+
+<ConditionalTypeDiagram variant="distributive" />
+
+The trigger for this behavior is specifically a **naked type parameter** — `T` appearing alone, directly to the left of `extends`, with nothing wrapping it. Wrap it in *anything* — a tuple is the idiomatic way — and the distribution stops, because the thing to the left of `extends` is no longer a bare type parameter, it's a tuple type that happens to contain one:
+
+<CodeBlock language="ts">
+{`
+  type ToArrayNonDistributive<T> = [T] extends [any] ? T[] : never;
+
+  type Result = ToArrayNonDistributive<string | number>;
+  // Result: (string | number)[] — the union stayed intact, evaluated as one single check
+`}
+</CodeBlock>
+
+<ConditionalTypeDiagram variant="non-distributive" />
+
+Comparing the two diagrams side by side is really the whole lesson: the distributive version fans a union out into independent branches and stitches the results back together, while the tuple-wrapped version never splits anything — one branch goes in, and the exact same shape (just wrapped in `[]`) comes out the other side.
+
+<Info title="Why does this matter in practice?">
+  Several of TypeScript's own built-in utility types rely on this exact behavior — `Exclude<T, U>` and `Extract<T, U>` are both defined as distributive conditional types over `T`, which is precisely what lets them filter a union member-by-member instead of needing to handle the whole union as one case.
+</Info>
+
+<Warning title="A common bug this causes">
+  Reaching for `[T] extends [U]` reflexively "to be safe" also silently disables distribution in code that actually needed it — a conditional type meant to filter or transform each union member independently will instead treat the whole union as one opaque value once it's tuple-wrapped. Only wrap when non-distributive behavior is the actual goal, as it was here for illustrating the contrast.
+</Warning>
+
+<RainbowDivider />
+
+## The `infer` Keyword
+
+`infer` declares a new type variable *inside* a conditional type's `extends` clause, letting TypeScript capture a piece of a matched type instead of just checking whether the match succeeded. It's how `MyReturnType` above pulled `R` out of a function type without needing to know in advance what that return type was.
+
+The clearest way to build intuition is to construct something from scratch: unwrapping the type a `Promise` resolves to.
+
+<CodeBlock language="ts">
+{`
+  type UnwrapPromise<T> = T extends Promise<infer U> ? U : T;
+
+  type A = UnwrapPromise<Promise<string>>; // string — unwrapped
+  type B = UnwrapPromise<number>;           // number — not a Promise, passed through unchanged
+`}
+</CodeBlock>
+
+Read `T extends Promise<infer U>` as: "if `T` matches the shape `Promise<something>`, capture that *something* as `U`, and make the whole conditional type resolve to `U`." The `: T` fallback branch matters just as much as the `infer` — it's what makes `UnwrapPromise` behave sensibly on a type that was never wrapped in a `Promise` to begin with, instead of producing `never` or an error.
+
+`infer` isn't limited to one capture, or to `Promise` specifically — it works against any generic shape, including a function's parameter list:
+
+<CodeBlock language="ts">
+{`
+  type FirstParam<T> = T extends (first: infer P, ...rest: any[]) => any ? P : never;
+
+  function greet(name: string, times: number) { /* ... */ }
+
+  type Name = FirstParam<typeof greet>; // string
+`}
+</CodeBlock>
+
+Every one of TypeScript's built-in inference utilities — `ReturnType`, `Parameters`, `InstanceType`, `Awaited` (a recursive version of the `UnwrapPromise` above, since a `Promise` can resolve to another `Promise`) — is built from exactly this pattern: a conditional type whose `extends` clause exists purely to give `infer` something to pattern-match against.
+
+<RainbowDivider />
+
+## Mapped Types
+
+A **mapped type** builds a new object type by iterating over another type's keys and transforming each one — the type-level equivalent of mapping over an object's entries at runtime.
+
+<CodeBlock language="ts">
+{`
+  type MyPartial<T> = {
+    [K in keyof T]?: T[K];
+  };
+
+  interface User {
+    id: number;
+    name: string;
+  }
+
+  type PartialUser = MyPartial<User>; // { id?: number; name?: string }
+
+  // The built-in Partial<T> does exactly this.
+`}
+</CodeBlock>
+
+`[K in keyof T]` reads as "for every key `K` in the union `keyof T`" — the same `keyof` from earlier, now driving an iteration instead of constraining a parameter. `T[K]` inside the mapped type looks up each key's original value type, and the `?` marks it optional. `Readonly<T>` is the same shape with a different modifier:
+
+<CodeBlock language="ts">
+{`
+  type MyReadonly<T> = {
+    readonly [K in keyof T]: T[K];
+  };
+
+  type ReadonlyUser = MyReadonly<User>; // { readonly id: number; readonly name: string }
+`}
+</CodeBlock>
+
+Both of these hand-rolled versions are, structurally, exactly what `Partial<T>` and `Readonly<T>` already do — walking through them once makes the built-ins stop feeling like magic.
+
+Mapped types can go further than copying keys through unchanged: the `as` clause, **key remapping**, lets a mapped type compute an entirely different key name for each property, derived from the original:
+
+<CodeBlock language="ts">
+{`
+  type Getters<T> = {
+    [K in keyof T as \`get\${Capitalize<string & K>}\`]: () => T[K];
+  };
+
+  interface User {
+    id: number;
+    name: string;
+  }
+
+  type UserGetters = Getters<User>;
+  // { getId: () => number; getName: () => string }
+`}
+</CodeBlock>
+
+`` `get${Capitalize<string & K>}` `` is a template literal type (the same feature behind the route-typing example in [template literal types](/snippet/template-literal-types-routing)) computing a new key — `"id"` becomes `"getId"`, `"name"` becomes `"getName"` — while `T[K]` still supplies the original value type, now wrapped in a `() => ...` function signature. `string & K` is a small but necessary detail: `K` here is `keyof T`, which could in principle include `number` or `symbol` keys, and `Capitalize` only accepts `string`; intersecting with `string` narrows `K` down to just its string members for that call, discarding the rest.
+
+<RainbowDivider />
+
+## Where the Earlier Snippets Fit
+
+Everything above is the connective tissue — generics, `keyof`, conditional types, `infer`, mapped types — that underlies TypeScript's type system as a whole. A handful of narrower, sharper tools already live on this site as standalone snippets, each covering one specific technique in depth rather than the surrounding machinery. Rather than re-explain them here, this is where they connect in:
+
+- **[`satisfies`](/snippet/satisfies-operator-inference)** solves a problem adjacent to generics rather than inside them — validating an object literal's shape without losing its precise inferred type — and combines naturally with the generic, `keyof`-driven functions above: a `satisfies`-validated config object is exactly the kind of value that benefits from `getProperty<T, K extends keyof T>` later reading it back with full literal-key precision.
+- **[`const` type parameters](/snippet/const-type-parameters)** are generics, specifically — a `const` modifier on a type parameter (like the `T` in every generic function above) that changes *how precisely* it's inferred, keeping array/object literals from widening the moment they cross into a generic function.
+- **[Template literal types](/snippet/template-literal-types-routing)** are what powered the key-remapping example (`` `get${Capitalize<...>}` ``) in the mapped types section just above, and lean on the same `infer` keyword covered here — just pattern-matching pieces out of a string type instead of an object or function type.
+- **[Discriminated unions](/snippet/discriminated-unions-exhaustiveness-never)** are what narrowing normally acts on at the *value* level (an `if`/`switch` narrowing a runtime variable); conditional types are the *type-level* equivalent — `T extends { status: "success" } ? ... : ...` asks the same kind of question about a type instead of a value.
+- **[`as const`](/snippet/as-const-literal-types)** is the deepest-cutting of the five here — literal inference from `as const` is precisely the kind of narrow type that makes union-driven conditional types (like the distributive example above) worth writing in the first place; a widened `string` flowing into `T extends any ? T[] : never` distributes over nothing, because there's no union left to split.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Reach for a generic only when a function's behavior is genuinely the same across types.** If a function only ever takes one concrete type in practice, writing `<T>` around it adds a layer of indirection with no real payoff — that's "generic soup": type parameters that exist because they *can*, not because anything actually varies.
+- **Name single-letter parameters (`T`, `K`, `V`) only when their role is obvious from context** — `T` for "the type," `K`/`V` for "key"/"value" in a `Record`-like shape are conventional enough to need no explanation. The moment a generic function has three or more type parameters, or their roles aren't self-evident from position alone, switch to descriptive names (`TRequest`, `TResponse`, `TItem`) — the same instinct that says a function with five single-letter value parameters needs better names applies just as much to type parameters.
+- **Constrain generously.** An unconstrained `T` is the most flexible signature but the least helpful one — it can't access any property, can't be compared meaningfully, and gives autocomplete nothing to work with. A tight, honest constraint (`T extends { id: string }`, `K extends keyof T`) documents the actual requirement and gets real tooling support back in return.
+- **Prefer inference over explicit type arguments** wherever the argument itself makes the type obvious — explicit type arguments are for the cases inference genuinely can't resolve (an empty array/object literal with no other context), not a default habit.
+- **Don't reach for a conditional type or `infer` before reaching for a plain generic constraint.** Both of the earlier sections' worked examples (`MyReturnType`, `UnwrapPromise`) exist to explain how the built-in utility types work — in real code, `ReturnType<T>`, `Parameters<T>`, and `Awaited<T>` already exist and are almost always the better choice over hand-rolling the same conditional type again.
+- **Keep mapped types close to what they model.** `Partial<T>`/`Readonly<T>`-shaped transformations are easy to read at a glance; a custom mapped type with several chained conditions and remapped keys is worth a comment explaining what shape it's building and why, the same way a gnarly runtime `.reduce()` benefits from one.
+
+<RainbowDivider />
+
+## Conclusion
+
+Generics start as a small idea — a type parameter is just a function parameter one level up — and the rest of TypeScript's advanced type system is mostly that idea, applied repeatedly and combined: constrain a type parameter with `extends` to give it structure, look up its shape with `keyof` and indexed access, branch on it with a conditional type, capture pieces of it with `infer`, and transform whole shapes at once with a mapped type. None of these are separate topics so much as the same underlying mechanism, stacked.
+
+The genuinely hard part — as the distributive conditional types section above hopefully made concrete — isn't the syntax, it's building the right mental model for what's happening underneath it: a union splitting into independent branches and re-joining, rather than being checked as one opaque value. Once that clicks, the built-in utility types (`Partial`, `ReturnType`, `Exclude`, `Awaited`) stop looking like magic and start looking like exactly what they are: ordinary generics, conditional types, and mapped types, written once by the TypeScript team so the rest of us don't have to write them again.
