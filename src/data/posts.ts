@@ -452,6 +452,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "complete-guide-to-the-nextjs-app-router",
+    title: "The Complete Guide to the Next.js App Router",
+    excerpt: "The file-convention system that ties the App Router together.",
+    description: "A complete mental model for the Next.js App Router — the special-file convention, nested layout composition, route groups, parallel and intercepting routes, dynamic segments, Server vs. Client Components, data fetching and caching, Server Actions, middleware and runtimes, metadata, and rendering strategy — with cross-links into deep-dive snippets for each.",
+    category: ["Next.js"],
+    tags: ["nextjs", "app-router", "react", "server-components", "server-actions", "routing", "middleware", "caching", "streaming", "rendering"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

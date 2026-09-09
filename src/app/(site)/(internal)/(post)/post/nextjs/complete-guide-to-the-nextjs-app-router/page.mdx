@@ -1,0 +1,185 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("complete-guide-to-the-nextjs-app-router");
+
+## Introduction
+
+The Pages Router's mental model was simple: one file under `pages/` was one route, full stop. `pages/about.tsx` was `/about`; `pages/blog/[slug].tsx` was `/blog/hello-world`. Data fetching, layout, and loading state were all bolted on separately — `getServerSideProps` here, a hand-rolled `_app.tsx` there, no built-in way to show a skeleton while a slow page loaded. The App Router keeps file-system routing but restructures what a "file" means: a folder is a route **segment**, and that segment is composed from a small set of special files that each own one concern — `page.tsx` for the UI, `layout.tsx` for shared chrome, `loading.tsx` for the pending state, `error.tsx` for failures. Nothing here is exotic in isolation. What makes the App Router take some getting used to is that almost every feature it ships — nested layouts, streaming, Server Components, Server Actions, middleware, caching — is really an elaboration of this one idea: **route behavior is declared by which special files exist in a folder, not by code you write to configure a router.**
+
+This post is the map. It won't re-derive the fine mechanics of any one feature in depth — eleven other posts on this site already do that, and are linked at the point where each becomes relevant. Its job is to give you the mental model that ties the special-file convention, the rendering model, and the caching model together into one coherent system, so that when you land in one of those deep-dive posts you already know where it fits.
+
+<RainbowDivider />
+
+## The File Convention System
+
+Everything starts with the routing rule: **a folder under `app/` is a route segment only if it contains a `page.tsx`.** A folder without one is just an organizational directory — you can nest components, styles, or shared utilities inside it, and none of it becomes reachable as a URL. This is deliberate: it means you can colocate a route's helper files right next to the route itself without accidentally exposing them.
+
+<CodeBlock showCopyButton={false}>
+{`
+  app/
+  ├─ dashboard/
+  │  ├─ layout.tsx        ← shared chrome for everything under /dashboard
+  │  ├─ loading.tsx        ← shown while a child segment's data is pending
+  │  ├─ error.tsx           ← catches errors thrown by this segment or below
+  │  ├─ page.tsx             ← makes /dashboard itself reachable
+  │  ├─ utils.ts              ← NOT a route — just a colocated helper
+  │  └─ settings/
+  │     └─ page.tsx           ← makes /dashboard/settings reachable
+  └─ not-found.tsx
+`}
+</CodeBlock>
+
+Beyond `page.tsx`, the special files worth knowing on sight:
+
+- **`layout.tsx`** — wraps its segment and every segment nested beneath it. Critically, a layout does not re-render when you navigate between its own children; it persists across that navigation, which is the whole subject of the next section.
+- **`loading.tsx`** — Next.js automatically wraps the segment in a `<Suspense>` boundary with this as the fallback. You get an instant loading state for free, without touching Suspense yourself. See [Streaming with `loading.tsx` and Suspense](/snippet/streaming-with-suspense) for how this interacts with data fetching and streamed HTML.
+- **`error.tsx`** — an automatic error boundary for the segment. It must be a Client Component (Next.js needs to catch the error at render time and re-render with a fallback UI), and it receives the thrown error plus a `reset()` function to retry the segment.
+- **`route.tsx`** (written as `route.ts` in practice) — the App Router's equivalent of a Pages Router API route, but scoped per-segment and exporting one function per HTTP method (`GET`, `POST`, and so on) instead of a single catch-all handler. A folder can have a `page.tsx` **or** a `route.ts`, never both — see [Building an API with App Router Route Handlers](/snippet/route-handlers-app-api) for the full method-export shape and how it differs from a Server Action.
+- **`not-found.tsx`** — rendered when a segment calls the `notFound()` function or when no route matches at all. Like `layout.tsx`, it's scoped to the nearest segment that defines one, falling back to the root.
+
+The rule to internalize: **the folder is not the route, the folder plus its special files is the route.** Two folders with identical names but different special files behave completely differently — one might be a page, one might be a JSON API, one might just be a place to keep shared components.
+
+<RainbowDivider />
+
+## Nested Layouts and Composition
+
+Layouts nest the same way segments do. `app/layout.tsx` wraps the entire app; `app/dashboard/layout.tsx` wraps everything under `/dashboard`; a `page.tsx` several folders deep is wrapped by every layout above it, outermost first. Each layout receives its nested content as `children` and decides where to place it — the layout owns the chrome (nav, sidebar, footer), and `children` is whatever segment matched further down the tree.
+
+The detail that actually matters for how you build with this: **navigating between two routes that share a layout does not remount that layout.** If `/dashboard/settings` and `/dashboard/billing` both sit under `app/dashboard/layout.tsx`, clicking from one to the other leaves the dashboard layout's React tree — and any state it holds, like a sidebar's open/closed toggle, or an in-flight WebSocket connection — completely untouched. Only the segments that actually differ between the two routes are torn down and remounted; everything shared re-uses its existing render.
+
+<LayoutCompositionDiagram />
+
+This is why layouts are the right place for things you want to survive a navigation — persistent UI state, a data subscription, an audio player that shouldn't restart — and the wrong place for anything that should reset per-page. It also explains a common surprise: putting a `key`-less `useEffect` with a data fetch inside a layout runs that fetch once, not once per page, because the layout genuinely doesn't re-run.
+
+<Info title="Root layout is mandatory">
+  `app/layout.tsx` is the one layout every App Router project must define — it's the only place allowed to render `<html>` and `<body>`, since it's the true root of the entire tree. Every other `layout.tsx` further down is optional; a segment with no layout of its own simply inherits the nearest one above it.
+</Info>
+
+<RainbowDivider />
+
+## Route Groups, Parallel Routes, and Intercepting Routes
+
+Three folder-naming conventions let you shape the file tree without those folders leaking into the URL, or without limiting a layout to rendering exactly one child segment at a time.
+
+**Route groups** — `(groupName)` — organize routes into folders that are stripped from the URL entirely. `app/(marketing)/about/page.tsx` and `app/(app)/dashboard/page.tsx` still resolve to `/about` and `/dashboard`; the parenthesized folder exists purely so you can give `(marketing)` and `(app)` their own separate root `layout.tsx` files without either affecting the other's URL structure. This site's own routes use the same trick — the post you're reading sits under `(site)/(internal)/(post)/post/...` on disk while serving from a much shorter public URL.
+
+**Parallel routes** (`@slotName`) and **intercepting routes** (`(.)`, `(..)`, `(..)(..)`, `(...)` prefixes) solve a harder problem: rendering more than one independent segment into the same layout at once, and conditionally swapping in a different UI for the same URL depending on how the user navigated there. The canonical example is a photo-modal: clicking a thumbnail should open an overlay on top of the current feed, but a hard refresh on that same URL should render the photo as its own full page. Building that with client-side modal state alone loses the shareable-URL behavior; a plain nested route loses the overlay behavior. Parallel and intercepting routes together give you both from the same file tree — the full mechanics, including which intercept-prefix to use at which folder depth, are in [Modal-Over-Page Routing with Parallel and Intercepting Routes](/snippet/parallel-routes-modals).
+
+<RainbowDivider />
+
+## Dynamic Segments
+
+A folder named `[slug]` matches any single path segment and exposes it as a route parameter — `app/blog/[slug]/page.tsx` matches `/blog/anything` and hands the page a `params.slug` of `"anything"`. Two variants extend this:
+
+<CodeBlock showCopyButton={false}>
+{`
+  [slug]                one segment          /blog/[slug]        → /blog/hello
+  [...slug]              one or more          /shop/[...slug]     → /shop/a/b/c
+  [[...slug]]            zero or more         /docs/[[...slug]]   → /docs  or  /docs/a/b
+`}
+</CodeBlock>
+
+The bracket count is the whole syntax: single brackets capture exactly one segment, `...` turns it into a catch-all array of however many segments follow, and wrapping the catch-all in a second pair of brackets makes it optional — the only variant that also matches the parent path with nothing after it.
+
+By default, a dynamic segment is rendered on demand the first time it's requested. To have Next.js generate a fixed set of them at build time instead — turning a dynamic route into effectively static output for known params — you export a `generateStaticParams` function from the same `page.tsx`. [`generateStaticParams` for Dynamic Segments](/snippet/generate-static-params-dynamic) covers the return shape, how it interacts with `dynamicParams` for params outside the generated set, and how it composes with nested dynamic segments.
+
+<RainbowDivider />
+
+## Server Components vs. Client Components
+
+Every component under `app/` is a **Server Component by default** — it renders on the server, ships zero JavaScript for its own logic to the browser, and can do things a Client Component can't: read environment secrets directly, query a database, use Node.js-only APIs, `await` inside the component body. The opt-in in the other direction is the `"use client"` directive at the top of a file, which marks that file as a **Client Component** — one that can use `useState`, `useEffect`, browser APIs, and event handlers, and does ship JavaScript to hydrate in the browser.
+
+The rule that trips people up isn't the directive itself, it's its reach: `"use client"` marks a **boundary**, not a single file. Everything that file imports — directly or transitively — also becomes part of the client bundle from that point down, regardless of whether those imported files have their own `"use client"` directive. It does not mean "only this file runs on the client"; it means "this file and its entire subtree of imports now run on the client." The practical consequence is to push `"use client"` as far down the tree as it can go — wrap just the interactive leaf (a button, a form, a toggle) rather than the page or layout that contains it, so everything above that boundary stays a Server Component and out of the client bundle.
+
+Server and Client Components can still compose freely in the other direction: a Server Component can render a Client Component as a child, and can pass it serializable props (not functions or class instances) — this is how a static, server-rendered page ends up with one small interactive widget in the middle of it without the whole page becoming client-rendered.
+
+<RainbowDivider />
+
+## Data Fetching and Caching
+
+Because Server Components run on the server and can `await` directly, data fetching often looks like plain, sequential `async`/`await` code with no client-side fetching library involved at all:
+
+<CodeBlock language="tsx">
+{`
+  // app/dashboard/page.tsx — a Server Component
+  export default async function DashboardPage() {
+    const data = await fetch("https://api.example.com/metrics").then((r) => r.json());
+    return <MetricsView data={data} />;
+  }
+`}
+</CodeBlock>
+
+Next.js extends the native `fetch()` with its own caching semantics layered on top — by default a `fetch()` call inside a Server Component can be cached and reused across requests, revalidated on an interval, or opted out of caching entirely, all via options passed to `fetch()` itself rather than a separate caching library. The finer-grained successor to this — caching arbitrary functions, not just `fetch()` calls, with the `"use cache"` directive — is covered in [Granular Caching with "use cache"](/snippet/use-cache-directive). And because caching decisions directly determine which parts of a page can be computed at build time versus which must wait for a request, this is also where Partial Prerendering becomes relevant — see [Partial Prerendering: Static Shell, Dynamic Streams](/snippet/partial-prerendering-ppr) for how a static shell and dynamic, per-request content can ship from the same route.
+
+<RainbowDivider />
+
+## Server Actions
+
+A Server Action is a function marked `"use server"` that can be called directly from a Client Component — most commonly as a `<form>`'s `action` — without you writing a separate API endpoint for it to call. The function still runs on the server; Next.js generates the network plumbing to invoke it from the client automatically. This collapses what used to be two files (a form component, plus an API route it `fetch()`s into) into one, with the mutation logic colocated right next to the UI that triggers it. [Progressive-Enhancement Forms with Server Actions](/snippet/server-actions-form-mutation) walks through the full pattern, including why these forms keep working with JavaScript disabled.
+
+Server Actions aren't a full replacement for Route Handlers, though — they're the better choice specifically when the only caller is your own app's UI. Reach for a real [Route Handler](/snippet/route-handlers-app-api) instead when the endpoint needs to be a genuinely public API: called from a mobile app, a third-party webhook target, or anything outside your own React tree, where you need a stable URL and explicit control over the HTTP method and response shape rather than an RPC-style function call.
+
+<RainbowDivider />
+
+## Middleware and Runtimes
+
+Middleware runs **before** Next.js matches a request to a route at all — it sits in front of the entire routing layer, which is what makes it the right place for cross-cutting concerns like redirecting unauthenticated users or rewriting a request based on a cookie, before any page-level code ever runs. A single `middleware.ts` file at the project root, with a `matcher` config, is how you scope which paths it intercepts. [Auth Gating with Edge Middleware](/snippet/middleware-auth-redirect) covers the redirect pattern end to end.
+
+Middleware runs on the **Edge Runtime** by default, and it's not the only place that choice comes up — individual routes can opt into either the Edge Runtime or the full Node.js runtime too. The two aren't interchangeable: the Edge Runtime starts faster and runs closer to the request geographically, but it's a deliberately restricted JavaScript environment (no full Node.js API surface, no arbitrary native modules), while the Node.js runtime gives you everything Node normally provides at the cost of a heavier cold start. [Choosing a Runtime: Edge vs. Node.js](/snippet/edge-runtime-vs-nodejs-runtime) lays out which APIs are actually available in each and how to decide.
+
+<RainbowDivider />
+
+## Metadata and SEO
+
+Instead of a `<Head>` component you assemble by hand, a route exports its SEO metadata declaratively — either a static `metadata` object or, when the values depend on data only known at request time (a blog post's title, a product's price), an async `generateMetadata` function with the same shape as `page.tsx`'s own data fetching:
+
+<CodeBlock language="tsx">
+{`
+  // app/blog/[slug]/page.tsx
+  export async function generateMetadata({ params }: { params: { slug: string } }) {
+    const post = await getPost(params.slug);
+    return { title: post.title, description: post.excerpt };
+  }
+`}
+</CodeBlock>
+
+This same metadata system extends to dynamically generated Open Graph images — rendering a per-page share-preview image as an actual image response rather than a static file. [Generating Social Preview Images with ImageResponse](/snippet/dynamic-og-image-metadata-api) covers the `ImageResponse` API this relies on, including how it composes with `generateMetadata` to point at a per-route image endpoint.
+
+<RainbowDivider />
+
+## Background Work After the Response
+
+Some work genuinely shouldn't block the response — logging an analytics event, sending a notification, writing an audit-log entry — but also shouldn't be dropped the instant the response is sent, the way work after a `return` in a serverless function normally would be. The `after()` function schedules a callback to run once the response has finished streaming to the client, without making the client wait for it. [Background Work After the Response with `after()`](/snippet/after-function-background-work) covers the API and where it fits relative to just not `await`-ing a promise.
+
+<RainbowDivider />
+
+## Choosing the Right Rendering Strategy
+
+It's easy to read "static," "dynamic," "streaming," and "Partial Prerendering" as four separate features you pick between. They're better understood as one spectrum, differing only in *when* each part of a page's HTML gets produced:
+
+- **Fully static** — every byte of HTML is generated at build time; the fastest possible response, but nothing on the page can depend on per-request data.
+- **Fully dynamic** — the whole page is rendered fresh on every request; necessary when everything on it is per-request (an authenticated dashboard), at the cost of a slower time-to-first-byte.
+- **Streaming** — the response starts sending before the whole page is ready, with `loading.tsx`/`<Suspense>` boundaries filling in as their data resolves. This turns "wait for the slowest thing" into "show the fast parts immediately, stream in the slow parts as they finish."
+- **Partial Prerendering** — takes streaming one step further by prerendering a route's static shell at build time and streaming only the genuinely dynamic holes in it at request time, so a single route can be mostly static with a few request-dependent islands rather than forcing an all-or-nothing choice between the two. See [Partial Prerendering: Static Shell, Dynamic Streams](/snippet/partial-prerendering-ppr) for how the shell/hole boundary is actually drawn.
+
+None of these are mutually exclusive within one app — most real routes end up somewhere in the middle, and the caching decisions covered above (`fetch()` options, `"use cache"`) are exactly what determines where on this spectrum a given route lands.
+
+<RainbowDivider />
+
+## Best Practices
+
+- **Push `"use client"` down, not up** — wrap the smallest interactive leaf, not the page or layout containing it, so the client bundle stays as small as possible.
+- **Put state that should survive navigation in a layout, not a page** — a layout's persistence across its children's navigations is the mechanism, not an accident.
+- **Reach for a Route Handler, not a Server Action, for anything genuinely public** — mobile clients, webhooks, and third parties need a stable URL and HTTP semantics, not an RPC-style function.
+- **Use `generateStaticParams` for known, bounded param sets** — anything with an unbounded or unknown set of values at build time should stay on-demand instead.
+- **Let `loading.tsx` do the Suspense wiring for page-level pending states** — reach for a manual `<Suspense>` boundary only for something more granular than a whole segment.
+- **Treat middleware as a gate, not a place for business logic** — it runs on every matched request before routing even happens, so keep it fast and narrowly scoped (auth checks, redirects, rewrites), not data fetching or heavy computation.
+- **Pick a runtime deliberately, not by default** — Edge for latency-sensitive, narrowly-scoped logic; Node.js the moment you need a package or API the Edge Runtime doesn't support.
+
+<RainbowDivider />
+
+## Conclusion
+
+Underneath all of the App Router's individual features is the same organizing idea: a folder's special files — not configuration, not a router you set up by hand — declare what that segment does. `page.tsx` makes it reachable, `layout.tsx` makes it persistent, `loading.tsx` and `error.tsx` make its pending and failure states automatic, and everything from route groups to parallel routes to dynamic segments is a variation on naming that folder differently to get different composition behavior out of the same underlying tree.
+
+Once that convention clicks, the deeper features stop looking like a pile of unrelated APIs to memorize. Server Components, Server Actions, caching, streaming, and Partial Prerendering are all just answers to "when and where does this code run relative to the request" — layered on top of a routing system that was already telling you, through its file names, exactly where each piece of behavior belongs.
