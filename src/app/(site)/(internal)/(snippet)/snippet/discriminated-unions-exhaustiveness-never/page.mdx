@@ -1,0 +1,99 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("discriminated-unions-exhaustiveness-never");
+
+## Introduction
+
+Modeling a value that can be one of several distinct shapes — a network request that's loading, succeeded, or failed; a shape that's a circle, square, or triangle — with a single loosely-typed object (optional fields for whichever case applies) lets invalid combinations slip through: a "success" state that still has an `error` field set, or a "loading" state with a stale `data` field left over from before.
+
+**Discriminated unions** model this correctly: one shared literal field (the "discriminant") tells TypeScript exactly which shape is active, and narrows every other field to match — with the compiler able to prove every case was actually handled.
+
+<RainbowDivider />
+
+## The Core Pattern
+
+<CodeBlock language="ts">
+{`
+  type RequestState =
+    | { status: "loading" }
+    | { status: "success"; data: string }
+    | { status: "error"; message: string };
+
+  function render(state: RequestState) {
+    if (state.status === "success") {
+      console.log(state.data);    // TypeScript KNOWS state.data exists here
+      console.log(state.message); // Error: Property 'message' does not exist on this branch
+    }
+  }
+`}
+</CodeBlock>
+
+`status` is the discriminant — a literal field present (with a different literal value) in every member of the union. The moment code checks `state.status === "success"`, TypeScript narrows `state`'s type to *just* that union member for the rest of that branch, and every field that only exists on other branches becomes a compile error to access.
+
+<RainbowDivider />
+
+## Exhaustiveness Checking with `never`
+
+<CodeBlock language="ts">
+{`
+  function render(state: RequestState): string {
+    switch (state.status) {
+      case "loading": return "Loading...";
+      case "success": return state.data;
+      case "error":   return state.message;
+      default:
+        const _exhaustive: never = state; // compile error if a case was missed above
+        throw new Error(\`Unhandled status: \${_exhaustive}\`);
+    }
+  }
+`}
+</CodeBlock>
+
+After every real case in the `switch` is handled, TypeScript has narrowed `state` down to `never` inside the `default` branch — there's nothing left it could possibly be. Assigning it to a variable typed `never` only compiles if that's actually true. Add a fourth member to `RequestState` later and forget to handle it here, and this line becomes a compile error pointing at exactly the `switch` that needs updating — instead of a silent runtime gap.
+
+<RainbowDivider />
+
+## Without the Discriminant: The Problem This Solves
+
+<CodeBlock language="ts">
+{`
+  // A single loosely-typed shape instead — every field optional, no way to know which apply
+  interface RequestStateLoose {
+    status: "loading" | "success" | "error";
+    data?: string;
+    message?: string;
+  }
+
+  function render(state: RequestStateLoose) {
+    if (state.status === "success") {
+      console.log(state.data); // type: string | undefined — still not narrowed, still needs a check
+    }
+  }
+`}
+</CodeBlock>
+
+With one flat interface and optional fields, checking `status` doesn't narrow anything — `data` is still `string | undefined` even inside the "success" branch, because TypeScript has no way to know the fields are actually linked to the discriminant. A discriminated union (separate object shapes, joined with `|`) is what makes that link explicit enough for the compiler to use.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Async state (loading/success/error), exactly as above — one of the most common real uses
+- Modeling a fixed set of shapes with genuinely different fields (a shape union: circle/square/triangle, each with different dimension fields)
+- Redux-style actions (`{ type: "ADD_ITEM"; payload: Item } | { type: "REMOVE_ITEM"; id: string }`), narrowed by `type` inside a reducer's `switch`
+- Any `switch`/`if` chain over a fixed set of cases where a forgotten case should be a compile error, not a runtime surprise
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The discriminant field must be a literal type, not just `string`.** `status: string` gives TypeScript nothing to narrow on; each union member needs its own specific literal (`"loading"`, `"success"`, ...) for narrowing to work at all.
+* **The exhaustiveness check only works if `default`/the final `else` is actually reachable in the type system's eyes** — a `switch` missing a `return`/`throw` in an earlier case can make the `never` assignment appear reachable even when a case wasn't intended to fall through; keep each case's control flow explicit.
+* **Adding a new union member is a deliberate design decision, not a free operation** — every existing exhaustive `switch` over that union now needs a new case, which the `never` check surfaces on the next build rather than silently accepting the gap.
+* **This is compile-time only.** Nothing about a discriminated union or a `never` check exists at runtime — data arriving from an API still needs its own runtime validation to confirm it actually matches one of the declared shapes.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A discriminated union turns "one flat shape with optional fields nobody's sure are linked" into distinct shapes the compiler can narrow between and prove are all handled. The `never`-typed exhaustiveness check is what makes that last part enforceable — reach for it on any `switch`/`if` chain over a fixed set of cases where forgetting one should fail the build, not ship a silent bug.

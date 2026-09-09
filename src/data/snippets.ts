@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "discriminated-unions-exhaustiveness-never",
+    title: "Discriminated Unions and Exhaustiveness Checking with never",
+    excerpt: "A forgotten case in a switch becomes a compile error, not a silent runtime gap.",
+    description: "A discriminated union models a value's distinct shapes as separate object types joined by a shared literal field, letting TypeScript narrow between them — and a never-typed exhaustiveness check in a switch's default case proves every member was actually handled, failing the build the moment a new case is added and forgotten.",
+    category: ["TypeScript"],
+    tags: ["typescript", "discriminated-unions", "exhaustiveness", "never", "type-narrowing"],
+    image: {
+      path: "/assets/img/goodies/snippets/discriminated-unions-exhaustiveness-never/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A switch statement over a discriminated union's status field, with a never-typed exhaustiveness check in its default case."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "broadcast-channel-cross-tab",
     title: "Cross-Tab Messaging with BroadcastChannel",
     excerpt: "A direct, same-origin channel between tabs — no server, no storage event side-channel.",
