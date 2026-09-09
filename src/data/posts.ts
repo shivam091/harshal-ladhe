@@ -485,6 +485,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "web-animations-api",
+    title: "The Web Animations API: JS-Driven Animation Without CSS",
+    excerpt: "Animation as a first-class JavaScript object, not a declarative side effect.",
+    description: "A complete guide to the Web Animations API — element.animate(), keyframe and timing-option syntax, controlling playback with play/pause/reverse/finish, composite operations, commitStyles, and when JS-driven animation earns its keep over CSS transitions and @keyframes.",
+    category: ["Animations"],
+    tags: ["javascript", "web-animations-api", "animation", "keyframes", "animation-timeline", "frontend"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

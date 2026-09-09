@@ -1,0 +1,265 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("web-animations-api");
+
+A CSS `@keyframes` animation, once it's running, is essentially invisible to JavaScript. It exists as a rule attached via a class name — you can toggle that class on and off, but you can't ask the animation how far through its cycle it currently is, tell it to reverse direction from exactly where it stands, or `await` its completion without wiring up a `transitionend`/`animationend` listener and hoping nothing races it. The animation is a side effect of a style rule, not a thing you hold a reference to.
+
+`element.animate()` changes that by handing you back an actual object. Call it and you get an `Animation` instance — something with methods, properties, and a state machine — representing a running animation you can pause, reverse, scrub, or query at any point in its lifecycle. It's the same visual output you'd get from CSS, but modeled as a first-class JavaScript value instead of a declarative side effect of the cascade.
+
+This post covers the Web Animations API (WAAPI) end to end: the keyframe and timing-option syntax behind `element.animate()`, the playback controls and properties on the `Animation` object it returns, the composite operations that let multiple animations combine rather than fight over the same property, the easy-to-miss boundary between an animation's visual effect and an element's real inline style, and a level-headed comparison of when this buys you something CSS transitions and `@keyframes` genuinely can't.
+
+<RainbowDivider />
+
+## `element.animate()`: The Core Method
+
+The whole API pivots on one method:
+
+<CodeBlock language="js">
+{`const animation = element.animate(keyframes, options);
+// animation is an Animation object. Playback starts immediately, synchronously.`}
+</CodeBlock>
+
+There's no separate "create" and "play" step — calling `animate()` both constructs the effect and starts it playing in the same call, and hands you the `Animation` object to control it from that point on.
+
+### Two Keyframe Syntaxes
+
+The first argument accepts either an array of keyframe objects, one per stop along the timeline:
+
+<CodeBlock language="js">
+{`element.animate(
+  [
+    { opacity: 0, transform: "scale(0.8)" },
+    { opacity: 1, transform: "scale(1)" },
+  ],
+  { duration: 300, easing: "ease-out", fill: "forwards" }
+);`}
+</CodeBlock>
+
+...or a single object whose properties are each an array of values, implicitly evenly spaced across the duration:
+
+<CodeBlock language="js">
+{`element.animate(
+  {
+    opacity: [0, 1],
+    transform: ["scale(0.8)", "scale(1)"],
+  },
+  { duration: 300, easing: "ease-out", fill: "forwards" }
+);`}
+</CodeBlock>
+
+Both produce an identical animation here. The array-of-objects form is more explicit when different properties need different numbers of stops or per-keyframe `offset`/`easing` values; the object-of-arrays form reads more cleanly when every property shares the same stop count.
+
+### Timing Options
+
+The second argument controls duration and playback shape:
+
+- **`duration`** — length of one iteration, in milliseconds.
+- **`easing`** — a timing function (`linear`, `ease-out`, `cubic-bezier(...)`, `steps(...)`, `linear(...)`), applied across the whole iteration unless overridden per-keyframe.
+- **`delay`** — milliseconds before the first iteration starts.
+- **`endDelay`** — milliseconds held after the last iteration finishes, before the animation is considered finished. Useful when sequencing animations end-to-end, since it shifts when `finished` resolves without changing the visible motion.
+- **`iterations`** — how many times the keyframes repeat. Accepts `Infinity` for animations meant to loop forever (spinners, pulsing indicators).
+- **`iterationStart`** — a fractional offset into the iteration cycle to start at (`0.5` begins halfway through the first loop) — handy for staggering otherwise-identical looping animations so they don't all start in visual lockstep.
+- **`direction`** — `normal`, `reverse`, `alternate` (odd iterations reversed), or `alternate-reverse`.
+- **`fill`** — what value applies outside the animation's active interval.
+
+`fill` trips people up more than any other option here, because "before it starts" and "after it ends" are two independent questions:
+
+| `fill` value | Before the animation starts (during `delay`) | After the animation ends |
+| --- | --- | --- |
+| `none` (default) | No effect — element shows its normal computed style | No effect — reverts to normal computed style |
+| `forwards` | No effect | Holds the final keyframe's value |
+| `backwards` | Applies the first keyframe's value | No effect — reverts to normal computed style |
+| `both` | Applies the first keyframe's value | Holds the final keyframe's value |
+
+`forwards` and `both` are the ones you'll reach for constantly — without one of them, an animation that fades an element in will finish and then immediately snap back to whatever `opacity` the element had before `animate()` was called.
+
+<RainbowDivider />
+
+## Controlling Playback: the `Animation` Object
+
+The object `animate()` returns isn't inert — it's a live handle with methods and properties for the entire lifetime of the animation.
+
+Methods: `play()` and `pause()` do what they say; `reverse()` flips playback direction from the current position; `finish()` jumps immediately to the end of the active interval, respecting `fill`; `cancel()` stops playback and removes the animation's effect entirely, as though `animate()` had never been called; `updatePlaybackRate()` schedules a smooth rate change at the next moment the browser can apply it without a visible jump, whereas assigning `animation.playbackRate` directly changes it synchronously and can produce a visible discontinuity mid-motion.
+
+Properties worth knowing: `playState` (`idle`, `running`, `paused`, `finished`), `currentTime` (position within the animation, in milliseconds — readable *and* writable), `playbackRate` (negative values play backwards), and `startTime` (the timeline time at which the animation began, useful for synchronizing multiple animations against the same origin).
+
+<Info title="currentTime is the scrubbing primitive">
+  Because `currentTime` is a writable property rather than a read-only progress indicator, you can bind it directly to user input. This is the whole mechanism behind a scrubbable animation — no manual interpolation required.
+</Info>
+
+<CodeBlock language="js">
+{`const animation = card.animate(
+  [{ transform: "translateY(0)" }, { transform: "translateY(-24px)" }],
+  { duration: 400, easing: "ease-out", fill: "both" }
+);
+animation.pause();
+
+const scrubber = document.querySelector('input[type="range"]');
+scrubber.addEventListener("input", () => {
+  // scrubber.value is 0-100; map it onto the animation's duration.
+  animation.currentTime = (scrubber.value / 100) * animation.effect.getTiming().duration;
+});`}
+</CodeBlock>
+
+The other pattern worth having memorized is pausing on hover and resuming on exit — trivial with an `Animation` object, fiddly with CSS alone:
+
+<CodeBlock language="js">
+{`const pulse = badge.animate(
+  { transform: ["scale(1)", "scale(1.15)", "scale(1)"] },
+  { duration: 1200, iterations: Infinity, easing: "ease-in-out" }
+);
+
+badge.addEventListener("pointerenter", () => pulse.pause());
+badge.addEventListener("pointerleave", () => pulse.play());`}
+</CodeBlock>
+
+Every `Animation` also exposes a `finished` Promise, which resolves once playback completes naturally (or immediately, if you call `finish()`). It's the cleanest way to `await` an animation instead of listening for a `finish` event:
+
+<CodeBlock language="js">
+{`await animation.finished;
+console.log("done");
+
+// Or wait on several at once:
+await Promise.all([fadeOut.finished, slideOut.finished]);`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Composite Operations: `replace`, `add`, `accumulate`
+
+Every keyframe effect has a `composite` option that governs how its value combines with whatever else is affecting the same property, rather than assuming it's the only thing writing to it.
+
+- **`replace`** (the default) — the animated value simply overwrites the underlying value for that property. This is what every example so far has been doing implicitly.
+- **`add`** — the animated value is composed on top of the underlying value using an addition-like operation appropriate to the property (matrix multiplication for `transform`, numeric addition for plain numbers). Useful when you want an animation to layer onto whatever value is already set some other way, rather than clobbering it.
+- **`accumulate`** — similar to `add`, but specifically for combining *multiple animations* that each declare `composite: 'accumulate'` on the same property. Instead of one animation overriding the other, their effects are combined together.
+
+The clearest way to see `accumulate` do something `replace` can't: two independent `animate()` calls, both rotating the same element, both opting into accumulation.
+
+<CodeBlock language="js">
+{`dial.animate(
+  [{ transform: "rotate(0deg)" }, { transform: "rotate(90deg)" }],
+  { duration: 1000, fill: "forwards", composite: "accumulate" }
+);
+
+dial.animate(
+  [{ transform: "rotate(0deg)" }, { transform: "rotate(45deg)" }],
+  { duration: 1000, fill: "forwards", composite: "accumulate" }
+);
+
+// With composite: 'replace' (the default), the second call would simply win,
+// leaving the dial at 45deg. With 'accumulate', the rotations combine — 135deg.`}
+</CodeBlock>
+
+With the default `composite: 'replace'`, the second `animate()` call would simply stomp on the first, and you'd end up at whatever the second animation's final value is. `accumulate` is what lets two independently-triggered animations — say, a base rotation and a separate "nudge" interaction — stack instead of racing each other.
+
+<RainbowDivider />
+
+## `commitStyles()` and the Animation/Style Boundary
+
+Here's a detail that catches people who assume `fill: 'forwards'` is equivalent to writing an inline style: it isn't. Even after an animation reaches `finished` and its final keyframe value is visibly held on screen, that value lives in the animation's effect — it is not written into `element.style`. Inspect `element.style.opacity` after a `fill: 'forwards'` fade-in completes and you'll find it's still empty. The visual result is real, but it's the *animation* holding it there, not the element's own style attribute.
+
+<Warning title="cancel() after fill: 'forwards' snaps the value away">
+  Because the held value belongs to the animation and not the element's style, calling `animation.cancel()` on a finished `fill: 'forwards'` animation immediately removes that effect from the stack — and the element visually reverts to whatever the ordinary cascade says, which is often not what you want.
+</Warning>
+
+`commitStyles()` is the bridge between the two. It computes the animation's current effect and writes that computed value directly into the element's inline `style`, as a real style-attribute write. Once committed, you can safely `cancel()` the `Animation` object — removing it from the effect stack entirely — and the DOM keeps the visual result, because it's no longer the animation holding that value.
+
+<CodeBlock language="js">
+{`const reveal = panel.animate(
+  [{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "translateY(0)" }],
+  { duration: 250, easing: "ease-out", fill: "forwards" }
+);
+
+await reveal.finished;
+reveal.commitStyles(); // writes the final opacity/transform into panel.style
+reveal.cancel();       // safe now — the visual result is owned by the element, not the Animation
+
+// panel.style.opacity and panel.style.transform are now real inline styles,
+// and ordinary CSS can take over from here (e.g. a later hover rule).`}
+</CodeBlock>
+
+This is the clean way to hand control back to plain CSS once a one-shot WAAPI animation has done its job — commit the result, discard the `Animation`, and let the cascade own the property again.
+
+<RainbowDivider />
+
+## WAAPI vs. CSS Transitions vs. `@keyframes`
+
+None of this makes WAAPI a strict upgrade over CSS-driven animation — it's a different tool with a different cost profile, and CSS still wins for a large share of everyday cases.
+
+| | CSS Transitions / `@keyframes` | Web Animations API |
+| --- | --- | --- |
+| Authoring model | Declarative — defined in a stylesheet | Imperative — defined and controlled in JS |
+| Interruption / dynamic retargeting | Awkward — requires reading computed style and restarting a new transition manually | Straightforward — `reverse()`, `updatePlaybackRate()`, or just re-`animate()` |
+| Per-instance control (pause/reverse/scrub) | Requires hand-rolled JS state tracking per element | Built in — every `animate()` call returns its own controllable `Animation` |
+| Compositor-thread optimization | Yes, for transform/opacity | Yes, for transform/opacity — same underlying engine |
+| Verbosity for a simple one-off effect | Minimal — a couple of CSS rules | More boilerplate for the same visual result |
+| Dynamic/data-driven values, sequencing, conditional logic | Painful — means generating CSS or juggling custom properties from JS anyway | Natural — keyframe values and timing are just JS expressions |
+
+If the effect is a hover fade or a one-off entrance transition defined once and never touched again, CSS is genuinely less code and easier to read six months later. Reach for WAAPI when the animation needs to be paused, reversed, scrubbed, or driven by values you don't know until runtime — that's where the imperative model starts paying for its extra verbosity. [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) and [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes) both cover the declarative baseline this API is complementing, not replacing.
+
+<RainbowDivider />
+
+## Sequencing and Introspection
+
+Chaining animations end-to-end is a direct application of the `finished` Promise — start the next `animate()` call once the previous one resolves:
+
+<CodeBlock language="js">
+{`const slideOut = card.animate(
+  [{ transform: "translateX(0)" }, { transform: "translateX(-100%)" }],
+  { duration: 300, easing: "ease-in", fill: "forwards" }
+);
+
+await slideOut.finished;
+
+const slideIn = nextCard.animate(
+  [{ transform: "translateX(100%)" }, { transform: "translateX(0)" }],
+  { duration: 300, easing: "ease-out", fill: "forwards" }
+);`}
+</CodeBlock>
+
+For inspecting what's actually running rather than tracking your own references, `element.getAnimations()` returns every `Animation` currently affecting that element, and `document.getAnimations()` returns every animation running anywhere in the document — both genuinely useful for debugging a page where several independent bits of code might be animating the same element.
+
+<Details summary="What about scroll-driven animation?">
+  The same `Animation`/timeline model this whole post is built on isn't limited to wall-clock time. A `ScrollTimeline` is a timeline whose `currentTime` is derived from a scrollable element's scroll offset instead of elapsed time — the same `animate()` call, effect, and playback model apply, just driven by a different clock. It's a forward-looking extension worth knowing exists, not something this post covers in depth.
+</Details>
+
+<Quote>
+  An animation you can `await`, pause, and query is a fundamentally different building block than a CSS rule you can only toggle and hope finishes on schedule.
+</Quote>
+
+If what you actually want is motion that responds to velocity and interruption rather than a fixed set of keyframes — a draggable card settling into place, a bottom sheet that can be flung mid-gesture — [Spring Physics Animations on the Web](/post/animations/spring-physics-animations-on-the-web) is the natural next read; it uses WAAPI as one option for *playing back* a precomputed spring curve, and explains exactly where that stops being enough.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any animation that needs to be paused, resumed, reversed, or scrubbed based on user interaction (drag progress, hover, a scrubber control)
+- Sequencing multiple animations with real JS logic — conditional branches, dynamic ordering, or values not known until runtime
+- Layering independent animations on the same property without them overwriting each other (`composite: 'add'`/`'accumulate'`)
+- Precomputed, non-declarative motion — sampled physics curves, procedurally generated keyframes, or animations driven by data from an API response
+- Debugging or introspecting everything currently animating on a page via `getAnimations()`
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **`fill: 'forwards'` is not a style write.** The held value lives in the animation's effect, not `element.style` — calling `cancel()` on a finished animation removes that value instantly unless you've called `commitStyles()` first.
+- **`updatePlaybackRate()` and assigning `playbackRate` are not equivalent.** The former schedules a smooth transition at the next safe moment; the latter changes speed synchronously and can produce a visible jump if the animation is mid-flight.
+- **`composite: 'accumulate'` only combines with other animations that opt into it.** Mixing an `accumulate` animation with a `replace` animation on the same property doesn't accumulate — `replace` still simply overwrites.
+- **`getAnimations()` includes CSS-triggered animations and transitions too.** It's not scoped to ones you started with `animate()` — a page with several independent CSS animations running will show up alongside your JS-driven ones, which is exactly why it's useful for debugging.
+- **`currentTime` scrubbing needs the animation paused first.** Writing to `currentTime` while an animation is still `running` works, but the animation will keep advancing on its own afterward — pause it first if you want the scrubber to be the sole source of truth.
+- **Respect `prefers-reduced-motion` at the point you call `animate()`.** WAAPI gives you no built-in opt-out — check the media query yourself and either skip straight to `fill: 'both'` with `duration: 0`, or reduce the motion's amplitude before constructing the keyframes.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+The thread running through all of this is that WAAPI turns an animation into a real object with state, methods, and a lifecycle, instead of a fire-and-forget side effect of a stylesheet rule. That difference doesn't make it universally better than CSS — it makes it the right tool specifically when you need control CSS was never designed to expose.
+
+- **`element.animate()`: The Core Method** covers both keyframe syntaxes and the full set of timing options, including the four `fill` modes and what each one does before and after the active interval.
+- **Controlling Playback: the `Animation` Object** walks through `play()`/`pause()`/`reverse()`/`finish()`/`cancel()`, the `currentTime`/`playbackRate` properties, and the `finished` Promise for `await`-ing playback.
+- **Composite Operations** explains `replace`, `add`, and `accumulate`, and shows two independent animations combining their rotations instead of overwriting one another.
+- **`commitStyles()` and the Animation/Style Boundary** clarifies that a held `fill: 'forwards'` value isn't a real style write, and how `commitStyles()` lets you safely `cancel()` an animation once its result is committed.
+- **WAAPI vs. CSS Transitions vs. `@keyframes`** lays out where each model wins — CSS for simple, static, one-off effects; WAAPI for interruption, per-instance control, and dynamic values.
+- **Sequencing and Introspection** shows Promise-based chaining with `finished`, introspecting a page's running animations with `getAnimations()`, and a glance at `ScrollTimeline` as the same model applied to scroll position instead of time.
+</content>
