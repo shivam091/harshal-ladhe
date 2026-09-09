@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "ref-as-prop-react-19",
+    title: "ref as a Regular Prop (React 19)",
+    excerpt: "forwardRef is deprecated — a function component can just destructure ref now.",
+    description: "As of React 19, ref is an ordinary prop a function component can destructure directly, without wrapping it in forwardRef's special (props, ref) two-argument signature — forwardRef still works for backward compatibility, but new components have no reason to reach for it anymore.",
+    category: ["React"],
+    tags: ["react", "react-19", "ref", "forwardref", "typescript"],
+    image: {
+      path: "/assets/img/goodies/snippets/ref-as-prop-react-19/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A custom TextInput function component accepting ref directly as a prop, with a parent button calling .focus() on the underlying DOM node."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "use-sync-external-store",
     title: "Safely Subscribing to Outside State with useSyncExternalStore",
     excerpt: "The tear-safe way to read a value React doesn't own, under concurrent rendering.",

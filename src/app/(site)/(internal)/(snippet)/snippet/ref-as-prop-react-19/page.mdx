@@ -1,0 +1,82 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("ref-as-prop-react-19");
+
+## Introduction
+
+Any component wrapping a DOM element that a parent needs a `ref` to has always needed `forwardRef` — a plain function component receiving `ref` as a second prop is simply invalid; React silently ignores a `ref` passed to one. `forwardRef` wraps the component in a special type React recognizes, with an unusual `(props, ref)` two-argument signature unlike every other component in the codebase.
+
+**As of React 19, `ref` is just a prop.** Function components can destructure it directly, the same way they'd destructure any other prop — `forwardRef` is no longer required, and is now deprecated in favor of this.
+
+<RainbowDivider />
+
+## The Core Change
+
+<CodeBlock language="jsx">
+{`
+  // Before (React < 19): a special wrapper, a special (props, ref) signature
+  const TextInput = forwardRef(function TextInput({ label }, ref) {
+    return <input ref={ref} placeholder={label} />;
+  });
+
+  // React 19: ref is just... a prop
+  function TextInput({ label, ref }) {
+    return <input ref={ref} placeholder={label} />;
+  }
+`}
+</CodeBlock>
+
+Same behavior, same result — a parent can pass `ref={someRef}` to `<TextInput>` either way, and it ends up on the underlying `<input>`. The React 19 version is just an ordinary function component; nothing about its signature or how it's declared is special anymore.
+
+<RainbowDivider />
+
+## Try It Live
+
+`TextInput` below accepts `ref` directly — no `forwardRef` anywhere in this sandbox. Click the button to call `.focus()` on the real `<input>` element underneath it.
+
+<Sandbox slug="ref-as-prop-react-19" readOnly />
+
+<RainbowDivider />
+
+## Typing It in TypeScript
+
+<CodeBlock language="tsx">
+{`
+  import type { Ref } from "react";
+
+  interface TextInputProps {
+    label: string;
+    ref?: Ref<HTMLInputElement>;
+  }
+
+  function TextInput({ label, ref }: TextInputProps) {
+    return <input ref={ref} placeholder={label} />;
+  }
+`}
+</CodeBlock>
+
+`ref` just needs to show up in the props interface like any other optional prop, typed with React's `Ref<T>` utility type — no `ForwardRefRenderFunction` or `forwardRef<Handle, Props>` generic gymnastics required anymore.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any new component wrapping a DOM element (an `<input>`, a `<button>`) that a parent might need direct access to
+- Migrating an existing `forwardRef`-wrapped component — the conversion is almost always mechanical: drop the wrapper, add `ref` to the props
+- Component libraries maintaining broad compatibility, once their supported React version floor reaches 19
+- Simplifying a codebase's component signatures now that `forwardRef`'s special two-argument shape is no longer needed anywhere
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`forwardRef` still works and isn't removed** — it's deprecated, not gone, so existing code doesn't break on the React 19 upgrade. New components are the ones that should skip it going forward.
+* **`useImperativeHandle` is unaffected by this change** — a component that needs to expose a *custom* handle (not just the raw DOM node) still uses `useImperativeHandle` the same way, just inside a plain function component instead of inside a `forwardRef` wrapper.
+* **This specifically requires React 19** — a codebase still on React 18 or earlier needs to keep using `forwardRef` for any component that accepts a ref; there's no way to opt into `ref`-as-a-prop on an older version.
+* **Class components are unaffected** — this change is specific to function components; a class component's `ref` has always worked differently (referring to the class instance itself) and continues to.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+React 19 removes the last reason a function component's signature needed to look different just because it accepted a `ref` — it's an ordinary prop now, typed and destructured like any other. `forwardRef` remains for backward compatibility, but new components in a React 19+ codebase have no reason to reach for it.

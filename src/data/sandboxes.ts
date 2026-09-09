@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "ref-as-prop-react-19",
+    title: "ref as a Prop",
+    description: "A custom TextInput component accepting ref directly as a prop — no forwardRef anywhere — with a button that calls .focus() on the real DOM node underneath it.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "use-sync-external-store",
     title: "useSyncExternalStore",
     description: "Two panels with no state of their own, both subscribed to the same external counter store — click increment (a plain function call, not setState) and watch both stay perfectly in sync.",
