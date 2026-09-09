@@ -507,6 +507,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "git-worktrees-multiple-branches",
+    title: "Git Worktrees: Working on Multiple Branches at Once",
+    excerpt: "A second working directory, not a second clone.",
+    description: "A complete guide to git worktree — what it solves that stash and a second clone don't, add/list/remove/prune/lock, how a linked worktree is actually stored under .git/worktrees, and the gotchas around shared branches, build artifacts, and IDE indexing.",
+    category: ["Git"],
+    tags: ["git", "git-worktree", "branching", "cli", "developer-workflow"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

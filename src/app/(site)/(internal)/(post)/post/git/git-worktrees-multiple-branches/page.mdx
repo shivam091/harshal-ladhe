@@ -1,0 +1,175 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("git-worktrees-multiple-branches");
+
+If you haven't seen `git worktree` before, [the Advanced Git post](/post/git/advanced-git-techniques-and-workflows#worktrees) covers the basics — this post is the deep dive.
+
+A repository and a working directory are not the same thing, even though a normal `git clone` makes them feel permanently glued together. The repository is the object database — every commit, tree, blob, and ref you've ever created, all content-addressed and immutable. The working directory is just *one* checked-out snapshot of that history, materialized as files on disk, with `HEAD` pointing at whichever branch is currently "active." A worktree is what you get when you split those two things apart on purpose: a second working directory, checked out to a different branch, reading and writing from the *same* object database as the first.
+
+That's meaningfully different from a second clone. A clone copies the entire object database to a new location — every commit, every blob, all of it duplicated on disk, with its own independent remote-tracking configuration. A linked worktree shares the original database outright. Commit in one, and the commit exists — instantly, no push or fetch involved — for every other worktree of that same repository to see.
+
+This post covers what that sharing actually buys you, the mechanics of `git worktree add/list/remove/lock/prune/move`, exactly how Git stores a linked worktree on disk (it's simpler than it sounds, and worth seeing once), and the real workflows — hotfixes, long-lived build/test worktrees, PR review, and running several parallel AI coding-agent sessions without them stepping on each other — where worktrees stop being a curiosity and become part of your daily setup.
+
+<RainbowDivider />
+
+## The Problem: One Working Directory, One Checked-Out Branch
+
+A normal Git clone gives you exactly one working directory, and it's permanently tied to `HEAD`. Every `git switch` or `git checkout` rewrites the files in that directory in place to match whatever the target branch points at. That's fine when your working directory is clean. It's a problem the moment it isn't.
+
+Say you're three hours into a feature, with uncommitted changes scattered across a dozen files, and a production bug lands in your lap. You can't just `git switch main` — Git refuses if the switch would overwrite modified files it can't cleanly merge, and even when it *doesn't* refuse, you don't want your half-finished feature entangled with a hotfix branch anyway. Switching back later means rebuilding whatever the OS or your build tooling had cached for the branch you left — a cold `node_modules`, a stale dev server, a compiler cache that no longer matches what's on disk.
+
+Historically, there were two ways around this, and both cost you something:
+
+- **`git stash`** tucks your uncommitted changes away and gives you a clean directory. It works, but the stashed state is inert — you can't run it, build it, or even glance at it running without popping it back first. Stash twice and forget about the older one, and it just sits in `git stash list` as a landmine for later.
+- **A second `git clone`** genuinely lets you work on two branches side by side. But you've now duplicated the entire object database on disk — fine for a small repo, painful for a large monorepo — and the second clone needs its own remote configured and its own fetch cadence. It's isolated from your first clone in a way that makes moving commits between them annoying: you're pushing and pulling between two remotes-of-one instead of the commit simply already being there.
+
+Both workarounds solve "I need a clean directory" by either freezing your work or duplicating your repository. Worktrees solve it by giving you a second directory that's cheap to create, fully independent to work in, and still backed by the one object database you already have.
+
+<RainbowDivider />
+
+## `git worktree add`: A Second Checkout, One Shared Object Database
+
+The core command has two shapes, depending on whether the branch you want already exists.
+
+Checking out an existing branch into a new directory:
+
+<CodeBlock language="bash">
+{`git worktree add ../hotfix hotfix/urgent-bug
+# Preparing worktree (checking out 'hotfix/urgent-bug')
+# HEAD is now at a1b2c3d Fix null pointer in checkout flow`}
+</CodeBlock>
+
+Creating a brand-new branch and a worktree for it in one step, off a given start point:
+
+<CodeBlock language="bash">
+{`git worktree add -b feature/new ../new-feature main
+# Preparing worktree (new branch 'feature/new')
+# HEAD is now at 9f8e7d6 Add rate limiter middleware`}
+</CodeBlock>
+
+Both commands leave your original working directory completely untouched — same branch checked out, same uncommitted changes sitting there, same installed dependencies. `../hotfix` and `../new-feature` are ordinary directories on disk, each with a full working copy of the files at that branch's tip.
+
+The property that makes this genuinely useful is what's happening underneath: **every linked worktree of a repository shares one object database.** There's no syncing step. Commit inside `../hotfix`, and that commit is a real object in the same `objects/` store your main checkout already reads from. Switch back to your original directory and run `git log hotfix/urgent-bug`, and the new commit is right there — no `git fetch`, no `git pull`, because nothing was ever "elsewhere" to begin with. The same goes for any branch or tag created in any worktree: it's visible from all of them immediately, because a ref is just a file (or a line in `packed-refs`) in the one shared `.git`.
+
+<Info title="One real constraint">
+The same branch can't be checked out in two worktrees at once. Try it, and Git refuses:
+
+<CodeBlock language="bash">
+{`git worktree add ../another-hotfix hotfix/urgent-bug
+# fatal: 'hotfix/urgent-bug' is already checked out at '/path/to/hotfix'`}
+</CodeBlock>
+
+This isn't an arbitrary restriction — a branch's `HEAD` can only sensibly describe one working directory's worth of state at a time. If two worktrees both "owned" the same branch, a commit made from one would silently change what the other's `HEAD` points at, out from under it. If two people (or two agent sessions) need the same starting point, branch off it twice instead — Git is perfectly happy to have `hotfix/urgent-bug` and `hotfix/urgent-bug-2` checked out in two different worktrees at the same time.
+</Info>
+
+<RainbowDivider />
+
+## `git worktree list`, `remove`, `lock`, `prune`, and `move`
+
+Beyond `add`, the `git worktree` subcommand has a small, focused set of housekeeping operations:
+
+| Subcommand | What it does |
+| --- | --- |
+| `git worktree list` | Lists every worktree linked to this repository, its path, and the branch (or detached commit) checked out in it |
+| `git worktree remove <path>` | Deletes a worktree's directory and its administrative metadata in one step (refuses if there are uncommitted changes, unless you pass `--force`) |
+| `git worktree lock <path>` | Marks a worktree as locked, so administrative commands — including automatic pruning — leave it alone |
+| `git worktree unlock <path>` | Reverses `lock` |
+| `git worktree prune` | Scans for worktrees whose directories no longer exist and clears their stale metadata from the main repo |
+| `git worktree move <path> <new-path>` | Relocates a worktree's directory and updates the main repo's records to match |
+
+<CodeBlock language="bash">
+{`git worktree list
+# /home/you/project           a1b2c3d [main]
+# /home/you/project-hotfix    9f8e7d6 [hotfix/urgent-bug]
+# /home/you/project-feature   3d4e5f6 [feature/new]
+
+git worktree remove ../project-hotfix
+# clean teardown — directory and metadata both gone`}
+</CodeBlock>
+
+`git worktree remove` is the well-behaved path: it deletes the directory *and* tells the main repo that worktree is gone, in one atomic step. The problem is that nothing stops you from skipping it — `rm -rf ../project-hotfix` deletes the directory just as effectively from the filesystem's point of view. Git, however, doesn't notice on its own. The main repository's `.git/worktrees/<name>/` metadata directory (more on exactly what lives there in the next section) is still sitting there, referencing a working directory that no longer exists.
+
+<Warning title="Manual deletion leaves stale metadata behind">
+If you `rm -rf` a worktree's directory instead of running `git worktree remove`, `git worktree list` keeps showing it — pointing at a path that no longer exists — until you run `git worktree prune`. Nothing breaks immediately, but stale entries pile up quietly, and some operations (like `add`-ing a new worktree at that same path) will complain about leftover administrative state until you prune it away. Run `git worktree prune` after any manual cleanup, or just always use `remove` in the first place.
+</Warning>
+
+`git worktree lock` matters most for worktrees that don't live on ordinary local disk — a worktree on a network share, a removable drive, or an external volume that might be unmounted when Git decides to run background maintenance. A locked worktree is skipped by `prune` and by other administrative operations that would otherwise treat a temporarily-unreachable directory as "gone."
+
+<RainbowDivider />
+
+## How a Linked Worktree Is Actually Stored
+
+In your original clone, `.git` is a real directory — you can `cd` into it and see `objects/`, `refs/`, `HEAD`, `config`, all of it. In a linked worktree, `.git` is something else entirely: a plain **file**, one line long, pointing back at the main repository.
+
+<CodeBlock language="bash">
+{`cd ../hotfix
+cat .git
+# gitdir: /home/you/project/.git/worktrees/hotfix`}
+</CodeBlock>
+
+That path it points to is real, and it's where the linked worktree's *own* state lives — inside the main repository's `.git` directory, not the worktree's own directory:
+
+<CodeBlock language="bash">
+{`cd /home/you/project
+ls .git/worktrees/hotfix
+# HEAD  index  commondir  gitdir  ORIG_HEAD  logs/`}
+</CodeBlock>
+
+- **`HEAD`** — this worktree's own current branch pointer, independent of the main checkout's `HEAD`. This is exactly what lets two worktrees sit on two different branches simultaneously: each has its own `HEAD` file, even though there's only one `refs/heads/` directory underneath both.
+- **`index`** — this worktree's own staging area. Stage a file in `../hotfix` and it has zero effect on the main checkout's index.
+- **`gitdir`** — the reverse pointer, back to the worktree's own `.git` file, so the main repo can find it (and notice if it's gone, for `prune`).
+- **`commondir`** — tells Git where the *shared* parts live (normally just `..`, i.e. the main `.git` itself).
+
+Everything else — `objects/`, `refs/`, `config`, hooks, `packed-refs` — stays exactly where it's always been, in the main repository's `.git`, and every linked worktree reads and writes through that same shared location. That's the entire mechanism: a worktree is "linked" by nothing more than a one-line pointer file plus a small per-worktree metadata directory holding just the state that genuinely has to be per-checkout (the branch pointer and the index), while everything content-addressed stays shared.
+
+<RainbowDivider />
+
+## Real Workflows
+
+**The canonical hotfix, mid-feature.** You're deep in a feature branch with a messy, uncommitted working directory, and a production bug needs a fix *now*. `git worktree add ../hotfix hotfix/urgent-bug` gives you a clean directory in seconds, on the same object database, with your feature branch's working directory left completely untouched — no stash, no context-switch tax, no risk of forgetting a stash existed by the time you get back to it.
+
+**A permanent `main` worktree for builds and tests.** Rather than repeatedly switching your one working directory back to `main` to run the production build, the full test suite, or a long-lived dev server, keep a dedicated worktree checked out to `main` at all times — `../project-main`, say — and leave it running. You keep coding features in your primary worktree while the `main` worktree sits there as a stable reference build you can `diff` against, deploy from, or point a smoke test at, without ever disturbing your in-progress work to do it.
+
+**Reviewing a coworker's PR branch in isolation.** `git worktree add ../review origin/feature/their-branch` gets you a fully separate directory to read through, run, and poke at their code — without touching your own checkout's branch, index, or uncommitted changes at all. When you're done, `git worktree remove ../review` and it's gone, cleanly.
+
+**Running multiple parallel AI coding-agent sessions.** This one's specific to how a lot of people work in 2026: if you're running several Claude Code (or other AI-assisted) sessions at once — one refactoring the auth module, one writing tests for the API layer, one investigating a bug — each session needs its own working directory. Point two agent sessions at the same checkout and they'll fight over the same files, overwrite each other's uncommitted edits, and generally corrupt each other's context. Give each session its own worktree, each pinned to its own branch (`../agent-auth-refactor` on `refactor/auth`, `../agent-api-tests` on `test/api-coverage`, and so on), and they're fully isolated — separate files on disk, separate indexes, separate `HEAD`s — while still committing into the one object database you'll eventually merge back together.
+
+<Quote>
+A worktree isn't a workaround for switching branches — it's what lets you stop treating "one branch checked out at a time" as a constraint you have to plan around.
+</Quote>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Jumping onto an urgent hotfix without disturbing a mid-feature working directory
+- Keeping `main` (or any stable branch) permanently checked out to run builds, the test suite, or a long-lived dev server alongside active feature work
+- Reviewing a teammate's pull request in an isolated directory, without touching your own in-progress checkout
+- Running several parallel AI coding-agent sessions, each pinned to its own branch and directory, so they never clobber each other's uncommitted changes
+- Bisecting a regression (`git bisect`) in a separate worktree while leaving your main checkout free to keep working
+- Building release artifacts for an older, still-supported branch while `main` has already moved on
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **Dependencies aren't shared.** Each worktree is a fully separate directory on disk — a JS monorepo's `node_modules`, a Python `venv`, compiled build artifacts, none of it is shared between worktrees. You typically need to reinstall dependencies (or deliberately symlink shared caches) per worktree, and with enough worktrees open that's a real disk-space cost worth budgeting for.
+- **IDEs index each worktree as its own project.** Open several worktrees in your editor at once and you're running several full project indexes, several language-server instances, several sets of file watchers — memory and CPU usage multiplies with each one you keep open, not just disk.
+- **Manual deletion leaves stale state behind.** Deleting a worktree's directory with `rm -rf` instead of `git worktree remove` doesn't clean up the main repo's `.git/worktrees/<name>/` metadata — it lingers, and `git worktree list` keeps reporting a directory that no longer exists, until `git worktree prune` clears it out.
+- **Submodules need their own init per worktree.** A submodule's checkout isn't automatically shared any more than build artifacts are — after adding a new worktree in a repo that uses submodules, you'll need to run `git submodule update --init` (or `--recursive`) inside it before the submodule directories are populated there too.
+- **The same branch, twice, is a hard no.** You can't check out `feature/x` in two worktrees at once. If two collaborators or two agent sessions need to work from the same commit, give each its own branch off that commit rather than trying to share one.
+- **Locked worktrees on removable media need explicit handling.** If a worktree lives on a USB drive or network share that might not always be mounted, `git worktree lock` keeps Git's housekeeping from treating a temporarily-missing directory as one to prune — remember to `unlock` it before you actually intend to remove it for good.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Worktrees stop feeling like a niche feature the first time you're mid-feature and something urgent interrupts you — at that point, a second full working directory backed by the same object database is obviously the right tool, and stashing or cloning start to feel like the workarounds they always were.
+
+- **The problem worktrees solve** — a single working directory tied to `HEAD` forces a stash or a second full clone every time you need a second branch checked out simultaneously.
+- **`git worktree add`** — creates a second checkout, on an existing or brand-new branch, sharing one object database with every other worktree of the repo.
+- **`list` / `remove` / `lock` / `prune` / `move`** — the housekeeping commands that keep a repo's set of worktrees tidy, including recovering from a directory deleted by hand.
+- **How it's stored on disk** — a linked worktree's `.git` is a one-line pointer file, backed by a small per-worktree metadata directory (`HEAD`, index, logs) inside the main repo's `.git/worktrees/<name>/`, while objects and refs stay shared.
+- **Real workflows** — hotfixes, a permanent build/test worktree, isolated PR review, and parallel AI coding-agent sessions each pinned to their own branch and directory.
+
+If you're already comfortable with worktrees, [Git Hooks: Automating Your Workflow](/post/git/git-hooks-automating-your-workflow) is a good next stop — it covers automating the checks and side effects that run around every commit and push, in any one of these worktrees.
