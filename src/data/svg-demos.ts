@@ -1643,6 +1643,68 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "linear-gradient-vector-demo",
+    title: "Interactive Example - linearGradient Vector",
+    controls: [
+      { id: "x1", label: "x1", type: "range", min: 0, max: 100, step: 1, defaultValue: 0 },
+      { id: "y1", label: "y1", type: "range", min: 0, max: 100, step: 1, defaultValue: 0 },
+      { id: "x2", label: "x2", type: "range", min: 0, max: 100, step: 1, defaultValue: 100 },
+      { id: "y2", label: "y2", type: "range", min: 0, max: 100, step: 1, defaultValue: 0 },
+      { id: "color1", label: "Stop 1", type: "color", defaultValue: "#6366f1" },
+      { id: "color2", label: "Stop 2", type: "color", defaultValue: "#f59e0b" }
+    ],
+    render: (values) => {
+      const x1 = Number(values.x1);
+      const y1 = Number(values.y1);
+      const x2 = Number(values.x2);
+      const y2 = Number(values.y2);
+      const c1 = String(values.color1);
+      const c2 = String(values.color2);
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <!-- x1/y1/x2/y2 define a VECTOR, not just an angle — its length and direction both matter. -->
+    <linearGradient id="vector-demo-gradient" x1="${x1}%" y1="${y1}%" x2="${x2}%" y2="${y2}%">
+      <stop offset="0%" stop-color="${c1}" />
+      <stop offset="100%" stop-color="${c2}" />
+    </linearGradient>
+  </defs>
+
+  <!-- Guide: the vector line itself, so the gradient's direction is visible, not just its result. -->
+  <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" />
+
+  <rect x="5" y="5" width="90" height="90" rx="6" fill="url(#vector-demo-gradient)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "radial-gradient-focal-demo",
+    title: "Interactive Example - radialGradient Focal Point",
+    controls: [
+      { id: "fx", label: "fx (focal x)", type: "range", min: 20, max: 80, step: 1, defaultValue: 50 },
+      { id: "fy", label: "fy (focal y)", type: "range", min: 20, max: 80, step: 1, defaultValue: 50 }
+    ],
+    render: (values) => {
+      const fx = Number(values.fx);
+      const fy = Number(values.fy);
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <!-- cx/cy/r is the outer circle; fx/fy is the "hot spot" — moving it off-center is what sells a 3D-sphere look. -->
+    <radialGradient id="focal-demo-gradient" cx="50%" cy="50%" r="45%" fx="${fx}%" fy="${fy}%">
+      <stop offset="0%" stop-color="#fef3c7" />
+      <stop offset="100%" stop-color="#b45309" />
+    </radialGradient>
+  </defs>
+
+  <circle cx="50" cy="50" r="45" fill="url(#focal-demo-gradient)" />
+  <circle cx="${fx}" cy="${fy}" r="1.5" fill="#111" opacity="0.5" />
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.

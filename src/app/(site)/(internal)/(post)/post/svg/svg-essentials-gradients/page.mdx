@@ -1,0 +1,140 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("svg-essentials-gradients");
+
+## Introduction
+
+CSS has its own `linear-gradient()`/`radial-gradient()` functions for `background` — a genuinely different mechanism from what this post covers. SVG gradients are **elements**, defined once in `<defs>` and referenced by id (`fill="url(#myGradient)"`), not values written inline. That indirection is the whole point: one gradient definition can be reused across many shapes, reacts to being referenced by objects of different sizes, and can even be animated the same way any other element can.
+
+<RainbowDivider />
+
+## `<linearGradient>` and `<stop>`
+
+<CodeBlock language="xml">
+{`
+  <linearGradient id="brand-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#6366f1" />
+    <stop offset="100%" stop-color="#f59e0b" />
+  </linearGradient>
+`}
+</CodeBlock>
+
+`x1`/`y1`/`x2`/`y2` define a **vector** — a direction and a length, not just an angle — and each child `<stop>` places a color at a point along it. Drag the vector's endpoints below and watch the gradient's direction follow:
+
+<InteractiveSvgPanel slug="linear-gradient-vector-demo" />
+
+<RainbowDivider />
+
+## `gradientUnits`: objectBoundingBox vs. userSpaceOnUse
+
+The default, `objectBoundingBox`, treats `x1`/`y1`/`x2`/`y2` as fractions (0 to 1) of whatever shape's own bounding box the gradient ends up painting — the same gradient definition automatically stretches to fit a tall rectangle, a wide one, or a circle, with zero changes.
+
+`userSpaceOnUse` switches to absolute coordinates in the SVG's own coordinate system instead — useful the moment a gradient needs to look like one continuous backdrop across *several* differently-positioned shapes, rather than restarting fresh inside each one:
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 200 100">
+  <defs>
+    <linearGradient id="obb-demo" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6366f1" /><stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <linearGradient id="uou-demo" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="200" y2="0">
+      <stop offset="0%" stop-color="#6366f1" /><stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <!-- objectBoundingBox: each rect gets its OWN full indigo-to-amber sweep, regardless of size -->
+  <rect x="10" y="10" width="30" height="35" fill="url(#obb-demo)" />
+  <rect x="55" y="10" width="80" height="35" fill="url(#obb-demo)" />
+  <!-- userSpaceOnUse: both rects sample from the SAME fixed 0-200 gradient line, as if it were one backdrop -->
+  <rect x="10" y="55" width="30" height="35" fill="url(#uou-demo)" />
+  <rect x="55" y="55" width="80" height="35" fill="url(#uou-demo)" />
+</svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## `<radialGradient>`
+
+<CodeBlock language="xml">
+{`
+  <radialGradient id="sphere" cx="50%" cy="50%" r="45%" fx="35%" fy="35%">
+    <stop offset="0%" stop-color="#fef3c7" />
+    <stop offset="100%" stop-color="#b45309" />
+  </radialGradient>
+`}
+</CodeBlock>
+
+`cx`/`cy`/`r` define the outer circle; `fx`/`fy` (and, more rarely, `fr`) place the **focal point** — the "hot spot" the gradient radiates from. Letting the focal point sit off-center from the outer circle's own center is what turns a flat radial fade into something that reads as a lit sphere:
+
+<InteractiveSvgPanel slug="radial-gradient-focal-demo" />
+
+<RainbowDivider />
+
+## `gradientTransform`
+
+A `transform`-style attribute applied to the gradient's *own* coordinate space, independent of the shape it paints — rotating a linear gradient 45° without recalculating `x1`/`y1`/`x2`/`y2` by hand:
+
+<CodeBlock language="xml">
+{`<linearGradient id="diagonal" gradientTransform="rotate(45)"> ... </linearGradient>`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## `spreadMethod`
+
+Controls what happens *beyond* the defined 0%-100% stop range:
+
+<CodeBlock language="xml">
+{`
+  <!-- pad (default): extends the end colors flatly past the vector's ends -->
+  <linearGradient id="g1" spreadMethod="pad">...</linearGradient>
+  <!-- reflect: mirrors the stop sequence back and forth -->
+  <linearGradient id="g2" spreadMethod="reflect">...</linearGradient>
+  <!-- repeat: tiles the stop sequence -->
+  <linearGradient id="g3" spreadMethod="repeat">...</linearGradient>
+`}
+</CodeBlock>
+
+`spreadMethod` only matters once the gradient's vector is shorter than the shape it's painting — `pad` freezes the edge colors, `reflect`/`repeat` turn a short gradient into a genuine striped pattern.
+
+<RainbowDivider />
+
+## Reusing Stops with `href`
+
+<CodeBlock language="xml">
+{`
+  <linearGradient id="base-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#6366f1" />
+    <stop offset="100%" stop-color="#f59e0b" />
+  </linearGradient>
+
+  <!-- Inherits base-gradient's <stop> children, overriding only the vector -->
+  <linearGradient id="vertical-variant" href="#base-gradient" x1="0%" y1="0%" x2="0%" y2="100%" />
+`}
+</CodeBlock>
+
+A gradient can inherit another gradient's `<stop>` list via `href`, overriding just its own geometry — a "same colors, different direction" variant without repeating the stop list.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Data visualization fills that must exactly match a shape's bounding box regardless of its size (`objectBoundingBox`, the default)
+- A brand gradient reused consistently across an icon system, updated in one place
+- Gradients that need to align across multiple separately-positioned shapes as one continuous backdrop (`userSpaceOnUse`)
+- Any CSS gradient value currently copy-pasted across several rules that would benefit from a single, referenceable definition
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`id` collisions are a real, common bug.** The same inline SVG markup repeated multiple times on one page (a repeated icon component, say) duplicates every `id` inside it — including gradient ids — and only the first one actually gets used by every reference. Generate unique ids per instance, or use a single shared `<defs>` block instead of repeating the gradient definition.
+* **`objectBoundingBox` is the default for a reason** — reach for `userSpaceOnUse` deliberately, when the alignment-across-shapes behavior is actually what's needed, not as a default choice.
+* **This is a different mechanism from CSS's `linear-gradient()`/`radial-gradient()` functions** — see [Mastering CSS Gradients](/post/css/mastering-css-gradients) for that side; the two don't interoperate directly (a CSS gradient function can't reference an SVG `<linearGradient>` element, and vice versa).
+
+<RainbowDivider />
+
+## Wrapping Up
+
+SVG gradients trade the simplicity of a CSS gradient value for reusability — one `<linearGradient>`/`<radialGradient>` definition, referenced by every shape that needs it, updated in exactly one place. `gradientUnits`, `gradientTransform`, and `spreadMethod` are the three controls that make one definition adapt to different shapes, angles, and edge behaviors without ever touching the stop list itself.

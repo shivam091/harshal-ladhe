@@ -386,6 +386,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-gradients",
+    title: "SVG Essentials: linearGradient, radialGradient, and stop",
+    excerpt: "Reusable gradient definitions, not one-off inline values.",
+    description: "A complete guide to SVG's linearGradient and radialGradient elements — the x1/y1/x2/y2 gradient vector, objectBoundingBox vs. userSpaceOnUse, radial focal points, gradientTransform, spreadMethod, and href-based stop reuse, contrasted with CSS's gradient() functions.",
+    category: ["SVG"],
+    tags: ["svg", "gradients", "lineargradient", "radialgradient", "stop", "gradientunits", "vector-graphics", "frontend-development", "web-design"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
