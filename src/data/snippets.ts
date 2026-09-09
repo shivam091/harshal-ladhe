@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "content-visibility-render-performance",
+    title: "Skipping Off-Screen Rendering with content-visibility",
+    excerpt: "One CSS property gives long lists a lightweight version of what virtualization libraries do.",
+    description: "content-visibility: auto skips layout, style, and paint work for an element entirely while it's off-screen, substituting a contain-intrinsic-size placeholder in the meantime — a native, dependency-free way to cut rendering cost on long lists and card grids without unmounting anything from the DOM.",
+    category: ["CSS"],
+    tags: ["css", "content-visibility", "performance", "rendering", "core-web-vitals", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/content-visibility-render-performance/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A long scrolling list of rows with off-screen rows shown as lightweight placeholders via content-visibility: auto, and a timer comparing forced-layout cost with it on versus off."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "dialog-element-native-modals",
     title: "Real Modals with the <dialog> Element",
     excerpt: "showModal() gives you focus trapping, a backdrop, and return-focus — for free.",

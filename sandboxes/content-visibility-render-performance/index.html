@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>content-visibility Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>content-visibility: auto</h1>
+        <p>800 rows below. Toggle the checkbox, then measure — with it on, the browser skips layout/paint work for every row currently off-screen.</p>
+      </header>
+
+      <label class="checkbox-field" for="cv-toggle">
+        <input type="checkbox" id="cv-toggle" checked>
+        <span>Enable <code>content-visibility: auto</code></span>
+      </label>
+
+      <button id="measure-btn" class="toggle-btn" type="button">Force layout + measure</button>
+
+      <output id="readout" class="readout" aria-live="polite">Click "Force layout + measure" to time it.</output>
+
+      <div class="list" id="list"></div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

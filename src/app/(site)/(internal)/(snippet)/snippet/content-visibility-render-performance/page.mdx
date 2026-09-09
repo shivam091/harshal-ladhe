@@ -1,0 +1,76 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("content-visibility-render-performance");
+
+## Introduction
+
+A page with a thousand list rows, comment threads, or product cards pays the full rendering cost — layout, style, and paint — for every single one of them on first render, even the 970 that are currently scrolled out of view. The usual fixes are virtualization libraries that only mount visible rows into the DOM at all, which solves the problem but adds a real dependency and its own edge cases (scroll position math, variable-height rows, SEO/print visibility).
+
+**`content-visibility: auto`** gets a version of the same win natively: the browser skips rendering work for an element's contents entirely while it's off-screen, and does it without removing anything from the DOM.
+
+<RainbowDivider />
+
+## The Core Property
+
+<CodeBlock language="css">
+{`
+  .row {
+    content-visibility: auto;        /* skip layout/paint for this element while off-screen */
+    contain-intrinsic-size: 0 60px;  /* placeholder size to use WHILE skipped, so scroll height stays correct */
+  }
+`}
+</CodeBlock>
+
+While a `content-visibility: auto` element is far from the viewport, the browser substitutes an empty placeholder sized by `contain-intrinsic-size` and skips computing its actual layout, style, and paint entirely. The moment it approaches the viewport, the browser renders it normally — the content was never removed, just deferred.
+
+<RainbowDivider />
+
+## Try It Live
+
+800 rows, same DOM either way — only the `content-visibility` class differs. Toggle it and hit measure: forcing a layout read is dramatically cheaper with it on, because most of those 800 rows never get laid out at all until they're scrolled into view.
+
+<Sandbox slug="content-visibility-render-performance" readOnly />
+
+<RainbowDivider />
+
+## Why `contain-intrinsic-size` Matters
+
+<CodeBlock language="css">
+{`
+  /* Without it: a skipped element collapses to ~0 height, so the scrollbar/page height jumps
+     around as items enter and leave the skip state while scrolling */
+  .row { content-visibility: auto; }
+
+  /* With it: the browser reserves this size for the placeholder, so nothing jumps */
+  .row {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 60px; /* width height — use the row's typical rendered size */
+  }
+`}
+</CodeBlock>
+
+Skipping rendering has to substitute *some* size for the element in the meantime, or every scroll position and the total scrollbar height would be wrong. `contain-intrinsic-size` is that placeholder — get it reasonably close to the real rendered size, and the visual jump when an element enters/exits the skipped state becomes unnoticeable.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Long lists, comment threads, or card grids where most content is off-screen at any given time
+- Pages with expensive-to-render sections (complex nested layouts, many images) below the fold
+- A lighter-weight alternative to a virtualization library when rows are DOM-light but numerous
+- Any page where Lighthouse/Core Web Vitals flags a large "rendering" cost on initial load
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This doesn't remove elements from the accessibility tree or from `Ctrl+F`/find-in-page the way `display: none` does** — skipped content is still "there," just not rendered yet, which is part of why it's safer to reach for than conditionally unmounting content in JS.
+* **A bad `contain-intrinsic-size` guess is still better than none at all**, but a wildly wrong one causes visible layout jumps as elements cross the skip threshold — measure a typical row's real height rather than guessing.
+* **`content-visibility: hidden` is a different, stronger tool** — unlike `auto`, it never automatically renders based on scroll position; use it for a "cache the render but keep it manually hidden" pattern (a hidden tab panel, say), not for scroll-based lists.
+* **Browser support is solid in Chromium and Firefox** (Chrome/Edge 85+, Firefox 125+) but **Safari has not shipped `content-visibility` as of this writing** — treat this as a progressive performance enhancement, not something to depend on for correctness.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`content-visibility: auto` turns "render everything, including the 95% currently off-screen" into "render only what's actually visible, automatically" — a single CSS property doing a simplified version of what a virtualization library exists to do, with no JS dependency and no elements ever leaving the DOM.
