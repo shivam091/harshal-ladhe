@@ -474,6 +474,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "spring-physics-animations-on-the-web",
+    title: "Spring Physics Animations on the Web",
+    excerpt: "Motion that responds to the current state, not a fixed timeline.",
+    description: "How spring physics animation works on the web — mass, stiffness, and damping instead of duration and easing curves, why springs handle interruption better than keyframes, approximating springs in pure CSS with linear(), and driving a real spring loop with requestAnimationFrame and the Web Animations API.",
+    category: ["Animations"],
+    tags: ["animation", "spring-physics", "easing", "linear-easing-function", "web-animations-api", "motion-design", "frontend"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

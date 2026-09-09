@@ -1,0 +1,249 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("spring-physics-animations-on-the-web");
+
+Drag a card, release it mid-gesture, and watch it settle into place with a little overshoot and wobble — that's a spring. Do the same thing with a CSS transition and you get a robotic snap to the final value, because a transition doesn't know the card was already moving. That gap between "looks physically plausible" and "looks like a tween" is almost always the difference between easing and spring physics.
+
+[An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) covers the duration-and-curve model that most web motion still runs on, and it's a genuinely good model for simple state changes. But it has a specific blind spot: it has no idea how fast anything is currently moving. Springs are built around exactly that piece of information.
+
+This post works through why that distinction matters, the actual differential equation behind a spring, how far you can fake it in pure CSS with the newer `linear()` easing function, and what it takes to build a truly interruptible spring with `requestAnimationFrame`. We'll close with where the Web Animations API fits — good for a precomputed spring curve, not a substitute for a live simulation.
+
+<RainbowDivider />
+
+## Why Springs, Not Easing Curves
+
+A CSS transition or `@keyframes` animation is defined entirely in terms of elapsed time: at `t=0` you're at the start value, at `t=duration` you're at the end value, and a timing function (`ease`, `cubic-bezier()`, `steps()`) maps every point in between. That's the whole model — a fixed duration and a fixed curve from A to B. It has no concept of the element's current velocity.
+
+That absence is invisible as long as nothing interrupts the animation. It becomes very visible the moment something does. Take a hover-triggered `transform: scale(1.1)` with a 300ms ease-out transition. Move the mouse away a hundred milliseconds in, before the scale-up finishes, and the browser starts a *new* transition back to `scale(1)`. That new transition restarts its timing function from `t=0`, against a new pair of endpoints — the element's current scale and the resting scale. It has no way to factor in the fact that the element was still visually accelerating outward at the moment of interruption. The result is a small but perceptible kink: the motion doesn't reverse smoothly, it snaps onto a new curve.
+
+<Quote>
+  A CSS transition doesn't reverse direction — it starts a brand-new animation that happens to end where the old one began.
+</Quote>
+
+A real spring doesn't have this problem, because it isn't described as a function of time at all. It's described as a differential equation driven by the object's *current position and velocity*, re-evaluated continuously. There's no baked-in curve to restart — there's just a simulation that keeps integrating, frame by frame, from wherever it currently is. Change the target mid-flight and the spring simply starts pulling toward the new target using the velocity it already had. Nothing resets, because nothing was ever "at t=0" to begin with.
+
+This is also, incidentally, why spring-driven UI libraries (React Spring, Framer Motion's spring transitions, iOS's `UIViewPropertyAnimator`) all expose stiffness/damping/mass parameters instead of duration — duration isn't an input to a spring, it's an emergent property of the physics you configure.
+
+<RainbowDivider />
+
+## The Physics Model: Mass, Stiffness, and Damping
+
+A spring in this context is a mechanical analogy, not a metaphor. Three forces act on a simulated object each frame:
+
+- **Stiffness** (often `k`) governs a restoring force proportional to how far the object is from its target — Hooke's law, `F = -k * displacement`. Higher stiffness pulls harder for the same distance, which means faster motion and, left unchecked, more overshoot.
+- **Damping** (often `c`) governs a resistive force proportional to the object's *current velocity* — `F = -c * velocity`. This is what bleeds energy out of the system and eventually brings it to rest.
+- **Mass** determines how much a given net force actually accelerates the object (`a = F / m`). Heavier objects respond more sluggishly to the same stiffness and damping.
+
+The ratio between damping and the "critical" damping value for a given stiffness/mass pair is called the **damping ratio**, and it's the single number that most determines how the motion *feels*:
+
+| Damping ratio | Behavior | Feel |
+| --- | --- | --- |
+| < 1 (underdamped) | Oscillates, overshoots one or more times before settling | Bouncy, energetic |
+| = 1 (critically damped) | Reaches the target as fast as possible with no overshoot | Snappy, precise |
+| > 1 (overdamped) | Approaches slowly, no overshoot | Sluggish, heavy |
+
+Here's the actual math for a single simulation frame, using semi-implicit (symplectic) Euler integration — compute the new velocity first, then use that updated velocity to move the position. It's cheap and stable enough for UI-scale motion:
+
+<CodeBlock language="js">
+{`// Advances a spring simulation by one frame using semi-implicit Euler integration.
+// position/velocity are mutated in place; deltaSeconds is the frame's elapsed time.
+function stepSpring(state, target, { stiffness, damping, mass }, deltaSeconds) {
+  const displacement = state.position - target;
+
+  // Hooke's law restoring force, opposed by a velocity-proportional damping force.
+  const springForce = -stiffness * displacement;
+  const dampingForce = -damping * state.velocity;
+  const acceleration = (springForce + dampingForce) / mass;
+
+  // Update velocity first, then integrate position using the *new* velocity.
+  state.velocity += acceleration * deltaSeconds;
+  state.position += state.velocity * deltaSeconds;
+
+  return state;
+}`}
+</CodeBlock>
+
+Every spring-based animation on the web — whether it's a hand-rolled `requestAnimationFrame` loop or a library's internals — boils down to calling something shaped like this every frame until the object settles close enough to its target.
+
+<RainbowDivider />
+
+## Approximating Springs in Pure CSS with `linear()`
+
+CSS Easing Level 2 added a `linear()` timing function that takes a list of numeric stops instead of a formula. Each stop is a value (optionally paired with a percentage of the duration), and the browser linearly interpolates between consecutive stops, sampled at even steps across the animation. Because it's just a list of samples, you can bake *any* curve into it — including one sampled from an actual spring simulation like the one above, run once offline and exported as a sequence of numbers.
+
+<CodeBlock language="css">
+{`.button {
+  transform: scale(1);
+  transition: transform 400ms linear(
+    0, 0.5, 0.8, 1.1, 0.95, 1.02, 1
+  );
+}
+
+.button:active {
+  transform: scale(0.92);
+}
+`}
+</CodeBlock>
+
+That stop list traces a small overshoot-and-settle bounce — the value passes 1 before dropping back and resettling, which is exactly the shape a real spring produces and something `cubic-bezier()` structurally cannot express. A `cubic-bezier()` curve is a single monotonic-ish segment between two points; it can bend the *rate* of change but it can't cross back over itself to produce multiple bounces. `linear()` can, because it isn't a formula at all — it's just data.
+
+<Warning title="linear() is still a fixed-duration, fixed-curve animation">
+  Baking a spring's *shape* into `linear()` gets you visually closer to spring motion, but it does not solve the interruption problem from the first section. It's still a transition running against `t=0` and a hard-coded duration — interrupt it mid-flight and you get the exact same discontinuity as a `cubic-bezier()` transition, just with a fancier curve underneath. `linear()` buys you shape, not velocity continuity.
+</Warning>
+
+This is genuinely useful for one-shot UI feedback — a button press, a toast entrance — where the animation is expected to always run to completion rather than get interrupted mid-gesture. It's the wrong tool the moment a user can grab, drag, or re-trigger the motion before it finishes.
+
+<RainbowDivider />
+
+## True Interruptible Springs: A `requestAnimationFrame` Loop
+
+For motion that genuinely needs to be interruptible — a draggable card, a bottom sheet the user can fling toward multiple snap points, a tooltip that has to retarget mid-flight when its anchor moves — there's no way around running your own simulation loop. No declarative animation API keeps a live position-and-velocity state around for you to redirect.
+
+The shape of it: each animation frame, step the physics model from the previous section by the frame's elapsed time, then write the resulting position directly to the DOM — either `element.style.transform` or a CSS custom property your stylesheet reads. When the target changes (say, a drag ends at a new drop point), you don't restart anything — you just update the value the loop is stepping toward. The velocity the object already had carries straight over, because the loop was never operating against a fixed timeline in the first place.
+
+<CodeBlock language="js">
+{`// Creates a reusable spring simulation driven by requestAnimationFrame.
+// Call setTarget() any time — mid-flight retargeting is naturally continuous.
+function createSpring(stiffness, damping, mass, onUpdate) {
+  let position = 0;
+  let velocity = 0;
+  let target = 0;
+  let frameId = null;
+  let lastTime = null;
+
+  // Stop condition: both velocity and remaining distance are visually negligible.
+  const REST_VELOCITY = 0.01;
+  const REST_DISTANCE = 0.01;
+
+  function tick(now) {
+    const deltaSeconds = Math.min((now - lastTime) / 1000, 1 / 30);
+    lastTime = now;
+
+    const displacement = position - target;
+    const acceleration =
+      (-stiffness * displacement - damping * velocity) / mass;
+
+    velocity += acceleration * deltaSeconds;
+    position += velocity * deltaSeconds;
+
+    onUpdate(position);
+
+    const atRest =
+      Math.abs(velocity) < REST_VELOCITY &&
+      Math.abs(displacement) < REST_DISTANCE;
+
+    if (atRest) {
+      position = target;
+      onUpdate(position);
+      frameId = null;
+      return;
+    }
+
+    frameId = requestAnimationFrame(tick);
+  }
+
+  function setTarget(value) {
+    target = value;
+    // Only (re)start the loop if it isn't already running — velocity is preserved.
+    if (frameId === null) {
+      lastTime = performance.now();
+      frameId = requestAnimationFrame(tick);
+    }
+  }
+
+  function stop() {
+    if (frameId !== null) cancelAnimationFrame(frameId);
+    frameId = null;
+  }
+
+  return { setTarget, stop };
+}
+
+// Usage: drives an element's translateX directly, no CSS transition involved.
+const spring = createSpring(210, 20, 1, (value) => {
+  card.style.transform = \`translateX(\${value}px)\`;
+});
+
+card.addEventListener("pointerup", () => {
+  spring.setTarget(nearestSnapPointX);
+});
+`}
+</CodeBlock>
+
+<Success title="This is the only approach that's actually interruptible">
+  Because the simulation reads its own current `position` and `velocity` on every frame rather than replaying a precomputed timeline, calling `setTarget()` again before the spring settles produces continuous motion — no snap, no restart, no discontinuity. This is the property CSS transitions and `linear()` fundamentally cannot offer.
+</Success>
+
+The tradeoff is cost and responsibility you don't have with a CSS transition: you own the render loop, the rest-detection thresholds, and cleanup (cancelling the frame callback when the element unmounts). It's more code for a real reason, not accidental complexity.
+
+<RainbowDivider />
+
+## Driving a Spring Through the Web Animations API
+
+The Web Animations API's model — a keyframe list played back over a fixed duration — has the same shape problem as `@keyframes` and `linear()`: it isn't built to integrate a live differential equation frame by frame. But it's still a legitimate way to *play back* a spring, provided you accept it as a one-shot animation rather than a live simulation.
+
+The technique: run the physics model from the second section once, ahead of time, sampling position at fixed time steps until the spring settles, and feed that array straight in as a keyframe list.
+
+<CodeBlock language="js">
+{`// Pre-samples a spring simulation into a keyframe array WAAPI can play back.
+function sampleSpringKeyframes(stiffness, damping, mass, from, to, stepMs = 16) {
+  const keyframes = [];
+  let position = from;
+  let velocity = 0;
+  const deltaSeconds = stepMs / 1000;
+
+  while (true) {
+    keyframes.push({ transform: \`translateY(\${position}px)\` });
+
+    const displacement = position - to;
+    const acceleration = (-stiffness * displacement - damping * velocity) / mass;
+    velocity += acceleration * deltaSeconds;
+    position += velocity * deltaSeconds;
+
+    const atRest = Math.abs(velocity) < 0.01 && Math.abs(position - to) < 0.01;
+    if (atRest || keyframes.length > 300) break;
+  }
+
+  return keyframes;
+}
+
+const keyframes = sampleSpringKeyframes(180, 12, 1, -40, 0);
+sheet.animate(keyframes, { duration: keyframes.length * 16, fill: "forwards" });
+`}
+</CodeBlock>
+
+That's a genuinely useful pattern for a one-shot bouncy entrance or dismissal — a modal sliding in, a notification settling into place — where you want spring-shaped motion but also want WAAPI's playback controls (`pause()`, `reverse()`, `playbackRate`) for free. What it doesn't give you back is live interruptibility: retargeting mid-playback means cancelling that `Animation` and starting an entirely new one with a freshly-sampled keyframe list from the current position, not continuing the same physical motion the way the `requestAnimationFrame` loop does. For the rest of what WAAPI can do — playback control, composite operations, `commitStyles` — see [The Web Animations API: JS-Driven Animation Without CSS](/post/animations/web-animations-api).
+
+If your springs are attached to SVG geometry rather than a transform, note that [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes) covers the CSS-only side of that specifically — the same interruption caveats from the first section apply there too.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Draggable UI that needs to settle naturally after release — cards, bottom sheets, swipeable list items
+- Any interaction where the user can interrupt or re-trigger the animation before it finishes (fast hover in/out, rapid re-drags, toggling a state repeatedly)
+- Snap-to-position behavior with multiple valid targets (carousel pages, dock magnification, drawer snap points)
+- One-shot entrance/exit motion that should feel organic rather than mechanical, even without live interruptibility (`linear()` or a precomputed WAAPI keyframe list)
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **A spring that never settles is a real bug, not a theoretical one.** Floating-point drift or an unreachable rest threshold can leave a `requestAnimationFrame` loop running indefinitely, burning CPU on an element nobody can see move. Always clamp with a distance-and-velocity threshold, and snap exactly to the target once you're under it.
+- **Underdamped springs can overshoot outside intended visual bounds.** A card can briefly render past its container edge mid-bounce — clip or constrain the container if that matters, rather than tuning damping ratio to 1 purely to avoid it.
+- **`requestAnimationFrame` loops must be torn down.** Cancel the frame callback on unmount, on component teardown, and when the element is removed from the DOM — an orphaned loop that keeps calling `onUpdate` on a detached element is a silent leak.
+- **Respect `prefers-reduced-motion`.** A bouncy, multi-oscillation spring is exactly the kind of motion that can bother users with vestibular sensitivity — check the media query and either critically damp (ratio = 1, no overshoot) or skip straight to the resting value.
+- **Mixing spring-driven transforms with CSS transitions on the same property causes fights.** If a `requestAnimationFrame` loop is writing `transform` every frame, make sure nothing else — a CSS `transition: transform` rule, a competing WAAPI animation — is also trying to own that property at the same time.
+- **Tune stiffness/damping/mass empirically, not analytically.** The exact numbers that "feel right" depend on the element's size, the distance it travels, and the interaction it's responding to — treat the constants as design parameters to iterate on visually, not values to derive from first principles.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+The core idea underneath all of this is simple even though the implementations vary in cost: a spring is defined by where an object currently is and how fast it's currently moving, not by how much time has elapsed against a fixed curve. That's what makes it naturally continuous under interruption, and it's the one property no amount of clever easing-curve authoring can retrofit onto a duration-based animation.
+
+- **Why Springs, Not Easing Curves** explains precisely why interrupting a CSS transition mid-flight produces a visible snap — the new transition restarts from `t=0` with no memory of prior velocity.
+- **The Physics Model** walks through the actual mass/stiffness/damping equation and the damping-ratio spectrum from bouncy to sluggish, with a real Euler-integration code sample.
+- **Approximating Springs in Pure CSS with `linear()`** shows how to bake a sampled spring curve into a zero-JS transition, and is explicit about the fact that it's still a fixed-duration animation under the hood.
+- **True Interruptible Springs** builds the actual `requestAnimationFrame` loop that solves the interruption problem for real, by continuously integrating from live position and velocity.
+- **Driving a Spring Through the Web Animations API** covers the middle ground — playing back a precomputed spring curve for a one-shot bouncy transition, with WAAPI's playback controls but not live interruptibility.
