@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "route-handlers-app-api",
+    title: "Route Handlers",
+    description: "Three buttons calling functions shaped exactly like real app/api/.../route.ts exports — GET the collection, GET one by id, and POST a new one with validation and real HTTP status codes.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "ref-as-prop-react-19",
     title: "ref as a Prop",
     description: "A custom TextInput component accepting ref directly as a prop — no forwardRef anywhere — with a button that calls .focus() on the real DOM node underneath it.",

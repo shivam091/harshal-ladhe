@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "route-handlers-app-api",
+    title: "Building an API with App Router Route Handlers",
+    excerpt: "One function export per HTTP method, using the same Request/Response the web already has.",
+    description: "App Router Route Handlers (app/api/.../route.ts) replace pages/api's single method-branching function with one named export per HTTP method — GET, POST, and the rest — built on the same web-standard Request/Response objects fetch() itself uses, including real dynamic segments and searchParams.",
+    category: ["Next.js"],
+    tags: ["nextjs", "app-router", "route-handlers", "api", "rest"],
+    image: {
+      path: "/assets/img/goodies/snippets/route-handlers-app-api/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A route.ts file's separate GET and POST exports handling a /api/posts endpoint, tested by a simulated API client showing real HTTP status codes and JSON responses."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "ref-as-prop-react-19",
     title: "ref as a Regular Prop (React 19)",
     excerpt: "forwardRef is deprecated — a function component can just destructure ref now.",

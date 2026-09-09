@@ -1,0 +1,99 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("route-handlers-app-api");
+
+## Introduction
+
+Building an API endpoint alongside a Next.js app used to mean the Pages Router's `pages/api/*.ts` files — a single default-exported function handling every HTTP method itself, branching internally on `req.method`. The App Router replaces that with a different shape entirely: one file per route, one *named export per HTTP method*.
+
+**Route Handlers** — `app/api/.../route.ts` — give `GET`, `POST`, `PUT`, `DELETE`, and the rest their own separate function exports, using the same web-standard `Request`/`Response` objects (extended by Next.js) that `fetch()` itself uses.
+
+<RainbowDivider />
+
+## The Core File
+
+<CodeBlock language="ts">
+{`
+  // app/api/posts/route.ts
+  import { NextResponse } from "next/server";
+
+  export async function GET() {
+    const posts = await db.post.findMany();
+    return NextResponse.json(posts);
+  }
+
+  export async function POST(request: Request) {
+    const body = await request.json();
+    const post = await db.post.create({ data: body });
+    return NextResponse.json(post, { status: 201 });
+  }
+`}
+</CodeBlock>
+
+No method branching inside one function — `GET` and `POST` are just two separate exports from the same file, each handling exactly one HTTP method. Any method without a matching export automatically gets a `405 Method Not Allowed` from Next.js itself.
+
+<RainbowDivider />
+
+## Try It Live
+
+Each button below calls a function shaped exactly like a real Route Handler export — same status codes, same JSON response shape a `fetch()` against the real endpoint would receive.
+
+<Sandbox slug="route-handlers-app-api" readOnly />
+
+<RainbowDivider />
+
+## Dynamic Segments
+
+<CodeBlock language="ts">
+{`
+  // app/api/posts/[id]/route.ts
+  export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const post = await db.post.findUnique({ where: { id } });
+    if (!post) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json(post);
+  }
+`}
+</CodeBlock>
+
+A folder segment named `[id]` makes that part of the path available as a real path parameter — `/api/posts/42` arrives with `params.id === "42"` — rather than something the handler has to parse out of the URL itself. In recent Next.js versions, `params` is a `Promise` that needs awaiting, not a plain object.
+
+<RainbowDivider />
+
+## Reading Query Parameters
+
+<CodeBlock language="ts">
+{`
+  export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get("page") ?? "1";
+    // ...
+  }
+`}
+</CodeBlock>
+
+Since `request` is a real (extended) `Request` object, its URL is parsed the same way any URL would be — `new URL(request.url).searchParams` — no Next.js-specific query-parsing API to learn separately from the rest of the web platform.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any backend endpoint colocated with the frontend that calls it — webhooks, form submission targets, a public JSON API
+- Anywhere `pages/api/*.ts` handlers are being migrated to the App Router
+- Endpoints that need access to cookies/headers via `next/headers`, or that need a specific runtime (`export const runtime = "edge"`)
+- Proxying or transforming a call to an external API before the client ever sees the response
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **A Route Handler and a `page.tsx` can't both live in the same route segment** — `app/posts/route.ts` and `app/posts/page.tsx` conflict; a route segment is either a page or an API endpoint, not both at the same URL.
+* **`GET` handlers are cached by default in some Next.js versions, `POST`/other methods are not** — check the caching behavior for the specific Next.js version in use, and opt out explicitly (`export const dynamic = "force-dynamic"`) for a `GET` that must never be cached, like one reading `searchParams` for pagination.
+* **Returning `NextResponse.json()` isn't required** — a Route Handler can return a plain `Response` object too (useful for non-JSON payloads, custom headers, or streaming), since `NextResponse` is just a convenience subclass.
+* **These run on the server only** — nothing in a Route Handler file is ever sent to the client bundle, the same isolation Server Components get, which makes them a safe place for secrets/database access that a Client Component could never touch directly.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Route Handlers replace one method-branching function per API file with one function export per HTTP method, built on the same `Request`/`Response` primitives the rest of the web platform already uses. Reach for them any time the App Router needs a real backend endpoint rather than a page — a webhook target, a public API, or anything a `pages/api` handler used to do.
