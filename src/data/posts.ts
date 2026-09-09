@@ -441,6 +441,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-metadata-and-interactivity",
+    title: "SVG Essentials: Metadata, Links, and Interactivity",
+    excerpt: "Accessible names, native links, deep-linkable views, and a real XSS warning.",
+    description: "The closing post in the SVG Essentials series — title and desc as accessible names, ARIA roles in SVG, native <a> hyperlinks, deep-linkable <view> viewports, <style>/<script> inside SVG and the real XSS risk they carry, and <metadata>.",
+    category: ["SVG"],
+    tags: ["svg", "accessibility", "aria", "title", "a11y", "xss", "security", "vector-graphics", "frontend-development"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

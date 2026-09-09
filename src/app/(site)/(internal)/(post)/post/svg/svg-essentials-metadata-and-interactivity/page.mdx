@@ -1,0 +1,103 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("svg-essentials-metadata-and-interactivity");
+
+## Introduction
+
+This closes out the SVG Essentials series with the smaller elements and attributes that turn a bag of shapes into a real, robust document: proper accessible names, correct ARIA, native links, deep-linkable views, and the security awareness that comes with SVG being able to hold real CSS and real JavaScript.
+
+<RainbowDivider />
+
+## `<title>` and `<desc>`
+
+<CodeBlock language="xml">
+{`
+  <svg role="img" aria-labelledby="chart-title">
+    <title id="chart-title">Quarterly revenue, upward trend</title>
+    <desc>A line chart showing revenue increasing from $2M to $5M over four quarters.</desc>
+    <!-- shapes -->
+  </svg>
+`}
+</CodeBlock>
+
+`<title>` is the *first* accessible name a screen reader announces for an SVG, or for any individual shape within it — a child element, not an attribute, functioning much like an `<img>`'s `alt`. `<desc>` supplements it with a longer description. Both need to be the **first child** of the element they describe. A common mistake: a `<title>` only on the root `<svg>`, when individual meaningful sub-shapes (separate clickable icons, say) need their own.
+
+<RainbowDivider />
+
+## ARIA and Roles in SVG
+
+<InteractiveSvgPanel slug="svg-accessible-name-demo" />
+
+- `role="img"` + `aria-labelledby` (pointing at a `<title>`'s `id`) — the standard pattern for a meaningful, non-interactive SVG
+- `aria-hidden="true"` (or `role="presentation"`) — for a genuinely decorative SVG that shouldn't be announced at all
+- `focusable="false"` — a legacy attribute some older IE/Edge versions needed explicitly on decorative SVGs to avoid an unwanted tab stop; rarely needed in current browsers, but you'll still see it in older codebases
+
+<RainbowDivider />
+
+## `<a>`: Native SVG Hyperlinks
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 100 50" width="240" height="120">
+  <a href="#" aria-label="View report">
+    <rect x="10" y="10" width="80" height="30" rx="6" fill="#6366f1" style="outline-offset: 2px" />
+    <text x="50" y="29" font-size="9" text-anchor="middle" fill="white">View report</text>
+  </a>
+</svg>
+`}
+</SvgSnippet>
+
+Wrapping any shape or group in `<a href="...">` makes it a real, keyboard-focusable, screen-reader-announced link — the SVG-native equivalent of wrapping a `<div>` in an anchor tag, with the same native keyboard/focus behavior a synthetic click handler on a `<g>` would otherwise have to reimplement by hand.
+
+<RainbowDivider />
+
+## `<view>`: Named Viewports
+
+<CodeBlock language="xml">
+{`
+  <svg>
+    <view id="chart-detail" viewBox="40 10 30 30" />
+    <!-- full diagram content -->
+  </svg>
+`}
+</CodeBlock>
+
+Linking to `map.svg#chart-detail` jumps directly to that specific zoomed/panned region — a native "deep link into part of an SVG" mechanism, useful for a large diagram or map where different anchors should present different zoomed views without any JavaScript.
+
+<RainbowDivider />
+
+## `<style>` and `<script>` Inside SVG
+
+An SVG document can contain its own `<style>` block (real CSS, scoped to that document when standalone) and even `<script>` (real JavaScript).
+
+<Warning title="script inside SVG is a real, historically-exploited XSS vector">
+  Never render user-supplied SVG content inline without sanitizing it first — stripping `<script>` elements, event-handler attributes (`onload`, `onclick`, and similar), and any other executable content. An SVG upload feature that renders the file inline/embedded without sanitization is a documented, real-world attack surface, not a theoretical one.
+</Warning>
+
+<RainbowDivider />
+
+## `<metadata>`
+
+A container for machine-readable metadata (often RDF/Dublin Core, commonly seen in files exported from professional design tools) — not rendered, not meant for human reading. You'll encounter it mostly as boilerplate in exported files rather than something to author by hand.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any SVG conveying real information (a chart, an icon with meaning) needs `<title>` and appropriate ARIA
+- Any clickable SVG element should be a real `<a>`, not a `<g>` with a synthetic click handler and no keyboard support
+- Any product accepting user-uploaded SVGs needs sanitization before rendering them inline
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The `<script>`-in-SVG XSS risk is the most operationally important point in this post** — sanitize before rendering any SVG your application didn't author itself.
+* **`<title>` the element is not the same as the `title` attribute** — the attribute is a native hover tooltip some elements also support; the child *element* is what assistive technology actually reads as the accessible name. Don't confuse the two.
+* **SVG accessibility support has historically been uneven across browser/AT combinations** — test with a real screen reader for anything accessibility-critical rather than trusting markup alone.
+
+<RainbowDivider />
+
+## Wrapping Up the Series
+
+That's the full spread of SVG — from [shapes, coordinates, and styling](/post/svg/svg-essentials-mastering-basic-shapes) and [the path element](/post/svg/svg-essentials-mastering-the-path-element) through [polygon vs. polyline](/post/svg/polygon-vs-polyline), [text](/post/svg/svg-essentials-mastering-text), [g/defs/symbol/use](/post/svg/svg-essentials-g-defs-symbol-and-use), [gradients](/post/svg/svg-essentials-gradients), [patterns](/post/svg/svg-essentials-pattern-element), [clipPath and mask](/post/svg/svg-essentials-clippath-and-mask), [markers](/post/svg/svg-essentials-marker-element), [filter fundamentals](/post/svg/svg-essentials-filters-fundamentals) and [advanced filter primitives](/post/svg/svg-essentials-advanced-filter-primitives), [native SMIL animation](/post/svg/svg-essentials-smil-animation), [image and foreignObject](/post/svg/svg-essentials-image-and-foreignobject), and now the accessibility/metadata/interactivity layer that ties it all together into a real, robust document. Thanks for reading the whole spec with me.

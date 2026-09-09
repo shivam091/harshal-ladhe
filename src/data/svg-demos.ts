@@ -1937,6 +1937,30 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "svg-accessible-name-demo",
+    title: "Interactive Example - title and role",
+    controls: [
+      { id: "decorative", label: "Purely decorative (aria-hidden)", type: "checkbox", defaultValue: false }
+    ],
+    // ARIA/title changes are invisible to a sighted reader by default, so this demo renders a live
+    // text readout of what a screen reader would actually announce, right inside the SVG itself.
+    render: (values) => {
+      const decorative = Boolean(values.decorative);
+      const attrs = decorative ? 'aria-hidden="true"' : 'role="img" aria-labelledby="chart-icon-title"';
+      const titleEl = decorative ? "" : '<title id="chart-icon-title">Upward sales trend</title>';
+      const announcement = decorative ? "(skipped entirely — not announced)" : '"Upward sales trend, image"';
+
+      return `
+<svg viewBox="0 0 100 70" width="260" height="182">
+  <g ${attrs}>
+    ${titleEl}
+    <polyline points="10,50 30,35 50,42 70,15 90,20" fill="none" stroke="#10b981" stroke-width="3" />
+  </g>
+  <text x="10" y="65" font-size="7" fill="var(--color-fg-muted)">Screen reader announces: ${announcement}</text>
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.
