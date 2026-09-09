@@ -1,0 +1,71 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("svg-essentials-image-and-foreignobject");
+
+## Introduction
+
+SVG can embed content that isn't native SVG markup at all: `<image>` for raster or vector image files, `<foreignObject>` for an entirely different XML namespace — almost always real HTML. Both let SVG interoperate with the rest of the web platform instead of being a closed, vector-only system.
+
+<RainbowDivider />
+
+## `<image>`: Embedding Raster or Vector Images
+
+<CodeBlock language="xml">
+{`<image href="photo.jpg" x="10" y="10" width="80" height="80" preserveAspectRatio="xMidYMid slice" />`}
+</CodeBlock>
+
+`preserveAspectRatio` controls how a source image of one aspect ratio fits into a differently-shaped target box — the same mechanism the root `<svg>` element itself uses to reconcile its `viewBox` against its actual viewport. `meet` (default) letterboxes the whole image inside the box; `slice` crops it to fill the box completely, similar in spirit to CSS `object-fit: contain` vs. `cover`. The alignment keyword (`xMidYMid`, `xMinYMin`, `xMaxYMax`, ...) decides which part of the image stays visible when cropping:
+
+<InteractiveSvgPanel slug="image-preserve-aspect-ratio-demo" />
+
+<RainbowDivider />
+
+## Why `<image>` Instead of a Plain `<img>`
+
+An `<image>` living inside an SVG document can be clipped, masked, filtered, and transformed using every other mechanism covered elsewhere in this series — [`<clipPath>`/`<mask>`](/post/svg/svg-essentials-clippath-and-mask), [`<filter>`](/post/svg/svg-essentials-filters-fundamentals) — capabilities a regular HTML `<img>` simply doesn't have natively.
+
+<RainbowDivider />
+
+## `<foreignObject>`: Embedding Real HTML
+
+<InteractiveSvgPanel slug="foreignobject-text-wrap-demo" />
+
+<CodeBlock language="xml">
+{`
+  <foreignObject x="10" y="10" width="60" height="40">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px sans-serif;">
+      Real HTML, with real automatic text wrapping.
+    </div>
+  </foreignObject>
+`}
+</CodeBlock>
+
+Real HTML — with real text flow and automatic wrapping, which native SVG [`<text>`](/post/svg/svg-essentials-mastering-text) fundamentally lacks — rendered inside an otherwise-vector document, positioned by a rectangular `x`/`y`/`width`/`height` region exactly like any other SVG element.
+
+<RainbowDivider />
+
+## Practical Use: Auto-Wrapping Text in a Diagram
+
+Since native `<text>` needs manual `<tspan>` line breaks, `<foreignObject>` is the pragmatic escape hatch anytime real paragraph-flow text needs to live at a precise SVG-coordinate position — a chart's rich annotation, a callout with more than a line or two of text, a label whose length isn't known ahead of time.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Applying vector manipulation (clip/mask/filter) to a raster source image, via `<image>`
+- Auto-wrapping text labels inside a generated diagram or data visualization, via `<foreignObject>`
+- Embedding a small interactive HTML widget at a precise position within a larger SVG-based diagram or map
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`<foreignObject>` content needs valid, correctly-namespaced XHTML in a strict-XML standalone `.svg` file** — the `xmlns="http://www.w3.org/1999/xhtml"` on the wrapping element matters there. SVG inlined directly inside an HTML document is more forgiving, since the browser's HTML parser handles it rather than a strict XML parser — a common source of confusion when markup that works fine inlined suddenly breaks once exported as a standalone `.svg` file.
+* **`<foreignObject>` rendering fidelity has historically been inconsistent across export/rasterization contexts** (converting to PNG, PDF) even though on-screen browser rendering is solid — worth testing specifically if the SVG needs to be exported or rasterized, not just displayed live.
+* **`<image>` embedding a cross-origin file is subject to the same CORS/tainted-canvas rules** as any other cross-origin image, once the SVG itself gets rasterized (drawn to a `<canvas>`, say).
+
+<RainbowDivider />
+
+## Wrapping Up
+
+`<image>` and `<foreignObject>` are SVG's two escape hatches out of vector-only content — a real image asset, gaining every SVG manipulation trick in the process, and real HTML, gaining real text flow. Reach for either the moment a document needs something SVG's own primitives genuinely can't provide on their own.

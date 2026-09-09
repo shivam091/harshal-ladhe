@@ -430,6 +430,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-image-and-foreignobject",
+    title: "SVG Essentials: image and foreignObject",
+    excerpt: "SVG's two escape hatches into raster images and real HTML.",
+    description: "A complete guide to SVG's image and foreignObject elements — preserveAspectRatio's meet/slice fitting behavior, why <image> beats a plain <img> for vector-manipulable embedding, auto-wrapping real HTML text via foreignObject, and the XML-namespace gotchas that matter for standalone SVG files.",
+    category: ["SVG"],
+    tags: ["svg", "image", "foreignobject", "preserveaspectratio", "embedding", "vector-graphics", "frontend-development"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
