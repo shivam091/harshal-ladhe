@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "use-deferred-value-vs-transition",
+    title: "useDeferredValue",
+    description: "Type quickly into 4,000 deliberately expensive items — the input stays snappy via a live query value while the filtered list reads a deferred version that lags a beat behind and dims while catching up.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "broadcast-channel-cross-tab",
     title: "BroadcastChannel",
     description: "Two independent BroadcastChannel instances side by side, as independent as two real browser tabs — send a message from one and watch it land in the other's log instantly.",

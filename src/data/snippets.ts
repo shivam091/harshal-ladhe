@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "use-deferred-value-vs-transition",
+    title: "useDeferredValue vs. useTransition",
+    excerpt: "Wrap the update when you own the setter, defer the value when you don't.",
+    description: "useDeferredValue hands back a version of a value that's allowed to lag behind during expensive rendering, solving the same urgent-vs-expensive-update problem useTransition does but from the value side rather than the state-update side — useful whenever the expensive computation's input arrives as a prop or a value outside your own setState call.",
+    category: ["React"],
+    tags: ["react", "use-deferred-value", "use-transition", "concurrent-rendering", "performance"],
+    image: {
+      path: "/assets/img/goodies/snippets/use-deferred-value-vs-transition/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A search input staying responsive while a large filtered list below it, driven by a deferred value, visibly lags and dims a beat behind before catching up."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "discriminated-unions-exhaustiveness-never",
     title: "Discriminated Unions and Exhaustiveness Checking with never",
     excerpt: "A forgotten case in a switch becomes a compile error, not a silent runtime gap.",

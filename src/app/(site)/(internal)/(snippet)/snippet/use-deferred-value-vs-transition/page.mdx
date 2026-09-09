@@ -1,0 +1,90 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-deferred-value-vs-transition");
+
+## Introduction
+
+[`useTransition`](/snippet/use-transition-non-blocking-updates) solves "keep typing responsive while an expensive update happens" by wrapping the *state update itself* in `startTransition`. That works great when the component doing the filtering also owns the `setState` call — but sometimes it doesn't. A value arriving as a prop, or from a third-party controlled input you don't own the setter for, has no `setState` call available to wrap.
+
+**`useDeferredValue`** solves the same problem from the other direction: instead of deprioritizing a state *update*, it deprioritizes *reading a value* — handing back a version of it that's allowed to lag behind during expensive work.
+
+<RainbowDivider />
+
+## The Core Hook
+
+<CodeBlock language="jsx">
+{`
+  const [query, setQuery] = useState("");
+  const deferredQuery = useDeferredValue(query);
+
+  // query updates immediately (the input stays responsive)
+  // deferredQuery lags behind during expensive re-renders, then catches up
+  const results = useMemo(() => expensiveFilter(list, deferredQuery), [deferredQuery]);
+`}
+</CodeBlock>
+
+`query` still updates synchronously, every keystroke — nothing about typing itself changes. `deferredQuery` is a second value React is allowed to keep showing the *previous* version of while a more urgent update (another keystroke) is in progress, catching up once things settle.
+
+<RainbowDivider />
+
+## Try It Live
+
+The input above always reflects what you typed immediately. The list below reads `deferredQuery` instead of `query` — notice it dims and lags a beat behind on a fast burst of typing, then catches up.
+
+<Sandbox slug="use-deferred-value-vs-transition" readOnly />
+
+<RainbowDivider />
+
+## Telling It's Stale
+
+<CodeBlock language="jsx">
+{`
+  const deferredQuery = useDeferredValue(query);
+  const isStale = query !== deferredQuery;
+
+  return (
+    <ul style={{ opacity: isStale ? 0.5 : 1 }}>
+      {/* ...filtered list using deferredQuery... */}
+    </ul>
+  );
+`}
+</CodeBlock>
+
+Comparing the live value to its deferred counterpart is the whole mechanism for showing a "catching up" state — no separate `isPending` boolean exists here the way `useTransition` provides one directly, since there's no transition being tracked, just a value allowed to lag.
+
+<RainbowDivider />
+
+## `useDeferredValue` vs. `useTransition`
+
+| | `useTransition` | `useDeferredValue` |
+| :--- | :--- | :--- |
+| **What it wraps** | A state *update* (`setState` call) | A *value*, read from anywhere |
+| **Requires owning the setter** | Yes | No |
+| **Pending indicator** | `isPending` boolean, built in | Compare the value to itself: `value !== deferredValue` |
+| **Typical source** | A state update you're triggering yourself | A prop, a value from a parent, or state you don't want to change how it updates |
+
+Both exist to solve the same underlying problem — an expensive re-render competing with something more urgent — from two different starting points: one where you control the update, one where you only have the resulting value.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A prop value driving expensive rendering, where the component receiving it can't wrap its parent's `setState` in a transition
+- Search-as-you-type filtering over a large list, exactly as in the demo above, when reaching for `useDeferredValue` specifically because nothing here needs a full transition's pending state
+- Wrapping a value passed to a `React.memo`-wrapped expensive child, so the child only re-renders once the deferred value actually changes
+- Any case where `useTransition` would apply but the state update isn't something the current component actually calls `setState` for
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This doesn't make the expensive work itself faster** — exactly like `useTransition`, it changes the *scheduling priority* of when that work happens, not its cost. A render that's expensive enough will still eventually show up as lag once React can no longer defer it further.
+* **`isStale` (comparing value to deferredValue) is a reasonable proxy for "pending," but isn't automatically provided** — unlike `useTransition`'s `isPending`, tracking staleness here is just an equality check you write yourself, which also means it's `===` comparison — an object/array value needs care about referential equality the same way any other React dependency does.
+* **Memoizing the expensive computation is what actually matters here** — `useDeferredValue` on its own doesn't skip work; pairing it with `useMemo` (keyed on the deferred value) is what prevents the expensive computation from re-running on every render regardless.
+* **Requires React 18+** — same version floor as `useTransition`, `useId`, and the rest of the concurrent-rendering hook family.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useTransition` and `useDeferredValue` solve the same "urgent update vs. expensive update" problem from opposite ends — wrap the *update* when you own the setter, defer the *value* when you don't. Reach for `useDeferredValue` specifically any time the expensive computation's input arrives as a prop or a value you can't route through your own `startTransition` call.
