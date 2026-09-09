@@ -397,6 +397,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-filters-fundamentals",
+    title: "SVG Essentials: Filter Fundamentals",
+    excerpt: "A filter is a chain of primitives, not one single effect.",
+    description: "A complete guide to SVG filter fundamentals — the filter region, SourceGraphic/SourceAlpha, chaining primitives via in/in2/result, feGaussianBlur, feOffset, feMerge, feFlood, feBlend, and building a real hand-crafted drop shadow from scratch.",
+    category: ["SVG"],
+    tags: ["svg", "filters", "fegaussianblur", "feoffset", "femerge", "drop-shadow", "vector-graphics", "frontend-development"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

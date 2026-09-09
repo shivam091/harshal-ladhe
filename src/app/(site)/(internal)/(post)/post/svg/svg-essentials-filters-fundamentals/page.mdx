@@ -1,0 +1,119 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("svg-essentials-filters-fundamentals");
+
+## Introduction
+
+`<filter>` applies a graphics-editor-style effect pipeline — blur, offset, color manipulation, lighting, noise — to any SVG element, referenced via `filter="url(#id)"`. The real power isn't any single effect; it's that a filter is a *chain* of small, composable primitives, each one a step simple enough to understand on its own, combining into effects none of them could produce alone.
+
+<RainbowDivider />
+
+## The `<filter>` Element and Its Region
+
+<CodeBlock language="xml">
+{`
+  <filter id="my-filter" x="-20%" y="-20%" width="140%" height="140%">
+    <!-- primitives go here -->
+  </filter>
+`}
+</CodeBlock>
+
+`x`/`y`/`width`/`height` define the **filter region** — a bounding box the effect is allowed to paint within, expressed (by default, via `filterUnits="objectBoundingBox"`) as a percentage of the filtered element's own box. Effects that spill outward — a blur, a drop shadow — need a region *larger* than 100%, or the effect gets visibly clipped at the element's original edges. This is the single most common SVG-filter bug: an effect that looks cut off almost always means the filter region needs expanding.
+
+<RainbowDivider />
+
+## The Named-Result Pipeline
+
+<FilterPipelineDiagram />
+
+Every filter chain starts from one of two implicit inputs: `SourceGraphic` (the element being filtered, as rendered) or `SourceAlpha` (just its alpha channel). Each primitive can name its own output with `result="someName"`, and any *later* primitive can pick that output back up via `in="someName"` (or `in2` for primitives taking two inputs, like `feMerge`/`feComposite`). That named hand-off — diagrammed above — is the entire mechanism that turns several individually-simple primitives into one compound effect.
+
+<RainbowDivider />
+
+## `<feGaussianBlur>`
+
+<CodeBlock language="xml">
+{`<feGaussianBlur in="SourceGraphic" stdDeviation="3" />`}
+</CodeBlock>
+
+The most common single primitive, and often used standalone for a plain blur. `stdDeviation` controls the blur radius:
+
+<InteractiveSvgPanel slug="gaussian-blur-demo" />
+
+<RainbowDivider />
+
+## `<feOffset>`
+
+<CodeBlock language="xml">
+{`<feOffset in="blurred" dx="4" dy="4" result="offsetBlur" />`}
+</CodeBlock>
+
+Shifts an input's position by `dx`/`dy`. Combined with blur, this is literally how a drop shadow is built from scratch: blur a copy of the source, offset that blurred copy, then paint it *underneath* the original.
+
+<RainbowDivider />
+
+## `<feMerge>` and `<feMergeNode>`
+
+<CodeBlock language="xml">
+{`
+  <feMerge>
+    <feMergeNode in="offsetBlur" />   <!-- painted first: behind -->
+    <feMergeNode in="SourceGraphic" /> <!-- painted last: in front -->
+  </feMerge>
+`}
+</CodeBlock>
+
+Stacks multiple inputs on top of each other in the order given — exactly what's needed to layer an offset, blurred shadow copy beneath the crisp original.
+
+<RainbowDivider />
+
+## `<feFlood>` and `<feBlend>`
+
+`<feFlood flood-color="..." flood-opacity="...">` fills the entire filter region with a solid color — useful as a base layer for colorizing a shape via compositing (the actual compositing primitives, `feComposite` and blend modes beyond `feBlend`, are covered in the next post in this series). `<feBlend mode="multiply|screen|darken|...">` blends two inputs together the same way CSS `mix-blend-mode` does — the mode values match directly.
+
+<RainbowDivider />
+
+## A Practical Drop Shadow, Built Step by Step
+
+Putting `feGaussianBlur` → `feOffset` → `feMerge` together into one real, reusable effect:
+
+<InteractiveSvgPanel slug="drop-shadow-filter-demo" />
+
+<CodeBlock language="xml">
+{`
+  <filter id="drop-shadow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blurred" />
+    <feOffset in="blurred" dx="4" dy="4" result="offsetBlur" />
+    <feMerge>
+      <feMergeNode in="offsetBlur" />
+      <feMergeNode in="SourceGraphic" />
+    </feMerge>
+  </filter>
+`}
+</CodeBlock>
+
+<Info title="Why not just filter: drop-shadow()?">
+  CSS's `drop-shadow()` filter function does exactly this, in one line, for the common case. The hand-built version earns its keep once the shadow itself needs its own color layer, its own separate opacity from the source, or needs to feed into further primitives — control CSS's shorthand doesn't expose.
+</Info>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Custom drop shadows needing more control than CSS `filter: drop-shadow()` (per-layer color, independent opacity)
+- Any effect needing more than one primitive chained together
+- Effects that must live in the SVG document itself — portable, working even if the SVG is extracted or embedded elsewhere, independent of the consuming page's own CSS
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **A clipped-looking effect almost always means the filter region is too tight.** Expand `x`/`y`/`width`/`height` past 100% before debugging anything else.
+* **SVG filters are generally more render-expensive than the equivalent CSS `filter` function** for simple single-effect cases — reach for the CSS property first when one effect is enough, and native SVG filters once the primitive-chaining flexibility is actually needed.
+* **`id` collisions apply here too** — the same caveat as gradients/patterns/markers for repeated inline SVG on one page.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+A filter is a chain, not a single effect — `SourceGraphic`/`SourceAlpha` in, a sequence of named-result primitives, a final composited output. `feGaussianBlur`, `feOffset`, and `feMerge` alone already cover a genuinely useful case (a real drop shadow); the [next post in this series](/post/svg/svg-essentials-advanced-filter-primitives) picks up from here with color manipulation, compositing, noise, and lighting.

@@ -1705,6 +1705,59 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "gaussian-blur-demo",
+    title: "Interactive Example - feGaussianBlur",
+    controls: [
+      { id: "stdDeviation", label: "stdDeviation", type: "range", min: 0, max: 8, step: 0.25, defaultValue: 2 }
+    ],
+    render: (values) => {
+      const stdDeviation = Number(values.stdDeviation);
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <defs>
+    <filter id="blur-demo-filter" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="${stdDeviation}" />
+    </filter>
+  </defs>
+
+  <!-- The filter region (x/y/width/height above) is expanded past the shape's own box — blur spills outward, and a tight region would clip it. -->
+  <rect x="20" y="20" width="60" height="60" rx="8" fill="#6366f1" filter="url(#blur-demo-filter)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "drop-shadow-filter-demo",
+    title: "Interactive Example - Hand-Built Drop Shadow",
+    controls: [
+      { id: "dx", label: "dx (offset x)", type: "range", min: -10, max: 10, step: 0.5, defaultValue: 4 },
+      { id: "dy", label: "dy (offset y)", type: "range", min: -10, max: 10, step: 0.5, defaultValue: 4 },
+      { id: "stdDeviation", label: "stdDeviation", type: "range", min: 0, max: 6, step: 0.25, defaultValue: 2 }
+    ],
+    render: (values) => {
+      const dx = Number(values.dx);
+      const dy = Number(values.dy);
+      const stdDeviation = Number(values.stdDeviation);
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <defs>
+    <filter id="shadow-demo-filter" x="-50%" y="-50%" width="200%" height="200%">
+      <!-- Chain: blur the source, offset the blurred copy, then stack it BEHIND the crisp original. -->
+      <feGaussianBlur in="SourceGraphic" stdDeviation="${stdDeviation}" result="blurred" />
+      <feOffset in="blurred" dx="${dx}" dy="${dy}" result="offsetBlur" />
+      <feMerge>
+        <feMergeNode in="offsetBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="25" y="25" width="50" height="50" rx="8" fill="#f59e0b" filter="url(#shadow-demo-filter)" />
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.
