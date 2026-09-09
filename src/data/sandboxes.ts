@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "container-style-queries",
+    title: "@container style() Playground",
+    description: "Switch a card's variant and watch its badge, color, and border all react to a single --variant custom property on the ancestor frame via @container style() — no class ever touches the card or badge themselves.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "content-visibility-render-performance",
     title: "content-visibility Playground",
     description: "800 rows in one list — toggle content-visibility: auto and force a layout read to see how much rendering work skipping off-screen rows actually saves.",

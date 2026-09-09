@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "container-style-queries",
+    title: "Reacting to an Ancestor's Custom Property with @container style()",
+    excerpt: "One custom property on a shared ancestor, and every descendant's style query reacts.",
+    description: "@container style() extends container queries from checking a container's SIZE to checking a custom property's current VALUE on it, letting deeply nested descendants react to a theme/variant token set once on a shared ancestor instead of threading a variant class through every element that cares.",
+    category: ["CSS"],
+    tags: ["css", "container-queries", "style-queries", "design-tokens", "custom-properties", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/container-style-queries/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A product card whose badge, border color, and visibility all change based on a single --variant custom property set on an ancestor, queried via @container style()."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "content-visibility-render-performance",
     title: "Skipping Off-Screen Rendering with content-visibility",
     excerpt: "One CSS property gives long lists a lightweight version of what virtualization libraries do.",

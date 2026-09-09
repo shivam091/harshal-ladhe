@@ -1,0 +1,77 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("container-style-queries");
+
+## Introduction
+
+[Container queries](/snippet/container-queries-responsive-cards) answer "how much *space* does my container have?" — but a component's styling sometimes needs to react to something else about an ancestor entirely: a theme variant, a status, a design token's current value. The traditional answer is a class on every descendant that cares (`.badge--featured`, `.border--urgent`), kept in sync by hand wherever the variant is set.
+
+**Style queries** extend the same `@container` syntax to ask a different question: not "how big is my container?" but "what's the current *value* of this custom property on my container?"
+
+<RainbowDivider />
+
+## The Core Syntax
+
+<CodeBlock language="css">
+{`
+  .card-frame {
+    container-name: card-demo;
+    container-type: normal; /* style queries don't need size containment */
+  }
+
+  @container card-demo style(--variant: featured) {
+    .badge { display: inline-block; }
+  }
+`}
+</CodeBlock>
+
+`container-type: normal` is the key difference from a size query — it registers the element as a *queryable* container without applying any layout containment, since a style query never needs to measure dimensions. The `style()` function inside `@container` then checks a custom property's resolved value on that named container, and the block only applies while it matches.
+
+<RainbowDivider />
+
+## Try It Live
+
+One custom property, `--variant`, set once on the frame around this card. Every reactive style below — the badge's visibility, its color, the card's border — comes from a `@container style()` block, not a class anywhere on the card or badge themselves.
+
+<Sandbox slug="container-style-queries" readOnly />
+
+<RainbowDivider />
+
+## Why Not Just a Class?
+
+<CodeBlock language="css">
+{`
+  /* Before: a class has to be added/removed on every element that cares about the variant */
+  .badge.badge--featured { display: inline-block; background: gold; }
+  .card.card--featured { border-color: gold; }
+
+  /* Now: one custom property change on the ANCESTOR, every descendant style query reacts */
+  .card-frame { --variant: featured; }
+`}
+</CodeBlock>
+
+The win shows up as a component tree gets deeper. A class-based variant has to be threaded onto (or duplicated across) every element that needs to react to it. A style query only needs the custom property set *once*, on a shared ancestor — every descendant's `@container style()` block picks it up on its own, no matter how deeply nested.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Theme/variant tokens (`--variant`, `--status`, `--density`) that multiple unrelated descendants need to react to
+- Design systems where a component's internals shouldn't need their own variant class threaded through
+- Replacing a chain of `.parent.variant-x .child { ... }` descendant selectors with a single custom property check
+- Any case where "this element's styling depends on an ancestor's current value" currently means a class synced by JavaScript
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Only custom properties are reliably queryable today.** The spec allows querying regular CSS properties too, but browser support for that part is still incomplete — treat style queries as "custom-property queries" in practice for now, and use a `--variant`-style token rather than trying to query something like `color` directly.
+* **The queried container needs a name (or you query the nearest one implicitly)** — `@container style(--variant: featured)` with no name checks the nearest ancestor that's a query container at all, which can accidentally match the wrong one in a deeply nested layout. Naming containers explicitly, as in the example above, avoids that ambiguity.
+* **This composes with size queries** — an element can be both a size AND style query container (`container-type: inline-size` plus a `style()` check against the same or a different container), letting a component react to space and a token simultaneously.
+* **Browser support is still emerging** (Chrome/Edge 111+ for custom-property style queries; Firefox and Safari support is partial/behind flags as of this writing) — treat this as progressive enhancement layered on top of a class-based fallback for now, not a full replacement yet.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Style queries extend `@container` from "react to my container's size" to "react to my container's custom property value" — set a token once on a shared ancestor, and let every descendant's own `@container style()` block react independently, instead of threading a variant class through every element that cares.

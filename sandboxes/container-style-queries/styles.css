@@ -1,0 +1,71 @@
+/*
+  container-type: normal registers this as a query container WITHOUT applying size containment —
+  style queries don't need it, unlike size/inline-size queries which do.
+*/
+.card-frame {
+  container-name: card-demo;
+  container-type: normal;
+  --variant: default;
+}
+
+.card {
+  position: relative;
+  padding: 18px 20px;
+  background: var(--pg-surface);
+  border: 2px solid var(--pg-border);
+  border-radius: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.card h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+}
+
+.card p code {
+  font-family: var(--pg-mono);
+  color: var(--pg-text);
+}
+
+.badge {
+  display: none;
+  position: absolute;
+  top: -10px;
+  right: 16px;
+  padding: 3px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+/* Every rule below reacts to the CONTAINER's --variant value — nothing here targets a class. */
+@container card-demo style(--variant: featured) {
+  .card {
+    border-color: #f4c400;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #f4c400;
+    color: #1a1500;
+  }
+}
+
+@container card-demo style(--variant: urgent) {
+  .card {
+    border-color: #ff6b6b;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #ff6b6b;
+    color: #fff;
+  }
+}

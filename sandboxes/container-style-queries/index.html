@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@container style() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>@container style()</h1>
+        <p>Switch the variant — every style below reacts to the ANCESTOR's custom property, not a class on itself.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Card variant</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Card variant">
+          <label class="segment">
+            <input type="radio" name="variant" value="default" checked>
+            <span>Default</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="variant" value="featured">
+            <span>Featured</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="variant" value="urgent">
+            <span>Urgent</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="card-frame" id="card-frame">
+        <article class="card">
+          <span class="badge">Featured</span>
+          <h3>Wireless Keyboard</h3>
+          <p>No class was added to this card, its badge, or its border — only <code>--variant</code> changed on the frame around it.</p>
+        </article>
+      </div>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
