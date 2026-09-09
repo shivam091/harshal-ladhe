@@ -9,6 +9,12 @@ export const goodies: Goodie[] = [
     href: "/snippets"
   },
   {
+    name: "Popover / Anchor-Positioning Builder",
+    description: "Live trigger-and-popover builder combining the real HTML popover attribute with real CSS anchor positioning — a compass-style anchor-side picker, offset, auto/manual dismiss, backdrop, and entrance-animation/fallback toggles, with an automatic static-position fallback for unsupported browsers, plus CSS/HTML/React code export.",
+    icon: "link",
+    href: "/goodies/popover-anchor-positioning-builder"
+  },
+  {
     name: "CSS Grid Template Builder",
     description: "Visual grid-template-columns/rows/areas editor — a track list with px/rem/fr/auto/minmax() sizing, a click-and-drag named-areas painter that generates a real grid-template-areas string, a live CSS Grid preview, Holy Grail/Sidebar/Dashboard presets, and CSS/Tailwind/React code export.",
     icon: "columns",
