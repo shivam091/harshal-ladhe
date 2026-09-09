@@ -4,7 +4,9 @@ export const metadata = buildPostMetadata("svg-essentials-gradients");
 
 ## Introduction
 
-CSS has its own `linear-gradient()`/`radial-gradient()` functions for `background` — a genuinely different mechanism from what this post covers. SVG gradients are **elements**, defined once in `<defs>` and referenced by id (`fill="url(#myGradient)"`), not values written inline. That indirection is the whole point: one gradient definition can be reused across many shapes, reacts to being referenced by objects of different sizes, and can even be animated the same way any other element can.
+CSS has its own `linear-gradient()`/`radial-gradient()` functions for `background` — a genuinely different mechanism from what this post covers. SVG gradients are **elements**, defined once in [`<defs>`](/post/svg/svg-essentials-g-defs-symbol-and-use) and referenced by id (`fill="url(#myGradient)"`), not values written inline. That indirection is the whole point: one gradient definition can be reused across many shapes, reacts to being referenced by objects of different sizes, and can even be animated the same way any other element can.
+
+The same `<defs>`-and-reference pattern shows up again for [patterns](/post/svg/svg-essentials-pattern-element) — the sibling fill mechanism for tiling instead of blending.
 
 <RainbowDivider />
 

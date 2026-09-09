@@ -163,11 +163,11 @@ That circle is completely invisible until something references `#dot` — most c
   There's no special "definition mode" attribute involved. What makes an element part of a `defs` block is simply that it's a child of `defs` — that placement is what tells the renderer "don't paint this in place, only when something else points at it." The same `circle`, `path`, or `linearGradient` markup renders normally the moment it's a direct child of `svg` or `g` instead.
 </Info>
 
-`defs` is the natural home for anything meant to be referenced rather than drawn directly:
+`defs` is the natural home for anything meant to be referenced rather than drawn directly — most of the rest of this series lives here:
 
-* Gradients and patterns, referenced via `fill="url(#id)"` or `stroke="url(#id)"`.
-* Filters, referenced via `filter="url(#id)"`.
-* Clip paths and masks, referenced via `clip-path="url(#id)"` and `mask="url(#id)"`.
+* [Gradients](/post/svg/svg-essentials-gradients) and [patterns](/post/svg/svg-essentials-pattern-element), referenced via `fill="url(#id)"` or `stroke="url(#id)"`.
+* [Filters](/post/svg/svg-essentials-filters-fundamentals), referenced via `filter="url(#id)"`.
+* [Clip paths and masks](/post/svg/svg-essentials-clippath-and-mask), referenced via `clip-path="url(#id)"` and `mask="url(#id)"`.
 * Reusable shapes and `symbol` templates, referenced by `use href="#id"`.
 
 <Warning title="An id alone doesn't require defs">
