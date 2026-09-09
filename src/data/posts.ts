@@ -463,6 +463,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "modern-css-selectors-has-is-where-and-nesting",
+    title: "Modern CSS Selectors: :has(), :is(), :where(), and Nesting",
+    excerpt: ":has() turns CSS into a selector that can finally look forward.",
+    description: "A complete guide to modern CSS selectors — :is() and :where() for compact, low- or zero-specificity selector lists, :has() as CSS's first real parent/relational selector, native CSS nesting with &, and the advanced selectors — attribute matching, :not() selector lists, and :nth-child(An+B of S) — that round out the toolkit.",
+    category: ["CSS"],
+    tags: ["css", "selectors", "has-selector", "is-selector", "where-selector", "css-nesting", "specificity", "frontend"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

@@ -1,0 +1,381 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("modern-css-selectors-has-is-where-and-nesting");
+
+For most of CSS's history, selectors could only look one direction: down and forward. You could target a descendant, a following sibling, a pseudo-class on the element itself — but never "select this element because of what's inside it." Writing a selector list meant repeating a common tail across every branch, and one unsupported or mistyped entry in that list could silently void the entire rule. Nesting selectors inside one another meant reaching for a preprocessor, because the browser itself had no concept of it.
+
+That's no longer true. `:is()` and `:where()` collapse repetitive selector lists into one compact, forgiving expression. `:has()` gives CSS its first real relational selector — the "parent selector" developers have wanted for a decade. And native nesting lets you write component-scoped CSS without Sass, a build step, or a text-expansion mental model standing between you and the cascade.
+
+This post walks through all four, plus the smaller Selectors Level 4 additions that round out the toolkit: richer attribute matching, a `:not()` that finally accepts a full selector list, and `:nth-child(An+B of S)` for counting only the siblings that actually matter.
+
+The throughline across all of it is the same: these selectors make CSS more expressive without making it more verbose, and in `:has()`'s case, more capable of things that used to require JavaScript entirely.
+
+<RainbowDivider />
+
+## `:is()`: A Forgiving List Selector
+
+`:is()` takes a selector list and matches any element that matches at least one entry in it. The obvious use is collapsing a repetitive selector list into one line:
+
+<CodeBlock language="css">
+{`
+  /* Without :is() — the "h2" tail is repeated for every branch */
+  header h2,
+  main h2,
+  footer h2 {
+    margin-block-start: 0;
+  }
+
+  /* With :is() — one selector, same three targets */
+  :is(header, main, footer) h2 {
+    margin-block-start: 0;
+  }
+`}
+</CodeBlock>
+
+That's a readability win, but the specificity behavior underneath it is the detail worth actually understanding. `:is()` does **not** contribute zero specificity — it takes on the specificity of its *most specific* argument in the list. `:is(#sidebar, .card, footer)` has the specificity of `#sidebar` (an ID), even though `.card` and `footer` are also valid matches. That's easy to miss if you assume a pseudo-class always behaves like `:hover` (which adds a class's worth of specificity) — `:is()` doesn't add a fixed amount, it borrows the highest amount already present inside it.
+
+<Info title="Specificity is borrowed, not fixed">
+  `:is(#a, .b)` has ID-level specificity, but `:is(.a, .b)` has only class-level specificity. Read the arguments before assuming what a given `:is()` selector will out-specificity in the cascade.
+</Info>
+
+The second, less obvious property is **forgiving selector list** parsing. In a plain, top-level comma-separated selector list, CSS parsing is all-or-nothing: if the browser doesn't recognize (or doesn't support) even one selector in the list, the entire rule is invalid and gets dropped — every selector in it, not just the bad one.
+
+<CodeBlock language="css">
+{`
+  /* If :-any-unsupported-pseudo isn't recognized, this ENTIRE rule is
+     dropped by the parser — h2 and h3 get NOTHING, even though they're
+     both perfectly valid on their own */
+  h2,
+  :-any-unsupported-pseudo,
+  h3 {
+    color: rebeccapurple;
+  }
+`}
+</CodeBlock>
+
+Put the same three selectors inside `:is()`, and the story changes completely — an invalid or unsupported argument is simply ignored, and every other argument in the list still matches:
+
+<CodeBlock language="css">
+{`
+  /* Forgiving: the unsupported argument is skipped, h2 and h3 still match */
+  :is(h2, :-any-unsupported-pseudo, h3) {
+    color: rebeccapurple;
+  }
+`}
+</CodeBlock>
+
+That makes `:is()` (and `:where()`, below) a genuinely useful defensive pattern when you're mixing well-established selectors with a newer or vendor-prefixed one you're not certain every target browser supports.
+
+<RainbowDivider />
+
+## `:where()`: Same List, Zero Specificity
+
+`:where()` is mechanically identical to `:is()` — same forgiving-list matching, same "match any argument" semantics — with exactly one difference: its specificity is always **zero**, no matter what's inside it. `:where(#a, .b, footer)` contributes nothing to specificity at all, even though it contains an ID selector that would normally be the heaviest weight class in CSS.
+
+That sounds like a downgrade until you see what it enables: styles that are trivially overridable by design. A CSS reset, or a design system's own base styles, wrapped in `:where()` can be beaten by a single plain class in consumer code — no `!important`, no selector escalation, no specificity arms race.
+
+<CodeBlock language="css">
+{`
+  /* Without :where() — this reset selector has real specificity (0,2,1) */
+  html body h1, html body h2, html body h3 {
+    margin: 0;
+    font-weight: 500;
+  }
+
+  /* A consumer's plain class LOSES to the rule above — 0,2,1 beats 0,1,0 */
+  .page-title {
+    font-weight: 700; /* doesn't win */
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* With :where() — the whole reset selector has specificity (0,0,0) */
+  :where(html body h1, html body h2, html body h3) {
+    margin: 0;
+    font-weight: 500;
+  }
+
+  /* Now a single plain class overrides it cleanly — 0,1,0 beats 0,0,0 */
+  .page-title {
+    font-weight: 700; /* wins */
+  }
+`}
+</CodeBlock>
+
+This is the pattern most modern CSS resets (including the ones shipped with popular component libraries) actually use today: wrap the reset in `:where()` so it never fights the app's own styles for priority.
+
+<Success title="Pairs well with custom properties">
+  If you're building a themeable component library, `:where()` for structural base styles and CSS custom properties for the themeable values solve two different halves of the same problem — see [CSS Custom Properties: Beyond Simple Variables](/post/css/css-custom-properties-beyond-variables) for the cascade and inheritance rules that make custom-property-driven theming work in the first place.
+</Success>
+
+<RainbowDivider />
+
+## `:has()`: CSS's First Relational Selector
+
+<Quote>
+  `:has()` is the selector CSS developers asked for the longest and expected the least — a real way to style a parent based on what's inside it, no JavaScript required.
+</Quote>
+
+Every selector before `:has()` matched based on an element's own state or its ancestors — never its descendants or siblings. `:has()` breaks that rule: it matches an element if the selector(s) inside it would match *relative to that element*. By default, the match is a descendant relationship, but you can make it explicit with a combinator.
+
+**Form validation.** Style a submit button based on whether the form it belongs to currently contains an invalid field — no JavaScript event listener needed:
+
+<CodeBlock language="css">
+{`
+  form:has(:invalid) button[type="submit"] {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+`}
+</CodeBlock>
+
+**Quantity queries.** Style a container differently once it crosses a child-count threshold — something that used to be flatly impossible in CSS:
+
+<CodeBlock language="css">
+{`
+  /* Once the gallery has 6+ items, switch to a denser grid */
+  .gallery:has(> :nth-child(6)) {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+  }
+`}
+</CodeBlock>
+
+**Pure-CSS empty states.** Combine `:has()` with `:not()` to detect "this container has zero matching children" and show a fallback message:
+
+<CodeBlock language="css">
+{`
+  .list:not(:has(> li)) {
+    display: grid;
+    place-items: center;
+  }
+
+  .list:not(:has(> li))::after {
+    content: "No items yet.";
+    color: var(--color-muted);
+  }
+`}
+</CodeBlock>
+
+**Sibling awareness.** `:has()` isn't limited to descendants — combined with `+` or `~`, it looks at siblings too, which is otherwise something CSS has never been able to express in this direction:
+
+<CodeBlock language="css">
+{`
+  /* A card that has another card right after it gets a bottom margin;
+     the last card in a run doesn't, because there's nothing after it */
+  .card:has(+ .card) {
+    margin-block-end: 1rem;
+  }
+`}
+</CodeBlock>
+
+The combinator inside `:has()` changes what relationship is being tested:
+
+| Selector | Matches the anchor element when it... |
+| --- | --- |
+| `:has(x)` | has `x` as a descendant, at any depth |
+| `:has(> x)` | has `x` as a direct child |
+| `:has(+ x)` | is immediately followed by a sibling matching `x` |
+| `:has(~ x)` | is followed by any later sibling matching `x` |
+
+<Warning title="Keep :has() targeted">
+  `:has()` can be genuinely expensive if used carelessly. To resolve it, the browser has to evaluate a relational subtree (or sibling set) for every candidate element that might match — unlike a normal selector, which only ever looks at the element and its ancestors. Modern engines have real invalidation-tracking optimizations to limit how much re-evaluation a DOM change triggers, but an overly broad selector like `body:has(.modal-open)` still asks the engine to watch far more of the tree than `.app-shell:has(.modal-open)` would. Anchor `:has()` selectors as narrowly as the actual relationship allows.
+</Warning>
+
+<RainbowDivider />
+
+## Native CSS Nesting
+
+CSS can now nest rules inside one another directly, without a preprocessor. The explicit way to reference the parent selector is `&`:
+
+<CodeBlock language="css">
+{`
+  .card {
+    padding: 1rem;
+    border-radius: 8px;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
+    }
+
+    &.active {
+      border-color: var(--color-accent);
+    }
+  }
+`}
+</CodeBlock>
+
+`&.active` here means "this same element, with the additional class `active`" — a compound selector on the parent. That's different from what happens if you drop the `&` and nest `.active` on its own: under today's relaxed nesting syntax, a nested rule can start directly with a plain compound selector and it's read as a **descendant**, not a compound, of the parent.
+
+<CodeBlock language="css">
+{`
+  .card {
+    /* Relaxed nesting — no & needed, reads as ".card h2" (a descendant) */
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    /* & is required here — without it, ".active" alone would mean
+       ".card .active" (a descendant), not ".card.active" (the same element) */
+    &.active {
+      border-color: var(--color-accent);
+    }
+  }
+`}
+</CodeBlock>
+
+<Warning title="& changes the meaning, it isn't just decoration">
+  `.card { .active { } }` and `.card { &.active { } }` compile to two different selectors — `.card .active` (descendant) versus `.card.active` (compound). This is the single most common nesting mistake for anyone coming from Sass, where `&` is more of a textual convenience than a semantic fork in the selector's meaning.
+</Warning>
+
+You can also nest at-rules like `@media` and `@supports` directly inside a rule, instead of wrapping the entire rule from outside:
+
+<CodeBlock language="css">
+{`
+  .card {
+    padding: 1rem;
+
+    @media (min-width: 640px) {
+      padding: 2rem;
+    }
+
+    @supports (aspect-ratio: 1) {
+      aspect-ratio: 4 / 3;
+    }
+  }
+`}
+</CodeBlock>
+
+If you're coming from Sass, the ergonomics will feel almost identical — but the underlying mechanism is not the same. Sass nesting is a compile-time text expansion: the preprocessor flattens nested rules into plain selectors before the browser ever sees them. Native CSS nesting is parsed and evaluated by the browser itself, which means it plays correctly with things a build-time expansion can't reason about — cascade layers, `@property`-registered custom properties, and stylesheets that are generated or mutated at runtime (via the CSSOM) rather than authored as static text.
+
+<RainbowDivider />
+
+## Combining Nesting with `:is()`/`:where()`
+
+Nesting and the forgiving-list selectors solve different problems, and they combine cleanly: nesting keeps the rule's structure tied to the component, while `:is()`/`:where()` keep a nested selector list compact and its specificity flat.
+
+<CodeBlock language="css">
+{`
+  .toolbar {
+    display: flex;
+    gap: 0.5rem;
+
+    /* Compact list instead of repeating ".toolbar button, .toolbar [role=button]" */
+    :is(button, [role="button"]) {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+    }
+
+    /* Zero-specificity variant styles, easy for a consumer to override */
+    &:where(.compact) {
+      gap: 0.25rem;
+    }
+  }
+`}
+</CodeBlock>
+
+The same combo shows up naturally with grid item selectors too — see [Mastering CSS Grid](/post/css/mastering-css-grid) if you're targeting a mix of grid item types and want to avoid repeating the parent selector for each one.
+
+<RainbowDivider />
+
+## Advanced Selectors Roundup
+
+A handful of smaller Selectors Level 4 additions round out the modern toolkit — none as headline-grabbing as `:has()`, but each solves a real, recurring problem.
+
+### Attribute Selectors
+
+Attribute selectors go well beyond "has this attribute" or "equals this value" — they can match substrings, whitespace-separated tokens, and hyphenated language-style values:
+
+| Selector | Matches when the attribute... |
+| --- | --- |
+| `[attr]` | is present, regardless of value |
+| `[attr=val]` | equals `val` exactly |
+| `[attr~=val]` | contains `val` as one whitespace-separated word |
+| `[attr\|=val]` | equals `val` or starts with `val-` (hyphenated) |
+| `[attr^=val]` | starts with `val` |
+| `[attr$=val]` | ends with `val` |
+| `[attr*=val]` | contains `val` anywhere |
+
+Add an `i` flag for case-insensitive matching, or `s` for explicitly case-sensitive matching (the default for most HTML attributes is already case-sensitive, so `s` mostly matters for documenting intent):
+
+<CodeBlock language="css">
+{`
+  /* Matches href="report.PDF", href="Report.pdf", etc. */
+  a[href$=".pdf" i] {
+    padding-inline-end: 1.5em;
+    background: url("pdf-icon.svg") no-repeat right center;
+  }
+`}
+</CodeBlock>
+
+### `:not()` With a Full Selector List
+
+`:not()` used to accept only a single simple selector. Selectors Level 4 upgraded it to accept a full comma-separated selector list:
+
+<CodeBlock language="css">
+{`
+  /* Old Level 3 :not() would have required three separate chained :not()s */
+  .card:not(.a, .b, [data-archived]) {
+    opacity: 1;
+  }
+`}
+</CodeBlock>
+
+### `:nth-child(An+B of S)`
+
+The standard `:nth-child(An+B)` formula counts *every* sibling. The `of S` syntax restricts that counting to only the siblings that also match `S` — useful when some siblings are hidden or otherwise excluded from the pattern you actually want:
+
+<CodeBlock language="css">
+{`
+  /* Style every 2nd VISIBLE item, ignoring [hidden] items entirely
+     when counting position */
+  li:nth-child(2n of :not([hidden])) {
+    background: var(--color-surface-alt);
+  }
+`}
+</CodeBlock>
+
+Without `of S`, a hidden item would still occupy a slot in the counting sequence and throw off which visible items land on even or odd positions.
+
+### A Few More Worth Knowing
+
+- **`:only-child`** — matches an element that is the sole child of its parent (no siblings at all).
+- **`:empty`** — matches an element with no children and no text content, not even whitespace.
+- **`:focus-within`** — matches an element if it or *any descendant* currently has focus, useful for highlighting an entire form field group when its input is focused.
+- **`:focus-visible`** — matches only when focus should be visibly indicated (keyboard navigation), not on every mouse click — the mechanism behind removing focus rings for mouse users without breaking keyboard accessibility.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Reach for `:is()` any time you'd otherwise repeat a common selector tail across three or more comma-separated branches.
+- Reach for `:where()` specifically in reset stylesheets, design-system base styles, or any CSS you expect consumers to need to override without a specificity fight.
+- Reach for `:has()` for parent-aware styling that used to require a JavaScript class toggle: form validation state, quantity-based layout changes, empty states, and sibling-aware spacing.
+- Adopt native nesting for component-scoped stylesheets where you want Sass-like structure without a build step, especially when the component also needs cascade layers or `@property`.
+- Use `:not()` selector lists and `:nth-child(An+B of S)` when a plain `:nth-child()` or chained `:not()` would need to account for elements you actually want to skip over.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **`:is()` specificity is borrowed, not zero.** Don't assume wrapping a selector in `:is()` neutralizes its specificity — only `:where()` does that. Mixing the two up is an easy way to introduce a cascade bug that only shows up once a consumer's override stops working.
+- **`:has()` invalidation cost is real but managed.** Browsers track dependencies to avoid re-evaluating the whole document on every DOM mutation, but a broadly-anchored `:has()` (like one rooted at `body` or `html`) still asks the engine to watch far more of the tree than a narrowly-anchored one. Prefer the smallest sensible anchor.
+- **`&` changes selector meaning in nesting, not just style.** `.card { .active {} }` (descendant) and `.card { &.active {} }` (compound) are genuinely different selectors — this is the most common nesting bug for anyone porting Sass mental models over.
+- **Forgiving selector lists only apply inside `:is()`/`:where()`/`:has()`.** A plain top-level selector list is still all-or-nothing — one unsupported selector in a bare comma list drops the entire rule, exactly as it always has.
+- **Native nesting needs current-generation browser support.** All major evergreen browsers support it today, but if you still ship to noticeably older browser versions, verify current support before removing a preprocessor-based build step outright.
+- **`:nth-child(of S)` browser support lags the base `:nth-child()` syntax.** Verify support if you're targeting older browser versions — the fallback failure mode is that the rule simply doesn't match, not that it errors.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Together, these selectors close some of the oldest, most-requested gaps in CSS: a compact way to write selector lists, a way to write them with zero specificity, a way to select based on what's *inside* or *after* an element instead of only what's above it, and a native way to nest rules without a build step. None of them require a framework or a preprocessor — they're just CSS, shipping in browsers today.
+
+- **`:is()`** collapses repetitive selector lists into one compact selector, but keep in mind it takes on the specificity of its most specific argument, not zero.
+- **`:where()`** is mechanically identical to `:is()` but always contributes zero specificity — the tool of choice for resets and overridable base styles.
+- **`:has()`** is CSS's first real relational selector, matching a parent or earlier sibling based on what it contains or what follows it — powerful, but worth anchoring narrowly for performance.
+- **Native CSS nesting** brings Sass-like ergonomics natively, with `&` required whenever a nested selector needs to compound with the parent rather than descend from it, plus the ability to nest `@media`/`@supports` directly inside a rule.
+- **Nesting combined with `:is()`/`:where()`** lets a component's nested rules stay both structurally scoped and specificity-flat at the same time.
+- **The advanced selectors roundup** — richer attribute matching, a selector-list-capable `:not()`, and `:nth-child(An+B of S)` — fills in the smaller gaps that make everyday selector-writing less awkward.
