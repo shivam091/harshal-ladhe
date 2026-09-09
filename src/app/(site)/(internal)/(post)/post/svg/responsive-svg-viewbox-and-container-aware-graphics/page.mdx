@@ -1,0 +1,193 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("responsive-svg-viewbox-and-container-aware-graphics");
+
+"Responsive SVG" gets talked about as if it were a single property the format either has or doesn't — vectors scale, therefore SVG is responsive, end of story. That's not really true, or at least it's not the useful version of true. An SVG dropped into a page with no other consideration will scale in the sense that it won't pixelate, but it can still cause layout shift, stretch its content into the wrong aspect ratio, thicken its own strokes as it grows, and render identically cramped at every viewport from a phone to a 4K monitor.
+
+Actual responsiveness is a handful of separate, learnable mechanisms, each solving one specific piece of that problem. `viewBox` and the `width`/`height` attributes are two independent numbers, not one; CSS `aspect-ratio` reserves layout space that dropped `width`/`height` attributes used to reserve; `vector-effect` decides whether a stroke scales with everything else or stays pinned to a constant pixel width; and container queries let an SVG's *content* — not just its outer box — adapt to the space it's actually been given, without a resize listener anywhere in sight.
+
+This post works through each of those mechanisms in turn: the intrinsic-size/`viewBox` split, using `aspect-ratio` to avoid layout shift, the real differences between inlining an SVG and referencing one via `<img>` or `background-image`, non-scaling strokes, container-query-driven SVG content, and art-directing entirely different SVG files at different sizes.
+
+<RainbowDivider />
+
+## Intrinsic Size vs. `viewBox`: Two Separate Numbers
+
+An `<svg>` element's `width` and `height` attributes set its *intrinsic* size — the size it renders at with no CSS involved whatsoever, and (critically, for an `<img>`-referenced SVG) the size the browser reserves in the layout *before the file has even loaded*, exactly the way a raster image's own dimensions do. `viewBox`, by contrast, defines the internal coordinate system the shapes inside are drawn against, and independently implies an aspect ratio from its width-to-height ratio. These two things are unrelated unless you make them related. [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes) covers `viewBox` and the coordinate system in full depth; the point that matters here is narrower: nothing forces the `width`/`height` attributes and the `viewBox` aspect ratio to agree, and when they don't, the browser's default `preserveAspectRatio` behavior (`xMidYMid meet`) reconciles them by scaling and letterboxing rather than stretching.
+
+The responsive move is to stop using the `width`/`height` *attributes* for sizing at all. Size the SVG with CSS instead — `width: 100%` on the element — and let the `viewBox`'s aspect ratio drive the rendered height automatically, the same way it would for any replaced element with `height: auto`:
+
+<CodeBlock language="xml">
+{`<svg viewBox="0 0 400 300" width="100%" height="auto" role="img" aria-label="Quarterly trend">
+  <!-- shapes drawn against the 400x300 coordinate system -->
+</svg>`}
+</CodeBlock>
+
+The `width="100%" height="auto"` attributes here are really just inline CSS-equivalent shorthand — in practice you'd usually put the same rule in an actual stylesheet. Either way, the browser stretches the SVG's viewport to fill its container width, then uses the `viewBox`'s 4:3 ratio to compute a proportional height. Nothing about the internal drawing changes; only the size of the window looking at it does.
+
+It's worth being precise about which attribute is doing which job, since the two get conflated constantly:
+
+| Attribute | Governs | Responsive role |
+|---|---|---|
+| `width` / `height` (attributes) | Intrinsic size; layout reservation for `<img>`-referenced SVG before load | Usually dropped or set to `100%`/`auto` |
+| `viewBox` | Internal coordinate system; implied aspect ratio | Kept fixed — this is what "shape" the content is drawn in |
+| CSS `width`/`height` | Actual rendered size in the page | Set to `100%`, a fluid value, or left to a container |
+
+<RainbowDivider />
+
+## Reserving Layout Space Without Fixed Pixels: `aspect-ratio`
+
+Dropping the `width`/`height` attributes in favor of CSS-driven sizing solves the scaling problem, but it creates a smaller one: the browser no longer has an intrinsic size to reserve space with before the SVG paints. That's the identical layout-shift risk a raster `<img>` has when it's missing its own `width`/`height` attributes — the surrounding content jumps once the image (or SVG) actually loads and claims its real footprint.
+
+CSS `aspect-ratio`, set to the ratio implied by the `viewBox`, closes that gap. A `viewBox="0 0 400 300"` implies a 4:3 ratio, so:
+
+<CodeBlock language="css">
+{`svg.chart {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  height: auto;
+}`}
+</CodeBlock>
+
+`width: 100%` makes the element fill its container, `aspect-ratio: 4 / 3` reserves the correctly-shaped box immediately — before the SVG has rendered anything at all — and `height: auto` lets that reserved ratio actually determine the computed height rather than fighting it with an explicit value. The three declarations aren't redundant; each is doing a distinct job.
+
+<Warning title="aspect-ratio has to match the viewBox by hand">
+There's no CSS mechanism that reads a `viewBox` and derives `aspect-ratio` automatically — you're keeping two numbers in sync manually. Change the `viewBox` dimensions during a redesign and forget to update the matching `aspect-ratio` rule, and you get exactly the layout-shift-then-letterbox problem `aspect-ratio` was there to prevent in the first place.
+</Warning>
+
+<RainbowDivider />
+
+## Inline `<svg>` vs. `<img src="...svg">` Sizing
+
+How an SVG gets delivered to the page changes what CSS can actually do to it, independent of any of the sizing mechanics above. There are three common delivery paths, and they're not interchangeable:
+
+| Delivery method | Sizing mechanism | Internal styling from page CSS |
+|---|---|---|
+| Inline `<svg>` in the HTML | CSS on the element itself — `width`, `aspect-ratio`, etc. | Full access — `fill`, `stroke`, `currentColor`, hover states on internal paint properties |
+| `<img src="file.svg">` | Ordinary `<img>` sizing rules; `object-fit` works | None — opaque replaced element, exactly like a raster image |
+| CSS `background-image: url(file.svg)` | `background-size` | None — same opacity as the `<img>` case |
+
+The inline case is the only one where the page's stylesheet can reach *inside* the SVG — set `fill: currentColor` on a path, add a `:hover` rule that recolors a specific internal shape, and so on. The moment an SVG is referenced as an `<img>` source or a `background-image` URL, the browser treats it as a completely opaque replaced element. It'll scale, crop with `object-fit`/`background-size`, and respect `alt` text — everything an ordinary raster image does — but the page has zero visibility into, or control over, anything happening inside the file. Whatever colors and stroke widths are baked into the SVG's own markup are what render, full stop.
+
+<Quote>
+An SVG referenced by URL is not "a vector image with extra styling hooks" — it's an opaque box, full stop, the instant it leaves the HTML document it was authored alongside.
+</Quote>
+
+That opacity isn't a bug to work around; it's the same sandboxing an `<iframe>` gets, and for a similar reason — the browser isn't going to let arbitrary external markup reach into the page's cascade uninvited. If theming needs to reach in, the SVG has to be brought into the document instead of merely referenced by it.
+
+<Info title="Pick the delivery method for the styling you actually need">
+If an icon needs to change color on hover, or inherit `currentColor` from surrounding text, it has to be inlined. If it's decorative or its colors are genuinely fixed, `<img>` or `background-image` is simpler, cacheable independently of the HTML document, and keeps the DOM smaller.
+</Info>
+
+<RainbowDivider />
+
+## Strokes That Shouldn't Scale: `vector-effect="non-scaling-stroke"`
+
+By default, scaling an entire SVG — via a responsive CSS width, or a `transform: scale()` — scales `stroke-width` right along with the geometry, because `stroke-width` is just another user-unit value measured on the same `viewBox` grid as everything else. Double the rendered size of the SVG and a `stroke-width="2"` outline gets visually twice as thick, exactly as if it were a shape dimension, because as far as the coordinate system is concerned, it is one.
+
+That's often exactly right — a diagram's strokes usually should get proportionally bolder as the whole thing scales up. But sometimes it's actively wrong: an icon's crisp 1px outline arguably shouldn't get visibly thicker or thinner just because that same icon renders larger in one part of the page than another, or gets scaled down into a favicon-sized context elsewhere.
+
+`vector-effect="non-scaling-stroke"`, set on an individual shape, keeps that shape's stroke width constant in *screen pixels* regardless of the SVG's rendered scale — the fill geometry continues to scale normally, only the stroke is exempted:
+
+<CodeBlock language="xml">
+{`<svg viewBox="0 0 24 24" width="100%" style="max-width: 400px">
+  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor"
+          stroke-width="1.5" vector-effect="non-scaling-stroke" />
+</svg>`}
+</CodeBlock>
+
+That circle's stroke renders at a constant 1.5px on screen whether the SVG is displayed at 24px or blown up to fill a 400px-wide container, while the circle's radius still scales normally with the rest of the drawing.
+
+<Warning title="It's a per-shape attribute, not a per-document setting">
+There's no document-level switch that makes every stroke in an SVG non-scaling at once — `vector-effect="non-scaling-stroke"` has to be applied to each shape that needs it individually. Forgetting it on one path in an otherwise-consistent icon set is a common, easy-to-miss inconsistency.
+</Warning>
+
+<RainbowDivider />
+
+## Container-Aware Graphics Without JavaScript
+
+### The Wrapper-Div Pattern
+
+SVG has no container-query units of its own — there's no `cqw` equivalent inside a `viewBox`. The practical workaround sidesteps that entirely by container-querying the *surrounding* HTML element instead, and having the SVG's own styles read the result through a custom property:
+
+<CodeBlock language="css">
+{`.icon-wrapper {
+  container-type: inline-size;
+}
+
+@container (min-width: 240px) {
+  .icon-wrapper {
+    --icon-scale: 1.4;
+  }
+}
+
+.icon-wrapper svg {
+  --icon-scale: 1;
+  transform: scale(var(--icon-scale));
+  transform-origin: center;
+}`}
+</CodeBlock>
+
+`container-type: inline-size` on the wrapper `<div>` turns it into a query container; the matching `@container` rule sets `--icon-scale` once the wrapper crosses 240px wide; and the SVG itself just reads that custom property in a `transform: scale()` (a `stroke-width: calc()` expression works the same way for a value that should scale rather than just the visual size). None of this requires JavaScript or a `ResizeObserver` — it's ordinary CSS container queries, aimed at a wrapper element instead of at the SVG directly, because the SVG isn't itself a valid query container target for this purpose. [CSS Custom Properties: Beyond Simple Variables](/post/css/css-custom-properties-beyond-variables) covers the cascade and inheritance mechanics that make a pattern like this work at all — worth a read if the "why does `--icon-scale: 1` on the SVG matter" part isn't obvious.
+
+### Text Inside the SVG Scales for Free
+
+One thing this pattern *doesn't* need to handle separately: text and labels inside a responsively-scaled SVG already scale automatically, because a unitless `font-size` in SVG is a user unit exactly like any shape's `width` or `r` — it lives on the same `viewBox` grid and scales right along with the geometry when the SVG itself scales. There's no separate container-query mechanism needed for in-SVG text specifically; it's just riding the same coordinate system every other shape does. [SVG Essentials: Text, tspan, and textPath](/post/svg/svg-essentials-mastering-text) covers this under its "Sizing and Scaling" section in more depth.
+
+<Success title="One less thing to build">
+If the only responsive requirement is "the label inside this icon should look proportionally correct at every size," `viewBox`-driven scaling already does that for free — reach for the container-query pattern above only when something needs to scale by a *different* factor than the rest of the drawing, or needs to change shape/visibility rather than just size.
+</Success>
+
+<RainbowDivider />
+
+## Art-Directing Different SVGs at Different Sizes
+
+Sometimes the right fix isn't scaling one file, but swapping in a genuinely different one — a simplified two-color icon at small sizes, a more detailed illustration once there's room for it. For the `<img>`-referenced case, that's ordinary `<picture>`-based art direction, identical to how it works for raster images:
+
+<CodeBlock language="html">
+{`<picture>
+  <source srcset="icon-detailed.svg" media="(min-width: 768px)" />
+  <source srcset="icon-simple.svg" media="(max-width: 767px)" />
+  <img src="icon-simple.svg" alt="Weather: partly cloudy" width="64" height="64" />
+</picture>`}
+</CodeBlock>
+
+The browser picks the first matching `<source>` and swaps the whole file, not just its size — an entirely different set of shapes, path count, and level of detail can live behind each `media` condition.
+
+This only applies to the opaque, `<img>`-referenced case. Inline SVG has no native equivalent to `<picture>` — there's no browser mechanism for "swap this inline markup for different inline markup past a breakpoint." Achieving the same effect with inline SVG means toggling which markup is actually present in the DOM by some other means: a CSS `display: none` pair gated by a media query, or a template/framework condition that renders one `<svg>` block or the other. It works, but it's a manual DOM-level swap you're responsible for, not something the platform does on your behalf the way `<picture>` does.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A logo, icon, or illustration that needs to fill a responsive container width without a fixed pixel size baked into the markup
+- A chart or diagram SVG referenced via `<img>` where layout shift on load actually matters — a hero graphic, an above-the-fold illustration
+- An icon set where hover-state recoloring or `currentColor` theming is required, which forces the inline-`<svg>` delivery path
+- A UI icon whose outline should read as a constant, crisp stroke weight regardless of where it's scaled to on the page
+- A component (a status badge, a data-viz glyph) that needs to visually adapt based on the space its container actually has, independent of the viewport size
+- An icon or illustration that should genuinely change in complexity, not just scale, between compact and spacious layouts
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **`preserveAspectRatio`'s `meet`/`slice` behavior underlies everything in this post.** Any time a `viewBox`'s aspect ratio doesn't match the box CSS is forcing it into, the result letterboxes (`meet`, the default) or crops (`slice`) rather than stretching the way a naively resized raster image might. [SVG Essentials: image and foreignObject](/post/svg/svg-essentials-image-and-foreignobject) covers `preserveAspectRatio` in depth — worth revisiting whenever a responsively-sized SVG looks unexpectedly cropped or padded.
+- **Dropping `width`/`height` entirely on an `<img>`-referenced SVG can render it at a browser-default fallback size** — often 300×150 — until CSS sizing rules actually apply, which can cause a visible flash or a broken-looking layout on a slow connection. Always pair "no intrinsic size" with an explicit CSS size or `aspect-ratio` rule; never leave an `<img>`-referenced SVG fully unconstrained.
+- **`aspect-ratio` and `viewBox` are two numbers you maintain by hand, not one derived from the other.** A redesign that changes the `viewBox` without updating the matching CSS `aspect-ratio` reintroduces the exact layout-shift-then-letterbox problem the CSS was added to prevent.
+- **`vector-effect="non-scaling-stroke"` is per-shape, and easy to apply inconsistently.** A multi-path icon where some strokes have it and others don't will visibly mismatch in weight the moment the icon is scaled away from its authored size.
+- **Container queries target the wrapper, not the SVG.** An SVG element itself generally isn't the right target for `container-type` in this pattern — query the surrounding block-level wrapper and pipe the result in via a custom property instead of expecting the SVG to act as its own query container.
+- **`<picture>`-based art direction only exists for the opaque, `<img>`-referenced path.** There's no equivalent native swap for inline SVG; budget for a manual DOM/CSS toggle if inline styling access and art-directed swapping are both required at once.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+None of this requires a JavaScript resize listener, and none of it is "SVG just scales" — it's a specific, small set of mechanisms, each solving one distinct failure mode of naively dropping an SVG into a responsive layout. Learn the six above and "make this SVG responsive" stops being a vague aspiration and becomes a checklist.
+
+- **Intrinsic size vs. `viewBox`** — stop sizing with `width`/`height` attributes; size with CSS instead and let `viewBox`'s aspect ratio drive the rendered height.
+- **`aspect-ratio`** — reserve the correctly-shaped layout box up front, replacing the space that dropped intrinsic dimensions used to reserve.
+- **Inline vs. `<img>`/`background-image`** — only inline SVG gives page CSS access to internal paint properties; the other two are opaque, image-like replaced elements.
+- **`vector-effect="non-scaling-stroke"`** — pin an individual shape's stroke width to a constant screen size while its fill geometry keeps scaling normally.
+- **Container-aware graphics** — container-query the wrapping element, pipe the result into the SVG through a CSS custom property; in-SVG text already scales for free without any of this.
+- **Art-directing different files** — `<picture>`/`<source>` swaps entire SVG files by breakpoint for the `<img>`-referenced case; inline SVG needs a manual DOM toggle instead.
+
+Once the SVG itself scales cleanly, file size is usually the next thing worth auditing — see [Optimizing SVG: SVGO, Path Simplification, and File-Size Tradeoffs](/post/svg/optimizing-svg-svgo-and-file-size) for trimming the markup these techniques are scaling in the first place.

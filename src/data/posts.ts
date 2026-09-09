@@ -529,6 +529,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "responsive-svg-viewbox-and-container-aware-graphics",
+    title: "Responsive SVG: viewBox, Intrinsic Sizing, and Container-Aware Graphics",
+    excerpt: "The same markup, correct at every size, without an image editor in the loop.",
+    description: "A guide to making SVG genuinely responsive — the difference between an SVG's intrinsic size and its viewBox, using aspect-ratio to avoid layout shift, vector-effect for strokes that shouldn't scale, and adapting SVG content across container sizes without a JavaScript resize listener.",
+    category: ["SVG"],
+    tags: ["svg", "viewbox", "responsive-design", "aspect-ratio", "container-queries", "vector-graphics", "frontend-development"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 
