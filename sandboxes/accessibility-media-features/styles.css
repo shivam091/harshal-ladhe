@@ -1,0 +1,89 @@
+.demo-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.demo-label {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--pg-text-muted);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 4px solid var(--pg-border);
+  border-top-color: var(--pg-primary);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Motion-sensitive users can trigger real vestibular symptoms from a spin like this one — this is
+   the one media feature that's less "nice to have" and more a genuine access requirement. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-top-color: var(--pg-border);
+  }
+}
+
+.contrast-card {
+  padding: 14px 16px;
+  border: 1px solid var(--pg-border);
+  border-radius: 8px;
+}
+
+.contrast-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+@media (prefers-contrast: more) {
+  .contrast-card {
+    border-width: 2px;
+    border-color: var(--pg-text);
+  }
+
+  .contrast-card p {
+    color: var(--pg-text);
+    font-weight: 600;
+  }
+}
+
+.forced-colors-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/*
+  No forced-colors rule needed here at all — under Windows High Contrast Mode, the browser
+  replaces this gradient with flat system colors (ButtonFace/ButtonText) automatically, which is
+  almost always the CORRECT outcome for ordinary UI, not something to fight.
+*/
+.decorative-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+}
+
+.brand-swatch {
+  width: 56px;
+  height: 24px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #ff6b6b, #4dabf7);
+  /* The deliberate escape hatch: keep an actual brand mark's real colors even under forced-colors. */
+  forced-color-adjust: none;
+}

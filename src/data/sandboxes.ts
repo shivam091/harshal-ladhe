@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "accessibility-media-features",
+    title: "Accessibility Media Features Playground",
+    description: "Three panels reading real OS/browser preferences live — a spinner that respects prefers-reduced-motion, a card that strengthens under prefers-contrast, and a button/swatch pair showing forced-colors' automatic override plus its explicit opt-out.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "container-style-queries",
     title: "@container style() Playground",
     description: "Switch a card's variant and watch its badge, color, and border all react to a single --variant custom property on the ancestor frame via @container style() — no class ever touches the card or badge themselves.",

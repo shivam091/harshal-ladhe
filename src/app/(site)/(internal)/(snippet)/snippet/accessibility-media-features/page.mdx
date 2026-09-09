@@ -1,0 +1,99 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("accessibility-media-features");
+
+## Introduction
+
+`@media (prefers-color-scheme: dark)` is the accessibility media feature everyone already knows, because it maps to a setting almost every OS exposes prominently. It's not the only one. A visitor can also tell the browser they get motion-sick from animation, that they need stronger contrast than a design's default, or that their OS is actively remapping every color on the page — and CSS can read all three of those preferences natively, the same way it reads light/dark mode.
+
+<RainbowDivider />
+
+## The Three Features
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) { /* ... */ }
+  @media (prefers-contrast: more)         { /* ... */ }
+  @media (forced-colors: active)          { /* ... */ }
+`}
+</CodeBlock>
+
+Each reads a real, user-controlled preference — an OS accessibility setting for the first two, and (for the third) whether a forced-colors mode like Windows High Contrast Mode is currently remapping the page's colors to a limited system palette.
+
+<RainbowDivider />
+
+## Try It Live
+
+None of these three can be toggled with a button on the page itself — they're real OS/browser preferences, exactly like `prefers-color-scheme`. Open DevTools → **More tools → Rendering** → **"Emulate CSS media feature..."** and flip each one to watch the panels below react, with a live readout of all three states.
+
+<Sandbox slug="accessibility-media-features" readOnly />
+
+<RainbowDivider />
+
+## `prefers-reduced-motion`
+
+<CodeBlock language="css">
+{`
+  .spinner { animation: spin 1s linear infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner { animation: none; }
+  }
+`}
+</CodeBlock>
+
+This isn't a nice-to-have the way a dark mode toggle is — large-scale motion (parallax, auto-playing carousels, spinning/zooming transitions) can trigger real vestibular symptoms for some users. `reduce` doesn't mean "remove all animation everywhere"; it means removing or simplifying anything large, fast, or looping, while small, purposeful transitions (a button's hover state) are usually fine to keep.
+
+<RainbowDivider />
+
+## `prefers-contrast`
+
+<CodeBlock language="css">
+{`
+  @media (prefers-contrast: more) {
+    .card { border-width: 2px; color: var(--text-strong); }
+  }
+`}
+</CodeBlock>
+
+`more` requests stronger contrast than the design's default (thicker borders, higher-contrast text colors); `less` is the opposite, for a visitor who finds a design's contrast harsh. `custom` indicates the user has a specific forced-colors-adjacent color scheme active without necessarily being high- or low-contrast.
+
+<RainbowDivider />
+
+## `forced-colors`
+
+<CodeBlock language="css">
+{`
+  /* Usually: nothing. Letting the OS replace your colors with system ones is the correct default. */
+
+  .brand-logo {
+    forced-color-adjust: none; /* the deliberate exception — keep real brand colors */
+  }
+`}
+</CodeBlock>
+
+Under a forced-colors mode, the OS overrides most author colors with a small palette of system keywords (`ButtonText`, `Canvas`, `LinkText`, and similar) to guarantee a baseline of readable contrast — your gradient button above just becomes a flat system-colored button automatically, with zero CSS from you. `forced-color-adjust: none` opts a specific element back out, which should be rare and deliberate — a real brand mark, not ordinary UI a user is actively trying to make more readable.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any animation longer/larger than a small hover transition — gate it behind `prefers-reduced-motion`
+- Design systems that want to offer a genuinely higher-contrast mode without a manual toggle
+- Auditing a site under `forced-colors: active` to make sure interactive elements stay usable once the OS remaps their colors
+- Any element that intentionally needs `forced-color-adjust: none` — brand marks, logos, illustrative graphics (not ordinary buttons/text)
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`prefers-reduced-motion: reduce` doesn't mean zero animation.** A subtle opacity fade or a short hover transition is rarely the problem; large-scale movement (parallax, spinning, auto-scrolling) is. Scope the media query to the animations that are actually large/fast/looping rather than disabling everything indiscriminately.
+* **Reach for `forced-color-adjust: none` sparingly.** The whole point of forced-colors mode is guaranteeing readability for a user who turned it on deliberately — overriding it defeats that guarantee, and should be reserved for elements where color carries no functional meaning (a logo), never for text, buttons, or anything conveying state.
+* **These three are independent of `prefers-color-scheme`** — a user can want dark mode AND reduced motion AND more contrast simultaneously; test combinations, not just each feature in isolation.
+* **Browser support is solid for all three** in modern evergreen browsers (`prefers-reduced-motion` and `prefers-contrast`: Chrome/Edge 96+, Firefox 63+/97+, Safari 10.1+/14.1+; `forced-colors`: Chrome/Edge 89+, Firefox 89+, Safari — partial) as of this writing.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`prefers-color-scheme` isn't a special case — it's one of a family of media features that let CSS read real accessibility preferences directly from the OS. `prefers-reduced-motion` and `prefers-contrast` are worth checking any time a design leans on large animation or subtle contrast; `forced-colors` is worth auditing for even if you never write a single rule for it, since the browser is already rewriting your colors for you the moment a user turns it on.

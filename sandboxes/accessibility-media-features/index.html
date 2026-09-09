@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accessibility Media Features Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Accessibility Media Features</h1>
+        <p>These three all read real OS/browser preferences — nothing here is a button. Open DevTools → More tools → Rendering → "Emulate CSS media feature" to test each live.</p>
+      </header>
+
+      <div class="demo-block">
+        <p class="demo-label">prefers-reduced-motion</p>
+        <div class="spinner" aria-hidden="true"></div>
+      </div>
+
+      <div class="demo-block">
+        <p class="demo-label">prefers-contrast</p>
+        <div class="contrast-card">
+          <p>Muted text, thin border — by default.</p>
+        </div>
+      </div>
+
+      <div class="demo-block">
+        <p class="demo-label">forced-colors</p>
+        <div class="forced-colors-row">
+          <button class="decorative-btn" type="button">Adapts automatically</button>
+          <div class="brand-swatch" title="forced-color-adjust: none"></div>
+        </div>
+      </div>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

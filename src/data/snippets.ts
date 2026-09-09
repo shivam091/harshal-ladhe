@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "accessibility-media-features",
+    title: "prefers-reduced-motion, prefers-contrast, and forced-colors",
+    excerpt: "prefers-color-scheme isn't the only accessibility preference CSS can read directly.",
+    description: "prefers-reduced-motion, prefers-contrast, and forced-colors let CSS react to real OS-level accessibility preferences the same way prefers-color-scheme does — gating large animation, offering a genuine higher-contrast mode, and auditing how a page behaves once the OS remaps its colors under a forced-colors mode like Windows High Contrast Mode.",
+    category: ["CSS"],
+    tags: ["css", "accessibility", "prefers-reduced-motion", "prefers-contrast", "forced-colors", "a11y"],
+    image: {
+      path: "/assets/img/goodies/snippets/accessibility-media-features/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Three UI panels reacting to real OS accessibility preferences: a spinner stopping under prefers-reduced-motion, a card gaining a thicker border under prefers-contrast, and a button repainted with flat system colors under forced-colors."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "container-style-queries",
     title: "Reacting to an Ancestor's Custom Property with @container style()",
     excerpt: "One custom property on a shared ancestor, and every descendant's style query reacts.",
