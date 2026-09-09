@@ -419,6 +419,17 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-09", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "svg-essentials-smil-animation",
+    title: "SVG Essentials: Native Animation with animate, animateTransform, and animateMotion",
+    excerpt: "Path-following motion and zero-JS event-triggered animation.",
+    description: "A complete guide to SVG's native SMIL animation elements — animate, animateTransform, animateMotion with mpath, set, keyTimes/calcMode timing control, zero-JavaScript event-triggered animation via begin, and how SMIL compares to CSS animation and the Web Animations API.",
+    category: ["SVG"],
+    tags: ["svg", "smil", "animate", "animatetransform", "animatemotion", "animation", "vector-graphics", "frontend-development"],
+    changelog: [
+      { date: "2026-09-09", change: "Initial publication" }
+    ]
   }
 ];
 

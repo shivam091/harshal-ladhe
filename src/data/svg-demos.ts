@@ -1827,6 +1827,68 @@ ${dots}
 </svg>`;
     }
   },
+  {
+    slug: "smil-animate-pulse-demo",
+    title: "Interactive Example - animate",
+    controls: [
+      { id: "dur", label: "dur (seconds)", type: "range", min: 0.3, max: 3, step: 0.1, defaultValue: 1 },
+      { id: "repeatCount", label: "repeatCount", type: "select", options: ["indefinite", "1", "3"], defaultValue: "indefinite" }
+    ],
+    // SMIL animations run automatically once the markup is inserted — the controls here tune the
+    // <animate> element's own attributes rather than driving a static frame the way other demos do.
+    render: (values) => {
+      const dur = Number(values.dur);
+      const repeatCount = String(values.repeatCount);
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <circle cx="50" cy="50" r="20" fill="#6366f1">
+    <animate attributeName="r" values="20;35;20" keyTimes="0;0.5;1" dur="${dur}s" repeatCount="${repeatCount}" fill="freeze" />
+  </circle>
+</svg>`;
+    }
+  },
+  {
+    slug: "smil-animatetransform-spin-demo",
+    title: "Interactive Example - animateTransform",
+    controls: [
+      { id: "dur", label: "dur (seconds)", type: "range", min: 0.5, max: 5, step: 0.25, defaultValue: 2 }
+    ],
+    render: (values) => {
+      const dur = Number(values.dur);
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <g transform="translate(50,50)">
+    <rect x="-4" y="-28" width="8" height="20" rx="2" fill="#f59e0b">
+      <!-- animate can't touch transform-related attributes — animateTransform is the dedicated element for exactly that. -->
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="${dur}s" repeatCount="indefinite" />
+    </rect>
+  </g>
+</svg>`;
+    }
+  },
+  {
+    slug: "smil-animatemotion-demo",
+    title: "Interactive Example - animateMotion",
+    controls: [
+      { id: "dur", label: "dur (seconds)", type: "range", min: 1, max: 6, step: 0.5, defaultValue: 3 }
+    ],
+    render: (values) => {
+      const dur = Number(values.dur);
+      const curve = "M 10 70 Q 50 10 90 70";
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <!-- Guide: the same curve the circle below actually rides along. -->
+  <path d="${curve}" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" />
+
+  <circle r="4" fill="#10b981">
+    <animateMotion dur="${dur}s" repeatCount="indefinite" path="${curve}" />
+  </circle>
+</svg>`;
+    }
+  },
 ];
 
 // Looks up an interactive SVG demo's registry entry by slug.

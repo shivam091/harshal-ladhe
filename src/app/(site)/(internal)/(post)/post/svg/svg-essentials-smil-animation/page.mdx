@@ -1,0 +1,132 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("svg-essentials-smil-animation");
+
+## Introduction
+
+[Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes) covers CSS-only animation — no JavaScript, no SMIL. This post is the other half: SVG's own native animation elements, which predate CSS animations and still do a few things CSS genuinely can't do as cleanly — animate an element *along an arbitrary path*, trigger an animation from an event with *zero* JavaScript, and get frame-precise keyframe timing without a stylesheet.
+
+<RainbowDivider />
+
+## `<animate>`: The Core Element
+
+<InteractiveSvgPanel slug="smil-animate-pulse-demo" />
+
+<CodeBlock language="xml">
+{`
+  <circle cx="50" cy="50" r="20" fill="#6366f1">
+    <animate attributeName="r" values="20;35;20" keyTimes="0;0.5;1" dur="1s" repeatCount="indefinite" fill="freeze" />
+  </circle>
+`}
+</CodeBlock>
+
+`attributeName` picks what animates, `values` is a semicolon-separated list of keyframe values (or use `from`/`to` for a simple two-point animation), `dur` sets the duration, `repeatCount` is either a number or `"indefinite"`. `fill="freeze"` holds the final value once the animation finishes instead of the default `"remove"`, which snaps back to the pre-animation value.
+
+<RainbowDivider />
+
+## `<animateTransform>`
+
+<InteractiveSvgPanel slug="smil-animatetransform-spin-demo" />
+
+`<animate>` can't touch `transform` directly — `<animateTransform>` is the dedicated element for rotate/scale/translate/skew:
+
+<CodeBlock language="xml">
+{`<animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="2s" repeatCount="indefinite" />`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## `<animateMotion>` and `<mpath>`
+
+<InteractiveSvgPanel slug="smil-animatemotion-demo" />
+
+Moves an element along real path geometry — either an inline `path="M ..."` attribute (as above) or by referencing an existing `<path>` element via a child `<mpath href="#pathId">`:
+
+<CodeBlock language="xml">
+{`
+  <defs>
+    <path id="route" d="M 10 70 Q 50 10 90 70" />
+  </defs>
+  <circle r="4" fill="#10b981">
+    <animateMotion dur="3s" repeatCount="indefinite">
+      <mpath href="#route" />
+    </animateMotion>
+  </circle>
+`}
+</CodeBlock>
+
+CSS's `offset-path` can move an element along a path too, but with different ergonomics and browser-support tradeoffs — `animateMotion` has been the more consistently-supported native option for this specific need for longer.
+
+<RainbowDivider />
+
+## `<set>`
+
+For a single, non-interpolated value change at a specific time — toggling `visibility` or `display`, which can't be smoothly animated the way a number can:
+
+<CodeBlock language="xml">
+{`<set attributeName="visibility" to="hidden" begin="2s" />`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Timing Control: `keyTimes`, `values`, and `calcMode`
+
+<CodeBlock language="xml">
+{`<animate attributeName="r" values="10;40;15;10" keyTimes="0;0.4;0.7;1" calcMode="spline" keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1" dur="2s" repeatCount="indefinite" />`}
+</CodeBlock>
+
+`values` isn't limited to two keyframes — `keyTimes` pairs each one to a specific fraction of the total duration for uneven pacing, and `calcMode` (`discrete`/`linear`/`paced`/`spline`) controls the interpolation style between them, right down to custom easing curves via `keySplines`.
+
+<RainbowDivider />
+
+## Event-Triggered Animation with `begin`
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 100 60" width="240" height="144">
+  <circle id="pulse-trigger" cx="30" cy="30" r="14" fill="#6366f1" style="cursor: pointer">
+    <animate attributeName="r" values="14;20;14" dur="0.4s" begin="pulse-trigger.click" />
+  </circle>
+  <text x="55" y="34" font-size="9" fill="currentColor">Click the circle</text>
+</svg>
+`}
+</SvgSnippet>
+
+`begin="click"` (or, as above, `begin="elementId.click"` to trigger from a *different* element's event) starts an animation with zero JavaScript — a genuinely unique SMIL capability nothing in CSS replicates directly.
+
+<RainbowDivider />
+
+## `additive` and `accumulate`
+
+Brief but useful: `additive="sum"` makes an animation add its effect on top of the underlying value rather than replacing it, and `accumulate="sum"` (on a repeating animation) makes each repeat build on the previous one's end state rather than resetting — a rotation that keeps compounding past 360° across repeats, for instance, instead of snapping back to 0 every cycle.
+
+<RainbowDivider />
+
+## SMIL vs. CSS Animation vs. the Web Animations API
+
+Not a "SMIL is obsolete" dismissal — each genuinely wins in different cases:
+
+- **CSS transitions/keyframes**: simple property animation, the most broadly optimized path, the right default for anything a stylesheet can express
+- **SMIL**: path-following motion, zero-JS event-triggered animation, precise multi-keyframe timing without touching a stylesheet
+- **Web Animations API (JS)**: anything that needs to be computed or controlled dynamically at runtime
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Path-following motion — an icon following a route curve, a marker moving along a chart's line
+- Zero-JS event-triggered micro-interactions in a static SVG asset, including ones embedded where no JS runtime exists at all
+- Precise multi-keyframe timing without a separate stylesheet
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **SMIL had an uneven browser-support history** (briefly deprecated then undeprecated in Chrome) — check current support before relying on it for anything critical, and default to CSS for cases either approach could handle.
+* **SMIL animations embedded via `<img src="file.svg">` still run**, unlike some CSS animation contexts in certain embedding scenarios — a genuinely useful practical distinction when an SVG asset needs to animate on its own with no surrounding page control at all.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+SMIL isn't a legacy leftover to avoid — it's the only native answer to "animate along this exact curve" and "trigger this animation from a click, with zero JavaScript." Reach for CSS first for ordinary property animation, and drop down to `<animate>`/`<animateTransform>`/`<animateMotion>` specifically for the cases only SMIL covers cleanly.
