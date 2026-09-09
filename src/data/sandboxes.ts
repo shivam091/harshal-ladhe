@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "abortsignal-timeout",
+    title: "AbortSignal.timeout()",
+    description: "Every simulated request gets a fixed 2-second budget via AbortSignal.timeout(2000) — drag the response-time slider past that and watch requests time out instead of completing.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "accessibility-media-features",
     title: "Accessibility Media Features Playground",
     description: "Three panels reading real OS/browser preferences live — a spinner that respects prefers-reduced-motion, a card that strengthens under prefers-contrast, and a button/swatch pair showing forced-colors' automatic override plus its explicit opt-out.",

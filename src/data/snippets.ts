@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "abortsignal-timeout",
+    title: "Built-In Fetch Timeouts with AbortSignal.timeout()",
+    excerpt: "Replaces the controller + setTimeout + clearTimeout trio with one expression.",
+    description: "AbortSignal.timeout(ms) returns a signal that aborts itself after the given delay, with cleanup already handled internally — a drop-in replacement for the manual AbortController + setTimeout + clearTimeout pattern every timed fetch() call has needed until now.",
+    category: ["JavaScript"],
+    tags: ["javascript", "abortsignal", "fetch", "timeout", "async-await", "esnext"],
+    image: {
+      path: "/assets/img/goodies/snippets/abortsignal-timeout/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A request given a fixed time budget via AbortSignal.timeout(), completing when fast enough and timing out automatically when it isn't."
+    },
+    changelog: [{ date: "2026-09-09", change: "Initial publication." }]
+  },
+  {
     slug: "accessibility-media-features",
     title: "prefers-reduced-motion, prefers-contrast, and forced-colors",
     excerpt: "prefers-color-scheme isn't the only accessibility preference CSS can read directly.",

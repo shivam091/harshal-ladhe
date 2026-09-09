@@ -1,0 +1,97 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("abortsignal-timeout");
+
+## Introduction
+
+Giving a `fetch()` call a timeout has always meant assembling one by hand: create an `AbortController`, start a `setTimeout` that calls `.abort()`, remember to `clearTimeout` it once the request actually finishes so it doesn't fire pointlessly later, and pass `controller.signal` through. Four moving parts for "give up after N milliseconds."
+
+**`AbortSignal.timeout()`** is that whole pattern, built in: it returns a signal that aborts itself after the given delay, with the cleanup already handled internally.
+
+<RainbowDivider />
+
+## The Core Method
+
+<CodeBlock language="js">
+{`
+  const response = await fetch("/api/data", {
+    signal: AbortSignal.timeout(3000), // aborts the fetch on its own after 3000ms
+  });
+`}
+</CodeBlock>
+
+No controller, no manual `setTimeout`/`clearTimeout` pair. If the request finishes before 3 seconds, the signal simply never fires — nothing to clean up on your end either way.
+
+<RainbowDivider />
+
+## Try It Live
+
+Every request here gets a fixed 2-second budget via `AbortSignal.timeout(2000)`. Drag the slider past that and watch requests start timing out instead of completing.
+
+<Sandbox slug="abortsignal-timeout" readOnly />
+
+<RainbowDivider />
+
+## Before and After
+
+<CodeBlock language="js">
+{`
+  // Before: manual controller + timer + cleanup
+  function withTimeout(ms) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    return { signal: controller.signal, cancel: () => clearTimeout(timer) };
+  }
+  const { signal, cancel } = withTimeout(3000);
+  const res = await fetch(url, { signal });
+  cancel(); // easy to forget, and this fires even on success
+
+  // Now: the same 3-second budget, no bookkeeping
+  const res = await fetch(url, { signal: AbortSignal.timeout(3000) });
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Combining a Timeout with Other Cancellation Sources
+
+<CodeBlock language="js">
+{`
+  const userCancel = new AbortController();
+  cancelButton.onclick = () => userCancel.abort();
+
+  // Whichever fires first — the timeout or the user's click — wins
+  const signal = AbortSignal.any([
+    AbortSignal.timeout(5000),
+    userCancel.signal,
+  ]);
+
+  await fetch(url, { signal });
+`}
+</CodeBlock>
+
+`AbortSignal.timeout()` returns an ordinary signal, so it composes with [`AbortSignal.any()`](/snippet/structured-concurrency-abortsignal-any) exactly like any other cancellation source — a request that should be cancellable by a timeout *and* a manual cancel button *and* a parent operation's own signal is just one array passed to `any()`.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any `fetch()` call currently missing a timeout entirely, or building one by hand with a controller + setTimeout
+- APIs known to occasionally hang — giving a hard ceiling on how long the UI waits
+- Combined with `AbortSignal.any()` for "cancellable by a timeout OR a user action OR a parent signal"
+- Any function accepting an `AbortSignal` parameter already — `AbortSignal.timeout()` is a drop-in value for it, nothing about the function needs to change
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The rejection reason is a `TimeoutError`, not a generic `AbortError`.** Code that branches on `error.name` to distinguish "the user cancelled this" from "this took too long" can tell the two apart directly, without threading through a separate flag.
+* **The timer starts the instant `AbortSignal.timeout()` is called**, not when the request actually begins — if there's a delay between creating the signal and starting the fetch, that gap counts against the budget.
+* **This is a signal, not a controller** — there's no `.abort()` method to call manually on it. Pair it with `AbortSignal.any()` (as above) any time something else also needs the ability to cancel the same operation.
+* **Browser support is universal at this point** (Chrome/Edge 103+, Firefox 100+, Safari 15.4+) — safe to adopt broadly, and there's no meaningful reason left to hand-rolling this pattern in new code.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`AbortSignal.timeout()` turns "controller + setTimeout + clearTimeout, wired together correctly" into a single expression that plugs into any API already accepting a signal. Reach for it as the default way to put a time budget on an async operation, and layer `AbortSignal.any()` on top the moment something else also needs to cancel it.
