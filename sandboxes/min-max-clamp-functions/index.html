@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>min() / max() / clamp() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>min() / max() / clamp() Playground</h1>
+        <p>Resize the frame below and watch three common patterns resolve differently — a readable measure, a safe-area-aware inset, and a bounded card width.</p>
+      </header>
+
+      <div class="field" id="width-field">
+        <label for="width-input">Simulated container width: <span id="width-label">640px</span></label>
+        <div class="range-row">
+          <span class="range-edge">240px</span>
+          <div class="range-track">
+            <input type="range" id="width-input" min="240" max="900" step="1" value="640">
+            <output class="range-bubble" id="width-value" for="width-input">640px</output>
+          </div>
+          <span class="range-edge">900px</span>
+        </div>
+      </div>
+
+      <section class="demo-area" aria-label="min, max, and clamp width demos">
+        <div class="frame" id="frame">
+          <div class="demo-row">
+            <div class="demo-item">
+              <p class="demo-label"><code>width: min(90%, 60ch)</code> — readable measure</p>
+              <div class="box box-min" id="box-min">Never wider than 60 characters, but still shrinks below that on narrow containers.</div>
+            </div>
+
+            <div class="demo-item">
+              <p class="demo-label"><code>padding-inline: max(1rem, 4%)</code> — safe inset</p>
+              <div class="box box-max" id="box-max">Padding never drops below 1rem, but grows past it on wide containers.</div>
+            </div>
+
+            <div class="demo-item">
+              <p class="demo-label"><code>width: clamp(200px, 50%, 500px)</code> — bounded card</p>
+              <div class="box box-clamp" id="box-clamp">Tracks 50% of the frame, but never below 200px or above 500px.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
