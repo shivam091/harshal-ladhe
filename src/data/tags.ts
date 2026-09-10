@@ -563,4 +563,20 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Mobile Web Development",
     description: "Techniques for building web pages that feel at home on phones, from viewport handling to device-specific quirks."
   },
+  "clamp": {
+    title: "The CSS `clamp()` Function",
+    description: "Using `clamp()` to set values that scale fluidly between a minimum and a maximum, without media queries."
+  },
+  "min-max": {
+    title: "The CSS `min()` and `max()` Functions",
+    description: "Using `min()` and `max()` to let the browser choose the smaller or larger of several values at render time."
+  },
+  "css-functions": {
+    title: "CSS Functions",
+    description: "Modern CSS functions such as `clamp()`, `min()`, `max()`, and `if()` that compute values directly in the browser."
+  },
+  "css-2025": {
+    title: "Modern CSS Features of 2025",
+    description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."
+  },
 };
