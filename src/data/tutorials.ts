@@ -102,6 +102,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-10", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "min-max-clamp-functions",
+    title: "`min()`, `max()`, and `clamp()` — CSS's Value-Bounding Functions",
+    excerpt: "Three comparison functions that pick a value from a rule, without a single media query.",
+    description: "min(), max(), and clamp() pick the smallest, largest, or a bounded value from a list of CSS expressions at the point of use, replacing media-query-driven overrides for readable measures, safe-area-aware insets, and bounded widths with one declaration each.",
+    category: ["CSS"],
+    tags: ["css", "clamp", "min-max", "responsive-design", "css-functions", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/min-max-clamp-functions/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "min(), max(), and clamp() CSS infographic showing value comparison, responsive sizing, safe-area insets, and CSS code without media queries."
+    },
+    changelog: [
+      { date: "2026-09-10", change: "Initial publication." }
+    ]
   }
 ];
 
