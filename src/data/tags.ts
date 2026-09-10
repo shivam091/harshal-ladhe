@@ -543,4 +543,24 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Working with Design Tokens",
     description: "Using design tokens to keep colour, spacing, and typography consistent and easy to theme across a site."
   },
+  "env": {
+    title: "The CSS `env()` Function",
+    description: "Reading browser-defined environment variables in CSS with `env()`, such as the safe-area insets around a device's notch."
+  },
+  "safe-area-inset": {
+    title: "Safe Area Insets in CSS",
+    description: "Using `safe-area-inset-*` values to keep content clear of notches, rounded corners, and home indicators."
+  },
+  "notch": {
+    title: "Designing Around the Notch",
+    description: "Keeping layouts usable on devices with notches, camera cut-outs, and rounded screen corners."
+  },
+  "viewport-fit": {
+    title: "The `viewport-fit` Meta Setting",
+    description: "How `viewport-fit=cover` extends a page edge to edge on notched devices, and how to pad content back into view."
+  },
+  "mobile-web": {
+    title: "Mobile Web Development",
+    description: "Techniques for building web pages that feel at home on phones, from viewport handling to device-specific quirks."
+  },
 };
