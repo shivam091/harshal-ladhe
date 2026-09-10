@@ -1,0 +1,59 @@
+#width-field {
+  margin-top: -4px;
+}
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.frame {
+  width: 640px;
+  max-width: 100%;
+  padding: 16px;
+  border: 1px dashed var(--pg-border);
+  transition: width 0.05s linear;
+}
+
+.demo-row {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.demo-label {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  color: var(--pg-text-muted);
+}
+
+.demo-label code {
+  font-family: var(--pg-mono);
+  color: var(--pg-text);
+}
+
+.box {
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--pg-text);
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+}
+
+/* Readable measure: capped at 60 characters wide, but still shrinks on narrow containers via the 90% branch. */
+.box-min {
+  width: min(90%, 60ch);
+}
+
+/* Safe inset: padding never collapses below 1rem on a narrow frame, but grows past it on a wide one. */
+.box-max {
+  width: 100%;
+  padding-inline: max(1rem, 4%);
+}
+
+/* Bounded card: tracks 50% of the frame, but clamped between a 200px floor and a 500px ceiling. */
+.box-clamp {
+  width: clamp(200px, 50%, 500px);
+}
