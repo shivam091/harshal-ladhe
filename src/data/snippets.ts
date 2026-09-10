@@ -240,6 +240,40 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-10", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "min-max-clamp-functions",
+    title: "min(), max(), and clamp() — CSS's Value-Bounding Functions",
+    excerpt: "Three comparison functions that pick a value from a rule, without a single media query.",
+    description: "min(), max(), and clamp() pick the smallest, largest, or a bounded value from a list of CSS expressions at the point of use, replacing media-query-driven overrides for readable measures, safe-area-aware insets, and bounded widths with one declaration each.",
+    category: ["CSS"],
+    tags: ["css", "clamp", "min-max", "responsive-design", "css-functions", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/min-max-clamp-functions/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "min(), max(), and clamp() CSS infographic showing value comparison, responsive sizing, safe-area insets, and CSS code without media queries."
+    },
+    changelog: [
+      { date: "2026-09-10", change: "Initial publication." }
+    ]
+  },
+  {
+    slug: "fluid-typography-and-spacing",
+    title: "Fluid Typography and Spacing with clamp()",
+    excerpt: "One clamp() declaration scales type, padding, and gaps smoothly — no breakpoint ladder.",
+    description: "clamp(min, preferred, max) — with a preferred value built from rem plus a viewport or container-relative unit — scales font-size, padding, and gaps continuously between a floor and ceiling instead of jumping at fixed breakpoints, replacing a media-query ladder with one line per property.",
+    category: ["CSS"],
+    tags: ["css", "fluid-typography", "clamp", "responsive-design", "container-queries", "css-2025"],
+    image: {
+      path: "/assets/img/goodies/snippets/fluid-typography-and-spacing/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A heading, paragraph, and card padding scaling smoothly across viewport widths via clamp(), next to the same elements jumping between fixed sizes at breakpoints."
+    },
+    changelog: [
+      { date: "2026-09-08", change: "Initial publication." }
+    ]
   }
 ];
 
