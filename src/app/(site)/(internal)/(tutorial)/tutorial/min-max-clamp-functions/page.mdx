@@ -84,7 +84,7 @@ Long lines of text are hard to read — the usual guidance is capping a paragrap
 
 ## Pattern: A Bounded, Proportional Size
 
-`clamp()` is the right tool the moment a value should track something proportional (a percentage, a viewport unit) but never go past a sane floor or ceiling — this is the same mechanism behind fluid typography and spacing, just applied to a plain width here instead of a font-size:
+`clamp()` is the right tool the moment a value should track something proportional (a percentage, a viewport unit) but never go past a sane floor or ceiling — this is the same mechanism behind [fluid typography and spacing](/tutorial/fluid-typography-and-spacing), just applied to a plain width here instead of a font-size:
 
 <CodeBlock language="css">
 {`
@@ -137,4 +137,4 @@ All three compose with `calc()` and with each other, and their arguments don't n
 
 ## Key Takeaway
 
-`min()`, `max()`, and `clamp()` replace "a base value plus a `@media` override that only ever swaps in one different number" with a single declaration that picks the right value itself, live, at every width. `clamp()` in particular is worth reaching for by default whenever a size needs to be proportional *and* bounded — see fluid typography and spacing for what that looks like applied to an entire type scale.
+`min()`, `max()`, and `clamp()` replace "a base value plus a `@media` override that only ever swaps in one different number" with a single declaration that picks the right value itself, live, at every width. `clamp()` in particular is worth reaching for by default whenever a size needs to be proportional *and* bounded — see [fluid typography and spacing](/tutorial/fluid-typography-and-spacing) for what that looks like applied to an entire type scale.
