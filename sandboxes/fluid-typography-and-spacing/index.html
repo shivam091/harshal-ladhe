@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluid Typography &amp; Spacing Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Fluid Type &amp; Spacing Playground</h1>
+        <p>Drag the slider to resize the frame below like a viewport. In <strong>Fluid</strong> mode every size is a single <code>clamp()</code> declaration; in <strong>Stepped</strong> mode the same element jumps between fixed breakpoint values.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Scaling mode</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Scaling mode">
+          <label class="segment">
+            <input type="radio" name="scale-mode" value="fluid" checked>
+            <span>Fluid clamp()</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="scale-mode" value="stepped">
+            <span>Stepped breakpoints</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="field" id="width-field">
+        <label for="width-input">Simulated container width: <span id="width-label">640px</span></label>
+        <div class="range-row">
+          <span class="range-edge">320px</span>
+          <div class="range-track">
+            <input type="range" id="width-input" min="320" max="960" step="1" value="640">
+            <output class="range-bubble" id="width-value" for="width-input">640px</output>
+          </div>
+          <span class="range-edge">960px</span>
+        </div>
+      </div>
+
+      <section class="demo-area" aria-label="Fluid type and spacing preview">
+        <div class="viewport-frame" id="viewport-frame">
+          <div class="fluid-card" id="fluid-card">
+            <h2 class="fluid-heading">Fluid Card</h2>
+            <p class="fluid-body">This heading, body text, card padding, and chip gap all resize as the frame does — no breakpoint required in fluid mode.</p>
+            <div class="fluid-chips">
+              <span class="chip">Design</span>
+              <span class="chip">Systems</span>
+              <span class="chip">Tokens</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <output id="fluid-readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

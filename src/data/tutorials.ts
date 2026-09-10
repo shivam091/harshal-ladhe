@@ -116,6 +116,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-10", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "fluid-typography-and-spacing",
+    title: "Fluid Typography and Spacing with `clamp()`",
+    excerpt: "One clamp() declaration scales type, padding, and gaps smoothly — no breakpoint ladder.",
+    description: "clamp(min, preferred, max) — with a preferred value built from rem plus a viewport or container-relative unit — scales font-size, padding, and gaps continuously between a floor and ceiling instead of jumping at fixed breakpoints, replacing a media-query ladder with one line per property.",
+    category: ["CSS"],
+    tags: ["css", "fluid-typography", "clamp", "responsive-design", "container-queries", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/fluid-typography-and-spacing/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "HD colorful infographic titled “Fluid Typography and Spacing with clamp()”, showing responsive mobile, tablet, and desktop layouts, a CSS clamp() code example, and visual explanations of fluid type, spacing, radii, container units, and accessibility."
+    },
+    changelog: [
+      { date: "2026-09-10", change: "Initial publication." }
+    ]
   }
 ];
 
