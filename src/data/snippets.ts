@@ -269,10 +269,10 @@ export const snippets: Snippet[] = [
       path: "/assets/img/goodies/snippets/fluid-typography-and-spacing/cover.png",
       width: 1536,
       height: 1024,
-      alt: "A heading, paragraph, and card padding scaling smoothly across viewport widths via clamp(), next to the same elements jumping between fixed sizes at breakpoints."
+      alt: "HD colorful infographic titled “Fluid Typography and Spacing with clamp()”, showing responsive mobile, tablet, and desktop layouts, a CSS clamp() code example, and visual explanations of fluid type, spacing, radii, container units, and accessibility."
     },
     changelog: [
-      { date: "2026-09-08", change: "Initial publication." }
+      { date: "2026-09-10", change: "Initial publication." }
     ]
   }
 ];
