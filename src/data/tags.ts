@@ -579,4 +579,8 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."
   },
+  "fluid-typography": {
+    title: "Fluid Typography with CSS",
+    description: "Scaling font sizes smoothly with the viewport or container using `clamp()` instead of fixed breakpoints."
+  },
 };
