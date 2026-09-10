@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "min-max-clamp-functions",
+    title: "min() / max() / clamp() Playground",
+    description: "Resize the frame and watch three common patterns resolve differently, live: a min(90%, 60ch) readable measure, a max(1rem, 4%) safe inset, and a clamp(200px, 50%, 500px) bounded card width.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "env-safe-area-insets",
     title: "env() Safe Area Playground",
     description: "Toggle a simulated notch and home indicator to see safe-area-inset padding move header and CTA content clear of them.",
