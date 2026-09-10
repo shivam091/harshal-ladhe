@@ -1,0 +1,140 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("min-max-clamp-functions");
+
+## Introduction
+
+A surprising amount of CSS boils down to "use this value, but never let it go below/above that other value" — a paragraph that shouldn't get wider than ~60 characters no matter how wide the screen is, padding that shouldn't collapse to nothing on a phone, a card that should track a percentage of its container but not blow past a sane maximum. The traditional tool for all three is the same: a base rule, then a `@media` override (or three) that swaps in a different fixed value past some width.
+
+[**`min()`**](https://developer.mozilla.org/en-US/docs/Web/CSS/min), [**`max()`**](https://developer.mozilla.org/en-US/docs/Web/CSS/max), and [**`clamp()`**](https://developer.mozilla.org/en-US/docs/Web/CSS/clamp) are CSS's comparison functions — they pick a value out of a list of expressions, evaluated live, wherever a length/percentage/number is expected. No media query, no JavaScript measuring anything.
+
+<RainbowDivider />
+
+## The Three Functions
+
+<CodeBlock language="css">
+{`
+  min(A, B, ...)      /* resolves to the SMALLEST of its arguments */
+  max(A, B, ...)      /* resolves to the LARGEST of its arguments */
+  clamp(MIN, VAL, MAX) /* resolves to VAL, bounded between MIN and MAX */
+`}
+</CodeBlock>
+
+Each accepts a comma-separated list of expressions — lengths, percentages, or anything `calc()` accepts — and picks one:
+
+<CodeBlock language="css">
+{`
+  .measure {
+    width: min(90%, 60ch); /* whichever is SMALLER */
+  }
+
+  .safe-pad {
+    padding-inline: max(1rem, 4%); /* whichever is LARGER */
+  }
+
+  .card {
+    width: clamp(200px, 50%, 500px); /* 50%, bounded 200-500px */
+  }
+`}
+</CodeBlock>
+
+`clamp()` isn't a fourth, unrelated idea — it's shorthand for a `min()`/`max()` pair: `clamp(MIN, VAL, MAX)` is exactly equivalent to `max(MIN, min(VAL, MAX))`. Writing it as `clamp()` is just more direct once the pattern is "bound a value on both sides."
+
+<RainbowDivider />
+
+## Try It Live
+
+Resize the frame below and watch all three patterns resolve independently — the readout shows each one's resolved pixel value at the current width.
+
+<Sandbox slug="min-max-clamp-functions" readOnly />
+
+<RainbowDivider />
+
+## Pattern: A Readable Measure
+
+Long lines of text are hard to read — the usual guidance is capping a paragraph around 45-75 characters wide. `ch` units approximate character width, so `min()` gives a width that's the smaller of "90% of the container" or "60 characters," without ever needing to know the container's actual size:
+
+<CodeBlock language="css">
+{`
+  p {
+    width: min(90%, 60ch);
+    /* Narrow container -> shrinks with it (the 90% branch wins)   */
+    /* Wide container   -> stops at 60ch (the 60ch branch wins)    */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Pattern: A Safe-Area-Aware Inset
+
+`max()` is the natural fit for "never below this floor" — most commonly paired with [`env(safe-area-inset-*)`](https://developer.mozilla.org/en-US/docs/Web/CSS/env) so content clears a device's notch/rounded corners without adding excess padding on devices that don't have one:
+
+<CodeBlock language="css">
+{`
+  .page {
+    padding-inline: max(1rem, env(safe-area-inset-left));
+    /* Normal device -> env() resolves to 0, so 1rem wins       */
+    /* Notched device -> env() may exceed 1rem, so it wins instead */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Pattern: A Bounded, Proportional Size
+
+`clamp()` is the right tool the moment a value should track something proportional (a percentage, a viewport unit) but never go past a sane floor or ceiling — this is the same mechanism behind [fluid typography and spacing](/tutorial/fluid-typography-and-spacing), just applied to a plain width here instead of a font-size:
+
+<CodeBlock language="css">
+{`
+  .card {
+    width: clamp(200px, 50%, 500px);
+    /* Narrow container -> 50% would be under 200px, so 200px wins */
+    /* Wide container   -> 50% would exceed 500px, so 500px wins   */
+    /* Everything between -> tracks 50% exactly                    */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Nesting and Mixing Units
+
+All three compose with `calc()` and with each other, and their arguments don't need to share a unit — the browser resolves each expression to a common unit before comparing:
+
+<CodeBlock language="css">
+{`
+  .el {
+    /* clamp() nested inside calc(), plus mixed rem/vw/px units in one call */
+    margin-inline: calc(clamp(1rem, 4vw, 3rem) / 2);
+
+    /* max() of two totally different kinds of expression */
+    inset-block-start: max(2rem, calc(env(safe-area-inset-top) + 0.5rem));
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Readable measures: `width: min(90%, NNch)` for any block of body text
+- Safe-area/notch-aware insets: `max(base-value, env(safe-area-inset-*))`
+- Any width/size that should be proportional but bounded, without a `@media` override
+- Replacing a base rule + one-or-two `@media` overrides that only ever changed a single fixed value
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Arguments are compared as resolved values, not as written.** `min(50%, 20rem)` doesn't compare "50" to "20" — the browser resolves both to actual lengths first (against whatever `%` is relative to, at the current font-size for `rem`), then picks the smaller *resolved* value. This is why mixing unit types in one call is safe and common.
+* **`clamp()`'s middle argument isn't required to be "between" the other two on paper.** If `VAL` is written smaller than `MIN`, the result is just `MIN` at every width — CSS won't warn about it, and it silently behaves like a plain fixed value. Sanity-check the floor/ceiling relationship when a `clamp()` value looks like it's "stuck."
+* **These aren't limited to sizing properties.** Anywhere a `<length>`, `<percentage>`, or plain `<number>` is valid — `calc()` expressions, custom properties, even some `transform` and animation values — `min()`/`max()`/`clamp()` work the same way.
+* **Browser support is universal at this point** for all three (Chrome/Edge 79+, Firefox 75+, Safari 13.1+) — there's no fallback consideration left to make; this has been broadly safe for years.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`min()`, `max()`, and `clamp()` replace "a base value plus a `@media` override that only ever swaps in one different number" with a single declaration that picks the right value itself, live, at every width. `clamp()` in particular is worth reaching for by default whenever a size needs to be proportional *and* bounded — see [fluid typography and spacing](/tutorial/fluid-typography-and-spacing) for what that looks like applied to an entire type scale.
