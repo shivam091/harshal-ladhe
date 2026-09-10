@@ -1,0 +1,243 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("fluid-typography-and-spacing");
+
+## Introduction
+
+The traditional way to make type "responsive" is a stack of fixed sizes swapped in at breakpoints:
+
+<CodeBlock language="css">
+{`
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  @media (min-width: 480px) {
+    h1 {
+      font-size: 2.25rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    h1 {
+      font-size: 2.75rem;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    h1 {
+      font-size: 3.5rem;
+    }
+  }
+`}
+</CodeBlock>
+
+It works, but every size is a guess at a handful of arbitrary widths — the heading is exactly right at 768px and 1200px, and just... whatever the browser interpolates between them at 900px, which is nothing: it's stuck at 2.75rem until the next jump. Four rules to maintain per property, and the same pattern repeats for every heading level, every section's padding, every card's internal gap.
+
+**`clamp()`** replaces the whole ladder with one line: give it a floor, a formula, and a ceiling, and the browser scales continuously between them — no jump, no in-between "guess," and nothing to maintain per breakpoint. (This snippet focuses on `clamp()` applied to fluid type and spacing specifically — for the general mechanics of `min()`/`max()`/`clamp()` as CSS's value-bounding functions, see [min(), max(), and clamp()](/tutorial/min-max-clamp-functions).)
+
+<RainbowDivider />
+
+## The Core Function
+
+<CodeBlock language="css">
+{`
+  clamp(1.5rem, 1rem + 3vw, 3rem);
+  /*     ^floor   ^preferred    ^ceiling */
+`}
+</CodeBlock>
+
+Reads as: "use \`1rem + 3vw\`, but never go below \`1.5rem\` and never go above \`3rem\`." The middle argument is the only one that actually changes as the viewport resizes — the floor and ceiling are just clamps on how far it's allowed to go. Below the width where the preferred value would dip under the floor, the result *is* the floor (constant); above the width where it would exceed the ceiling, the result *is* the ceiling (constant); everywhere in between, it's the live formula.
+
+<Info title="Beginner's mental model">
+Think of `clamp()` as three numbers competing, and the middle one usually winning: `clamp(MIN, VALUE, MAX)` returns `VALUE`, unless `VALUE` would go below `MIN` (then it returns `MIN`) or above `MAX` (then it returns `MAX`). Everything below is really just picking a good `VALUE` formula — the clamping behavior itself never changes.
+</Info>
+
+<RainbowDivider />
+
+## Building the "Preferred" Value
+
+The middle argument doesn't have to be a plain `vw` unit — and for accessibility reasons, it shouldn't be:
+
+<CodeBlock language="css">
+{`
+  /* Fragile: pure vw ignores the reader's font-size/zoom preference entirely */
+  h1 {
+    font-size: clamp(1.5rem, 5vw, 3rem);
+  }
+
+  /* Better: rem sets the floor/ceiling AND contributes to the scaling term */
+  h1 {
+    font-size: clamp(1.5rem, 1rem + 3vw, 3rem);
+  }
+`}
+</CodeBlock>
+
+`rem` is relative to the root font-size, which is exactly what changes when a user bumps their browser's default text size or zooms the page. A formula built purely from `vw` never reads that preference — it scales with viewport width alone, at any zoom level. Mixing in a `rem` term (even a small one, added to the `vw` term) means the whole value still moves proportionally when the user asks for larger text, which pure `vw` cannot do. This is the difference between "fluid" and "fluid, but also still accessible."
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag the width slider to resize the frame below like a viewport, and flip the mode to compare. In **Fluid** mode, the heading, body text, card padding, and chip gap are each one `clamp()` declaration. In **Stepped** mode, the exact same elements use fixed values that jump at three breakpoints — the readout below shows the resolved pixel value for each, live.
+
+<Sandbox slug="fluid-typography-and-spacing" readOnly />
+
+<RainbowDivider />
+
+## Beyond Type: Fluid Spacing
+
+Anything that accepts a length accepts `clamp()` — padding, margin, gap, border-radius, all of it:
+
+<CodeBlock language="css">
+{`
+  .section {
+    /* Section padding grows with the viewport instead of jumping between two fixed values */
+    padding-block: clamp(2rem, 1rem + 4vw, 6rem);
+  }
+
+  .card-grid {
+    /* The GAP between cards scales too, not just the cards' own sizing */
+    gap: clamp(0.75rem, 0.5rem + 1.5vw, 2rem);
+  }
+
+  .card {
+    border-radius: clamp(0.5rem, 0.3rem + 0.5vw, 1rem);
+  }
+`}
+</CodeBlock>
+
+This is the part beginners tend to miss: "fluid design" usually gets introduced as a typography trick, but the exact same formula fixes the same jumpy-breakpoint problem for whitespace. A layout where the type scales fluidly but the surrounding padding still snaps at three fixed breakpoints looks visibly inconsistent — the spacing around the text draws attention to the one thing that *didn't* scale smoothly.
+
+<RainbowDivider />
+
+## A Fluid Scale, Not Just One Value
+
+Once one heading uses `clamp()`, the same shape of declaration extends to a whole type scale by storing the floor/ceiling pair as custom properties per step:
+
+<CodeBlock language="css">
+{`
+  :root {
+    --fluid-h1: clamp(2rem, 1.5rem + 3vw, 3.5rem);
+    --fluid-h2: clamp(1.5rem, 1.2rem + 2vw, 2.5rem);
+    --fluid-h3: clamp(1.25rem, 1.1rem + 1vw, 1.75rem);
+    --fluid-body: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
+  }
+
+  h1 {
+    font-size: var(--fluid-h1);
+  }
+
+  h2 {
+    font-size: var(--fluid-h2);
+  }
+
+  h3 {
+    font-size: var(--fluid-h3);
+  }
+
+  p  {
+    font-size: var(--fluid-body);
+  }
+`}
+</CodeBlock>
+
+Every step keeps the same *shape* — floor, `rem + vw`, ceiling — just with different numbers. A smaller viewport spread between floor and ceiling on `--fluid-body` than on `--fluid-h1` is intentional: body text should barely move, while a hero heading is allowed a much wider range, so the visual hierarchy between them holds at every width instead of only at the breakpoints you happened to test.
+
+<RainbowDivider />
+
+## Advanced: Scoping Fluid Values to a Container, Not the Viewport
+
+`vw` always measures the *browser viewport* — which is a problem the moment a fluid component gets reused somewhere narrower than the full page, like a sidebar or a modal. It'll keep reading the full window width and scale as if it had that much room, even though its actual box is much smaller.
+
+`cqi` (container query inline-size) fixes this by measuring the nearest **queryable container** instead of the viewport — the same container a `@container` rule would target:
+
+<CodeBlock language="css">
+{`
+  .widget {
+    container-type: inline-size; /* opt this element in as a query container */
+  }
+
+  .widget h3 {
+    /* Scales with the WIDGET's own width, not the page's — same formula shape as vw, different axis */
+    font-size: clamp(1.1rem, 1rem + 1.5cqi, 1.5rem);
+  }
+`}
+</CodeBlock>
+
+This pairs directly with container queries: if a component already opts into `container-type: inline-size` so its *layout* can respond to its own box, its *type and spacing* can respond to that same box via `cqi`/`cqb` instead of the viewport. The sandbox above uses exactly this trick — the "simulated viewport" slider is really resizing a `container-type: inline-size` frame, since there's no way to actually resize the browser window from a page control.
+
+<RainbowDivider />
+
+## Comparison with the Old Approaches
+
+<CodeBlock language="css">
+{`
+  /* Before: a fixed value per breakpoint, repeated for every fluid property */
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  @media (min-width: 480px) {
+    h1 { font-size: 2.25rem; }
+  }
+
+  @media (min-width: 768px) {
+    h1 { font-size: 2.75rem; }
+  }
+
+  @media (min-width: 1200px) {
+    h1 { font-size: 3.5rem; }
+  }
+
+  .section {
+    padding-block: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .section {
+      padding-block: 4rem;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .section {
+      padding-block: 6rem;
+    }
+  }
+
+  /* Now: one line per property, continuous between a floor and ceiling, no jumps */
+  h1 {
+    font-size: clamp(1.75rem, 1.2rem + 2.5vw, 3.5rem);
+  }
+
+  .section {
+    padding-block: clamp(2rem, 1rem + 4vw, 6rem);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any heading/body type scale currently redeclared across two or more `@media` breakpoints
+- Section padding, card gaps, and border-radius that should grow with the viewport instead of jumping
+- Reusable components (cards, sidebars, widgets) where `cqi`/`cqb` scale off the component's own box instead of the page
+- Design tokens meant to work at *every* width, not just the handful of breakpoints someone remembered to test
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Never use a bare `vw`/`cqi` term without a `rem` (or `em`) component in the mix.** A formula built purely from viewport/container units doesn't respond to the user's font-size or zoom preference at all — mixing in `rem` keeps the whole value scaling proportionally when they ask for larger text. This is an accessibility requirement, not a style preference.
+* **A `clamp()` value can't be reverse-engineered from browser DevTools alone.** DevTools shows the *resolved* pixel value at the current width, not the formula that produced it — keep the source-of-truth formulas as custom properties (as in the type-scale example above) so the design intent stays legible in the CSS itself, not just the computed output.
+* **Overlapping ranges compound.** If a fluid heading's floor-to-ceiling range is 300px wide and it sits inside a fluid-padded section with its own 200px range, the *combined* visual change across that viewport span is larger than either property alone — reasonable per-property ranges can still add up to a layout that feels like it's moving too much. Preview across the full width range, not just the two endpoints.
+* **`cqi`/`cqb` require an ancestor with `container-type` set** — a `clamp()` using `cqi` inside an element with no queryable container ancestor doesn't error, it just has no container to measure and falls back to treating the container size as unconstrained, usually resolving to the `clamp()`'s ceiling.
+* **Browser support is solid in every modern evergreen browser** for both `clamp()` (universal for years) and container query units (Chrome/Edge 105+, Firefox 110+, Safari 16+) as of this writing — safe to adopt broadly; fall back to `vw`-only formulas only if a component truly never needs to scale off anything but the viewport.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`clamp()` turns "pick a handful of fixed sizes and jump between them at breakpoints" into "pick a floor, a ceiling, and a formula for what happens in between" — one line per property, no per-breakpoint maintenance, and (with a `rem` term in the mix) no accessibility regression. The same idea covers type, spacing, and radii alike; swap `vw` for `cqi`/`cqb` once a component needs to scale off its own container instead of the page.
