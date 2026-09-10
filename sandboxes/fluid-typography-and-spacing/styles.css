@@ -1,0 +1,94 @@
+#width-field {
+  margin-top: -4px;
+}
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+/*
+  container-type: inline-size turns this frame's own width into a query axis (cqi), so the card
+  inside can scale off the FRAME's width via clamp()/@container instead of the real browser
+  viewport — letting the width slider simulate a viewport without actually resizing the window.
+*/
+.viewport-frame {
+  container-type: inline-size;
+  container-name: fluid-demo;
+  width: 640px;
+  max-width: 100%;
+  border: 1px dashed var(--pg-border);
+  transition: width 0.05s linear;
+}
+
+.fluid-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--pg-surface);
+  /* Fluid padding: scales smoothly with the frame instead of jumping at a breakpoint. */
+  padding: clamp(0.75rem, 0.4rem + 2cqi, 2rem);
+}
+
+.fluid-heading {
+  margin: 0 0 0.4em;
+  font-weight: 700;
+  line-height: 1.15;
+  /* Fluid font-size: rem for the floor/ceiling (respects browser text zoom), cqi for the scaling term. */
+  font-size: clamp(1.375rem, 1rem + 2.5cqi, 2.5rem);
+}
+
+.fluid-body {
+  margin: 0;
+  color: var(--pg-text-muted);
+  line-height: 1.6;
+  font-size: clamp(0.875rem, 0.8rem + 0.4cqi, 1.05rem);
+}
+
+.fluid-chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: clamp(0.75rem, 0.4rem + 1.5cqi, 1.5rem);
+  /* Fluid gap: the space BETWEEN chips scales too, not just the chips themselves. */
+  gap: clamp(0.375rem, 0.2rem + 1cqi, 1rem);
+}
+
+.chip {
+  padding: 0.3em 0.75em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--pg-primary);
+  background: var(--pg-primary-soft);
+  border-radius: 999px;
+}
+
+/*
+  Stepped mode: the exact same properties, but as fixed values that jump at three container
+  breakpoints — the "before" comparison for what clamp() replaces. @container (not @media) so it
+  still responds to the simulated frame width rather than the real browser viewport.
+*/
+.fluid-card.stepped .fluid-heading { font-size: 1.375rem; }
+.fluid-card.stepped .fluid-body { font-size: 0.875rem; }
+.fluid-card.stepped { padding: 0.75rem; }
+.fluid-card.stepped .fluid-chips { gap: 0.375rem; margin-top: 0.75rem; }
+
+@container fluid-demo (min-width: 480px) {
+  .fluid-card.stepped .fluid-heading { font-size: 1.75rem; }
+  .fluid-card.stepped .fluid-body { font-size: 0.9375rem; }
+  .fluid-card.stepped { padding: 1.25rem; }
+  .fluid-card.stepped .fluid-chips { gap: 0.625rem; margin-top: 1rem; }
+}
+
+@container fluid-demo (min-width: 700px) {
+  .fluid-card.stepped .fluid-heading { font-size: 2.125rem; }
+  .fluid-card.stepped .fluid-body { font-size: 1rem; }
+  .fluid-card.stepped { padding: 1.625rem; }
+  .fluid-card.stepped .fluid-chips { gap: 0.8rem; margin-top: 1.25rem; }
+}
+
+@container fluid-demo (min-width: 880px) {
+  .fluid-card.stepped .fluid-heading { font-size: 2.5rem; }
+  .fluid-card.stepped .fluid-body { font-size: 1.05rem; }
+  .fluid-card.stepped { padding: 2rem; }
+  .fluid-card.stepped .fluid-chips { gap: 1rem; margin-top: 1.5rem; }
+}
