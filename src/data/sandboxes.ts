@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "mastering-js-observers",
+    title: "JavaScript Observers Playground",
+    description: "Watch MutationObserver, IntersectionObserver, and ResizeObserver fire live — mutate the DOM, scroll targets into view, and resize a box while the console logs every callback.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "min-max-clamp-functions",
     title: "min() / max() / clamp() Playground",
     description: "Resize the frame and watch three common patterns resolve differently, live: a min(90%, 60ch) readable measure, a max(1rem, 4%) safe inset, and a clamp(200px, 50%, 500px) bounded card width.",

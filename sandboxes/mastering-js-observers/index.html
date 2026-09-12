@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JavaScript Observers Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>JavaScript Observers Playground</h1>
+        <p>Mutate the DOM, scroll cards into view, and resize a box — watch each observer react live.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>MutationObserver</legend>
+        <p class="tip">Watch the DOM change.</p>
+
+        <div id="mutation-target" class="demo-surface mutation-target">
+          <p class="mutation-item">Watched element</p>
+        </div>
+
+        <div class="button-row">
+          <button id="add-item-btn" class="secondary-btn" type="button">Add child</button>
+          <button id="remove-item-btn" class="secondary-btn" type="button">Remove child</button>
+          <button id="toggle-attr-btn" class="secondary-btn" type="button">Toggle attribute</button>
+        </div>
+
+        <output id="mutation-status" class="readout" aria-live="polite">No mutations yet — try a button above.</output>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>IntersectionObserver</legend>
+        <p class="tip">Scroll the strip below — each card logs when it crosses 50% visibility.</p>
+
+        <div id="intersection-root" class="demo-surface intersection-root">
+          <div class="intersection-spacer"></div>
+          <div class="intersection-card" data-card="1">Card 1</div>
+          <div class="intersection-card" data-card="2">Card 2</div>
+          <div class="intersection-card" data-card="3">Card 3</div>
+          <div class="intersection-card" data-card="4">Card 4</div>
+          <div class="intersection-card" data-card="5">Card 5</div>
+          <div class="intersection-spacer"></div>
+        </div>
+
+        <output id="intersection-status" class="readout" aria-live="polite">Nothing visible yet.</output>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>ResizeObserver</legend>
+        <p class="tip">Drag the bottom-right corner of the box to resize it.</p>
+
+        <div id="resize-target" class="resize-target">Resize me</div>
+
+        <output id="resize-status" class="readout" aria-live="polite">Waiting for a resize…</output>
+      </fieldset>
+
+      <p class="tip">Open the Console tab to see every observer callback logged as it fires.</p>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
