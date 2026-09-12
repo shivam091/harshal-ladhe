@@ -41,7 +41,12 @@ export const tutorials: Tutorial[] = [
       type: "image/png",
       alt: "Illustration of exponential retry logic showing a circular retry loop, increasing delays, and a digital countdown timer."
     },
+    link: {
+      label: "Read the full post: Mastering Asynchronous JavaScript",
+      href: "/post/javascript/mastering-async-javascript"
+    },
     changelog: [
+      { date: "2026-09-12", change: "Added cross-reference to post 'Mastering Asynchronous JavaScript: Callbacks, Promises, and Async/Await'" },
       { date: "2026-08-05", change: "Initial publication with Options Object and Max Delay support." }
     ]
   },
@@ -59,7 +64,12 @@ export const tutorials: Tutorial[] = [
       type: "image/png",
       alt: "Visualization of exponential backoff with jitter, showing randomized retry intervals over time to prevent synchronized retries."
     },
+    link: {
+      label: "Read the full post: Mastering Asynchronous JavaScript",
+      href: "/post/javascript/mastering-async-javascript"
+    },
     changelog: [
+      { date: "2026-09-12", change: "Added cross-reference to post 'Mastering Asynchronous JavaScript: Callbacks, Promises, and Async/Await'" },
       { date: "2026-08-05", change: "Initial publication with Full Jitter implementation." }
     ]
   },
