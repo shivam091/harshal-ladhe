@@ -331,6 +331,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-08", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "mastering-js-observers",
+    title: "Mastering JavaScript Observers: A Complete Guide to Reactive Web APIs",
+    excerpt: "Unlock reactive power with JavaScript Observer APIs.",
+    description: "Master MutationObserver, IntersectionObserver, ResizeObserver, and PerformanceObserver. Learn to build high-performance, reactive web apps with real-world examples and best practices.",
+    category: ["JavaScript"],
+    tags: ["javascript", "web-apis", "observer-pattern", "frontend-development", "performance", "reactive-programming", "event-listener", "mutation-observer", "intersection-observer", "resize-observer", "dom", "core-web-vitals", "lazy-loading"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/mastering-js-observers/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "JavaScript observers diagram illustrating MutationObserver, IntersectionObserver, ResizeObserver, and PerformanceObserver in reactive web development."
+    },
+    toc: { maxLevel: 4 },
+    signoff: "Four observer APIs, a custom Pub/Sub implementation, and a sandbox that lets you mutate, scroll, and resize your way through all three DOM observers live — getting the IntersectionObserver strike-zone math right for the scrollspy pattern took more whiteboarding than I expected. Thanks for reading all the way to the FAQ section; go replace a scroll listener with something that only runs when it actually needs to. 👀",
+    changelog: [
+      { date: "2026-09-12", change: "Initial publication" }
+    ]
   }
 ];
 
