@@ -14,7 +14,8 @@ import { PageMetaSecondary } from "@/components/PageMeta/PageMeta.styles";
 import { getSnippetBySlug, getSnippetNavigation } from "@/data/snippets";
 import HitCounter from "@/components/HitCounter";
 import LikeButton from "@/components/LikeButton";
-import { ExternalLinkIcon } from "@/components/Icon";
+import IconExternalLink from "@/icons/IconExternalLink";
+import { useToggleIconStatus } from "@/hooks/use-toggle-icon-status";
 import { siteConfig } from "@/config/site";
 import {
   Article,
@@ -40,6 +41,7 @@ export default function SnippetLayout({ children }: { children: ReactNode }): JS
   if (!snippet) notFound();
 
   const { previous, next } = getSnippetNavigation(slug);
+  const { status, onPointerEnter, onPointerLeave, onPointerDown, onPointerUp } = useToggleIconStatus();
 
   return (
     <>
@@ -49,9 +51,15 @@ export default function SnippetLayout({ children }: { children: ReactNode }): JS
         <SnippetHeader>
           {snippet.excerpt && <SnippetExcerpt>{snippet.excerpt}</SnippetExcerpt>}
           {snippet.link && (
-            <SnippetLink href={snippet.link.href}>
+            <SnippetLink
+              href={snippet.link.href}
+              onPointerEnter={onPointerEnter}
+              onPointerLeave={onPointerLeave}
+              onPointerDown={onPointerDown}
+              onPointerUp={onPointerUp}
+            >
               {snippet.link.label}
-              <ExternalLinkIcon size={14} />
+              <IconExternalLink size={14} status={status} />
             </SnippetLink>
           )}
         </SnippetHeader>
