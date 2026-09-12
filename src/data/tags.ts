@@ -451,6 +451,38 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Lazy Loading Techniques",
     description: "Techniques for deferring the loading of images, components, and data until they're actually needed, improving initial page performance."
   },
+  "async-javascript": {
+    title: "Asynchronous JavaScript Explained",
+    description: "Writing non-blocking JavaScript using callbacks, promises, and async/await, along with the event loop concepts that tie them together."
+  },
+  "modern-js": {
+    title: "Modern JavaScript Features and Patterns",
+    description: "Content focused on contemporary JavaScript syntax and idioms, from ES2017+ features to current best practices for writing clean, maintainable code."
+  },
+  "async": {
+    title: "Understanding Asynchronous Programming",
+    description: "Foundational and advanced content on asynchronous execution in JavaScript, including concurrency, timing, and coordination patterns."
+  },
+  "callbacks": {
+    title: "Callback Functions in JavaScript",
+    description: "The callback pattern in JavaScript — passing functions as arguments to run after an operation completes — and its trade-offs at scale."
+  },
+  "promises": {
+    title: "Mastering JavaScript Promises",
+    description: "The Promise API, its states and resolution rules, chaining, and the static utility methods like Promise.all and Promise.race."
+  },
+  "async-await": {
+    title: "Async/Await in Modern JavaScript",
+    description: "Using async and await to write asynchronous JavaScript that reads like synchronous code, including error handling with try/catch."
+  },
+  "event-loop": {
+    title: "The JavaScript Event Loop Explained",
+    description: "The JavaScript runtime model — the call stack, Web APIs, task queues, and the event loop that ties them together."
+  },
+  "microtasks": {
+    title: "Microtasks and the Priority Queue",
+    description: "The microtask queue that backs Promises and queueMicrotask, and how it's prioritized ahead of macrotasks like setTimeout."
+  },
   "objectfreeze": {
     title: "Using `Object.freeze()` in JavaScript",
     description: "How `Object.freeze()` locks an object's properties, where its shallow behaviour falls short, and how to freeze nested structures."
