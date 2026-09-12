@@ -143,6 +143,10 @@ export const snippets: Snippet[] = [
       type: "image/webp",
       alt: "Illustration of exponential retry logic showing a circular retry loop, increasing delays, and a digital countdown timer."
     },
+    link: {
+      label: "Read the full post: Mastering Asynchronous JavaScript",
+      href: "/post/javascript/mastering-async-javascript"
+    },
     changelog: [
       { date: "2026-08-05", change: "Initial publication with Options Object and Max Delay support." }
     ]
@@ -162,8 +166,8 @@ export const snippets: Snippet[] = [
       alt: "Visualization of exponential backoff with jitter, showing randomized retry intervals over time to prevent synchronized retries."
     },
     link: {
-      label: "dssdds",
-      href: "/"
+      label: "Read the full post: Mastering Asynchronous JavaScript",
+      href: "/post/javascript/mastering-async-javascript"
     },
     changelog: [
       { date: "2026-08-05", change: "Initial publication with Full Jitter implementation." }
