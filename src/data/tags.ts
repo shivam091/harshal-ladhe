@@ -411,6 +411,46 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Streamlined Styling with SCSS and Preprocessors",
     description: "Optimize your CSS workflow using SCSS (Sass) features like variables, nesting, mixins, and modular imports for scalable and maintainable code."
   },
+  "web-apis": {
+    title: "Browser Web APIs for Modern Frontends",
+    description: "Coverage of native browser APIs — beyond the core language — that power reactive, high-performance web applications."
+  },
+  "observer-pattern": {
+    title: "The Observer Pattern in JavaScript",
+    description: "The Observer (Pub/Sub) design pattern, both as implemented by native browser APIs and as a custom pattern for decoupled state updates."
+  },
+  "reactive-programming": {
+    title: "Reactive Programming on the Web",
+    description: "Content on writing code that responds to state and environment changes as they happen, rather than polling for them."
+  },
+  "event-listener": {
+    title: "Event Listeners and DOM Events",
+    description: "Using addEventListener, event delegation, and handling user interactions and browser events efficiently."
+  },
+  "mutation-observer": {
+    title: "Working with MutationObserver",
+    description: "Using MutationObserver to react to DOM structure and attribute changes without expensive polling."
+  },
+  "intersection-observer": {
+    title: "IntersectionObserver in Practice",
+    description: "Using IntersectionObserver for lazy loading, scrollspy navigation, infinite scroll, and visibility-triggered animations."
+  },
+  "resize-observer": {
+    title: "ResizeObserver for Container-Aware Components",
+    description: "Content on using ResizeObserver to react to an individual element's size changes, enabling truly container-aware, responsive components."
+  },
+  "dom": {
+    title: "Working with the DOM",
+    description: "Reading, updating, and reacting to changes in the Document Object Model from JavaScript."
+  },
+  "core-web-vitals": {
+    title: "Core Web Vitals and Performance Metrics",
+    description: "Measuring and improving Core Web Vitals like Largest Contentful Paint and Cumulative Layout Shift using browser performance APIs."
+  },
+  "lazy-loading": {
+    title: "Lazy Loading Techniques",
+    description: "Techniques for deferring the loading of images, components, and data until they're actually needed, improving initial page performance."
+  },
   "objectfreeze": {
     title: "Using `Object.freeze()` in JavaScript",
     description: "How `Object.freeze()` locks an object's properties, where its shallow behaviour falls short, and how to freeze nested structures."
