@@ -207,3 +207,5 @@ Retrying these only wastes time because another attempt will almost certainly fa
 ## Key Takeaway
 
 The standard `retry` utility provides a safety net for flaky APIs. By using an **Options Object** and **Max Delay**, you ensure your code remains maintainable and resilient under stress.
+
+For the bigger picture this utility fits into — the event loop, promise internals, and the combinators (`Promise.all`, `allSettled`, `race`, `any`) that pair well with retries like this one — see the full [Mastering Asynchronous JavaScript](/post/javascript/mastering-async-javascript) guide.
