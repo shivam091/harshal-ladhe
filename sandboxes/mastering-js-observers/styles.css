@@ -1,0 +1,124 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+  --pg-radius-md: 0.75rem;
+}
+
+.tip {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+  border-radius: 0;
+}
+
+.readout {
+  display: block;
+  margin-top: 12px;
+  padding: 6px 10px;
+  font-family: var(--pg-mono);
+  font-size: 0.78rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+}
+
+/* Shared dashed preview surface */
+
+.demo-surface {
+  border: 1px dashed var(--pg-border);
+  border-radius: var(--pg-radius-md);
+  background: var(--pg-surface-muted);
+}
+
+/* MutationObserver demo */
+
+.mutation-target {
+  padding: 1rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.mutation-target.is-active {
+  border-color: var(--pg-primary);
+  border-style: solid;
+  background: var(--pg-primary-soft);
+}
+
+.mutation-item {
+  margin: 0;
+  padding: 0.4rem 0;
+  font-size: 0.95rem;
+  color: var(--pg-text);
+}
+
+.button-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Base look now lives in the shared .secondary-btn — only this sandbox's row-sizing stays local. */
+.button-row .secondary-btn {
+  flex: 1;
+  min-width: 7.5rem;
+}
+
+/* IntersectionObserver demo */
+
+.intersection-root {
+  height: 160px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.intersection-spacer {
+  height: 80px;
+}
+
+.intersection-card {
+  height: 90px;
+  margin: 0 1rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface);
+  border-radius: var(--pg-radius-sm);
+  border: 2px solid transparent;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.intersection-card.is-visible {
+  background: var(--pg-primary-soft);
+  border-color: var(--pg-primary);
+  color: var(--pg-text);
+}
+
+/* ResizeObserver demo */
+
+.resize-target {
+  width: 220px;
+  height: 120px;
+  min-width: 120px;
+  min-height: 80px;
+  max-width: 100%;
+  resize: both;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  color: #fff;
+  font-weight: 600;
+  border-radius: var(--pg-radius-md);
+  box-shadow: var(--pg-shadow-sm);
+}
+
+@media (max-width: 480px) {
+  .button-row {
+    flex-direction: column;
+  }
+}
