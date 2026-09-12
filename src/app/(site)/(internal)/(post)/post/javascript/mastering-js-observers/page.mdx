@@ -1,0 +1,534 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("mastering-js-observers");
+
+## Beyond Polling: The Reactive Revolution
+
+In modern web development, the shift from **imperative** (telling the browser exactly what to do) to **reactive** (responding to changes) is fundamental. JavaScript Observers are the engine behind this shift. Instead of expensive loops or constant polling, these APIs allow the browser to notify your code only when specific conditions are met.
+
+This guide explores the full spectrum of native observers, their syntax, and industry best practices for building high-performance, event-driven applications.
+
+## Why Move to Native Observers?
+
+The **Observer Pattern** — a design where a **Subject** notifies its **Observers** of state changes — is uniquely suited for the modern web:
+
+- **Performance:** They avoid "Layout Thrashing" — repeated layout recalculation caused by a polling loop that reads and writes DOM geometry within the same frame. Observers hand that work off to the browser itself, which reports back asynchronously once something actually changes, instead of you looping to check and recheck.
+- **Decoupling:** Separate your UI logic from your business logic, making components modular and maintainable.
+- **Efficiency:** By avoiding constant polling, you significantly reduce CPU usage and battery drain, since the browser only wakes your code when something actually changes.
+- **Enhanced UX:** They are the secret behind seamless lazy loading, infinite scroll, and **container-aware components** that adapt to fluid layouts.
+
+Every observer in this guide is a variation on the same shape — one Subject, one or more Observers, notified instead of polled:
+
+<ObserverPatternDiagram />
+
+## Observer Comparison at a Glance
+
+| Observer | Watches | Best For |
+| --- | --- | --- |
+| EventListener | User actions | Clicks, scrolls |
+| MutationObserver | DOM changes | Dynamic UI |
+| IntersectionObserver | Element Visibility | Lazy loading |
+| ResizeObserver | Element size | Responsive components |
+| PerformanceObserver | Performance metrics | Optimization |
+
+## Types of Observers
+
+From the classic `addEventListener` to the four specialized DOM/performance observers, each API below watches for a different kind of change. They share the same shape — create an observer, point it at a target, and clean it up when you're done — so once one clicks, the rest follow the same mental model.
+
+### Event Listeners: Classic Observer
+
+Before the specialized APIs, we had `addEventListener`. It remains the primary way to watch for discrete user interactions like clicks, scrolls, or keyboard input.
+
+**Example:**
+
+<CodeBlock language="js">
+{`
+  const button = document.querySelector("#myButton");
+  button.addEventListener("click", () => alert("Interaction detected!"), { once: true });
+`}
+</CodeBlock>
+
+**Use Cases:**
+
+1. User interactions
+2. Form validation
+3. Animations triggered by events
+
+**Best Practices:**
+
+1. Always remove event listeners when not needed (`removeEventListener`) to prevent memory leaks.
+2. Use delegation for multiple elements to improve performance.
+
+<Info title="Pro Tip">
+  Use the `{ once: true }` option for one-time events to let the browser handle cleanup automatically.
+</Info>
+
+### MutationObserver: Watching the DOM Structure
+
+The `MutationObserver` is the high-performance successor to the deprecated "Mutation Events." It monitors the DOM tree itself — perfect for reacting to third-party scripts or dynamic UI changes. It is uniquely efficient because it uses the **microtask queue**, batching multiple changes into a single callback.
+
+<CodeBlock language="js">
+{`
+  const targetNode = document.getElementById("app");
+
+  const config = {
+    attributes: true,        // Watch attribute changes (class, id, etc.)
+    childList: true,         // Watch for added/removed elements
+    subtree: true,           // Watch all descendants, not just the target
+    characterData: true,     // Watch text content changes
+    attributeOldValue: true  // Keep record of the previous attribute value
+  };
+
+  const mutationObserver = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.type === "attributes") {
+        console.log(\`Attribute \${mutation.attributeName} changed from \${mutation.oldValue}\`);
+      }
+    });
+  });
+
+  mutationObserver.observe(targetNode, config);
+`}
+</CodeBlock>
+
+**Use Cases:**
+
+- Tracking dynamic DOM changes
+- Implementing custom UI updates
+- Reacting to third-party DOM modifications
+
+**Best Practices:**
+
+- Observe only necessary nodes to minimize performance overhead.
+- Always call `observer.disconnect()` when no longer needed.
+
+<Info title="Pro Tip">
+  Use `observer.takeRecords()` to process any pending mutations immediately before disconnecting the observer.
+</Info>
+
+### IntersectionObserver: The Viewport Watcher
+
+The `IntersectionObserver` API provides a way to asynchronously observe changes in the intersection of a target element with an ancestor element or the top-level document's viewport.
+
+This observer is used to detect when an element enters or leaves the viewport and is great for lazy loading, infinite scrolling, and animations.
+
+- **Threshold:** An array of values (0.0 to 1.0). A value of `0.5` means the callback triggers when 50% of the element is visible.
+- **rootMargin:** Similar to CSS margins. It grows or shrinks the "box" that the observer uses to check for intersections. This is perfect for **pre-loading** images before they enter the screen.
+
+<CodeBlock language="js">
+{`
+  const options = {
+    root: null, // use the viewport
+    rootMargin: "0px 0px 200px 0px", // trigger 200px before entry
+    threshold: [0, 0.25, 0.5, 0.75, 1] // trigger at every 25% visibility
+  };
+
+  const intersectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const img = entry.target;
+        img.src = img.dataset.src;
+        intersectionObserver.unobserve(img); // Stop watching once loaded
+      }
+    });
+  }, options);
+`}
+</CodeBlock>
+
+**Use Cases:**
+
+- Lazy-loading images or videos
+- Triggering animations when elements are visible
+- Infinite scrolling implementations
+
+**Best Practices:**
+
+- Use `rootMargin` to preload elements before they appear in viewport.
+- Always call `observer.disconnect()` when no longer needed.
+
+### ResizeObserver: Beyond Media Queries
+
+Media queries are limited to the viewport size. The `ResizeObserver` allows you to respond to the dimensions of **individual elements**. This is the key to creating truly "Container-Aware" components.
+
+This observer monitors changes to the size of an element, including width, height, or both.
+
+You can observe different "boxes" of an element:
+
+- `content-box`: The size of the content (default).
+- `border-box`: Includes padding and borders.
+- `device-pixel-content-box`: The size in physical pixels (essential for high-performance `<canvas>` or `<svg>` rendering).
+
+`content-box` sits inside `border-box` — padding and border make up the gap between them. `device-pixel-content-box` isn't a fourth, bigger region; it's that same `content-box` area, just reported in physical pixels instead of CSS pixels:
+
+<ResizeBoxModelDiagram />
+
+<CodeBlock language="js">
+{`
+  const resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+      // entry.contentRect is legacy; use entry.contentBoxSize for future-proofing
+      // inlineSize typically refers to 'width' in horizontal writing modes
+      const width = entry.contentBoxSize[0].inlineSize;
+      console.log(\`New width: \${width}px\`);
+    }
+  });
+
+  resizeObserver.observe(document.querySelector(".card"));
+`}
+</CodeBlock>
+
+**Use Cases:**
+
+- Responsive components
+- Dynamic layout adjustments
+- Canvas resizing or SVG updates
+
+**Best Practices:**
+
+- Avoid observing too many elements simultaneously.
+- Debounce heavy computations triggered by resize events.
+- Always call `observer.disconnect()` when no longer needed.
+
+<Info title="Note on SVGs">
+  When working with **SVGs**, `ResizeObserver` is vital for recalculating paths or `viewBox` coordinates when the container scales.
+</Info>
+
+<Warning title="Watch for the resize-loop error">
+  If a `ResizeObserver` callback changes the size of the very element it's observing (directly, or indirectly through a layout change), the browser can throw `ResizeObserver loop completed with undelivered notifications`. It's usually harmless — the browser just drops the extra notification for that frame — but it's a sign your callback is feeding back into its own trigger, so check whether the size actually changed before acting on it again.
+</Warning>
+
+### PerformanceObserver: The Pro's Choice
+
+The `PerformanceObserver` allows you to programmatically track **Core Web Vitals** — metrics like **Largest Contentful Paint (LCP)** and **Cumulative Layout Shift (CLS)** — directly within your application logic.
+
+Unlike other observers, `PerformanceObserver` does not watch DOM changes — it tracks browser performance events.
+
+<CodeBlock language="js">
+{`
+  const performanceObserver = new PerformanceObserver((list) => {
+    list.getEntries().forEach((entry) => {
+      console.log(\`\${entry.name}: \${entry.startTime}ms\`);
+    });
+  });
+
+  // Watch for layout shifts (CLS)
+  performanceObserver.observe({ type: "layout-shift", buffered: true });
+`}
+</CodeBlock>
+
+**Use Cases:**
+
+- Measure page load performance
+- Track slow resources
+- Detect long (UI blocking) tasks
+- Monitor layout shifts
+
+**Best Practices:**
+
+- Avoid unnecessary overhead by limiting `entryTypes`.
+- Do not run heavy logic inside the observer callback.
+- Check `PerformanceObserver.supportedEntryTypes` before observing a newer entry type like `layout-shift` — requesting one a browser doesn't support throws instead of silently doing nothing.
+
+<Info title="Reach for a library in production">
+  Handling every edge case here — waiting for a late `LCP` candidate, ignoring layout shifts caused by user input, browser inconsistencies — adds up fast. Most production apps use Google's [`web-vitals`](https://github.com/GoogleChrome/web-vitals) package instead of a hand-rolled `PerformanceObserver`, since it already wraps these entry types with the correct edge-case handling and reports the metrics Chrome itself uses for Core Web Vitals scoring.
+</Info>
+
+## Browser Support
+
+All four Observer APIs are supported in every current major browser (Chrome, Firefox, Safari, Edge) — the days of needing a `MutationObserver` or `IntersectionObserver` fallback are largely behind us:
+
+| Observer | Supported since |
+| --- | --- |
+| MutationObserver | Chrome 26, Firefox 14, Safari 6.1, Edge 12 |
+| IntersectionObserver | Chrome 51, Firefox 55, Safari 12.1, Edge 15 |
+| ResizeObserver | Chrome 64, Firefox 69, Safari 13.1, Edge 79 |
+| PerformanceObserver | Chrome 52, Firefox 57, Safari 11, Edge 79 |
+
+The API shape itself is stable everywhere, but individual **entry types** for `PerformanceObserver` (like `layout-shift` or `largest-contentful-paint`) roll out separately and unevenly across browsers — see the `PerformanceObserver.supportedEntryTypes` note above. For anything older than these baselines, see the polyfill callout in Best Practices & Memory Management below.
+
+## The Custom Observable Pattern
+
+When you need to sync state across your app without a heavy library (like Redux), a custom Observer (often called **Pub/Sub**) is the cleanest approach.
+
+This pattern mirrors how libraries like RxJS and Redux internally manage subscriptions.
+
+**Implementation with Cleanup Logic**
+
+To avoid memory leaks, your subscribe method should always return an **`unsubscribe`** function.
+
+<CodeBlock language="js">
+{`
+  class StateManager {
+    constructor() {
+      this.observers = new Set();
+    }
+
+    subscribe(callback) {
+      this.observers.add(callback);
+      return () => this.observers.delete(callback); // Cleanup function
+    }
+
+    notify(data) {
+      this.observers.forEach(callback => callback(data));
+    }
+  }
+
+  const store = new StateManager();
+  const unsub = store.subscribe(data => console.log("Received:", data));
+
+  // Later...
+  unsub(); // Clean and safe
+`}
+</CodeBlock>
+
+**Use Cases:**
+
+- State management in applications
+- Reactive UI updates
+- Implementing Pub/Sub systems
+
+**Best Practices:**
+
+- Keep observer lists clean to prevent memory leaks.
+- Use strong typing in TypeScript for better reliability.
+
+## Observers in Production: Real-World Patterns
+
+The theoretical examples above are useful, but the true power of Observers shows up when they replace an expensive polling loop or scroll listener in a real interface. Here are a few patterns worth recognizing — and knowing when a modern CSS-only alternative might replace the observer entirely.
+
+### 1. Scrollspy Navigation
+
+A traditional scroll-spy implementation relies on a `scroll` event listener that fires hundreds of times per second, calculating `getBoundingClientRect()` on every header — a performance nightmare if left unthrottled.
+
+An `IntersectionObserver`-based scrollspy replaces that: watch all section headers, and set a `rootMargin` (e.g. `"0px 0px -50% 0px"`) to define a "strike zone" partway down the screen. The callback only fires when a header actually crosses that zone, instead of on every scroll frame.
+
+That negative bottom margin is what shrinks the root's effective bottom edge upward, well before the raw viewport ends — here's that boundary drawn against a target crossing it:
+
+<IntersectionGeometryDiagram />
+
+<Info title="Not every implementation needs the same approach">
+  This is a common pattern for scrollspy navigation, but it isn't the only valid one — a `requestAnimationFrame`-throttled scroll listener with a fixed offset works too, and avoids the `IntersectionObserver` API's per-entry callback overhead for a small number of headings. Reach for `IntersectionObserver` when you're watching many elements or want to avoid hand-rolled throttling.
+</Info>
+
+### 2. Sticky Header Effects
+
+Creating a "glass" effect (blur and opacity) on a header as you scroll away from the top can be expensive if it's computed in a `scroll` event handler running continuously.
+
+One common `IntersectionObserver`-based approach: place a trigger element at the very top of the page, and only attach a `passive: true` scroll listener (to calculate blur intensity) once that trigger leaves the viewport — detaching it again when the user scrolls back to the top. This keeps zero scroll-processing overhead while the hero section is in view.
+
+<Info title="A CSS-only alternative">
+  Modern browsers also support driving this entirely in CSS with `animation-timeline: scroll()` — a `@keyframes` block that fades in the blur as the page scrolls, with no JavaScript observer or scroll listener involved at all. Where scroll-driven CSS animations are supported, they remove the need for an `IntersectionObserver` gate in the first place.
+
+  This site's own header is a real example of that migration: it used to compute its glass effect with an `IntersectionObserver` trigger exactly like the one described above, and now does the entire thing in CSS instead — the header's own source comment notes there's "NO IntersectionObserver or scroll listener" left in it. For the `@keyframes`/`animation-timeline` syntax behind that migration, see [An Interactive Guide to CSS Keyframes](/post/animations/css-keyframes-guide) and [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes).
+</Info>
+
+### 3. Responsive, Container-Aware Tooling
+
+Interactive code playgrounds and embedded widgets need to be aware of their environment — specifically their size. A `ResizeObserver` watching the preview container (instead of relying on window-level media queries) lets a panel react to the *exact* pixel dimensions of its container, whether the user resizes the browser or toggles a sidebar that changes the container's width without changing the viewport at all.
+
+<Info title="Running in the sandbox below">
+  The code editor powering the `<Sandbox />` embed further down this page uses exactly this pattern: its "sticky scroll" overlay — the strip that keeps the current fold's opening line pinned to the top while you scroll through its contents — watches the gutter that renders those fold markers with a `ResizeObserver`, because that gutter mounts through a separate React root and can resize asynchronously — a size change a one-time measurement would miss entirely.
+</Info>
+
+### 4. Custom Performance Metrics
+
+Browser APIs tell us about the page, but they don't always tell us about our _components_. A custom **Pub/Sub (Observable)**, like the `StateManager` class above, can notify a UI layer when an internal process (a compile step, a render pass) finishes — letting you display precise timing metrics without tightly coupling the internal logic to how it's displayed.
+
+### 5. Pausing Off-Screen Decorative Animation
+
+A decorative animation loop — confetti, particles, sparkles — still burns CPU even while it's scrolled out of view. Wrapping the animated element in an `IntersectionObserver` and only running the loop while `isIntersecting` is `true` is a small change with a real payoff on longer pages with several such effects.
+
+<Info title="A real example">
+  This site's own sparkle-trail effect (the one behind a handful of headings and buttons around the site) uses exactly this check: a small `useIsOnscreen` hook wraps `IntersectionObserver` and the animation only spawns new sparkles while the element reports as visible.
+</Info>
+
+## Best Practices & Memory Management
+
+To keep your application performant and leak-free, follow these five "Golden Rules" of observation:
+
+- **Always Disconnect:** Browsers are efficient, but an orphaned observer on a global object is a memory leak waiting to happen. Always call `observer.disconnect()` in your cleanup logic (e.g., `componentWillUnmount` or a `destroy()` method).
+- **Use WeakMap for Metadata:** If you need to associate data with observed elements, use a `WeakMap`. This ensures the element can be garbage collected even if it is still a key in your map.
+- **Passive Listeners:** For classic scroll observers, always use `{ passive: true }`. This tells the browser you won't call `preventDefault()`, allowing for a much smoother scrolling experience.
+- **Coordinate Precision:** When using `ResizeObserver` for **SVG dashboards**, use `device-pixel-content-box` to ensure your paths are recalculated with sub-pixel accuracy on high-DPI (Retina) displays.
+
+<Info title="Falling back for older browsers">
+  All four Observer APIs have well-maintained polyfills — `resize-observer-polyfill` and the W3C's `intersection-observer` package are the most common — that patch the same constructor onto `window` when the native one is missing, so existing code needs no branching to fall back to them.
+</Info>
+
+## Common Mistakes to Avoid
+
+- Observing too many elements unnecessarily
+- Forgetting to disconnect observers
+- Running heavy logic inside callbacks
+- Using MutationObserver where event delegation is enough
+
+## Using Observers in React
+
+Every observer above cleans up the same way: create it, `observe()` a node, and `disconnect()` it when that node is gone. In React, "gone" means the component unmounted or its ref changed — which is exactly what a `useEffect` cleanup function is for.
+
+<CodeBlock language="jsx">
+{`
+  import { useEffect, useRef, useState } from "react";
+
+  function LazyImage({ src, alt }) {
+    const imgRef = useRef(null);
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+      const node = imgRef.current;
+      if (!node || isVisible) return;
+
+      const observer = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) setIsVisible(true);
+      }, { rootMargin: "200px" });
+
+      observer.observe(node);
+
+      // Runs on unmount AND whenever a dependency changes before the effect re-runs.
+      return () => observer.disconnect();
+    }, [isVisible]);
+
+    return <img ref={imgRef} src={isVisible ? src : undefined} alt={alt} />;
+  }
+`}
+</CodeBlock>
+
+<Warning title="Don't skip the cleanup function">
+  Returning nothing from `useEffect` here is the single most common way observer-based React components leak memory — the observer keeps a strong reference to the DOM node, so neither can be garbage collected after the component unmounts. The `return () => observer.disconnect()` line isn't optional.
+</Warning>
+
+The same shape works for `ResizeObserver` and `MutationObserver` — swap the observer type and its callback, keep the `useEffect`/cleanup skeleton identical.
+
+## Testing Observer-Based Code
+
+`IntersectionObserver`, `ResizeObserver`, and `MutationObserver` don't exist in Node — so a component that uses one will throw in Jest or Vitest unless you mock the constructor first. The pattern is the same for all three: replace the global with a stub that records what it was asked to observe, then trigger its callback manually.
+
+<CodeBlock language="jsx">
+{`
+  import { render, screen } from "@testing-library/react";
+
+  class MockIntersectionObserver {
+    constructor(callback) {
+      this.callback = callback;
+      this.observe = jest.fn();
+      this.unobserve = jest.fn();
+      this.disconnect = jest.fn();
+    }
+  }
+
+  beforeEach(() => {
+    global.IntersectionObserver = MockIntersectionObserver;
+  });
+
+  test("marks the image visible once it intersects", () => {
+    render(<LazyImage src="/photo.jpg" alt="A photo" />);
+
+    // Grab the instance the component created, then fire its callback by hand.
+    const [instance] = global.IntersectionObserver.mock.instances;
+    instance.callback([{ isIntersecting: true }]);
+
+    expect(screen.getByAltText("A photo")).toHaveAttribute("src", "/photo.jpg");
+  });
+`}
+</CodeBlock>
+
+<Info title="A library can do this for you">
+  Packages like [`jsdom-testing-mocks`](https://github.com/trurl-master/jsdom-testing-mocks) ship ready-made mocks for all three observer APIs, including realistic `entry` shapes — reach for one before hand-rolling a mock class in every test file that touches an observer.
+</Info>
+
+## Interactive Example
+
+Now that we've explored the theory, see these observers in action. Trigger a DOM mutation, scroll a card into view, and drag-resize a box — watch the console react to each one live.
+
+<Sandbox slug="mastering-js-observers" defaultLayout="vertical" />
+
+## Frequently Asked Questions
+
+### Observers vs. Traditional Events
+
+#### What is the difference between observers and event listeners?
+
+Event listeners react to user-triggered events (click, scroll), while observers monitor state or environment changes like DOM mutations, visibility, or performance.
+
+#### Is IntersectionObserver better than scroll events?
+
+Yes, for visibility tracking. It is more performant because the browser can compute intersection off the main thread's hot path, avoiding continuous scroll event firing and reducing jank.
+
+#### Can ResizeObserver replace media queries?
+
+No. Media queries are for viewport-based styling, while `ResizeObserver` handles element-level responsiveness. They complement each other.
+
+### Strategic Comparisons
+
+#### When should I use MutationObserver instead of event delegation?
+
+Use `MutationObserver` when the DOM structure itself changes dynamically (e.g., elements added/removed by third-party scripts). Event delegation is better for handling **user interactions** on dynamic elements.
+
+#### When should I avoid using observers?
+
+Avoid observers when a simple event listener is sufficient, you don't need real-time updates, or the observed changes are too frequent and expensive to process.
+
+### Performance & Optimization
+
+#### How do observers impact performance?
+
+Properly used observers improve performance by avoiding polling. However, excessive observation or heavy callback logic can still cause lag.
+
+#### What happens if I don't disconnect an observer?
+
+It can lead to memory leaks and unnecessary CPU usage, as the observer may stay active even after the element is removed from the DOM.
+
+#### What is the difference between buffered and non-buffered observations?
+
+Buffered observations (`buffered: true`) capture events that occurred before the observer was created — essential for accurate performance metrics.
+
+### Architecture & Practical Usage
+
+#### Can observers be used together?
+
+Yes. In real-world apps, multiple observers are often combined. For example: `IntersectionObserver` for lazy loading, `ResizeObserver` for layout adjustments, and `MutationObserver` for dynamic DOM updates.
+
+#### Is there a limit to how many observers I can create?
+
+There is no strict limit, but creating too many observers can lead to **performance overhead**. Prefer reusing observers for multiple targets when possible.
+
+### Support & Maintenance
+
+#### Does PerformanceObserver work in all browsers?
+
+Not all entry types are supported across all browsers. Some metrics like `layout-shift` or `largest-contentful-paint` may require **modern browsers** and fallback handling.
+
+#### How do I debug observer callbacks?
+
+- Use `console.log()` inside callbacks.
+- Inspect entries (`entry.target`, `entry.type`).
+- Use the browser DevTools **Performance panel** to see when callbacks are triggered.
+
+### Implementation Details
+
+#### Can I observe multiple elements with one observer?
+
+Yes. Reusing a single observer instance for multiple targets is more memory-efficient than creating an observer for every element.
+
+#### Are observers synchronous or asynchronous?
+
+They are asynchronous, though not all on the same clock: `MutationObserver` callbacks run as true **microtasks**, while `IntersectionObserver` and `ResizeObserver` are batched into the browser's rendering steps just before paint. Either way, the browser groups multiple changes into a single callback instead of firing once per change.
+
+#### Can observers be used with frameworks like React or Vue?
+
+Absolutely. While frameworks handle state, observers are perfect for low-level tasks like lazy-loading or measuring element sizes inside lifecycle hooks.
+
+## Wrapping Up
+
+Mastering these observers turns you from a developer who "checks" for state into one who "reacts" to state. Whether you are lazy-loading images with `IntersectionObserver` or building responsive **SVG dashboards** with `ResizeObserver`, these native APIs are the secret to modern, performant web applications.
+
+By moving away from manual polling and toward reactive patterns, you ensure your code remains modular, your CPU stays idle, and your users enjoy a seamless, lag-free experience.
+
+**Key Takeaways:**
+
+- **Watch, don't poll:** Every observer here replaces a loop or a hot event listener with a callback the browser only fires when something actually changed.
+- **Match the observer to the job:** `MutationObserver` for DOM structure, `IntersectionObserver` for visibility, `ResizeObserver` for element size, `PerformanceObserver` for browser metrics.
+- **Always clean up:** Disconnect observers when the element or component is gone — an orphaned observer is a silent memory leak.
+- **Combine with CSS where you can:** Not every reactive effect needs JavaScript — scroll-driven CSS animations can replace an observer entirely for simple visual cases.
+
+Reactive observers are only half of the "Reactive Web" story — the other half is how JavaScript schedules and sequences the work they trigger. If you haven't already, see my companion guide: [Mastering Asynchronous JavaScript: Callbacks, Promises, and Async/Await](/post/javascript/mastering-async-javascript).
