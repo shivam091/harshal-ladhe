@@ -241,3 +241,5 @@ Two jitter-specific things worth deciding upfront:
 ## Key Takeaway
 
 For production-scale applications, always favor **Jitter**. It transforms a fragile retry loop into a robust recovery mechanism that respects the health of your entire system architecture.
+
+For the bigger picture this utility fits into — the event loop, promise internals, and the combinators (`Promise.all`, `allSettled`, `race`, `any`) that pair well with retries like this one — see the full [Mastering Asynchronous JavaScript](/post/javascript/mastering-async-javascript) guide.
