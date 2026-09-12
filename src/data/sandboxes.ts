@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "promise-combinator-playground",
+    title: "Promise Combinator Playground",
+    description: "Three simulated tasks with adjustable delays and pass/fail switches — pick Promise.all, allSettled, race, or any and watch how each settles, plus which tasks keep running after it does.",
+    template: "react-ts",
+    entry: "/App.tsx"
+  },
+  {
     slug: "mastering-js-observers",
     title: "JavaScript Observers Playground",
     description: "Watch MutationObserver, IntersectionObserver, and ResizeObserver fire live — mutate the DOM, scroll targets into view, and resize a box while the console logs every callback.",
