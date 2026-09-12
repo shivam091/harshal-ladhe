@@ -455,5 +455,37 @@ export const tagMeta: Record<string, TagMeta> = {
   "lazy-loading": {
     title: "Lazy Loading Techniques",
     description: "Techniques for deferring the loading of images, components, and data until they're actually needed, improving initial page performance."
+  },
+  "async-javascript": {
+    title: "Asynchronous JavaScript Explained",
+    description: "Guides to writing non-blocking JavaScript using callbacks, promises, and async/await, along with the event loop concepts that tie them together."
+  },
+  "modern-js": {
+    title: "Modern JavaScript Features and Patterns",
+    description: "Content focused on contemporary JavaScript syntax and idioms, from ES2017+ features to current best practices for writing clean, maintainable code."
+  },
+  "async": {
+    title: "Understanding Asynchronous Programming",
+    description: "Foundational and advanced content on asynchronous execution in JavaScript, including concurrency, timing, and coordination patterns."
+  },
+  "callbacks": {
+    title: "Callback Functions in JavaScript",
+    description: "Guides on the callback pattern in JavaScript — passing functions as arguments to run after an operation completes — and its trade-offs at scale."
+  },
+  "promises": {
+    title: "Mastering JavaScript Promises",
+    description: "Deep dives into the Promise API, its states and resolution rules, chaining, and the static utility methods like Promise.all and Promise.race."
+  },
+  "async-await": {
+    title: "Async/Await in Modern JavaScript",
+    description: "Tutorials on using async and await to write asynchronous JavaScript that reads like synchronous code, including error handling with try/catch."
+  },
+  "event-loop": {
+    title: "The JavaScript Event Loop Explained",
+    description: "Explanations of the JavaScript runtime model — the call stack, Web APIs, task queues, and the event loop that ties them together."
+  },
+  "microtasks": {
+    title: "Microtasks and the Priority Queue",
+    description: "Articles on the microtask queue that backs Promises and queueMicrotask, and how it's prioritized ahead of macrotasks like setTimeout."
   }
 };
