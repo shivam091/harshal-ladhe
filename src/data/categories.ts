@@ -33,7 +33,7 @@ export const categoryMeta: Record<string, CategoryMeta> = {
     description: "Guides on Scalable Vector Graphics (SVG) — from coordinates, the viewBox, and basic shapes to mastering the path element and building custom vector icons."
   },
   javascript: {
-    title: "All Posts on JavaScript Programming",
-    description: "Explore posts on the JavaScript programming language, including ES6+ features, operators, concepts, and techniques for modern frontend development."
+    title: "All Posts on JavaScript and Modern Web APIs",
+    description: "Guides and deep dives into JavaScript — from asynchronous programming fundamentals to modern browser APIs like the Observer family — covering the language and platform features that power interactive web applications.",
   }
 };
