@@ -364,6 +364,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-12", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "mastering-async-javascript",
+    title: "Mastering Asynchronous JavaScript: Callbacks, Promises, and Async/Await",
+    excerpt: "Write clean, predictable asynchronous JavaScript",
+    description: "A deep guide to asynchronous JavaScript covering the event loop, callbacks, promises, async/await, microtasks, concurrency patterns, and performance best practices for modern web development.",
+    category: ["JavaScript"],
+    tags: ["javascript", "async-javascript", "modern-js", "async", "callbacks", "promises", "async-await", "event-loop", "microtasks"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/mastering-async-javascript/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "JavaScript event loop diagram with callbacks, promises, async/await, and microtask vs macrotask queues."
+    },
+    toc: { maxLevel: 4 },
+    signoff: "Getting the microtask-vs-macrotask ordering to click as a diagram instead of just a list of rules took a few passes, and building a live Promise.all/allSettled/race/any playground next to the section that explains them felt like the right way to make combinator choice concrete instead of theoretical. Thanks for following the whole callbacks → promises → async/await arc with me; go find an unnecessary sequential await in your own code and fix it. ⏱️",
+    changelog: [
+      { date: "2026-09-12", change: "Initial publication" }
+    ],
   }
 ];
 

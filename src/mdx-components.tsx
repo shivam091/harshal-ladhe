@@ -46,6 +46,8 @@ import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
 import ObserverPatternDiagram from "@/components/mdx/ObserverPatternDiagram";
 import ResizeBoxModelDiagram from "@/components/mdx/ResizeBoxModelDiagram";
 import IntersectionGeometryDiagram from "@/components/mdx/IntersectionGeometryDiagram";
+import EventLoopDiagram from "@/components/mdx/EventLoopDiagram";
+import MicrotaskMacrotaskTimelineDiagram from "@/components/mdx/MicrotaskMacrotaskTimelineDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -107,6 +109,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ObserverPatternDiagram,
     ResizeBoxModelDiagram,
     IntersectionGeometryDiagram,
+    EventLoopDiagram,
+    MicrotaskMacrotaskTimelineDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
