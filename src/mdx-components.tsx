@@ -43,6 +43,9 @@ import RadialGradientDiagram from "@/components/mdx/RadialGradientDiagram";
 import ConicGradientDiagram from "@/components/mdx/ConicGradientDiagram";
 import RepeatingGradientDiagram from "@/components/mdx/RepeatingGradientDiagram";
 import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
+import ObserverPatternDiagram from "@/components/mdx/ObserverPatternDiagram";
+import ResizeBoxModelDiagram from "@/components/mdx/ResizeBoxModelDiagram";
+import IntersectionGeometryDiagram from "@/components/mdx/IntersectionGeometryDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -101,6 +104,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ConicGradientDiagram,
     RepeatingGradientDiagram,
     GradientLayeringDiagram,
+    ObserverPatternDiagram,
+    ResizeBoxModelDiagram,
+    IntersectionGeometryDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
