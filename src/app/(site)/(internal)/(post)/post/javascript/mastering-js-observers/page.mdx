@@ -319,7 +319,7 @@ One common `IntersectionObserver`-based approach: place a trigger element at the
 <Info title="A CSS-only alternative">
   Modern browsers also support driving this entirely in CSS with `animation-timeline: scroll()` — a `@keyframes` block that fades in the blur as the page scrolls, with no JavaScript observer or scroll listener involved at all. Where scroll-driven CSS animations are supported, they remove the need for an `IntersectionObserver` gate in the first place.
 
-  This site's own header is a real example of that migration: it used to compute its glass effect with an `IntersectionObserver` trigger exactly like the one described above, and now does the entire thing in CSS instead — the header's own source comment notes there's "NO IntersectionObserver or scroll listener" left in it. For the `@keyframes`/`animation-timeline` syntax behind that migration, see An Interactive Guide to CSS Keyframes and [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes).
+  This site's own header is a real example of that migration: it used to compute its glass effect with an `IntersectionObserver` trigger exactly like the one described above, and now does the entire thing in CSS instead — the header's own source comment notes there's "NO IntersectionObserver or scroll listener" left in it. For the `@keyframes`/`animation-timeline` syntax behind that migration, see [An Interactive Guide to CSS Keyframes](/post/animations/css-keyframes-guide) and [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes).
 </Info>
 
 ### 3. Responsive, Container-Aware Tooling
