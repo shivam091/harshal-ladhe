@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "checkbox-radio-toggle-hack",
+    title: "Checkbox/Radio Hack Playground",
+    description: "A radio-driven tab set and a checkbox-driven accordion, both fully interactive with zero JavaScript — :checked and a sibling combinator do all of the work.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "custom-scrollbar-styling",
     title: "Custom Scrollbar Playground",
     description: "A scrollable list with a themed scrollbar — switch the thumb color and toggle scrollbar-width between auto and thin, with scrollbar-color and the ::-webkit-scrollbar pseudo-elements updating together.",

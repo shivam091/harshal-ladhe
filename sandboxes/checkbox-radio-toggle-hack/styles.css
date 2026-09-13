@@ -1,0 +1,109 @@
+.demo-label {
+  margin: 0 0 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
+}
+
+.demo-area + .demo-area {
+  margin-top: 18px;
+}
+
+/* Tabs */
+
+.tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tab-labels {
+  display: flex;
+  gap: 6px;
+}
+
+.tab-labels label {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.tab-panel {
+  display: none;
+  padding: 14px 16px;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: 8px;
+}
+
+/* Each radio, once :checked, reveals ITS OWN panel further down the sibling chain — three separate rules, one per radio/panel pairing. */
+#tab1:checked ~ #panel-overview,
+#tab2:checked ~ #panel-details,
+#tab3:checked ~ #panel-reviews {
+  display: block;
+}
+
+/* Same idea, styling whichever label belongs to the currently-:checked radio. */
+#tab1:checked ~ .tab-labels label[for="tab1"],
+#tab2:checked ~ .tab-labels label[for="tab2"],
+#tab3:checked ~ .tab-labels label[for="tab3"] {
+  color: #fff;
+  background: var(--pg-primary);
+  border-color: var(--pg-primary);
+}
+
+/* Accordion */
+
+.accordion {
+  display: flex;
+  flex-direction: column;
+}
+
+.acc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.acc-icon {
+  transition: transform 0.15s ease;
+}
+
+/* Rotating a "+" by 45deg turns it into an "×" — a free open/closed indicator with no separate icon swap. */
+.acc-input:checked ~ .acc-header .acc-icon {
+  transform: rotate(45deg);
+}
+
+.acc-body {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.2s ease;
+}
+
+.acc-body p {
+  margin: 10px 2px 2px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+}
+
+.acc-input:checked ~ .acc-body {
+  max-height: 200px;
+}

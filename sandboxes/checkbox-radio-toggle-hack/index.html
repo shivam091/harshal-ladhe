@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checkbox/Radio Toggle Hack Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>The Checkbox/Radio Hack</h1>
+        <p>No JavaScript below this line — :checked plus a sibling combinator drives both demos.</p>
+      </header>
+
+      <section class="demo-area">
+        <p class="demo-label">Tabs, from three radios sharing one name</p>
+        <div class="tabs">
+          <input type="radio" name="tab" id="tab1" class="tab-input" checked hidden>
+          <input type="radio" name="tab" id="tab2" class="tab-input" hidden>
+          <input type="radio" name="tab" id="tab3" class="tab-input" hidden>
+
+          <div class="tab-labels">
+            <label for="tab1">Overview</label>
+            <label for="tab2">Details</label>
+            <label for="tab3">Reviews</label>
+          </div>
+
+          <div class="tab-panel" id="panel-overview">A short overview panel — selected by default since #tab1 starts checked.</div>
+          <div class="tab-panel" id="panel-details">Details live here. Only one panel is ever visible, purely from which radio is :checked.</div>
+          <div class="tab-panel" id="panel-reviews">Reviews would go here — swapped in with no JS event listener anywhere.</div>
+        </div>
+      </section>
+
+      <section class="demo-area">
+        <p class="demo-label">An accordion, from one checkbox</p>
+        <div class="accordion">
+          <input type="checkbox" id="acc1" class="acc-input" hidden>
+          <label for="acc1" class="acc-header">
+            What is the checkbox hack?
+            <span class="acc-icon" aria-hidden="true">+</span>
+          </label>
+          <div class="acc-body">
+            <p>A hidden checkbox tracks open/closed state, a label toggles it on click, and a sibling selector keyed on :checked shows or hides the content underneath — the checkbox itself is the only "state" involved.</p>
+          </div>
+        </div>
+      </section>
+
+      <output class="readout">Every toggle above is a real, native form control — Tab and Space/Enter operate all of it for free.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

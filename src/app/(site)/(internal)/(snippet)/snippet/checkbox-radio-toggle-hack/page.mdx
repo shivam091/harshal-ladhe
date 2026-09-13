@@ -1,0 +1,98 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("checkbox-radio-toggle-hack");
+
+## Introduction
+
+A checkbox already has exactly the state a toggle needs — checked or not — for free, tracked by the browser, operable by mouse, touch, and keyboard alike. The **"checkbox hack"** (and its radio-button sibling) reuses that instead of writing one: hide the native input, pair it with a `<label>` as the visible trigger, then key a sibling selector off `:checked` to show, hide, or restyle whatever comes after it — an accordion, a tab set, even a modal, with zero JavaScript.
+
+<RainbowDivider />
+
+## The Core Pattern
+
+<CodeBlock language="html">
+{`
+  <input type="checkbox" id="toggle" hidden>
+  <label for="toggle">Show details</label>
+  <div class="details">Hidden until the checkbox above is checked.</div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .details {
+    display: none;
+  }
+
+  #toggle:checked ~ .details {
+    display: block;
+  }
+`}
+</CodeBlock>
+
+`hidden` removes the checkbox visually while keeping it a real, focusable, keyboard-operable form control. The `<label for="toggle">` is what makes clicking (or tapping) the visible label toggle the hidden checkbox — standard label/input association, nothing hack-specific there. `~` (the general sibling combinator) is what lets `.details`, several elements away, react to `#toggle`'s `:checked` state, as long as both share the same parent and the checkbox comes first in markup order.
+
+<RainbowDivider />
+
+## Radios for "Only One Active at a Time"
+
+<CodeBlock language="css">
+{`
+  #tab1:checked ~ #panel-1,
+  #tab2:checked ~ #panel-2,
+  #tab3:checked ~ #panel-3 {
+    display: block;
+  }
+`}
+</CodeBlock>
+
+Radio inputs sharing one `name` are mutually exclusive by the browser's own native behavior — checking one automatically unchecks the rest. That's exactly the semantics a tab set needs, and it comes from the input type itself, not from anything written in CSS.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click between tabs, then the accordion header — every bit of this interaction is `:checked` and a sibling selector, no event listener anywhere on the page.
+
+<Sandbox slug="checkbox-radio-toggle-hack" readOnly />
+
+<RainbowDivider />
+
+## The Same Trick for a Modal
+
+<CodeBlock language="css">
+{`
+  .modal-overlay {
+    display: none;
+  }
+
+  #modal-toggle:checked ~ .modal-overlay {
+    display: flex; /* center the modal content, dim the backdrop, etc. */
+  }
+`}
+</CodeBlock>
+
+A modal is the identical pattern with a different visible result — a `<label for="modal-toggle">` opens it, and a *second* `<label for="modal-toggle">` placed inside the overlay (as a "×" close button) closes it, since multiple labels can target the same input.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A small, self-contained accordion/FAQ or tab set where reaching for a JS component (or a `useState`) feels like overkill for "show one thing, hide the rest"
+- Server-rendered/static pages (a Markdown-generated site, an email-adjacent HTML fragment) where no JavaScript runtime is guaranteed to run at all
+- A quick prototype of an interaction's visual states, before wiring up real component state
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This only works when the toggle and its target are structurally arrangeable as siblings.** The `~` combinator can't reach into a different subtree or cross out of a parent — a deeply nested target sometimes forces markup restructuring purely to satisfy the selector, which is the pattern's biggest real limitation.
+* **State lives in the DOM's checkbox, not in application state.** A checkbox's checked-ness isn't visible to a JS framework's own state management, isn't serializable the way a `useState` value is, and resets to its `checked`/unchecked default attribute on a fresh page load — fine for pure presentation, wrong for anything a server or app logic needs to know about.
+* **A group of independent checkboxes styled to look like radio-exclusive tabs will still let all of them be checked at once** — actual mutual exclusivity requires real `<input type="radio">` elements sharing one `name`, not checkboxes styled to merely look that way.
+* **`display: none`/`max-height: 0` transitions of content driven this way are unanimated by default** the same way any other CSS state-change is — `max-height` with a `transition` (as the accordion demo uses) is the usual workaround for animating "open," since `display` itself cannot be transitioned.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A hidden checkbox or radio group, a label as the visible control, and a sibling selector keyed on `:checked` recreates an accordion, tab set, or modal with no JavaScript at all — reach for it specifically when the interaction is simple, the markup can stay flat enough for sibling selectors to reach everything, and the toggle state genuinely doesn't need to exist anywhere outside the DOM.

@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "checkbox-radio-toggle-hack",
+    title: "JS-Free Toggles with the Checkbox/Radio Hack",
+    excerpt: "A hidden input's own :checked state, plus a sibling selector, builds an accordion or tab set with zero JS.",
+    description: "A hidden checkbox or radio group paired with a label and a sibling selector keyed on :checked reuses the browser's own native toggle state to build an accordion, tab set, or modal with no JavaScript at all — real, keyboard-operable form controls doing the state-tracking a useState or event listener would otherwise be written for.",
+    category: ["CSS"],
+    tags: ["css", "checkbox-hack", "accordion", "tabs", "sibling-selector"],
+    image: {
+      path: "/assets/img/goodies/snippets/checkbox-radio-toggle-hack/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A tab set built from three radio inputs and an accordion built from one checkbox, both toggled entirely through :checked and sibling CSS selectors with no JavaScript."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "custom-scrollbar-styling",
     title: "Custom Scrollbars with scrollbar-color and ::-webkit-scrollbar",
     excerpt: "Style the browser's own native scrollbar directly — no JS-driven replacement element required.",
