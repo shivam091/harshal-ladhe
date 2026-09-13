@@ -385,6 +385,8 @@ Use sparingly — excessive `will-change` declarations force the browser to imme
   Even today, I occasionally see some small differences between `will-change` and the `translateZ` trick in specific/niche situations. This is becoming less and less common, but it's a good reminder to always do your own testing, to make sure that these techniques work on the devices and browsers you target.
 </Info>
 
+Want to see the "add it just before, remove it right after" discipline in action instead of just reading about it? My [Hinting Layer Promotion with will-change](/snippet/will-change-property) snippet has a live sandbox comparing that pattern against always-on and no-hint at all, logged against the element's real `will-change` value.
+
 <RainbowDivider />
 
 ## Common Pitfalls
