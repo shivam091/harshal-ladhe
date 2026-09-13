@@ -736,6 +736,10 @@ When animating frequently changing properties like `transform` or `opacity`, you
 `}
 </CodeBlock>
 
+<Info title="For a deep dive into will-change">
+  For a deep dive into the performance benefits and necessary cautions of using `will-change` (especially concerning memory and GPU usage), please refer to the dedicated section in my [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide#the-will-change-property) post, or the runnable [Hinting Layer Promotion with will-change](/tutorial/will-change-property) snippet, which compares no hint, always-on, and the recommended toggle-before/after pattern live.
+</Info>
+
 Use it selectively — overusing it consumes more memory and GPU resources.
 
 ## Accessibility: Respecting Motion Preferences
