@@ -72,6 +72,20 @@ export const sandboxes: SandboxMeta[] = [
     entry: "/index.html"
   },
   {
+    slug: "css-scroll-driven-animations",
+    title: "Scroll-Driven Animations Playground",
+    description: "A scroll()-timeline progress bar and a view()-timeline reveal — tune animation-range live to see how each named range (entry, cover, contain) times the animation against scroll position.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
+    slug: "css-keyframes-guide",
+    title: "CSS Keyframes Playground",
+    description: "Tune duration, delay, timing function, iteration count, direction, and fill mode live against a multi-step @keyframes animation.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "css-transitions-guide",
     title: "CSS Transitions Playground",
     description: "Tune duration, delay, and timing function (preset, cubic-bezier, or steps) live against a transform + background-color transition.",
