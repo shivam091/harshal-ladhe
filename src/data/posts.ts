@@ -371,6 +371,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-12", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "css-keyframes-guide",
+    title: "An Interactive Guide to CSS Keyframes",
+    excerpt: "Bring static designs to life with keyframes",
+    description: "Master multi-step CSS animations using @keyframes. Learn control, performance, GPU optimization, and advanced web motion.",
+    category: ["Animations"],
+    tags: ["css", "keyframes", "animation", "gpu-performance", "multi-step", "web-motion", "ui-design", "frontend", "scroll-animation", "view-timeline", "advanced-css", "browser-support"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-keyframes-guide/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-themed CSS keyframes guide cover showing multi-step animation timelines, a bouncing gradient sphere, CSS @keyframes code, animation controls, smooth animation examples, and a laptop on a dark developer workspace."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Between the core keyframes playground and a second sandbox built just to make `animation-timeline` and `animation-range` tangible — complete with a live range slider and its own feature-detection fallback for browsers that don't support scroll-driven animations yet — this one ended up needing two full interactive builds instead of one. Getting the `animation-range` diagram to actually line up entry/contain/cover/exit against a scrolling element took more iteration than the rest of the post combined. Thanks for tweaking every duration, delay, and range slider with me — go give your loops, spinners, and scroll reveals some real personality. 🎬",
+    changelog: [
+      { date: "2026-09-13", change: "Initial publication" }
+    ],
   }
 ];
 
