@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "custom-scrollbar-styling",
+    title: "Custom Scrollbars with scrollbar-color and ::-webkit-scrollbar",
+    excerpt: "Style the browser's own native scrollbar directly — no JS-driven replacement element required.",
+    description: "scrollbar-color and scrollbar-width now style a native scrollbar's thumb/track color and width with standard, cross-browser CSS, and the older ::-webkit-scrollbar pseudo-element family fills in what the standard properties still can't express — an exact pixel thickness, rounded thumb corners — without replacing the real scrollbar with a JS-driven substitute.",
+    category: ["CSS"],
+    tags: ["css", "scrollbar", "scrollbar-color", "webkit-scrollbar", "scrollbar-width"],
+    image: {
+      path: "/assets/img/goodies/snippets/custom-scrollbar-styling/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A scrollable list panel with a custom-colored, rounded scrollbar thumb, with controls to change its color and toggle scrollbar-width between auto and thin."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "history-pushstate-spa-navigation",
     title: "SPA-Style Navigation with history.pushState() — No Router",
     excerpt: "pushState changes the URL, popstate reacts to Back/Forward — the two primitives every router is built on.",

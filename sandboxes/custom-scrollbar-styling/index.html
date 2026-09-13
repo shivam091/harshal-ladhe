@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Scrollbar Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Custom Scrollbars</h1>
+        <p>scrollbar-color drives Firefox/current Chrome; the ::-webkit-scrollbar pseudo-elements back it up in older WebKit/Blink.</p>
+      </header>
+
+      <div class="demo-area">
+        <ul class="scroll-panel" id="scroll-panel">
+          <!-- 24 filler rows, generated below in index.js, keep this list scrollable -->
+        </ul>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>Thumb color</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Thumb color">
+          <label class="segment">
+            <input type="radio" name="color" value="indigo" checked>
+            <span>Indigo</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="color" value="teal">
+            <span>Teal</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="color" value="rose">
+            <span>Rose</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>scrollbar-width</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="scrollbar-width">
+          <label class="segment">
+            <input type="radio" name="width" value="auto" checked>
+            <span>auto</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="width" value="thin">
+            <span>thin</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

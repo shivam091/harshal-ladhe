@@ -1,0 +1,76 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("custom-scrollbar-styling");
+
+## Introduction
+
+Scrollbars used to be one of the few UI pieces CSS couldn't touch at all — styling one meant a JS-driven custom-scrollbar library replacing the native element entirely, overlay and all. **`scrollbar-color`** and **`scrollbar-width`** now style the browser's own native scrollbar directly, standardized and (as of recently) supported across every major engine; the older **`::-webkit-scrollbar`** family of pseudo-elements still fills in gaps where the standard properties alone aren't expressive enough.
+
+<RainbowDivider />
+
+## The Standard Properties
+
+<CodeBlock language="css">
+{`
+  .scroll-panel {
+    scrollbar-color: #818cf8 transparent; /* thumb color, then track color */
+    scrollbar-width: thin;                /* auto | thin | none — no arbitrary pixel widths */
+  }
+`}
+</CodeBlock>
+
+Two properties, two values each: `scrollbar-color` takes the thumb color first, the track color second (`transparent` is a legal value here, letting the track show whatever's behind it). `scrollbar-width` only accepts the keywords `auto`, `thin`, or `none` — there's no standardized way to request an exact pixel thickness.
+
+<RainbowDivider />
+
+## The WebKit Pseudo-Elements
+
+<CodeBlock language="css">
+{`
+  .scroll-panel::-webkit-scrollbar {
+    width: 10px; /* an exact thickness — not possible with scrollbar-width alone */
+  }
+
+  .scroll-panel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scroll-panel::-webkit-scrollbar-thumb {
+    background: #818cf8;
+    border-radius: 999px;
+  }
+`}
+</CodeBlock>
+
+These predate the standard properties by years and remain the only way to set an exact scrollbar thickness or round the thumb's corners — pairing both approaches (as this snippet's sandbox does) means whichever the browser understands actually takes effect, with no feature detection required.
+
+<RainbowDivider />
+
+## Try It Live
+
+Switch the thumb color and toggle `scrollbar-width` between `auto` and `thin` — both the standard property and its WebKit pseudo-element equivalent update together.
+
+<Sandbox slug="custom-scrollbar-styling" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A scrollable panel, sidebar, or code block that should match the surrounding design system rather than the OS's default scrollbar chrome
+- A dark-themed UI, where the OS's light-mode-default scrollbar can otherwise look jarringly out of place
+- Slimming down a scrollbar (`scrollbar-width: thin`, or a narrow `::-webkit-scrollbar` width) in a dense UI where the default width eats into limited horizontal space
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Don't remove scrollbars entirely without another visible affordance that content scrolls.** `scrollbar-width: none` (or a zero-width WebKit scrollbar) hides the indicator some users rely on to notice there's more content — pair it with something else signaling overflow (a fade, a shadow, visible partial content) if the scrollbar itself is being hidden.
+* **`scrollbar-color`'s track value affects hit-testing/visual area, not just color** — `transparent` is common specifically so the track blends into whatever background sits behind the scrollable element, rather than drawing its own visible strip.
+* **Only the two colors and the auto/thin/none keyword are standardized** — anything beyond that (rounded corners, a gradient thumb, hover-state color changes) still requires the WebKit pseudo-elements, which Firefox has never implemented and likely won't, favoring the standard properties instead.
+* **This only affects scrollbars *within* the page** (an overflowing element, or the document itself) — it has no effect on OS-level UI like a browser's own tab strip or a native scrollbar belonging to a different application.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`scrollbar-color` and `scrollbar-width` now cover the common case — a themed thumb/track color and a slimmer width — with genuinely standard, cross-browser CSS. Reach for the `::-webkit-scrollbar` pseudo-elements alongside them only for the specific things the standard properties still can't express, like an exact pixel thickness or a rounded thumb.

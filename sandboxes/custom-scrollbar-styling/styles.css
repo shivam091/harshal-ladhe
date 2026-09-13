@@ -1,0 +1,39 @@
+.scroll-panel {
+  --thumb-color: #818cf8;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+
+  /* Standard property — Firefox and current Chromium (121+) */
+  scrollbar-color: var(--thumb-color) transparent;
+}
+
+.scroll-panel li {
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: 6px;
+}
+
+.scroll-panel li:last-child {
+  margin-bottom: 0;
+}
+
+/* Legacy WebKit/Blink pseudo-elements — needed for full control (thickness, rounded thumb) in browsers that don't yet map scrollbar-color to anything more than a flat color. */
+.scroll-panel::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scroll-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-panel::-webkit-scrollbar-thumb {
+  background: var(--thumb-color);
+  border-radius: 999px;
+  border: 2px solid var(--pg-surface-muted);
+}

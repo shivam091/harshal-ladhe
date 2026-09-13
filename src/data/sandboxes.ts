@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "custom-scrollbar-styling",
+    title: "Custom Scrollbar Playground",
+    description: "A scrollable list with a themed scrollbar — switch the thumb color and toggle scrollbar-width between auto and thin, with scrollbar-color and the ::-webkit-scrollbar pseudo-elements updating together.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "history-pushstate-spa-navigation",
     title: "pushState Navigation",
     description: "Click between three linked views, then use the Back/Forward buttons — the URL, the active nav item, and the panel below all move together via history.pushState() and popstate, with no page reload and no router library.",
