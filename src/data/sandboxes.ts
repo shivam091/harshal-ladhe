@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "reorder-list-items-drag-and-drop",
+    title: "Reorder a List",
+    description: "Drag any row up or down — dragover splices it into its new position live as it crosses each neighbor, so the list is already in its final order well before you release it.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "css-order-property-reordering",
     title: "order Property Playground",
     description: "Drag the slider to change item 3's order value and watch it slide across the row — its label never changes, and Tab still visits every item in its original 1-2-3-4-5 sequence regardless of where it's currently sitting.",

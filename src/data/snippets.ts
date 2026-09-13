@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "reorder-list-items-drag-and-drop",
+    title: "Reordering Items Within a List with Drag and Drop",
+    excerpt: "Every row is both a drag source and a drop target — dragover splices the array live as it moves.",
+    description: "Reordering rows within a single list reuses the same HTML Drag and Drop API as moving items between containers, but keys the reorder off dragover firing on each sibling row — splicing the dragged item out of its old array position and into the row currently being hovered, live, well before drop ever fires.",
+    category: ["HTML"],
+    tags: ["html", "drag-and-drop", "reordering", "sortable-list", "datatransfer"],
+    image: {
+      path: "/assets/img/goodies/snippets/reorder-list-items-drag-and-drop/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A five-row to-do list reordering live as one row is dragged past its neighbors, using the native HTML Drag and Drop API."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "css-order-property-reordering",
     title: "Reordering Elements Visually with the CSS order Property",
     excerpt: "Flex/grid items reshuffle on screen while the DOM — and everything that reads it — stays untouched.",

@@ -1,0 +1,83 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("reorder-list-items-drag-and-drop");
+
+## Introduction
+
+Moving a card between two columns is one shape of drag-and-drop; reordering rows *within* a single list — a to-do list, a priority queue, a playlist — is a related but distinct problem: every row is both a drag source and a drop target, and the actual work is recomputing the array's order as the dragged row passes over its neighbors. The [HTML Drag and Drop API](/snippet/drag-and-drop-api) still does all the lifting; the difference here is entirely in how `dragover` is handled.
+
+<RainbowDivider />
+
+## The Core Technique
+
+<CodeBlock language="js">
+{`
+  let draggedIndex = null;
+
+  row.addEventListener("dragstart", (e) => {
+    draggedIndex = Number(row.dataset.index);
+  });
+
+  row.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    const overIndex = Number(row.dataset.index);
+    if (draggedIndex === overIndex) return;
+
+    const [moved] = items.splice(draggedIndex, 1); // remove from its old position
+    items.splice(overIndex, 0, moved);              // reinsert at the position being hovered
+    draggedIndex = overIndex;                       // track the item's new position for the next dragover
+    render(items);
+  });
+`}
+</CodeBlock>
+
+Every row listens for `dragover` on itself, not just the list as a whole — that's what makes "which row is currently being hovered" available as `overIndex`. Reordering the underlying array the instant the dragged row crosses into a new position (rather than waiting for `drop`) is what makes the list visually reshuffle in real time as the drag moves, the same live-reorder feel `SortableJS`-style libraries have.
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag any row up or down — the list reorders live as the dragged row crosses over each neighbor, well before you release it.
+
+<Sandbox slug="reorder-list-items-drag-and-drop" readOnly />
+
+<RainbowDivider />
+
+## Why drop Barely Does Anything Here
+
+<CodeBlock language="js">
+{`
+  row.addEventListener("drop", (e) => {
+    e.preventDefault(); // the reorder already happened during dragover — this just formally accepts it
+  });
+
+  row.addEventListener("dragend", () => {
+    draggedIndex = null; // clear the "currently dragging" styling regardless of where the drag ended
+  });
+`}
+</CodeBlock>
+
+Because the array is already in its final order by the time the drag is released, `drop` only needs `preventDefault()` to formally accept it — there's no separate "commit the reorder" step left to do. `dragend` (which, like the [task-board snippet](/snippet/drag-and-drop-api), fires regardless of whether the drop landed on a valid target) is where the "currently being dragged" visual state gets cleared.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A to-do list, priority queue, or playlist where the *order itself* is the data being edited, not which of several containers an item belongs to
+- Reordering form fields, questions, or steps in a builder UI where sequence matters
+- Any flat, single-list reorder — for moving items *between* multiple lists/columns, see the [drag-and-drop task board snippet](/snippet/drag-and-drop-api) instead
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Key rows by a stable, unique id — never by array index.** This snippet's sandbox keys by each row's own text only because every label here happens to be unique; the moment two rows could share a label (or the data has a real id already), index-based or content-based keys risk the wrong DOM node getting reused mid-drag, which can visibly break the drag interaction partway through.
+* **Reordering on every `dragover` re-renders the whole list on every pixel the cursor crosses a row boundary.** Fine for a short list; for a genuinely long one (hundreds of rows), throttling the reorder computation or only reordering once the cursor has been over a new row for a brief moment avoids a flood of renders during a fast drag.
+* **This inherits every limitation of the underlying Drag and Drop API** — no touch support, no keyboard operability. A production reorderable list usually needs an alternative (explicit move-up/move-down buttons, at minimum) alongside the drag interaction for both cases, or a library built on Pointer Events (`@dnd-kit`, `react-beautiful-dnd`'s successors) if drag-to-reorder specifically must work on mobile.
+* **Persisting the new order is a separate step this snippet doesn't cover.** `dragend` (or right after the array update) is the natural place to fire off whatever save/sync call makes the new order durable — nothing here writes it anywhere beyond the component's own state.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Reordering within one list is the same Drag and Drop API as moving between containers, with the twist that `dragover` fires on sibling rows and reorders the array live as the dragged item crosses each one — `drop` ends up doing almost nothing, since the array is already correct by the time it fires. Reach for a library the moment touch or keyboard support becomes a real requirement; this pattern covers the mouse-only case with no dependency at all.
