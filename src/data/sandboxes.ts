@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "array-at-findlast-findlastindex",
+    title: "at() / findLast() / findLastIndex()",
+    description: "Append success/error/pending entries to a request log and watch log.at(-1), log.findLast(isError), and log.findLastIndex(isError) recompute live, with the flagged entry in the log tracking whichever one findLastIndex currently points to.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "crypto-random-uuid",
     title: "crypto.randomUUID()",
     description: "Click Add item and watch a fresh crypto.randomUUID() get generated for each one — a real RFC 4122 v4 UUID, no two ever colliding.",

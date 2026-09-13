@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "array-at-findlast-findlastindex",
+    title: "Array.prototype.at(), findLast(), and findLastIndex()",
+    excerpt: "Negative indexing and backwards search, without a temp variable or a reversed copy.",
+    description: "at(-1) replaces arr[arr.length - 1], and findLast()/findLastIndex() replace the [...arr].reverse().find() pattern — searching from the end directly, without copying/reversing the array first or ending up with an index that only makes sense on the reversed copy.",
+    category: ["JavaScript"],
+    tags: ["javascript", "array-methods", "at", "findlast", "findlastindex"],
+    image: {
+      path: "/assets/img/goodies/snippets/array-at-findlast-findlastindex/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A request log with at(-1), findLast(), and findLastIndex() results recomputing live as new entries are appended."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "crypto-random-uuid",
     title: "Generating Unique IDs with crypto.randomUUID()",
     excerpt: "A built-in, dependency-free RFC 4122 v4 UUID, one call away.",

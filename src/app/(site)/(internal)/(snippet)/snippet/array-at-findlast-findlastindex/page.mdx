@@ -1,0 +1,77 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("array-at-findlast-findlastindex");
+
+## Introduction
+
+Three small array methods quietly remove a whole category of "search from the end" workarounds: **`.at(-1)`** replaces `arr[arr.length - 1]`, and **`.findLast()`**/**`.findLastIndex()`** replace `[...arr].reverse().find(...)` — a pattern that copies and reverses the entire array just to search it backwards.
+
+<RainbowDivider />
+
+## at(): Negative Indexing, Finally
+
+<CodeBlock language="js">
+{`
+  const requests = ["r1", "r2", "r3"];
+
+  requests[requests.length - 1]; // "r3" — the old way
+  requests.at(-1);               // "r3" — the same thing, no temp variable needed
+  requests.at(-2);               // "r2" — any negative index counts back from the end
+`}
+</CodeBlock>
+
+`.at()` works on arrays, strings, and typed arrays alike, and accepts positive indices too (`arr.at(0) === arr[0]`) — it's a drop-in superset of bracket indexing, not a separate API to remember for the negative case only.
+
+<RainbowDivider />
+
+## findLast() and findLastIndex(): Searching Backwards
+
+<CodeBlock language="js">
+{`
+  const requests = [
+    { id: 1, status: "success" },
+    { id: 2, status: "error" },
+    { id: 3, status: "success" },
+  ];
+
+  // Before: copy the whole array, reverse it, then search
+  const lastError = [...requests].reverse().find((r) => r.status === "error");
+
+  // Now: search from the end directly, no copy
+  requests.findLast((r) => r.status === "error");      // { id: 2, status: "error" }
+  requests.findLastIndex((r) => r.status === "error");  // 1 — the ORIGINAL array's index, not the reversed one
+`}
+</CodeBlock>
+
+The `[...arr].reverse().find()` pattern has a subtle bug built in beyond just the wasted copy: the index `.findIndex()` would return on the reversed copy doesn't correspond to any position in the original array at all. `.findLastIndex()` returns the original array's real index directly — there's no reversed-index math to get wrong.
+
+<RainbowDivider />
+
+## Try It Live
+
+Append entries and watch `.at(-1)`, `.findLast()`, and `.findLastIndex()` recompute live — the flagged entry in the log is whichever one `findLastIndex` currently points to.
+
+<Sandbox slug="array-at-findlast-findlastindex" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- The last item in any array — a log, a history stack, a paginated list's final page — in place of `arr[arr.length - 1]`
+- "Most recent matching entry" searches (the last error, the last completed step, the last message from a given user) instead of reversing a copy to search backwards
+- Any place currently computing a reversed-array index and converting it back to the original array's indexing by hand
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **All three return `undefined`/`-1` on no match or an empty array**, exactly like their forward-searching counterparts (`.find()`/`.findIndex()`) and like out-of-bounds `.at()` — no new failure mode to handle, the existing "check for undefined" habit carries over directly.
+* **`.at()` does not support step/slice-style ranges** — it returns exactly one element for exactly one index; reach for `.slice()` when a range of elements is actually needed, not a single one.
+* **Node.js and browser support are both broad at this point** — `.at()` shipped in Node 16.6/Chrome 92, `.findLast()`/`.findLastIndex()` in Node 18/Chrome 97 — safe to use directly in any reasonably current environment without a polyfill.
+* **Mutating methods (`.reverse()`, `.sort()`) still mutate in place** — `.findLast()` doesn't change that; it's a wholly separate, non-mutating way to search, not a replacement for `.reverse()` itself when a genuinely reversed array is what's actually needed elsewhere.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`.at(-1)` and `.findLast()`/`.findLastIndex()` cover "the end of the array" and "the last match" directly, without a temp variable for the former or a wasteful (and index-confusing) reverse-then-search for the latter. Small methods, but they delete a whole category of boilerplate wherever "most recent" is the question being asked.
