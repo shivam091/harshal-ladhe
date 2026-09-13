@@ -1,0 +1,97 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("copy-to-clipboard-with-fallback");
+
+## Introduction
+
+`navigator.clipboard.writeText()` is the modern way to put text on the clipboard — async, Promise-based, no `document.execCommand` deprecation warning. It also isn't universally guaranteed: it needs a secure context, and a user or browser can deny clipboard permission outright. A "Copy" button that's supposed to just work everywhere still needs a fallback to the older technique underneath it.
+
+<RainbowDivider />
+
+## The Modern Path
+
+<CodeBlock language="js">
+{`
+  async function copyToClipboard(text) {
+    await navigator.clipboard.writeText(text);
+  }
+`}
+</CodeBlock>
+
+One call, no selection ranges or hidden elements involved. `navigator.clipboard` only exists in a secure context (HTTPS or `localhost`), and `writeText()` can still reject — most commonly because the page lacks clipboard-write permission, which some browsers gate behind a user gesture or an explicit prompt.
+
+<RainbowDivider />
+
+## The Fallback
+
+<CodeBlock language="js">
+{`
+  function legacyCopy(text) {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.top = "-9999px"; // off-screen, never visible
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    const succeeded = document.execCommand("copy"); // deprecated, but still broadly supported
+    document.body.removeChild(textarea);
+    return succeeded;
+  }
+`}
+</CodeBlock>
+
+This is the pattern every "copy to clipboard" implementation used before the async Clipboard API existed: create an off-screen `<textarea>`, put the target text in it, select that selection, and let `execCommand("copy")` act on whatever's currently selected. `execCommand` is formally deprecated, but browsers still support the `"copy"` command specifically — removing it would break a huge fraction of the web's existing copy buttons.
+
+<RainbowDivider />
+
+## Combining Both
+
+<CodeBlock language="ts">
+{`
+  async function copyToClipboard(text: string): Promise<boolean> {
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // permission denied or unsupported — fall through
+      }
+    }
+    return legacyCopy(text);
+  }
+`}
+</CodeBlock>
+
+`navigator.clipboard?.writeText` guards against browsers where the API doesn't exist at all; the `try`/`catch` around the call itself guards against the API existing but the write being refused. Either way, `legacyCopy()` is what actually runs when the modern path isn't available — the function always resolves to whether the text actually made it onto the clipboard.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click Copy — under the hood this calls `navigator.clipboard.writeText()`, with the textarea fallback ready to take over in any environment that can't.
+
+<Sandbox slug="copy-to-clipboard-with-fallback" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any "Copy" button — a code snippet, a generated link, an API key, a coupon code
+- Utility functions/design-system components meant to run across a range of browser versions and embedding contexts, not just the latest evergreen browser
+- Anywhere `document.execCommand` is still present in a codebase purely for copying — safe to keep as the fallback, but the async API should be the first attempt
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`navigator.clipboard` requires a secure context.** Over plain HTTP on a non-`localhost` origin, the API doesn't exist at all — `navigator.clipboard` itself is `undefined`, which is exactly what the optional-chained `navigator.clipboard?.writeText` check above is for.
+* **Some browsers only allow `writeText()` from within a direct user-gesture handler** (a click), not from an arbitrary async callback fired later — keep the call inside the click handler itself rather than deferring it behind another await first.
+* **`execCommand("copy")` depends on an active text selection** — this is exactly why the fallback creates and selects a real (if invisible) textarea rather than trying to copy a string directly; `execCommand` has no "copy this text" form, only "copy the current selection."
+* **Reading the clipboard is a separate, more tightly permissioned API** (`navigator.clipboard.readText()`) — this snippet only covers writing to it; don't assume the same permission model applies to reading a value back out.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`navigator.clipboard.writeText()` should be the first thing any copy button reaches for, with the textarea-plus-`execCommand` technique kept underneath as a fallback for insecure contexts, denied permissions, or older browsers. Neither one alone covers every environment a copy button might run in — together, they do.

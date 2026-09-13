@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "copy-to-clipboard-with-fallback",
+    title: "Copy to Clipboard with a Fallback",
+    excerpt: "navigator.clipboard.writeText() first, an off-screen textarea and execCommand behind it.",
+    description: "navigator.clipboard.writeText() is the modern, Promise-based way to copy text, but it needs a secure context and can still be denied permission — pairing it with the older off-screen-textarea-plus-execCommand(\"copy\") technique as a fallback covers the browsers and contexts the async API alone doesn't.",
+    category: ["JavaScript"],
+    tags: ["javascript", "clipboard", "clipboard-api", "execcommand", "fallback"],
+    image: {
+      path: "/assets/img/goodies/snippets/copy-to-clipboard-with-fallback/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A code snippet with a Copy button showing 'Copied!' feedback after navigator.clipboard.writeText() succeeds."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "drag-and-drop-api",
     title: "Reordering Lists with the HTML Drag and Drop API",
     excerpt: "draggable plus a handful of native events moves real data between elements — no library needed.",

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "copy-to-clipboard-with-fallback",
+    title: "Copy to Clipboard",
+    description: "Click Copy — navigator.clipboard.writeText() runs first, with an off-screen textarea and execCommand(\"copy\") ready to take over anywhere the async API isn't available.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "drag-and-drop-api",
     title: "Drag & Drop Task Board",
     description: "Drag a card between two columns — dragstart stashes its id in DataTransfer, dragover opts the column in to accept it (highlighting as it does), and drop reads the id back out to move the task.",
