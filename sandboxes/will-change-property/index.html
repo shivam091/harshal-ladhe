@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>will-change Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>will-change: transform</h1>
+        <p>Pick a strategy, then move the box. The log below shows the box's <em>real</em>, live <code>will-change</code> value — not a simulation — so you can watch the hint get added and removed (or not).</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Strategy</legend>
+
+        <div class="tabs" role="tablist" aria-label="will-change strategy">
+          <button class="tab tab--active" type="button" data-mode="none" role="tab" aria-selected="true">No hint</button>
+          <button class="tab" type="button" data-mode="toggle" role="tab" aria-selected="false">Toggle before/after</button>
+          <button class="tab" type="button" data-mode="always" role="tab" aria-selected="false">Always on</button>
+        </div>
+
+        <div id="demo-area" class="demo-area">
+          <div id="demo-box" class="demo-box">Move me</div>
+        </div>
+
+        <output id="status" class="readout" aria-live="polite">will-change: auto</output>
+
+        <div class="button-row">
+          <button id="move-btn" class="toggle-btn" type="button">Move box</button>
+        </div>
+      </fieldset>
+
+      <p class="tip">Event log — newest first:</p>
+      <output id="log" class="readout log" aria-live="polite">Choose a strategy and click "Move box" to start.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
