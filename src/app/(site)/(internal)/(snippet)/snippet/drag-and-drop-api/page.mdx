@@ -1,0 +1,92 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("drag-and-drop-api");
+
+## Introduction
+
+Moving a card between two lists, reordering rows in a table, dragging a file onto an upload zone — these all feel like they need a library. The browser has natively supported this since IE5: the **HTML Drag and Drop API** turns any element into a drag source with a single `draggable` attribute, and a small, fixed sequence of events (`dragstart`, `dragover`, `drop`, `dragend`) carries data from wherever the drag began to wherever it ends, via a `DataTransfer` object built for exactly that.
+
+<RainbowDivider />
+
+## The Core Events
+
+<CodeBlock language="js">
+{`
+  // On the element being dragged
+  card.addEventListener("dragstart", (e) => {
+    e.dataTransfer.setData("text/plain", card.id); // stash data for the eventual drop target to read
+  });
+
+  // On the element that can receive a drop
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault(); // REQUIRED — signals "yes, a drop is allowed here"
+  });
+
+  dropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/plain"); // read back what dragstart stashed
+    moveCardInto(dropZone, id);
+  });
+`}
+</CodeBlock>
+
+`draggable="true"` (the default on links and images, opt-in via the attribute on everything else) is what makes an element pick-uppable at all. `DataTransfer` is the only channel connecting the two ends — whatever `dragstart` writes to it with `setData()` is what `drop` reads back with `getData()`, even though the two elements have no direct reference to each other.
+
+<RainbowDivider />
+
+## The One Line Everyone Forgets
+
+<CodeBlock language="js">
+{`
+  dropZone.addEventListener("dragover", (e) => {
+    e.preventDefault(); // without this, the browser's default action wins and drop never fires
+  });
+`}
+</CodeBlock>
+
+Every element rejects drops by default — `dragover`'s default action *is* "refuse this." Calling `preventDefault()` inside the `dragover` handler is what opts an element into accepting one; skip it, and the `drop` event silently never fires on that element at all, no error, nothing in the console.
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag a card from one column into the other — `dragstart` stashes the card's id, `dragover` opts the column in to accept it (and highlights it), and `drop` reads the id back out and moves the task.
+
+<Sandbox slug="drag-and-drop-api" readOnly />
+
+<RainbowDivider />
+
+## Highlighting the Drop Target
+
+<CodeBlock language="js">
+{`
+  dropZone.addEventListener("dragenter", () => dropZone.classList.add("drag-over"));
+  dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+  dropZone.addEventListener("drop", () => dropZone.classList.remove("drag-over"));
+`}
+</CodeBlock>
+
+`dragenter`/`dragleave` fire as the dragged element crosses a potential target's boundary, independent of `dragover` (which keeps firing continuously while hovering) — the pair most components actually reach for just to toggle a "you can drop here" highlight class, without needing to track position on every `dragover` tick.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Reordering items within a list, or moving them between lists/columns (a kanban board, a playlist, a form builder's field order)
+- Accepting files dropped from the user's OS onto an upload zone (`dataTransfer.files` holds the dropped `File` objects directly, same shape as a file input's `files`)
+- Simple cases where a full drag-and-drop library (`react-dnd`, `@dnd-kit`, SortableJS) would be more machinery than the interaction actually needs
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This API has no touch support at all.** `dragstart`/`dragover`/`drop` are pointer/mouse events only — dragging on a touchscreen fires none of them. Shipping drag-and-drop that must also work on mobile means reaching for a library built on Pointer Events (`@dnd-kit`, `react-dnd`'s touch backend) instead of this API alone.
+* **Native drag-and-drop is not keyboard-accessible**, and has no built-in equivalent — there's no "press Enter to pick up, arrow keys to move" behavior for free. Anything reorderable needs a keyboard-operable alternative (explicit move-up/move-down buttons, at minimum) alongside the drag interaction, not instead of accessible controls.
+* **`dataTransfer.setData`/`getData` can store multiple formats on one drag** (`"text/plain"`, `"text/html"`, a custom MIME-like type string) — reading the wrong format back returns an empty string, not an error, so a mismatched type string between `setData` and `getData` fails silently.
+* **`dragend` fires on the *source* element regardless of whether the drop succeeded** — even a drag released outside any valid drop target still fires `dragend`, making it the right place for cleanup (removing a "being dragged" class, resetting state) rather than trying to detect failure inside `drop` itself.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`draggable` plus `dragstart`/`dragover`/`drop` — with `preventDefault()` in `dragover` as the one easy-to-miss step — covers drag-and-drop natively, no dependency required. Reach past it only once touch support or keyboard accessibility is a real requirement, since neither comes with this API for free.

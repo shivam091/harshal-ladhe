@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "drag-and-drop-api",
+    title: "Drag & Drop Task Board",
+    description: "Drag a card between two columns — dragstart stashes its id in DataTransfer, dragover opts the column in to accept it (highlighting as it does), and drop reads the id back out to move the task.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "array-at-findlast-findlastindex",
     title: "at() / findLast() / findLastIndex()",
     description: "Append success/error/pending entries to a request log and watch log.at(-1), log.findLast(isError), and log.findLastIndex(isError) recompute live, with the flagged entry in the log tracking whichever one findLastIndex currently points to.",

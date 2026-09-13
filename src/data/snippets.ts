@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "drag-and-drop-api",
+    title: "Reordering Lists with the HTML Drag and Drop API",
+    excerpt: "draggable plus a handful of native events moves real data between elements — no library needed.",
+    description: "The HTML Drag and Drop API turns any element into a drag source via the draggable attribute, and a fixed sequence of events (dragstart, dragover, drop, dragend) carries data between the drag's source and its eventual drop target through a DataTransfer object, covering list reordering and file-drop zones without a dedicated library.",
+    category: ["HTML"],
+    tags: ["html", "drag-and-drop", "datatransfer", "dragstart", "drop"],
+    image: {
+      path: "/assets/img/goodies/snippets/drag-and-drop-api/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A two-column task board with a card being dragged from the To Do column into the Done column using the native HTML Drag and Drop API."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "array-at-findlast-findlastindex",
     title: "Array.prototype.at(), findLast(), and findLastIndex()",
     excerpt: "Negative indexing and backwards search, without a temp variable or a reversed copy.",
