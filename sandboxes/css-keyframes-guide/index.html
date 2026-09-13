@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Keyframes Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS Keyframes Playground</h1>
+        <p>Tune timing and sequencing, then play, pause, or restart the animation.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Keyframe animation preview">
+        <div class="demo-track">
+          <div id="animated-box"></div>
+        </div>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Timing</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="duration-input">Duration</label>
+            <div class="field-input">
+              <input type="number" id="duration-input" min="0.2" max="6" step="0.1" value="1.4">
+              <select id="duration-unit" class="unit-select" aria-label="Duration unit">
+                <option value="s">s</option>
+                <option value="ms">ms</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="delay-input">Delay</label>
+            <div class="field-input">
+              <input type="number" id="delay-input" min="-3" max="3" step="0.1" value="0">
+              <select id="delay-unit" class="unit-select" aria-label="Delay unit">
+                <option value="s">s</option>
+                <option value="ms">ms</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="timing-select">Timing Function</label>
+            <select id="timing-select">
+              <option value="ease-in-out">ease-in-out</option>
+              <option value="linear">linear</option>
+              <option value="ease">ease</option>
+              <option value="ease-in">ease-in</option>
+              <option value="ease-out">ease-out</option>
+              <option value="cubic-bezier(0.68, -0.6, 0.32, 1.6)">cubic-bezier (ease-in-out-back)</option>
+              <option value="cubic-bezier(0.25, 0.46, 0.45, 0.94)">cubic-bezier (ease-out-quad)</option>
+              <option value="cubic-bezier(0.86, 0, 0.07, 1)">cubic-bezier (ease-in-out-quart)</option>
+              <option value="cubic-bezier(0.34, 1.56, 0.64, 1)">cubic-bezier (bounce)</option>
+              <option value="cubic-bezier(0.27, 0.22, 0.44, 1.03)">cubic-bezier (overshoot)</option>
+              <option value="cubic-bezier(0.68, -0.55, 0.265, 1.55)">cubic-bezier (punchy overshoot)</option>
+              <option value="cubic-bezier(0.36, 0, 0.66, -0.56)">cubic-bezier (anticipation)</option>
+              <option value="cubic-bezier(0.16, 1, 0.3, 1)">cubic-bezier (soft landing)</option>
+              <option value="cubic-bezier(0.7, 0, 0.84, 0)">cubic-bezier (sharp exit)</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Sequencing</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="iteration-select">Iteration Count</label>
+            <select id="iteration-select">
+              <option value="1" selected>1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="infinite">infinite</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="direction-select">Direction</label>
+            <select id="direction-select">
+              <option value="normal">normal</option>
+              <option value="reverse">reverse</option>
+              <option value="alternate" selected>alternate</option>
+              <option value="alternate-reverse">alternate-reverse</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="fill-mode-select">Fill Mode</label>
+            <select id="fill-mode-select">
+              <option value="none">none</option>
+              <option value="forwards" selected>forwards</option>
+              <option value="backwards">backwards</option>
+              <option value="both">both</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="tip">Fill mode only matters once the animation stops — try it with iteration count "1" or "3" so you can see where the box "lives" afterward.</p>
+      </fieldset>
+
+      <div class="button-row">
+        <button id="play-pause-btn" class="toggle-btn">Pause</button>
+        <button id="restart-btn" class="secondary-btn">Restart</button>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
