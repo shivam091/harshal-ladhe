@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "history-pushstate-spa-navigation",
+    title: "SPA-Style Navigation with history.pushState() — No Router",
+    excerpt: "pushState changes the URL, popstate reacts to Back/Forward — the two primitives every router is built on.",
+    description: "history.pushState() changes the URL and adds a history entry without a page reload, and the popstate event fires when the user moves through history via Back/Forward — together the same two primitives every client-side router is built on top of, enough on their own for a small set of views that deserve their own URL without a full router dependency.",
+    category: ["JavaScript"],
+    tags: ["javascript", "history-api", "pushstate", "popstate", "spa"],
+    image: {
+      path: "/assets/img/goodies/snippets/history-pushstate-spa-navigation/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A mini single-page app with three linked views, its URL and active nav item both updating via history.pushState() with no page reload, alongside Back/Forward buttons."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "request-idle-callback-deferred-work",
     title: "Deferring Non-Urgent Work with requestIdleCallback",
     excerpt: "Chunk it against a real idle-time budget, instead of firing it the instant setTimeout(fn, 0) can.",

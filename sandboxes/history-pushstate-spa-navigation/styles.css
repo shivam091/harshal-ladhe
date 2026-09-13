@@ -1,0 +1,94 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(220, 20%, 8%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.nav {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.nav button {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: hsl(210, 10%, 85%);
+  background: hsl(220, 15%, 16%);
+  border: 1px solid hsl(220, 15%, 24%);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.nav button.active {
+  color: #fff;
+  background: hsl(213, 70%, 45%);
+  border-color: hsl(213, 70%, 45%);
+}
+
+.browser-controls {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.browser-controls button {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  color: hsl(210, 12%, 65%);
+  background: transparent;
+  border: 1px solid hsl(220, 15%, 24%);
+  border-radius: 0.3125rem;
+  cursor: pointer;
+}
+
+.page {
+  padding: 1rem 1.125rem;
+  border-radius: 0.5rem;
+  background: hsl(220, 18%, 13%);
+  border: 1px solid hsl(220, 15%, 22%);
+}
+
+.page-path {
+  margin: 0 0 0.5rem;
+  font-size: 0.7rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  color: hsl(210, 12%, 55%);
+}
+
+.page h2 {
+  margin: 0 0 0.375rem;
+  font-size: 1rem;
+}
+
+.page p:last-child {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 70%);
+}

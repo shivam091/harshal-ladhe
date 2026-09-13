@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "history-pushstate-spa-navigation",
+    title: "pushState Navigation",
+    description: "Click between three linked views, then use the Back/Forward buttons — the URL, the active nav item, and the panel below all move together via history.pushState() and popstate, with no page reload and no router library.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "request-idle-callback-deferred-work",
     title: "requestIdleCallback",
     description: "Click Start to process 6,000 items in idle-time chunks — type into the input alongside the progress bar while it runs to see it stay fully responsive the whole time.",

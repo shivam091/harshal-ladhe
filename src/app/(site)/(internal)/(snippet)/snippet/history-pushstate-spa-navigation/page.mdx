@@ -1,0 +1,83 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("history-pushstate-spa-navigation");
+
+## Introduction
+
+Every client-side router — React Router, Next.js's own, anything else — is built on the same two browser primitives underneath: **`history.pushState()`** to change the URL and add a history entry without a page reload, and the **`popstate`** event to react when the user hits Back or Forward. For a small custom view switcher, a wizard with a URL per step, or just understanding what a router actually does under the hood, those two primitives alone are enough.
+
+<RainbowDivider />
+
+## Navigating Without a Reload
+
+<CodeBlock language="js">
+{`
+  function navigate(path) {
+    history.pushState({}, "", path); // changes the URL, adds a history entry — no request, no reload
+    render(path);                    // pushState doesn't re-render anything on its own
+  }
+`}
+</CodeBlock>
+
+`pushState(state, title, url)` updates the address bar and adds a new entry to the session history, entirely client-side — the second argument (`title`) is ignored by virtually every browser today, kept only for the API's original signature. Crucially, calling it does *nothing* visible by itself; whatever should change on screen for the new URL has to be triggered manually, right alongside the call.
+
+<RainbowDivider />
+
+## Reacting to Back and Forward
+
+<CodeBlock language="js">
+{`
+  window.addEventListener("popstate", () => {
+    render(location.pathname); // re-render whatever the (now-current) URL says
+  });
+`}
+</CodeBlock>
+
+`popstate` fires when the *active history entry changes* — the user clicking Back/Forward, or a script calling `history.back()`/`forward()`/`go()` — but it does **not** fire from `pushState()` or `replaceState()` themselves. Reading `location.pathname` inside the handler picks up wherever the browser landed after the navigation.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click between the three links, then use Back/Forward — the URL, the active nav item, and the panel below all move together, entirely without a page reload.
+
+<Sandbox slug="history-pushstate-spa-navigation" readOnly />
+
+<RainbowDivider />
+
+## replaceState() for a Non-History-Creating Update
+
+<CodeBlock language="js">
+{`
+  // pushState: adds a NEW entry — Back returns to whatever was here before
+  history.pushState({}, "", "/step-2");
+
+  // replaceState: swaps the CURRENT entry — Back skips over this state entirely
+  history.replaceState({}, "", "/step-2-corrected");
+`}
+</CodeBlock>
+
+`replaceState` shares `pushState`'s signature exactly, but overwrites the current history entry instead of adding a new one — useful for a redirect, or correcting a URL, in cases where a Back press landing on the discarded intermediate state would be confusing rather than useful.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A small set of client-side views (tabs, a wizard, a filter panel) that deserve their own URL and Back-button behavior, without pulling in a full router
+- Understanding or debugging what a router library is actually doing, since `pushState`/`popstate` is the entire mechanism underneath all of them
+- Correcting or redirecting a URL in place with `replaceState`, without adding a spurious entry a user would otherwise have to Back past
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The server still needs to serve *something* for every path this touches**, on a real deep link or a hard refresh. Since `pushState` never issues a request, the browser only asks the server for `/about` directly if the user refreshes or opens that URL fresh — the server (or a static host's rewrite rule) needs to respond with the same app shell for every one of these paths, not a 404.
+* **`pushState`'s first argument (`state`) is real, retrievable data** — `history.state` (or `event.state` inside the `popstate` handler) reads back whatever object was passed in, letting a route carry along data (scroll position, a selected id) without re-parsing it from the URL every time.
+* **The initial page load fires no `popstate` event.** Reading `location.pathname` once during setup (as this snippet's initial state does) is how the very first render gets its route — `popstate` only covers *subsequent* navigation.
+* **This snippet's own routes have nothing to do with Next.js's App Router** — inside this codebase (and any Next.js app), routing should go through Next's own navigation APIs; reaching for raw `pushState` alongside a framework router that doesn't know about it will leave the two out of sync.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`pushState` changes the URL and history; `popstate` is how you find out the user moved Back or Forward through it — neither one renders anything by itself, which is exactly why a router is a thin layer of "call render() alongside every history change" wrapped around these two primitives. For a handful of views, that layer is sometimes small enough to just write directly, as above.
