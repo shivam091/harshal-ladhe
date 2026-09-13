@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>object-fit Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>object-fit &amp; object-position</h1>
+        <p>The frame stays a fixed square — everything below only changes how the wider photo fills it, without touching the frame itself.</p>
+      </header>
+
+      <div class="demo-area">
+        <div class="frame">
+          <img
+            class="photo"
+            id="photo"
+            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500'%3E%3Cdefs%3E%3ClinearGradient id='sky' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fca5a5'/%3E%3Cstop offset='1' stop-color='%23fef3c7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='500' fill='url(%23sky)'/%3E%3Ccircle cx='620' cy='120' r='70' fill='%23fbbf24'/%3E%3Cpolygon points='0,500 200,260 340,420 480,220 650,500' fill='%234b5563'/%3E%3Cpolygon points='150,500 320,320 430,440 560,300 750,500' fill='%236b7280'/%3E%3Crect y='440' width='800' height='60' fill='%2334d399'/%3E%3C/svg%3E"
+            alt="A stylized wide landscape illustration with a sun in the upper right, two overlapping mountain ranges, and a green foreground strip along the bottom"
+          />
+        </div>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>object-fit</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="object-fit">
+          <label class="segment">
+            <input type="radio" name="fit" value="cover" checked>
+            <span>cover</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="fit" value="contain">
+            <span>contain</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="fit" value="fill">
+            <span>fill</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="fit" value="none">
+            <span>none</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>object-position</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="x-range">X <span id="x-value">50%</span></label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <div class="range-bubble" id="x-bubble">50%</div>
+                <input type="range" id="x-range" min="0" max="100" value="50" step="5">
+              </div>
+              <span class="range-edge">100</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="y-range">Y <span id="y-value">50%</span></label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <div class="range-bubble" id="y-bubble">50%</div>
+                <input type="range" id="y-range" min="0" max="100" value="50" step="5">
+              </div>
+              <span class="range-edge">100</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

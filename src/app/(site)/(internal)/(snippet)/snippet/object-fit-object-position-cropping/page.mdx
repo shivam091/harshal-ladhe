@@ -1,0 +1,72 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("object-fit-object-position-cropping");
+
+## Introduction
+
+Fitting a photo of the wrong aspect ratio into a fixed-size box used to mean a server-side crop, or a wrapper `<div>` with the image as a `background-image` just to get `background-size: cover` behavior. **`object-fit`** brings that same "cover/contain/fill" model directly to `<img>` and `<video>` elements, and **`object-position`** controls exactly which part of the source gets kept when cropping happens — the same real image element, its natural dimensions and `alt` text intact.
+
+<RainbowDivider />
+
+## The Four Fit Modes
+
+<CodeBlock language="css">
+{`
+  img {
+    width: 300px;
+    height: 300px;
+    object-fit: cover;   /* fills the box, cropping whatever doesn't fit */
+    /* object-fit: contain; — fits entirely inside the box, letterboxing the rest */
+    /* object-fit: fill;    — stretches to fill exactly, ignoring aspect ratio */
+    /* object-fit: none;    — ignores the box, renders at natural size (may overflow) */
+  }
+`}
+</CodeBlock>
+
+`cover` is the one reached for most often — it fills the element's box completely, cropping whatever part of the source doesn't fit, the exact behavior `background-size: cover` has always had for background images, now available on a real `<img>`. `contain` is its inverse: the whole source stays visible, with empty space (the box's own background) showing wherever the aspect ratios don't match.
+
+<RainbowDivider />
+
+## Choosing What Gets Cropped
+
+<CodeBlock language="css">
+{`
+  img {
+    object-fit: cover;
+    object-position: top right; /* keep this part of the source in view when cropping */
+  }
+`}
+</CodeBlock>
+
+`object-position` only matters once `cover` (or `none`, if the source overflows its box) is actually cropping something — it's the anchor point kept in view while the rest gets cut off, accepting the same keyword (`top`/`center`/`bottom left`, etc.) or percentage syntax as `background-position`.
+
+<RainbowDivider />
+
+## Try It Live
+
+The frame stays a fixed square the whole time — only `object-fit` and `object-position` change how the (wider) photo underneath fills it.
+
+<Sandbox slug="object-fit-object-position-cropping" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any user-uploaded image (an avatar, a thumbnail) whose aspect ratio you don't control, displayed inside a fixed-size box
+- Video posters/players that need to fill a container without letterboxing or stretching (`object-fit: cover` on a `<video>` works identically to an `<img>`)
+- Replacing a `background-image` + `background-size: cover` hack on what should really be a semantic `<img>` — with real `alt` text, lazy-loading, and `srcset` support that a CSS background image can't offer
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`object-fit`/`object-position` need explicit `width`/`height` on the element to do anything meaningful** — without a box size that differs from the source's own natural dimensions, there's nothing to fit or crop into.
+* **This is purely a CSS-level crop — the browser still downloads the full original image.** For genuinely reducing transferred bytes to match the displayed crop, a server-side/CDN image-resizing step (or `srcset` with appropriately sized sources) is the actual fix; `object-fit` alone doesn't shrink the request.
+* **`fill` is `object-fit`'s initial value** — an `<img>` with a `width`/`height` that doesn't match its natural aspect ratio stretches by default unless something sets `object-fit` explicitly. Reach for `fill` deliberately (a full-bleed banner where slight stretching is acceptable), rather than ending up there by simply forgetting to set the property.
+* **Support is effectively universal on `<img>`** across current browsers; the one long-standing gap was Safari on `<video>` needing a `-webkit-` prefix in older versions — current Safari versions no longer need it, but it's worth checking if a project's minimum supported Safari version predates that.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`object-fit` brings `background-size: cover`'s cropping model to real `<img>`/`<video>` elements, and `object-position` picks which part of the source survives the crop. Reach for `cover` plus a deliberate `object-position` as the default for any fixed-size image box, and `contain` specifically when nothing in the source can be sacrificed.

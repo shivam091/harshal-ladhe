@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "object-fit-object-position-cropping",
+    title: "object-fit Playground",
+    description: "A fixed square frame around a wide landscape illustration — switch between cover/contain/fill/none and drag the X/Y sliders to see object-fit and object-position crop and anchor the image without ever resizing the frame.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "copy-to-clipboard-with-fallback",
     title: "Copy to Clipboard",
     description: "Click Copy — navigator.clipboard.writeText() runs first, with an off-screen textarea and execCommand(\"copy\") ready to take over anywhere the async API isn't available.",

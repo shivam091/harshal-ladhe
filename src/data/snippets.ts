@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "object-fit-object-position-cropping",
+    title: "Cropping Responsive Media with object-fit and object-position",
+    excerpt: "background-size: cover's fitting model, now available on a real img or video element.",
+    description: "object-fit brings background-size: cover's crop-to-fill (and contain/fill/none) behavior directly to img and video elements, and object-position chooses which part of the source stays in view when object-fit: cover crops the rest away — a real image element throughout, with alt text, lazy-loading, and srcset intact.",
+    category: ["CSS"],
+    tags: ["css", "object-fit", "object-position", "responsive-images", "cropping"],
+    image: {
+      path: "/assets/img/goodies/snippets/object-fit-object-position-cropping/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A wide landscape illustration cropped into a fixed square frame, with controls for object-fit mode and object-position."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "copy-to-clipboard-with-fallback",
     title: "Copy to Clipboard with a Fallback",
     excerpt: "navigator.clipboard.writeText() first, an off-screen textarea and execCommand behind it.",

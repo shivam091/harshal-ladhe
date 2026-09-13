@@ -1,0 +1,24 @@
+.frame {
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid var(--pg-border);
+  border-radius: 8px;
+  /* A checkerboard behind the image — visible only through the gaps object-fit: contain/none can leave around the photo. */
+  background-image:
+    linear-gradient(45deg, var(--pg-surface-muted) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--pg-surface-muted) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--pg-surface-muted) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--pg-surface-muted) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: var(--fit, cover);
+  object-position: var(--pos-x, 50%) var(--pos-y, 50%);
+}
