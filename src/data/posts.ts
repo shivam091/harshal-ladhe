@@ -159,6 +159,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-09-13", change: "Added cross reference to tutorial `Hinting Layer Promotion with will-change`" },
       { date: "2026-08-31", change: "Added an interactive timing-function curve diagram and playground cross-references" },
       { date: "2026-08-08", change: "Initial publication" }
     ]
@@ -362,6 +363,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Four observer APIs, a custom Pub/Sub implementation, and a sandbox that lets you mutate, scroll, and resize your way through all three DOM observers live — getting the IntersectionObserver strike-zone math right for the scrollspy pattern took more whiteboarding than I expected. Thanks for reading all the way to the FAQ section; go replace a scroll listener with something that only runs when it actually needs to. 👀",
     changelog: [
+      { date: "2026-09-13", change: "Added cross reference to tutorial `Hinting Layer Promotion with will-change`" },
       { date: "2026-09-12", change: "Initial publication" }
     ]
   },
