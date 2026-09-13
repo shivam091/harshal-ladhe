@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "will-change-property",
+    title: "will-change Playground",
+    description: "Pick a strategy — no hint, toggle before/after, or always on — and move a box, while the log shows the box's real, live will-change value at every step.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "promise-combinator-playground",
     title: "Promise Combinator Playground",
     description: "Three simulated tasks with adjustable delays and pass/fail switches — pick Promise.all, allSettled, race, or any and watch how each settles, plus which tasks keep running after it does.",

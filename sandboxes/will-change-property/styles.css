@@ -1,0 +1,62 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+}
+
+/*
+  Vertical rhythm between the tab strip, demo area, status readout, and button row — all four sit
+  stacked inside one fieldset.control-group, which (unlike .playground itself) doesn't apply a gap
+  between its own children, so each piece adds its own margin-top.
+*/
+.demo-area {
+  min-height: 120px;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+/*
+  Shared .readout relies on .playground's flex context to blockify it (it sets no display of its
+  own), but this one sits inside fieldset.control-group instead — a plain block container, so an
+  <output> falls back to its inline default and margin-top produces no visible gap without this.
+*/
+#status {
+  display: block;
+  margin-top: 1rem;
+}
+
+.demo-box {
+  width: 110px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  border-radius: var(--pg-radius-sm);
+  box-shadow: var(--pg-shadow-sm);
+  transition: transform 0.6s ease;
+}
+
+/* --shift-x is measured in JS from the demo area's real content width, so this reaches the exact right edge on any viewport instead of guessing a fixed distance. */
+.demo-box--shifted {
+  transform: translateX(var(--shift-x, 0px));
+}
+
+.button-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+/*
+  The log accumulates one line per event and would otherwise grow the page indefinitely — capped
+  height + scroll keeps the newest (prepended) entries in view without pushing the rest of the page down.
+*/
+.log {
+  margin-top: 0.75rem;
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
