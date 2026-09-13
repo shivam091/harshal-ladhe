@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "fade-out-text-truncation",
+    title: "Fading Out Truncated Text Instead of an Ellipsis",
+    excerpt: "A mask-image gradient fades overflowing text to transparent — no JS, no ellipsis glyph.",
+    description: "A mask-image linear-gradient that stays solid until near the truncation edge, then fades to transparent, replaces a hard-cut ellipsis with a soft fade — on a single line via a left-to-right gradient, or across a multi-line -webkit-line-clamp block via a top-to-bottom one.",
+    category: ["CSS"],
+    tags: ["css", "text-truncation", "mask-image", "gradient", "line-clamp"],
+    image: {
+      path: "/assets/img/goodies/snippets/fade-out-text-truncation/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A paragraph of text fading smoothly to transparent at its truncated edge instead of ending in an ellipsis, with a slider controlling the fade width."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "colored-text-overflow-ellipsis",
     title: "Coloring the text-overflow Ellipsis Differently From the Text",
     excerpt: "The native ellipsis glyph always inherits the text color — faking one is the only way around that.",

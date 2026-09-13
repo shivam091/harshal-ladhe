@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "fade-out-text-truncation",
+    title: "Fade-Out Truncation",
+    description: "Drag the slider to change how much of the edge fades to transparent instead of cutting off with an ellipsis, and toggle between a single-line fade and a 3-line clamp fading at the bottom.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "colored-text-overflow-ellipsis",
     title: "Colored Ellipsis",
     description: "Toggle a truncated title's fake ellipsis between matching the text color and a distinct accent color — something the native, unstylable ellipsis glyph can never do.",

@@ -1,0 +1,80 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("fade-out-text-truncation");
+
+## Introduction
+
+An ellipsis is one way to signal "there's more text than fits" — a soft fade to transparent is another, and for some designs a better one: it reads as "this trails off" rather than "this was cut here," with no glyph competing with the content for attention. **`mask-image`** with a `linear-gradient` does this in pure CSS — no JS measuring text width, no gradient-colored overlay `<div>` faking the effect.
+
+<RainbowDivider />
+
+## The Core Technique
+
+<CodeBlock language="css">
+{`
+  .fade-truncate {
+    overflow: hidden;
+    white-space: nowrap;
+    mask-image: linear-gradient(
+      to right,
+      black calc(100% - 40px), /* fully visible up to here */
+      transparent 100%          /* fades out over the last 40px */
+    );
+  }
+`}
+</CodeBlock>
+
+`mask-image` uses a gradient's alpha channel (not its color) to control opacity — wherever the gradient is `black`, the masked element is fully visible; wherever it's `transparent`, the element is fully hidden; anywhere in between, it's partially see-through. A `linear-gradient` that stays solid until near the end, then fades to transparent, turns into exactly that: text rendered normally until the last 40px, then fading smoothly away instead of getting clipped mid-character.
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag the slider to change how much of the edge fades — a small value fades sharply right at the boundary, a large one fades gradually well before it.
+
+<Sandbox slug="fade-out-text-truncation" readOnly />
+
+<RainbowDivider />
+
+## Fading a Multi-Line Clamp Too
+
+<CodeBlock language="css">
+{`
+  .fade-truncate {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    mask-image: linear-gradient(
+      to bottom,
+      black calc(100% - 40px),
+      transparent 100%
+    );
+  }
+`}
+</CodeBlock>
+
+The same idea works on a multi-line `-webkit-line-clamp` block by fading the *bottom* edge instead of the right edge — `-webkit-line-clamp` on its own renders a native ellipsis on the last visible line; adding the mask on top replaces that abrupt cutoff with a fade over the final line instead.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A card or list-item description that should feel like it trails off, rather than getting visibly chopped by "…"
+- Any truncation the design explicitly wants to look "unobtrusive" rather than "clearly cut here" — a subtler affordance than an ellipsis
+- Combined with the [colored-ellipsis technique](/snippet/colored-text-overflow-ellipsis) for a fade *and* a small styled affix at the very end, instead of either alone
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`mask-image` needs the `-webkit-` prefix for full compatibility today**, even in browsers that don't need a prefix for most other CSS — Safari in particular still requires `-webkit-mask-image` alongside the unprefixed property.
+* **This fades the pixels to transparent — it doesn't reserve space for a visible affordance.** If users need an explicit signal that more content exists (not just an implied fade), pair this with a "Read more" control rather than relying on the fade alone to communicate that.
+* **The fade width should scale with font size**, not stay a fixed pixel value, if the component needs to support significant font-size variation (user zoom, responsive type scales) — an `em`-based fade width keeps the proportion consistent as text grows.
+* **A background that isn't a flat color (an image, a gradient) still fades correctly** — unlike the fake-ellipsis overlay technique, `mask-image` genuinely changes the element's alpha rather than painting a matching-color box on top, so there's nothing to keep in sync with the background underneath.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A `mask-image: linear-gradient(...)` that goes from solid to transparent right at the truncation edge replaces a hard-cut ellipsis with a soft fade — on one line via `to right`, across a multi-line clamp via `to bottom`. Reach for it whenever "trails off" reads better in a design than "was cut here."

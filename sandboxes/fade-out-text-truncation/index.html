@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fade-Out Truncation Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Fade-Out Truncation</h1>
+        <p>A mask-image gradient fades overflowing text to transparent instead of cutting it off with "...".</p>
+      </header>
+
+      <div class="demo-area">
+        <p class="fade-truncate" id="fade-truncate">
+          This paragraph is long enough to overflow its box no matter how wide the fade region gets, so you can always see exactly where the text fades away.
+        </p>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>Fade width</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="width-range">Reach <span id="width-value">40px</span></label>
+            <div class="range-row">
+              <span class="range-edge">10</span>
+              <div class="range-track">
+                <div class="range-bubble" id="width-bubble">40px</div>
+                <input type="range" id="width-range" min="10" max="120" value="40" step="5">
+              </div>
+              <span class="range-edge">120</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Mode</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Truncation mode">
+          <label class="segment">
+            <input type="radio" name="mode" value="single" checked>
+            <span>Single line</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="mode" value="multi">
+            <span>3 lines</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

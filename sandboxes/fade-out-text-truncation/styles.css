@@ -1,0 +1,26 @@
+.fade-truncate {
+  --fade-width: 40px;
+  margin: 0;
+  max-width: 320px;
+  max-height: 4.8em;
+  overflow: hidden;
+  line-height: 1.6;
+  background: var(--pg-surface-muted);
+  border-radius: 8px;
+  padding: 16px;
+
+  /* Single-line mode: fade the right edge instead of clipping mid-character. */
+  white-space: nowrap;
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--fade-width)), transparent 100%);
+  mask-image: linear-gradient(to right, black calc(100% - var(--fade-width)), transparent 100%);
+}
+
+/* Multi-line mode: clamp to 3 lines, then fade the BOTTOM edge instead of the native line-clamp ellipsis. */
+.fade-truncate[data-mode="multi"] {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  -webkit-mask-image: linear-gradient(to bottom, black calc(100% - var(--fade-width)), transparent 100%);
+  mask-image: linear-gradient(to bottom, black calc(100% - var(--fade-width)), transparent 100%);
+}
