@@ -1,0 +1,80 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("will-change-property");
+
+## Introduction
+
+Browsers can render `transform` and `opacity` changes on the compositor, skipping layout and paint entirely — but only once an element has been promoted to its own compositor layer. That promotion isn't free: the browser has to rasterize the element into a new layer before it can move cheaply, and if that happens the instant a transition starts, the first frame can stutter.
+
+**`will-change`** lets you tell the browser ahead of time. It's a hint, not a guarantee: "this property is about to change — do whatever pre-optimization you'd normally do at the last second, now instead."
+
+<RainbowDivider />
+
+## The Core Property
+
+<CodeBlock language="css">
+{`
+  .card {
+    will-change: transform; /* hint: this element's transform is about to change */
+  }
+`}
+</CodeBlock>
+
+Setting `will-change` gives the browser a head start on layer promotion, so the cost lands before the animation starts instead of during its first frame. The value should name the *specific* property you're about to animate — `transform`, `opacity`, or a comma-separated list — not a blanket `will-change: all`.
+
+<RainbowDivider />
+
+## Try It Live
+
+Pick a strategy, then click "Move box" — the log shows the box's real, live `will-change` value at every step, not a simulation. "Toggle before/after" is the pattern to actually use; "Always on" is what overusing this property looks like.
+
+<Sandbox slug="will-change-property" readOnly />
+
+<RainbowDivider />
+
+## Why Timing Matters
+
+`will-change` isn't something to set once in a stylesheet and forget. The recommended pattern:
+
+1. Add it right before the change you're hinting about actually happens (e.g. on `pointerenter`, just before a hover-triggered transition).
+2. Remove it right after (on `transitionend`/`animationend`), once the browser no longer needs to keep that layer ready.
+
+<CodeBlock language="js">
+{`
+  el.addEventListener("pointerenter", () => {
+    el.style.willChange = "transform";
+  });
+
+  el.addEventListener("transitionend", () => {
+    el.style.willChange = "auto"; // back to the default — no promotion held open
+  });
+`}
+</CodeBlock>
+
+Leaving `will-change` set permanently (the "Always on" mode in the sandbox above) keeps that compositor layer allocated indefinitely, for every element it's applied to — the exact overuse the next section warns about.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A hover-triggered menu, tooltip, or card that's about to animate — set it on `pointerenter`/`focus`, not on page load
+- An element about to be dragged, right as the drag gesture starts
+- A modal or panel about to transition open, set just before toggling the class that starts it
+- Any transition/animation that's visibly janky on its very first frame, but smooth afterward — a classic layer-promotion symptom
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This is a hint, not a mandate** — the spec doesn't require browsers to do anything specific with it, and behavior has genuinely varied across engines and versions. Test on the browsers you actually target.
+* **Overuse costs real memory.** Every `will-change`-promoted element gets its own compositor layer, allocated up front. Setting it on dozens of elements — or leaving it set indefinitely — trades the problem you were solving for a new one: elevated GPU memory use across the whole page.
+* **Older alternatives still exist and sometimes still matter**: `transform: translateZ(0)` and `backface-visibility: hidden` were the pre-`will-change` way to force layer promotion, and can still surface small behavioral differences from `will-change` in niche cases — worth a quick check if something doesn't animate quite the way you expect.
+* **Browser support is effectively universal** at this point (Chrome 36+, Firefox 36+, Safari 9.1+) — this isn't a progressive-enhancement concern the way some newer CSS features are.
+
+For the full walkthrough of transitions, timing functions, and the rest of the performance picture this fits into, see the [`will-change` section](/post/animations/css-transitions-guide#the-will-change-property) of my [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) post.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`will-change` turns a layer-promotion cost the browser would otherwise pay on the first frame of a transition into one it pays ahead of time, during idle time instead. Set it right before you need it, remove it right after — leaving it on permanently just relocates the performance problem instead of solving it.
