@@ -1,0 +1,823 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-keyframes-guide");
+
+## Introduction
+
+While CSS transitions animate between two states, **CSS keyframe animations** allow **full control over multiple animation stages**. They power complex UI effects like loaders, banners, progress bars, and interactive micro-animations — all without JavaScript.
+
+## What Are Keyframes?
+
+A keyframe defines **how an element's properties change over time**. Unlike transitions, which have a simple start and end, keyframes can describe multiple checkpoints — giving you detailed control.
+
+The `@keyframes` rule allows you to specify the appearance of an element at various points during an animation.
+
+<CodeBlock language="css">
+{`
+  @keyframes bounce {
+    0% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-50px);
+    }
+
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  .ball {
+    animation: bounce 1s ease-in-out infinite;
+  }
+`}
+</CodeBlock>
+
+The element moves up and down smoothly, repeating forever.
+
+## Using `from` and `to` Keywords
+
+For the start and end of your animation, CSS provides simple keyword aliases that can improve readability:
+
+- `from`: This is an alias for `0%`. It is used to define the element's properties at the **start** of the animation.
+- `to`: This is an alias for `100%`. It is used to define the element's properties at the **end** of the animation cycle.
+
+You can rewrite the start and end of the `bounce` animation using these keywords:
+
+<CodeBlock language="css">
+{`
+  @keyframes bounce {
+    from {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-50px);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+`}
+</CodeBlock>
+
+Using `from` and `to` is especially helpful for simple animations that only need a beginning and an end state.
+
+## Enhanced Keyframe Definition Techniques
+
+### Omitting Keyframes (Implicit Styling)
+
+For brevity, you don't always need to define `0%` or `100%`. If you omit the starting keyframe (`0%` or `from`), the browser will implicitly use the element's default or current style. Similarly, if you omit the final keyframe (`100%` or `to`), the browser interpolates back toward the element's base styles.
+
+### Grouping Keyframes
+
+When multiple keyframes share the exact same style, you can group them using commas. This significantly cleans up complex keyframe definitions and improves readability:
+
+<CodeBlock language="css">
+{`
+  @keyframes pulsing {
+    /* Keyframes 10%, 40%, and 60% all share the same opacity and scale */
+    10%,
+    40%,
+    60% {
+      opacity: 0.2;
+      transform: scale(1.05);
+    }
+
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`}
+</CodeBlock>
+
+Here's that same grouping mapped onto one shared 0%–100% timeline — the three bracketed stops on top all resolve to the same "pulsed" values, and the two on the bottom both resolve to the element's resting state:
+
+<KeyframeStopsDiagram />
+
+## Why Keyframes?
+
+- **Multi-step control:** Define several states beyond just start/end.
+- **Reusability:** Apply the same animation to multiple elements.
+- **Independence:** Animations can run automatically, not tied to hover/focus.
+- **Composability:** Chain or layer animations for advanced motion effects.
+
+## Animation Properties
+
+CSS provides a set of `animation-*` properties to control animations. For an animation to run, you must specify both the `animation-name` and the `animation-duration`. All other properties are optional.
+
+### 1. `animation-name`
+
+The `animation-name` CSS property specifies the name of the `@keyframes` animation to apply.
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce;
+  }
+`}
+</CodeBlock>
+
+You can define multiple animations by separating names with commas:
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce, fade;
+  }
+`}
+</CodeBlock>
+
+### 2. `animation-duration`
+
+The `animation-duration` CSS property sets **how long** one animation cycle takes to complete. The duration can be specified either in seconds (`s`) or milliseconds (`ms`).
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce;
+
+    /* Duration */
+    animation-duration: 2s;
+  }
+`}
+</CodeBlock>
+
+You can specify multiple durations for multiple animations, maintaining the order defined in the `animation-name` property:
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce, fade;
+
+    /* Matches the order: bounce gets 1s, fade gets 3s */
+    animation-duration: 1s, 3s;
+  }
+`}
+</CodeBlock>
+
+### 3. `animation-timing-function`
+
+The `animation-timing-function` CSS property controls the **speed curve** of the animation.
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce;
+    animation-duration: 2s;
+
+    /* Timing function */
+    animation-timing-function: ease-in-out;
+  }
+`}
+</CodeBlock>
+
+**Common Timing Functions:**
+
+| Function | Description |
+| --- | --- |
+| `linear` | Constant speed throughout. |
+| `ease` | Starts slow, speeds up, then slows down (default). |
+| `ease-in` | Starts slow, speeds up at end. |
+| `ease-out` | Starts fast, slows down at end. |
+| `ease-in-out` | Slow start and end, fast middle. |
+| `steps(n, start/end)` | Jump-based animations for discrete steps. |
+| `cubic-bezier(x1, y1, x2, y2)` | Custom curve for precise control. |
+
+Here's what those curves actually look like, plotted on a shared timeline:
+
+<TransitionTimingDiagram />
+
+You can specify multiple timing functions for multiple animations, maintaining the order defined in the `animation-name` property:
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce, fade;
+    animation-duration: 1s, 3s;
+
+    /* Matches the order: bounce gets ease-out, fade gets ease-in-out */
+    animation-timing-function: ease-out, ease-in-out;
+  }
+`}
+</CodeBlock>
+
+<Info title="Note on cubic-bezier">
+  This function gives you granular control over the curve, allowing you to simulate complex effects like a subtle spring or bounce (where the property briefly overshoots its final value) in your animations.
+</Info>
+
+### 4. `animation-delay`
+
+The `animation-delay` CSS property defines **how long to wait before the animation starts**.
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-delay: 0.5s;
+  }
+`}
+</CodeBlock>
+
+This can be used to **stagger multiple elements** or coordinate sequences. A common pattern is pairing `animation-delay` with the `:nth-child()` selector, so each item in a list starts a little after the one before it:
+
+<CodeBlock language="css">
+{`
+  .list-item {
+    animation: fade-in 0.4s ease-out both;
+  }
+
+  /* Each item waits an extra 0.1s per position: item 1 at 0s, item 2 at 0.1s, item 3 at 0.2s... */
+  .list-item:nth-child(1) { animation-delay: 0s; }
+  .list-item:nth-child(2) { animation-delay: 0.1s; }
+  .list-item:nth-child(3) { animation-delay: 0.2s; }
+  .list-item:nth-child(4) { animation-delay: 0.3s; }
+`}
+</CodeBlock>
+
+You can specify multiple delays for multiple animations, maintaining the order defined in the `animation-name` property:
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce, fade;
+    animation-duration: 1s, 3s;
+    animation-timing-function: ease-out, ease-in-out;
+
+    /* Matches the order: bounce gets 1s delay, fade gets 1.5s delay */
+    animation-delay: 1s, 1.5s;
+  }
+`}
+</CodeBlock>
+
+#### Negative Delays
+
+A negative value for `animation-delay` is perfectly valid and causes the animation to begin **immediately**, but from a point **partway through its animation cycle**.
+
+For instance, an `animation-delay: -0.5s` applied to an animation with a `1s` duration will start at its midway point (equivalent to the `50%` keyframe), with only `0.5s` of the animation remaining to play out.
+
+The primary utility of a negative delay is for synchronizing or pre-positioning elements without having to define a separate initial state.
+
+<Info title="Core Mechanism Note">
+  The function of a negative delay is identical across transitions and keyframe animations: it sets the internal timer backward by the specified amount. For its application in simple, two-state transitions, see the **Negative Delays** section in my [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide#negative-delays) post.
+</Info>
+
+**Key takeaway:** The negative value does not mean the element waits; it means the animation starts now, but the timer is conceptually set backwards by that amount.
+
+### 5. `animation-iteration-count`
+
+The `animation-iteration-count` CSS property controls how many times each animation cycle repeats.
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-iteration-count: infinite;
+  }
+`}
+</CodeBlock>
+
+It can be a number (e.g., `3` for three cycles) or `infinite` for endless repetition.
+
+You can specify multiple iteration counts for multiple animations, maintaining the order defined in the `animation-name` property:
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce, fade;
+    animation-duration: 1s, 3s;
+    animation-timing-function: ease-out, ease-in-out;
+    animation-delay: 1s, 1.5s;
+
+    /* Matches the order: bounce runs once, fade runs infinite */
+    animation-iteration-count: 1, infinite;
+  }
+`}
+</CodeBlock>
+
+### 6. `animation-direction`
+
+The `animation-direction` CSS property defines the direction of play for each iteration.
+
+| Value | Description |
+| --- | --- |
+| `normal` | Plays forward each time (default) |
+| `reverse` | Plays backward each time |
+| `alternate` | Forwards, then backwards alternately |
+| `alternate-reverse` | Backwards first, then forwards |
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-direction: alternate;
+  }
+`}
+</CodeBlock>
+
+This creates a smooth **back-and-forth** motion.
+
+You can specify multiple directions for multiple animations, maintaining the order defined in the `animation-name` property:
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce, fade;
+    animation-duration: 1s, 3s;
+    animation-timing-function: ease-out, ease-in-out;
+    animation-delay: 1s, 1.5s;
+    animation-iteration-count: 1, infinite;
+
+    /* Matches the order: bounce runs normal, fade runs alternate */
+    animation-direction: normal, alternate;
+  }
+`}
+</CodeBlock>
+
+### 7. `animation-fill-mode`
+
+The `animation-fill-mode` CSS property controls how styles are applied **before** and **after** the animation.
+
+| Value | Description |
+| --- | --- |
+| `none` | Element returns to initial state |
+| `forwards` | Keeps final keyframe styles |
+| `backwards` | Applies starting keyframe before animation starts |
+| `both` | Applies both `forwards` and `backwards` |
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-fill-mode: forwards;
+  }
+`}
+</CodeBlock>
+
+This is useful when you want the final state to persist.
+
+You can specify multiple fill modes for multiple animations, maintaining the order defined in the `animation-name` property:
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce, fade;
+    animation-duration: 1s, 3s;
+    animation-timing-function: ease-out, ease-in-out;
+    animation-delay: 1s, 1.5s;
+    animation-iteration-count: 1, infinite;
+    animation-direction: normal, alternate;
+
+    /* Matches the order: bounce stays at end, fade resets (default) */
+    animation-fill-mode: forwards, none;
+  }
+`}
+</CodeBlock>
+
+### 8. `animation-play-state`
+
+The `animation-play-state` CSS property specifies whether a CSS animation is **running** or **paused**.
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-play-state: paused;
+  }
+`}
+</CodeBlock>
+
+**Values:**
+
+| Value | Description | Practical Effect |
+| --- | --- | --- |
+| `running` (default) | The animation is currently playing normally. | If the animation was paused, it resumes from the point where it stopped. |
+| `paused` | The animation is stopped at its current point in the cycle. | The element's properties remain fixed at the state they were in when the pause was applied. |
+
+You can specify multiple play states for multiple animations, maintaining the order defined in the `animation-name` property:
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation-name: bounce, fade;
+    animation-duration: 1s, 3s;
+    animation-timing-function: ease-out, ease-in-out;
+    animation-delay: 1s, 1.5s;
+    animation-iteration-count: 1, infinite;
+    animation-direction: normal, alternate;
+    animation-fill-mode: forwards, none;
+
+    /* Matches the order: bounce runs, fade is paused */
+    animation-play-state: running, paused;
+  }
+`}
+</CodeBlock>
+
+**Practical Usage:**
+
+This property is most commonly manipulated using JavaScript (by toggling a CSS class) to give users control over animations, such as:
+
+- **User Control:** Allowing a user to click a "Pause" or "Play" button.
+- **Accessibility:** Automatically pausing animations when an element is not visible. While this can be done with CSS, using the [Intersection Observer API](/post/javascript/mastering-js-observers#intersectionobserver-the-viewport-watcher) allows for more complex logic, such as pausing animations across an entire page to save CPU cycles when a tab is in the background.
+- **Interactivity:** Pausing an animation when a user hovers over the element (which can also be done entirely with CSS using the `:hover` pseudo-class).
+
+### 9. `animation-timeline`
+
+The `animation-timeline` CSS property lets an animation progress based on scroll position instead of the clock — a technique known as **scroll-linked** or **view-linked** animation. It's a recent addition, defined in its own CSS Scroll-Driven Animations specification rather than the core CSS Animations spec.
+
+Instead of having the animation progress based on time (controlled by `animation-duration`), this property allows the animation to progress based on a user's action, typically:
+
+- **Scroll Progress:** The animation progresses as the user scrolls down a container or the main document (`scroll()` or `view()` timelines).
+- **Element Visibility:** The animation progresses as a specific element enters or exits the viewport.
+
+**Values:**
+
+| Value | Description |
+| --- | --- |
+| `auto` (default) | The animation progresses based on time. |
+| `scroll(root)` | The animation progresses based on the scroll position of the entire page. |
+| `view(block)` | The animation progresses based on a specific element entering and moving through the viewport. |
+
+You can specify multiple timelines for multiple animations, maintaining the order defined in the `animation-name` property.
+
+**Examples:**
+
+#### 1. Single Animation Timeline Example
+
+This example defines a single animation, `fade-out-on-scroll`, which plays out as the element moves through the **viewport** (`view()`), rather than over a specific duration of time.
+
+<CodeBlock language="css">
+{`
+  /* 1. Define the Keyframes */
+  @keyframes fade-out-on-scroll {
+    /* 0% corresponds to the element's entry into the viewport */
+    0% {
+      opacity: 1;
+      filter: blur(0);
+    }
+
+    /* 100% corresponds to the element's exit from the viewport */
+    100% {
+      opacity: 0;
+      filter: blur(10px);
+    }
+  }
+
+  /* 2. Apply the Animation and Timeline */
+  .hero-header {
+    height: 50vh;
+    padding: 40px;
+
+    animation: fade-out-on-scroll 1s linear 0s 1 normal forwards running view();
+    /* The '1s' duration is now the *distance* over which the 0% to 100% keyframe progression occurs relative to the scroll. */
+  }
+`}
+</CodeBlock>
+
+#### 2. Multiple Animations Timeline Example
+
+This example runs two animations simultaneously on a single element: one that is **time-based** (`color-shift`) and one that is **scroll-based** (`slide-up`).
+
+<CodeBlock language="css">
+{`
+  /* 1. Define Keyframes */
+  /* Time-based: Loops forever */
+  @keyframes color-shift {
+    0% {
+      background-color: darkblue;
+    }
+
+    50% {
+      background-color: purple;
+    }
+
+    100% {
+      background-color: darkblue;
+    }
+  }
+
+  /* Scroll-based: Plays once based on view entry */
+  @keyframes slide-up {
+    0% {
+      transform: translateY(50px);
+      opacity: 0;
+    }
+
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* 2. Apply Animations and Timelines using Shorthand */
+  .card-element {
+    padding: 20px;
+
+    /* List two complete animation definitions separated by a comma. */
+    animation:
+      /* Animation 1 (Time-based Loop): timeline set to 'auto' */
+      color-shift 3s ease-in-out infinite alternate both running auto,
+
+      /* Animation 2 (Scroll-driven Reveal): timeline set to 'view()' */
+      slide-up 0.5s linear 0s 1 forwards running view();
+  }
+`}
+</CodeBlock>
+
+**Practical Effect:**
+
+This feature is powerful for creating effects like:
+
+- Elements smoothly fading in as they become visible.
+- A progress bar filling up based on scroll depth.
+
+<Info title="CSS vs. JavaScript">
+  While `animation-timeline` is excellent for keeping a purely visual effect in sync with scroll position, use [IntersectionObserver](/post/javascript/mastering-js-observers#intersectionobserver-the-viewport-watcher) if you need to trigger side effects — like starting a video, fetching data, or logging analytics — when an element enters the viewport.
+</Info>
+
+#### Controlling *where* the animation runs with `animation-range`
+
+By default, a `view()` timeline covers an element's entire pass through the scroller — 0% at the moment it starts entering, 100% once it's fully exited. `animation-range` lets you narrow that down to a specific segment, using one of several named ranges:
+
+| Range | Covers |
+| --- | --- |
+| `entry` | From the moment the element starts entering the viewport to the moment it's fully inside. |
+| `contain` | The span during which the element is either fully contained by the viewport, or fully covers it. |
+| `cover` | The entire time the element is at least partially visible — from first pixel in to last pixel out. |
+| `exit` | From the moment the element starts leaving the viewport to the moment it's fully gone. |
+
+So `animation-range: entry 0% cover 40%` means: start the animation the instant the element begins entering, and finish it once scrolling has covered 40% of the element's total visible range — a fast reveal near the top of its entry, rather than one smeared across its entire time on screen.
+
+Here's how those four ranges map onto the element's actual pass through the viewport:
+
+<AnimationRangeDiagram />
+
+<Sandbox slug="css-scroll-driven-animations" defaultLayout="vertical" />
+
+### 10. `animation`
+
+Instead of writing multiple CSS animation properties separately, you can combine them into the `animation` **shorthand property**. This property is essential for clean code, especially when defining complex or layered effects.
+
+The full syntax includes **nine** potential values, but only `animation-name` and `animation-duration` are strictly required.
+
+**Syntax:**
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  animation: <name> <duration> <timing-function> <delay> <iteration-count> <direction> <fill-mode> <play-state> <timeline>;
+`}
+</CodeBlock>
+
+Nine positions is a lot to hold in your head at once — here's the same nine tokens from the `bounce` example used throughout this section, each one labeled with the longhand property it fills:
+
+<AnimationShorthandBuilder />
+
+#### Positional Rules: Duration vs. Delay
+
+Unlike most other values, the browser uses a positional rule to distinguish between the two time values (`duration` and `delay`):
+
+1. The **first time** value provided is always the `animation-duration`.
+2. The **second time** value provided is always the `animation-delay`.
+
+If only one time value is present, it is always treated as the `duration`, and the `delay` defaults to `0s`.
+
+| Shorthand Example (Time Values) | Interpretation |
+| --- | --- |
+| `animation: slide 1.5s linear;` | duration: 1.5s, delay: 0s (default) |
+| `animation: slide 1.5s linear 0.5s;` | duration: 1.5s, delay: 0.5s |
+
+**Example:**
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation: bounce 1s ease-out 0s infinite alternate both; /* timeline defaults to 'auto' */
+  }
+`}
+</CodeBlock>
+
+You can chain multiple, independent animations on a single element by separating the full definitions with a comma. This is how you combine multiple simple motions into one complex effect.
+
+<CodeBlock language="css">
+{`
+  .element {
+    animation: bounce 1s ease-out, fade 2s ease-in-out 1s; /* Both default to 'auto' timeline */
+  }
+`}
+</CodeBlock>
+
+Each animation runs independently. Use delays to coordinate sequences or **different timelines** (as shown in the `animation-timeline` section) to drive them separately.
+
+**Example (Including Scroll Timeline):**
+
+<CodeBlock language="css">
+{`
+  .scroll-reveal {
+    /* This combines all 9 properties, including the 'view()' timeline */
+    animation: reveal 0.8s ease-in-out 0s 1 normal forwards running view();
+  }
+`}
+</CodeBlock>
+
+## Interactive Example
+
+Unlike transitions, keyframes let you control the middle of the story, not just the beginning and the end. Use the playground below to tweak the iteration counts and directions. See how `alternate-reverse` changes the vibe of the loop, or how `fill-mode` decides where the element "lives" once the show is over.
+
+<Sandbox slug="css-keyframes-guide" defaultLayout="vertical" />
+
+## Keyframes vs Transitions
+
+To truly master UI motion, you need to understand the fundamental difference between **CSS Transitions** and **CSS Keyframe Animations**. While both can animate properties, they are designed for different levels of complexity and control. Transitions are **state-driven** (a property changes from A to B), while Keyframes are **time-driven** (the `@keyframes` rule itself dictates how the properties change across a timeline, with no external trigger needed).
+
+For a deep dive into transitions, see the [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) post.
+
+| Feature | CSS Transitions | CSS Keyframe Animations |
+| --- | --- | --- |
+| **Definition** | A bridge between two discrete property values (State A → State B). | A sequence of property changes defined across a timeline (`0%` to `100%`). |
+| **Trigger Mechanism** | Must be triggered by a **state change** (e.g., `:hover`, class toggle via JS, `:active`). | Can be triggered **automatically** on page load, via a class, or infinite loop. |
+| **Steps / Stages** | **2 Steps:** Always animates from a single start state to a single end state. | **Unlimited Steps:** Defined using percentage stops (`0%`, `50%`, `100%`, etc.). |
+| **Cycling / Looping** | **No** native looping. It must be re-triggered for a second play. | **Yes.** Supports infinite looping (`animation-iteration-count: infinite;`). |
+| **Property Control** | **Single:** All properties must share the same `duration`, `delay`, and `timing-function` for the overall transition. | **Per Step:** Each keyframe percentage stop (`0%`, `50%`, etc.) can hold completely different sets of property values. |
+| **Motion Flow** | Typically reversible (smoothly plays backward when the state is removed). | By default, it runs one-way. Reversibility requires setting `animation-direction` or JS control. |
+| **Best For** | **Micro-interactions**, hover effects, subtle UI feedback, toggles (smooth A ↔ B changes). | **Complex effects**, spinners/loaders, staged introductions, scrolling effects, infinite loops. |
+| **JavaScript Event** | `transitionend` | `animationend`, `animationstart`, `animationiteration` |
+
+### When to Choose Which?
+
+#### Choose Transitions When:
+
+- You need simple, high-performance feedback on **user interaction** (e.g., a button changes color or a link slides 2 pixels on hover).
+- The change only involves **two states** (on/off, open/closed, active/inactive).
+- You want the animation to be **easily reversible** when the trigger state is removed.
+
+#### Choose Keyframes When:
+
+- You require **more than two stages** of motion (e.g., a "loading" bar that shrinks, pauses, then moves).
+- You need the animation to **loop infinitely** (e.g., a pulsating icon or loading spinner).
+- The animation needs to **start automatically** without explicit user interaction (e.g., an element fading in as the page loads).
+
+Understanding this division ensures you use the most efficient tool for the job. Transitions are the lightweight workhorses for UI, while Keyframes are the powerful engines for complex choreography.
+
+## Animation Events
+
+You can handle animation lifecycle via events:
+
+| Event | Trigger |
+| --- | --- |
+| `animationstart` | When animation begins |
+| `animationiteration` | Each time an animation repeats |
+| `animationend` | When animation finishes |
+
+<CodeBlock language="js">
+{`
+  const box = document.querySelector(".box");
+
+  box.addEventListener("animationend", () => {
+    console.log("Animation completed!");
+  });
+`}
+</CodeBlock>
+
+### Restarting an Animation from JavaScript
+
+Setting `element.style.animation = "none"` and then reapplying the same animation string does **not** restart it by itself — the browser sees the same value going in and coming back out, so nothing actually changes. You need to force the browser to acknowledge the "none" state first, by reading a layout property (which forces a reflow) before reapplying the animation:
+
+<CodeBlock language="js">
+{`
+  function restart(element, animation) {
+    element.style.animation = "none";
+    void element.offsetWidth; // Forces a reflow, "flushing" the "none" state
+    element.style.animation = animation;
+  }
+`}
+</CodeBlock>
+
+<Info title="Why this works">
+  Reading `offsetWidth` requires the browser to have an up-to-date layout, so it can't defer that work — this is the same "layout thrashing" cost you'd normally want to avoid, but here it's exactly the side effect you're after. Skip the read, and the two assignments collapse into one before the browser ever repaints, so the animation never actually stops.
+</Info>
+
+## Debugging Keyframe Animations
+
+Animations can sometimes be tricky to debug. The most powerful tool available is your browser's built-in developer panel.
+
+### Using the Browser Animations Tab
+
+Most modern browsers (Chrome, Firefox, Edge) include an **Animations** tab in their Developer Tools. This tool is invaluable for:
+
+- **Visual Timeline:** Seeing a visual representation of all running animations on the page.
+- **Scrubbing:** Pausing the animation and manually dragging the timeline to inspect the element's state at any percentage point.
+- **Inspection:** Clicking an animation in the panel reveals the exact `animation-name`, duration, and timing function used.
+
+Use this tab to verify that your keyframes are being applied correctly and that the timing curve isn't causing unexpected jerks or jumps.
+
+## When and How to Use Animations
+
+### When to Use:
+
+- **Drawing Attention:** Highlight critical elements like new notifications, success messages, or prompt users to action.
+- **Indicating State:** Clearly signal ongoing processes (loading spinners, progress bars) or successful/failed actions.
+- **Providing Continuity:** Create smooth visual transitions between application states or views.
+
+### How to Use Effectively:
+
+- **Be Purposeful:** Ensure every animation serves a clear function; **avoid purely decorative** or distracting loops.
+- **Maintain Consistency:** Use the same `timing-function` and `duration` across similar UI elements for a cohesive feel.
+- **Use Delays for Sequence:** Leverage `animation-delay` to **stagger** motion and guide the user's eye through multiple steps.
+- **Combine Effects:** Utilize keyframes for complex motion paths and transitions for simple state changes (e.g., hover effects).
+
+## Performance and `will-change`
+
+When animating frequently changing properties like `transform` or `opacity`, you can use the `will-change` CSS property to help the browser prepare rendering optimizations.
+
+<CodeBlock language="css">
+{`
+  .box {
+    will-change: transform, opacity;
+  }
+`}
+</CodeBlock>
+
+<Info title="For a deep dive into will-change">
+  For a deep dive into the performance benefits and necessary cautions of using `will-change` (especially concerning memory and GPU usage), please refer to the dedicated section in my [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide#the-will-change-property) post, or the runnable [Hinting Layer Promotion with will-change](/snippet/will-change-property) snippet, which compares no hint, always-on, and the recommended toggle-before/after pattern live.
+</Info>
+
+Use it selectively — overusing it consumes more memory and GPU resources.
+
+## Accessibility: Respecting Motion Preferences
+
+Infinite loops and large motion — a spinner that never stops, a banner that keeps sliding — are exactly the kind of animation `prefers-reduced-motion` exists for. For users with vestibular disorders, that constant motion can cause real physical discomfort, so CSS gives you a way to detect the preference and scale back:
+
+<CodeBlock language="css">
+{`
+  .spinner {
+    animation: spin 1s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spinner {
+      animation-duration: 4s; /* Slow it down instead of removing a loading indicator entirely */
+    }
+
+    .banner-intro {
+      animation: none; /* A one-off entrance animation can just be skipped */
+    }
+  }
+`}
+</CodeBlock>
+
+Not every animation needs the same treatment. A one-off entrance animation (a banner fading in on page load) can usually just be turned off — the element still ends up in its final state via `animation-fill-mode`. A *looping* indicator that's communicating "this is still loading" shouldn't simply vanish, since that removes real information; slowing it down or switching to a subtler `opacity` pulse keeps the message without the motion that triggers discomfort.
+
+## Browser Support & Fallbacks
+
+The core `@keyframes` rule and all nine `animation-*` properties covered above have excellent, long-standing support — every current browser handles them identically. `animation-timeline` is the one exception: scroll-driven animations (`scroll()`, `view()`, and `animation-range`) are, as of this writing, supported only in Chromium-based browsers (Chrome, Edge, Opera) — Firefox and Safari currently ignore the timeline entirely.
+
+| Feature | Supported since |
+| --- | --- |
+| `@keyframes` and the `animation-*` longhands (name, duration, timing-function, delay, iteration-count, direction, fill-mode, play-state) | All current browsers |
+| `animation-timeline` (`scroll()`, `view()`, `animation-range`) | Chrome/Edge 115+ only |
+
+An unsupported browser doesn't error — it just never starts the animation, leaving the element frozen at its `0%` keyframe. If that matters for your design, treat `animation-timeline` as a progressive enhancement: give the element a sensible static appearance by default, then opt into the scroll-driven version only where it's actually supported.
+
+<CodeBlock language="css">
+{`
+  /* Fallback: static, fully visible — no scroll-driven behavior */
+  .hero-header {
+    opacity: 1;
+  }
+
+  /* Enhancement, applied only where scroll-driven animations are supported */
+  @supports (animation-timeline: scroll()) {
+    .hero-header {
+      animation: fade-out-on-scroll 1s linear 0s 1 normal forwards running view();
+    }
+  }
+`}
+</CodeBlock>
+
+## Best Practices
+
+To ensure your keyframe animations are smooth, efficient, and accessible, follow these core principles:
+
+- **Prioritize GPU-Accelerated Properties:** For the smoothest motion, **always prefer animating** `transform` and `opacity`. These properties run on the **GPU** (Graphics Processing Unit) and avoid triggering expensive browser reflows.
+- **Avoid Layout-Affecting Properties:** **Never animate properties** like `width`, `height`, `margin`, or `top`/`left`. These force the browser to recalculate the entire page layout on every frame, causing **jank** (stuttering).
+- **Use `will-change` Judiciously:** Apply `will-change` only to the elements about to be animated. This hints to the browser for performance preparation. **Remove it immediately** after the animation completes to prevent excess memory consumption.
+- **Define Keyframes Clearly:** Keep your `@keyframes` simple and focused. Avoid complex logic or nesting within the keyframes definition itself to ensure cleaner browser parsing.
+- **Mind the Duration:** Keep animation durations consistent and appropriate for the context. Fast actions (micro-animations) should be **under 0.5s**. Complex loaders or banner effects may be longer.
+- **Respect Accessibility:** Honor `prefers-reduced-motion` — see the **Accessibility: Respecting Motion Preferences** section above for handling a looping indicator differently from a one-off entrance animation.
+- **Combine with animation-fill-mode:** Always explicitly set `animation-fill-mode` (usually to `forwards`) if the element needs to maintain its final animated state. Don't rely on the element resetting unexpectedly.
+- **Vendor Prefix Note (Legacy):** While not required in modern, stable browsers, if you need to support very old browser versions (e.g., specific Android or Safari targets), you may still need to use **vendor prefixes** for both the keyframe definition and the properties (e.g., `@-webkit-keyframes` and `-webkit-animation:`).
+- **The Hybrid Approach:** For the ultimate performance-to-control ratio, combine CSS Keyframes with JS Observers. Use [MutationObserver](/post/javascript/mastering-js-observers#mutationobserver-watching-the-dom-structure) to detect when a specific component is added to the DOM, then apply a CSS class that triggers a high-performance `@keyframes` intro animation. This keeps your "motion" in CSS and your "logic" in JavaScript.
+
+## Conclusion
+
+**CSS keyframe animations** empower you to define complex, multi-stage motion with ultimate precision and intent. By mastering the sequence and control properties, and critically, by leveraging **GPU-accelerated properties** like `transform` and `opacity`, you can create highly engaging visual effects that make interfaces feel truly alive. They provide full control over timing, direction, and repetition **without compromising performance or usability**.
+
+**Key Takeaways:**
+
+- **Full Control:** Define multi-step motion using `%` checkpoints.
+- **Performance First:** Prefer `transform` and `opacity` to utilize the GPU.
+- **Layering:** Chain multiple animations using comma-separated values.
+- **Usability:** Respect user preferences using `animation-play-state` and accessibility media queries.
+
+Mastering keyframes unlocks the full expressive power of modern CSS motion. However, animation is only half of the "Reactive Web" story. To learn how to trigger these animations dynamically based on DOM changes, element resizing, or scroll visibility, check out my companion guide: [Mastering JavaScript Observers: A Complete Guide to Reactive Web APIs](/post/javascript/mastering-js-observers).
+
+Everything here applies to shapes as well as boxes — for keyframes on SVG specifically, including `transform-origin`/`transform-box` quirks and self-drawing line effects, see [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes).
