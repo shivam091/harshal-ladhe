@@ -278,6 +278,21 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-10", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "will-change-property",
+    title: "Hinting Layer Promotion with `will-change`",
+    excerpt: "Tell the browser what's about to change, before it changes — then take the hint back.",
+    description: "will-change hints to the browser that a property is about to change, letting it promote an element to its own compositor layer ahead of time instead of during the first frame of a transition. A live sandbox compares no hint, always-on, and the recommended toggle-before/after pattern against the element's real, live will-change value.",
+    category: ["CSS"],
+    tags: ["css", "will-change", "performance", "gpu-acceleration", "transition", "animation"],
+    image: {
+      path: "/assets/img/goodies/snippets/will-change-property/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A modern dark-themed illustration explaining CSS will-change, showing layer promotion with smooth animation, a CSS code example, performance tips, and a comparison between animation with and without will-change."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
   }
 ];
 
