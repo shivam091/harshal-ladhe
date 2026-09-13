@@ -1,0 +1,66 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("crypto-random-uuid");
+
+## Introduction
+
+Needing a quick unique ID — a React list key, a temporary client-side record, a correlation ID for a log line — has usually meant reaching for the `uuid` npm package, or a hand-rolled `Date.now() + Math.random()` string that's unique in practice but not really *designed* to be. **`crypto.randomUUID()`** is built into the platform: one call, zero dependencies, a real RFC 4122 version-4 UUID string.
+
+<RainbowDivider />
+
+## The Core Method
+
+<CodeBlock language="js">
+{`
+  crypto.randomUUID(); // "3b6d3f3a-8c2e-4b1a-9f0d-7e2a1c4d5b6f"
+`}
+</CodeBlock>
+
+No arguments, no configuration — every call returns a fresh, randomly generated v4 UUID, formatted with the standard hyphens already in place.
+
+<RainbowDivider />
+
+## Try It Live
+
+Each click generates one new item with `crypto.randomUUID()` as its id — no two ever collide.
+
+<Sandbox slug="crypto-random-uuid" readOnly />
+
+<RainbowDivider />
+
+## Before and After
+
+<CodeBlock language="js">
+{`
+  // Before: unique in practice, but not a real guarantee — and not a standard format
+  const id = \`\${Date.now()}-\${Math.random().toString(36).slice(2)}\`;
+
+  // Now: a real RFC 4122 v4 UUID, built into the platform
+  const id = crypto.randomUUID();
+`}
+</CodeBlock>
+
+The `Date.now()` + `Math.random()` pattern works well enough for a lot of throwaway cases, but it's not a real collision-resistance guarantee, and the resulting string isn't a standard ID format anything else might expect. `crypto.randomUUID()` is both, for free.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- React list keys and other client-only identifiers generated at runtime, replacing a `Date.now()`/`Math.random()` string
+- Correlation IDs for client-side logging or tracing a single user action through several async steps
+- Any place currently pulling in the `uuid` package purely for `uuidv4()` — this replaces that specific call with zero dependencies
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Requires a secure context** — HTTPS, or `localhost` during development. `crypto.randomUUID()` lives on the same `Crypto` interface as the rest of the Web Crypto API, which is unavailable entirely over plain HTTP on a non-localhost origin.
+* **This is a client/runtime ID generator, not a database primary key strategy.** IDs generated independently on the client have no ordering guarantee and nothing to do with how a database indexes rows — for primary keys, defer to whatever your database or backend framework already generates.
+* **For anything beyond a basic random ID** — needing the ID to *encode* a creation timestamp for sortability (as UUIDv7 or ULIDs do), for instance — `crypto.randomUUID()`'s fixed v4 format isn't the right tool; that calls for a small dedicated library instead.
+* **Browser support is universal in secure contexts at this point** (Chrome/Edge 92+, Firefox 95+, Safari 15.4+) — safe to reach for directly, no polyfill needed for any currently supported browser.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`crypto.randomUUID()` turns "generate a unique ID" into a single built-in call — no dependency, no hand-rolled format. Reach for it as the default for any client-side unique identifier, and remember it needs a secure context (HTTPS or localhost) to exist at all.

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "crypto-random-uuid",
+    title: "crypto.randomUUID()",
+    description: "Click Add item and watch a fresh crypto.randomUUID() get generated for each one — a real RFC 4122 v4 UUID, no two ever colliding.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "custom-underline-gradient-background",
     title: "Gradient Underlines",
     description: "Drag the sliders to change a background-image underline's thickness and its gap from the text — hover the second link to see the same underline animate in from the left, and the third swap in a multi-color gradient.",

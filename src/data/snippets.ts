@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "crypto-random-uuid",
+    title: "Generating Unique IDs with crypto.randomUUID()",
+    excerpt: "A built-in, dependency-free RFC 4122 v4 UUID, one call away.",
+    description: "crypto.randomUUID() returns a real RFC 4122 version-4 UUID string directly from the platform's Web Crypto API, replacing a hand-rolled Date.now()-plus-Math.random() ID or a dependency on the uuid package for the common client-side unique-ID case — it just needs a secure context (HTTPS or localhost) to exist.",
+    category: ["JavaScript"],
+    tags: ["javascript", "crypto", "uuid", "unique-id", "web-crypto-api"],
+    image: {
+      path: "/assets/img/goodies/snippets/crypto-random-uuid/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A list of items each generated with crypto.randomUUID() as its id, added one at a time by a button click."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "custom-underline-gradient-background",
     title: "Custom Underline Effects with Gradient Backgrounds",
     excerpt: "Draw the underline as a background-image and text-decoration's limits disappear.",

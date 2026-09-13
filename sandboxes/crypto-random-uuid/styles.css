@@ -1,0 +1,83 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(220, 20%, 8%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.add-btn {
+  align-self: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: hsl(213, 70%, 45%);
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 4rem;
+}
+
+.item-list .empty {
+  font-size: 0.8rem;
+  color: hsl(210, 12%, 55%);
+  font-style: italic;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: hsl(220, 18%, 13%);
+  border: 1px solid hsl(220, 15%, 22%);
+}
+
+.item-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.item-id {
+  font-size: 0.7rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  color: hsl(210, 12%, 60%);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 12rem;
+}
