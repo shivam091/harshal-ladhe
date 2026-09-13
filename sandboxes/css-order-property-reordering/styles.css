@@ -1,0 +1,27 @@
+.items {
+  display: flex;
+  gap: 10px;
+}
+
+.item {
+  flex: 1 1 0;
+  padding: 18px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: 8px;
+  cursor: default;
+  /* Every item shares order's initial value (0) unless overridden — ties are broken by DOM/source order, which is exactly why #item-3 alone moving is enough to demonstrate the property. */
+}
+
+#item-3 {
+  border-color: var(--pg-primary);
+  color: var(--pg-primary);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--pg-primary);
+  outline-offset: 2px;
+}

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-order-property-reordering",
+    title: "order Property Playground",
+    description: "Drag the slider to change item 3's order value and watch it slide across the row — its label never changes, and Tab still visits every item in its original 1-2-3-4-5 sequence regardless of where it's currently sitting.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "checkbox-radio-toggle-hack",
     title: "Checkbox/Radio Hack Playground",
     description: "A radio-driven tab set and a checkbox-driven accordion, both fully interactive with zero JavaScript — :checked and a sibling combinator do all of the work.",

@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "css-order-property-reordering",
+    title: "Reordering Elements Visually with the CSS order Property",
+    excerpt: "Flex/grid items reshuffle on screen while the DOM — and everything that reads it — stays untouched.",
+    description: "The order property reorders a flex or grid container's children purely visually, sorting them by an integer value (ties broken by source order) without touching the actual DOM sequence — leaving Tab order and screen reader traversal exactly as written, unlike physically moving elements in the markup.",
+    category: ["CSS"],
+    tags: ["css", "order", "flexbox", "grid", "reordering"],
+    image: {
+      path: "/assets/img/goodies/snippets/css-order-property-reordering/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Five numbered flex items with item 3 sliding to a new visual position via the order property, its label unchanged, alongside a slider controlling its order value."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "checkbox-radio-toggle-hack",
     title: "JS-Free Toggles with the Checkbox/Radio Hack",
     excerpt: "A hidden input's own :checked state, plus a sibling selector, builds an accordion or tab set with zero JS.",

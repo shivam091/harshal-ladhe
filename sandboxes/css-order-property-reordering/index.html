@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>order Property Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>The order Property</h1>
+        <p>Item 3's label never changes — only where it sits visually. Tab through the row and notice focus still follows 1→2→3→4→5.</p>
+      </header>
+
+      <div class="demo-area">
+        <div class="items" id="items">
+          <button class="item" id="item-1">1</button>
+          <button class="item" id="item-2">2</button>
+          <button class="item" id="item-3">3</button>
+          <button class="item" id="item-4">4</button>
+          <button class="item" id="item-5">5</button>
+        </div>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>order for item 3</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="order-range">order <span id="order-value">0</span></label>
+            <div class="range-row">
+              <span class="range-edge">-3</span>
+              <div class="range-track">
+                <div class="range-bubble" id="order-bubble">0</div>
+                <input type="range" id="order-range" min="-3" max="3" value="0" step="1">
+              </div>
+              <span class="range-edge">3</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

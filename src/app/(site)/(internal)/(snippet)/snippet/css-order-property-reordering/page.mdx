@@ -1,0 +1,88 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-order-property-reordering");
+
+## Introduction
+
+Moving an element visually has traditionally meant moving it in the markup — reordering `<div>`s by hand, or doing it at render time in a framework. Inside a flex or grid container, the **`order`** property reorders items purely visually: the DOM keeps its original sequence (still what a screen reader reads and Tab follows), while layout alone decides what appears where on screen.
+
+<RainbowDivider />
+
+## The Core Property
+
+<CodeBlock language="css">
+{`
+  .items {
+    display: flex;
+  }
+
+  .items > * {
+    order: 0; /* every flex/grid item's initial value — ties are broken by source order */
+  }
+
+  #move-me {
+    order: -1; /* moves this one item ahead of every sibling still at order: 0 */
+  }
+`}
+</CodeBlock>
+
+`order` takes any integer, lower values rendering first — items are sorted by `order`, and among items sharing the same value (the default, `0`), the original DOM order decides the tie. Nothing else about the markup changes; this is purely how the flex/grid layout algorithm visually arranges its children.
+
+<RainbowDivider />
+
+## Try It Live
+
+Item 3's label stays "3" no matter what — only its visual position moves. Tab through the row afterward: focus still visits 1→2→3→4→5 in that order, regardless of where "3" is currently sitting on screen.
+
+<Sandbox slug="css-order-property-reordering" readOnly />
+
+<RainbowDivider />
+
+## A Common Use: Reordering for Small Screens
+
+<CodeBlock language="css">
+{`
+  .layout {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar {
+    order: -1; /* shows the sidebar ABOVE the main content only in this narrow layout */
+  }
+
+  @media (min-width: 768px) {
+    .layout {
+      flex-direction: row;
+    }
+    .sidebar {
+      order: 0; /* back to its natural (markup) position at wider widths */
+    }
+  }
+`}
+</CodeBlock>
+
+A common real use: content that should read main-content-first in the markup (for SEO, and so it's not last in a screen reader's traversal) but needs to visually appear above a sidebar on narrow screens — `order` handles exactly that mismatch between source order and a specific breakpoint's visual arrangement.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Swapping the visual position of a sidebar/nav relative to main content at a specific breakpoint, without duplicating markup or reaching for JS
+- Pulling a specific card, action button, or list item to the front/back of a row purely for visual emphasis, independent of its logical/source position
+- A drag-to-reorder UI's own visual feedback layer, where `order` can preview a drop position before the underlying data (and DOM) actually changes
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This changes visual order only — not DOM order, reading order, or Tab order.** A screen reader traverses the DOM's actual sequence, and keyboard Tab navigation follows it too, both entirely independent of `order`. A layout that reorders content significantly can create a confusing mismatch between what's seen and what's read/focused — worth testing with a keyboard and a screen reader whenever `order` shifts something meaningfully out of its source position.
+* **Only applies inside a flex or grid container** — `order` on an element with no `display: flex`/`display: grid` parent (or on the container itself) does nothing at all.
+* **Ties resolve to source/DOM order, not document position on screen** — two items both left at the default `order: 0` will always render in their original markup sequence relative to each other, no matter what other items around them have been reordered to.
+* **For content that must both look and read/focus in the new order, reorder the actual markup instead.** `order` is the right tool specifically when the visual position should diverge from the logical one (the responsive-sidebar case above); it's the wrong tool when they should really match.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`order` reshuffles a flex or grid container's children visually, with the DOM's own sequence — and everything that depends on it, like Tab order and screen reader traversal — left untouched. Reach for it exactly when visual position and logical/reading order are supposed to differ, most often at a specific responsive breakpoint; reorder the markup itself whenever they should stay in sync.
