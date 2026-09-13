@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "online-offline-reconnect-detection",
+    title: "Detecting Online/Offline and Handling Reconnects",
+    excerpt: "navigator.onLine and the online/offline events are the easy half — flushing a queue on reconnect is the useful one.",
+    description: "navigator.onLine seeds a live connectivity flag kept current by the window online/offline events, and a queue of pending actions flushed in order with bounded retries the moment connectivity returns turns simple connectivity detection into an actual recovery path for anything attempted while offline.",
+    category: ["JavaScript"],
+    tags: ["javascript", "online-offline", "navigator-online", "reconnect", "network"],
+    image: {
+      path: "/assets/img/goodies/snippets/online-offline-reconnect-detection/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A connectivity status pill flipping between online and offline, with a queue of updates flushing and retrying automatically on reconnect."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "fade-out-text-truncation",
     title: "Fading Out Truncated Text Instead of an Ellipsis",
     excerpt: "A mask-image gradient fades overflowing text to transparent — no JS, no ellipsis glyph.",

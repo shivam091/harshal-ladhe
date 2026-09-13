@@ -1,0 +1,123 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(220, 20%, 8%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: hsl(220, 18%, 13%);
+  border: 1px solid hsl(220, 15%, 22%);
+}
+
+.status-pill {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.status-pill.online {
+  color: hsl(140, 60%, 60%);
+}
+
+.status-pill.offline {
+  color: hsl(0, 70%, 65%);
+}
+
+.status-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.status-actions button,
+.queue-btn {
+  padding: 0.4rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(210, 10%, 92%);
+  background: hsl(220, 15%, 20%);
+  border: 1px solid hsl(220, 15%, 28%);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.status-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.queue-btn {
+  align-self: flex-start;
+  padding: 0.5rem 0.875rem;
+  background: hsl(213, 70%, 45%);
+  border-color: hsl(213, 70%, 45%);
+}
+
+.queue-log {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  min-height: 4rem;
+}
+
+.queue-log .empty {
+  font-size: 0.8rem;
+  color: hsl(210, 12%, 55%);
+  font-style: italic;
+}
+
+.queue-log li {
+  padding: 0.4rem 0.6rem;
+  font-size: 0.8rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  border-radius: 0.3125rem;
+  background: hsl(220, 18%, 13%);
+  border-left: 3px solid hsl(220, 15%, 28%);
+}
+
+.queue-log li.queued {
+  border-left-color: hsl(45, 70%, 55%);
+}
+
+.queue-log li.sending {
+  border-left-color: hsl(213, 70%, 55%);
+}
+
+.queue-log li.sent {
+  border-left-color: hsl(140, 55%, 50%);
+}
+
+.queue-log li.failed {
+  border-left-color: hsl(0, 65%, 55%);
+}

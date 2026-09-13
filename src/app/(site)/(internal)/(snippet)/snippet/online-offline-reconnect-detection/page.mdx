@@ -1,0 +1,95 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("online-offline-reconnect-detection");
+
+## Introduction
+
+The browser already knows when connectivity changes — **`navigator.onLine`** gives the current state, and the **`online`**/**`offline`** window events fire the moment it changes. Reading them is only half the problem, though: the more useful half is what happens *after* a reconnect — anything queued up while offline needs to actually get sent, ideally without slamming the server with every pending request at once the instant the network returns.
+
+<RainbowDivider />
+
+## Tracking Connectivity
+
+<CodeBlock language="ts">
+{`
+  function useOnlineStatus(): boolean {
+    const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+
+    useEffect(() => {
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+      return () => {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      };
+    }, []);
+
+    return isOnline;
+  }
+`}
+</CodeBlock>
+
+`navigator.onLine` seeds the initial value; the two event listeners keep it current from then on. This alone is already useful for showing a connectivity banner — the reconnect handling below is what makes it useful for actually recovering from an outage.
+
+<RainbowDivider />
+
+## Try It Live
+
+"Go offline" / "Back online" dispatch the same `online`/`offline` events a real network change would — the hook above can't tell the difference. Queue an update while offline, then reconnect and watch it flush, retrying automatically if a simulated send fails.
+
+<Sandbox slug="online-offline-reconnect-detection" readOnly />
+
+<RainbowDivider />
+
+## Flushing a Queue on Reconnect
+
+<CodeBlock language="ts">
+{`
+  useEffect(() => {
+    if (!isOnline) return;
+
+    async function flush() {
+      for (const item of queue) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+          try {
+            await sendUpdate(item);
+            break; // sent — stop retrying this item
+          } catch {
+            // try again, up to the attempt limit
+          }
+        }
+      }
+    }
+
+    flush();
+  }, [isOnline]);
+`}
+</CodeBlock>
+
+The effect is keyed on `isOnline` alone — it runs once whenever the flag flips from `false` to `true`, walking the queue in order and retrying each item a bounded number of times before moving on, rather than firing every pending request simultaneously the instant connectivity returns.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A connectivity indicator/banner anywhere users might genuinely lose signal — a mobile web app, an editor, a form with meaningful unsaved input
+- Queuing writes made offline (form submissions, edits, likes) to flush automatically on reconnect, instead of just failing silently or showing a generic error
+- Retrying a specific failed request once connectivity is confirmed restored, rather than retrying blindly against a network that's still down
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`navigator.onLine` only reports whether the device has *a* network interface it thinks is active** — being connected to Wi-Fi with no real internet access still reports `true`. Treat it as a useful signal, not a guarantee the network actually works; a failed request is still possible even while `isOnline` reads `true`.
+* **The `online` event fires the moment a connection is detected, not necessarily the moment the server is reachable again.** A brief delay (or a lightweight health-check request) before flushing a queue avoids firing requests into a connection that's still stabilizing.
+* **Retries need a cap.** An unbounded retry loop against a genuinely broken endpoint (not a connectivity issue at all) will retry forever — this snippet's 3-attempt limit per item is a deliberately simple stand-in for a real exponential-backoff policy in production code.
+* **Persist the queue if it needs to survive a page reload.** As written here, the queue lives only in React state — a refresh while offline loses anything queued. `localStorage` or IndexedDB is the usual fix for a queue that has to survive a reload before reconnecting.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`navigator.onLine` plus the `online`/`offline` events cover detection; the part worth building carefully is what happens next — flushing whatever was queued, in order, with retries bounded enough not to hammer a server that's still recovering. Detection is the easy half of this pattern.

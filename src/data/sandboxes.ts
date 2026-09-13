@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "online-offline-reconnect-detection",
+    title: "Online/Offline + Reconnect",
+    description: "Go offline, queue an update, then come back online and watch it flush automatically — retrying up to 3 times per item against a simulated, occasionally-failing send.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "fade-out-text-truncation",
     title: "Fade-Out Truncation",
     description: "Drag the slider to change how much of the edge fades to transparent instead of cutting off with an ellipsis, and toggle between a single-line fade and a 3-line clamp fading at the bottom.",
