@@ -348,6 +348,7 @@ To keep your application performant and leak-free, follow these five "Golden Rul
 
 - **Always Disconnect:** Browsers are efficient, but an orphaned observer on a global object is a memory leak waiting to happen. Always call `observer.disconnect()` in your cleanup logic (e.g., `componentWillUnmount` or a `destroy()` method).
 - **Use WeakMap for Metadata:** If you need to associate data with observed elements, use a `WeakMap`. This ensures the element can be garbage collected even if it is still a key in your map.
+- **Optimize the Callback:** Observers like `ResizeObserver` can fire dozens of times per second. Wrap heavy computations in a `requestAnimationFrame` or a debounce function to stay at 60fps — and if the callback drives a CSS transform or opacity change, pair it with [`will-change`](/tutorial/will-change-property) so the browser promotes the layer ahead of time instead of mid-change.
 - **Passive Listeners:** For classic scroll observers, always use `{ passive: true }`. This tells the browser you won't call `preventDefault()`, allowing for a much smoother scrolling experience.
 - **Coordinate Precision:** When using `ResizeObserver` for **SVG dashboards**, use `device-pixel-content-box` to ensure your paths are recalculated with sub-pixel accuracy on high-DPI (Retina) displays.
 
