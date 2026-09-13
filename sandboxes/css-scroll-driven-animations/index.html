@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scroll-Driven Animations Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Scroll-Driven Animations Playground</h1>
+        <p>Scroll the panels below — every animation here runs off <code>animation-timeline</code>, with no scroll event listener in sight.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Demo">
+        <button class="tab tab--active" type="button" data-mode="progress" role="tab" aria-selected="true">scroll() progress bar</button>
+        <button class="tab" type="button" data-mode="reveal" role="tab" aria-selected="false">view() reveal</button>
+      </div>
+
+      <section id="progress-demo" class="tab-panel tab-panel--active" aria-label="Scroll timeline progress bar demo">
+        <p class="tip">The bar's width comes entirely from <code>animation-timeline: scroll(nearest block)</code> on a <code>@keyframes</code> that scales it from 0 to 1 — scroll the panel and watch it track your position.</p>
+
+        <div class="scroll-area">
+          <div class="progress-track">
+            <div class="progress-bar"></div>
+          </div>
+          <div class="scroll-content">
+            <div class="scroll-block">1 / 6</div>
+            <div class="scroll-block">2 / 6</div>
+            <div class="scroll-block">3 / 6</div>
+            <div class="scroll-block">4 / 6</div>
+            <div class="scroll-block">5 / 6</div>
+            <div class="scroll-block">6 / 6</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="reveal-demo" class="tab-panel" aria-label="View timeline reveal demo">
+        <fieldset class="control-group">
+          <legend>animation-range</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="range-name-select">Fully revealed by</label>
+              <select id="range-name-select">
+                <option value="entry" selected>entry</option>
+                <option value="cover">cover</option>
+                <option value="contain">contain</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="range-end-input">Range end</label>
+              <div class="range-row">
+                <span class="range-edge">10%</span>
+                <div class="range-track">
+                  <input type="range" id="range-end-input" min="10" max="100" step="5" value="40">
+                  <output class="range-bubble" id="range-end-value" for="range-end-input">40%</output>
+                </div>
+                <span class="range-edge">100%</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="tip">Each card's <code>animation-range</code> is <code id="range-readout">entry 0% entry 40%</code> — it starts revealing the moment it enters the scroller, and finishes by that point.</p>
+        </fieldset>
+
+        <div class="reveal-area">
+          <div class="reveal-spacer" aria-hidden="true"></div>
+          <div class="reveal-card"><span class="reveal-badge">1</span>Fades and slides in as it enters view.</div>
+          <div class="reveal-card"><span class="reveal-badge">2</span>Same animation, timed by your animation-range.</div>
+          <div class="reveal-card"><span class="reveal-badge">3</span>No IntersectionObserver, no scroll listener.</div>
+          <div class="reveal-card"><span class="reveal-badge">4</span>Just a view()-timeline keyframes animation.</div>
+          <div class="reveal-spacer" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <p id="support-warning" class="tip" hidden>Your browser doesn't support scroll-driven animations yet (needs Chrome/Edge 115+) — the demos above fall back to a static state.</p>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
