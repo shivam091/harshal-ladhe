@@ -1,0 +1,150 @@
+.playground-header code,
+.tip code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  background: var(--pg-surface-muted);
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+}
+
+/* scroll() progress bar demo */
+
+.scroll-area {
+  position: relative;
+  height: 220px;
+  overflow-y: auto;
+  border: 1px dashed var(--pg-border);
+  background: var(--pg-surface-muted);
+}
+
+.progress-track {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 10px 12px;
+  background: var(--pg-surface-muted);
+  border-bottom: 1px solid var(--pg-border);
+}
+
+.progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pg-primary), var(--pg-primary-dark));
+  transform-origin: left;
+  transform: scaleX(0);
+  animation: fill-progress linear;
+  animation-timeline: scroll(nearest block);
+}
+
+.scroll-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.scroll-block {
+  height: 140px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface);
+}
+
+/* view() reveal demo */
+
+.fields-grid {
+  margin-bottom: 12px;
+}
+
+.reveal-area {
+  height: 260px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 0 12px;
+  border: 1px dashed var(--pg-border);
+  background: var(--pg-surface-muted);
+}
+
+.reveal-spacer {
+  height: 90px;
+}
+
+.reveal-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  font-size: 0.85rem;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  box-shadow: var(--pg-shadow-sm);
+  animation: reveal-in linear both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 40%;
+}
+
+.reveal-badge {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+}
+
+/* Keyframes */
+
+@keyframes fill-progress {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(36px) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Fallback for browsers without animation-timeline support */
+
+.no-timeline-support .progress-bar {
+  animation: none;
+  transform: scaleX(0.35);
+}
+
+.no-timeline-support .reveal-card {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 480px) {
+  .scroll-area {
+    height: 180px;
+  }
+
+  .reveal-area {
+    height: 220px;
+  }
+}
