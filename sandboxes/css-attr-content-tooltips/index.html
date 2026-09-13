@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>attr() Tooltips Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>attr() Tooltips</h1>
+        <p>Hover or Tab to a button — its tooltip text comes straight from the data-tooltip attribute via content: attr(...), no JS.</p>
+      </header>
+
+      <div class="demo-area">
+        <div class="toolbar" id="toolbar" data-tooltip-position="top">
+          <button class="icon-btn" data-tooltip="Save changes" aria-label="Save changes">💾</button>
+          <button class="icon-btn" data-tooltip="Duplicate this item" aria-label="Duplicate this item">📄</button>
+          <button class="icon-btn" data-tooltip="Move to trash" aria-label="Move to trash">🗑️</button>
+          <button class="icon-btn" data-tooltip="Share with your team" aria-label="Share with your team">🔗</button>
+        </div>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>Tooltip position</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Tooltip position">
+          <label class="segment">
+            <input type="radio" name="position" value="top" checked>
+            <span>Top</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="position" value="bottom">
+            <span>Bottom</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

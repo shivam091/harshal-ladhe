@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "css-attr-content-tooltips",
+    title: "CSS-Only Tooltips with attr() and content",
+    excerpt: "content: attr(data-tooltip) turns one attribute into a positioned, styled tooltip — no JS.",
+    description: "content: attr(data-tooltip) on a ::after pseudo-element pulls a tooltip's text directly from the element's own attribute, and a :hover/:focus-visible transition positions and reveals it — a JS-free tooltip with the attribute as the single source of truth for its text.",
+    category: ["CSS"],
+    tags: ["css", "tooltips", "attr", "pseudo-elements", "accessibility"],
+    image: {
+      path: "/assets/img/goodies/snippets/css-attr-content-tooltips/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A row of icon buttons showing a tooltip generated purely from CSS content: attr(data-tooltip), with a control to switch it above or below the button."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "dynamic-og-image-metadata-api",
     title: "Generating Social Preview Images with ImageResponse",
     excerpt: "A per-page opengraph-image.tsx replaces a stale, design-tool-exported static card.",

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-attr-content-tooltips",
+    title: "attr() Tooltips",
+    description: "Hover or Tab to any icon button — its tooltip text comes straight from a data-tooltip attribute via content: attr(...), with a control to flip it above or below the button.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "react-render-cascade-visualizer",
     title: "Render Cascade Visualizer",
     description: "Two small component trees that flash on every render — watch a state update cascade to children regardless of their own props, then watch React.memo stop that cascade until an inline function literal breaks it again.",

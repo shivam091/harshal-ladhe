@@ -1,0 +1,88 @@
+.toolbar {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 24px 12px;
+}
+
+.icon-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  font-size: 1.1rem;
+  line-height: 1;
+  background: var(--pg-surface);
+  border: 1px solid var(--pg-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.icon-btn:hover,
+.icon-btn:focus-visible {
+  border-color: var(--pg-primary);
+  transform: translateY(-2px);
+}
+
+/* The whole tooltip string comes from the button's own data-tooltip attribute — no duplicate markup, no JS-built string. */
+.icon-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  width: max-content;
+  max-width: 160px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--pg-text);
+  background: var(--pg-surface-muted);
+  border: 1px solid var(--pg-border);
+  border-radius: 6px;
+  box-shadow: var(--pg-shadow-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 1;
+}
+
+/* A small triangle pointing from the tooltip back to the button it belongs to. */
+.icon-btn::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  z-index: 1;
+}
+
+.toolbar[data-tooltip-position="top"] .icon-btn::after {
+  bottom: calc(100% + 10px);
+}
+
+.toolbar[data-tooltip-position="top"] .icon-btn::before {
+  bottom: calc(100% + 4px);
+  border-top-color: var(--pg-border);
+}
+
+.toolbar[data-tooltip-position="bottom"] .icon-btn::after {
+  top: calc(100% + 10px);
+}
+
+.toolbar[data-tooltip-position="bottom"] .icon-btn::before {
+  top: calc(100% + 4px);
+  border-bottom-color: var(--pg-border);
+}
+
+.icon-btn:hover::after,
+.icon-btn:focus-visible::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.icon-btn:hover::before,
+.icon-btn:focus-visible::before {
+  opacity: 1;
+}

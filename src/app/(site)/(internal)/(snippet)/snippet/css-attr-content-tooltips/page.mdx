@@ -1,0 +1,95 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-attr-content-tooltips");
+
+## Introduction
+
+A tooltip is usually reached for as a JS library, or at minimum a `title` attribute with all its quirks (a multi-second delay, no styling control, inconsistent behavior across browsers). For a simple hint on a button or icon, CSS alone can do it: **`content: attr(data-tooltip)`** pulls a string straight out of an element's own attribute into generated content, and a `::after` pseudo-element with a hover/focus transition turns that into a positioned, styled tooltip — no JS, no duplicated text in the markup.
+
+<RainbowDivider />
+
+## The Core Technique
+
+<CodeBlock language="html">
+{`
+  <button data-tooltip="Save changes" aria-label="Save changes">💾</button>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .icon-btn {
+    position: relative;
+  }
+
+  .icon-btn::after {
+    content: attr(data-tooltip); /* pulled directly from the button's own attribute */
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    padding: 6px 10px;
+    background: #1d2137;
+    color: #fff;
+    border-radius: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+
+  .icon-btn:hover::after,
+  .icon-btn:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+`}
+</CodeBlock>
+
+The attribute is the single source of truth for the tooltip text — change `data-tooltip="..."` and the rendered tooltip updates with it, without touching the CSS or adding a second copy of the string anywhere in the markup.
+
+<RainbowDivider />
+
+## Try It Live
+
+Hover or Tab to any button — its tooltip text comes from `data-tooltip`, positioned above or below the button depending on the control below.
+
+<Sandbox slug="css-attr-content-tooltips" readOnly />
+
+<RainbowDivider />
+
+## Making It Keyboard-Reachable
+
+<CodeBlock language="css">
+{`
+  /* :hover alone only serves pointer users — :focus-visible is what makes the same tooltip reachable by Tab */
+  .icon-btn:hover::after,
+  .icon-btn:focus-visible::after {
+    opacity: 1;
+  }
+`}
+</CodeBlock>
+
+Pairing `:hover` with `:focus-visible` (rather than `:hover` alone) is what makes this reachable without a mouse — a button that only reveals its tooltip on hover is invisible to anyone tabbing through the page.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Icon-only buttons/controls that need a short supplementary label — a toolbar, a compact action row
+- Anywhere a `title` attribute's un-styleable, multi-second-delay tooltip isn't good enough, but a full JS tooltip library is overkill
+- A quick prototype tooltip before (or instead of) reaching for a proper ARIA tooltip pattern
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This is not an accessible tooltip in the ARIA sense.** CSS generated content (`::after`'s `content: attr(...)`) isn't reliably exposed to screen readers the way a real `role="tooltip"` element with `aria-describedby` is — treat this as a nice-to-have visual hint, not the only place essential information lives. Keep an `aria-label` (as in the example) on the element itself for real accessible naming.
+* **`attr()` here only returns a string**, usable solely inside `content`. The CSS Values spec has proposed a typed `attr()` that could resolve numbers/lengths for use in other properties, but support for that extended form remains negligible — stick to the `content`-only form for anything shipping today.
+* **Nothing shows on touch devices without a hover state.** A tap can trigger `:focus-visible` on some browsers/elements, but don't rely on that alone if touch users need the same information — surface it in the accessible label too, as above.
+* **Long tooltip text needs an explicit `max-width`** (and usually `white-space: normal`) — without one, `width: max-content` lets the pseudo-element grow arbitrarily wide and overflow the viewport.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`content: attr(data-tooltip)` plus a `::after` and a couple of transitions covers the common case — a short label on an icon button, one attribute as the single source of truth. Reach for a real ARIA tooltip pattern (or a library) the moment the tooltip carries information a screen reader user genuinely needs.
