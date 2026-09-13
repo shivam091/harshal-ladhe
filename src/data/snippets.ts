@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "request-idle-callback-deferred-work",
+    title: "Deferring Non-Urgent Work with requestIdleCallback",
+    excerpt: "Chunk it against a real idle-time budget, instead of firing it the instant setTimeout(fn, 0) can.",
+    description: "requestIdleCallback schedules a callback to run only during the browser's actual idle periods, handing it an IdleDeadline whose timeRemaining() tells it how much of that period is left — letting non-urgent work (analytics batching, prefetching, processing a large dataset) get chunked and spread across idle time instead of competing with rendering and input the way setTimeout(fn, 0) would.",
+    category: ["JavaScript"],
+    tags: ["javascript", "requestidlecallback", "performance", "scheduling", "idle-deadline"],
+    image: {
+      path: "/assets/img/goodies/snippets/request-idle-callback-deferred-work/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A progress bar filling in as 6,000 items are processed in idle-time chunks, with a text input alongside it staying fully responsive the whole time."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "object-fit-object-position-cropping",
     title: "Cropping Responsive Media with object-fit and object-position",
     excerpt: "background-size: cover's fitting model, now available on a real img or video element.",

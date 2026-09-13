@@ -1,0 +1,78 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("request-idle-callback-deferred-work");
+
+## Introduction
+
+Not all work is equally urgent. Rendering the current frame and responding to input come first; logging an analytics event, prefetching a link the user hasn't hovered yet, or processing a big local dataset can wait. **`requestIdleCallback`** schedules exactly that kind of work to run only when the browser has spare time left in the current frame — instead of a `setTimeout(fn, 0)`, which runs as soon as it can regardless of whether anything more urgent is waiting.
+
+<RainbowDivider />
+
+## The Core API
+
+<CodeBlock language="js">
+{`
+  function processQueue(deadline) {
+    while (tasks.length > 0 && deadline.timeRemaining() > 0) {
+      doNextTask(tasks.shift());
+    }
+    if (tasks.length > 0) {
+      requestIdleCallback(processQueue); // more work left — wait for the next idle period
+    }
+  }
+
+  requestIdleCallback(processQueue);
+`}
+</CodeBlock>
+
+The callback receives an `IdleDeadline` with `timeRemaining()` — how much idle time is left in *this* period, recalculated on every call — and `didTimeout`, set when the callback is firing because its `timeout` option expired rather than because the browser was actually idle. The pattern is always the same: do work while time remains, then reschedule for the next idle period if there's more left.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click Start — 6,000 items get processed a few hundred at a time, only during the browser's idle periods. Type into the input while it runs: it never lags, because the work yields back before it can block a keystroke.
+
+<Sandbox slug="request-idle-callback-deferred-work" readOnly />
+
+<RainbowDivider />
+
+## A Fallback for Safari
+
+<CodeBlock language="js">
+{`
+  function scheduleIdleWork(callback) {
+    if (typeof window.requestIdleCallback === "function") {
+      window.requestIdleCallback(callback, { timeout: 1000 });
+    } else {
+      // No real idle-time signal available — approximate one with a fixed, generous budget instead
+      setTimeout(() => callback({ didTimeout: false, timeRemaining: () => 8 }), 0);
+    }
+  }
+`}
+</CodeBlock>
+
+`requestIdleCallback` has never shipped in Safari. Feature-detecting it and falling back to `setTimeout` with a synthesized `IdleDeadline` keeps the same call sites working everywhere — Safari just gets a fixed, approximate time budget per chunk instead of the browser's real idle-time measurement.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Batching and sending analytics/telemetry events, where a few seconds of delay is invisible to the user
+- Prefetching data or resources for a likely-next interaction (hovering a link, an adjacent tab) without competing with whatever's currently rendering
+- Processing a large in-memory dataset (parsing, transforming, indexing) in chunks, when the whole result isn't needed on this exact frame
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Never use this for anything visible in the current frame.** Idle callbacks can be delayed arbitrarily — under load, they might not fire for a long time. A `timeout` option (as in the fallback above) guarantees a callback fires eventually, but "eventually" can still be well past when a user-visible update would need to happen.
+* **`timeRemaining()` typically caps out around 50ms per idle period** — it reflects time left before the next frame is due, not a fixed budget handed to the callback; recalculate it (don't cache the first read) on every loop iteration inside the callback.
+* **DOM writes inside an idle callback can still trigger layout/reflow** just like anywhere else — idle time doesn't grant an exemption from that cost. Heavy DOM mutation is often better batched and applied in one pass rather than spread across many small idle-callback chunks.
+* **`cancelIdleCallback(handle)` exists for cleanup** (a component unmounting, a search superseded by a newer one) — hold onto the handle `requestIdleCallback` returns if the scheduled work might need to be cancelled before it runs.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`requestIdleCallback` is for work that can wait — batch it, chunk it against `timeRemaining()`, and reschedule until it's done, with a `setTimeout`-based fallback covering the one major browser (Safari) that's never implemented it. Reach for `setTimeout(fn, 0)` instead the moment the work is actually urgent enough that "whenever the browser happens to be idle" isn't good enough.

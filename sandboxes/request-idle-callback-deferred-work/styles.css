@@ -1,0 +1,89 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  padding: 40px 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(220, 20%, 8%);
+  color: hsl(210, 10%, 90%);
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 26rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+  text-align: center;
+}
+
+.type-test {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: hsl(210, 10%, 92%);
+  background: hsl(220, 18%, 13%);
+  border: 1px solid hsl(220, 15%, 24%);
+  border-radius: 0.375rem;
+}
+
+.type-test:focus {
+  outline: none;
+  border-color: hsl(213, 70%, 55%);
+}
+
+.start-btn {
+  align-self: center;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: hsl(213, 70%, 45%);
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.start-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.progress-track {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: hsl(220, 18%, 16%);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: hsl(213, 70%, 55%);
+  transition: width 0.1s linear;
+}
+
+.progress-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  color: hsl(210, 12%, 60%);
+  text-align: center;
+}

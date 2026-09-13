@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "request-idle-callback-deferred-work",
+    title: "requestIdleCallback",
+    description: "Click Start to process 6,000 items in idle-time chunks — type into the input alongside the progress bar while it runs to see it stay fully responsive the whole time.",
+    template: "react-ts",
+    entry: "/App.tsx",
+  },
+  {
     slug: "object-fit-object-position-cropping",
     title: "object-fit Playground",
     description: "A fixed square frame around a wide landscape illustration — switch between cover/contain/fill/none and drag the X/Y sliders to see object-fit and object-position crop and anchor the image without ever resizing the frame.",
