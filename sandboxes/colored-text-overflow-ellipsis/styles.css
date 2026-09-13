@@ -1,0 +1,40 @@
+.truncate {
+  --accent: #f97316;
+  position: relative;
+  display: flex;
+  max-width: 260px;
+  margin: 0;
+  overflow: hidden;
+  background: var(--pg-surface-muted);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+}
+
+/* The real text — clipped with plain overflow: hidden, no native ellipsis (text-overflow is left at its clip default). */
+.truncate-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/*
+  A fake ellipsis, absolutely positioned over the clipped edge. Its background matches the
+  container exactly so it fully covers whatever the real text got cut off mid-character, then
+  paints its own "..." on top in whatever color this rule chooses — something the native,
+  unstylable ellipsis glyph can never do.
+*/
+.dots {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  padding-left: 6px;
+  background: var(--pg-surface-muted);
+  font-weight: 700;
+  color: inherit;
+}
+
+.dots[data-color="accent"] {
+  color: var(--accent);
+}

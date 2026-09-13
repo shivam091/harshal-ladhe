@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Colored Ellipsis Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Coloring the Ellipsis</h1>
+        <p>Native text-overflow: ellipsis dots inherit the text color — this fakes the dots as a separate, styleable element instead.</p>
+      </header>
+
+      <div class="demo-area">
+        <p class="truncate" id="truncate">
+          <span class="truncate-text">This card title is deliberately far too long to fit in the space it's been given</span><span class="dots" id="dots" aria-hidden="true">...</span>
+        </p>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>Ellipsis color</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Ellipsis color">
+          <label class="segment">
+            <input type="radio" name="color" value="inherit" checked>
+            <span>Same as text</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="color" value="accent">
+            <span>Accent color</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

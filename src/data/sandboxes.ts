@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "colored-text-overflow-ellipsis",
+    title: "Colored Ellipsis",
+    description: "Toggle a truncated title's fake ellipsis between matching the text color and a distinct accent color — something the native, unstylable ellipsis glyph can never do.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "css-attr-content-tooltips",
     title: "attr() Tooltips",
     description: "Hover or Tab to any icon button — its tooltip text comes straight from a data-tooltip attribute via content: attr(...), with a control to flip it above or below the button.",

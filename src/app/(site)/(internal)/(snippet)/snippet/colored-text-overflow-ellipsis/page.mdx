@@ -1,0 +1,77 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("colored-text-overflow-ellipsis");
+
+## Introduction
+
+`text-overflow: ellipsis` truncates overflowing text with "…" — but that glyph always inherits the surrounding text's color. There's no `::ellipsis` pseudo-element, no property that targets just the dots; the native ellipsis is rendered by the browser as part of the text itself, entirely outside CSS's reach. Making the dots a different color than the text means not using the native ellipsis at all — faking one instead, as a real, styleable element.
+
+<RainbowDivider />
+
+## The Fake-Ellipsis Technique
+
+<CodeBlock language="html">
+{`
+  <p class="truncate">
+    <span class="truncate-text">A title long enough to overflow its container</span><span class="dots">...</span>
+  </p>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .truncate {
+    position: relative;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .truncate-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap; /* clipped with no native ellipsis — text-overflow stays at its clip default */
+  }
+
+  .dots {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    background: inherit; /* must match the container's own background exactly */
+    color: orange;       /* styled independently of the text it's covering */
+  }
+`}
+</CodeBlock>
+
+`.truncate-text` clips with a plain `overflow: hidden` — no ellipsis glyph is ever rendered by the browser. `.dots` sits absolutely positioned over the clipped edge, with a background that exactly matches the container so it fully hides whatever character got cut off mid-glyph underneath it, then paints its own "…" on top in whatever color you want.
+
+<RainbowDivider />
+
+## Try It Live
+
+Toggle the color — the dots switch between matching the text (mimicking the native look) and a distinct accent color the real ellipsis glyph could never take on.
+
+<Sandbox slug="colored-text-overflow-ellipsis" readOnly />
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A UI convention where truncated-content indicators (dots, a "more" affix) get their own brand or semantic color, distinct from body text
+- Card titles, table cells, or chips where a colored ellipsis doubles as a subtle "there's more here" affordance
+- Anywhere a design calls for something the native ellipsis glyph structurally cannot do, since it isn't a separately stylable node
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The fake dots' background must match the container's actual background exactly.** This technique only works cleanly against a solid, known color — over an image, a gradient, or a background that can change (e.g. a dark-mode toggle), the covering box becomes visibly mismatched unless its background is kept in sync too.
+* **Mark the fake dots `aria-hidden="true"`.** They're decorative — the real text node already carries the actual content (fully, untruncated, in the DOM) for assistive technology and search indexing to read.
+* **This only handles single-line truncation.** For a multi-line clamp with a styled indicator at the end, `-webkit-line-clamp` plus a similarly absolutely-positioned overlay is the equivalent approach — see [fading truncated text with a mask-image gradient](/snippet/fade-out-text-truncation) for a related technique that skips the dots entirely.
+* **Flex layout (`display: flex` + `min-width: 0`) is what makes `.truncate-text` actually shrink to overflow** inside its container — without `min-width: 0`, a flex item won't shrink below its content's intrinsic width, and the text-overflow rules never kick in.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Because the native ellipsis glyph isn't a stylable node, coloring it differently from the text it truncates means faking it — a plain-clipped text span plus an absolutely positioned dots element with a background that matches its container. Simple once the two pieces are separated; invisible as a hack once it's in place.

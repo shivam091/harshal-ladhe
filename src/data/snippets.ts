@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "colored-text-overflow-ellipsis",
+    title: "Coloring the text-overflow Ellipsis Differently From the Text",
+    excerpt: "The native ellipsis glyph always inherits the text color — faking one is the only way around that.",
+    description: "The native text-overflow: ellipsis glyph always inherits the surrounding text's color with no pseudo-element or property that targets it directly — a plain-clipped text span plus an absolutely positioned fake-dots element with a background matching its container fakes an ellipsis that can be colored independently of the text it truncates.",
+    category: ["CSS"],
+    tags: ["css", "text-overflow", "ellipsis", "pseudo-elements", "truncation"],
+    image: {
+      path: "/assets/img/goodies/snippets/colored-text-overflow-ellipsis/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "A truncated card title with its fake ellipsis dots rendered in an accent color distinct from the title text."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "css-attr-content-tooltips",
     title: "CSS-Only Tooltips with attr() and content",
     excerpt: "content: attr(data-tooltip) turns one attribute into a positioned, styled tooltip — no JS.",
