@@ -11,6 +11,21 @@ import type { Snippet, SnippetNavigation } from "@/interfaces/snippet";
 */
 export const snippets: Snippet[] = [
   {
+    slug: "custom-underline-gradient-background",
+    title: "Custom Underline Effects with Gradient Backgrounds",
+    excerpt: "Draw the underline as a background-image and text-decoration's limits disappear.",
+    description: "Treating an underline as a background-image (sized and positioned via background-size/background-position) instead of text-decoration hands you precise control over its thickness and gap, an animatable left-to-right reveal on hover, and multi-color gradients — none of which text-decoration alone can express.",
+    category: ["CSS"],
+    tags: ["css", "underline", "background-image", "gradient", "text-decoration"],
+    image: {
+      path: "/assets/img/goodies/snippets/custom-underline-gradient-background/cover.png",
+      width: 1536,
+      height: 1024,
+      alt: "Three links with gradient-based underlines — a static bar, an animated hover-reveal underline, and a multi-color gradient underline."
+    },
+    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
     slug: "online-offline-reconnect-detection",
     title: "Detecting Online/Offline and Handling Reconnects",
     excerpt: "navigator.onLine and the online/offline events are the easy half — flushing a queue on reconnect is the useful one.",

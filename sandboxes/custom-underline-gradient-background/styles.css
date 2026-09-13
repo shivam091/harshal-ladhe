@@ -1,0 +1,45 @@
+.demo-area {
+  --underline-thickness: 2px;
+  --underline-gap: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.demo-area p {
+  margin: 0;
+}
+
+/*
+  A flat linear-gradient (two identical stops) acts as a solid-color bar here — the point of
+  reaching for a gradient instead of a plain background-color is that it also opens the door to
+  the multi-color version below, using one and the same property.
+*/
+.underline-link {
+  color: var(--pg-text);
+  text-decoration: none;
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% var(--underline-thickness);
+  padding-bottom: var(--underline-gap);
+}
+
+.underline-link.static {
+  background-image: linear-gradient(var(--pg-primary), var(--pg-primary));
+}
+
+/* Starts at 0% width and grows to 100% on hover/focus — a directional reveal text-decoration-line has no equivalent for. */
+.underline-link.animated {
+  background-image: linear-gradient(var(--pg-primary), var(--pg-primary));
+  background-size: 0% var(--underline-thickness);
+  transition: background-size 0.25s ease;
+}
+
+.underline-link.animated:hover,
+.underline-link.animated:focus-visible {
+  background-size: 100% var(--underline-thickness);
+}
+
+.underline-link.multicolor {
+  background-image: linear-gradient(to right, #f97316, #ec4899, #8b5cf6);
+}

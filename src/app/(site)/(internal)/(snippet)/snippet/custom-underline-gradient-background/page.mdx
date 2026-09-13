@@ -1,0 +1,91 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("custom-underline-gradient-background");
+
+## Introduction
+
+`text-decoration-line: underline` draws a line, but styling it precisely — its exact thickness, its gap from the text baseline, a multi-color gradient rather than a flat color, an animated left-to-right reveal on hover — has always been awkward or outright impossible with `text-decoration` alone. Skipping it entirely and drawing the underline as a **`background-image`** instead hands you every lever `background-size`, `background-position`, and `background-repeat` already have for any other background.
+
+<RainbowDivider />
+
+## The Core Technique
+
+<CodeBlock language="css">
+{`
+  .underline-link {
+    text-decoration: none;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;   /* bottom-aligned */
+    background-size: 100% 2px;     /* thickness */
+    padding-bottom: 2px;           /* gap between text and underline */
+  }
+`}
+</CodeBlock>
+
+A `linear-gradient` with two identical color stops paints as a flat bar — the underline itself. `background-size`'s second value sets its thickness directly; `padding-bottom` opens a gap between the text baseline and the bar without touching `background-position`'s vertical alignment.
+
+<RainbowDivider />
+
+## An Animated Reveal
+
+<CodeBlock language="css">
+{`
+  .underline-link {
+    background-size: 0% 2px;                       /* starts invisible */
+    transition: background-size 0.25s ease;
+  }
+
+  .underline-link:hover,
+  .underline-link:focus-visible {
+    background-size: 100% 2px;                     /* grows in from the left */
+  }
+`}
+</CodeBlock>
+
+Animating `background-size`'s width from `0%` to `100%` reads as the underline growing in from the left — a directional reveal `text-decoration-line` has no equivalent for, since a plain underline can only ever be fully on or fully off (or transition color/style, but never "partially drawn").
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag the sliders to change the underline's thickness and its gap from the text — the multi-color link swaps in a three-stop gradient using the exact same properties.
+
+<Sandbox slug="custom-underline-gradient-background" readOnly />
+
+<RainbowDivider />
+
+## A Multi-Color Underline
+
+<CodeBlock language="css">
+{`
+  .underline-link.multicolor {
+    background-image: linear-gradient(to right, #f97316, #ec4899, #8b5cf6);
+  }
+`}
+</CodeBlock>
+
+Since the underline is just a `background-image`, any gradient works — a straight swap from a two-stop flat color to a three-stop rainbow, no other rule needs to change.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A hover-reveal underline animation (growing in, sliding, or changing color) that plain `text-decoration` transitions can't express
+- A brand-colored or multi-stop gradient underline as a stylistic accent, distinct from the surrounding text color
+- Precise control over an underline's thickness and its gap from the text, independent of font metrics
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **This replaces `text-decoration`, so its inherited behaviors go with it** — a real underline follows the text through line wraps automatically and (with `text-decoration-skip-ink`) skips descenders cleanly; a `background-image` underline needs its own handling for either if the text wraps across lines or has descenders crossing the bar.
+* **`currentColor` keeps the underline in sync with the link's own text color** for free — hardcode a color instead only when the underline is meant to look intentionally different from the text, as in the multicolor example.
+* **Modern `text-decoration-thickness`, `text-underline-offset`, and `text-decoration-color` now cover the plain thickness/gap/color cases directly** — reach for the background-image approach specifically once something on top of that (an animated reveal, a multi-stop gradient) is actually needed, rather than by default.
+* **`background-clip: text` is a different, unrelated technique** (clipping the gradient to the text glyphs themselves, for gradient-filled text) — don't confuse the two; this snippet's gradient paints a separate underline bar, not the text's fill color.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Treating an underline as a `background-image` rather than `text-decoration` unlocks `background-size`/`background-position`'s full toolkit — precise thickness and gap, multi-stop gradients, and an animatable, directional reveal. Reach for plain `text-decoration-thickness`/`text-underline-offset` first for the simple cases; switch to this the moment one of those extra capabilities is actually needed.

@@ -9,6 +9,13 @@ import type { SandboxMeta } from "@/interfaces/sandbox";
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "custom-underline-gradient-background",
+    title: "Gradient Underlines",
+    description: "Drag the sliders to change a background-image underline's thickness and its gap from the text — hover the second link to see the same underline animate in from the left, and the third swap in a multi-color gradient.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "online-offline-reconnect-detection",
     title: "Online/Offline + Reconnect",
     description: "Go offline, queue an update, then come back online and watch it flush automatically — retrying up to 3 times per item against a simulated, occasionally-failing send.",

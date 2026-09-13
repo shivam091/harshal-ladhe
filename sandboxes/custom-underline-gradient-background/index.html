@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gradient Underline Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Gradient Underlines</h1>
+        <p>Every underline below is a background-image, not text-decoration — sized, positioned, and animated like any other background.</p>
+      </header>
+
+      <div class="demo-area">
+        <p><a href="#" class="underline-link static">A static underline with its own thickness and gap</a></p>
+        <p><a href="#" class="underline-link animated">Hover me — the underline grows in from the left</a></p>
+        <p><a href="#" class="underline-link animated multicolor">A multi-color gradient underline, also animated</a></p>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>Thickness &amp; gap</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="thickness-range">Thickness <span id="thickness-value">2px</span></label>
+            <div class="range-row">
+              <span class="range-edge">1</span>
+              <div class="range-track">
+                <div class="range-bubble" id="thickness-bubble">2px</div>
+                <input type="range" id="thickness-range" min="1" max="8" value="2" step="1">
+              </div>
+              <span class="range-edge">8</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="gap-range">Gap from text <span id="gap-value">2px</span></label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <div class="range-bubble" id="gap-bubble">2px</div>
+                <input type="range" id="gap-range" min="0" max="10" value="2" step="1">
+              </div>
+              <span class="range-edge">10</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
