@@ -130,3 +130,10 @@
   inherits: true;
   initial-value: 0px;
 }
+
+// Tracks the festive banner's live height so sticky offsets can clear it; 0px when absent or dismissed.
+@property --festive-banner-height {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
