@@ -75,8 +75,6 @@ export const SandboxHeaderMeta = styled.div``;
   closing off this row instead (it's the last piece of "chrome" before the actual sandbox body).
 */
 export const SandboxToolbarRow = styled.div`
-  padding-inline: 0.5rem;
-  padding-block: 0.25rem;
   border-block: 0.0625rem solid var(--color-border-muted);
   background: var(--color-bg-muted);
 `;

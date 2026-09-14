@@ -79,6 +79,14 @@ export default function ResetButton({ size = 14 }: ResetButtonProps): JSX.Elemen
     }
   }
 
+  // Pointer left the button mid-hold — stop the countdown without treating it as a completed
+  // click, so it doesn't also pop the quick-click tooltip the way handlePressEnd would.
+  function handlePressCancel() {
+    heldSinceRef.current = null;
+    setIsHolding(false);
+    setProgress(0);
+  }
+
   // Polls the hold duration every 20ms while isHolding, firing the reset once RESET_AFTER is reached.
   useInterval(
     () => {
@@ -126,6 +134,7 @@ export default function ResetButton({ size = 14 }: ResetButtonProps): JSX.Elemen
             onPointerLeave={() => {
               onPointerLeave();
               setShowTooltip(false);
+              handlePressCancel();
             }}
             onKeyDown={(event) => {
               if (event.key === "Enter") handleReset();

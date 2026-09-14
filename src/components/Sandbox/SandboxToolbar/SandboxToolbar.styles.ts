@@ -25,7 +25,8 @@ export const rootClass = css`
     own block-start edge. The matching negative margin cancels the added padding back out so this
     row still occupies the exact same space in SandboxToolbarRow's layout either way.
   */
-  padding: 0.25rem;
+  padding-inline: 0.25rem;
+  padding-block: 0.5rem;
   scrollbar-width: thin;
   scrollbar-color: var(--color-border-muted) transparent;
 
