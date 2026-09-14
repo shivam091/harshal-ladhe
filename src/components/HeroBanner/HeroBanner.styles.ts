@@ -74,3 +74,106 @@ export const CloudForeground = styled.path`
 export const Star = styled.path`
   fill: hsl(0 0% 100%);
 `;
+
+/*
+  Planets — hand-placed decorative bodies (not part of the seeded star field), shaded via
+  the radial gradients defined in HeroBanner.tsx's <defs> to read as spheres rather than
+  flat discs. Colors are fixed (not theme tokens), same as Star, since a planet's hue is
+  a real-world fact rather than something that should shift with the site theme.
+*/
+export const PlanetSaturnBody = styled.circle`
+  fill: url(#planet-saturn-gradient);
+`;
+
+export const PlanetMoonBody = styled.circle`
+  fill: url(#planet-moon-gradient);
+`;
+
+export const PlanetMarsBody = styled.circle`
+  fill: url(#planet-mars-gradient);
+`;
+
+export const PlanetJupiterBody = styled.circle`
+  fill: url(#planet-jupiter-gradient);
+`;
+
+export const PlanetNeptuneBody = styled.circle`
+  fill: url(#planet-neptune-gradient);
+`;
+
+export const PlanetEarthBody = styled.circle`
+  fill: url(#planet-earth-gradient);
+`;
+
+export const PlanetVenusBody = styled.circle`
+  fill: url(#planet-venus-gradient);
+`;
+
+export const PlanetUranusBody = styled.circle`
+  fill: url(#planet-uranus-gradient);
+`;
+
+export const PlanetMercuryBody = styled.circle`
+  fill: url(#planet-mercury-gradient);
+`;
+
+// Half of Saturn's ring ellipse, drawn before the planet body so the sphere occludes it.
+export const PlanetRingBack = styled.path`
+  fill: none;
+  stroke: hsl(42 45% 62%);
+  stroke-width: 8;
+  stroke-linecap: round;
+  opacity: 0.55;
+`;
+
+// The other half, drawn after the planet body so it reads as passing in front.
+export const PlanetRingFront = styled.path`
+  fill: none;
+  stroke: hsl(42 60% 78%);
+  stroke-width: 8;
+  stroke-linecap: round;
+  opacity: 0.92;
+`;
+
+// Uranus's rings are near-vertical (its axial tilt is ~98°) rather than Saturn's near-horizontal —
+// same front/back split technique, just thinner and fainter since they're a much subtler feature.
+export const PlanetRingBackThin = styled.path`
+  fill: none;
+  stroke: hsl(190 30% 60%);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.4;
+`;
+
+export const PlanetRingFrontThin = styled.path`
+  fill: none;
+  stroke: hsl(190 35% 74%);
+  stroke-width: 3;
+  stroke-linecap: round;
+  opacity: 0.75;
+`;
+
+// Faint cloud-band lines clipped to a gas giant's disc (Jupiter/Venus).
+export const PlanetBand = styled.line`
+  stroke: hsl(30 40% 20% / 0.18);
+  stroke-width: 3;
+  stroke-linecap: round;
+`;
+
+// Crater/surface-feature ellipses clipped to a planet's disc.
+export const PlanetSurfaceFeature = styled.ellipse`
+  fill: hsl(0 0% 0% / 0.16);
+`;
+
+// Earth's continents — irregular landmass blobs clipped to the disc, greener/browner than the ocean gradient underneath.
+export const PlanetLandmass = styled.path`
+  fill: hsl(100 25% 38%);
+`;
+
+// Thin white cloud wisps drawn over Earth's landmasses.
+export const PlanetClouds = styled.path`
+  fill: none;
+  stroke: hsl(0 0% 100% / 0.55);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+`;

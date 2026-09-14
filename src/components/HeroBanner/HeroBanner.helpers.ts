@@ -1,6 +1,6 @@
 import { mulberry32, between } from "@/utils/random";
 import { toFixed } from "@/utils/number";
-import type { Star } from "@/components/HeroBanner/HeroBanner.types";
+import type { Star, Planet, PlanetKind } from "@/components/HeroBanner/HeroBanner.types";
 
 // Bounds mirror the hand-placed field this replaces, so the composition reads the same.
 const X_MIN = 1630;
@@ -64,4 +64,67 @@ export function generateStars(count: number, seed: number): Star[] {
   };
 
   return Array.from({ length: count }, createStar);
+}
+
+// Each planet symbol's natural (unscaled) render size — must match the viewBox declared on its <symbol> in HeroBanner.tsx.
+const PLANET_SIZES: Record<PlanetKind, { width: number; height: number }> = {
+  saturn:  { width: 140, height: 70 },
+  uranus:  { width: 40,  height: 60 },
+  jupiter: { width: 52,  height: 52 },
+  earth:   { width: 44,  height: 44 },
+  neptune: { width: 32,  height: 32 },
+  venus:   { width: 30,  height: 30 },
+  moon:    { width: 48,  height: 48 },
+  mars:    { width: 28,  height: 28 },
+  mercury: { width: 24,  height: 24 }
+};
+const PLANET_KINDS = Object.keys(PLANET_SIZES) as PlanetKind[];
+
+// Same visible band the star field occupies, so planets stay within the composition's readable area.
+const PLANET_X_MIN = 1650;
+const PLANET_X_MAX = 3480;
+const PLANET_Y_MIN = 30;
+const PLANET_Y_MAX = 260;
+const PLANET_SCALE_MIN = 0.7;
+const PLANET_SCALE_MAX = 1.3;
+const PLANET_DRIFT_DUR_MIN = 30;
+const PLANET_DRIFT_DUR_MAX = 65;
+const PLANET_DRIFT_RANGE = 6;
+
+/*
+  Generates `count` planets from `seed` — same reproducible-then-reroll pattern as generateStars
+  (see HeroBanner.tsx). Kind order is shuffled per seed and each kind is used at most once, so the
+  field never repeats a planet; `count` above PLANET_KINDS.length is clamped down to it.
+*/
+export function generatePlanets(count: number, seed: number): Planet[] {
+  const rand = mulberry32(seed);
+  const kinds = [...PLANET_KINDS];
+
+  for (let i = kinds.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [kinds[i], kinds[j]] = [kinds[j], kinds[i]];
+  }
+
+  const planetCount = Math.min(count, kinds.length);
+
+  const createPlanet = (index: number): Planet => {
+    const kind = kinds[index];
+    const scale = between(rand, PLANET_SCALE_MIN, PLANET_SCALE_MAX);
+    const { width, height } = PLANET_SIZES[kind];
+
+    return {
+      kind,
+      x: toFixed(between(rand, PLANET_X_MIN, PLANET_X_MAX), 1),
+      y: toFixed(between(rand, PLANET_Y_MIN, PLANET_Y_MAX), 1),
+      width: toFixed(width * scale, 1),
+      height: toFixed(height * scale, 1),
+      drift: {
+        dur: toFixed(between(rand, PLANET_DRIFT_DUR_MIN, PLANET_DRIFT_DUR_MAX), 1),
+        dx: toFixed(between(rand, -PLANET_DRIFT_RANGE, PLANET_DRIFT_RANGE), 1),
+        dy: toFixed(between(rand, -PLANET_DRIFT_RANGE, PLANET_DRIFT_RANGE), 1)
+      }
+    };
+  };
+
+  return Array.from({ length: planetCount }, (_, i) => createPlanet(i));
 }

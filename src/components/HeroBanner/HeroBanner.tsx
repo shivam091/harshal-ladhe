@@ -11,13 +11,35 @@ import {
   CloudMidground,
   CloudForeground,
   CloudBackground,
-  HeroBannerContainer
+  HeroBannerContainer,
+  PlanetBand,
+  PlanetRingBack,
+  PlanetRingFront,
+  PlanetRingBackThin,
+  PlanetRingFrontThin,
+  PlanetMarsBody,
+  PlanetMoonBody,
+  PlanetSaturnBody,
+  PlanetJupiterBody,
+  PlanetEarthBody,
+  PlanetVenusBody,
+  PlanetUranusBody,
+  PlanetMercuryBody,
+  PlanetNeptuneBody,
+  PlanetLandmass,
+  PlanetClouds,
+  PlanetSurfaceFeature
 } from "@/components/HeroBanner/HeroBanner.styles";
-import { generateStars } from "@/components/HeroBanner/HeroBanner.helpers";
+import { generateStars, generatePlanets } from "@/components/HeroBanner/HeroBanner.helpers";
 
 const STAR_COUNT = 30;
 // Fixed seed keeps the first paint identical across server render and client hydration.
 const STAR_FIELD_SEED = 20260702;
+
+// One of each planet kind (generatePlanets clamps to PLANET_KINDS.length, so this is the max/full field).
+const PLANET_COUNT = 9;
+// Distinct from STAR_FIELD_SEED so the two fields don't inherit the same PRNG sequence.
+const PLANET_FIELD_SEED = 20260703;
 
 // Decorative hero banner — two-layer cloud SVG with a star-field and SVG-native twinkle/drift animations.
 export default function HeroBanner(): JSX.Element {
@@ -25,12 +47,14 @@ export default function HeroBanner(): JSX.Element {
   // genuinely random field once mounted — that swap happens strictly after hydration,
   // so it can't cause a mismatch, and gives every real page load its own star layout.
   const [stars, setStars] = useState(() => generateStars(STAR_COUNT, STAR_FIELD_SEED));
+  const [planets, setPlanets] = useState(() => generatePlanets(PLANET_COUNT, PLANET_FIELD_SEED));
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     // Intentional one-shot re-roll, not state synced from a prop/external source —
     // the whole point is to diverge from the SSR-matched initial value post-hydration.
     setStars(generateStars(STAR_COUNT, Date.now()));
+    setPlanets(generatePlanets(PLANET_COUNT, Date.now() + 1));
   }, []);
 
   return (
@@ -65,7 +89,191 @@ export default function HeroBanner(): JSX.Element {
                   <feMergeNode in="SourceGraphic" />
                 </feMerge>
               </filter>
+
+              {/* Off-center highlight (cx/cy < 50%) fakes a light source, so each sphere reads as lit from the upper-left rather than as a flat disc. */}
+              <radialGradient id="planet-saturn-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(42 65% 82%)" />
+                <stop offset="60%" stopColor="hsl(40 55% 66%)" />
+                <stop offset="100%" stopColor="hsl(32 45% 42%)" />
+              </radialGradient>
+              <radialGradient id="planet-moon-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(0 0% 96%)" />
+                <stop offset="55%" stopColor="hsl(220 6% 80%)" />
+                <stop offset="100%" stopColor="hsl(220 8% 55%)" />
+              </radialGradient>
+              <radialGradient id="planet-mars-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(18 70% 72%)" />
+                <stop offset="55%" stopColor="hsl(14 60% 52%)" />
+                <stop offset="100%" stopColor="hsl(10 55% 32%)" />
+              </radialGradient>
+              <radialGradient id="planet-jupiter-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(36 55% 80%)" />
+                <stop offset="55%" stopColor="hsl(28 45% 62%)" />
+                <stop offset="100%" stopColor="hsl(22 40% 38%)" />
+              </radialGradient>
+              <radialGradient id="planet-neptune-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(206 70% 74%)" />
+                <stop offset="55%" stopColor="hsl(212 65% 54%)" />
+                <stop offset="100%" stopColor="hsl(220 60% 32%)" />
+              </radialGradient>
+              <radialGradient id="planet-earth-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(202 70% 68%)" />
+                <stop offset="55%" stopColor="hsl(212 62% 48%)" />
+                <stop offset="100%" stopColor="hsl(220 55% 26%)" />
+              </radialGradient>
+              <radialGradient id="planet-venus-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(48 55% 84%)" />
+                <stop offset="55%" stopColor="hsl(42 45% 68%)" />
+                <stop offset="100%" stopColor="hsl(34 40% 46%)" />
+              </radialGradient>
+              <radialGradient id="planet-uranus-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(185 45% 80%)" />
+                <stop offset="55%" stopColor="hsl(190 40% 63%)" />
+                <stop offset="100%" stopColor="hsl(196 38% 40%)" />
+              </radialGradient>
+              <radialGradient id="planet-mercury-gradient" cx="35%" cy="30%" r="75%">
+                <stop offset="0%" stopColor="hsl(30 12% 64%)" />
+                <stop offset="55%" stopColor="hsl(28 10% 48%)" />
+                <stop offset="100%" stopColor="hsl(25 12% 28%)" />
+              </radialGradient>
+
+              <clipPath id="planet-saturn-clip">
+                <circle r="32" />
+              </clipPath>
+              <clipPath id="planet-moon-clip">
+                <circle r="21" />
+              </clipPath>
+              <clipPath id="planet-mars-clip">
+                <circle r="12" />
+              </clipPath>
+              <clipPath id="planet-jupiter-clip">
+                <circle r="24" />
+              </clipPath>
+              <clipPath id="planet-earth-clip">
+                <circle r="18" />
+              </clipPath>
+              <clipPath id="planet-venus-clip">
+                <circle r="13" />
+              </clipPath>
+              <clipPath id="planet-mercury-clip">
+                <circle r="10" />
+              </clipPath>
+
+              {/* Sphere with limb-shaded gradient, tilted rings split front/back of the body, and faint cloud bands. */}
+              <symbol id="planet-saturn" viewBox="-70 -35 140 70" overflow="visible">
+                <g transform="rotate(-18)">
+                  <PlanetRingBack d="M -58 0 A 58 16 0 0 0 58 0" />
+                  <PlanetSaturnBody r="32" />
+                  <g clipPath="url(#planet-saturn-clip)">
+                    <PlanetBand x1="-32" y1="-13" x2="32" y2="-10" />
+                    <PlanetBand x1="-32" y1="1" x2="32" y2="3" />
+                    <PlanetBand x1="-32" y1="15" x2="32" y2="18" />
+                  </g>
+                  <PlanetRingFront d="M -58 0 A 58 16 0 0 1 58 0" />
+                </g>
+              </symbol>
+
+              {/* Banded gas giant, no rings. */}
+              <symbol id="planet-jupiter" viewBox="-26 -26 52 52" overflow="visible">
+                <PlanetJupiterBody r="24" />
+                <g clipPath="url(#planet-jupiter-clip)">
+                  <PlanetBand x1="-24" y1="-16" x2="24" y2="-14" />
+                  <PlanetBand x1="-24" y1="-6" x2="24" y2="-5" />
+                  <PlanetBand x1="-24" y1="4" x2="24" y2="6" />
+                  <PlanetBand x1="-24" y1="14" x2="24" y2="17" />
+                </g>
+              </symbol>
+
+              {/* Cratered sphere. */}
+              <symbol id="planet-moon" viewBox="-24 -24 48 48" overflow="visible">
+                <PlanetMoonBody r="21" />
+                <g clipPath="url(#planet-moon-clip)">
+                  <PlanetSurfaceFeature cx="-7" cy="-8" rx="5" ry="4" />
+                  <PlanetSurfaceFeature cx="6" cy="-2" rx="3.5" ry="3" />
+                  <PlanetSurfaceFeature cx="-3" cy="7" rx="4" ry="3.5" />
+                  <PlanetSurfaceFeature cx="10" cy="9" rx="3" ry="2.5" />
+                </g>
+              </symbol>
+
+              {/* Smooth ice giant — small, no surface detail, reads as most distant. */}
+              <symbol id="planet-neptune" viewBox="-16 -16 32 32" overflow="visible">
+                <PlanetNeptuneBody r="14" />
+              </symbol>
+
+              {/* Small rust-red sphere with a couple of darker surface patches. */}
+              <symbol id="planet-mars" viewBox="-14 -14 28 28" overflow="visible">
+                <PlanetMarsBody r="12" />
+                <g clipPath="url(#planet-mars-clip)">
+                  <PlanetSurfaceFeature cx="-3" cy="2" rx="3.5" ry="2.5" />
+                  <PlanetSurfaceFeature cx="4" cy="-3" rx="2.5" ry="2" />
+                </g>
+              </symbol>
+
+              {/* Ocean-blue sphere with irregular continent landmasses and a couple of thin cloud wisps over the top. */}
+              <symbol id="planet-earth" viewBox="-22 -22 44 44" overflow="visible">
+                <PlanetEarthBody r="18" />
+                <g clipPath="url(#planet-earth-clip)">
+                  <PlanetLandmass d="M -12 -6 C -14 -10 -6 -14 0 -11 C 4 -9 6 -4 2 -2 C -2 0 -10 -2 -12 -6 Z" />
+                  <PlanetLandmass d="M 4 6 C 2 3 8 1 11 5 C 13 8 10 12 6 11 C 3 10 5 8 4 6 Z" />
+                  <PlanetClouds d="M -15 2 Q -6 -2 2 1 T 15 -2" />
+                  <PlanetClouds d="M -11 11 Q 0 7 11 10" />
+                </g>
+              </symbol>
+
+              {/* Pale, hazy atmosphere — thicker and cloudier-looking than Jupiter's, with fewer/fainter bands. */}
+              <symbol id="planet-venus" viewBox="-15 -15 30 30" overflow="visible">
+                <PlanetVenusBody r="13" />
+                <g clipPath="url(#planet-venus-clip)">
+                  <PlanetBand x1="-13" y1="-6" x2="13" y2="-4" />
+                  <PlanetBand x1="-13" y1="3" x2="13" y2="5" />
+                </g>
+              </symbol>
+
+              {/* Pale cyan sphere with near-vertical rings — Uranus's ~98° axial tilt makes its rings read edge-on/vertical rather than Saturn's horizontal band. */}
+              <symbol id="planet-uranus" viewBox="-20 -30 40 60" overflow="visible">
+                <g transform="rotate(8)">
+                  <PlanetRingBackThin d="M 0 -27 A 7 27 0 0 0 0 27" />
+                  <PlanetUranusBody r="15" />
+                  <PlanetRingFrontThin d="M 0 -27 A 7 27 0 0 1 0 27" />
+                </g>
+              </symbol>
+
+              {/* Small, warm-gray, heavily cratered sphere. */}
+              <symbol id="planet-mercury" viewBox="-12 -12 24 24" overflow="visible">
+                <PlanetMercuryBody r="10" />
+                <g clipPath="url(#planet-mercury-clip)">
+                  <PlanetSurfaceFeature cx="-4" cy="-3" rx="2.2" ry="1.8" />
+                  <PlanetSurfaceFeature cx="3" cy="-4" rx="1.6" ry="1.4" />
+                  <PlanetSurfaceFeature cx="-2" cy="4" rx="2" ry="1.6" />
+                  <PlanetSurfaceFeature cx="4" cy="3" rx="1.4" ry="1.2" />
+                  <PlanetSurfaceFeature cx="0" cy="-1" rx="1.2" ry="1" />
+                </g>
+              </symbol>
             </defs>
+
+            <g role="presentation">
+              {planets.map((planet, i) => (
+                <g key={i} transform={`translate(${planet.x} ${planet.y})`}>
+                  {!prefersReducedMotion && (
+                    <animateTransform
+                      attributeName="transform"
+                      type="translate"
+                      values={`0 0; ${planet.drift.dx} ${planet.drift.dy}; 0 0`}
+                      dur={`${planet.drift.dur}s`}
+                      additive="sum"
+                      repeatCount="indefinite"
+                    />
+                  )}
+                  <use
+                    href={`#planet-${planet.kind}`}
+                    x={-planet.width / 2}
+                    y={-planet.height / 2}
+                    width={planet.width}
+                    height={planet.height}
+                  />
+                </g>
+              ))}
+            </g>
 
             <g filter="url(#glow)">
               {stars.map((star, i) => (
