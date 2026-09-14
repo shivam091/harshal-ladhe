@@ -8,8 +8,12 @@ import type { GoodieMetadataImage } from "@/utils/goodie-metadata";
 const TITLE = "Cron Expression Builder";
 const DESCRIPTION =
   "Bidirectional cron builder — build a 5-field cron string with per-field widgets, read it back in plain English, and preview its next 5 runs with crontab, GitHub Actions, and Kubernetes export.";
-// Set once a cover image exists at this path, e.g. /assets/img/goodies/cron-expression-builder/cover.png
-const IMAGE: GoodieMetadataImage | undefined = undefined;
+const IMAGE: GoodieMetadataImage = {
+  path: "/assets/img/goodies/cron-expression-builder/cover.png",
+  width: 1536,
+  height: 1024,
+  alt: "A modern dark-themed cover image for a Cron Expression Builder, featuring a visual cron schedule editor, live preview of upcoming run times, plain-English readout, presets, shareable links, and export options for Crontab, GitHub Actions, and Kubernetes."
+};
 
 export const metadata: Metadata = buildGoodieMetadata({
   title: TITLE,
