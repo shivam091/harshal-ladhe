@@ -343,6 +343,57 @@ export const icons = {
       </>
     )
   },
+  // A clock face (circle + hour/minute hands) with a small looping-arrow badge at the lower right — the clock reads as "schedule," the loop as "recurring," together reading as a cron/repeating-timer glyph rather than a plain clock.
+  cron: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <circle cx="11" cy="11" r="8" />
+        <path d="M11 6.5 L11 11 L14 13" />
+        <path d="M16.5 16.5 A4 4 0 1 1 19.8 13.7" />
+        <path d="M19.8 11.5 L19.8 13.7 L17.6 13.4" />
+      </>
+    )
+  },
+  undo: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <polyline points="9 14 4 9 9 4" />
+        <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+      </>
+    )
+  },
+  redo: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <polyline points="15 14 20 9 15 4" />
+        <path d="M4 20v-7a4 4 0 0 1 4-4h12" />
+      </>
+    )
+  },
   close: {
     viewBox: "0 0 24 24",
     svgProps: {
