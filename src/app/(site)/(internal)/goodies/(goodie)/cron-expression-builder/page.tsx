@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import type { JSX } from "react";
 import type { Metadata } from "next";
-import VisuallyHidden from "@/components/VisuallyHidden";
 import CronBuilder from "@/components/CronBuilder";
 import { buildGoodieMetadata } from "@/utils/goodie-metadata";
 import type { GoodieMetadataImage } from "@/utils/goodie-metadata";
@@ -27,8 +26,6 @@ export const metadata: Metadata = buildGoodieMetadata({
 export default function CronExpressionBuilderPage(): JSX.Element {
   return (
     <>
-      <VisuallyHidden as="h2">{TITLE}</VisuallyHidden>
-
       <p>
         Cron expressions are compact, but that compactness cuts both ways — the same five fields
         that make a schedule easy to paste into a crontab also make it easy to misread. This
