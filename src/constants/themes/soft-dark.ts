@@ -122,6 +122,11 @@ export const SOFT_DARK_COLORS_RAW: ColorMapRaw = {
   colorHitCounterSegmentActiveOn:     [123, 48, 52],
   colorHitCounterSegmentInactiveOn:   [123, 18, 24],
 
+  // Festive banner — same warm-gold family, softened a touch further to match this theme's lower-contrast palette.
+  colorBgFestiveBanner:        [40,  80,  64],
+  colorFgFestiveBanner:        [214, 15,  16],
+  // Zigzag outline — a vivid navy (not colorFgFestiveBanner's near-black) so the scalloped edge reads as a colour, never as a black stroke.
+  colorStrokeFestiveBanner:    [213, 45,  38],
   // Sky / clouds
   colorBgCloud100:             [212, 18,  16],
   colorBgCloud300:             [212, 22,  20],
