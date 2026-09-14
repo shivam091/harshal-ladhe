@@ -2,6 +2,7 @@
 import type { JSX } from "react";
 import { ViewTransition } from "react";
 import SiteBanner from "@/components/SiteBanner";
+import FestiveBanner from "@/components/FestiveBanner";
 import SkyBannerBottom from "@/components/SkyBanners/SkyBannerBottom";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -16,6 +17,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }):
     <>
       <PageViewTracker />
       <SiteBanner />
+      <FestiveBanner />
 
       <Container>
         <PageWrapper>
