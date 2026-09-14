@@ -7,6 +7,7 @@ import Trigger from "@/components/Trigger";
 import Tip from "@/components/Tip";
 import { useHoverDevice } from "@/hooks/use-hover-device";
 import type { TooltipProps } from "@/components/Tooltip/Tooltip.types";
+import { useSound } from "@/hooks/use-sound";
 import { contentClass } from "@/components/Tooltip/Tooltip.styles";
 
 /*
@@ -34,6 +35,8 @@ export default function Tooltip({
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const [playOpen] = useSound("/sounds/menu-open-softer.mp3");
+  const [playClose] = useSound("/sounds/menu-close.mp3");
 
   /*
     Callers like ResetButton toggle `content` itself (string ↔ undefined) to drive a
@@ -55,12 +58,25 @@ export default function Tooltip({
     Radix's auto open/close and rely on the tap handlers below.
   */
   const handleOpenChange = (next: boolean): void => {
-    if (!isTouch) setOpen(next);
+    if (isTouch) return;
+    setOpen(next);
+    if (next) {
+      playOpen();
+    } else {
+      playClose();
+    }
   };
 
   // Touch only: tap the trigger to toggle the tooltip.
   const handleTriggerClick = (): void => {
-    if (isTouch) setOpen((prev) => !prev);
+    if (!isTouch) return;
+    const next = !open;
+    setOpen(next);
+    if (next) {
+      playOpen();
+    } else {
+      playClose();
+    }
   };
 
   // Touch only: dismiss when tapping outside the trigger and content.
