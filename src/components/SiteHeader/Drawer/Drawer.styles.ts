@@ -12,8 +12,8 @@ export const headerDrawerClass = css`
   position: fixed;
   display: flex;
   flex-direction: column;
-  // 5rem is Header's own block-size; the var clears the hero gap that pushes it down.
-  inset-block-start: calc(5rem + var(--header-top-offset, 0px));
+  // 5rem is Header's own block-size; the two vars clear whatever pushes it down (hero gap, festive banner).
+  inset-block-start: calc(5rem + var(--header-top-offset, 0px) + var(--festive-banner-height, 0px));
   inset-inline: 0.5rem;
   inset-block-end: 0.5rem;
   z-index: 1002;
