@@ -65,5 +65,11 @@ export const goodies: Goodie[] = [
     description: "Blueprint-drafted Flexbox/Grid playground — container and per-item controls compile live, the preview reads as an annotated technical drawing with dimension-lined gaps, a parts-schedule item list, curated presets, and CSS/Tailwind/React export.",
     icon: "gridLayout",
     href: "/goodies/layout-playground"
+  },
+  {
+    name: "Color Palette Generator",
+    description: "Print-shop swatch-fan palette builder — seed a color to generate a full 50-950 OKLCH lightness ramp, check WCAG contrast against a foreground/background pair with a stamped pass/fail seal, start from curated presets, and export to CSS/Tailwind/React.",
+    icon: "colorPalette",
+    href: "/goodies/color-palette-generator"
   }
 ];

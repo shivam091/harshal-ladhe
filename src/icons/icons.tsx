@@ -494,6 +494,24 @@ export const icons = {
       </>
     )
   },
+  // Three overlapping rounded chips fanned like a hand of paint swatches — ColorPaletteGenerator's own nameplate glyph and goodies-grid icon.
+  colorPalette: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="4" y="5" width="10" height="14" rx="2" transform="rotate(-12 9 12)" />
+        <rect x="7" y="5" width="10" height="14" rx="2" transform="rotate(6 12 12)" />
+        <rect x="10" y="5" width="10" height="14" rx="2" />
+      </>
+    )
+  },
   // Two side-by-side panes — SplitDiffViewToggle's glyph for the Diff tab's split (old | new) layout.
   columns: {
     viewBox: "0 0 24 24",
@@ -1116,6 +1134,23 @@ export const icons = {
         <line x1="18" y1="6" x2="19" y2="5" />
         <line x1="5" y1="19" x2="6" y2="18" />
         <line x1="18" y1="18" x2="19" y2="19" />
+      </>
+    )
+  },
+  // Two opposing curved arrows — a generic swap/exchange glyph, used here for ContrastControls' foreground/background swap action.
+  swap: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M4 8 H17 M17 8 L13 4 M17 8 L13 12" />
+        <path d="M20 16 H7 M7 16 L11 12 M7 16 L11 20" />
       </>
     )
   },
