@@ -741,6 +741,23 @@ export const icons = {
       </>
     )
   },
+  // A bordered square divided by one vertical and one horizontal rule into an uneven grid — reads as "arrangeable tracks/cells" rather than a plain uniform 2x2 grid. Used by the Layout Playground goodie card.
+  gridLayout: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <line x1="9" y1="3" x2="9" y2="21" />
+        <line x1="3" y1="14" x2="21" y2="14" />
+      </>
+    )
+  },
   hamburger: {
     viewBox: "0 0 24 24",
     svgProps: {

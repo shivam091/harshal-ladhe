@@ -47,6 +47,7 @@ export const UnfoldIcon = createIcon("unfold");
 export const FrostedPanelIcon = createIcon("frostedPanel");
 export const GradientIcon = createIcon("gradient");
 export const GithubIcon = createIcon("github");
+export const GridLayoutIcon = createIcon("gridLayout");
 export const HamburgerIcon = createIcon("hamburger");
 export const HashIcon = createIcon("hash");
 export const HistoryIcon = createIcon("history");

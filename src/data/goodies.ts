@@ -59,5 +59,11 @@ export const goodies: Goodie[] = [
     description: "Clay-studio border-radius editor — pinch each corner's radius by dragging directly on the shape or typing exact values, jump between quick shapes from sharp to pill, circle, blob, and squircle, tune the clay and worktable colors, and export to CSS/Tailwind/React.",
     icon: "blob",
     href: "/goodies/border-radius-generator"
+  },
+  {
+    name: "Layout Playground",
+    description: "Blueprint-drafted Flexbox/Grid playground — container and per-item controls compile live, the preview reads as an annotated technical drawing with dimension-lined gaps, a parts-schedule item list, curated presets, and CSS/Tailwind/React export.",
+    icon: "gridLayout",
+    href: "/goodies/layout-playground"
   }
 ];
