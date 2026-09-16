@@ -362,6 +362,25 @@ export const icons = {
       </>
     )
   },
+  // Two angled slashes (regex literal delimiters) flanking a dot and a small asterisk burst — reads as "/.*/ ", the most recognizable regex shorthand there is.
+  regex: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M7 3 L4 21" />
+        <path d="M20 3 L17 21" />
+        <circle cx="9.5" cy="16" r="1.1" fill="currentColor" stroke="none" />
+        <path d="M13 10.5 L13 15.5 M10.8 11.75 L15.2 14.25 M15.2 11.75 L10.8 14.25" />
+      </>
+    )
+  },
   undo: {
     viewBox: "0 0 24 24",
     svgProps: {

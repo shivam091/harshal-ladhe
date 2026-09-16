@@ -23,5 +23,11 @@ export const goodies: Goodie[] = [
     description: "Bidirectional cron builder — per-field mode widgets generate the 5-field string, a plain-English description reads it back, and a live next-5-runs preview with crontab/GitHub Actions/Kubernetes export.",
     icon: "cron",
     href: "/goodies/cron-expression-builder"
+  },
+  {
+    name: "Regex Tester",
+    description: "Live regex tester — matches highlight directly in your test string, numbered/named capture groups surface as their own tags, a plain-English explain panel reads the pattern back, and it exports to JavaScript/Python/Java.",
+    icon: "regex",
+    href: "/goodies/regex-tester"
   }
 ];
