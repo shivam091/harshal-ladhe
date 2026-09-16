@@ -29,5 +29,11 @@ export const goodies: Goodie[] = [
     description: "Live regex tester — matches highlight directly in your test string, numbered/named capture groups surface as their own tags, a plain-English explain panel reads the pattern back, and it exports to JavaScript/Python/Java.",
     icon: "regex",
     href: "/goodies/regex-tester"
+  },
+  {
+    name: "Gradient Generator",
+    description: "Live gradient builder — the gradient itself is the backdrop, with a large draggable angle dial and position pad, multi-stop color editing with OKLCH/HSL/RGB interpolation, curated presets, and CSS/Tailwind/React export.",
+    icon: "gradient",
+    href: "/goodies/gradient-generator"
   }
 ];
