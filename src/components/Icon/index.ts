@@ -70,6 +70,7 @@ export const SunDimIcon = createIcon("sunDim");
 export const SunIcon = createIcon("sun");
 export const TagIcon = createIcon("tag");
 export const TelegramIcon = createIcon("telegram");
+export const TextEffectsIcon = createIcon("textEffects");
 export const TwitterIcon = createIcon("twitter");
 export const WaveDividerIcon = createIcon("waveDivider");
 export const WhatsAppIcon = createIcon("whatsapp");

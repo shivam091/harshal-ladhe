@@ -41,5 +41,11 @@ export const goodies: Goodie[] = [
     description: "Layered box-shadow editor — stack, reorder, and duplicate per-layer offset/blur/spread/color/inset shadows, tune the surface and page colors, start from neumorphism/material/neon presets, and export to CSS/Tailwind/React.",
     icon: "boxShadow",
     href: "/goodies/box-shadow-generator"
+  },
+  {
+    name: "Text Effects Generator",
+    description: "Live text-effects editor — an oversized preview on its own spotlit stage, a solid or gradient text fill, a stack of text-shadow layers for glow/emboss/outline/3D-extrude looks, curated presets, and CSS/Tailwind/React export.",
+    icon: "textEffects",
+    href: "/goodies/text-effects-generator"
   }
 ];

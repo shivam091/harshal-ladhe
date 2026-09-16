@@ -1095,6 +1095,20 @@ export const icons = {
       </>
     )
   },
+  // A bold "A" with an offset silhouette behind it — the same "cast shadow behind the real shape" language as the boxShadow icon, applied to a glyph instead of a card, so the two read as related but distinct effects.
+  textEffects: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <text x="7" y="19" fontSize="20" fontWeight="800" opacity="0.35">
+          A
+        </text>
+        <text x="4" y="16" fontSize="20" fontWeight="800">
+          A
+        </text>
+      </>
+    )
+  },
   textSize: {
     viewBox: "0 0 24 24",
     svgProps: {
