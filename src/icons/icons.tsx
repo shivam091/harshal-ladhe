@@ -150,6 +150,22 @@ export const icons = {
       </>
     )
   },
+  // Two overlapping squares, the back one filled at low opacity — reads as "a shape casting a shadow", used for the Box Shadow Generator goodie card and its Console-family icon.
+  boxShadow: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="7" y="7" width="14" height="14" rx="2" fill="currentColor" stroke="none" opacity="0.35" />
+        <rect x="3" y="3" width="14" height="14" rx="2" />
+      </>
+    )
+  },
   bulb: {
     viewBox: "0 0 24 24",
     children: (
@@ -503,6 +519,23 @@ export const icons = {
         <polygon points="2,12 5.5,8.5 9,12 5.5,15.5" />
         <polygon points="22,12 18.5,8.5 15,12 18.5,15.5" />
         <polygon points="12,22 8.5,18.5 12,15 15.5,18.5" />
+      </>
+    )
+  },
+  // Two overlapping rounded rects — the standard "duplicate" glyph, distinct from `clipboard` (which reads as "copy to clipboard," not "duplicate this item").
+  duplicate: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="9" y="9" width="13" height="13" rx="2" />
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
       </>
     )
   },

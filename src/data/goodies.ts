@@ -35,5 +35,11 @@ export const goodies: Goodie[] = [
     description: "Live gradient builder — the gradient itself is the backdrop, with a large draggable angle dial and position pad, multi-stop color editing with OKLCH/HSL/RGB interpolation, curated presets, and CSS/Tailwind/React export.",
     icon: "gradient",
     href: "/goodies/gradient-generator"
+  },
+  {
+    name: "Box Shadow Generator",
+    description: "Layered box-shadow editor — stack, reorder, and duplicate per-layer offset/blur/spread/color/inset shadows, tune the surface and page colors, start from neumorphism/material/neon presets, and export to CSS/Tailwind/React.",
+    icon: "boxShadow",
+    href: "/goodies/box-shadow-generator"
   }
 ];
