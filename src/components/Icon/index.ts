@@ -43,6 +43,7 @@ export const FolderOpenIcon = createIcon("folderOpen");
 export const FoldUpIcon = createIcon("foldUp");
 export const FoldDownIcon = createIcon("foldDown");
 export const UnfoldIcon = createIcon("unfold");
+export const FrostedPanelIcon = createIcon("frostedPanel");
 export const GradientIcon = createIcon("gradient");
 export const GithubIcon = createIcon("github");
 export const HamburgerIcon = createIcon("hamburger");

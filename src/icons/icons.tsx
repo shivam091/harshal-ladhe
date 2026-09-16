@@ -678,6 +678,22 @@ export const icons = {
     )
   },
   /*
+    Two overlapping rounded rects at different opacities plus a bordered inner rect — a plain panel
+    behind a taller, more transparent one, with a sharp-edged frame standing in for the pane of glass
+    a backdrop-filter's translucent panel actually is. Used by the Filter & Backdrop Generator goodie
+    card.
+  */
+  frostedPanel: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <rect x="1" y="1" width="22" height="22" rx="3" opacity="0.25" />
+        <rect x="10" y="1" width="13" height="22" rx="3" opacity="0.4" />
+        <rect x="5" y="7" width="14" height="10" rx="2.5" fill="none" stroke="currentColor" strokeWidth="1.5" opacity="0.9" />
+      </>
+    )
+  },
+  /*
     Four side-by-side (non-overlapping) bands at decreasing opacity inside a rounded frame — a
     currentColor-only stand-in for a gradient swatch, since the icon registry has no per-icon color
     stops of its own. Bands must not overlap: stacking same-colored rects on top of each other

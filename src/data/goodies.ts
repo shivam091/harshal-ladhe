@@ -47,5 +47,11 @@ export const goodies: Goodie[] = [
     description: "Live text-effects editor — an oversized preview on its own spotlit stage, a solid or gradient text fill, a stack of text-shadow layers for glow/emboss/outline/3D-extrude looks, curated presets, and CSS/Tailwind/React export.",
     icon: "textEffects",
     href: "/goodies/text-effects-generator"
+  },
+  {
+    name: "Filter & Backdrop Generator",
+    description: "Optics-bench filter editor — slot CSS filter functions into an ordered lens rack, aim them at the preview subject or through a translucent backdrop-filter panel, start from a glassmorphism/vintage/vivid preset, and export to CSS/Tailwind/React.",
+    icon: "frostedPanel",
+    href: "/goodies/filter-backdrop-generator"
   }
 ];
