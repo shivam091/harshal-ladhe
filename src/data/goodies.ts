@@ -53,5 +53,11 @@ export const goodies: Goodie[] = [
     description: "Optics-bench filter editor — slot CSS filter functions into an ordered lens rack, aim them at the preview subject or through a translucent backdrop-filter panel, start from a glassmorphism/vintage/vivid preset, and export to CSS/Tailwind/React.",
     icon: "frostedPanel",
     href: "/goodies/filter-backdrop-generator"
+  },
+  {
+    name: "Border Radius Generator",
+    description: "Clay-studio border-radius editor — pinch each corner's radius by dragging directly on the shape or typing exact values, jump between quick shapes from sharp to pill, circle, blob, and squircle, tune the clay and worktable colors, and export to CSS/Tailwind/React.",
+    icon: "blob",
+    href: "/goodies/border-radius-generator"
   }
 ];
