@@ -48,9 +48,16 @@ export default function StopEditor({ state, actions }: StopEditorProps): JSX.Ele
     return clamp(((clientX - left) / width) * 100, 0, 100);
   }
 
+  /*
+    addStop already commits internally (it's dispatched via undoStack.commit, not setPresent) — a
+    trailing commitDrag() here would fire a second commit() call in the same synchronous handler.
+    useUndoStack's commit() reads `pendingBaseline ?? state` from this render's closure, not from
+    the update addStop's own commit() just queued, so that second call would re-push the exact same
+    pre-add snapshot rather than anything new: a harmless-looking but real duplicate undo entry.
+    commitDrag() belongs only after a setPresent-based action.
+  */
   function handleBarDoubleClick(event: ReactMouseEvent<HTMLDivElement>) {
     actions.addStop(positionFromClientX(event.clientX));
-    actions.commitDrag();
   }
 
   function handleHandlePointerDown(id: string) {
