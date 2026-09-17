@@ -145,7 +145,7 @@ export interface ColorSpaceControlsProps {
   actions: GradientActions;
 }
 
-// Props for PreviewPane — kept for parity with the source tool's props shape even though this build folds a live preview into the root Canvas backdrop instead of a separate swatch component.
+// Props for PreviewPane — the dedicated preview rectangle between the toolbar and the rest of the controls.
 export interface PreviewPaneProps {
   state: GradientEditorState;
 }

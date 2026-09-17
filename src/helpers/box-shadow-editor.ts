@@ -1,9 +1,17 @@
 import { generateId } from "@/utils/random";
 import type { BoxShadowEditorState, BoxShadowPresetMeta, BoxShadowShareableState, ShadowLayer } from "@/interfaces/box-shadow";
 
-// A fresh layer's starting values — a small, soft, non-inset drop shadow, close enough to CSS's own initial appearance that adding one never looks jarring against whatever's already stacked.
-function defaultLayer(): ShadowLayer {
-  return { id: generateId(), offsetX: 0, offsetY: 4, blur: 12, spread: 0, color: "#000000", opacity: 15, inset: false };
+/*
+  A fresh layer's starting values — a small, soft, non-inset drop shadow, close enough to CSS's own
+  initial appearance that adding one never looks jarring against whatever's already stacked. `id`
+  defaults to a fresh generateId() for addLayer's own use (client-only, triggered by a click, so
+  randomness is safe), but createDefaultEditorState below passes a fixed id explicitly — that
+  function backs the lazy initializer that runs once during SSR and again during the client's own
+  hydration render, and two independent generateId() calls there would leak a different random
+  string into ShareControls' rendered permalink text, causing a hydration mismatch on every fresh visit.
+*/
+function defaultLayer(id: string = generateId()): ShadowLayer {
+  return { id, offsetX: 0, offsetY: 4, blur: 12, spread: 0, color: "#000000", opacity: 15, inset: false };
 }
 
 // Picks the fields that round-trip through both localStorage autosave and the permalink — `selectedLayerId` is deliberately excluded (pure UI state, and irrelevant to what a shared link should restore).
@@ -14,7 +22,7 @@ export function toShareableState(state: BoxShadowEditorState): BoxShadowShareabl
 
 // The tool's starting state on a fresh visit — one soft layer, a white surface on a light-slate page, and a moderately rounded corner.
 export function createDefaultEditorState(): BoxShadowEditorState {
-  const layer = defaultLayer();
+  const layer = defaultLayer("layer-1");
   return { layers: [layer], selectedLayerId: layer.id, surfaceColor: "#ffffff", pageColor: "#f1f5f9", borderRadius: 16 };
 }
 

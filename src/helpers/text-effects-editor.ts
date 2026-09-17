@@ -2,20 +2,28 @@ import { clamp } from "@/utils/number";
 import { generateId } from "@/utils/random";
 import type { GradientFillConfig, GradientFillStop, GradientFillType, TextEffectsEditorState, TextEffectsPresetMeta, TextEffectsShareableState, TextShadowLayer } from "@/interfaces/text-effects";
 
-// A fresh shadow layer's starting values — a small, soft, 40%-opaque drop shadow, close enough to a plausible starting point that adding one never looks jarring against whatever's already stacked.
-function defaultShadowLayer(): TextShadowLayer {
-  return { id: generateId(), offsetX: 2, offsetY: 2, blur: 4, color: "#000000", opacity: 40 };
+/*
+  A fresh shadow layer's starting values — a small, soft, 40%-opaque drop shadow, close enough to a
+  plausible starting point that adding one never looks jarring against whatever's already stacked.
+  `id` defaults to a fresh generateId() for addShadowLayer's own use (client-only, triggered by a
+  click, so randomness is safe), but createDefaultEditorState below passes a fixed id explicitly —
+  that function backs the lazy initializer that runs once during SSR and again during the client's
+  own hydration render, and two independent generateId() calls there would leak a different random
+  string into ShareControls' rendered permalink text, causing a hydration mismatch on every fresh visit.
+*/
+function defaultShadowLayer(id: string = generateId()): TextShadowLayer {
+  return { id, offsetX: 2, offsetY: 2, blur: 4, color: "#000000", opacity: 40 };
 }
 
-// A fresh gradient fill's starting values — off by default (a plain solid textColor is the more common starting look), with a violet-to-pink two-stop ramp ready the moment it's switched on.
+// A fresh gradient fill's starting values — off by default (a plain solid textColor is the more common starting look), with a violet-to-pink two-stop ramp ready the moment it's switched on. Fixed stop IDs for the same reason defaultShadowLayer's own id defaults to a param above — this only ever gets called from createDefaultEditorState.
 function defaultGradientFill(): GradientFillConfig {
   return {
     enabled: false,
     type: "linear",
     angle: 90,
     stops: [
-      { id: generateId(), color: "#6366f1", position: 0 },
-      { id: generateId(), color: "#ec4899", position: 100 }
+      { id: "fill-stop-1", color: "#6366f1", position: 0 },
+      { id: "fill-stop-2", color: "#ec4899", position: 100 }
     ]
   };
 }
@@ -28,7 +36,7 @@ export function toShareableState(state: TextEffectsEditorState): TextEffectsShar
 
 // The tool's starting state on a fresh visit — a friendly sample sentence, a bold 64px weight, one soft shadow layer, and the gradient fill left off.
 export function createDefaultEditorState(): TextEffectsEditorState {
-  const layer = defaultShadowLayer();
+  const layer = defaultShadowLayer("shadow-layer-1");
   return {
     text: "Hello World",
     fontSize: 64,

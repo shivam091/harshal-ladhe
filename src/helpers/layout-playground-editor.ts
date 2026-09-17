@@ -33,9 +33,17 @@ function defaultGridItem(index: number, columnCount: number): GridItemProps {
   return { columnStart: (index % columns) + 1, columnSpan: 1, rowStart: Math.floor(index / columns) + 1, rowSpan: 1, justifySelf: "stretch", alignSelf: "stretch" };
 }
 
-// Builds one fresh item at `index`, deriving both its default flex overrides and its tiled grid placement so it drops in sensibly regardless of which mode is currently active.
-function createItem(index: number, columnCount: number): LayoutItem {
-  return { id: generateId(), label: `${index + 1}`, color: ITEM_COLORS[index % ITEM_COLORS.length], flex: defaultFlexItem(), grid: defaultGridItem(index, columnCount) };
+/*
+  Builds one fresh item at `index`, deriving both its default flex overrides and its tiled grid
+  placement so it drops in sensibly regardless of which mode is currently active. `id` defaults to a
+  fresh generateId() for addItem's own use (client-only, triggered by a click, so randomness is
+  safe), but createDefaultEditorState below passes fixed ids explicitly — that function backs the
+  lazy initializer that runs once during SSR and again during the client's own hydration render, and
+  independent generateId() calls there would leak different random strings into ShareControls'
+  rendered permalink text, causing a hydration mismatch on every fresh visit.
+*/
+function createItem(index: number, columnCount: number, id: string = generateId()): LayoutItem {
+  return { id, label: `${index + 1}`, color: ITEM_COLORS[index % ITEM_COLORS.length], flex: defaultFlexItem(), grid: defaultGridItem(index, columnCount) };
 }
 
 // A fresh flex container's initial properties — flexbox's own real defaults, so a brand-new layout renders exactly like an un-styled `display: flex` box until something is changed.
@@ -43,16 +51,20 @@ function defaultFlexContainer(): FlexContainerConfig {
   return { direction: "row", wrap: "nowrap", justifyContent: "flex-start", alignItems: "stretch", alignContent: "stretch" };
 }
 
-// Builds one grid track with a fresh id — every track needs its own stable id for React keys and for addTrack/removeTrack/updateTrack to target it.
-function track(size: number, unit: GridTrack["unit"]): GridTrack {
-  return { id: generateId(), size, unit };
+/*
+  Builds one grid track. `id` defaults to a fresh generateId() for addTrack's own use (client-only,
+  triggered by a click, so randomness is safe), but defaultGridContainer below passes fixed ids
+  explicitly, for the same SSR/hydration reason createItem's own `id` parameter does.
+*/
+function track(size: number, unit: GridTrack["unit"], id: string = generateId()): GridTrack {
+  return { id, size, unit };
 }
 
 // A fresh grid container's initial properties — three equal `1fr` columns and one `1fr` row is a small, immediately legible starting grid rather than an empty (and so invisible) one.
 function defaultGridContainer(): GridContainerConfig {
   return {
-    columns: [track(1, "fr"), track(1, "fr"), track(1, "fr")],
-    rows: [track(1, "fr")],
+    columns: [track(1, "fr", "col-1"), track(1, "fr", "col-2"), track(1, "fr", "col-3")],
+    rows: [track(1, "fr", "row-1")],
     autoFlow: "row",
     justifyItems: "stretch",
     alignItems: "stretch",
@@ -70,7 +82,7 @@ export function toShareableState(state: LayoutEditorState): Omit<LayoutEditorSta
 // The tool's very first render, a manual "reset", and the fallback when a `?state=` link or autosave can't be decoded — three plain boxes in flex mode is a small enough starting layout to read at a glance.
 export function createDefaultEditorState(): LayoutEditorState {
   const gridContainer = defaultGridContainer();
-  const items = Array.from({ length: 3 }, (_, i) => createItem(i, gridContainer.columns.length));
+  const items = Array.from({ length: 3 }, (_, i) => createItem(i, gridContainer.columns.length, `item-${i + 1}`));
   return {
     mode: "flex",
     gap: 16,
