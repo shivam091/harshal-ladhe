@@ -1331,6 +1331,14 @@ export const icons = {
       </>
     )
   },
+  triangle: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M12 3 L21 20 L3 20 Z" />
+      </>
+    )
+  },
   twitter: {
     viewBox: "0 0 24 24",
     children: (

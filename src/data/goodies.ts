@@ -113,5 +113,11 @@ export const goodies: Goodie[] = [
     description: "Type-specimen min/max viewport → clamp() font-size calculator with an arbitrary list of named steps, a draggable viewport-width live preview, and CSS custom-property/Tailwind/React export.",
     icon: "fluidType",
     href: "/goodies/fluid-type-calculator"
+  },
+  {
+    name: "CSS Triangle / Arrow Generator",
+    description: "Chalkboard triangle and chevron/arrow generator comparing two CSS techniques side by side — the classic border trick and clip-path polygon() — with direction/size/color controls and real-world tooltip/breadcrumb/carousel-arrow presets.",
+    icon: "triangle",
+    href: "/goodies/triangle-generator"
   }
 ];
