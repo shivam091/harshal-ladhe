@@ -77,5 +77,11 @@ export const goodies: Goodie[] = [
     description: "Radar-tower popover builder — combine the real HTML popover attribute with real CSS anchor positioning via a compass-style anchor-side picker, offset, auto/manual dismiss, backdrop, and entrance-animation/fallback toggles, with an automatic static-position fallback for unsupported browsers, plus CSS/HTML/React code export.",
     icon: "link",
     href: "/goodies/popover-anchor-positioning-builder"
+  },
+  {
+    name: "CSS Grid Template Builder",
+    description: "Ledger-sheet grid-template-columns/rows/areas editor — a track list with px/rem/fr/auto/minmax() sizing, a click-and-drag named-areas painter that generates a real grid-template-areas string, a live CSS Grid preview, Holy Grail/Sidebar/Dashboard presets, and CSS/Tailwind/React code export.",
+    icon: "columns",
+    href: "/goodies/css-grid-template-builder"
   }
 ];
