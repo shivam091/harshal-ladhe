@@ -119,5 +119,11 @@ export const goodies: Goodie[] = [
     description: "Chalkboard triangle and chevron/arrow generator comparing two CSS techniques side by side — the classic border trick and clip-path polygon() — with direction/size/color controls and real-world tooltip/breadcrumb/carousel-arrow presets.",
     icon: "triangle",
     href: "/goodies/triangle-generator"
+  },
+  {
+    name: "JSON ⇄ TS Interface Generator",
+    description: "Terminal-styled bidirectional JSON/TypeScript converter — generate nested, de-duplicated interfaces with optional-field inference from JSON, or a sample JSON payload from hand-typed TS interfaces.",
+    icon: "jsonToTs",
+    href: "/goodies/json-to-ts"
   }
 ];

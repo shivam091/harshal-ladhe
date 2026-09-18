@@ -926,6 +926,23 @@ export const icons = {
       </>
     )
   },
+  jsonToTs: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M5 3 C 3 3, 3 5, 3 7 C 3 9, 2 9, 2 10 C 2 11, 3 11, 3 12 C 3 14, 3 16, 5 16" transform="translate(0 3)" />
+        <path d="M19 3 C 21 3, 21 5, 21 7 C 21 9, 22 9, 22 10 C 22 11, 21 11, 21 12 C 21 14, 21 16, 19 16" transform="translate(0 3)" />
+        <path d="M9 12 L15 12 M9 12 L11 10 M9 12 L11 14 M15 12 L13 10 M15 12 L13 14" />
+      </>
+    )
+  },
   keyboard: {
     viewBox: "0 0 24 24",
     children: (
