@@ -989,6 +989,25 @@ export const icons = {
       </>
     )
   },
+  penTool: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M4 19 C 4 12, 10 8, 15 8" />
+        <circle cx="4" cy="19" r="1.5" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="8" r="1.5" fill="currentColor" stroke="none" />
+        <path d="M15 8 L20 4" />
+        <circle cx="20" cy="4" r="1.5" />
+      </>
+    )
+  },
   pilcrow: {
     viewBox: "0 0 24 24",
     svgProps: {

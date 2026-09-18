@@ -89,5 +89,11 @@ export const goodies: Goodie[] = [
     description: "Cutting-mat clip-path editor — drag pen-tool bezier points or circle/ellipse/inset handles directly on the preview, morph between two shapes with ready @keyframes export, and output CSS/Tailwind/React/SVG code.",
     icon: "diamonds",
     href: "/goodies/clip-path-generator"
+  },
+  {
+    name: "SVG Path Generator",
+    description: "Backlit light-table pen-tool path editor with open/closed strokes, bezier curve points, stroke/fill styling, and raw <path d>, standalone SVG, and React code export.",
+    icon: "penTool",
+    href: "/goodies/svg-path-generator"
   }
 ];
