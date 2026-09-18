@@ -107,5 +107,11 @@ export const goodies: Goodie[] = [
     description: "Mixing-bench color-mix() editor comparing srgb/hsl/hwb/lch/oklch/lab/oklab interpolation side by side on the same two colors, a ratio-driven result swatch, and CSS/Tailwind/React code export.",
     icon: "colorMix",
     href: "/goodies/color-mix-playground"
+  },
+  {
+    name: "Fluid Type Calculator",
+    description: "Type-specimen min/max viewport → clamp() font-size calculator with an arbitrary list of named steps, a draggable viewport-width live preview, and CSS custom-property/Tailwind/React export.",
+    icon: "fluidType",
+    href: "/goodies/fluid-type-calculator"
   }
 ];

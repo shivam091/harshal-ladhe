@@ -683,6 +683,20 @@ export const icons = {
       </>
     )
   },
+  fluidType: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <path d="M6 19 L18 7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="0.5 3" />
+        <text x="2" y="21" fontSize="9" fontWeight="800">
+          A
+        </text>
+        <text x="11" y="15" fontSize="17" fontWeight="800">
+          A
+        </text>
+      </>
+    )
+  },
   folder: {
     viewBox: "0 0 24 24",
     svgProps: {
