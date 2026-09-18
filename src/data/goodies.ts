@@ -71,5 +71,11 @@ export const goodies: Goodie[] = [
     description: "Print-shop swatch-fan palette builder — seed a color to generate a full 50-950 OKLCH lightness ramp, check WCAG contrast against a foreground/background pair with a stamped pass/fail seal, start from curated presets, and export to CSS/Tailwind/React.",
     icon: "colorPalette",
     href: "/goodies/color-palette-generator"
+  },
+  {
+    name: "Popover / Anchor-Positioning Builder",
+    description: "Radar-tower popover builder — combine the real HTML popover attribute with real CSS anchor positioning via a compass-style anchor-side picker, offset, auto/manual dismiss, backdrop, and entrance-animation/fallback toggles, with an automatic static-position fallback for unsupported browsers, plus CSS/HTML/React code export.",
+    icon: "link",
+    href: "/goodies/popover-anchor-positioning-builder"
   }
 ];
