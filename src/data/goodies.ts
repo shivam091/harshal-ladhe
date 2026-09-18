@@ -101,5 +101,11 @@ export const goodies: Goodie[] = [
     description: "Oscilloscope-styled cubic-bezier() editor with a slide/scale/opacity/rotate preview animation, presets from the CSS Easing Functions guide, and CSS/Tailwind/React code export.",
     icon: "easingCurve",
     href: "/goodies/easing-curve-editor"
+  },
+  {
+    name: "Color-Mix Space Playground",
+    description: "Mixing-bench color-mix() editor comparing srgb/hsl/hwb/lch/oklch/lab/oklab interpolation side by side on the same two colors, a ratio-driven result swatch, and CSS/Tailwind/React code export.",
+    icon: "colorMix",
+    href: "/goodies/color-mix-playground"
   }
 ];

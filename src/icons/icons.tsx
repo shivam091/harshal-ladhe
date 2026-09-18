@@ -494,6 +494,15 @@ export const icons = {
       </>
     )
   },
+  colorMix: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <circle cx="9" cy="12" r="7" opacity="0.6" />
+        <circle cx="15" cy="12" r="7" opacity="0.6" />
+      </>
+    )
+  },
   // Three overlapping rounded chips fanned like a hand of paint swatches — ColorPaletteGenerator's own nameplate glyph and goodies-grid icon.
   colorPalette: {
     viewBox: "0 0 24 24",
