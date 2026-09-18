@@ -95,5 +95,11 @@ export const goodies: Goodie[] = [
     description: "Backlit light-table pen-tool path editor with open/closed strokes, bezier curve points, stroke/fill styling, and raw <path d>, standalone SVG, and React code export.",
     icon: "penTool",
     href: "/goodies/svg-path-generator"
+  },
+  {
+    name: "Easing Curve Editor",
+    description: "Oscilloscope-styled cubic-bezier() editor with a slide/scale/opacity/rotate preview animation, presets from the CSS Easing Functions guide, and CSS/Tailwind/React code export.",
+    icon: "easingCurve",
+    href: "/goodies/easing-curve-editor"
   }
 ];

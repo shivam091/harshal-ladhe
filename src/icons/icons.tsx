@@ -572,6 +572,24 @@ export const icons = {
       </>
     )
   },
+  easingCurve: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3 3 L3 21 L21 21" />
+        <path d="M4 19 C 9 19, 8 5, 20 5" />
+        <circle cx="9" cy="19" r="1.4" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="5" r="1.4" fill="currentColor" stroke="none" />
+      </>
+    )
+  },
   emojiSad: {
     viewBox: "0 0 24 24",
     children: (
@@ -1022,6 +1040,14 @@ export const icons = {
         <path d="M13 4v16" />
         <path d="M17 4v16" />
         <path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13" />
+      </>
+    )
+  },
+  play: {
+    viewBox: "0 0 24 24",
+    children: (
+      <>
+        <polygon points="6 4 20 12 6 20 6 4" />
       </>
     )
   },
