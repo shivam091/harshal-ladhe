@@ -83,5 +83,11 @@ export const goodies: Goodie[] = [
     description: "Ledger-sheet grid-template-columns/rows/areas editor — a track list with px/rem/fr/auto/minmax() sizing, a click-and-drag named-areas painter that generates a real grid-template-areas string, a live CSS Grid preview, Holy Grail/Sidebar/Dashboard presets, and CSS/Tailwind/React code export.",
     icon: "columns",
     href: "/goodies/css-grid-template-builder"
+  },
+  {
+    name: "Clip-Path Generator",
+    description: "Cutting-mat clip-path editor — drag pen-tool bezier points or circle/ellipse/inset handles directly on the preview, morph between two shapes with ready @keyframes export, and output CSS/Tailwind/React/SVG code.",
+    icon: "diamonds",
+    href: "/goodies/clip-path-generator"
   }
 ];
