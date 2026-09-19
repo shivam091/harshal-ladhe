@@ -178,6 +178,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "dynamic-viewport-width-units",
+    title: "Dynamic Viewport Width Units: `dvw`, `svw`, and `lvw`",
+    excerpt: "Width-axis siblings of dvh/svh/lvh, useful for full-bleed breakouts.",
+    description: "dvw, svw, and lvw mirror dvh/svh/lvh onto the width axis, but the browser chrome that makes dvh diverge from vh is a vertical UI element — so on virtually every current browser, all four width units render identically. Where they actually earn their place is different: full-bleed breakouts and edge-to-edge mobile carousels, not a live-resizing address bar.",
+    category: ["CSS"],
+    tags: ["css", "viewport-units", "dvw", "full-bleed", "responsive-design", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/dynamic-viewport-width-units/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Dynamic viewport width units (dvw, svw, and lvw) illustrated with three mobile screens, showing large, small, and dynamic viewport widths, with a CSS example demonstrating a full-bleed section."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication." }
+    ]
   }
 ];
 
