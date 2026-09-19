@@ -137,6 +137,25 @@ export const series: Series[] = [
       { date: "2026-08-15", change: "Initial publication" }
     ]
   },
+  {
+    slug: "docker-from-basics-to-advanced",
+    title: "Docker: From Basics to Advanced",
+    order: 3,
+    excerpt: "Dockerfiles, layer caching, and multi-stage builds, through Compose and on to production-grade image security.",
+    description: "A 6-part Docker series — from Dockerfile fundamentals and layer caching, through multi-stage builds and Compose-based local dev environments, to BuildKit optimization and hardening images for production.",
+    parts: [
+      "dockerfile-basics-for-beginners",
+      "docker-layers-and-caching",
+      "multi-stage-dockerfiles",
+      "docker-compose-for-local-dev",
+      "advanced-dockerfile-optimization",
+      "securing-docker-images"
+    ],
+    signoff: "Six parts, one continuous arc — from your first FROM/COPY/RUN/CMD to images that are fast to build and safe to ship. Thanks for working through the whole thing with me. Go containerize something properly. 🐳",
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
+  },
 ];
 
 /*

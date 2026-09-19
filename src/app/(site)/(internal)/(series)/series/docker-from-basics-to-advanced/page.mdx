@@ -1,0 +1,24 @@
+import { buildSeriesMetadata } from "@/utils/series-metadata";
+
+export const metadata = buildSeriesMetadata("docker-from-basics-to-advanced");
+
+🐳 **Docker: From Basics to Advanced** takes you from your very first Dockerfile to images that are fast to build, small to ship, and safe to run in production.
+
+Whether you've never run `docker build` or you already containerize things daily but want the mechanics — caching, layering, BuildKit — to stop feeling like guesswork, this 6-part series builds that understanding one layer at a time.
+
+Here's what you'll explore:
+
+- **Part 1: Dockerfile Basics for Beginners** — The images-vs-containers mental model, a full `FROM`/`WORKDIR`/`COPY`/`RUN`/`CMD` walkthrough, building and running a container, `CMD` vs. `ENTRYPOINT`, and `.dockerignore`.
+- **Part 2: Understanding Docker Layers and Caching** — How Docker's layered filesystem works, exactly how the build cache invalidation cascade works, and why instruction order determines build speed.
+- **Part 3: Writing Efficient Multi-Stage Dockerfiles** — Naming build stages with `FROM ... AS`, pulling artifacts across stages with `COPY --from`, targeting an intermediate stage with `--target`, and choosing a lean runtime base.
+- **Part 4: Docker Compose for Local Dev Environments** — Defining services, default-network service discovery, named volumes vs. bind mounts, `.env` substitution, and healthcheck-based startup ordering.
+- **Part 5: Advanced Dockerfile Techniques and Optimization** — BuildKit cache mounts, secret mounts, distroless runtime images, and the real story behind layer squashing.
+- **Part 6: Securing Your Docker Images** — Non-root users, choosing a base image for security, vulnerability scanning, why `ARG`/`ENV` leak secrets, and BuildKit secret mounts.
+
+By the end of the series, you'll be able to write a production-ready multi-stage Dockerfile, run a realistic multi-container stack locally with Compose, and ship an image that's been optimized and hardened rather than just "built and it works."
+
+<Quote>
+  A Dockerfile that builds is the easy part — this series is about the difference between an image that works and one that's fast, small, and safe to actually ship.
+</Quote>
+
+<RainbowDivider />
