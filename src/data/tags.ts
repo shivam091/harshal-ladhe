@@ -687,4 +687,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Mobile-Friendly Web Techniques",
     description: "CSS and layout techniques that account for mobile browser behaviour, small screens, and touch input."
   },
+  "dvw": {
+    title: "Dynamic Viewport Width (`dvw`)",
+    description: "Using `dvw`, `svw`, and `lvw` for widths that respect the visible viewport, including full-bleed layouts."
+  },
+  "full-bleed": {
+    title: "Full-Bleed Layouts in CSS",
+    description: "Techniques for letting elements break out of a centred content column and span the full width of the viewport."
+  },
 };
