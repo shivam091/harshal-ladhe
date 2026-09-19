@@ -531,5 +531,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "devops": {
     title: "DevOps Practices and Tooling",
     description: "Articles on the tools and practices that connect development and operations, including containerization, environment management, and delivery pipelines."
+  },
+  "docker-layers": {
+    title: "How Docker Image Layers Work",
+    description: "A look at Docker's layered filesystem — how each instruction creates a layer, and how layers are shared and reused across images."
+  },
+  "build-cache": {
+    title: "Speeding Up Builds with Build Caching",
+    description: "Techniques for structuring builds so unchanged steps are served from cache instead of re-executed, cutting build times significantly."
+  },
+  "image-layers": {
+    title: "Docker Image Layer Structure Explained",
+    description: "Explanations of how a Docker image's layers stack together, and how instruction order affects layer size and reuse."
   }
 };

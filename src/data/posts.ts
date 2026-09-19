@@ -416,6 +416,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "docker-layers-and-caching",
+    title: "Understanding Docker Layers and Caching",
+    excerpt: "Why your Docker builds are slower than they need to be.",
+    description: "Understand how Docker's layered filesystem and build cache actually work, why Dockerfile instruction order determines build speed, and how to stop paying for a full rebuild on every code change.",
+    category: ["Docker"],
+    tags: ["docker", "dockerfile", "docker-layers", "build-cache", "image-layers", "containerization", "beginner", "performance"],
+    signoff: "The \"why is this build still slow\" question came up enough in my own projects that untangling exactly how the cache cascades felt worth writing down properly, whiteout layers and all. Thanks for sticking with the mechanics instead of just the rules of thumb — go reorder a Dockerfile and watch the CACHED lines stack up. ⚡",
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

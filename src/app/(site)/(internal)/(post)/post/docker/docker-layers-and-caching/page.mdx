@@ -1,0 +1,238 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("docker-layers-and-caching");
+
+## Introduction
+
+You change one line in `server.js`, run `docker build`, and go make coffee — because it's going to take three minutes, again, just like the last twenty builds. `npm install` runs from scratch, every dependency gets re-downloaded, and the only thing that actually changed was a `console.log`. That wait isn't a Docker problem. It's a caching problem, almost always caused by the order of instructions in the Dockerfile.
+
+Docker's build cache exists precisely to make this fast. Used correctly, a code-only change rebuilds in seconds, because expensive steps like installing dependencies get reused from a previous build. Ignored, every build pays the full cost, no matter how small the change was.
+
+By the end of this post, you'll be able to:
+
+- Explain how a Docker image is really a stack of layers, not a single blob
+- Describe exactly what conditions make Docker reuse a cached layer vs. rebuild it
+- Understand why one cache miss invalidates every instruction after it
+- Reorder instructions so dependency installation stays cached across code changes
+- Read `docker history` and build output to see which layers were cached
+- Avoid "cleanup" commands that bloat image size instead of shrinking it
+- Use `.dockerignore` to keep the build context small and avoid unnecessary cache churn
+
+<RainbowDivider />
+
+## How Docker Images Are Built from Layers
+
+A Docker image isn't a single file — it's a stack of read-only layers, each a diff on top of the layer below it. Roughly, each Dockerfile instruction that changes the filesystem (`RUN`, `COPY`, `ADD`) produces one new layer; instructions that only change metadata (`CMD`, `ENV`, `EXPOSE`, `LABEL`) produce a very small layer with no real filesystem content.
+
+Each layer is immutable once built and identified by a content-addressed hash. Layers are stacked using a union filesystem, so from inside a container the filesystem looks like one normal directory tree, even though it's assembled from many separate layers underneath.
+
+When you run a container, Docker adds one more layer on top: a thin, writable container layer. Anything the process writes at runtime goes there, while the image layers underneath stay untouched — which is why deleting a container discards its writes but leaves the image intact, and why many containers can run from the same image at once without interfering with each other.
+
+<Info title="Layers are shared, not duplicated">
+Because layers are content-addressed, two images that share an identical layer — say, the same `node:20-slim` base — don't store that layer twice. Docker recognizes the hash and reuses the existing copy, which is why pulling an image that shares a base with one you already have is often much faster than its total size would suggest.
+</Info>
+
+<RainbowDivider />
+
+## How the Build Cache Actually Works
+
+On every `docker build`, Docker walks the Dockerfile instruction by instruction and asks: do I already have a cached layer for this exact step, built on this exact parent? If yes, it reuses that layer. If no, it executes the instruction and produces a new layer — and everything after that point starts missing the cache too.
+
+The check differs slightly by instruction type:
+
+- For most instructions (`RUN`, `ENV`, `WORKDIR`, etc.), Docker compares the instruction text against what produced the cached layer. Identical text plus a matching parent means a hit.
+- For `COPY`/`ADD`, text comparison isn't enough, since `COPY . .` looks the same even when the files behind it change. Docker also checksums the contents, permissions, and ownership of every copied file. A different checksum is a miss, even if the instruction line is identical.
+- In every case, the parent layer's cache validity matters too — a layer only counts as cached if the layer before it was also served from cache.
+
+That last point is the most important mechanic in this post: **cache invalidation cascades downward and never recovers for the rest of that build.** Instructions run top to bottom, and the moment one misses the cache, every instruction after it re-executes too, regardless of whether it would have matched a cached layer on its own. Docker doesn't skip ahead looking for later matches — once the chain breaks, it stays broken for that build.
+
+This is why instruction order has real, measurable consequences on build time, not just stylistic ones.
+
+<RainbowDivider />
+
+## Why Instruction Order Matters
+
+Consider a common but poorly ordered Node.js Dockerfile:
+
+<CodeBlock language="docker">
+{`
+  FROM node:20-slim
+
+  WORKDIR /app
+
+  COPY . .
+  RUN npm install
+
+  CMD ["node", "server.js"]
+`}
+</CodeBlock>
+
+`COPY . .` copies the entire project, source included, before `npm install` runs. Since `COPY`'s cache check checksums everything it copies, changing any file — even an unrelated comment — changes that checksum, invalidating the `COPY` layer and cascading into `RUN npm install` too. The result: touching one line of code forces a full dependency reinstall on every build, even when `package.json` never changed.
+
+Now reorder it so the dependency manifest is copied, and dependencies installed, before the rest of the source:
+
+<CodeBlock language="docker">
+{`
+  FROM node:20-slim
+
+  WORKDIR /app
+
+  COPY package.json package-lock.json ./
+  RUN npm install
+
+  COPY . .
+
+  CMD ["node", "server.js"]
+`}
+</CodeBlock>
+
+Now the checksum behind `COPY package.json package-lock.json ./` only changes when those two files change. As long as dependencies are untouched, that `COPY` is a cache hit, its parent stays valid for `RUN npm install`, and `npm install` itself is skipped entirely — Docker reuses the layer holding `node_modules`. Only the final `COPY . .`, which picks up your actual changes, needs to re-run, and that's cheap.
+
+<Success title="Order least-to-most frequently changing">
+Put instructions that change rarely (installing a toolchain, installing dependencies from a lockfile) near the top of the Dockerfile, and instructions that change on every commit (copying application source) near the bottom. Anything after the first thing that changes re-runs anyway, so put the most volatile steps last.
+</Success>
+
+<RainbowDivider />
+
+## Inspecting Layers and Cache Behavior
+
+You don't have to guess whether a layer was reused. During a build, BuildKit output marks each step it skipped:
+
+<CodeBlock language="bash">
+{`
+  $ docker build -t myapp .
+  [+] Building 4.2s (11/11) FINISHED
+  => [1/6] FROM docker.io/library/node:20-slim                          0.0s
+  => CACHED [2/6] WORKDIR /app                                          0.0s
+  => CACHED [3/6] COPY package.json package-lock.json ./                0.0s
+  => CACHED [4/6] RUN npm install                                       0.0s
+  => [5/6] COPY . .                                                     0.3s
+  => [6/6] CMD ["node", "server.js"]                                    0.0s
+`}
+</CodeBlock>
+
+Any step marked `CACHED` didn't execute — Docker reused the layer. Once a step isn't cached, expect every step after it to also miss, per the cascade rule above.
+
+Afterward, `docker history` shows every layer in a built image, its size, and the command that produced it:
+
+<CodeBlock language="bash">
+{`
+  $ docker history myapp
+  IMAGE          CREATED         CREATED BY                                      SIZE
+  a1b2c3d4e5f6   3 minutes ago   CMD ["node" "server.js"]                        0B
+  b2c3d4e5f6a7   3 minutes ago   COPY . .                                        18.4kB
+  c3d4e5f6a7b8   5 minutes ago   RUN npm install                                 42.7MB
+  d4e5f6a7b8c9   5 minutes ago   COPY package.json package-lock.json ./          1.2kB
+  e5f6a7b8c9d0   5 minutes ago   WORKDIR /app                                    0B
+  f6a7b8c9d0e1   2 weeks ago     FROM node:20-slim                               178MB
+`}
+</CodeBlock>
+
+This is useful for spotting which instruction contributes most to image size — here, `npm install` at ~43MB. `docker image inspect <image>` gives the same layer list as JSON, with digests, if you need to script against it.
+
+<RainbowDivider />
+
+## Reducing Layer Count with Combined RUN Instructions
+
+A classic mistake, especially with `apt-get`, is splitting related setup across multiple `RUN` instructions:
+
+<CodeBlock language="docker">
+{`
+  # Don't do this
+  RUN apt-get update
+  RUN apt-get install -y curl git
+  RUN rm -rf /var/lib/apt/lists/*
+`}
+</CodeBlock>
+
+This works, but produces a larger image than necessary. Each `RUN` is its own immutable layer, and the `install` layer bakes in downloaded package lists and cache files. The final `rm -rf` runs in its own layer and does delete those files from the merged, final filesystem view — but it doesn't shrink the layer that added them, because that layer is already sealed. The delete is recorded as a new layer marking those paths removed ("whiteout") when layers are stacked together, so the bytes are invisible inside a running container but still on disk in the earlier layer, still counting toward the image size you push and pull.
+
+Combining the steps into one `RUN` avoids this, since the cache files never get committed as their own layer in the first place:
+
+<CodeBlock language="docker">
+{`
+  # Do this instead
+  RUN apt-get update && \\
+      apt-get install -y curl git && \\
+      rm -rf /var/lib/apt/lists/*
+`}
+</CodeBlock>
+
+`update`, `install`, and cleanup now happen within one filesystem snapshot that becomes one layer, so the apt cache files are written and removed before that layer is finalized. The layer only reflects the net result: `curl` and `git` installed, no leftover package lists.
+
+<Warning title="Deleting in a later layer doesn't shrink an earlier one">
+A `RUN rm` in a later instruction removes files from the final merged view, but doesn't reclaim the disk space they occupy in the earlier layer that created them. If a file needs to be gone from the final image, it needs to be removed within the same layer it was created in — or excluded via a multi-stage build that never copies it into the final image.
+</Warning>
+
+<RainbowDivider />
+
+## How .dockerignore Affects the Cache
+
+Before Docker evaluates a single instruction, it sends the build context — the directory you pointed `docker build` at — to the daemon or BuildKit. This happens regardless of caching; it's a precondition for the build to start. A large, uncurated context (a full `node_modules`, a `.git` history, stray build artifacts) slows that transfer down, independent of what ends up cached.
+
+A `.dockerignore` file, with syntax similar to `.gitignore`, excludes matching paths from the context entirely — they're never sent to the daemon and never considered by `COPY`/`ADD`.
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  node_modules
+  .git
+  npm-debug.log
+  dist
+  .env
+`}
+</CodeBlock>
+
+Beyond transfer time, `.dockerignore` affects cache correctness for `COPY`/`ADD` instructions using broad patterns like `COPY . .`. Since the checksum behind that check covers every copied file, an ignored path is simply excluded from it. Without a `.dockerignore`, files irrelevant to your app — editor state, logs from a previous `docker run`, a stray `.DS_Store` — can become part of what `COPY . .` hashes, causing that layer, and everything after it, to miss the cache for reasons unrelated to your actual source.
+
+<Warning title="Be precise about what .dockerignore fixes">
+`.dockerignore` doesn't change how caching works — it changes what feeds into the cache check for context-copying instructions, and how much data uploads before the build starts. It won't help a `COPY package.json ./` step that only references files you never meant to ignore, and it has no effect on `RUN` instructions, since those aren't influenced by the build context's contents.
+</Warning>
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+### Does `--no-cache` disable caching permanently?
+
+No. `docker build --no-cache` ignores the cache for that one build only. Later builds without the flag use the cache normally, including the layers just produced.
+
+---
+
+### Does changing a comment invalidate the cache?
+
+Usually not — comments aren't part of the instruction Docker compares, so editing a comment above a `RUN` line typically doesn't affect that instruction's cache key.
+
+---
+
+### If I change an early `ENV` value, does it invalidate everything after it?
+
+Yes. `ENV` produces a layer whose cache key includes its own text and its parent's validity, same as `RUN` or `COPY`, so changing it early breaks the chain from that point forward.
+
+---
+
+### Does multi-stage building affect caching?
+
+Each stage is cached independently under the same rules. A miss in one stage doesn't invalidate an unrelated stage — one reason multi-stage builds help separate a rarely-changing dependency stage from a frequently-changing application stage.
+
+---
+
+### Is the build cache shared across machines?
+
+Not by default — it lives on the machine or CI runner that ran the build. BuildKit can export and import cache explicitly, for example via a registry, using `--cache-to` and `--cache-from`.
+
+<RainbowDivider />
+
+## Conclusion
+
+The Docker build cache isn't magic or unreliable — it's a mechanical set of rules applied top to bottom. Once you internalize that a single cache miss cascades through every instruction after it, most "why is this build always slow" questions answer themselves: something near the top of the file, or a broad `COPY`, is invalidating more than it needs to.
+
+**Key Takeaways:**
+
+- Docker images are stacks of immutable, content-addressed layers; containers add one writable layer on top at runtime
+- A cached layer is reused only if the instruction text matches (and, for `COPY`/`ADD`, the copied content's checksum matches) and its parent was also cached
+- One cache miss invalidates every subsequent instruction in that build — the cascade never recovers mid-file
+- Order instructions from least to most frequently changing, so dependency installation stays cached across ordinary code changes
+- Build output marks reused steps as `CACHED`; `docker history` shows each layer's size and originating command afterward
+- Combine related shell commands into one `RUN` so temporary files never get committed to their own persisted layer
+- Deleting a file in a later layer removes it from the final view but doesn't shrink the earlier layer that created it
+- `.dockerignore` keeps the build context small and prevents irrelevant files from entering a `COPY`'s cache checksum
