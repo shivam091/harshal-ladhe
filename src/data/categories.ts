@@ -35,5 +35,9 @@ export const categoryMeta: Record<string, CategoryMeta> = {
   javascript: {
     title: "All Posts on JavaScript and Modern Web APIs",
     description: "Guides and deep dives into JavaScript — from asynchronous programming fundamentals to modern browser APIs like the Observer family — covering the language and platform features that power interactive web applications.",
+  },
+  docker: {
+    title: "Docker and Containerization Guides",
+    description: "Guides on Docker and containerization — from Dockerfile fundamentals and image layering to multi-stage builds, Compose-based dev environments, and production-grade image security."
   }
 };

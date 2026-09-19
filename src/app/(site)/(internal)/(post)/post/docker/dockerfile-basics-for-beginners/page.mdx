@@ -1,0 +1,253 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("dockerfile-basics-for-beginners");
+
+## Introduction
+
+"It works on my machine" is the most expensive sentence in software. A teammate pulls your branch and hits a version mismatch, a missing system library, or a config file that only exists on your laptop — multiplied across a team, a CI pipeline, and a production server, that's hours lost to environment drift instead of actual bugs.
+
+Docker exists to make that sentence irrelevant. Instead of describing an environment in a wiki page that goes stale, you describe it in a **Dockerfile** — a plain-text, version-controlled recipe that produces the exact same runtime every time, on every machine.
+
+This post is a ground-up introduction to that recipe format: the core mental model of images and containers, a real Dockerfile walked through line by line, and the everyday commands and gotchas that trip up almost everyone in their first week with Docker.
+
+By the end of this post, you'll be able to:
+
+- Explain the difference between a Docker image and a Docker container, and why that distinction matters
+- Read and write a Dockerfile using `FROM`, `WORKDIR`, `COPY`, `RUN`, `EXPOSE`, and `CMD`
+- Build an image with `docker build` and tag it sensibly
+- Run a container with the right combination of `-p`, `-d`, and `--name` flags
+- Inspect, stop, and remove running containers using `docker ps`, `docker logs`, `docker stop`, and `docker rm`
+- Explain the practical difference between `CMD` and `ENTRYPOINT`
+- Write a `.dockerignore` file that keeps your images small, fast to build, and free of leaked secrets
+
+<RainbowDivider />
+
+## Images vs. Containers
+
+Almost every point of early Docker confusion traces back to blurring these two words together. They're related, but not the same thing.
+
+An **image** is a read-only, immutable template: filesystem layers stacked on top of each other, plus metadata describing what command to run by default, what ports the process expects, and what environment variables it needs. An image doesn't do anything by itself — it's inert, sitting on disk (or in a registry like Docker Hub) waiting to be used.
+
+A **container** is a running (or stopped) instance created *from* an image. When you start one, Docker takes the image's layers, adds a thin writable layer on top, and starts the defined process inside an isolated environment with its own filesystem view, process namespace, and network interface. Anything the container writes — logs, temp data, database files if you're not careful — lands in that writable layer, not the underlying image.
+
+The analogy that tends to stick: an image is a class definition, a container is an object instantiated from it — or, the image is the recipe card, the container is the dish cooked from it. Cook the same recipe ten times and you get ten independent meals; burning one doesn't touch the recipe. Delete every container and the image is still there, ready to spin up a fresh one.
+
+This is also why images are layered and cacheable: each Dockerfile instruction produces a new, immutable layer, and Docker reuses layers across builds that share a common base — exactly why instruction *order* matters for build speed, covered shortly.
+
+<Success title="The one distinction that matters">
+Images are templates you build once and reuse. Containers are disposable, running instances of that template. You should be comfortable destroying and recreating containers at will — if your setup is fragile to that, it's storing state somewhere it shouldn't be.
+</Success>
+
+<RainbowDivider />
+
+## Anatomy of a Dockerfile
+
+A Dockerfile is just a sequence of instructions, each producing a layer, executed top to bottom to build an image. Here's a complete, realistic one for a small Node.js Express app:
+
+<CodeBlock language="docker">
+{`
+  FROM node:20-slim
+
+  WORKDIR /app
+
+  COPY package.json package-lock.json ./
+  RUN npm ci --omit=dev
+
+  COPY . .
+
+  EXPOSE 3000
+
+  CMD ["node", "server.js"]
+`}
+</CodeBlock>
+
+Let's go instruction by instruction.
+
+### `FROM node:20-slim`
+
+Every Dockerfile starts with `FROM`, which picks the base image everything else builds on top of. We're starting from an official Node.js image rather than a bare Linux distribution because it already has Node and npm installed — no point reinventing that layer.
+
+Note the tag: `node:20-slim`, not just `node`, which resolves to `node:latest` — a moving target that can point to a different image next month, breaking reproducibility. `20-slim` pins a specific major version on a smaller Debian variant, stripped of docs and extra tooling: faster pulls, a smaller attack surface.
+
+### `WORKDIR /app`
+
+`WORKDIR` sets the working directory for every instruction that follows, creating it if it doesn't exist. Without it, everything runs relative to `/`, scattering application files across the image's root filesystem. Set once, every subsequent `COPY`, `RUN`, and `CMD` operates relative to `/app`.
+
+### `COPY package.json package-lock.json ./` and `RUN npm ci --omit=dev`
+
+This is the layer-caching trick that matters most in practice: copy *only* the dependency manifests first, then install, *before* copying the rest of the source. Docker caches layers by their inputs — if the manifests haven't changed since the last build, it reuses the cached `npm ci` layer even after a hundred source-line changes. Reorder this (copy everything, then install) and every source change invalidates the dependency layer, turning a cached two-second build into a minute-plus reinstall every time.
+
+`npm ci` does a clean, deterministic install strictly from the lockfile, unlike `npm install`. `--omit=dev` skips devDependencies you don't need at runtime.
+
+### `COPY . .`
+
+Copy the rest of the application source into the image. The first `.` is the build context on your host machine (more on that shortly); the second is the destination, resolving to `/app` because of the earlier `WORKDIR`.
+
+### `EXPOSE 3000`
+
+`EXPOSE` documents that the application listens on port 3000. It's worth being precise about what this does *not* do: it doesn't publish the port or change the container's networking — it's metadata for anyone reading the Dockerfile. You still need `-p` at `docker run` time to actually reach that port from outside.
+
+### `CMD ["node", "server.js"]`
+
+`CMD` specifies the default command a container runs. The array form shown here — "exec form" — runs the command directly rather than through a shell, which handles signals like `SIGTERM` correctly and avoids an extra shell process. More on `CMD` vs. `ENTRYPOINT` shortly.
+
+<RainbowDivider />
+
+## Building and Running Your Image
+
+With a Dockerfile in place, building an image is one command:
+
+<CodeBlock language="bash">
+{`
+  # -t tags the image with a name:tag; the trailing . is the build context (current directory)
+  docker build -t my-express-app:1.0 .
+`}
+</CodeBlock>
+
+Give the image a meaningful tag — `1.0`, a git commit SHA, a semver — rather than relying on the implicit `latest`, for the same reproducibility reason discussed above.
+
+Now run a container from it:
+
+<CodeBlock language="bash">
+{`
+  # -p maps host_port:container_port — here, host 8080 forwards to the container's 3000
+  # -d runs the container in detached mode (in the background, freeing your terminal)
+  # --name gives the container a memorable name instead of a random one
+  docker run -p 8080:3000 -d --name express-app my-express-app:1.0
+`}
+</CodeBlock>
+
+Your app is now reachable at `http://localhost:8080`, even though it listens on port 3000 *inside* the container — that's exactly what `-p 8080:3000` maps. Omit `-d` and the container runs in the foreground, streaming logs until you `Ctrl+C` out.
+
+A handful of commands cover almost everything else you'll do day to day:
+
+<CodeBlock language="bash">
+{`
+  # List running containers (add -a to include stopped ones)
+  docker ps
+
+  # Tail the logs of a running or stopped container by name
+  docker logs -f express-app
+
+  # Stop a running container gracefully (sends SIGTERM, then SIGKILL after a timeout)
+  docker stop express-app
+
+  # Remove a stopped container so the name can be reused
+  docker rm express-app
+
+  # See what images you have locally
+  docker images
+`}
+</CodeBlock>
+
+<Info title="Containers vs. their names">
+Stopping a container doesn't delete it — `docker rm` does. Try `docker run --name express-app` again while a stopped container still holds that name, and Docker refuses until you remove the old one.
+</Info>
+
+<RainbowDivider />
+
+## CMD vs. ENTRYPOINT (the short version)
+
+Both specify what runs when a container starts, using the same array ("exec") syntax — but they answer different questions.
+
+`CMD` provides **default arguments**, freely overridable at `docker run` time: `docker run my-image echo hello` replaces whatever `CMD` specified entirely.
+
+`ENTRYPOINT` specifies the **fixed executable** that always runs. Anything passed after the image name on `docker run` is appended to it as arguments instead.
+
+<CodeBlock language="docker">
+{`
+  # CMD only: fully overridable
+  CMD ["node", "server.js"]
+  # docker run my-image  -> runs: node server.js
+  # docker run my-image echo hi -> runs: echo hi
+
+  # ENTRYPOINT + CMD: CMD becomes default *arguments* to the entrypoint
+  ENTRYPOINT ["node"]
+  CMD ["server.js"]
+  # docker run my-image          -> runs: node server.js
+  # docker run my-image worker.js -> runs: node worker.js
+`}
+</CodeBlock>
+
+For a beginner project, `CMD` alone (as in our Express example) is usually all you need. `ENTRYPOINT` earns its keep when the image should always run through one binary — a startup wrapper, a CLI tool — no matter what arguments someone passes at runtime.
+
+<RainbowDivider />
+
+## Keeping Build Context Clean with .dockerignore
+
+When you run `docker build .`, that trailing `.` is the **build context** — the entire directory tree Docker sends to the build process so `COPY`/`ADD` can pull files from it. By default that's *everything* in the current directory, recursively: `.git` history, `node_modules`, local `.env` files, log files, build artifacts.
+
+A `.dockerignore` file, next to your Dockerfile, excludes paths from the build context the way `.gitignore` excludes them from version control. This matters for build speed — Docker reads and hashes every file in the context even if nothing `COPY`s it in — and for security, since a stray secret in the context can end up baked into an image layer without any instruction referencing it by name.
+
+A reasonable starting point for a Node.js project:
+
+<CodeBlock language="bash">
+{`
+  .git
+  .gitignore
+  node_modules
+  npm-debug.log
+  .env
+  .env.*
+  Dockerfile
+  .dockerignore
+  README.md
+  dist
+  coverage
+`}
+</CodeBlock>
+
+<Warning title="Common beginner mistakes">
+- **Using `:latest` in production.** A moving target — the same Dockerfile can silently pull a different image weeks later. Pin to a specific version tag.
+- **Running as root without thinking about it.** Official base images often default to root unless told otherwise. Fine for local experiments; for anything real, add a `USER` instruction (or use a base image that already drops privileges) so a compromised process doesn't have root inside the container.
+- **Forgetting `.dockerignore` and copying `node_modules`/`.git` into the image.** `COPY . .` will happily include your host's `node_modules` (which may not match the container's architecture) and your entire `.git` history, bloating the image and potentially leaking old secrets still sitting in commit history.
+</Warning>
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+### Do I need to install Docker Desktop to follow this post?
+
+You need a working Docker Engine, which Docker Desktop provides on macOS and Windows. On Linux you can install Docker Engine directly; either way, `docker version` should print both a client and server section.
+
+---
+
+### What's the difference between `COPY` and `ADD`?
+
+`COPY` does one thing: copies files from the build context into the image. `ADD` does that plus extra behavior — auto-extracting local tar archives and fetching remote URLs. Default to `COPY`, and reach for `ADD` only when you specifically need archive extraction.
+
+---
+
+### Why does my image still contain old files after I changed my source code?
+
+Almost always a caching issue, instruction ordering, or a stale tag. Rebuild with `docker build --no-cache -t my-app:tag .` to rule out a bad cache layer, and confirm you're running the new tag — `docker run` with an old tag happily starts an old image.
+
+---
+
+### Can one Dockerfile produce multiple different images?
+
+Not directly, but multi-stage builds (multiple `FROM` lines, each starting a new stage) let one stage compile the app and a leaner second stage copy in just the final artifacts — a topic worth its own dedicated post once you're comfortable with the basics here.
+
+---
+
+### Is it bad to have a lot of layers in my Dockerfile?
+
+Not inherently — layers enable caching. What costs you is duplicating large data across layers (downloading a file in one `RUN` and deleting it in a later one still leaves those bytes in the earlier layer). Combining related shell commands into a single `RUN` with `&&` avoids that.
+
+<RainbowDivider />
+
+## Conclusion
+
+The instructions covered here — `FROM`, `WORKDIR`, `COPY`, `RUN`, `EXPOSE`, `CMD` — plus the images-vs-containers mental model, cover most of what you'll type in your first weeks of Docker. Everything more advanced (multi-stage builds, volumes, networks, Compose) builds directly on this foundation.
+
+**Key Takeaways:**
+
+- An image is an immutable, layered template; a container is a running instance of that image with its own writable layer
+- Pin base image tags (e.g. `node:20-slim`) instead of relying on `:latest` for reproducible builds
+- Order Dockerfile instructions to maximize layer caching — copy dependency manifests and install dependencies before copying the rest of your source
+- `EXPOSE` is documentation, not port publishing — you still need `-p` at `docker run` time
+- `docker build -t name:tag .` builds; `docker run -p host:container -d --name x image` runs it in the background with a reachable port
+- `docker ps`, `docker logs`, `docker stop`, and `docker rm` cover most day-to-day container inspection and cleanup
+- `CMD` provides overridable default arguments; `ENTRYPOINT` fixes the executable that always runs
+- A `.dockerignore` file keeps builds fast and keeps `.git`, `node_modules`, and secrets out of your image

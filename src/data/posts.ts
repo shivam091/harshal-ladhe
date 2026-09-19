@@ -404,6 +404,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-13", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "dockerfile-basics-for-beginners",
+    title: "Dockerfile Basics for Beginners",
+    excerpt: "Learn Docker's core building blocks, one instruction at a time.",
+    description: "A beginner's guide to Dockerfile basics — FROM, COPY, RUN, and CMD — plus the images-vs-containers mental model you need before anything else in Docker makes sense.",
+    category: ["Docker"],
+    tags: ["docker", "dockerfile", "containers", "containerization", "docker-images", "devops", "beginner", "cli"],
+    signoff: "Every instruction in this one — FROM, WORKDIR, COPY, RUN, CMD — is something I still type from muscle memory years in, and I hope walking through the Express example line by line makes that same muscle memory click faster for you than it did for me. Thanks for building your first image with me — go containerize something. 🐳",
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

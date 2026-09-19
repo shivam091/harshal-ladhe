@@ -507,5 +507,29 @@ export const tagMeta: Record<string, TagMeta> = {
   "microtasks": {
     title: "Microtasks and the Priority Queue",
     description: "Articles on the microtask queue that backs Promises and queueMicrotask, and how it's prioritized ahead of macrotasks like setTimeout."
+  },
+  "docker": {
+    title: "Docker and Container Fundamentals",
+    description: "Articles on Docker — building images, running containers, and the core concepts behind modern application packaging and deployment."
+  },
+  "dockerfile": {
+    title: "Writing and Optimizing Dockerfiles",
+    description: "Guides on writing Dockerfiles — instructions, syntax, layering, and the techniques that turn a working Dockerfile into an efficient, production-ready one."
+  },
+  "containers": {
+    title: "Understanding Application Containers",
+    description: "Content on containers as a unit of deployment — how they isolate processes, share the host kernel, and differ from full virtual machines."
+  },
+  "containerization": {
+    title: "Containerization Concepts and Practices",
+    description: "Foundational and practical content on containerization — packaging applications with their dependencies into portable, reproducible units."
+  },
+  "docker-images": {
+    title: "Building and Managing Docker Images",
+    description: "Guides on Docker images — how they're built from layers, tagged, stored, and distributed via registries."
+  },
+  "devops": {
+    title: "DevOps Practices and Tooling",
+    description: "Articles on the tools and practices that connect development and operations, including containerization, environment management, and delivery pipelines."
   }
 };
