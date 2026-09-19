@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flexbox Axis Builder</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Flexbox Axis Builder</h1>
+        <p>Tune the direction, wrapping, and alignment of a flex container, then watch the main and cross axes reflow live.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Flex preview">
+        <div id="flex-preview" class="flex-preview"></div>
+      </section>
+
+      <output id="flex-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Flex Direction</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="flex-direction">
+          <label class="segment">
+            <input type="radio" name="flex-direction" value="row" checked>
+            <span>row</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="flex-direction" value="row-reverse">
+            <span>row-reverse</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="flex-direction" value="column">
+            <span>column</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="flex-direction" value="column-reverse">
+            <span>column-reverse</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Flex Container</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="flex-wrap-select">flex-wrap</label>
+            <select id="flex-wrap-select">
+              <option value="nowrap" selected>nowrap</option>
+              <option value="wrap">wrap</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="justify-content-select">justify-content</label>
+            <select id="justify-content-select">
+              <option value="flex-start" selected>flex-start</option>
+              <option value="center">center</option>
+              <option value="flex-end">flex-end</option>
+              <option value="space-between">space-between</option>
+              <option value="space-around">space-around</option>
+              <option value="space-evenly">space-evenly</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="align-items-select">align-items</label>
+            <select id="align-items-select">
+              <option value="stretch" selected>stretch</option>
+              <option value="flex-start">flex-start</option>
+              <option value="center">center</option>
+              <option value="flex-end">flex-end</option>
+              <option value="baseline">baseline</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="gap-input">Gap</label>
+            <div class="range-row">
+              <span class="range-edge">0px</span>
+              <div class="range-track">
+                <input type="range" id="gap-input" min="0" max="40" step="2" value="12">
+                <output class="range-bubble" id="gap-value" for="gap-input">12px</output>
+              </div>
+              <span class="range-edge">40px</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="item-count-input">Item count</label>
+            <div class="range-row">
+              <span class="range-edge">3</span>
+              <div class="range-track">
+                <input type="range" id="item-count-input" min="3" max="10" step="1" value="5">
+                <output class="range-bubble" id="item-count-value" for="item-count-input">5</output>
+              </div>
+              <span class="range-edge">10</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

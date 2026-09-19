@@ -1,0 +1,36 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+}
+
+/* The actual flex container being demoed — sized tall enough that column/column-reverse have room to show. */
+.flex-preview {
+  display: flex;
+  min-block-size: 16rem;
+}
+
+.flex-item {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 3.5rem;
+  padding-block: 1.125rem;
+  padding-inline: 1.25rem;
+  border-radius: var(--pg-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  box-shadow: var(--pg-shadow-sm);
+}
+
+/* A couple of items get a taller/shorter cross size than the rest, so align-items (and baseline) have something visible to align. */
+.flex-item:nth-child(3n + 2) {
+  padding-block: 1.875rem;
+  font-size: 1.05rem;
+}
+
+.flex-item:nth-child(4n) {
+  padding-block: 0.5rem;
+  font-size: 0.7rem;
+}

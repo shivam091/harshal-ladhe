@@ -137,6 +137,27 @@ export const series: Series[] = [
       { date: "2026-08-15", change: "Initial publication" }
     ]
   },
+  {
+    slug: "flexbox-fundamentals",
+    title: "Flexbox Fundamentals",
+    order: 3,
+    excerpt: "One axis, fully mastered — from your first flex container to the sizing algorithm.",
+    description: "A 5-part series on CSS Flexbox — start with the flex container/item model and the main/cross axes, work through every alignment property, build responsive layouts without media queries, learn the flex-grow/shrink/basis sizing algorithm in depth, and finish with the real-world gotchas and debugging techniques that trip developers up in production.",
+    image: {
+      path: "/assets/img/series/flexbox-fundamentals/cover.webp",
+      width: 1536,
+      height: 1024,
+      type: "image/webp",
+      alt: "Flexbox Fundamentals infographic showing a one-dimensional flex container, main and cross axis arrows, and the five-part series covering axis basics, alignment, responsive wrapping, sizing, and debugging."
+    },
+    parts: [
+      "getting-started-with-flexbox"
+    ],
+    signoff: "Five parts, one axis at a time — from your very first flex container to the sizing math the browser runs under the hood. Thanks for working through it with me. Go build something that flexes without breaking. 🧩",
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication — Part 1 live" }
+    ]
+  },
 ];
 
 /*

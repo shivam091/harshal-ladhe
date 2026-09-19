@@ -161,6 +161,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Tune column count, row height, gap, and item count live to see grid-template-columns and grid-auto-rows reflow the grid.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "getting-started-with-flexbox",
+    title: "Flexbox Axis Builder",
+    description: "Tune flex-direction, flex-wrap, justify-content, align-items, gap, and item count live to see the main and cross axes reflow the container.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 

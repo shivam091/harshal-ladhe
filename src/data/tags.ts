@@ -20,6 +20,18 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Exploring 2D Layouts for Web Design",
     description: "Posts exploring two-dimensional layout techniques for the web, primarily using CSS Grid and Flexbox for complex and structured designs."
   },
+  "1d-layouts": {
+    title: "Exploring 1D Layouts for Web Design",
+    description: "Posts exploring one-dimensional layout techniques for the web — arranging items along a single row or column — primarily using CSS Flexbox."
+  },
+  "flexbox": {
+    title: "Comprehensive Guides to CSS Flexbox",
+    description: "Comprehensive guides and advanced techniques for mastering CSS Flexbox — the main and cross axes, alignment, sizing, and responsive one-dimensional layouts."
+  },
+  "flex-layout": {
+    title: "Building Layouts with CSS Flexbox",
+    description: "Practical techniques and patterns for building one-dimensional layouts with CSS Flexbox, from simple rows to fully responsive, wrapping arrangements."
+  },
   "css-grid": {
     title: "Comprehensive Guides to CSS Grid Layout",
     description: "Comprehensive guides and advanced techniques for mastering CSS Grid Layout for building robust, two-dimensional web interfaces."

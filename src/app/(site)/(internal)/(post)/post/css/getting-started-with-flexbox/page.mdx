@@ -1,0 +1,320 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("getting-started-with-flexbox");
+
+## The Power of Flexbox for Layouts
+
+Long before CSS Grid existed, developers needed a sane way to arrange elements along a single line — a row of nav links, a toolbar, a stack of form fields. **Flexbox** (the Flexible Box Layout module) is CSS's answer to exactly that problem.
+
+Flexbox turns a container into a **flex context**: its children stop behaving like ordinary block or inline boxes and instead grow, shrink, and align themselves along one axis, according to rules you control with a handful of properties.
+
+This is the first post in a five-part series called **Flexbox Fundamentals**, where we'll go from "what is a flex container?" all the way to debugging tricky real-world layouts. In this post, we'll build the mental model everything else in the series depends on.
+
+By the end of this post, you'll be able to:
+
+- Turn any element into a flex container with `display: flex`
+- Understand the main axis and cross axis — and how `flex-direction` controls them
+- Control wrapping, spacing, and basic alignment with `flex-wrap`, `gap`, `justify-content`, and `align-items`
+- Recognize which Flexbox properties belong on the container vs. the items
+- Debug a flex layout visually using your browser's DevTools
+- Avoid the most common beginner mistakes
+
+Let's dive in.
+
+<RainbowDivider />
+
+## Why Flexbox?
+
+Before Flexbox, arranging elements in a row (with even spacing, or centered, or filling leftover space) meant reaching for one of a few uncomfortable tools:
+
+- `float: left` / `float: right`, plus a "clearfix" hack to stop the parent from collapsing,
+- `display: inline-block`, which left stray whitespace gaps between elements in your markup,
+- `display: table` / `table-cell`, borrowing layout behavior never meant for anything but tabular data,
+- absolute positioning with manually calculated offsets, which fell apart the moment content changed size.
+
+None of these were designed for layout — they were repurposed for it. Centering a single element vertically was infamous enough to become a running joke in the CSS community.
+
+**Flexbox** changes that. It's a layout mode purpose-built for **one-dimensional** arrangement: a single row, or a single column, where the browser handles growing, shrinking, and spacing for you.
+
+**Natural use cases:**
+
+- Navbars and toolbars (logo on the left, links on the right)
+- Button groups and form control rows
+- Media objects (an avatar next to a block of text)
+- Sidebars that need to fill whatever vertical space is left over
+- Centering literally anything, in both directions, with two lines of CSS
+
+<CodeBlock language="css">
+{`
+  .center-anything {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`}
+</CodeBlock>
+
+That's the whole trick — no more `margin: 0 auto` plus a manual `top: 50%; transform: translateY(-50%)` workaround.
+
+<RainbowDivider />
+
+## Flexbox vs. Grid: When to Use What?
+
+Flexbox and CSS Grid solve overlapping but different problems. Grid is built for **two-dimensional** layout — rows and columns together. Flexbox is built for **one-dimensional** layout — a single row or a single column at a time, where content size is often allowed to drive the layout.
+
+| Scenario                               | Use Flexbox | Use Grid |
+| --------------------------------------- | :----------: | :------: |
+| Navbar with logo + links                | ✓            | ✗        |
+| Page layout (header, sidebar, content)  | ✗            | ✓        |
+| Single row of buttons                   | ✓            | ✗        |
+| Gallery or card grid                    | ✗            | ✓        |
+| Media object (avatar + text block)      | ✓            | ✗        |
+| Calendar or table layout                | ✗            | ✓        |
+| Sidebar that fills remaining height     | ✓            | ✗        |
+
+<Success title="Summary">
+  Use **Flexbox** when you're arranging items along a single row or column and want the layout to respond to content size. Use **Grid** when you need both rows and columns under one coordinated layout. You can — and often should — combine them: a Grid page skeleton with Flexbox-arranged toolbars inside its cells is an extremely common pattern.
+</Success>
+
+<Details summary="When not to use Flexbox?">
+
+- If you need real rows *and* columns aligned together (a dashboard, a photo gallery, a page skeleton) — reach for Grid instead.
+- If you're only centering or spacing a couple of inline elements inside otherwise normal text flow, plain `text-align` or margins might be simpler.
+- If your layout genuinely needs two-dimensional alignment (an item spanning multiple rows and columns), Flexbox can't do that — it only ever reasons about one axis at a time.
+
+</Details>
+
+For a deeper side-by-side comparison with more scenarios, see **[Flexbox vs Grid: When to Use Which](/post/css/flexbox-vs-grid-when-to-use-which)**.
+
+<RainbowDivider />
+
+## Basic Terminology
+
+Flexbox has its own vocabulary, and getting it straight now will save you a lot of confusion later — especially because a couple of these terms mean something slightly different than they would in ordinary page layout.
+
+- **Flex Container:** The parent element with `display: flex` (or `display: inline-flex`) applied. It establishes a flex formatting context for its direct children.
+- **Flex Item:** Any direct child of a flex container. Flex items are laid out along the container's main axis and can be individually sized and aligned.
+- **Main Axis:** The primary axis along which flex items are laid out, one after another. **Its direction is defined entirely by `flex-direction`** — `row` and `row-reverse` make the main axis horizontal; `column` and `column-reverse` make it vertical. This is the single most important thing to internalize about Flexbox: there is no fixed "horizontal" or "vertical" behavior baked into properties like `justify-content` — they always act along whichever axis is currently the main one.
+- **Cross Axis:** The axis **perpendicular** to the main axis. If the main axis is horizontal (a row), the cross axis is vertical, and vice versa. Alignment properties like `align-items` act along the cross axis.
+- **Main-Start / Main-End:** The two edges of the flex container along the main axis where flex items begin and end being placed. For `flex-direction: row` (in a left-to-right document), main-start is the left edge and main-end is the right edge. Reversing the direction (`row-reverse`) swaps them.
+- **Cross-Start / Cross-End:** The two edges of the flex container along the cross axis — relevant to properties like `align-items` and `align-self`.
+- **Main Size / Cross Size:** A flex item's size measured along the main axis (its "main size") versus along the cross axis (its "cross size"). For a row layout, main size is effectively the item's width and cross size is its height; for a column layout, that's flipped.
+
+<Info title="Tip">
+  A quick sanity check: whatever `flex-direction` you set determines what "main axis" means. Switch from `row` to `column` and `justify-content` stops distributing items left-to-right and starts distributing them top-to-bottom — the property didn't change, the axis it operates on did.
+</Info>
+
+<RainbowDivider />
+
+## Building Layouts with Flexbox
+
+### Fundamental Properties
+
+Flexbox properties split cleanly into two groups: properties you set on the **container**, and properties you set on the **items**. Getting this split right is one of the most common sources of "why isn't this working?" confusion for beginners, so we'll call it out explicitly as we go.
+
+**Container properties:**
+
+- **`display: flex`** — Converts an element into a flex container, enabling flex layout for its direct children. (`display: inline-flex` does the same thing, but the container itself behaves like an inline element in the surrounding page flow.)
+- **`flex-direction`** — Sets the main axis and its direction:
+  - `row` (default) — left-to-right, main axis is horizontal
+  - `row-reverse` — right-to-left, main axis is horizontal
+  - `column` — top-to-bottom, main axis is vertical
+  - `column-reverse` — bottom-to-top, main axis is vertical
+- **`flex-wrap`** — Controls whether items are forced onto a single line (`nowrap`, the default) or allowed to wrap onto multiple lines (`wrap`) when they don't all fit.
+- **`justify-content`** — Distributes extra space along the **main axis** (e.g. `flex-start`, `center`, `space-between`). We'll only scratch the surface here — the full breakdown of every value and how they interact with wrapping is coming in **[Part 2 → Mastering Flexbox Alignment](/post/css/mastering-flexbox-alignment)**.
+- **`align-items`** — Aligns items along the **cross axis** (e.g. `stretch`, the default, plus `flex-start`, `center`, `flex-end`, `baseline`). Also covered in full depth in Part 2.
+- **`gap`** — Sets spacing between flex items, both along the main axis and, when wrapping, between wrapped lines. A cleaner alternative to margin-based spacing tricks.
+
+**Item properties** (a preview — these get their own deep dive in Part 4): `flex-grow`, `flex-shrink`, `flex-basis` (and the `flex` shorthand that combines them), `align-self`, and `order`.
+
+<Info>
+  Full alignment coverage — every `justify-content` and `align-items` value, `align-content` for wrapped lines, and `align-self` for overriding one item — is **[Part 2 → Mastering Flexbox Alignment](/post/css/mastering-flexbox-alignment)**. This post only covers enough to get a layout on screen.
+</Info>
+
+### A Simple Row: Navbar
+
+Here's a classic use case — a navbar with a logo on one side and links on the other, vertically centered:
+
+<CodeBlock language="css">
+{`
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <nav class="navbar">
+    <a class="logo" href="/">Brand</a>
+    <div class="nav-links">
+      <a href="/about">About</a>
+      <a href="/blog">Blog</a>
+      <a href="/contact">Contact</a>
+    </div>
+  </nav>
+`}
+</CodeBlock>
+
+**Explanation:**
+
+- `display: flex` on `.navbar` puts the logo and the `.nav-links` wrapper on a single row (the default `flex-direction: row`).
+- `justify-content: space-between` pushes the logo to one end and the links to the other, distributing any leftover space between them.
+- `align-items: center` vertically centers both children along the cross axis, no matter how tall the navbar is.
+- The inner `.nav-links` is *itself* a nested flex container — Flexbox composes naturally, one row inside another.
+
+### Wrapping: Button Groups
+
+Not everything fits on one line, especially on narrower screens. `flex-wrap` handles that gracefully:
+
+<CodeBlock language="css">
+{`
+  .button-group {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .button-group button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 0.375rem;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="button-group">
+    <button>Save</button>
+    <button>Cancel</button>
+    <button>Delete</button>
+    <button>Duplicate</button>
+    <button>Archive</button>
+  </div>
+`}
+</CodeBlock>
+
+**Explanation:**
+
+- With `flex-wrap: wrap`, once the buttons run out of room on one line, the overflow drops down to a new line instead of shrinking indefinitely or spilling outside the container.
+- `gap: 0.75rem` spaces the buttons evenly, both between buttons on the same line *and* between wrapped lines — one property instead of margin juggling.
+- Notice `flex-wrap` is a **container** property; it says nothing about any individual button.
+
+<RainbowDivider />
+
+## Debugging Flex Layouts with DevTools
+
+You don't have to guess where the main axis is pointing or why an item won't center — every modern browser can draw the flex lines and gaps directly on the rendered page.
+
+### Chrome / Edge
+
+1. Open DevTools (`F12` or `Cmd+Opt+I`) and select any element with `display: flex` in the **Elements** panel.
+2. A small **flex** badge appears next to the element in the DOM tree — click it to toggle the overlay.
+3. In the **Layout** tab (next to Styles/Computed), you'll find toggles for showing the flex direction arrow directly on the overlay, plus per-item outlines.
+
+### Firefox
+
+Firefox's Flexbox Inspector is the most detailed of the major browsers:
+
+1. Open DevTools and go to the **Layout** panel.
+2. Under **Flexbox**, check the box next to your flex container.
+3. Hover an individual flex item in the panel to see exactly how much free space it grew or shrank by, and why — including a breakdown of `flex-basis`, growth, and shrinkage per item.
+
+<Info title="Tip">
+  Firefox can also show the flex container overlay for **multiple containers at once**, each in a different color — handy for comparing a nested flex layout without constantly re-selecting elements.
+</Info>
+
+The overlay answers questions like *"which axis is my main axis right now?"* or *"is this space coming from `gap` or from margin?"* directly, instead of you having to reason it out from the CSS alone.
+
+<RainbowDivider />
+
+## Interactive Example
+
+Reading about `flex-direction` and `justify-content` is one thing, but watching the main and cross axes swap live is what makes the model click. Use the playground below to change the direction, wrapping, alignment, gap, and item count, and watch the flex container reflow in real time.
+
+<Sandbox slug="getting-started-with-flexbox" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Common Beginner Mistakes
+
+A few gotchas trip up almost everyone the first time they reach for Flexbox:
+
+- **Forgetting `display: flex` on the parent.** Properties like `justify-content`, `align-items`, and `gap` silently do nothing on an element that isn't a flex (or inline-flex) container — there's no error, the layout just doesn't change.
+- **Assuming `justify-content` always means "horizontal."** It means "along the main axis," full stop. Switch `flex-direction` to `column` and `justify-content` starts distributing items top-to-bottom, while `align-items` takes over the horizontal alignment. The properties didn't change meaning — the axis they act on did.
+- **Confusing `gap` with margin.** `gap` only adds space *between* flex items (and between wrapped lines), never on the outer edge of the container. If you need space around the whole flex container, that's still `padding` or `margin`.
+- **Not accounting for content that refuses to shrink.** Flex items default to `min-width: auto`, which means text or an image can force an item to overflow its container even with `flex-shrink: 1` set. We'll cover exactly how the sizing algorithm resolves this — and how to fix it — in Part 4 and [Part 5 → Flexbox Gotchas and Debugging Techniques](/post/css/flexbox-gotchas-and-debugging-techniques).
+- **Styling the wrong element.** Layout properties (`flex-direction`, `flex-wrap`, `justify-content`, `align-items`, `gap`) belong on the **container**; sizing and self-alignment properties (`flex-grow`, `flex-shrink`, `flex-basis`, `align-self`, `order`) belong on the **items**. Mixing them up is a common source of layouts that just don't respond to the property you're editing.
+- **Expecting `order` to update tab order or DOM order.** `order` only changes *visual* position, not the underlying document order — screen readers and keyboard navigation still follow the markup. Reordering visually without a good reason can create a confusing experience for anyone not using a mouse.
+
+<RainbowDivider />
+
+## Frequently Asked Questions (FAQ)
+
+### When should I use Flexbox over Grid?
+
+Use **Flexbox** when:
+- You're arranging items along a single row or column (1D layout).
+- You want the layout to respond naturally to content size — growing, shrinking, wrapping.
+- You're building navbars, toolbars, button groups, or media objects.
+
+Use **Grid** when:
+- You need both rows and columns coordinated together (2D layout).
+- You're building full-page layouts, dashboards, or card grids.
+
+See **[Flexbox vs Grid: When to Use Which](/post/css/flexbox-vs-grid-when-to-use-which)** for a deeper comparison.
+
+---
+
+### Is Flexbox responsive?
+
+Yes — often without a single media query. `flex-wrap`, combined with `flex-grow`/`flex-shrink`, lets items reflow and resize themselves as the container's width changes.
+
+<Info title="Tip">
+  We'll explore media-query-free responsive techniques in depth in **[Part 3 → Responsive Flex Layouts Without Media Queries](/post/css/responsive-flex-layouts-without-media-queries)**.
+</Info>
+
+---
+
+### Does Flexbox work in all browsers?
+
+✅ **Yes**, all modern browsers (Chrome, Firefox, Safari, Edge) fully support Flexbox.
+
+⚠️ Older versions of **IE** (10 and 11) support an early, partially-implemented draft of the spec with several bugs — not recommended to rely on for new projects.
+
+<RainbowDivider />
+
+## Conclusion
+
+🎉 Congratulations — you've just taken your first steps into the world of Flexbox!
+
+Here's a quick recap of what you've learned in this post:
+- Why Flexbox exists and what problems it solves that floats and inline-block couldn't
+- The key differences between Flexbox and Grid, and when to reach for each
+- Core terminology: containers, items, the main axis, and the cross axis — and how `flex-direction` controls which is which
+- The fundamental container properties: `display: flex`, `flex-direction`, `flex-wrap`, `justify-content`, `align-items`, and `gap`
+- How to build a navbar and a wrapping button group from scratch
+- How to debug a flex layout visually using your browser's DevTools
+
+You now have a solid foundation to build on — and this is just the beginning.
+
+🔗 **Up Next (Part 2):** [Mastering Flexbox Alignment](/post/css/mastering-flexbox-alignment) — we'll dive deeper into:
+
+- Every `justify-content` and `align-items` value, explained and demonstrated
+- `align-content`, for aligning wrapped lines as a group
+- `align-self`, for overriding one item's cross-axis alignment
+- Common alignment patterns you'll reach for again and again
+
+Stay tuned — you're just one step away from turning your layout skills from good to great 💪

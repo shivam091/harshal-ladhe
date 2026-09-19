@@ -404,6 +404,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-13", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "getting-started-with-flexbox",
+    title: "Getting Started with Flexbox: A Beginner's Guide to 1D Layouts",
+    excerpt: "Lay the foundation, align the axis.",
+    description: "A beginner-friendly introduction to CSS Flexbox that covers the flex container/item model, the main and cross axes, and guides you through building your first one-dimensional layouts.",
+    category: ["CSS"],
+    tags: ["css", "flexbox", "flex-layout", "beginner", "layout", "web-design", "frontend", "1d-layouts", "devtools"],
+    image: {
+      path: "/assets/img/posts/css/getting-started-with-flexbox/cover.webp",
+      width: 1200,
+      height: 630,
+      type: "image/webp",
+      alt: "Flat-design digital illustration introducing CSS Flexbox fundamentals, featuring icons for flex containers, the main and cross axes, and one-dimensional layout arrangements."
+    },
+    signoff: "This one lays the groundwork the rest of the Flexbox Fundamentals series builds on, and I hope the main-axis/cross-axis model clicks as cleanly for you as it did once I finally stopped mixing them up myself. Appreciate you working through it with me — happy flexing. 🧩",
+    pinned: true,
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ],
   }
 ];
 
