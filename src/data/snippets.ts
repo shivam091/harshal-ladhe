@@ -313,6 +313,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "buildkit-cache-mount",
+    title: "BuildKit Cache Mount for Package Installs",
+    excerpt: "Persist npm/pip/apt caches across builds without baking them into an image layer.",
+    description: "A copy-pasteable RUN --mount=type=cache pattern for npm, pip, and apt installs — faster rebuilds without any extra image size.",
+    category: ["Docker"],
+    tags: ["docker", "buildkit", "cache-mounts", "dockerfile"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/buildkit-cache-mount/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Illustration of a BuildKit cache mount persisting a package manager's download cache across Docker builds without entering an image layer."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

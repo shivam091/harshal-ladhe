@@ -1,0 +1,67 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("buildkit-cache-mount");
+
+## Introduction
+
+Package managers like `npm`, `pip`, and `apt` keep a local download cache to avoid re-fetching what they've already handled. In a normal `RUN` instruction, that cache lives inside the layer the instruction produces — so it either ships in your final image, or you scrub it with a trailing `rm -rf` and pay the full download cost again on the next build.
+
+BuildKit's `--mount=type=cache` solves both problems at once: it gives a `RUN` instruction a persistent cache directory that survives across builds, without any of it being committed to the resulting image layer.
+
+<RainbowDivider />
+
+## The Pattern
+
+Requires the `# syntax=docker/dockerfile:1` directive as the Dockerfile's very first line — it opts into the newer frontend that understands `--mount`.
+
+<CodeBlock language="docker">
+{`
+  # syntax=docker/dockerfile:1
+  FROM node:20-slim AS build
+
+  WORKDIR /app
+  COPY package.json package-lock.json ./
+
+  RUN --mount=type=cache,target=/root/.npm \\
+      npm ci
+`}
+</CodeBlock>
+
+`npm ci`'s layer still gets invalidated whenever `package-lock.json` changes — a cache mount doesn't change layer-cache invalidation semantics. What changes is what happens *after* invalidation: `npm` finds packages already sitting in `/root/.npm` from the previous build instead of re-downloading them.
+
+<RainbowDivider />
+
+## Variants for pip and apt
+
+<CodeBlock language="docker">
+{`
+  # syntax=docker/dockerfile:1
+
+  # pip
+  RUN --mount=type=cache,target=/root/.cache/pip \\
+      pip install -r requirements.txt
+
+  # apt — note two mounts: the cache mount covers the downloaded .deb archives,
+  # but the package index under /var/lib/apt/lists still needs an explicit cleanup
+  RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \\
+      --mount=type=cache,target=/var/lib/apt,sharing=locked \\
+      apt-get update && apt-get install -y --no-install-recommends curl \\
+      && rm -rf /var/lib/apt/lists/*
+`}
+</CodeBlock>
+
+`sharing=locked` serializes access to a mount so concurrent builds using the same builder don't corrupt it; omit it if you're confident only one build will touch that mount at a time.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Cache mounts live with the builder, not the image.** A fresh CI runner or a different `docker buildx` builder instance starts with a cold cache — this technique speeds up *repeated* local/CI builds on the same machine, not a brand-new environment's first build.
+* **They don't remove the need for other cleanup.** The apt example above still ends in `rm -rf /var/lib/apt/lists/*` — the cache mount only covers the package cache, not the index metadata, which has no reason to sit in the shipped image.
+* **They're keyed by target path (or an explicit `id`).** Two `RUN` instructions mounting the same target on the same builder share one cache by default.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`RUN --mount=type=cache,target=<path>` gives package managers a warm cache across builds without that cache ending up in any image layer — faster rebuilds on the same machine, with no extra image size to show for it.
