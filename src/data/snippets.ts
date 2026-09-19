@@ -259,6 +259,24 @@ export const snippets: Snippet[] = [
       alt: "A modern dark-themed illustration explaining CSS will-change, showing layer promotion with smooth animation, a CSS code example, performance tips, and a comparison between animation with and without will-change."
     },
     changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
+    slug: "multi-stage-nodejs-dockerfile",
+    title: "Minimal Multi-Stage Node.js Dockerfile",
+    excerpt: "A lean two-stage Dockerfile for shipping a Node.js app without the build toolchain.",
+    description: "A minimal, copy-pasteable multi-stage Dockerfile for Node.js — a full build stage feeding a slim production-only runtime stage.",
+    category: ["Docker"],
+    tags: ["docker", "dockerfile", "multi-stage-builds", "nodejs", "containerization"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/multi-stage-nodejs-dockerfile/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Illustration of a two-stage Docker build pipeline for Node.js, showing a full build stage feeding a slim runtime stage."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

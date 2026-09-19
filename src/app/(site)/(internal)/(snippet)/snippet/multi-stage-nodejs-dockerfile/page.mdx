@@ -1,0 +1,82 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("multi-stage-nodejs-dockerfile");
+
+## Introduction
+
+A single-stage Dockerfile for a compiled or transpiled app almost always ships more than it needs to — the compiler, every devDependency, and the raw source, all sitting in the same image that runs in production.
+
+A **multi-stage build** fixes this without any external tooling: one stage does the messy work of installing dependencies and building, and a second, much leaner stage copies in only the finished artifact. Nothing from the first stage rides along unless you explicitly copy it over.
+
+<RainbowDivider />
+
+## The Dockerfile
+
+A minimal two-stage build for a TypeScript/Node service — copy-paste and adjust the entry point and build script for your project:
+
+<CodeBlock language="docker">
+{`
+  # ---- Stage 1: build ----
+  FROM node:20 AS build
+
+  WORKDIR /app
+
+  COPY package.json package-lock.json ./
+  RUN npm ci
+
+  COPY . .
+  RUN npm run build
+
+  # ---- Stage 2: runtime ----
+  FROM node:20-slim AS runtime
+
+  WORKDIR /app
+  ENV NODE_ENV=production
+
+  COPY package.json package-lock.json ./
+  RUN npm ci --omit=dev
+
+  COPY --from=build /app/dist ./dist
+
+  CMD ["node", "dist/server.js"]
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Stage 1 (`build`)** starts from the full `node:20` image, installs every dependency including devDependencies, and runs the build script — producing compiled output in `dist/`.
+2. **Stage 2 (`runtime`)** starts over from `node:20-slim`, a much smaller base. It reinstalls dependencies with `npm ci --omit=dev`, resolving only production packages fresh from the lockfile.
+3. `COPY --from=build /app/dist ./dist` reaches back into the (already-discarded) `build` stage and copies out just the compiled output — nothing else from that stage makes it into the final image.
+4. Only the instructions in the last stage determine what ships. The full toolchain, the raw TypeScript source, and the build stage's dev-heavy `node_modules` never appear in the image you push.
+
+<RainbowDivider />
+
+## Targeting the Build Stage
+
+Naming both stages lets you build either one independently — handy for running tests against the full toolchain without needing a separate Dockerfile:
+
+<CodeBlock language="bash">
+{`
+  # Full production image (the default, untargeted build)
+  docker build -t myapp .
+
+  # Just the build stage — useful for running a test suite against it
+  docker build --target build -t myapp:dev .
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Never copy `node_modules` across stages.** `COPY --from=build /app/node_modules ./node_modules` drags along devDependencies and any native addons compiled against the build stage's base — reinstall fresh in the runtime stage instead.
+* **`-alpine` is smaller still, with a caveat.** Swapping `node:20-slim` for `node:20-alpine` shrinks the image further, but Alpine's `musl` libc can occasionally cause issues with native Node addons built against `glibc` — worth testing against your actual dependency tree before switching.
+* **A `.dockerignore` still matters.** The build context is sent to the daemon as a whole regardless of how many stages consume it, so excluding `node_modules` and `.git` still speeds up every build.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Two `FROM` lines and one `COPY --from=` is usually all it takes to stop shipping a compiler and a pile of devDependencies to production. Adjust the build command and entry point for your stack, and the pattern carries over directly to Go, Rust, Java, or any other compiled or transpiled language.

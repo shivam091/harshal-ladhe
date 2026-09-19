@@ -615,5 +615,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "secrets-management": {
     title: "Handling Secrets in Docker Builds and Containers",
     description: "Safe patterns for passing credentials and secrets into builds and containers without leaking them into image layers or history."
+  },
+  "nodejs": {
+    title: "Node.js Development and Deployment",
+    description: "Articles touching Node.js specifically — runtime behavior, tooling, and packaging Node applications for deployment."
+  },
+  "dockerignore": {
+    title: "Using .dockerignore Effectively",
+    description: "Guides on excluding paths from the Docker build context with .dockerignore, for faster builds and correct cache behavior."
+  },
+  "healthcheck": {
+    title: "Container Health Checks",
+    description: "Using HEALTHCHECK and orchestrator-level readiness probes to signal when a container is actually ready to serve traffic, not just running."
   }
 };
