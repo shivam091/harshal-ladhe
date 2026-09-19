@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Equal-Height Cards Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Equal-Height Cards</h1>
+        <p>Three cards with different amounts of copy. Toggle <code>align-items</code> below to see the default <code>stretch</code> behavior — and the button-pinning trick — in action.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Card row preview">
+        <div id="card-row" class="card-row">
+          <div class="card">
+            <h3>Basic</h3>
+            <p>A short description.</p>
+            <button type="button">Choose</button>
+          </div>
+          <div class="card">
+            <h3>Pro</h3>
+            <p>A much longer description that wraps across several lines and takes up noticeably more vertical space than its neighbors.</p>
+            <button type="button">Choose</button>
+          </div>
+          <div class="card">
+            <h3>Enterprise</h3>
+            <p>Medium length description here.</p>
+            <button type="button">Choose</button>
+          </div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Card Row</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="align-items">
+          <label class="segment">
+            <input type="radio" name="align-items" value="stretch" checked>
+            <span>align-items: stretch</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="align-items" value="flex-start">
+            <span>align-items: flex-start</span>
+          </label>
+        </div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

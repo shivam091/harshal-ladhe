@@ -203,6 +203,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Toggle min-width: 0 on a flex item holding a long unbreakable filename to see the auto min-content floor stop flex-shrink in real time.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "equal-height-cards-with-flexbox",
+    title: "Equal-Height Cards Demo",
+    description: "Toggle align-items between stretch and flex-start on a row of cards with different description lengths to see the default stretch behavior in action.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 

@@ -1,0 +1,91 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("equal-height-cards-with-flexbox");
+
+## Introduction
+
+A row of pricing or feature cards, each with a different amount of copy — one card's description wraps to five lines, its neighbor's fits on two. You want every card in the row to end up the same height, so the "Buy" buttons at the bottom line up in a neat row instead of staircasing down the page. The instinct is to measure the tallest card in JS and set a fixed `height` on the rest.
+
+You don't need to. This is free with Flexbox.
+
+<RainbowDivider />
+
+## The Core Pattern
+
+<CodeBlock language="css">
+{`
+  .card-row {
+    display: flex;
+    gap: 1rem;
+    /* align-items: stretch is the initial value — no declaration needed */
+  }
+
+  .card {
+    flex: 1 1 0%; /* equal widths too, while we're at it */
+    display: flex;
+    flex-direction: column;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="card-row">
+    <div class="card">
+      <h3>Basic</h3>
+      <p>A short description.</p>
+      <button>Choose</button>
+    </div>
+    <div class="card">
+      <h3>Pro</h3>
+      <p>A much longer description that wraps across several lines and takes up noticeably more vertical space than its neighbors.</p>
+      <button>Choose</button>
+    </div>
+    <div class="card">
+      <h3>Enterprise</h3>
+      <p>Medium length description here.</p>
+      <button>Choose</button>
+    </div>
+  </div>
+`}
+</CodeBlock>
+
+`.card-row`'s children stretch to match the tallest card automatically because `align-items: stretch` is the default — you don't even need to write it. See [Mastering Flexbox Alignment](/post/css/mastering-flexbox-alignment) for the full explanation of why `stretch` is the initial value and when an item opts out of it.
+
+Notice each `.card` is *also* given `display: flex; flex-direction: column;`. That's not decoration — it's what makes the card's own internal content (heading, paragraph, button) a nested flex layout, so the button can use `margin-top: auto` to push itself to the bottom of whatever height the card stretched to. Equal card heights alone don't line up the buttons; the next section is the part that actually does.
+
+<RainbowDivider />
+
+## Pinning the Button to the Bottom
+
+<CodeBlock language="css">
+{`
+  .card button {
+    margin-top: auto; /* pushes the button to the bottom of the now-stretched card */
+  }
+`}
+</CodeBlock>
+
+Once `.card` has been stretched to match its tallest sibling, it has genuine leftover space at the bottom — real, laid-out space, not just a taller box. `margin-top: auto` on the button consumes exactly that leftover space, pushing the button flush to the card's bottom edge no matter how much text sits above it. This works because `.card` is itself a flex container (a *nested* flex context, sitting inside `.card-row`'s own): `margin-top: auto` on a flex item absorbs all free space along the main axis, the same mechanism that centers a single flex item when both its `margin` values are `auto`.
+
+<RainbowDivider />
+
+## Try It Live
+
+Toggle `align-items` between `stretch` and `flex-start` on the row below to see exactly what the default is buying you.
+
+<Sandbox slug="equal-height-cards-with-flexbox" />
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+- **Overriding `align-items` on `.card-row`.** Setting it to anything other than `stretch` (including its `flex-start`-equivalent look before you add real content) silently disables the equal-height behavior — cards go back to sizing themselves to their own content.
+- **Giving a `.card` an explicit `height`.** Same mechanism [Part 2 of this series](/post/css/mastering-flexbox-alignment) covers: any item with its own cross-size declared opts out of stretching entirely, even if the row itself is still `align-items: stretch`.
+- **Forgetting `.card` needs `display: flex; flex-direction: column` itself.** Stretch alone only equalizes the *outer* card height — it doesn't rearrange what's inside. Without the nested flex context, `margin-top: auto` on the button does nothing, and you're back to buttons landing wherever the text happens to end.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Equal-height cards aren't something you build — they're what Flexbox already does, since `align-items: stretch` is the container's default. The only work is making sure nothing opts out of it (no explicit `height`, no non-stretch `align-items`), and layering a second, nested flex context inside each card so `margin-top: auto` can turn that stretched height into a pinned button.

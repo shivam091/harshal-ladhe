@@ -1,0 +1,62 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+}
+
+/* The row being demoed — align-items is toggled here in JS; everything else is fixed. */
+.card-row {
+  display: flex;
+  gap: 1rem;
+}
+
+/*
+  Each card is its own nested flex column (not just a flex ITEM of .card-row) so the button inside
+  it can use margin-top: auto to consume whatever leftover space stretching produced. Without this
+  nested flex context, equalizing the outer height wouldn't move the button at all.
+*/
+.card {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+  /* Visible outline on the card itself, so the equal-vs-unequal heights read clearly at a glance. */
+  outline: 0.0625rem dashed var(--pg-border);
+  outline-offset: 0.25rem;
+}
+
+.card h3 {
+  margin-block: 0 0.5rem;
+  margin-inline: 0;
+  font-size: 1rem;
+}
+
+.card p {
+  margin-block: 0;
+  margin-inline: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+}
+
+.card button {
+  align-self: flex-start;
+  margin-top: auto; /* pushes the button to the bottom of the now-stretched card */
+  padding-block: 0.5rem;
+  padding-inline: 0.875rem;
+  margin-block-start: 0.875rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  border: none;
+  border-radius: var(--pg-radius-sm);
+  cursor: pointer;
+}
+
+@media (max-width: 30rem) {
+  .card-row {
+    flex-direction: column;
+  }
+}

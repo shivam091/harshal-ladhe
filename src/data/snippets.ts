@@ -259,6 +259,28 @@ export const snippets: Snippet[] = [
       alt: "A modern dark-themed illustration explaining CSS will-change, showing layer promotion with smooth animation, a CSS code example, performance tips, and a comparison between animation with and without will-change."
     },
     changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
+    slug: "equal-height-cards-with-flexbox",
+    title: "Equal-Height Cards with Flexbox",
+    excerpt: "align-items: stretch is the default — equal-height cards are free, not built.",
+    description: "Use Flexbox's default align-items: stretch to give a row of cards equal height automatically, then pin each card's button to the bottom with a nested flex context and margin-top: auto.",
+    link: {
+      label: "Mastering Flexbox Alignment",
+      href: "/post/css/mastering-flexbox-alignment"
+    },
+    category: ["CSS"],
+    tags: ["css", "flexbox", "align-items", "layout", "web-design", "frontend"],
+    image: {
+      path: "/assets/img/goodies/snippets/equal-height-cards-with-flexbox/cover.webp",
+      width: 1536,
+      height: 1024,
+      type: "image/webp",
+      alt: "Three pricing cards of equal height in a flex row, with buttons aligned flush at the bottom despite differing amounts of description text."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 
