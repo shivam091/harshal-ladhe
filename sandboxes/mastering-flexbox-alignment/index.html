@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flexbox Alignment Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Flexbox Alignment Playground</h1>
+        <p>Tune every container-level alignment property, then override one item's cross-axis alignment on its own.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Flex container preview">
+        <div id="flex-preview" class="flex-preview">
+          <div class="flex-item">1</div>
+          <div class="flex-item">2</div>
+          <div class="flex-item">3</div>
+          <div class="flex-item">4</div>
+          <div class="flex-item">5</div>
+          <div class="flex-item">6</div>
+        </div>
+      </section>
+
+      <output id="flex-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Flex Container</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <span class="field-label" id="direction-label">flex-direction</span>
+            <div class="segmented-control" role="radiogroup" aria-labelledby="direction-label">
+              <label class="segment">
+                <input type="radio" name="flex-direction" value="row" checked>
+                <span>row</span>
+              </label>
+              <label class="segment">
+                <input type="radio" name="flex-direction" value="column">
+                <span>column</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field field--full">
+            <span class="field-label" id="wrap-label">flex-wrap</span>
+            <div class="segmented-control" role="radiogroup" aria-labelledby="wrap-label">
+              <label class="segment">
+                <input type="radio" name="flex-wrap" value="nowrap" checked>
+                <span>nowrap</span>
+              </label>
+              <label class="segment">
+                <input type="radio" name="flex-wrap" value="wrap">
+                <span>wrap</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="justify-content-select">justify-content</label>
+            <select id="justify-content-select">
+              <option value="flex-start" selected>flex-start</option>
+              <option value="flex-end">flex-end</option>
+              <option value="center">center</option>
+              <option value="space-between">space-between</option>
+              <option value="space-around">space-around</option>
+              <option value="space-evenly">space-evenly</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="align-items-select">align-items</label>
+            <select id="align-items-select">
+              <option value="stretch" selected>stretch</option>
+              <option value="flex-start">flex-start</option>
+              <option value="flex-end">flex-end</option>
+              <option value="center">center</option>
+              <option value="baseline">baseline</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="align-content-select">align-content</label>
+            <select id="align-content-select">
+              <option value="flex-start" selected>flex-start</option>
+              <option value="flex-end">flex-end</option>
+              <option value="center">center</option>
+              <option value="space-between">space-between</option>
+              <option value="space-around">space-around</option>
+              <option value="space-evenly">space-evenly</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="gap-input">gap</label>
+            <div class="range-row">
+              <span class="range-edge">0px</span>
+              <div class="range-track">
+                <input type="range" id="gap-input" min="0" max="40" step="2" value="12">
+                <output class="range-bubble" id="gap-value" for="gap-input">12px</output>
+              </div>
+              <span class="range-edge">40px</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="tip">Turn on <code>flex-wrap</code> to force multiple lines — that's the only time <code>align-content</code> has anything to distribute. Item 2 is taller/wider and item 5 has larger text, so <code>align-items: stretch</code> vs. <code>baseline</code> vs. the rest are easy to tell apart.</p>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Per-Item Override (align-self)</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="item-select">Item</label>
+            <select id="item-select">
+              <option value="1" selected>Item 1</option>
+              <option value="2">Item 2</option>
+              <option value="3">Item 3</option>
+              <option value="4">Item 4</option>
+              <option value="5">Item 5</option>
+              <option value="6">Item 6</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="align-self-select">align-self</label>
+            <select id="align-self-select">
+              <option value="auto" selected>auto (inherit)</option>
+              <option value="stretch">stretch</option>
+              <option value="flex-start">flex-start</option>
+              <option value="flex-end">flex-end</option>
+              <option value="center">center</option>
+              <option value="baseline">baseline</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="tip">The selected item gets a <span class="legend-swatch selected-swatch"></span> outline in the preview so it's always obvious which one <code>align-self</code> is about to change.</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -1,0 +1,384 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("mastering-flexbox-alignment");
+
+## Introduction
+
+Welcome to **Part 2** of the Flexbox Fundamentals Series!
+
+In [Part 1](/post/css/getting-started-with-flexbox), you learned how to turn on `display: flex`, pick a `flex-direction`, and get items sitting in a row or column. That's enough to build something — but it's not enough to build it *precisely*.
+
+This post is the deep reference for the part of Flexbox that trips up almost everyone at least once: alignment. Every property that decides *where* items end up — along the main axis, along the cross axis, and across multiple wrapped lines — gets its own section, with every value spelled out and every gotcha called out by name.
+
+By the end of this post, you'll be able to:
+
+- Explain, without hesitating, which axis `justify-content` targets and which axis `align-items` targets — even after `flex-direction` flips
+- Use every value of `justify-content`, including the subtle difference between `space-between`, `space-around`, and `space-evenly`
+- Use every value of `align-items`, including what `baseline` actually lines up
+- Override a single item's cross-axis alignment with `align-self`
+- Control how multiple wrapped lines are positioned as a group with `align-content`
+- Space items with `gap` instead of margin hacks
+- Recognize and fix the most common alignment bugs
+
+Let's get precise.
+
+<RainbowDivider />
+
+## The Two Axes, One More Time
+
+Part 1 introduced the **main axis** and **cross axis**, but it's worth nailing down one fact before going any further, because it's the single biggest source of Flexbox confusion:
+
+<Warning title="The rule that never changes">
+  `justify-content` **always** targets the main axis. `align-items`, `align-content`, and `align-self` **always** target the cross axis. This is true regardless of `flex-direction` — the properties don't change meaning, but the *visual direction* they move things in absolutely does.
+</Warning>
+
+By default, `flex-direction: row` makes the main axis **horizontal** and the cross axis **vertical**. So `justify-content` moves items left/right, and `align-items` moves them up/down:
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    flex-direction: row; /* main axis = horizontal, cross axis = vertical */
+    justify-content: center; /* centers items horizontally */
+    align-items: center;     /* centers items vertically */
+  }
+`}
+</CodeBlock>
+
+Switch to `flex-direction: column`, and the axes **rotate with it**. The main axis is now **vertical**, the cross axis is now **horizontal** — so the exact same two properties, with the exact same values, now move items in the opposite dimensions:
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    flex-direction: column; /* main axis = vertical, cross axis = horizontal */
+    justify-content: center; /* now centers items vertically */
+    align-items: center;     /* now centers items horizontally */
+  }
+`}
+</CodeBlock>
+
+Nothing about `justify-content: center` or `align-items: center` changed between those two blocks. What changed is which physical direction "main" and "cross" point in. If you ever find yourself reaching for `align-items` to move something left-to-right, stop — that's a sign the container is actually in `column` mode and you want `justify-content` instead, or vice versa.
+
+<Info title="A quick way to remember it">
+  Read `justify-content` as "justify the **content flow**" — the flow is always the main axis, by definition. `align-items` aligns items **across** that flow — always the cross axis.
+</Info>
+
+<Details summary="What about row-reverse and column-reverse?">
+
+`flex-direction: row-reverse` and `column-reverse` don't introduce a third axis — the main axis is still horizontal for `row-reverse` and still vertical for `column-reverse`. What flips is which physical edge counts as the axis's **start**. So `justify-content: flex-start` under `row-reverse` packs items toward the *right* instead of the left, because "start" now means the opposite physical edge. `align-items` and `align-content` are untouched by `-reverse` — only the main-axis direction flips, never the cross axis.
+
+</Details>
+
+<RainbowDivider />
+
+## `justify-content` — Aligning Along the Main Axis
+
+`justify-content` controls how items are distributed along the main axis whenever they don't consume all of the container's main-axis space (i.e., their combined size plus gaps is less than the container).
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    justify-content: space-between; /* pushes items apart along the main axis */
+  }
+`}
+</CodeBlock>
+
+Here's the full set of values:
+
+- **`flex-start`** (the default) — items are packed toward the start of the main axis.
+- **`flex-end`** — items are packed toward the end of the main axis.
+- **`center`** — items are packed toward the center of the main axis, with any leftover space split evenly before and after the group.
+- **`space-between`** — the first item sits flush at the start, the last item sits flush at the end, and the remaining space is divided **equally between** the items in the middle. No space is added at the outer edges.
+- **`space-around`** — every item gets equal space on **both** sides. Because adjacent items share their in-between space, the gaps *between* items end up looking twice as large as the gaps at the two outer edges.
+- **`space-evenly`** — every gap — including the two outer edges — is made **exactly equal**. This is the one that actually looks "evenly spaced" at a glance; `space-around`'s edges are visually smaller than its middle gaps.
+
+That distinction between the three `space-*` values is worth internalizing precisely, since they're easy to mix up from memory alone:
+
+| Value | Edge gap | Between-item gap |
+| --- | --- | --- |
+| `space-between` | `0` | equal share of leftover space |
+| `space-around` | half of the between-item gap | full share of leftover space |
+| `space-evenly` | equal to the between-item gap | equal to the edge gap |
+
+A concrete before/after helps more than the table alone. Take a navbar with a logo on the left and three links on the right — a classic `space-between` use case:
+
+<CodeBlock language="html">
+{`
+  <nav class="navbar">
+    <span class="logo">Brand</span>
+    <a href="#">Home</a>
+    <a href="#">Docs</a>
+    <a href="#">Contact</a>
+  </nav>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .navbar {
+    display: flex;
+    justify-content: space-between; /* logo flush left, links flush right, gap distributed between */
+  }
+`}
+</CodeBlock>
+
+Swap that single declaration to `space-around` and the logo and the last link both pick up a small gap from the container's edges — half the size of the gaps between the three links. Swap it to `space-evenly` and every gap, including those two edges, becomes visually identical.
+
+<Info title="Newer keywords">
+  `justify-content` also accepts `start`, `end`, and `normal` — writing-mode-aware equivalents of `flex-start`, `flex-end`, and the initial value, useful in RTL or vertical writing modes. It also accepts `left` and `right`, but those two are **always physical** (literally the left or right edge of the screen) regardless of writing mode or `flex-direction` — a subtle gotcha if you're building something that needs to flip cleanly under `direction: rtl`. Stick to `flex-start`/`flex-end`/`start`/`end` unless you specifically want a value that never flips.
+</Info>
+
+<RainbowDivider />
+
+## `align-items` — Aligning Along the Cross Axis
+
+`align-items` is set on the container and controls how items are positioned along the **cross** axis — for every item at once, within a single line.
+
+- **`stretch`** (the default) — items stretch to fill the container's cross-axis size, **as long as they don't already have an explicit cross-size set** (e.g. an explicit `height` in a row container, or `width` in a column container). This is *why* flex items often end up the same height in a row even though you never told them to be: with no `height` declared, `stretch` fills in the blank. Give an item its own `height`, and it opts out of stretching.
+- **`flex-start`** — items align to the start edge of the cross axis, keeping their own intrinsic cross-size.
+- **`flex-end`** — items align to the end edge of the cross axis.
+- **`center`** — items are centered along the cross axis.
+- **`baseline`** — items align so that the **first line of text baseline** lines up across every item in the row, regardless of each item's own height, padding, or font size.
+
+Here's the `stretch` default in action, and how a single `height` declaration opts one card out of it:
+
+<CodeBlock language="css">
+{`
+  .card-row {
+    display: flex; /* align-items: stretch is the initial value — no declaration needed */
+  }
+
+  .card {
+    padding: 1rem; /* no height set — this card stretches to match its tallest sibling */
+  }
+
+  .card--fixed-height {
+    height: 120px; /* explicit cross-size — this one opts out of stretching entirely */
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    align-items: baseline; /* lines up the text baselines, not the box edges */
+  }
+`}
+</CodeBlock>
+
+`baseline` is easiest to appreciate with a concrete example: a row of items with wildly different font sizes — say a `2rem` heading-style label next to a `0.85rem` caption. With `align-items: flex-start` or `center`, those two would line up by their *box* edges, which looks visually off because the actual *text* sits at different heights inside boxes of different sizes. `align-items: baseline` instead measures where each item's first line of text actually sits and lines those points up, which is what your eye expects when reading a row of mixed-size labels — the classic real-world case is a price next to its "/month" unit label, or an icon next to a heading of a different font size.
+
+<Warning title="baseline needs text (or a replaced element) to measure">
+  If an item has no text content — an empty `<div>` used purely as a spacer, for instance — there's no baseline to measure, and the browser falls back to aligning that item's bottom margin edge with the baseline of its siblings. Keep `baseline` for rows where every item actually has inline content.
+</Warning>
+
+<RainbowDivider />
+
+## `align-self` — Overriding One Item's Cross-Axis Alignment
+
+Everything `align-items` does for the whole container, `align-self` does for a **single item** — and when both are set, the item's own `align-self` wins.
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    align-items: flex-start; /* every item aligns to the top by default */
+  }
+
+  .featured-item {
+    align-self: center; /* ...except this one, which centers itself instead */
+  }
+`}
+</CodeBlock>
+
+`align-self` accepts the same value set as `align-items` (`stretch`, `flex-start`, `flex-end`, `center`, `baseline`), plus one extra keyword:
+
+- **`auto`** (the default) — the item defers back to whatever the container's `align-items` says. Setting `align-self: auto` is effectively the same as not setting `align-self` at all.
+
+This is genuinely useful for things like a single "featured" card in an otherwise uniform row, or a submit button that should stick to the bottom of a form row while its neighboring labels stay top-aligned.
+
+<Success title="Only the cross axis">
+  There is no `justify-self` in Flexbox — a per-item override for the main axis doesn't exist here the way it does in Grid. If you need one item to sit apart from the rest along the main axis, the usual trick is an `auto` margin on that item (e.g. `margin-inline-start: auto` to push everything after it to the far end) rather than a property override. That's a technique we'll build on in Part 3.
+</Success>
+
+<RainbowDivider />
+
+## `align-content` — Aligning Multiple Lines
+
+This is the property people forget exists — because it only does anything under two conditions at once: `flex-wrap: wrap` (or `wrap-reverse`) is producing **more than one line**, *and* those lines together don't fill all of the container's cross-axis space.
+
+The key distinction from `align-items`:
+
+- **`align-items`** positions each item **within its own line**.
+- **`align-content`** positions the **lines themselves**, as a group, within the container's cross-axis space.
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: space-between; /* spreads the wrapped LINES apart vertically */
+    align-items: center;          /* centers items WITHIN each of those lines */
+  }
+`}
+</CodeBlock>
+
+`align-content` accepts the same distribution keywords as `justify-content` — `flex-start`, `flex-end`, `center`, `space-between`, `space-around`, `space-evenly` — plus `stretch`, which grows each line to fill an equal share of any leftover cross-axis space (rather than leaving the lines at their content height and bunching the extra space elsewhere). Its actual initial value is `normal`, which behaves the same as `stretch` in a flex layout — so a plain `display: flex; flex-wrap: wrap;` with no `align-content` declared already stretches its lines by default, exactly like `align-items` does for items within a line.
+
+A worked example: a container tall enough to hold three short wrapped lines but with real leftover space underneath them.
+
+<CodeBlock language="css">
+{`
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;   /* required — align-content is inert without multiple lines */
+    height: 320px;      /* taller than the wrapped lines actually need */
+    align-content: space-between; /* first line at the top, last line at the bottom, rest spread between */
+    align-items: center; /* each line's own items stay vertically centered within that line */
+  }
+`}
+</CodeBlock>
+
+Here, `align-content: space-between` pushes the first wrapped line to the very top of the 320px container and the last wrapped line to the very bottom, distributing any remaining lines evenly between them — while `align-items: center` independently keeps each tag centered *within* whichever line it landed on. Change `flex-wrap` back to `nowrap`, or shrink the container until every tag fits on one line, and `align-content` stops having anything to distribute.
+
+<Warning title="No effect with a single line">
+  If `flex-wrap: nowrap` (the default) is in effect, or if `wrap` is on but everything still fits on one line, `align-content` has **nothing to do** — there's only one line, so there's no group of lines to distribute. This is the single most common reason `align-content` "doesn't work": the container isn't actually wrapping.
+</Warning>
+
+<RainbowDivider />
+
+## `gap`, `row-gap`, and `column-gap`
+
+Before `gap` was supported on flex containers, spacing items apart meant giving every item a `margin` and then writing a `:last-child` (or `:not(:last-child)`) override so the outer edges didn't pick up extra space too. `gap` replaces all of that with a single, container-level declaration:
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    gap: 1rem;          /* shorthand: sets both row-gap and column-gap to 1rem */
+    row-gap: 1rem;       /* space between wrapped lines (cross-axis gaps) */
+    column-gap: 0.5rem;  /* space between items on the same line (main-axis gaps) */
+  }
+`}
+</CodeBlock>
+
+Why it's better than the old margin trick:
+
+- **No edge cleanup needed.** `gap` only ever adds space *between* items — never before the first one or after the last one — so there's no `:last-child` reset to remember.
+- **Works automatically with wrapping.** `row-gap` and `column-gap` apply correctly whichever way the container is wrapping, without you having to figure out which margin side matters for the current `flex-direction`.
+- **Doesn't collapse or get overridden by an item's own margin.** Margins on individual items are a separate concern from `gap`, so the two don't fight each other the way stacked item margins sometimes did.
+
+`row-gap` maps to the **cross-axis** gap (the space between lines) and `column-gap` maps to the **main-axis** gap (the space between items on the same line) — but which physical direction each one draws in still depends on `flex-direction`, the same way `justify-content`/`align-items` do. In practice, most layouts just reach for the `gap` shorthand and only split it into `row-gap`/`column-gap` when they specifically need asymmetric spacing.
+
+That axis mapping matters most once you set them independently:
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 1.5rem;    /* space between wrapped lines */
+    column-gap: 0.5rem; /* space between items within a line */
+  }
+`}
+</CodeBlock>
+
+In `flex-direction: row` (the default), that reads exactly as written — generous vertical breathing room between wrapped rows, tighter horizontal spacing between items on the same row. Flip to `flex-direction: column` and the *names* don't change, but their visual jobs do: `row-gap` now separates items within the same wrapped column (since the main axis is vertical), and `column-gap` now separates the wrapped columns from each other.
+
+<RainbowDivider />
+
+## Interactive Example
+
+All six alignment properties from this post — plus a per-item `align-self` override — are live in the playground below. Flip `flex-direction` and watch `justify-content` and `align-items` swap which physical direction they move things in, turn on `flex-wrap` and push `align-content` around to see it only matter once there's more than one line, and pick an item from the dropdown to override just its own cross-axis alignment.
+
+<Sandbox slug="mastering-flexbox-alignment" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Common Alignment Bugs (and Fixes)
+
+### "`align-items: center` isn't working"
+
+**Cause:** Usually one of two things. Either the container has no defined cross-axis size (so there's no extra cross-axis space to center *within* — a row container with `height: auto` and items that already fill it has nothing to push around), or `flex-direction` is `column`, which means `align-items` is now working on the *horizontal* axis and you actually wanted `justify-content: center` for vertical centering.
+
+**Fix:** Give the container an explicit or min cross-size if it needs one, and double-check which axis you actually meant — re-read [The Two Axes, One More Time](#the-two-axes-one-more-time) above if you're not sure.
+
+### "`space-between` looks wrong with only one item"
+
+**Cause:** `space-between` divides leftover space *between* items. With exactly one item, there's nothing to distribute between, so the single item simply sits at the start of the main axis — which looks identical to `flex-start`.
+
+**Fix:** This isn't actually a bug — it's the correct, spec-defined behavior. If you need a lone item centered regardless of count, use `justify-content: center` instead, or handle the single-item case separately.
+
+### "My flex items won't shrink below their content size"
+
+**Cause:** This is the famous `min-width: auto` (or `min-height: auto` in a column) default on flex items — their initial minimum size is based on their content, not `0`, so they refuse to shrink smaller than that content even when `flex-shrink` says they should.
+
+**Fix:** We cover this — and the full sizing algorithm behind it — in depth in [Part 4: Flexbox Sizing Algorithm Deep Dive](/post/css/flexbox-sizing-algorithm-deep-dive).
+
+### "`align-self` does nothing"
+
+**Cause:** Usually a misunderstanding of priority, not a real bug — people sometimes expect the container's `align-items` to somehow "win" over an item's own `align-self` because the container feels like the more authoritative setting. It's the opposite: `align-self` on the item always overrides `align-items` on the container, so if `align-self` genuinely has no visible effect, check that you're not accidentally setting it to `auto` (which explicitly defers back to `align-items`), and that the container actually has cross-axis space for the item to move within in the first place.
+
+**Fix:** Confirm the value isn't `auto`, and confirm the container isn't `align-items: stretch` combined with the item having no content that would look any different when unstretched — stretch plus a single line of text can look identical to `flex-start` if the item's content doesn't need the extra height.
+
+### "`gap` isn't doing anything"
+
+**Cause:** `gap` on flex containers is supported in every current major browser, but it's a relatively recent addition — very old Safari versions (pre-14.1) implemented `gap` for Grid before they implemented it for Flexbox, so a project with a hard requirement to support those versions can hit a silent gap.
+
+**Fix:** Check your actual browser support target first — for almost everyone today this isn't an issue at all. If you do need to support ancient Safari, the [Flexbox `gap` Fallback for Safari](/snippet/flexbox-gap-fallback-for-safari) snippet covers a margin-based fallback that degrades gracefully.
+
+### "`align-items: stretch` is distorting my images"
+
+**Cause:** An `<img>` inside a flex item with no explicit `height` is itself a flex item candidate for stretching — with no cross-size of its own declared, `stretch` (the default `align-items`) happily stretches the image to fill the row's cross-size, squashing or elongating it away from its natural aspect ratio.
+
+**Fix:** Give the image (or its wrapping element) `align-self: flex-start` to opt it out of stretching, or set an explicit `height` alongside `object-fit: cover` if you actually want it to fill the available space without distorting.
+
+<RainbowDivider />
+
+## Frequently Asked Questions (FAQ)
+
+### What's the difference between `align-items` and `align-content`?
+
+`align-items` positions items **within their own line**, one line at a time. `align-content` positions the **lines themselves**, as a group, within the container's leftover cross-axis space — and it only has a visible effect when `flex-wrap` is producing more than one line. A single-line container has no lines to distribute, so `align-content` is a no-op there no matter what it's set to.
+
+---
+
+### Does `justify-items` work on flex containers?
+
+No. `justify-items` and `justify-self` are Grid (and block-layout) properties — they have **no effect** on flex items at all. This trips people up specifically because CSS Grid supports alignment symmetrically on both axes (`justify-items`/`align-items` and `justify-self`/`align-self`), while Flexbox does not: Flexbox only ever gives you `align-items`/`align-self` for the cross axis, and `justify-content` (a container-only, no per-item version) for the main axis. If you're used to reaching for Grid's alignment set out of habit, this is the one place that habit will silently fail.
+
+---
+
+### Can I center a single flex item both ways in one line?
+
+Yes — this is one of the most common real-world Flexbox use cases, and it only takes two declarations on the container:
+
+<CodeBlock language="css">
+{`
+  .flex-container {
+    display: flex;
+    justify-content: center; /* centers along the main axis */
+    align-items: center;     /* centers along the cross axis */
+  }
+`}
+</CodeBlock>
+
+For a deeper look at this pattern — including variants for centering when you don't know the container's size in advance — see the [Perfect Centering with Flexbox](/snippet/perfect-centering-with-flexbox) snippet.
+
+<RainbowDivider />
+
+## Conclusion
+
+You now have the full alignment picture for Flexbox:
+
+- `justify-content` always targets the main axis; `align-items`, `align-content`, and `align-self` always target the cross axis — regardless of `flex-direction`.
+- `justify-content`'s six core values, and precisely how `space-between`, `space-around`, and `space-evenly` differ at the edges.
+- `align-items`'s five values, including what `baseline` actually measures.
+- `align-self` lets a single item override the container's cross-axis alignment, with `auto` deferring back to it.
+- `align-content` positions wrapped *lines* as a group — and does nothing at all without multiple lines and leftover cross-axis space.
+- `gap` replaces margin-hack spacing cleanly, and works correctly with wrapping.
+
+🔗 **Up Next (Part 3):** [Responsive Flex Layouts Without Media Queries](/post/css/responsive-flex-layouts-without-media-queries) — we'll put this alignment toolkit to work building layouts that adapt to their container without a single `@media` breakpoint, using `flex-wrap`, `flex-basis`, and `flex-grow`/`flex-shrink` together.

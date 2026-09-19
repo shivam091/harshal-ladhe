@@ -175,6 +175,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Switch the same card gallery between Flexbox and Grid, then shrink the container to see how wrapped-row alignment differs between the two.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "mastering-flexbox-alignment",
+    title: "Flexbox Alignment Playground",
+    description: "Set flex-direction, flex-wrap, justify-content, align-items, align-content, and gap live, then override one item's cross-axis alignment with align-self.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 

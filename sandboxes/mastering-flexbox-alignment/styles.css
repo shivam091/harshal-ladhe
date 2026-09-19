@@ -1,0 +1,72 @@
+:root {
+  --pg-accent: #f472b6;
+  --pg-accent-dark: #ec4899;
+  --pg-radius-sm: 0.5rem;
+}
+
+/*
+  Fixed at 28rem x 19rem on purpose — big enough that flex-wrap can force real multiple lines with
+  leftover cross-axis space (so align-content has something to distribute), but small enough that
+  nowrap/no-wrap still leaves visible leftover main-axis space for justify-content to distribute too.
+  A real layout wouldn't usually fix a flex container's size like this; it's done here purely so the
+  "extra space" every alignment property redistributes is always present and visible.
+*/
+.flex-preview {
+  display: flex;
+  inline-size: 28rem;
+  block-size: 19rem;
+  padding: 0.75rem;
+  border: 0.0625rem dashed var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+  background: var(--pg-surface-muted);
+}
+
+.flex-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 4.5rem;
+  min-block-size: 3rem;
+  padding-block: 0.75rem;
+  padding-inline: 1.1rem;
+  border-radius: var(--pg-radius-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  box-shadow: var(--pg-shadow-sm);
+  outline: 0.1875rem solid transparent;
+  outline-offset: 0.1875rem;
+  transition: outline-color 0.15s ease;
+}
+
+/* Deliberately taller/wider than its siblings, with no explicit height/width of its own — makes align-items: stretch (it grows to match) vs. flex-start/center/end (it keeps its own larger size) obviously different. */
+.flex-item:nth-child(2) {
+  padding-block: 1.75rem;
+  padding-inline: 1.75rem;
+}
+
+/* Deliberately larger text with no extra padding — its text baseline sits differently than the other items', making align-items: baseline visibly distinct from center/stretch. */
+.flex-item:nth-child(5) {
+  padding-block: 0.5rem;
+  font-size: 1.4rem;
+}
+
+/* Applied to whichever item the "Per-Item Override" select currently targets, regardless of its align-self value, so the control's target is always obvious in the preview. */
+.flex-item--selected {
+  outline-color: var(--pg-accent);
+}
+
+.legend-swatch {
+  display: inline-block;
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  margin-inline: 0.125rem;
+  border-radius: 0.125rem;
+  vertical-align: middle;
+}
+
+.legend-swatch.selected-swatch {
+  background: transparent;
+  border: 0.125rem solid var(--pg-accent);
+}

@@ -444,6 +444,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "mastering-flexbox-alignment",
+    title: "Mastering Flexbox Alignment: justify-content, align-items, align-self, and gap",
+    excerpt: "Every alignment property, and the bugs they cause when you mix them up.",
+    description: "A deep, practical guide to Flexbox alignment — justify-content, align-items, align-self, align-content, and gap — plus the most common alignment bugs and how to fix them.",
+    category: ["CSS"],
+    tags: ["css", "flexbox", "justify-content", "align-items", "align-self", "align-content", "gap", "layout", "frontend"],
+    image: {
+      path: "/assets/img/posts/css/mastering-flexbox-alignment/cover.webp",
+      width: 1200,
+      height: 630,
+      type: "image/webp",
+      alt: "Stylized illustration of a flex row and a flex column side by side, with arrows showing justify-content acting along the main axis and align-items acting along the cross axis."
+    },
+    signoff: "Alignment is where Flexbox quietly punishes assumptions, and I wanted every value — and every bug those values cause — nailed down precisely instead of hand-waved. Thanks for working through the whole reference with me. Go align something with confidence. 📐",
+    pinned: true,
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ],
   }
 ];
 
