@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>gap Fallback Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Flexbox <code>gap</code> Fallback</h1>
+        <p>Toggle the simulated environment below and watch which CSS rule is actually providing the spacing between items.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Flex row spacing preview">
+        <div id="flex-row" class="flex-row">
+          <div class="flex-item">1</div>
+          <div class="flex-item">2</div>
+          <div class="flex-item">3</div>
+          <div class="flex-item">4</div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Simulated environment</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Simulated environment">
+          <label class="segment">
+            <input type="radio" name="env" value="modern" checked>
+            <span>Modern browser (gap supported)</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="env" value="legacy">
+            <span>Legacy Safari (gap unsupported)</span>
+          </label>
+        </div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

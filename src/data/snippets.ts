@@ -281,6 +281,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "flexbox-gap-fallback-for-safari",
+    title: "Flexbox gap Fallback for Older Safari",
+    excerpt: "gap on flex containers only works from Safari 14.1 onward — here's the margin-based fallback.",
+    description: "A margin-based fallback for Flexbox gap support in Safari versions older than 14.1, using the adjacent-sibling owl selector and an @supports feature-detection block that switches to real gap once it's available.",
+    link: {
+      label: "Mastering Flexbox Alignment",
+      href: "/post/css/mastering-flexbox-alignment"
+    },
+    category: ["CSS"],
+    tags: ["css", "flexbox", "gap", "browser-support", "progressive-enhancement", "safari"],
+    image: {
+      path: "/assets/img/goodies/snippets/flexbox-gap-fallback-for-safari/cover.webp",
+      width: 1536,
+      height: 1024,
+      type: "image/webp",
+      alt: "A row of flex items with margin-based spacing on one side and gap-based spacing on the other, joined by an @supports feature-detection bracket."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

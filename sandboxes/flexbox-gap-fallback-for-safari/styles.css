@@ -1,0 +1,56 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+}
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+}
+
+/*
+  Default state mirrors the `@supports (gap: 1rem)` branch from the post: real `gap` provides
+  the spacing, and the fallback margin below is zeroed out so the two never stack.
+*/
+.flex-row {
+  display: flex;
+  gap: 1rem;
+}
+
+/*
+  Always present, same shape as the post's fallback rule — the "lobotomized owl" selector adds
+  margin to every item except the first, mirroring what `gap` does (space only between items).
+  In the unsupported-gap branch this is what's actually producing the spacing; in the
+  gap-supported branch it's zeroed out below.
+*/
+.flex-row > * + * {
+  margin-inline-start: 1rem;
+}
+
+.flex-row:not(.flex-row--simulated-legacy) > * + * {
+  margin-inline-start: 0;
+}
+
+/* Simulated "legacy Safari" state: gap removed entirely, so only the margin fallback above is left doing the work. */
+.flex-row--simulated-legacy {
+  gap: 0;
+}
+
+.flex-item {
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  border-radius: var(--pg-radius-sm);
+  box-shadow: var(--pg-shadow-sm);
+}
+
+.readout {
+  margin-top: 0.75rem;
+  display: block;
+}

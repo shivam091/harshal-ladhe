@@ -1,0 +1,85 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("flexbox-gap-fallback-for-safari");
+
+## Introduction
+
+`gap` (along with `row-gap` and `column-gap`) started out as a CSS Grid-only feature — it shipped for Grid containers well before any engine extended it to Flexbox. Support for `gap` **specifically on `display: flex` containers** came later, and Safari was the last major engine to catch up: it landed in **Safari 14.1**, released April 2021.
+
+Below that version, `gap` on a flex container is silently ignored — no console warning, no automatic fallback, nothing. The layout just renders with zero spacing between items, as if the declaration weren't there at all.
+
+For almost every project shipping today, this is a non-issue — current Safari, and the iOS Safari that tracks its engine version, has supported flex `gap` for years. This snippet exists specifically for the narrower case: a hard requirement to support Safari versions older than 14.1, or a correspondingly old iOS Safari release.
+
+<RainbowDivider />
+
+## Detecting Support with `@supports`
+
+The cleanest fallback doesn't need any JavaScript — `@supports` can feature-detect `gap` directly in the stylesheet:
+
+<CodeBlock language="css">
+{`
+  .flex-row {
+    display: flex;
+  }
+
+  /* Fallback: margin-based spacing for browsers without flex gap support */
+  .flex-row > * + * {
+    margin-inline-start: 1rem;
+  }
+
+  /* Override the fallback once gap is actually supported */
+  @supports (gap: 1rem) {
+    .flex-row > * + * {
+      margin-inline-start: 0;
+    }
+
+    .flex-row {
+      gap: 1rem;
+    }
+  }
+`}
+</CodeBlock>
+
+The `.flex-row > * + *` selector — the "lobotomized owl" / adjacent-sibling-of-any-direct-child pattern — matches every direct child **except the first**. That's not an arbitrary shape: it's exactly what `gap` itself does, adding space *only between* items and never before the first one or after the last. A blanket `margin` on every child would need a separate `:last-child` (or `:first-child`) reset to avoid that extra edge space; the owl selector never creates the edge space in the first place, so there's nothing to reset.
+
+`@supports (gap: 1rem)` then feature-detects real `gap` support directly in CSS — no user-agent sniffing, no JavaScript. Once it evaluates true, it zeroes out the fallback margin and applies the real `gap` instead, so a browser that supports both never ends up with double spacing.
+
+<Info title="No fallback-of-a-fallback needed">
+  `@supports` itself has been supported in Safari since version 9 — years before flex `gap` arrived in 14.1 — so any Safari old enough to need this fallback is still new enough to evaluate the `@supports` block correctly. You don't need to nest another layer of feature detection around it.
+</Info>
+
+<RainbowDivider />
+
+## Try It Live
+
+The demo below can't actually disable `gap` support in your real browser, so it simulates the unsupported state instead — toggle the control to switch between the two code paths above and watch the readout show which rule is providing the spacing at any given moment.
+
+<Sandbox slug="flexbox-gap-fallback-for-safari" />
+
+<RainbowDivider />
+
+## A Note on `row-gap` and `column-gap` Separately
+
+Everything above assumes a single, uniform gap value. If you need `row-gap` and `column-gap` to differ — say, tighter horizontal spacing than vertical in a wrapped flex row — the pure-margin fallback gets more involved. A single `* + *` margin rule adds the same margin to every non-first child regardless of *why* it's non-first, and CSS alone has no clean way to tell "the next item on the same line" apart from "the first item of a newly wrapped line" — which is exactly the distinction you'd need in order to fall back the horizontal and vertical spacing separately.
+
+For a wrapping flex row specifically, a clean pure-CSS fallback for asymmetric row/column gaps is genuinely awkward to build well. In practice, many teams just accept the minor spacing difference in ancient Safari rather than engineering a complex workaround for it — given how narrow that browser slice is today, it's rarely worth the added CSS complexity. See the [`gap`, `row-gap`, and `column-gap` section](/post/css/mastering-flexbox-alignment#gap-row-gap-and-column-gap) of Part 2 for how the two properties map to the main and cross axes.
+
+<RainbowDivider />
+
+## When You Can Just Skip This
+
+<Success title="Check your support target first">
+  If your project's browser support target doesn't include Safari older than 14.1 — true for the vast majority of projects today — you don't need any of this. Use `gap` directly and move on.
+</Success>
+
+<Details summary="How do I know what my actual support target is?">
+
+Check whatever analytics or `browserslist` config the project already uses before assuming either way. A `browserslist` entry like `"safari >= 14.1"` (or simply not going back further than a few major versions) means this fallback is dead weight. A hard requirement from a client or an internal analytics dashboard showing real pre-14.1 Safari traffic is the only good reason to reach for it.
+
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`gap` on flex containers only works from Safari 14.1 onward; before that, it's silently ignored rather than erroring. If your support target genuinely reaches back further, pair a `* + *` margin rule — which mimics `gap`'s between-items-only spacing exactly — with an `@supports (gap: 1rem)` block that zeroes the margin and switches to real `gap` once it's available. If it doesn't, skip the fallback entirely and just write `gap`.

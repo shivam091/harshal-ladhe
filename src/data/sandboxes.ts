@@ -210,6 +210,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Toggle align-items between stretch and flex-start on a row of cards with different description lengths to see the default stretch behavior in action.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "flexbox-gap-fallback-for-safari",
+    title: "gap Fallback Simulator",
+    description: "Simulates switching between a margin-based gap fallback and real flex gap to compare which CSS rule is providing spacing in each state.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 
