@@ -93,7 +93,7 @@ This keeps the markup clean and readable while allowing CSS Grid to control layo
 ## Highlights
 
 - **Semantic naming:** `grid-template-areas` acts as a visual blueprint for the layout.
-- **Sticky footer:** `min-height: 100vh` combined with a `1fr` row pushes the footer to the bottom.
+- **Sticky footer:** `min-height: 100vh` combined with a `1fr` row pushes the footer to the bottom. On mobile, that `100vh` can render taller than what's actually visible behind the browser's address bar — see [Dynamic Viewport Height Units](/tutorial/dynamic-viewport-height-units) for `100dvh`, the fix that tracks the real visible height.
 - **Ultra-responsive:** Mobile layout is achieved by remapping areas — no DOM changes required.
 - **Configurable:** Sidebar widths are controlled via CSS variables.
 
