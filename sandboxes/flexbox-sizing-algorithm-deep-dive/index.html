@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flex Grow/Shrink/Basis Calculator</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Flex Grow/Shrink/Basis Calculator</h1>
+        <p>Set a container width and each item's flex-basis/grow/shrink, then compare the pixel widths you'd hand-calculate against the ones the browser's real flexbox engine actually renders below.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Flex preview">
+        <div id="flex-preview" class="flex-preview">
+          <div class="flex-item flex-item--a" id="item-a">
+            <span class="item-label">A</span>
+            <span class="item-width" id="item-a-width">0px</span>
+          </div>
+          <div class="flex-item flex-item--b" id="item-b">
+            <span class="item-label">B</span>
+            <span class="item-width" id="item-b-width">0px</span>
+          </div>
+          <div class="flex-item flex-item--c" id="item-c">
+            <span class="item-label">C</span>
+            <span class="item-width" id="item-c-width">0px</span>
+          </div>
+        </div>
+      </section>
+
+      <output id="flex-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Container</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label for="container-width-input">Container width</label>
+            <div class="range-row">
+              <span class="range-edge">300px</span>
+              <div class="range-track">
+                <input type="range" id="container-width-input" min="300" max="900" step="10" value="600">
+                <output class="range-bubble" id="container-width-value" for="container-width-input">600px</output>
+              </div>
+              <span class="range-edge">900px</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group control-group--a">
+        <legend>Item A</legend>
+        <div class="fields-grid fields-grid--3">
+          <div class="field">
+            <label for="a-basis-input">flex-basis</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="a-basis-input" min="0" max="400" step="10" value="100">
+                <output class="range-bubble" id="a-basis-value" for="a-basis-input">100px</output>
+              </div>
+              <span class="range-edge">400</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="a-grow-input">flex-grow</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="a-grow-input" min="0" max="5" step="1" value="1">
+                <output class="range-bubble" id="a-grow-value" for="a-grow-input">1</output>
+              </div>
+              <span class="range-edge">5</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="a-shrink-input">flex-shrink</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="a-shrink-input" min="0" max="5" step="1" value="1">
+                <output class="range-bubble" id="a-shrink-value" for="a-shrink-input">1</output>
+              </div>
+              <span class="range-edge">5</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group control-group--b">
+        <legend>Item B</legend>
+        <div class="fields-grid fields-grid--3">
+          <div class="field">
+            <label for="b-basis-input">flex-basis</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="b-basis-input" min="0" max="400" step="10" value="200">
+                <output class="range-bubble" id="b-basis-value" for="b-basis-input">200px</output>
+              </div>
+              <span class="range-edge">400</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="b-grow-input">flex-grow</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="b-grow-input" min="0" max="5" step="1" value="1">
+                <output class="range-bubble" id="b-grow-value" for="b-grow-input">1</output>
+              </div>
+              <span class="range-edge">5</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="b-shrink-input">flex-shrink</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="b-shrink-input" min="0" max="5" step="1" value="2">
+                <output class="range-bubble" id="b-shrink-value" for="b-shrink-input">2</output>
+              </div>
+              <span class="range-edge">5</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group control-group--c">
+        <legend>Item C</legend>
+        <div class="fields-grid fields-grid--3">
+          <div class="field">
+            <label for="c-basis-input">flex-basis</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="c-basis-input" min="0" max="400" step="10" value="100">
+                <output class="range-bubble" id="c-basis-value" for="c-basis-input">100px</output>
+              </div>
+              <span class="range-edge">400</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="c-grow-input">flex-grow</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="c-grow-input" min="0" max="5" step="1" value="2">
+                <output class="range-bubble" id="c-grow-value" for="c-grow-input">2</output>
+              </div>
+              <span class="range-edge">5</span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="c-shrink-input">flex-shrink</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="c-shrink-input" min="0" max="5" step="1" value="1">
+                <output class="range-bubble" id="c-shrink-value" for="c-shrink-input">1</output>
+              </div>
+              <span class="range-edge">5</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

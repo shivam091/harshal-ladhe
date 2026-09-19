@@ -484,6 +484,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "flexbox-sizing-algorithm-deep-dive",
+    title: "Mastering Flexbox: Sizing Algorithm Deep Dive",
+    excerpt: "flex-grow, flex-shrink, and flex-basis — the math the browser actually runs.",
+    description: "An in-depth look at how the browser resolves flex item sizes — the flex-grow/flex-shrink/flex-basis algorithm, free space distribution, and why flex: 1 isn't always what you think it is.",
+    category: ["CSS"],
+    tags: ["css", "flexbox", "flex-grow", "flex-shrink", "flex-basis", "advanced", "layout"],
+    image: {
+      path: "/assets/img/posts/css/flexbox-sizing-algorithm-deep-dive/cover.webp",
+      width: 1200,
+      height: 630,
+      type: "image/webp",
+      alt: "Diagram of three flex items with grow, shrink, and basis values labeled, arrows showing free space being distributed proportionally across a container width."
+    },
+    signoff: "This was the post I most wanted to get exactly right — no hand-waving on the shrink-weighting formula, every worked example checked by hand until the arithmetic matched what the browser actually renders. Thanks for working through the math with me. Go stop guessing at flex values. 🧮",
+    pinned: true,
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ],
   }
 ];
 

@@ -189,6 +189,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Narrow a resizable container and tune flex-basis, item count, and gap to see the wrapping decision live, then toggle min-width to see the shrink floor it adds.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "flexbox-sizing-algorithm-deep-dive",
+    title: "Flex Grow/Shrink/Basis Calculator",
+    description: "Set flex-grow, flex-shrink, and flex-basis on three items and a container width, then compare your hand-calculated widths against the real computed widths read from the DOM.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 

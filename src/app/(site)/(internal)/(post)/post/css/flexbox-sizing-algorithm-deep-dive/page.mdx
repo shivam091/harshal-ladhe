@@ -1,0 +1,407 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("flexbox-sizing-algorithm-deep-dive");
+
+## Introduction
+
+In [Part 3](/post/css/responsive-flex-layouts-without-media-queries) of this series, we reached for `flex: 1 1 200px` on a row of cards and moved on — it worked, the cards wrapped and resized the way we wanted, and that was enough at the time. But we never actually explained **why** those three numbers produce the widths they do. This post is that explanation.
+
+So far in this series:
+
+- [Part 1](/post/css/getting-started-with-flexbox): the flex container/item model, `flex-direction`, `flex-wrap`, and the main/cross axes
+- [Part 2](/post/css/mastering-flexbox-alignment): `justify-content`, `align-items`, `align-self`, and `gap`
+- [Part 3](/post/css/responsive-flex-layouts-without-media-queries): building responsive rows without a single `@media` query
+
+Most developers use `flex: 1` as a magic incantation — sprinkle it on, the layout works, move on. Few could tell you what it actually resolves to, or why `flex: 1` and `flex: auto` — which look almost identical — produce visibly different layouts on the same markup. This post derives the actual algorithm the browser runs to turn `flex-grow`, `flex-shrink`, and `flex-basis` into real pixel widths, with the arithmetic worked out by hand so you can check it against what your browser renders.
+
+By the end of this post, you'll be able to:
+
+- Define `flex-grow`, `flex-shrink`, and `flex-basis` precisely — including the one piece of `flex-shrink` almost everyone gets wrong
+- Explain exactly why `flex: 1` and `flex: auto` diverge, even though both set `flex-grow: 1` and `flex-shrink: 1`
+- Walk through the browser's real sizing algorithm, stage by stage, from hypothetical size to final size
+- Hand-calculate an item's resulting pixel width given a container size and a set of `flex-grow`/`flex-shrink`/`flex-basis` values
+- Recognize when `min-width: auto` is silently overriding your `flex-shrink` (and know where to go for the full story)
+
+<Quote>
+  You don't need to memorize flexbox behavior if you understand the algorithm producing it — at that point, every layout is just arithmetic you haven't done yet.
+</Quote>
+
+That's the goal here: not another list of properties to memorize, but the underlying math, so the next time a layout surprises you, you can work out *why* instead of reaching for trial-and-error `flex` values until something looks right.
+
+<RainbowDivider />
+
+## The flex Shorthand: grow, shrink, basis
+
+`flex` is a shorthand for three longhand properties, and every one of the three plays a completely different role in the sizing algorithm. Getting them mixed up — which is easy to do, since they all take unitless numbers or lengths — is where most flexbox confusion starts.
+
+### flex-grow
+
+`flex-grow` is a unitless number (**default `0`**) that defines an item's share of the container's **positive free space** — the leftover space after every item has been laid out at its hypothetical size and the container still has room to spare. It's a *ratio*, not an absolute value: an item with `flex-grow: 2` doesn't end up twice as wide as one with `flex-grow: 1` — it gets **twice the share of the leftover space**, which is a different thing (more on that in the FAQ below). An item with `flex-grow: 0` — the default — never grows, no matter how much free space is available.
+
+If every item on a line has `flex-grow: 0` (the default, if you haven't touched `flex` at all), positive free space is never distributed to any item — it's left over, and it's [Part 2](/post/css/mastering-flexbox-alignment)'s `justify-content` that decides what happens to it instead (pushed to one edge, split between items as gaps, and so on). `flex-grow` and `justify-content` are solving the same "there's extra room" problem from two different angles: one grows items to fill it, the other repositions items within it.
+
+### flex-shrink
+
+`flex-shrink` is a unitless number (**default `1`**) that defines an item's share of the container's **negative free space** — how much it gives up when the items collectively don't fit. This is the single most misunderstood part of flex sizing, so it's worth stating precisely: an item's shrink factor is not used on its own. It's **weighted by the item's flex-basis** before the negative space is distributed. The browser multiplies `flex-shrink × flex-basis` to get each item's *scaled shrink factor*, and that scaled factor — not the raw `flex-shrink` value — determines how much of the negative space the item absorbs.
+
+The practical consequence: two items with the **same** `flex-shrink` value but **different** `flex-basis` values do **not** shrink by the same number of pixels. The bigger item (larger basis) shrinks more in absolute terms, because it carries more weight in the scaled-factor calculation. We'll prove this with real numbers in the worked examples section below.
+
+**Why weight by basis at all?** Because shrinking every item by the same flat number of pixels, regardless of size, would distort small items far more (proportionally) than large ones — a `40px` icon losing `20px` is catastrophic, while a `400px` panel losing `20px` is barely noticeable. Scaling the shrink amount by each item's own basis keeps the *proportional* impact closer to even across items of very different sizes, which is closer to what "shrink to fit" usually means visually.
+
+### flex-basis
+
+`flex-basis` sets an item's **initial main size** — the size it's given *before* any free space (positive or negative) gets distributed. It accepts:
+
+- **A length** (`200px`, `10rem`, …) — used directly as the starting main size.
+- **A percentage** (`20%`, `50%`, …) — resolved against the flex container's own inner main size, the same way a percentage `width` resolves against its containing block. If the container's main size is itself indefinite (e.g. `width: auto` with no constraint from its own parent), a percentage basis falls back to behaving like `auto`.
+- **`auto`** — use the item's `width` (in a row container) or `height` (in a column container) property instead; if *that* is also `auto`, fall back to the item's content size.
+- **`content`** — size the item based on its content, ignoring any explicit `width`/`height`. Rarely used explicitly in practice, since `flex-basis: auto` with no `width`/`height` set already falls through to content sizing.
+
+All three longhands can be written out explicitly instead of through the shorthand — useful when you're debugging and want to change exactly one of the three without recalculating the others:
+
+<CodeBlock language="css">
+{`
+  .item {
+    flex-grow: 1;      /* share of positive free space */
+    flex-shrink: 1;     /* share of negative free space, weighted by flex-basis */
+    flex-basis: 200px;  /* starting main size, before either of the above applies */
+  }
+`}
+</CodeBlock>
+
+<Info title="grow defaults to 0, shrink defaults to 1">
+  This asymmetry trips people up: an unstyled flex item (`flex: 0 1 auto`, the `initial` value) will happily **shrink** if the container is too small, but it will never **grow** into extra space. If your items aren't filling a container you expected them to fill, check whether `flex-grow` is actually set to something above `0` before looking anywhere else.
+</Info>
+
+### Shorthand Expansions
+
+The `flex` shorthand accepts up to three values (`grow shrink basis`), but its keyword and single-number forms expand to specific longhand combinations that are worth memorizing outright:
+
+| Shorthand | Expands to (`grow shrink basis`) |
+| --- | --- |
+| `flex: initial` (or unset) | `0 1 auto` |
+| `flex: auto` | `1 1 auto` |
+| `flex: none` | `0 0 auto` |
+| `flex: 1` | `1 1 0%` |
+| `flex: <number>` | `<number> 1 0%` |
+
+Notice that a bare number (`flex: 1`, `flex: 2`, `flex: 3`, …) always expands to a basis of `0%`, not `auto`. That single difference — `0%` versus `auto` — is responsible for the entire next section.
+
+<RainbowDivider />
+
+## Why flex: 1 Isn't flex: auto
+
+This is the single most common misconception in flexbox, and it comes straight out of the table above: `flex: 1` expands to `1 1 0%`, while `flex: auto` expands to `1 1 auto`. Both set `flex-grow: 1` and `flex-shrink: 1` — identical growth and shrink behavior — but they disagree completely on **where sizing starts**.
+
+- **`flex: 1` (basis `0%`)** — ignore the item's content size entirely. Every item starts from a hypothetical size of zero, and *all* of the container's width is then distributed purely by `flex-grow` ratio. The result: items with equal `flex-grow` end up **exactly equal width**, regardless of how much text or content each one holds.
+- **`flex: auto` (basis `auto`)** — start from the item's actual content size (or its `width`/`height`, if set), and only then distribute whatever's left over by `flex-grow` ratio. The result: items keep a size *proportional to their own content*, just stretched or shrunk from that starting point.
+
+### A Concrete Before/After
+
+Take two buttons in a `500px`-wide container, both with `flex-grow: 1` and `flex-shrink: 1` — the only difference is the basis:
+
+<CodeBlock language="html">
+{`
+  <div class="toolbar">
+    <button class="btn">Login</button>
+    <button class="btn">Create a new account</button>
+  </div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* Version A: flex: 1 */
+  .btn {
+    flex: 1; /* 1 1 0% */
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* Version B: flex: auto */
+  .btn {
+    flex: auto; /* 1 1 auto */
+  }
+`}
+</CodeBlock>
+
+Suppose the browser measures each button's content-driven width as `70px` for "Login" and `230px` for "Create a new account" (their min/max-content sizes as text, before any flexing).
+
+**Version A (`flex: 1`, basis `0%`):** both buttons start at `0px`. Free space is the full `500px`. `flex-grow` is `1` on both, so each gets an equal `250px` share. **Final: `250px` and `250px`** — identically sized, even though one label is more than three times longer than the other.
+
+**Version B (`flex: auto`, basis `auto`):** buttons start at their content sizes, `70px` and `230px` — total `300px`. Free space is `500 − 300 = 200px`, split evenly by the `1:1` grow ratio, `100px` each. **Final: `70 + 100 = 170px` and `230 + 100 = 330px`** — still not identical, because they started from different places.
+
+<Success title="Key insight">
+  `flex: 1` throws away content size and enforces equal final widths. `flex: auto` preserves content size as a starting point and only adds/removes from there. Neither is "correct" — they're different tools. Reach for `flex: 1` when you want a strict equal-width layout (a nav's tabs, an evenly split toolbar); reach for `flex: auto` when items should keep their natural proportions and merely flex around them.
+</Success>
+
+At a glance:
+
+| | `flex: 1` (`1 1 0%`) | `flex: auto` (`1 1 auto`) |
+| --- | --- | --- |
+| Starting size | Always `0` | Item's content size (or `width`/`height`) |
+| Content length matters? | No — content is ignored for sizing | Yes — longer content starts (and usually ends) wider |
+| Final widths with equal `flex-grow` | Always equal | Proportional to content, not necessarily equal |
+| Good for | Strict equal-width columns/tabs | Natural, content-aware flexible sizing |
+
+<RainbowDivider />
+
+## The Algorithm, Step by Step
+
+Here's the actual resolution process a browser runs for every flex line, distilled from the "resolving flexible lengths" portion of the CSS Flexible Box Layout Module Level 1 spec into a form you can trace by hand — same conclusions, without the formal spec prose.
+
+<Quote>
+  Every flex layout resolves in the same handful of stages: figure out how big everything "wants" to be, compare that to how much room there actually is, then hand out (or take away) the difference by ratio.
+</Quote>
+
+One term worth pinning down before the steps: the container's **available main size** is its content box in the main-axis direction — its `width` (row container) or `height` (column container) minus padding and border, and minus any fixed, non-flexed content sharing that box. For a simple `display: flex` container with an explicit `width`, this is just that width.
+
+Everything in this post is written from a `flex-direction: row` container's point of view — main axis horizontal, `flex-basis` mapping to `width` — purely because it's easier to reason about in prose. Flip to `flex-direction: column` and every rule still holds, just rotated 90°:
+
+<CodeBlock language="css">
+{`
+  .column-container {
+    display: flex;
+    flex-direction: column;
+    block-size: 500px; /* now the available main size */
+  }
+
+  .column-item {
+    flex: 1 1 100px; /* basis now maps to block-size (height), not inline-size */
+  }
+`}
+</CodeBlock>
+
+Every formula in the steps below (and in the worked examples that follow) applies identically — just substitute `height`/`block-size` for `width`/`inline-size` wherever it appears.
+
+**1. Determine each item's hypothetical main size.**
+Resolve `flex-basis` for every item: if it's a length, that's the hypothetical size directly; if it's `auto` (and no explicit `width`/`height`), use the item's content size instead.
+
+**2. Sum the hypothetical sizes (plus gaps) for the whole line.**
+Add every item's hypothetical main size together, plus any `gap` between them, to get the line's **total hypothetical main size**.
+
+**3. Compare that sum to the container's available main size.**
+Subtract the total hypothetical main size from the container's available main size. If the result is positive, the line has **positive free space** and enters the grow phase. If it's negative, the line has **negative free space** and enters the shrink phase. If it's exactly zero, every item simply keeps its hypothetical size — nothing left to distribute.
+
+**4. Positive free space → distribute by flex-grow.**
+Sum every item's `flex-grow` value on the line. Each item's share of the free space is:
+
+<CodeBlock language="css">
+{`
+  /* item's grow share = (item's flex-grow / sum of all flex-grow on the line) × free space */
+`}
+</CodeBlock>
+
+That share is *added* to the item's hypothetical size. Items with `flex-grow: 0` get a share of `0` and stay put.
+
+**5. Negative free space → distribute by scaled flex-shrink.**
+This is where the basis-weighting from the earlier section comes back in. Each item's **scaled shrink factor** is `flex-shrink × flex-basis`. Sum every item's scaled shrink factor on the line, then each item's share of the negative space is:
+
+<CodeBlock language="css">
+{`
+  /* item's scaled shrink factor = flex-shrink × flex-basis
+     item's shrink share = (item's scaled factor / sum of all scaled factors) × |free space| */
+`}
+</CodeBlock>
+
+That share is *subtracted* from the item's hypothetical size. This is clamped: an item is never shrunk below its **min-content size** (or an explicit `min-width`/`min-height`), which is exactly the constraint the [next section](#min-width-auto-and-the-shrink-floor) is about.
+
+**6. Apply min/max clamps — and a possible second pass.**
+After step 4 or 5, every item's `min-width`/`max-width` (or the block-axis equivalents, for a column container) get applied as hard clamps. If applying a clamp would change an item's size, that item is "frozen" at its clamped size and removed from the pool of flexible items, and its size violation is credited back into the free space total. The algorithm then **re-runs the distribution** (step 4 or 5) among only the remaining, still-flexible items — repeating until no further violations occur. In practice this only matters when at least one item has an explicit `min-width`/`max-width` tight enough to bind; most everyday layouts resolve in a single pass.
+
+<Details summary="Why does the second pass exist at all?">
+
+Without it, a `max-width` on one item could "eat" free space that was meant for its siblings and just silently clip, or a `min-width` could be violated outright. Freezing the clamped item and redistributing the *remainder* among the others is what keeps the rest of the line growing/shrinking correctly instead of stopping short. You'll rarely need to trace this by hand — just know it's why an item with a tight `max-width` doesn't "steal" space other items were counting on. [Example 3](#worked-examples-with-real-numbers) below works through a full second-pass case with real numbers.
+
+</Details>
+
+For quick reference, here's the whole process condensed to one table:
+
+| Step | Question it answers | Formula |
+| --- | --- | --- |
+| 1–2 | How big does everything want to be? | sum of each item's `flex-basis` (or content size), plus gaps |
+| 3 | Is there extra room, or not enough? | `available main size − total hypothetical size` |
+| 4 (if positive) | How much does each item grow? | `(item's flex-grow / sum of flex-grow) × free space` |
+| 5 (if negative) | How much does each item shrink? | `(flex-shrink × flex-basis) / sum of scaled factors × |free space|` |
+| 6 | Does anything hit a min/max clamp? | freeze it, credit the difference back, redistribute among the rest |
+
+<RainbowDivider />
+
+## Worked Examples with Real Numbers
+
+Theory is only convincing with arithmetic attached. Both examples below assume `gap: 0` to keep the numbers clean — a non-zero gap works identically, it's simply subtracted from the container's available main size before step 2.
+
+<Info title="Don't forget gaps in the real calculation">
+  Three items with `flex-basis: 200px` each and `gap: 20px` between them have a total hypothetical main size of `3 × 200 + 2 × 20 = 640px` (two gaps sit between three items), not `600px`. Drop a `640px`-wide container in and the free space is exactly `0` — miss the `40px` of gaps in your mental math, and you'd wrongly expect `40px` of positive free space to distribute.
+</Info>
+
+### Example 1: Positive Free Space (flex-grow)
+
+Container: `600px`. Three items, all starting from the same basis:
+
+<CodeBlock language="css">
+{`
+  .item-a { flex: 1 1 100px; } /* grow: 1, shrink: 1, basis: 100px */
+  .item-b { flex: 2 1 100px; } /* grow: 2, shrink: 1, basis: 100px */
+  .item-c { flex: 1 1 100px; } /* grow: 1, shrink: 1, basis: 100px */
+`}
+</CodeBlock>
+
+**Step 1–2:** hypothetical sizes are `100px`, `100px`, `100px` → total `300px`.
+**Step 3:** free space = `600 − 300 = +300px` → positive, grow phase.
+**Step 4:** sum of `flex-grow` = `1 + 2 + 1 = 4`.
+
+- A: `100 + (1 / 4 × 300) = 100 + 75 = 175px`
+- B: `100 + (2 / 4 × 300) = 100 + 150 = 250px`
+- C: `100 + (1 / 4 × 300) = 100 + 75 = 175px`
+
+**Check:** `175 + 250 + 175 = 600px` ✓ — matches the container exactly.
+
+### Example 2: Negative Free Space (flex-shrink, different bases)
+
+This is the example that proves the basis-weighting. Container: `400px`. Three items with **equal** `flex-shrink` but **different** `flex-basis`:
+
+<CodeBlock language="css">
+{`
+  .item-a { flex: 0 1 100px; } /* grow: 0, shrink: 1, basis: 100px */
+  .item-b { flex: 0 1 300px; } /* grow: 0, shrink: 1, basis: 300px */
+  .item-c { flex: 0 1 100px; } /* grow: 0, shrink: 1, basis: 100px */
+`}
+</CodeBlock>
+
+**Step 1–2:** hypothetical sizes are `100px`, `300px`, `100px` → total `500px`.
+**Step 3:** free space = `400 − 500 = −100px` → negative, shrink phase.
+**Step 5:** scaled shrink factor = `flex-shrink × flex-basis` for each item:
+
+- A: `1 × 100 = 100`
+- B: `1 × 300 = 300`
+- C: `1 × 100 = 100`
+- Sum of scaled factors = `100 + 300 + 100 = 500`
+
+Each item's shrink amount = `(its scaled factor / 500) × 100px` (the magnitude of the negative free space):
+
+- A: `(100 / 500) × 100 = 20px` shrink → `100 − 20 = 80px`
+- B: `(300 / 500) × 100 = 60px` shrink → `300 − 60 = 240px`
+- C: `(100 / 500) × 100 = 20px` shrink → `100 − 20 = 80px`
+
+**Check:** `80 + 240 + 80 = 400px` ✓ — matches the container exactly.
+
+Notice what happened: A and C both have `flex-shrink: 1`, identical to B's `flex-shrink: 1` — and yet B shrank by `60px` while A and C each shrank by only `20px`. B shrinks **exactly 3× more**, in direct proportion to its `300px` basis being 3× A's `100px` basis. Equal shrink *factors* do not mean equal shrink *amounts* — only equal scaled factors would, and the basis is part of that scale.
+
+### Example 3: The Second Pass in Action (min-width Clamp)
+
+This one walks through step 6 for real — a `min-width` clamp that forces the algorithm to freeze an item and redistribute the remainder. Container: `250px`. Three items, equal basis and shrink, but A has an explicit floor:
+
+<CodeBlock language="css">
+{`
+  .item-a { flex: 0 1 100px; min-width: 90px; } /* clamped floor */
+  .item-b { flex: 0 1 100px; }
+  .item-c { flex: 0 1 100px; }
+`}
+</CodeBlock>
+
+**Step 1–3:** hypothetical total = `100 + 100 + 100 = 300px`. Free space = `250 − 300 = −50px` → shrink phase, `50px` needs to come out.
+
+**First pass (step 5), ignoring clamps for a moment:** scaled factors are all `1 × 100 = 100`, summing to `300`. Each item's naive shrink share is `(100 / 300) × 50 ≈ 16.667px`, which would put every item at `100 − 16.667 ≈ 83.333px`.
+
+**Step 6 catches the violation:** A's `min-width: 90px` is higher than its naive result of `83.333px` — a clamp violation. A gets **frozen at `90px`** (a real shrink of only `10px`, not `16.667px`), and the `6.667px` of shrink it *didn't* end up absorbing is credited back into the pool. The remaining `40px` of shrink (`50 − 10`) is then redistributed across only the still-flexible items, B and C:
+
+- Remaining scaled factors: B `= 100`, C `= 100`, sum `= 200`.
+- B: `(100 / 200) × 40 = 20px` shrink → `100 − 20 = 80px`
+- C: `(100 / 200) × 40 = 20px` shrink → `100 − 20 = 80px`
+
+**Final:** A `90px`, B `80px`, C `80px`. **Check:** `90 + 80 + 80 = 250px` ✓. Without the second pass, A would have illegally shrunk to `83.333px`, under its own floor — the redistribution is what keeps every constraint satisfied at once.
+
+<RainbowDivider />
+
+## Interactive Example
+
+Rather than trust the arithmetic above blindly, try it yourself: set a container width and each item's grow/shrink/basis below, and compare the widths you'd hand-calculate against the ones the browser actually renders (read live off the DOM, not simulated).
+
+<Sandbox slug="flexbox-sizing-algorithm-deep-dive" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## min-width: auto and the Shrink Floor
+
+There's one piece of the shrink phase we deliberately simplified above: flex items have an **initial `min-width: auto`** on the main axis (or `min-height: auto` in a column container) — not `0`. For many elements, an `auto` minimum resolves to the item's **min-content size** — roughly, the width it needs to avoid overflowing its own content (e.g. the widest unbreakable word in a paragraph, or an image's intrinsic width).
+
+That floor applies *regardless* of `flex-shrink`. An item with `flex-shrink: 5` sitting next to siblings with `flex-shrink: 1` will still refuse to shrink past its min-content size once it hits that floor — no shrink factor, however aggressive, can push it further without an explicit `min-width: 0` (or a smaller explicit `min-width`) to override the default:
+
+The spec calls this the item's **automatic minimum size**, and it isn't unique to flexbox — the same "don't let content overflow invisibly" idea shows up in grid too. What makes it feel like a flexbox-specific gotcha is that it interacts directly with step 5: no matter how the scaled-shrink-factor arithmetic works out, the automatic minimum is applied as a hard floor on top of it, silently overriding whatever number your hand calculation produced. A long, unbreakable string (a URL, a code snippet with no wrap points) makes this especially visible, since its min-content size can be very wide.
+
+<CodeBlock language="css">
+{`
+  .item {
+    flex-shrink: 5;   /* aggressive shrink factor... */
+    min-width: 0;     /* ...but it only actually matters once you override the auto floor */
+  }
+`}
+</CodeBlock>
+
+This is exactly the kind of "why won't this item shrink" debugging scenario that deserves its own full treatment — which is the entire subject of [Part 5](/post/css/flexbox-gotchas-and-debugging-techniques). Consider this the pointer that completes the sizing picture: shrinking isn't just `flex-shrink` and scaled factors, it's also bounded by a minimum size you didn't explicitly set.
+
+<Warning title="Overflow isn't automatically fixed by flex-shrink">
+  If your layout is overflowing and `flex-shrink` doesn't seem to help, `min-width: auto` is the first thing to suspect — not a bug in your shrink math.
+</Warning>
+
+<RainbowDivider />
+
+## Practical Takeaways
+
+All of the algorithm above compresses down to a handful of decisions you'll actually make while writing CSS:
+
+- Use **`flex: 1 1 0%`** (or its shorthand, `flex: 1`) when you want items to end up **equal width regardless of content** — tabs, evenly split toolbar buttons, columns that shouldn't visually favor whichever has more text.
+- Use **`flex: auto`** (or `flex: 1 1 auto`) when items should **keep their natural/content size as a starting point** and only grow or shrink from there — this is almost always the better default for buttons, form fields, and anything where content length is meaningful information.
+- Use **`flex: none`** for items that should **never grow or shrink** — fixed-size icons, avatars, a sidebar with a deliberately fixed width.
+- Set **`flex-shrink: 0`** explicitly on any item that must **never shrink**, even under space pressure — a company logo, a "must stay legible" badge, anything where clipping or squashing is worse than overflow.
+- Remember the basis-weighting: if two items with equal `flex-shrink` are shrinking by very different amounts, check their `flex-basis` values before assuming something's broken.
+- When an item refuses to shrink past a certain point and you haven't set an explicit `min-width`, suspect the default `min-width: auto` floor described below before you suspect your `flex-shrink` math.
+- If a layout only misbehaves when one particular item has a `min-width`/`max-width` set, that's the second-pass redistribution from step 6 — the clamp is "stealing" space from where you expected it to be distributed evenly.
+
+For a compact, printable reference of the shorthand table from earlier in this post, see the [`flex` shorthand explained](/snippet/flex-shorthand-explained) snippet.
+
+<RainbowDivider />
+
+## Frequently Asked Questions (FAQ)
+
+### What's the difference between flex: 1 and flex: 1 1 0%?
+
+Trick question — there isn't one. `flex: 1` **is** `1 1 0%`; it's simply the shorthand's single-number form, which always expands to `grow: <number>, shrink: 1, basis: 0%` (see the [shorthand expansion table](#the-flex-shorthand-grow-shrink-basis) earlier in this post). Writing either one produces byte-for-byte identical computed styles.
+
+---
+
+### Why won't my flex item shrink no matter what flex-shrink I set?
+
+Almost always `min-width: auto` (or `min-height: auto` in a column container) — the item's initial main-axis minimum, which resolves to its content's min-content size and acts as a hard floor underneath the shrink algorithm. Setting `min-width: 0` explicitly on the stuck item is the fix in most cases, once you've confirmed that's actually what's happening. See [min-width: auto and the Shrink Floor](#min-width-auto-and-the-shrink-floor) above, and [Part 5](/post/css/flexbox-gotchas-and-debugging-techniques) for the full debugging playbook.
+
+---
+
+### Does flex-basis: 0 mean the item has zero width?
+
+No — `flex-basis: 0` (or `0%`) is only the **starting point** the algorithm uses before distributing free space, not the item's final size. Pair it with any `flex-grow` above `0` and the item still ends up with real, often substantial, width once the grow phase runs — see [Example 1](#worked-examples-with-real-numbers) above, where every item started at `100px` and ended between `175px` and `250px`. The one case where `flex-basis: 0` *does* leave an item at (or near) zero width is `flex-grow: 0` with nothing else pushing it wider — no grow means nothing ever gets added to that starting `0`.
+
+---
+
+### What happens with flex-grow: 2 vs flex-grow: 1 on siblings?
+
+`flex-grow: 2` gets **twice the share of the leftover free space** compared to a sibling's `flex-grow: 1` — it does not mean the item ends up twice as wide overall. If both items start from the same basis, the higher-grow item will indeed be wider, but not necessarily double, since the basis itself isn't multiplied — only the distributed extra is. Mixing up "double the growth share" with "double the final width" is one of the most common misreadings of `flex-grow`. Two items with `flex: 1 1 0%` and `flex: 2 1 0%` in a `300px` container split as `100px` and `200px` — double, only because the basis is `0` for both. Give them a nonzero, unequal basis instead and the ratio between their final widths stops being a clean `1:2`, even though the grow values didn't change.
+
+<RainbowDivider />
+
+## Conclusion
+
+`flex: 1` was never magic — it's `flex-grow: 1`, `flex-shrink: 1`, `flex-basis: 0%` running through a deterministic algorithm: resolve each item's hypothetical size, compare the total to the container, then distribute whatever's left (positive by `flex-grow` ratio, negative by `flex-shrink × flex-basis` scaled ratio), clamped by min/max and — occasionally — re-run in a second pass. Once you can trace that by hand, `flex: 1 1 200px` from [Part 3](/post/css/responsive-flex-layouts-without-media-queries) stops being a recipe and becomes a prediction you can verify.
+
+To recap:
+
+- `flex-grow` (default `0`) shares *positive* free space by ratio; `flex-shrink` (default `1`) shares *negative* free space by a basis-weighted ratio.
+- `flex: 1` (basis `0%`) forces equal final sizes; `flex: auto` (basis `auto`) preserves content-proportional sizes.
+- The algorithm runs in clear stages — hypothetical size, free-space sign, proportional distribution, then min/max clamping with a possible redistribution pass.
+- `min-width: auto` is a silent floor on shrinking that has nothing to do with `flex-shrink` itself.
+
+None of this requires memorization if the arithmetic makes sense — the [sandbox above](#interactive-example) is there for exactly that, so you can keep checking your own hand-calculated numbers against real computed widths until the pattern stops feeling like a trick and starts feeling obvious.
+
+🔗 **Up Next (Part 5):** [Flexbox Gotchas and Debugging Techniques](/post/css/flexbox-gotchas-and-debugging-techniques) — where we'll put this algorithm to work diagnosing the layouts that don't behave the way the spec says they should: the `min-width: auto` overflow trap in full, scrollable flex children that push their parent taller instead of scrolling, nested flex contexts, and the DevTools workflow for catching all of it fast.
