@@ -1,0 +1,105 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("sticky-footer-with-flexbox");
+
+## Introduction
+
+Every project eventually needs this: a footer that sits right at the bottom of the viewport when the page has barely any content, but doesn't overlap anything and simply gets pushed down naturally once the content is long enough to need it. Get it wrong and you either see a footer floating awkwardly in the middle of an empty page, or one glued to `position: fixed` that overlaps your actual content on longer pages.
+
+The fix is a single, tiny pattern — `min-height: 100vh` on a flex column, plus one item that's allowed to grow — and it's one of the most reused layout tricks in Flexbox, precisely because it's this short. If you've read [Getting Started with Flexbox](/post/css/getting-started-with-flexbox), you already know everything needed to understand it; this is just one specific, very common application of `flex-grow`.
+
+<RainbowDivider />
+
+## The Core Pattern
+
+<CodeBlock language="css">
+{`
+  html, body {
+    height: 100%;
+  }
+
+  .page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .content {
+    flex: 1 0 auto; /* grows to push the footer down, never shrinks below its own content */
+  }
+
+  .footer {
+    flex-shrink: 0; /* never gets squeezed by a tall .content */
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <body>
+    <div class="page">
+      <header>...</header>
+      <main class="content">...</main>
+      <footer class="footer">...</footer>
+    </div>
+  </body>
+`}
+</CodeBlock>
+
+**Explanation, piece by piece:**
+
+- **`.page` is a flex column at least `100vh` tall.** `display: flex; flex-direction: column` stacks the header, content, and footer top to bottom along the main axis. `min-height: 100vh` — deliberately *`min-height`*, not `height` — guarantees `.page` is never shorter than the viewport, while still letting it grow taller when there's more content than fits on one screen. Using `height: 100vh` instead would clip anything past the viewport's edge.
+- **`.content` gets `flex: 1 0 auto`.** That's `flex-grow: 1`, `flex-shrink: 0`, `flex-basis: auto` — the exact shorthand walked through in [Mastering Flexbox: Sizing Algorithm Deep Dive](/post/css/flexbox-sizing-algorithm-deep-dive). The `1` is what does the actual work here: whenever `.page` is taller than its children need (i.e. the page is short), `.content` grows to absorb every pixel of that leftover space, which is exactly what shoves the footer down to the bottom edge. The `0` for `flex-shrink` is mostly belt-and-suspenders in this particular layout — a column with `min-height: 100vh` and modest content isn't short on room, so `.content` was never going to be forced below its own size anyway — but setting it explicitly documents the intent instead of leaving it to accident.
+- **`.footer` needs no flex properties to "stick."** It isn't positioned, pinned, or anchored — it just comes after `.content` in normal flex-column flow. Once `.content` has grown to fill whatever space is left over, the footer's box starts exactly where `.content`'s ends, which lands it at the very bottom edge of `.page`. `flex-shrink: 0` is there only for the long-content case: it stops a tall `.content` from squeezing the footer's own height down as room gets tight.
+
+<RainbowDivider />
+
+## Try It Live
+
+The demo below renders a small mock "viewport" with a header, content area, and footer wired up to this exact pattern. Toggle between short and long content to see the footer sit flush at the bottom in one case, and get pushed down below the fold (with the viewport itself scrolling) in the other.
+
+<Sandbox slug="sticky-footer-with-flexbox" />
+
+<RainbowDivider />
+
+## Why `html, body { height: 100% }` Matters (Sometimes)
+
+This rule gets copy-pasted into sticky-footer CSS constantly, often without anyone checking whether it's actually needed — so it's worth being precise instead of repeating folklore.
+
+In the simple, full-page case shown above, **`min-height: 100vh` on `.page` doesn't need it at all.** `vh` units are relative to the viewport itself, not to any ancestor's computed height — so `.page` will correctly be at least viewport-tall whether or not `html` and `body` have an explicit `height` set. Delete the `html, body { height: 100% }` rule from the pattern above and the sticky-footer behavior keeps working exactly the same.
+
+Where `height: 100%` earns its place is in **nested contexts** — if `.page` isn't a direct child laid out against the raw viewport, but instead lives inside another container (say, `.page` is inside a flex or grid cell that itself needs to be viewport-sized, or you're mixing this pattern with a percentage-based height somewhere in the ancestor chain). In those cases a `%`-based height further down needs every ancestor, including `html` and `body`, to have a resolvable height to percentage against — `vh` on `.page` alone doesn't propagate that. If your layout is the plain "one page, one footer" case, you can leave `html, body { height: 100% }` out entirely; only reach for it once something in the chain actually depends on percentage heights instead of viewport units.
+
+<RainbowDivider />
+
+## Common Variations
+
+**A fixed-height header, too.** If the header shouldn't shrink either (a logo, a nav bar with a fixed height), give it the same treatment as the footer:
+
+<CodeBlock language="css">
+{`
+  .page > header {
+    flex-shrink: 0; /* same reasoning as .footer — don't get squeezed by a tall .content */
+  }
+`}
+</CodeBlock>
+
+**Grid does this in one line, too.** CSS Grid solves the identical layout with a single declaration on `.page`, no `flex` properties on the children at all:
+
+<CodeBlock language="css">
+{`
+  .page {
+    display: grid;
+    grid-template-rows: auto 1fr auto; /* header / content / footer */
+    min-height: 100vh;
+  }
+`}
+</CodeBlock>
+
+The middle `1fr` track absorbs the leftover space exactly the way `.content`'s `flex: 1 0 auto` does — it's arguably even more explicit about intent, since the three rows are named right there in `grid-template-rows`. Which one to reach for is mostly a matter of what the rest of the layout is already using; see [Flexbox vs Grid: When to Use Which](/post/css/flexbox-vs-grid-when-to-use-which) for the fuller comparison.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A sticky footer is nothing more than a `min-height: 100vh` flex column with one growable item: `.content` with `flex: 1 0 auto` claims any leftover vertical space and pushes everything after it to the bottom, while `.footer` needs no positioning of its own — it just rides along in normal flow. The `html, body { height: 100% }` rule that so often gets pasted alongside this pattern is only necessary once percentage heights are involved further up the ancestor chain; for the plain full-page case, `min-height: 100vh` already does the whole job by itself.

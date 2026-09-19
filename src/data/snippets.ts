@@ -325,6 +325,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "sticky-footer-with-flexbox",
+    title: "Sticky Footer with Flexbox",
+    excerpt: "min-height: 100vh plus one growable item is the whole trick.",
+    description: "A footer that sits at the bottom of the viewport when the page is short, and gets pushed down naturally when it's long, using a min-height: 100vh flex column and flex: 1 0 auto on the content area.",
+    link: {
+      label: "Getting Started with Flexbox",
+      href: "/post/css/getting-started-with-flexbox"
+    },
+    category: ["CSS"],
+    tags: ["css", "flexbox", "flex-grow", "layout", "web-design"],
+    image: {
+      path: "/assets/img/goodies/snippets/sticky-footer-with-flexbox/cover.webp",
+      width: 1536,
+      height: 1024,
+      type: "image/webp",
+      alt: "A page layout diagram showing a header, a growing content area, and a footer pinned flush to the bottom of the viewport."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

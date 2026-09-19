@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sticky Footer Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Sticky Footer with Flexbox</h1>
+        <p>The dashed box below stands in for a browser viewport. Toggle the content length and watch the footer stay pinned to the bottom when there's little content, then get pushed down (with the "viewport" itself scrolling) once there's enough to need it.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Content Length</legend>
+
+        <div class="tabs" role="tablist" aria-label="content length">
+          <button class="tab tab--active" type="button" data-mode="short" role="tab" aria-selected="true">Short content</button>
+          <button class="tab" type="button" data-mode="long" role="tab" aria-selected="false">Long content</button>
+        </div>
+
+        <section class="demo-area" aria-label="Sticky footer preview">
+          <div id="viewport-frame" class="viewport-frame">
+            <div id="page" class="page">
+              <header class="demo-header">header</header>
+              <main id="content" class="content"></main>
+              <footer class="footer">footer</footer>
+            </div>
+          </div>
+        </section>
+
+        <output id="readout" class="readout" aria-live="polite"></output>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

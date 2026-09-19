@@ -224,6 +224,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Switch three differently-sized nav items between flex: 1 and flex: auto and compare their real, measured widths.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "sticky-footer-with-flexbox",
+    title: "Sticky Footer Demo",
+    description: "Toggle between short and long content in a mock viewport to see the footer stay flush at the bottom, or get pushed down and scroll naturally.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 
