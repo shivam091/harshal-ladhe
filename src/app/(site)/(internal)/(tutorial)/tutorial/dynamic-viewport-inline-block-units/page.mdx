@@ -1,0 +1,81 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("dynamic-viewport-inline-block-units");
+
+## Introduction
+
+Every unit in this family so far — `vh`/`svh`/`lvh`/`dvh` and `vw`/`svw`/`lvw`/`dvw` — is tied to a fixed physical direction: height is always vertical, width is always horizontal, no matter what. `vi` (viewport inline) and `vb` (viewport block) break that assumption entirely: they follow whichever axis text actually **flows** and **stacks** on, per the current `writing-mode` — not a fixed screen direction.
+
+In the everyday `horizontal-tb` writing mode (English, and most Western-script content), `vi` behaves exactly like `vw` and `vb` behaves exactly like `vh`. Switch to a vertical writing mode — used for traditional Mongolian, or a deliberately vertical design for East Asian scripts — and the two units swap: `vi` starts tracking the viewport's height, `vb` starts tracking its width.
+
+<RainbowDivider />
+
+## The Two Units
+
+<CodeBlock language="css">
+{`
+  .box {
+    inline-size: 100vi; /* horizontal-tb: same as 100vw   |   vertical-rl/lr: same as 100vh */
+    block-size: 100vb;  /* horizontal-tb: same as 100vh   |   vertical-rl/lr: same as 100vw */
+  }
+`}
+</CodeBlock>
+
+Paired here with the logical sizing properties (`inline-size`/`block-size`, not `width`/`height`) the way [CSS Logical Properties](/post/css/css-logical-properties) already covers for margins, padding, and borders — putting a logical unit on a physical property defeats the point of reaching for one at all.
+
+<Info title="Beginner's mental model">
+`vw` and `vh` always mean "sideways" and "up-and-down," full stop. `vi` and `vb` never commit to either — they mean "whichever way this document's text currently flows" and "whichever way its lines currently stack." Flip the `writing-mode` and `vi`/`vb` repoint themselves to the other physical axis automatically; `vw`/`vh` never do.
+</Info>
+
+<RainbowDivider />
+
+## Try It Live
+
+<Sandbox slug="dynamic-viewport-inline-block-units" readOnly />
+
+Two bars, each sized with a real `vi`/`vb` value. Toggle the root's `writing-mode` and watch which physical dimension each one tracks — the bar governed by `vi` swaps from matching the viewport's width to matching its height, and the bar governed by `vb` swaps the other way, while everything else on the page stays perfectly horizontal and readable.
+
+<RainbowDivider />
+
+## The Root-Only Gotcha
+
+The one detail that trips people up: `vi`/`vb` follow the `writing-mode` of the **root element** (`<html>`) — not the element they're declared on, and not that element's nearest ancestor.
+
+<CodeBlock language="css">
+{`
+  html {
+    writing-mode: horizontal-tb; /* This is what vi/vb actually check. */
+  }
+
+  .card {
+    writing-mode: vertical-rl; /* Changes how .card's OWN children flow — does nothing to vi/vb. */
+    inline-size: 50vi;         /* Still resolves against the ROOT's horizontal-tb, i.e. still = 50vw. */
+  }
+`}
+</CodeBlock>
+
+This is the opposite of how container query units (`cqi`/`cqb`) behave — those deliberately follow the writing-mode of their own query container, not the document root. If a component's local `writing-mode` needs to affect its own sizing units, `cqi`/`cqb` off a queryable ancestor is the right tool for that, not `vi`/`vb`; see [Fluid Type & Spacing](/tutorial/fluid-typography-and-spacing) for `cqi`/`cqb` used that way.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Any component or design system built to support both horizontal and vertical writing modes without maintaining two separate stylesheets
+- Sizing that's conceptually "the length of a line" or "the number of lines that fit," rather than "wide" or "tall" specifically — `vi`/`vb` describe those correctly regardless of writing mode; `vw`/`vh` only describe them correctly in `horizontal-tb`
+- RTL/vertical-script internationalization work generally, alongside the logical properties (`margin-inline`, `padding-block`, etc.) covered in [CSS Logical Properties](/post/css/css-logical-properties)
+- Not worth reaching for on a page that will only ever ship `horizontal-tb` — `vi`/`vb` add a layer of indirection that plain `vw`/`vh` don't need there
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`vi`/`vb` check the root element's `writing-mode`, never a locally-scoped one.** Setting `writing-mode` on a component doesn't change what `vi`/`vb` mean inside it — only changing it on `<html>` does.
+* **The large/small/dynamic distinction applies here too.** `lvi`/`svi`/`dvi` and `lvb`/`svb`/`dvb` exist, and each inherits whichever physical behavior its `vw`/`vh` counterpart has for the root's current writing mode. In `horizontal-tb`, `dvb` behaves like [`dvh`](/tutorial/dynamic-viewport-height-units) (genuinely live, tracking mobile browser chrome) while `dvi` behaves like [`dvw`](/tutorial/dynamic-viewport-width-units) (rarely diverges from its small/large counterparts) — switch to a vertical writing mode and those roles swap.
+* **Mixing a logical unit with a physical property (or vice versa) works, but reads as a mistake.** `width: 100vi` is valid CSS and does something, but it pairs a "whichever direction is inline" value with a property that's always "sideways" — pair `vi`/`vb` with `inline-size`/`block-size` so the property and the value agree about which axis they mean.
+* **Browser support matches the rest of this unit family** (Chrome/Edge 108+, Firefox 101+, Safari 15.4+ as of this writing) — `vi`/`vb`, `lvi`/`svi`/`dvi`, and `lvb`/`svb`/`dvb` all shipped as part of the same viewport-units feature.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`vw` and `vh` describe the screen; `vi` and `vb` describe the document's own flow — and only agree with `vw`/`vh` by coincidence, in whichever writing mode happens to make horizontal "inline" and vertical "block." For anything meant to keep working correctly if the writing mode ever changes — a design system, an RTL or vertical-script layout — `vi`/`vb` are the versions of [dvh/svh/lvh](/tutorial/dynamic-viewport-height-units) and [dvw/svw/lvw](/tutorial/dynamic-viewport-width-units) that don't assume a direction at all.
