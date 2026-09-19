@@ -94,7 +94,7 @@ Treat `overflow-x: hidden` here as insurance for a full-bleed layout, not a subs
 
 * **In practice, `vw`, `svw`, `lvw`, and `dvw` render identically on essentially every current mainstream browser.** They only diverge if a browser ships UI that dynamically consumes horizontal space — nothing mainstream does today, so don't expect to see a visible difference the way toggling `dvh` produces one.
 * **The breakout technique needs its direct parent horizontally centered on the same axis as the viewport.** `calc(50% - 50dvw)` assumes the element's containing block is itself centered (e.g. via `margin-inline: auto`) — nested inside an off-center or asymmetrically-padded ancestor, the math no longer lines up.
-* **These units aren't the only logical pairing either.** `vi`/`vb` (viewport inline/block) exist as writing-mode-aware equivalents of `vw`/`vh` — see Viewport Inline & Block Units for why they're worth reaching for instead of `vw`/`vh` directly on anything that needs to keep working correctly in vertical writing modes.
+* **These units aren't the only logical pairing either.** `vi`/`vb` (viewport inline/block) exist as writing-mode-aware equivalents of `vw`/`vh` — see [Viewport Inline & Block Units](/tutorial/dynamic-viewport-inline-block-units) for why they're worth reaching for instead of `vw`/`vh` directly on anything that needs to keep working correctly in vertical writing modes.
 * **Browser support matches the height-axis units exactly** (Chrome/Edge 108+, Firefox 101+, Safari 15.4+ as of this writing), since `lvw`/`svw`/`dvw` ship as part of the same feature as `lvh`/`svh`/`dvh`.
 
 <RainbowDivider />
