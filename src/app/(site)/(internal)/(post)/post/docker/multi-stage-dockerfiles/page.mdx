@@ -1,0 +1,201 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("multi-stage-dockerfiles");
+
+## Introduction
+
+Here's a Dockerfile pattern almost everyone writes at some point without thinking twice about it: `FROM node:20`, `COPY . .`, `RUN npm install`, `RUN npm run build`, `CMD ["node", "dist/server.js"]`. It builds. It runs. It also ships a TypeScript compiler, every devDependency you installed to make the build work, the raw uncompiled source, and often source maps and test files, into the exact same image that ends up running in production — none of which the running process ever touches again after the build step finishes.
+
+That's the "fat image" problem. A single-stage Dockerfile can't distinguish between "things I need to *produce* the artifact" and "things I need to *run* the artifact," because it's one flat sequence of layers baked into one final image. The compiler, the build cache, the `node_modules` full of dev tooling, the `.ts` source files — all of it rides along at runtime, inflating image size, slowing down pulls and deploys, and quietly expanding your attack surface with tooling nobody will ever invoke again.
+
+Multi-stage builds fix this at the Dockerfile level, with no separate build scripts or external orchestration required. You already know `FROM`, `COPY`, and layer caching from the fundamentals — this post is about combining them across multiple stages inside one file to produce a final image that contains only what the running process actually needs.
+
+By the end of this post, you'll be able to:
+
+- Write a Dockerfile with multiple named stages using `FROM <image> AS <stage-name>`
+- Use `COPY --from=<stage-name>` to pull specific build artifacts across stages while discarding everything else
+- Build a complete, realistic multi-stage Dockerfile for a TypeScript/Node application
+- Use `docker build --target` to build an intermediate stage on its own, for local dev or test workflows
+- Avoid the most common multi-stage mistake: leaking build-stage `node_modules` into the runtime image
+- Reason about the tradeoffs between `-slim` and `-alpine` base images for a lean final stage
+
+<RainbowDivider />
+
+## What Multi-Stage Builds Actually Do
+
+A multi-stage Dockerfile contains more than one `FROM` instruction, and each `FROM` starts a fresh, independent stage with its own filesystem. Nothing carries over between stages automatically — not environment variables, not the working directory, not any file you wrote — unless you explicitly ask for it.
+
+The mechanism that makes this useful is naming a stage and referencing it later:
+
+<CodeBlock language="docker">
+{`
+  FROM node:20 AS build
+  WORKDIR /app
+  COPY . .
+  RUN npm install
+  RUN npm run build
+
+  FROM node:20-slim
+  WORKDIR /app
+  COPY --from=build /app/dist ./dist
+  CMD ["node", "dist/server.js"]
+`}
+</CodeBlock>
+
+The `AS build` on the first `FROM` line gives that stage a name. The second `FROM` line starts an entirely new stage from a different, leaner base image — and by default, an unnamed final stage like this is what `docker build` tags as your resulting image. Everything from the `build` stage — the full `node:20` base, the entire `node_modules` tree, the raw source files, the TypeScript compiler itself — exists only inside that intermediate stage's filesystem. It is never part of the final image unless a later stage explicitly copies it in.
+
+`COPY --from=build /app/dist ./dist` is that explicit copy. It reaches back into the (already-built, already-discarded-as-a-base) `build` stage, grabs just the `/app/dist` directory, and places it at `./dist` in the current stage. You can have as many `COPY --from=` instructions as you need, and you can reference a stage by its name (`build`) or, less commonly, by its numeric index (`--from=0` for the first `FROM` in the file). You can also copy from a stage defined in a completely separate image, not just one earlier in the same Dockerfile, using `COPY --from=<image-or-stage>` with a full image reference — useful for pulling a prebuilt tool binary from a published image without installing it yourself.
+
+The important mental model: only the instructions in your *final* stage determine what actually gets shipped. Every other stage is disposable scaffolding — a "build shed" that exists purely to produce artifacts, gets torn down conceptually once the build finishes, and never appears in the image you push to a registry or deploy.
+
+<Info title="Intermediate stages are still cached">
+Don't mistake "discarded from the final image" for "rebuilt every time." Each stage's layers are cached exactly like a single-stage build's layers are — keyed on the instructions and inputs that produced them. If your `build` stage's `COPY . .` and `RUN npm install`/`RUN npm run build` layers haven't changed since the last build, Docker reuses them without re-running anything, even though that stage never ends up in the shipped image. Multi-stage builds cost you nothing extra on repeated builds; they just change what's included in the final output.
+</Info>
+
+<RainbowDivider />
+
+## A Complete Example: Building and Running a TypeScript/Node App
+
+Here's a realistic, complete multi-stage Dockerfile for a TypeScript service — the kind of thing you'd actually commit to a repository:
+
+<CodeBlock language="docker">
+{`
+  # ---- Stage 1: build ----
+  FROM node:20 AS build
+
+  WORKDIR /app
+
+  # Install ALL dependencies, including devDependencies (tsc, type packages, bundlers, etc.)
+  COPY package.json package-lock.json ./
+  RUN npm ci
+
+  # Bring in source and compile TypeScript to JavaScript
+  COPY tsconfig.json ./
+  COPY src ./src
+  RUN npm run build
+
+  # ---- Stage 2: runtime ----
+  FROM node:20-slim AS runtime
+
+  WORKDIR /app
+  ENV NODE_ENV=production
+
+  # Install ONLY production dependencies, from a clean slate
+  COPY package.json package-lock.json ./
+  RUN npm ci --omit=dev
+
+  # Pull in just the compiled output from the build stage — nothing else
+  COPY --from=build /app/dist ./dist
+
+  CMD ["node", "dist/server.js"]
+`}
+</CodeBlock>
+
+Walk through what each stage is responsible for. The `build` stage uses the full `node:20` image (not `-slim`), because it needs a complete toolchain — `npm ci` installing every devDependency including `typescript` itself, then `npm run build` invoking `tsc` to emit compiled JavaScript into `dist/`. This stage is allowed to be big and messy. Nobody ever ships it.
+
+The `runtime` stage starts over from `node:20-slim`, a smaller base with the Node runtime but without the extra packages a full Debian-based dev image carries. It reinstalls dependencies with `npm ci --omit=dev`, which resolves only production dependencies straight from the lockfile — this is a clean, fresh `node_modules`, not a filtered copy of the build stage's one. Then it copies in exactly one thing from the `build` stage: the compiled `dist/` directory. The TypeScript source, the compiler, the type definitions, the dev-only tooling, and the build stage's much larger `node_modules` never make it into `runtime` at all.
+
+The size difference this produces is the whole point of the exercise. A naive single-stage image carrying a full toolchain plus dev dependencies is often measured in the hundreds of megabytes; the equivalent multi-stage runtime image, containing only a slim Node base, production dependencies, and compiled output, is often measured in the tens of megabytes. The exact numbers depend heavily on your dependency tree and base image choice, but the shape of the win — often better than an order of magnitude — holds broadly across compiled and transpiled language ecosystems, not just Node.
+
+<RainbowDivider />
+
+## Targeting a Specific Stage with --target
+
+Sometimes you don't want the final stage at all — you want to build up to and stop at an intermediate one. That's what `--target` is for:
+
+<CodeBlock language="bash">
+{`
+  # Build only the "build" stage, stopping before the runtime stage even starts
+  docker build --target build -t myapp:dev .
+`}
+</CodeBlock>
+
+This produces an image tagged `myapp:dev` that *is* the `build` stage — full toolchain, dev dependencies, uncompiled source if you copied it before running the build, all still present. That's exactly what you want for a few concrete workflows:
+
+- **Running tests against the build stage.** Your test suite likely needs devDependencies (test runners, mocking libraries, type checkers) that have no business being in production. Target the `build` stage in CI, run `npm test` inside a container from it, and only proceed to build the `runtime` stage if tests pass.
+- **Local development iteration.** Sometimes you want a container with the full toolchain available — for debugging a build failure, running a REPL, or inspecting intermediate output — without the extra step of maintaining a second, separate development Dockerfile.
+- **Layering more than two stages.** Nothing restricts you to exactly two `FROM` lines. A `deps` stage, a `build` stage, and a `runtime` stage is a common three-stage split, and `--target` lets you address any one of them by name.
+
+This is the real payoff of naming stages carefully: one Dockerfile, checked into source control once, serves both "give me a production-ready image" (the default, untargeted build) and "give me a dev/test image with the full toolchain" (`--target build`), without duplicating instructions across two files that inevitably drift out of sync with each other.
+
+<RainbowDivider />
+
+## Copying Only What You Need Between Stages
+
+`COPY --from=` is powerful precisely because it's selective, but that selectivity only helps if you're deliberate about the paths on both sides of it. Copy the narrowest thing that actually satisfies the runtime's needs — the built artifact directory (`dist/`, `build/`, `target/release/`, whatever your toolchain produces), not the whole working directory the build stage used.
+
+<CodeBlock language="docker">
+{`
+  # Good: copy only the compiled output
+  COPY --from=build /app/dist ./dist
+
+  # Bad: copies the entire build-stage working directory, including
+  # source, node_modules, config files, and anything else that landed in /app
+  COPY --from=build /app ./
+`}
+</CodeBlock>
+
+The second form defeats most of the purpose of splitting stages in the first place — you've reintroduced everything you were trying to leave behind, just via a different instruction.
+
+<Warning title="Don't copy node_modules across stages">
+A common mistake is copying `node_modules` from the build stage into the runtime stage instead of installing dependencies fresh there — for example, `COPY --from=build /app/node_modules ./node_modules`. This looks like it saves an install step, but it drags along two problems at once: it includes every devDependency you installed to build the app (defeating the entire point of a lean runtime image), and it can include native addons or platform-specific binaries that npm compiled against the build stage's base image, which may not match the runtime stage's base image closely enough to work correctly. Run a clean `npm ci --omit=dev` (or your ecosystem's equivalent) in the runtime stage instead — it's cached independently and stays correct for that stage's actual environment.
+</Warning>
+
+<RainbowDivider />
+
+## Choosing a Lean Runtime Base for the Final Stage
+
+The base image you pick for your final stage matters as much as what you copy into it. Two tags come up constantly for this: `-slim` variants (Debian-based, stripped of documentation, extra locales, and build tooling you don't need at runtime) and `-alpine` variants (built on the much smaller Alpine Linux distribution, which trims the image down further still).
+
+`-alpine` images are usually the smallest option and a reasonable default for many services. The one honest caveat worth knowing before you reach for it: Alpine uses `musl` as its C standard library instead of the `glibc` that Debian-based images (and most developers' local machines) use. Most pure JavaScript/TypeScript code never notices the difference, but native Node addons — packages with a compiled `.node` binary, often built or downloaded against `glibc` — can behave unexpectedly or fail to load at all on `musl`. It's not a dealbreaker, just something to test for rather than assume away, especially if your dependency tree includes native bindings.
+
+This is intentionally a short orientation rather than a full comparison — choosing between base image variants, distroless images, and other lean-runtime strategies in depth is a topic for a dedicated, more advanced post. For now, know that both `-slim` and `-alpine` are standard, sensible choices for a multi-stage final stage, and that `-alpine`'s size advantage comes with a compatibility tradeoff worth verifying against your actual dependencies.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+### Do I need BuildKit to use multi-stage builds?
+
+No — multi-stage builds have been a standard Dockerfile feature since Docker 17.05 and work with the classic builder. BuildKit (the default builder in current Docker versions) is faster and adds extra features like build secrets and cache mounts, but multiple `FROM`/`AS`/`--from` syntax itself isn't BuildKit-specific.
+
+---
+
+### Can a later stage use build arguments or environment variables from an earlier stage?
+
+Not automatically. Each stage starts a fresh environment, so `ENV` and `ARG` values set in one stage don't carry into the next unless you redeclare `ARG` (for build args, which can be re-declared per stage) or explicitly set `ENV` again in the later stage.
+
+---
+
+### Does splitting my Dockerfile into stages slow down my builds?
+
+No, and it can speed them up. Intermediate stages are cached the same as any other layers, and splitting concerns often means a source-code change only invalidates the stage that actually needs rebuilding, rather than forcing a full reinstall of every dependency in one giant stage.
+
+---
+
+### Can I copy files from outside my project, like a published Docker image?
+
+Yes. `COPY --from=` accepts a full image reference in place of a stage name, for example `COPY --from=curlimages/curl:latest /usr/bin/curl /usr/local/bin/curl`. This is a common way to grab a single prebuilt binary into your final image without installing a whole toolchain to get it.
+
+---
+
+### Do I still need a .dockerignore file with multi-stage builds?
+
+Yes — the build context is still sent to the daemon as a whole, regardless of how many stages consume it, so excluding `node_modules`, `.git`, and other unwanted paths still matters for build speed and for keeping unintended files out of any stage that runs a broad `COPY . .`.
+
+<RainbowDivider />
+
+## Conclusion
+
+Multi-stage builds turn "build tooling versus runtime needs" from a problem you have to solve with separate scripts or separate Dockerfiles into something the Dockerfile format handles natively. Give each concern its own named stage, be deliberate about what crosses the `COPY --from=` boundary, and your final image ends up containing exactly what the running process needs — nothing borrowed from the toolchain that produced it.
+
+**Key Takeaways:**
+
+- Multiple `FROM <image> AS <stage-name>` lines in one Dockerfile create independent stages; nothing carries over between them except what you explicitly copy
+- `COPY --from=<stage-name>` pulls specific files or directories from an earlier stage; everything else in that stage is discarded from the final image
+- Intermediate stages are cached like any other layers — multi-stage builds don't cost extra time on repeated builds
+- A typical split is a full-toolchain `build` stage (all dependencies, compiler, source) feeding a slim `runtime` stage (production dependencies only, plus compiled output)
+- `docker build --target <stage-name>` builds just one stage, letting one Dockerfile serve both dev/test and production use cases
+- Copy the narrowest artifact directory you can (`dist/`, not the whole `/app`), and never copy `node_modules` across stages — install it fresh in the runtime stage instead
+- `-slim` and `-alpine` are both reasonable lean final-stage bases; `-alpine`'s `musl` libc can occasionally cause issues with native Node addons built against `glibc`
+- The size and attack-surface reduction from a well-structured multi-stage build is often dramatic — routinely dropping images from hundreds of megabytes to tens

@@ -543,5 +543,21 @@ export const tagMeta: Record<string, TagMeta> = {
   "image-layers": {
     title: "Docker Image Layer Structure Explained",
     description: "Explanations of how a Docker image's layers stack together, and how instruction order affects layer size and reuse."
+  },
+  "multi-stage-builds": {
+    title: "Multi-Stage Docker Builds",
+    description: "Using multiple FROM stages in a single Dockerfile to separate build-time tooling from the slim runtime image that actually ships."
+  },
+  "build-optimization": {
+    title: "Optimizing Container Build Performance",
+    description: "Techniques for reducing build time and image size, from cache-friendly instruction ordering to BuildKit-specific optimizations."
+  },
+  "slim-images": {
+    title: "Building Slim, Minimal Container Images",
+    description: "Strategies for keeping container images small — from choosing lean base images to discarding build-only dependencies before shipping."
+  },
+  "intermediate": {
+    title: "Intermediate Guides for Practicing Developers",
+    description: "Guides that build on the fundamentals — for readers comfortable with the basics and ready to go a level deeper."
   }
 };

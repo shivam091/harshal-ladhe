@@ -428,6 +428,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "multi-stage-dockerfiles",
+    title: "Writing Efficient Multi-Stage Dockerfiles",
+    excerpt: "Ship the artifact, not the toolchain that built it.",
+    description: "Learn to write efficient multi-stage Dockerfiles that separate build-time tooling from a slim final runtime image, using named stages, COPY --from, and --target.",
+    category: ["Docker"],
+    tags: ["docker", "dockerfile", "multi-stage-builds", "build-optimization", "slim-images", "containerization", "devops", "intermediate"],
+    signoff: "Splitting a Dockerfile into a disposable build stage and a lean runtime stage is one of those techniques that feels like a trick the first time it clicks and completely obvious every time after. Thanks for working through the full TypeScript example with me — go shrink an image that's been quietly shipping a whole compiler toolchain it doesn't need. 📦",
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 
