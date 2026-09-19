@@ -440,6 +440,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "docker-compose-for-local-dev",
+    title: "Docker Compose for Local Dev Environments",
+    excerpt: "Run your whole local stack with one command.",
+    description: "A practical guide to Docker Compose for local development — defining services, networking between containers, persisting data with volumes, and managing configuration with .env files.",
+    category: ["Docker"],
+    tags: ["docker", "docker-compose", "local-development", "containers", "networking", "volumes", "dotenv", "devops", "intermediate"],
+    signoff: "Getting the service-name-not-localhost networking model to actually land took more than one confused debugging session of my own, so I tried to get ahead of that one early here. Thanks for wiring up services, volumes, and .env with me — go bring up a stack with one command instead of five. 🧩",
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

@@ -559,5 +559,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "intermediate": {
     title: "Intermediate Guides for Practicing Developers",
     description: "Guides that build on the fundamentals — for readers comfortable with the basics and ready to go a level deeper."
+  },
+  "docker-compose": {
+    title: "Docker Compose for Multi-Container Apps",
+    description: "Guides on Docker Compose — defining services, networks, and volumes in a single file to run multi-container applications locally."
+  },
+  "local-development": {
+    title: "Local Development Environment Setup",
+    description: "Content on setting up fast, reliable local development environments that mirror production as closely as practical."
+  },
+  "networking": {
+    title: "Container and Application Networking",
+    description: "Articles on how containers communicate with each other and the outside world, including service discovery and port mapping."
+  },
+  "volumes": {
+    title: "Managing Persistent Data with Volumes",
+    description: "Using volumes and bind mounts to persist and share data between containers and the host, independent of a container's lifecycle."
+  },
+  "dotenv": {
+    title: "Managing Environment Variables with .env Files",
+    description: "Practices for storing and loading configuration and secrets through .env files, and keeping them out of version control."
   }
 };

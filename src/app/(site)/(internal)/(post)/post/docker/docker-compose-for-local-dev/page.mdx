@@ -1,0 +1,287 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("docker-compose-for-local-dev");
+
+## Introduction
+
+Real applications are rarely a single container. A typical web app needs a database to persist data, probably a cache like Redis for sessions or rate limiting, and maybe a background worker or a message queue. Each of those pieces is its own image, with its own ports, its own environment variables, and its own storage needs.
+
+You *can* wire all of that together by hand with a string of `docker run` commands — remembering to create a shared network, remembering the exact volume mount paths, remembering which port maps to which, retyping the same fifteen flags every time you restart your machine. It works, right up until it doesn't: someone forgets a flag, a teammate's setup drifts from yours, and "works on my machine" creeps back in through the side door.
+
+Docker Compose solves this by describing your entire local stack — services, networks, volumes, configuration — in a single declarative file. One command brings the whole thing up in the right order, wired together correctly, every time. This post assumes you're already comfortable with the basics of Dockerfiles, images, and containers, and focuses specifically on using Compose to run a realistic multi-container dev environment on your own machine.
+
+By the end of this post, you'll be able to:
+
+- Read and write a `compose.yaml` file describing multiple services
+- Understand the difference between `build:` and `image:` for a service
+- Explain how services discover and talk to each other over Compose's default network
+- Use named volumes to persist database data and bind mounts to live-reload your source code
+- Manage secrets and configuration cleanly with `.env` files and `env_file:`
+- Sequence startup correctly with `depends_on` and health checks, instead of guessing with sleeps
+- Operate a stack day-to-day with the everyday `docker compose` command set
+
+<RainbowDivider />
+
+## Anatomy of a compose.yaml File
+
+At the top level, a Compose file has one required key: `services:`. Everything else — networks, volumes, top-level configuration — hangs off of that. Each entry under `services:` describes one container that Compose will manage, and gives it a logical name (`web`, `db`, `cache`, whatever you choose) that doubles as its hostname on the network, which matters a lot in the next section.
+
+For a service you're actively developing, you'll usually use `build:`, pointing at a directory (the *build context*) that contains a Dockerfile. You can point at a context directly (`build: .`), or use the long form to set the context and a non-default Dockerfile path:
+
+<CodeBlock language="yaml">
+{`
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+`}
+</CodeBlock>
+
+For a service you're consuming as-is — a database, a cache, a message broker — you almost never write your own Dockerfile. Instead you use `image:` to pull a known, versioned image straight from a registry, for example `postgres:16-alpine`. Compose will pull it automatically the first time you bring the stack up if it isn't already on your machine.
+
+`ports:` maps a host port to a container port, in `"HOST:CONTAINER"` form, so you can reach a service from your browser or a local client like `psql`. `environment:` sets environment variables inside that specific container — this is how you configure things like the Postgres superuser password without baking it into an image.
+
+Here's a realistic starting point: a `web` app built from the local Dockerfile, alongside a Postgres database pulled from Docker Hub.
+
+<CodeBlock language="yaml">
+{`
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: appdb
+`}
+</CodeBlock>
+
+Notice there's no `version:` key at the top of the file. Older Compose files used to declare one (`version: "3.8"`, etc.), but that field has been obsolete since the Compose Specification unified the format — modern `docker compose` ignores it if present and doesn't require it at all, so new files should just omit it.
+
+<RainbowDivider />
+
+## Networking Between Services
+
+When you run `docker compose up`, Compose automatically creates a dedicated bridge network for the project (named after the project directory, something like `docker-compose-for-local-dev_default`) and attaches every service in the file to it. You don't have to configure this yourself for a basic setup — it's the default behavior, and it's most of what makes Compose more convenient than juggling `docker run --network` flags by hand.
+
+The important consequence is DNS-based service discovery: **every service can reach every other service using its service name as a hostname**. In the example above, the `web` container doesn't connect to Postgres at `localhost:5432` — from inside `web`'s container, `localhost` refers to `web` itself, not the host machine and not the `db` container. Instead, `web` connects to Postgres at host `db`, port `5432` — the internal container port, regardless of whatever you've mapped it to on the host with `ports:`. A connection string inside your app's config would look like:
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  postgresql://appuser:devpassword@db:5432/appdb
+`}
+</CodeBlock>
+
+The `ports:` mapping to `5432:5432` on the host exists purely so *you*, from outside Docker, can point a local `psql` or GUI client at `localhost:5432`. It has nothing to do with how containers talk to each other.
+
+<Warning title="Why can't my app connect to localhost:5432?">
+This is the single most common Compose confusion. If your app is *also* running inside a container, `localhost` inside that container means "this container," never the host machine and never a sibling container. Use the service name (`db`, `cache`, `redis`, etc.) as the hostname whenever one container needs to reach another. Reserve `localhost` for tools running directly on your host machine, outside of Docker entirely.
+</Warning>
+
+<RainbowDivider />
+
+## Persisting Data with Volumes
+
+Containers are meant to be disposable — you should be able to `docker compose down` and bring everything back up without a second thought. But that's a problem for a database: if Postgres's data directory lives only inside the container's writable layer, every teardown wipes your local data. Volumes solve this, and Compose supports two flavors that serve very different purposes.
+
+A **named volume** is storage managed by Docker itself, declared under a top-level `volumes:` key and then referenced from a service. It's the right tool for data that needs to survive container recreation but that you don't need to browse directly from your host filesystem — database files being the canonical example.
+
+A **bind mount** instead maps a path on your host machine directly into the container, in `HOST_PATH:CONTAINER_PATH` form. It's the right tool for your own source code during development: mount your project's `./src` directory over the corresponding path inside the container, and changes you make in your editor appear inside the running container immediately, no rebuild required — which is what makes hot-reloading dev servers actually useful under Docker.
+
+<CodeBlock language="yaml">
+{`
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: appdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
+`}
+</CodeBlock>
+
+<Info title="down vs. down -v">
+`docker compose down` stops and removes the project's containers and network, but leaves named volumes intact — the next `docker compose up` picks up right where your database left off. `docker compose down -v` additionally removes those named volumes, which permanently deletes their data. It's a normal way to get a clean slate during development, but be deliberate about it: there's no undo.
+</Info>
+
+<RainbowDivider />
+
+## Managing Configuration with .env Files
+
+Compose automatically looks for a file named `.env` in the same directory as your `compose.yaml` and loads it for **variable substitution** — any `${VARIABLE}` reference inside the Compose file itself gets replaced with the value from `.env` (or your shell environment) before Compose even parses the rest of the file. You can also supply a fallback with `${VARIABLE:-default}`, which is handy for values that are fine to leave unset in most setups.
+
+This is a genuinely different mechanism from a service's `environment:` or `env_file:` keys, and it's easy to conflate the two. The project-level `.env` is consulted at *parse time*, to fill in placeholders inside `compose.yaml` — things like which host port to expose, or which image tag to pull. A service's `env_file:` (pointing at a file of `KEY=value` lines) or `environment:` block instead sets variables *inside the running container*, at runtime, for your application code to read. You can — and often should — use both in the same file.
+
+A small `.env` alongside your `compose.yaml`:
+
+<CodeBlock language="bash">
+{`
+# .env — loaded automatically by \`docker compose\`
+POSTGRES_PASSWORD=devpassword
+WEB_PORT=3000
+`}
+</CodeBlock>
+
+And a `compose.yaml` that uses substitution for the port mapping while using `env_file:` to inject application-level configuration into the container itself:
+
+<CodeBlock language="yaml">
+{`
+services:
+  web:
+    build: .
+    ports:
+      - "\${WEB_PORT:-3000}:3000"
+    env_file:
+      - .env.web
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: \${POSTGRES_PASSWORD}
+`}
+</CodeBlock>
+
+<Warning title="Never commit real secrets in .env">
+A `.env` file with real passwords or API keys should never reach version control. Add `.env` to your `.gitignore`, and commit a `.env.example` (or `.env.sample`) template instead, listing the variable names with placeholder or empty values so teammates know what to fill in without ever seeing an actual credential.
+</Warning>
+
+<RainbowDivider />
+
+## depends_on and Startup Order
+
+`depends_on` controls the order Compose starts containers in, but by default that's *all* it controls. `depends_on: [db]` guarantees the `db` container is started before `web`, but a Postgres container reports as "started" the moment its process launches — not once Postgres has finished initializing and is actually ready to accept connections. If your app tries to connect immediately, you'll often see a handful of failed connection attempts right after `docker compose up`, especially on a cold start with an empty volume.
+
+The fix is to give the dependency a `healthcheck:` and tell `depends_on` to wait for that check to pass, using the long-form `condition: service_healthy` syntax instead of the short list form:
+
+<CodeBlock language="yaml">
+{`
+services:
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: devpassword
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+`}
+</CodeBlock>
+
+With this in place, Compose won't start `web` until `db`'s health check reports healthy, which is a far more reliable substitute for a manual `sleep` or a retry loop bolted onto your app's startup code.
+
+<RainbowDivider />
+
+## Everyday Compose Commands
+
+Most of your day-to-day interaction with a stack comes down to a small set of commands, run from the directory containing your `compose.yaml`:
+
+<CodeBlock language="bash">
+{`
+# Build images (if needed) and start every service, attached to your terminal
+docker compose up
+
+# Same, but detached — runs in the background, returns your shell immediately
+docker compose up -d
+
+# Stop and remove containers and the project network (named volumes are kept)
+docker compose down
+
+# Tail logs from one service — essential for watching an app boot or crash
+docker compose logs -f web
+
+# Open a shell inside a running service's container
+docker compose exec web sh
+
+# List the project's containers and their status/ports at a glance
+docker compose ps
+
+# Rebuild an image after changing its Dockerfile or dependencies
+docker compose build web
+
+# Restart a single service without touching the rest of the stack
+docker compose restart web
+`}
+</CodeBlock>
+
+A common loop: change a dependency in your Dockerfile, run `docker compose build web`, then `docker compose up -d` again to swap in the new image without restarting services you didn't touch.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+### Do I need to install docker-compose separately?
+
+No. Modern Docker Desktop and Docker Engine installations ship the `docker compose` subcommand (V2, written as two words) built in. The old standalone `docker-compose` binary (hyphenated) still works on many systems but is in maintenance mode — prefer `docker compose` for anything new.
+
+---
+
+### Can I still name my file docker-compose.yaml?
+
+Yes — `docker compose` recognizes both `compose.yaml` and the older `docker-compose.yaml` automatically, with no flag needed. `compose.yaml` is the name used in current documentation and examples, but either works.
+
+---
+
+### Why does my app still fail to connect even with a healthcheck on the database?
+
+Double-check that the healthcheck's `test:` command actually succeeds inside that container (for example, `pg_isready` needs to be on the image's `PATH`), and that `depends_on` on the dependent service uses the long form with `condition: service_healthy` rather than the plain list syntax — the plain list form only waits for the container to start, never for its health status.
+
+---
+
+### How do multiple compose files or environments (dev vs. prod) work?
+
+Compose supports layering files with `-f`, e.g. `docker compose -f compose.yaml -f compose.override.yaml up`, where later files override or extend earlier ones. A common pattern is keeping shared service definitions in `compose.yaml` and dev-only overrides (bind mounts, exposed ports) in `compose.override.yaml`, which Compose loads automatically if present.
+
+---
+
+### Should I use Compose for production deployments?
+
+Compose is primarily a local-development and single-host tool. It can run production workloads on a single machine, but for anything requiring scaling across multiple hosts, rolling deployments, or high availability, you'll typically move to an orchestrator like Kubernetes or a managed container platform instead.
+
+<RainbowDivider />
+
+## Conclusion
+
+Compose doesn't introduce new Docker concepts so much as it removes the tedium around the ones you already know: instead of hand-assembling networks, volumes, and `docker run` flags every time you sit down to work, you describe the whole stack once and let one command bring it up correctly, in order, every time. The pieces covered here — services, the default network, named volumes vs. bind mounts, `.env` substitution, and health-aware startup ordering — cover the vast majority of what a realistic local dev environment needs.
+
+**Key Takeaways:**
+
+- `services:` is the only required top-level key; use `build:` for code you're developing and `image:` for pre-built dependencies like databases
+- Compose creates a default network automatically, and services reach each other by **service name**, never by `localhost`, from inside another container
+- Named volumes persist data (like a database) across `docker compose down`; bind mounts live-sync your source code into a running container
+- `docker compose down -v` deletes named volumes — use it deliberately, not out of habit
+- The project-level `.env` file is for `${VAR}` substitution inside `compose.yaml` at parse time; `environment:`/`env_file:` set variables inside the running container at runtime
+- Never commit a `.env` with real secrets — gitignore it and commit a `.env.example` instead
+- Plain `depends_on` only waits for a container to start; pair it with a `healthcheck:` and `condition: service_healthy` to wait for real readiness
+- A handful of commands — `up -d`, `down`, `logs -f`, `exec`, `ps`, `build`, `restart` — cover nearly all day-to-day operation of a local stack
