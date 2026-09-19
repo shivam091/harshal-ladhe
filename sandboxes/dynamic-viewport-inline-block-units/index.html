@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>vi / vb Axis Swap Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>vi / vb Axis Swap</h1>
+        <p>Toggle the root's <code>writing-mode</code> and watch which physical dimension <code>vi</code> and <code>vb</code> track. Everything here stays horizontal and readable on purpose — only the two bars below (sized with real <code>vi</code>/<code>vb</code> CSS) change.</p>
+      </header>
+
+      <button class="toggle-btn" id="mode-toggle" type="button">Switch to vertical-rl</button>
+
+      <section class="demo-area" aria-label="vi and vb measurement bars">
+        <div class="axis-row">
+          <div class="axis-box axis-vi" id="box-vi">vi</div>
+        </div>
+        <div class="axis-row">
+          <div class="axis-box axis-vb" id="box-vb">vb</div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
