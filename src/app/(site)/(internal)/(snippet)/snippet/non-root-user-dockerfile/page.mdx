@@ -83,3 +83,5 @@ Many official images already bake in a usable unprivileged user (`node`'s own im
 ## Key Takeaway
 
 Creating a dedicated user and switching to it with `USER` is a small, mechanical addition to a Dockerfile that closes off an entire category of "container escape becomes host root" outcomes. Do the `chown` work while you're still root, and verify with `docker run --rm <image> whoami` before shipping.
+
+For the rest of the hardening picture — minimal base images, vulnerability scanning, and safe secrets handling — see the full [Securing Your Docker Images](/post/docker/securing-docker-images) guide.

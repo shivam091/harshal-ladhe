@@ -65,3 +65,5 @@ Requires the `# syntax=docker/dockerfile:1` directive as the Dockerfile's very f
 ## Key Takeaway
 
 `RUN --mount=type=cache,target=<path>` gives package managers a warm cache across builds without that cache ending up in any image layer — faster rebuilds on the same machine, with no extra image size to show for it.
+
+For secret mounts, distroless images, and the real story on layer squashing, see the full [Advanced Dockerfile Techniques and Optimization](/post/docker/advanced-dockerfile-optimization) guide.

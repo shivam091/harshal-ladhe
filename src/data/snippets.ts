@@ -274,7 +274,12 @@ export const snippets: Snippet[] = [
       type: "image/png",
       alt: "Illustration of a two-stage Docker build pipeline for Node.js, showing a full build stage feeding a slim runtime stage."
     },
+    link: {
+      label: "Read the full post: Writing Efficient Multi-Stage Dockerfiles",
+      href: "/post/docker/multi-stage-dockerfiles"
+    },
     changelog: [
+      { date: "2026-09-19", change: "Cross-linked to the full Multi-Stage Dockerfiles post" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -292,7 +297,12 @@ export const snippets: Snippet[] = [
       type: "image/png",
       alt: "Illustration of a .dockerignore file filtering out .git, node_modules, and .env from a Docker build context."
     },
+    link: {
+      label: "Read the full post: Dockerfile Basics for Beginners",
+      href: "/post/docker/dockerfile-basics-for-beginners"
+    },
     changelog: [
+      { date: "2026-09-19", change: "Cross-linked to the full Dockerfile Basics post" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -310,7 +320,12 @@ export const snippets: Snippet[] = [
       type: "image/png",
       alt: "Illustration of a Docker container health check cycle, showing a HEALTHCHECK probe and healthy/unhealthy status states."
     },
+    link: {
+      label: "Read the full post: Docker Compose for Local Dev Environments",
+      href: "/post/docker/docker-compose-for-local-dev"
+    },
     changelog: [
+      { date: "2026-09-19", change: "Cross-linked to the full Docker Compose post" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -328,7 +343,12 @@ export const snippets: Snippet[] = [
       type: "image/png",
       alt: "Illustration of a BuildKit cache mount persisting a package manager's download cache across Docker builds without entering an image layer."
     },
+    link: {
+      label: "Read the full post: Advanced Dockerfile Techniques and Optimization",
+      href: "/post/docker/advanced-dockerfile-optimization"
+    },
     changelog: [
+      { date: "2026-09-19", change: "Cross-linked to the full Advanced Dockerfile Techniques post" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -346,7 +366,12 @@ export const snippets: Snippet[] = [
       type: "image/png",
       alt: "Illustration of a Docker container dropping root privileges for a dedicated, unprivileged application user."
     },
+    link: {
+      label: "Read the full post: Securing Your Docker Images",
+      href: "/post/docker/securing-docker-images"
+    },
     changelog: [
+      { date: "2026-09-19", change: "Cross-linked to the full Securing Your Docker Images post" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   }

@@ -94,3 +94,5 @@ Compose won't start `web` until `db`'s health check reports healthy — a far mo
 ## Key Takeaway
 
 `HEALTHCHECK` turns "is the process running" into "is the process actually ready," which is what `depends_on`'s `condition: service_healthy` and most orchestrators actually need to sequence startup correctly. Keep the check itself cheap and give slow-starting services a real `--start-period`.
+
+For the rest of the Compose picture — services, networking, volumes, and `.env` — see the full [Docker Compose for Local Dev Environments](/post/docker/docker-compose-for-local-dev) guide.

@@ -80,3 +80,5 @@ Naming both stages lets you build either one independently — handy for running
 ## Key Takeaway
 
 Two `FROM` lines and one `COPY --from=` is usually all it takes to stop shipping a compiler and a pile of devDependencies to production. Adjust the build command and entry point for your stack, and the pattern carries over directly to Go, Rust, Java, or any other compiled or transpiled language.
+
+For the full picture — naming stages, `--target`, and the tradeoffs between `-slim` and `-alpine` final bases — see the full [Writing Efficient Multi-Stage Dockerfiles](/post/docker/multi-stage-dockerfiles) guide.
