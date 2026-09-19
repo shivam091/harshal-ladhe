@@ -1,0 +1,122 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("perfect-centering-with-flexbox");
+
+## Introduction
+
+"How do I center a div?" is one of the oldest running jokes in CSS — for years the honest answer involved `position: absolute`, a guessed `top`/`left`, and a `transform: translate(-50%, -50%)` (or a negative-margin trick that needed the element's exact width and height ahead of time).
+
+Flexbox collapsed all of that into three declarations on the parent:
+
+<CodeBlock language="css">
+{`
+  .center-anything {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`}
+</CodeBlock>
+
+No known width, no known height, no transform. This snippet is the focused reference for that pattern — what each line actually does, the newer one-line shorthand, and the variations you'll actually reach for.
+
+<RainbowDivider />
+
+## The Core Pattern
+
+Two declarations do the centering, and they split cleanly by axis:
+
+- **`justify-content: center`** centers along the **main axis** — horizontal by default, since `flex-direction: row` is the initial value.
+- **`align-items: center`** centers along the **cross axis** — vertical by default.
+
+Set both, and you get centering on both axes at once. Precision matters here: this centers the **child (or children)** within the parent. With exactly one child, that child is centered as a single block — which is the classic "center a div" case. With multiple children, they're centered *as a group*, sitting together in the middle of the container rather than each one individually centered in its own slot. If you want several children centered individually, you'd give each its own centering context (or reach for Grid's `place-items`, which — unlike Flexbox — does apply per-item on both axes).
+
+<RainbowDivider />
+
+## The One-Line Shorthand
+
+Both properties above can collapse into a single declaration using `place-content` — with one catch:
+
+<CodeBlock language="css">
+{`
+  .center-anything {
+    display: flex;
+    flex-wrap: wrap;     /* required — see the warning below */
+    place-content: center; /* shorthand for align-content + justify-content */
+  }
+`}
+</CodeBlock>
+
+`place-content: center` sets `align-content` and `justify-content` to `center` in one declaration. In a flex container, `justify-content` genuinely is the main-axis distribution property, so the horizontal half always works. But by spec, a flex container only counts as "single-line" — and `align-content` only has an effect — when `flex-wrap` is *not* `nowrap`. Since `nowrap` is the default, `place-content: center` on a bare `display: flex` silently centers only one axis: the vertical half quietly does nothing. Add `flex-wrap: wrap`, and that single wrapped line is exactly the kind of line `align-content` does position — which is what makes the one-liner actually center both axes.
+
+<Warning title="place-content, not place-items">
+  Don't reach for `place-items: center` here either — it's a shorthand for a different pair of properties (`align-items` + `justify-items`), and `justify-items` **has no effect on flex items at all** (it's a Grid/block-layout property). So `place-items: center` in a flex container only centers vertically, via its `align-items` half — the horizontal half silently does nothing, because there's no such thing as `justify-items` for a flex child to obey. `place-content: center` (with `flex-wrap: wrap`) is the shorthand that actually works for centering; the explicit `justify-content` + `align-items` pair from the section above needs no such caveat and remains the safer default.
+</Warning>
+
+<RainbowDivider />
+
+## Try It Live
+
+Toggle `justify-content: center` and `align-items: center` independently below to see the un-centered, one-axis-centered, and both-axes-centered states side by side.
+
+<Sandbox slug="perfect-centering-with-flexbox" />
+
+<RainbowDivider />
+
+## Centering Without Knowing the Container's Size
+
+The old absolute-positioning + negative-margin trick needed the centered element's exact width and height baked into the CSS (`margin-top: -${height / 2}px`, and so on) — change the content, and the offsets went stale.
+
+This Flexbox pattern doesn't care about any of that. It works regardless of the parent's dimensions, regardless of the child's dimensions, and regardless of whether there's one child or several — the browser does the measuring and distributing at layout time, not you at author time. That's the whole reason it replaced the old tricks rather than just supplementing them.
+
+<RainbowDivider />
+
+## Common Variations
+
+**Horizontal only** — leave `align-items` at its default (`stretch`) and set only the main axis:
+
+<CodeBlock language="css">
+{`
+  .center-horizontal {
+    display: flex;
+    justify-content: center;
+  }
+`}
+</CodeBlock>
+
+**Vertical only** — the reverse; leave `justify-content` alone:
+
+<CodeBlock language="css">
+{`
+  .center-vertical {
+    display: flex;
+    align-items: center;
+  }
+`}
+</CodeBlock>
+
+**A centered element with a max-width** — the classic modal/dialog overlay. The overlay centers the modal as a flex child; the modal's own `max-width` keeps it from stretching edge-to-edge on wide screens:
+
+<CodeBlock language="css">
+{`
+  .overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal {
+    max-width: 32rem; /* the centering pattern doesn't fight this — it just centers whatever size the child ends up */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`display: flex` with `align-items: center` and `justify-content: center` centers a child on both axes without ever needing to know the parent's or child's dimensions — the two properties split cleanly by axis, main and cross, and either can be dropped on its own for single-axis centering. The one-line `place-content: center` shorthand can replace both, but only alongside `flex-wrap: wrap` (its `align-content` half is a no-op under the default `nowrap`) — and never reach for `place-items: center` instead, since `justify-items` is inert on flex items and would quietly leave you centered on only one axis.
+
+For the full alignment picture — `justify-content`, `align-items`, `align-self`, and `align-content` — see [Mastering Flexbox Alignment](/post/css/mastering-flexbox-alignment). If you're starting from zero, [Getting Started with Flexbox](/post/css/getting-started-with-flexbox) covers the basics this pattern builds on.

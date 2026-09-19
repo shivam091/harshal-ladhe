@@ -347,6 +347,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "perfect-centering-with-flexbox",
+    title: "Perfect Centering with Flexbox",
+    excerpt: "display: flex, align-items: center, justify-content: center — no known width or height required.",
+    description: "Center anything on both axes with three Flexbox declarations, plus the newer place-content: center one-liner and why place-items: center doesn't work the same way on a flex container.",
+    link: {
+      label: "Mastering Flexbox Alignment",
+      href: "/post/css/mastering-flexbox-alignment"
+    },
+    category: ["CSS"],
+    tags: ["css", "flexbox", "justify-content", "align-items", "centering", "layout"],
+    image: {
+      path: "/assets/img/goodies/snippets/perfect-centering-with-flexbox/cover.webp",
+      width: 1536,
+      height: 1024,
+      type: "image/webp",
+      alt: "A single box perfectly centered inside a container on both axes, with justify-content and align-items arrows pointing along the horizontal and vertical directions."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

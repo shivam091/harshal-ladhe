@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Centering Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Centering a Box with Flexbox</h1>
+        <p>Toggle each axis independently to see the un-centered, one-axis, and both-axes states.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Centering preview">
+        <div id="center-container" class="center-container">
+          <div class="center-child">child</div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Axes</legend>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="justify-toggle" />
+          <span><code>justify-content: center</code> (main axis)</span>
+        </label>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="align-toggle" />
+          <span><code>align-items: center</code> (cross axis)</span>
+        </label>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

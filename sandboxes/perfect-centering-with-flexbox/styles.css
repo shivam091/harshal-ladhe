@@ -1,0 +1,24 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+}
+
+/* The container being demoed — a fixed, generous size so both un-centered and centered states are visually obvious. */
+.center-container {
+  display: flex;
+  min-block-size: 14rem;
+  border-radius: var(--pg-radius-sm);
+}
+
+.center-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 6rem;
+  block-size: 4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  border-radius: var(--pg-radius-sm);
+  box-shadow: var(--pg-shadow-sm);
+}

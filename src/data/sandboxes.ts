@@ -231,6 +231,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Toggle between short and long content in a mock viewport to see the footer stay flush at the bottom, or get pushed down and scroll naturally.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "perfect-centering-with-flexbox",
+    title: "Perfect Centering Demo",
+    description: "Toggle justify-content and align-items independently to see the un-centered, one-axis-centered, and both-axes-centered states.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 
