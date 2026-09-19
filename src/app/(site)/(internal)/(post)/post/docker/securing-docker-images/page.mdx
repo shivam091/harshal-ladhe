@@ -1,0 +1,247 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("securing-docker-images");
+
+## Introduction
+
+A working, well-optimized image isn't automatically a *safe* one. Image size and image security are related — a smaller image usually has a smaller attack surface — but they're distinct goals, and optimizing purely for layer count or megabytes can still leave you with a lean image that runs as root and ships a leaked API token in its build history. This post is about the other half of the job: hardening the images you actually ship.
+
+We're assuming you're already comfortable with Dockerfile fundamentals, multi-stage builds, and BuildKit features like cache and secret mounts from earlier posts in this series. Here we go one level deeper.
+
+By the end of this post, you'll be able to:
+
+- Run application processes as a dedicated non-root user, and avoid the file-ownership pitfalls that trip people up when they do
+- Choose a base image with security tradeoffs — not just size — in mind
+- Scan images for known vulnerabilities using `docker scout` and Trivy, and reason about where that fits in CI
+- Explain precisely why `ARG` and `ENV` are unsafe for secrets, down to the mechanism
+- Use BuildKit secret mounts for build-time secrets and orchestrator-level injection for runtime secrets
+- Apply additional runtime hardening: read-only root filesystems, capability dropping, and avoiding `--privileged`
+
+<RainbowDivider />
+
+## Running as a Non-Root User
+
+By default, unless a base image says otherwise, a container's main process runs as `root` inside the container. That's convenient in development and risky in production, for two reasons.
+
+First, container isolation isn't an absolute security boundary. If an attacker exploits a container-escape vulnerability — a kernel bug, a misconfigured mount — the privilege they land with on the host is determined by the privilege they had inside the container. Root inside plus a successful escape is effectively root-equivalent outside. Running unprivileged doesn't stop every escape, but it removes an entire class of "and then it was trivial" outcomes.
+
+Second, even without any escape, root inside the container is a magnet for plain misconfiguration: a process writing files it shouldn't, a bind-mounted host directory ending up root-owned, a dependency that behaves differently — and more dangerously — when it detects `UID 0`.
+
+The fix is a dedicated, unprivileged user, created and switched to before the entrypoint runs. The exact commands depend on your base image's userland:
+
+<CodeBlock language="docker">
+{`
+  # Debian/Ubuntu-based images (e.g. node:20-slim) use groupadd/useradd
+  FROM node:20-slim
+
+  WORKDIR /app
+  COPY --chown=appuser:appgroup . .
+
+  RUN groupadd --gid 1001 appgroup \\
+      && useradd --uid 1001 --gid appgroup --shell /bin/false appuser
+
+  USER appuser
+  CMD ["node", "server.js"]
+`}
+</CodeBlock>
+
+Alpine-based images don't ship `groupadd`/`useradd` — they use BusyBox's `addgroup`/`adduser`, with slightly different flags:
+
+<CodeBlock language="docker">
+{`
+  # Alpine-based images use addgroup/adduser instead
+  FROM node:20-alpine
+
+  WORKDIR /app
+
+  RUN addgroup --gid 1001 appgroup \\
+      && adduser --uid 1001 --ingroup appgroup --disabled-password --shell /sbin/nologin appuser
+
+  COPY --chown=appuser:appgroup . .
+  USER appuser
+  CMD ["node", "server.js"]
+`}
+</CodeBlock>
+
+Many official images already bake in a usable unprivileged user (`node`, `nginx`) — check before rolling your own.
+
+The gotcha nearly everyone hits first: any directory the app writes to at runtime — a cache folder, an upload directory — must be owned by the new user *before* you switch to it with `USER`, or the app hits a permission error that has nothing to do with your application logic.
+
+<Warning title="chown before you switch USER, not after">
+Once `USER` takes effect, every subsequent instruction — and the eventual container process — runs as that user, which typically can't `chown` anything. `RUN mkdir /app/.cache && chown appuser:appgroup /app/.cache` must happen while you're still root, and `COPY --chown=` should be used for files the app modifies later. Doing the `chown` after `USER` fails silently depending on existing permissions, and the failure you'll actually see is an unrelated-looking `EACCES` at container startup, long after the build succeeded.
+</Warning>
+
+<RainbowDivider />
+
+## Choosing a Minimal Base Image
+
+We covered the size and layering tradeoffs between full OS images, `-slim`, `-alpine`, and distroless images in more depth earlier in this series, so we won't re-litigate that here. Worth revisiting through a security lens, though: every package installed in a base image is something that can, someday, have a CVE disclosed against it. A base image with fewer packages isn't just smaller on disk — it's a smaller list of things a scanner can ever flag, and a smaller list of things an attacker who gets a shell can pivot with.
+
+That's also why distroless images are attractive in production even when their size advantage over `-alpine` is marginal: there's no `/bin/sh` to drop into even after achieving code execution, and no package manager to abuse to pull in additional tools.
+
+<Details summary="Base image comparison: size vs. security-relevant properties">
+
+| | Full OS (e.g. `ubuntu`) | `-slim` variant | `-alpine` variant | Distroless |
+|---|---|---|---|---|
+| Relative size | Largest | Medium | Small | Small to smallest |
+| Shell available | Yes | Yes | Yes (BusyBox `ash`) | No (except `:debug` tags) |
+| Package manager available | Yes (`apt`) | Yes (`apt`, trimmed) | Yes (`apk`) | No |
+| Typical attack surface | Largest — full utility set | Reduced, still `apt`-based | Small — musl libc, minimal userland | Smallest — nothing to abuse post-exploitation |
+
+</Details>
+
+<RainbowDivider />
+
+## Scanning Images for Known Vulnerabilities
+
+A minimal base image reduces exposure; it doesn't eliminate it, and it tells you nothing about vulnerabilities already present in the packages that do end up in your final image. That's what scanning is for: a scanner inspects installed OS packages and language-level libraries baked into an image, matches their versions against CVE databases, and reports which have known, disclosed vulnerabilities, typically with a severity rating.
+
+**Docker Scout** is built into the Docker CLI:
+
+<CodeBlock language="bash">
+{`
+  docker scout cves myapp:latest
+`}
+</CodeBlock>
+
+<CodeBlock language="bash">
+{`
+  ## Overview
+                       │ Analyzed Image
+  ────────────────────┼──────────────────────
+    Target             │ myapp:latest
+    vulnerabilities     │ 2C 5H 11M 4L
+
+  ## Packages and Vulnerabilities
+    0C 1H 2M 0L  openssl 3.0.11-1~deb12u1
+      https://scout.docker.com/v/CVE-2024-XXXX
+`}
+</CodeBlock>
+
+**Trivy** is a widely used open-source alternative that isn't tied to a platform and drops easily into any CI pipeline as a single binary:
+
+<CodeBlock language="bash">
+{`
+  trivy image myapp:latest
+`}
+</CodeBlock>
+
+<CodeBlock language="bash">
+{`
+  myapp:latest (debian 12.5)
+  Total: 22 (LOW: 4, MEDIUM: 11, HIGH: 5, CRITICAL: 2)
+
+  ┌─────────┬───────────────┬──────────┬───────────────┬───────────────┐
+  │ Library │ Vulnerability │ Severity │ Installed Ver │ Fixed Version │
+  ├─────────┼───────────────┼──────────┼───────────────┼───────────────┤
+  │ openssl │ CVE-2024-XXXX │ HIGH     │ 3.0.11        │ 3.0.13        │
+  └─────────┴───────────────┴──────────┴───────────────┴───────────────┘
+`}
+</CodeBlock>
+
+Either works as a manual check, but the real value comes from wiring a scan into CI as a build gate: fail (or at minimum, loudly warn) the pipeline when a build introduces new critical- or high-severity findings that weren't present before, rather than relying on someone remembering to check. Both tools support severity thresholds and exit codes for exactly this — we won't go into any specific CI platform's syntax here, the point is that the gate exists somewhere in your pipeline.
+
+<RainbowDivider />
+
+## Handling Secrets Safely
+
+This is the section to get exactly right, because getting it wrong doesn't just create a *risk* — it creates a concrete, recoverable leak sitting in a registry somewhere.
+
+It's tempting to pass a secret — an npm token, an API key, a database password — into a build via `ARG` or `ENV`. Neither is safe, and the reason is mechanical, not theoretical.
+
+`ARG` values are recorded in the image's build history. Any `RUN` instruction referencing an `ARG` has that value baked into the command string for that layer, and `docker history --no-trunc <image>` prints it back out in full — no exploit required, just a `docker pull` and one command. `ENV` is arguably worse: a variable set with `ENV` becomes part of the final image's config metadata, persisted in the image manifest and visible via `docker inspect <image>` — no need to even run the container.
+
+<Warning title="ARG and ENV values are not build-time-only — they persist in the shippable artifact">
+Anyone who can run `docker history --no-trunc` against your image, or `docker inspect` it, or simply `docker pull` it from a registry you push to, can potentially recover any secret passed via `ARG` or set via `ENV`. This isn't a misconfiguration edge case — it's documented, intended behavior of both instructions. Treat any pushed image with a secret in its `ARG`/`ENV` history as already compromised, and rotate the secret.
+</Warning>
+
+The fix splits into two cases depending on *when* the secret is needed.
+
+**Build-time secrets** — needed only while building, like a private npm token for `npm install`, with no reason to exist in the final image — belong in a BuildKit secret mount:
+
+<CodeBlock language="docker">
+{`
+  # syntax=docker/dockerfile:1
+  FROM node:20-slim AS builder
+
+  WORKDIR /app
+  COPY package.json package-lock.json ./
+
+  RUN --mount=type=secret,id=npm_token \\
+      export NPM_TOKEN=$(cat /run/secrets/npm_token) && \\
+      npm config set //registry.npmjs.org/:_authToken=$NPM_TOKEN && \\
+      npm ci && \\
+      npm config delete //registry.npmjs.org/:_authToken
+`}
+</CodeBlock>
+
+built with:
+
+<CodeBlock language="bash">
+{`
+  docker build --secret id=npm_token,src=./npm_token.txt -t myapp .
+`}
+</CodeBlock>
+
+The secret is mounted only into the filesystem visible to that one `RUN` instruction, at a path that exists only for its duration. It's never written into any layer and never appears in `docker history` — precisely the property `ARG` and `ENV` lack.
+
+**Runtime secrets** — a database password, an API key the running application needs — shouldn't be baked into the image at all, under any mechanism, because an image is meant to be built once and deployed to multiple environments with different credentials. Inject them at the point the container actually runs, via Compose's `secrets:` key mounting a secret as a file, Kubernetes `Secret` objects mounted as volumes or set at pod creation, or a dedicated secrets manager the application queries at startup. The common thread: the secret's lifecycle stays decoupled from the image's, so rotating a credential never requires rebuilding or repushing anything.
+
+<RainbowDivider />
+
+## A Few More Hardening Practices
+
+**Read-only root filesystem.** `--read-only` makes a container's root filesystem immutable, so a compromised process can't write a payload to disk or persist anything beyond the container's lifetime. Most applications still need somewhere writable, so pair it with a narrowly scoped `--tmpfs /tmp` or a mounted volume for just that path, rather than leaving the whole filesystem writable for one directory's sake.
+
+**Dropping Linux capabilities.** Containers get a default capability set broader than almost any application needs — most services don't need `CAP_NET_RAW` or `CAP_SYS_MODULE`. Running with `--cap-drop=ALL` and adding back only what's genuinely required (often nothing, for a typical web service) shrinks what a compromised process can do even with code execution inside the container.
+
+**Avoiding `--privileged`.** This flag disables most of the isolation Docker provides — full device access, the full capability set — turning the container into something much closer to a chroot with extra steps. A handful of legitimate uses exist (certain CI runners doing Docker-in-Docker), but seeing `--privileged` during review should be treated as a major red flag demanding justification, not waved through as a convenience.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+### Do I need to scan every single build, including local development builds?
+
+Not necessarily — the important gate is on images destined for a registry or production. Scanning in CI on every merge to your main branch, plus on a schedule since new CVEs get disclosed against unchanged code, is generally the right balance.
+
+---
+
+### If I switch to a non-root user, do I lose the ability to bind to low ports like 80 or 443?
+
+Yes, by default — ports below 1024 require elevated privileges on Linux. The common fix is listening on a high port (e.g. 8080) inside the container and mapping it to 80/443 at the host or load-balancer level, rather than granting the process root or `CAP_NET_BIND_SERVICE`.
+
+---
+
+### Is Alpine always more secure than a Debian slim image?
+
+Not automatically — Alpine's smaller package set reduces surface area, but its musl libc has occasionally caused subtly different behavior compared to glibc for certain workloads. Security is one input to the decision, not the only one.
+
+---
+
+### Can Docker Scout or Trivy catch vulnerabilities in my own application code?
+
+Both go beyond OS packages into language-level dependency manifests (`package-lock.json`, `requirements.txt`, `go.sum`), so a vulnerable dependency version shows up too. Neither substitutes for SAST or a dependency-review tool aimed at your own source code.
+
+---
+
+### What if I've already accidentally pushed an image with a secret in its history?
+
+Rotate the secret immediately — treat the value as burned regardless of whether you can prove it was pulled. Deleting the image or tag afterward is good hygiene, but doesn't undo a pull that already happened; rotation is the step that actually closes the exposure.
+
+<RainbowDivider />
+
+## Conclusion
+
+None of the practices in this post are exotic — non-root users, minimal base images, vulnerability scanning, and keeping secrets out of image layers are all well-supported by tooling and cheap relative to the risk they close off. The discipline is treating them as defaults for every image you build, not a checklist reached for after an incident.
+
+**Key Takeaways:**
+
+- Running as root inside a container turns a container-escape vulnerability into a much worse outcome, and invites plain misconfiguration even without one
+- `chown` writable directories to your dedicated user *before* the `USER` instruction — doing it after silently fails
+- Fewer packages in your base image means fewer things that can ever have a CVE disclosed against them; distroless goes further by removing the shell and package manager entirely
+- `docker scout cves` and `trivy image` both scan installed packages against CVE databases — wire one into CI so builds fail or warn on new critical/high findings
+- `ARG` values persist in `docker history --no-trunc`, and `ENV` values persist in the image's inspectable config — neither is safe for secrets
+- Use BuildKit's `--mount=type=secret` for build-time-only secrets; they never touch a layer
+- Inject runtime secrets via your orchestrator or a secrets manager, decoupled from the image entirely
+- `--read-only` plus a scoped `tmpfs`, `--cap-drop=ALL` with minimal `--cap-add`, and avoiding `--privileged` round out a hardened runtime posture

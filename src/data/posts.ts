@@ -464,6 +464,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "securing-docker-images",
+    title: "Securing Your Docker Images",
+    excerpt: "A lean image isn't automatically a safe one.",
+    description: "Harden your Docker images with non-root users, minimal base images, vulnerability scanning with Docker Scout and Trivy, and safe secrets handling with BuildKit secret mounts.",
+    category: ["Docker"],
+    tags: ["docker", "docker-security", "non-root-user", "minimal-base-images", "vulnerability-scanning", "secrets-management", "containerization", "advanced", "devops"],
+    signoff: "This felt like the right note to end the series on — all the optimization in the world doesn't matter much if the image ships root access and a leaked token in its history. Thanks for following the whole arc from FROM/COPY/RUN to hardened, scanned, secrets-safe images — go audit one of your own. 🔒",
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

@@ -595,5 +595,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "layer-squashing": {
     title: "Squashing and Flattening Docker Layers",
     description: "Techniques for merging multiple image layers into fewer, smaller layers to reduce image size and layer-count overhead."
+  },
+  "docker-security": {
+    title: "Docker and Container Security Practices",
+    description: "Guides on hardening containers and images — from user privileges and base image choice to scanning and secret handling."
+  },
+  "non-root-user": {
+    title: "Running Containers as a Non-Root User",
+    description: "Why containers should drop root privileges by default, and how to configure a dedicated user in a Dockerfile."
+  },
+  "minimal-base-images": {
+    title: "Choosing Minimal Base Images",
+    description: "Comparing base image options like slim, alpine, and distroless variants for smaller attack surface and faster pulls."
+  },
+  "vulnerability-scanning": {
+    title: "Scanning Container Images for Vulnerabilities",
+    description: "Using image-scanning tools to catch known vulnerabilities in base images and dependencies before they reach production."
+  },
+  "secrets-management": {
+    title: "Handling Secrets in Docker Builds and Containers",
+    description: "Safe patterns for passing credentials and secrets into builds and containers without leaking them into image layers or history."
   }
 };
