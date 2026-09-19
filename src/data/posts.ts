@@ -452,6 +452,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "advanced-dockerfile-optimization",
+    title: "Advanced Dockerfile Techniques and Optimization",
+    excerpt: "Push Dockerfile optimization past multi-stage builds.",
+    description: "Advanced Dockerfile techniques using BuildKit — persistent cache mounts, secret mounts, distroless runtime images, and the real story behind layer squashing.",
+    category: ["Docker"],
+    tags: ["docker", "dockerfile", "buildkit", "cache-mounts", "distroless", "layer-squashing", "build-optimization", "advanced", "devops"],
+    signoff: "Cache mounts and distroless bases are the kind of techniques that don't show up until you go looking for them, and I wanted this post to be the thing that surfaces them earlier than they surfaced for me. Thanks for going past multi-stage builds into BuildKit's sharper tools — go squeeze a build that's still slower than it should be. 🛠️",
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

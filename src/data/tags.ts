@@ -579,5 +579,21 @@ export const tagMeta: Record<string, TagMeta> = {
   "dotenv": {
     title: "Managing Environment Variables with .env Files",
     description: "Practices for storing and loading configuration and secrets through .env files, and keeping them out of version control."
+  },
+  "buildkit": {
+    title: "Docker BuildKit Features and Techniques",
+    description: "Guides to BuildKit — Docker's modern build engine — covering cache mounts, secret mounts, and parallelized build execution."
+  },
+  "cache-mounts": {
+    title: "BuildKit Cache Mounts Explained",
+    description: "Using BuildKit's --mount=type=cache to persist package-manager caches across builds without baking them into image layers."
+  },
+  "distroless": {
+    title: "Distroless and Minimal Runtime Images",
+    description: "Building runtime images that ship only an application and its dependencies, without a shell, package manager, or OS utilities."
+  },
+  "layer-squashing": {
+    title: "Squashing and Flattening Docker Layers",
+    description: "Techniques for merging multiple image layers into fewer, smaller layers to reduce image size and layer-count overhead."
   }
 };
