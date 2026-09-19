@@ -10,6 +10,8 @@ Docker exists to make that sentence irrelevant. Instead of describing an environ
 
 This post is a ground-up introduction to that recipe format: the core mental model of images and containers, a real Dockerfile walked through line by line, and the everyday commands and gotchas that trip up almost everyone in their first week with Docker.
 
+This is **Part 1** of a six-part Docker series, starting here with the fundamentals and moving through layer caching, multi-stage builds, and Compose, up to BuildKit optimization and image security.
+
 By the end of this post, you'll be able to:
 
 - Explain the difference between a Docker image and a Docker container, and why that distinction matters
@@ -251,3 +253,5 @@ The instructions covered here — `FROM`, `WORKDIR`, `COPY`, `RUN`, `EXPOSE`, `C
 - `docker ps`, `docker logs`, `docker stop`, and `docker rm` cover most day-to-day container inspection and cleanup
 - `CMD` provides overridable default arguments; `ENTRYPOINT` fixes the executable that always runs
 - A `.dockerignore` file keeps builds fast and keeps `.git`, `node_modules`, and secrets out of your image
+
+🔗 **Up Next (Part 2):** [Understanding Docker Layers and Caching](/post/docker/docker-layers-and-caching) — once these instructions feel natural, the next post covers why their *order* determines how fast your builds run.

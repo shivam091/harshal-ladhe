@@ -10,6 +10,8 @@ That's the "fat image" problem. A single-stage Dockerfile can't distinguish betw
 
 Multi-stage builds fix this at the Dockerfile level, with no separate build scripts or external orchestration required. You already know `FROM`, `COPY`, and layer caching from the fundamentals — this post is about combining them across multiple stages inside one file to produce a final image that contains only what the running process actually needs.
 
+This is **Part 3** of a six-part Docker series, moving from fundamentals into intermediate territory. It builds directly on [Dockerfile Basics for Beginners](/post/docker/dockerfile-basics-for-beginners) and [Understanding Docker Layers and Caching](/post/docker/docker-layers-and-caching) — start there first if `FROM`/`COPY`/`RUN` or the build cache still feel shaky.
+
 By the end of this post, you'll be able to:
 
 - Write a Dockerfile with multiple named stages using `FROM <image> AS <stage-name>`
@@ -199,3 +201,5 @@ Multi-stage builds turn "build tooling versus runtime needs" from a problem you 
 - Copy the narrowest artifact directory you can (`dist/`, not the whole `/app`), and never copy `node_modules` across stages — install it fresh in the runtime stage instead
 - `-slim` and `-alpine` are both reasonable lean final-stage bases; `-alpine`'s `musl` libc can occasionally cause issues with native Node addons built against `glibc`
 - The size and attack-surface reduction from a well-structured multi-stage build is often dramatic — routinely dropping images from hundreds of megabytes to tens
+
+🔗 **Up Next (Part 4):** [Docker Compose for Local Dev Environments](/post/docker/docker-compose-for-local-dev) — moves from a single Dockerfile to running a whole multi-container stack locally.

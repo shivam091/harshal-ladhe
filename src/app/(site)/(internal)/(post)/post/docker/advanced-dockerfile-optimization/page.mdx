@@ -8,6 +8,8 @@ If you've already got multi-stage builds and cache-friendly instruction ordering
 
 The next tier of optimization isn't expressible in plain Dockerfile syntax — it's BuildKit-specific: persistent cache directories that survive across builds without polluting the final image, secrets that never touch a layer or the build cache metadata, runtime bases stripped to nothing but the application and its direct dependencies, and, for the layers that do ship, techniques to reduce how many there are and how much dead weight they carry.
 
+This is **Part 5** of a six-part Docker series. It builds directly on [Writing Efficient Multi-Stage Dockerfiles](/post/docker/multi-stage-dockerfiles) and [Understanding Docker Layers and Caching](/post/docker/docker-layers-and-caching) — if multi-stage builds or the build cache still feel shaky, start there.
+
 By the end of this post, you'll be able to:
 
 - Use `RUN --mount=type=cache` to give package managers a persistent cache across builds without baking that cache into a layer
@@ -188,3 +190,5 @@ Cache mounts, secret mounts, distroless bases, and layer squashing all attack th
 - Distroless images shrink attack surface and size by dropping the shell and package manager, but break `docker exec ... sh`-style debugging — plan around `docker debug` or an ephemeral debug sidecar
 - `docker build --squash` is experimental, requires enabling experimental features, and has had inconsistent support across Docker versions — don't treat it as a stable default
 - Multi-stage builds achieve squashing's practical benefit — no stale files from earlier steps — as a natural side effect of only shipping the final stage, which is why they're the more commonly recommended approach today
+
+🔗 **Up Next (Part 6):** [Securing Your Docker Images](/post/docker/securing-docker-images) — the series' final post, on hardening the images these techniques help you build.

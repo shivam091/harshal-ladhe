@@ -414,6 +414,7 @@ export const posts: Post[] = [
     tags: ["docker", "dockerfile", "containers", "containerization", "docker-images", "devops", "beginner", "cli"],
     signoff: "Every instruction in this one — FROM, WORKDIR, COPY, RUN, CMD — is something I still type from muscle memory years in, and I hope walking through the Express example line by line makes that same muscle memory click faster for you than it did for me. Thanks for building your first image with me — go containerize something. 🐳",
     changelog: [
+      { date: "2026-09-19", change: "Added series navigation linking to the rest of the six-part Docker series" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -426,6 +427,7 @@ export const posts: Post[] = [
     tags: ["docker", "dockerfile", "docker-layers", "build-cache", "image-layers", "containerization", "beginner", "performance"],
     signoff: "The \"why is this build still slow\" question came up enough in my own projects that untangling exactly how the cache cascades felt worth writing down properly, whiteout layers and all. Thanks for sticking with the mechanics instead of just the rules of thumb — go reorder a Dockerfile and watch the CACHED lines stack up. ⚡",
     changelog: [
+      { date: "2026-09-19", change: "Added series navigation linking to the rest of the six-part Docker series" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -438,6 +440,7 @@ export const posts: Post[] = [
     tags: ["docker", "dockerfile", "multi-stage-builds", "build-optimization", "slim-images", "containerization", "devops", "intermediate"],
     signoff: "Splitting a Dockerfile into a disposable build stage and a lean runtime stage is one of those techniques that feels like a trick the first time it clicks and completely obvious every time after. Thanks for working through the full TypeScript example with me — go shrink an image that's been quietly shipping a whole compiler toolchain it doesn't need. 📦",
     changelog: [
+      { date: "2026-09-19", change: "Added series navigation linking to the rest of the six-part Docker series" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -450,6 +453,7 @@ export const posts: Post[] = [
     tags: ["docker", "docker-compose", "local-development", "containers", "networking", "volumes", "dotenv", "devops", "intermediate"],
     signoff: "Getting the service-name-not-localhost networking model to actually land took more than one confused debugging session of my own, so I tried to get ahead of that one early here. Thanks for wiring up services, volumes, and .env with me — go bring up a stack with one command instead of five. 🧩",
     changelog: [
+      { date: "2026-09-19", change: "Added series navigation linking to the rest of the six-part Docker series" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -462,6 +466,7 @@ export const posts: Post[] = [
     tags: ["docker", "dockerfile", "buildkit", "cache-mounts", "distroless", "layer-squashing", "build-optimization", "advanced", "devops"],
     signoff: "Cache mounts and distroless bases are the kind of techniques that don't show up until you go looking for them, and I wanted this post to be the thing that surfaces them earlier than they surfaced for me. Thanks for going past multi-stage builds into BuildKit's sharper tools — go squeeze a build that's still slower than it should be. 🛠️",
     changelog: [
+      { date: "2026-09-19", change: "Added series navigation linking to the rest of the six-part Docker series" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   },
@@ -474,6 +479,7 @@ export const posts: Post[] = [
     tags: ["docker", "docker-security", "non-root-user", "minimal-base-images", "vulnerability-scanning", "secrets-management", "containerization", "advanced", "devops"],
     signoff: "This felt like the right note to end the series on — all the optimization in the world doesn't matter much if the image ships root access and a leaked token in its history. Thanks for following the whole arc from FROM/COPY/RUN to hardened, scanned, secrets-safe images — go audit one of your own. 🔒",
     changelog: [
+      { date: "2026-09-19", change: "Added series navigation linking back through the six-part Docker series" },
       { date: "2026-09-19", change: "Initial publication" }
     ]
   }

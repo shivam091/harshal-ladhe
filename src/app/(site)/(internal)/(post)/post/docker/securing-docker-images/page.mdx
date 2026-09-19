@@ -8,6 +8,8 @@ A working, well-optimized image isn't automatically a *safe* one. Image size and
 
 We're assuming you're already comfortable with Dockerfile fundamentals, multi-stage builds, and BuildKit features like cache and secret mounts from earlier posts in this series. Here we go one level deeper.
 
+This is **Part 6**, the final post in this six-part Docker series. It leans most heavily on [Writing Efficient Multi-Stage Dockerfiles](/post/docker/multi-stage-dockerfiles) and [Advanced Dockerfile Techniques and Optimization](/post/docker/advanced-dockerfile-optimization) — cache and secret mounts in particular come up again here.
+
 By the end of this post, you'll be able to:
 
 - Run application processes as a dedicated non-root user, and avoid the file-ownership pitfalls that trip people up when they do
@@ -234,6 +236,8 @@ Rotate the secret immediately — treat the value as burned regardless of whethe
 ## Conclusion
 
 None of the practices in this post are exotic — non-root users, minimal base images, vulnerability scanning, and keeping secrets out of image layers are all well-supported by tooling and cheap relative to the risk they close off. The discipline is treating them as defaults for every image you build, not a checklist reached for after an incident.
+
+That closes out the series: from [Dockerfile Basics for Beginners](/post/docker/dockerfile-basics-for-beginners) through layer caching, multi-stage builds, and Compose, to the BuildKit optimization and hardening covered in this post and the last. Keep this one bookmarked in particular — of everything covered, it's the post worth revisiting every time you're about to push a new image.
 
 **Key Takeaways:**
 

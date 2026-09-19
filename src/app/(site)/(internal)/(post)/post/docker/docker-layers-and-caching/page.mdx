@@ -8,6 +8,8 @@ You change one line in `server.js`, run `docker build`, and go make coffee — b
 
 Docker's build cache exists precisely to make this fast. Used correctly, a code-only change rebuilds in seconds, because expensive steps like installing dependencies get reused from a previous build. Ignored, every build pays the full cost, no matter how small the change was.
 
+This is **Part 2** of a six-part Docker series. [Part 1: Dockerfile Basics for Beginners](/post/docker/dockerfile-basics-for-beginners) covers `FROM`/`COPY`/`RUN`/`CMD` and the images-vs-containers mental model this post assumes — start there if any of that feels shaky.
+
 By the end of this post, you'll be able to:
 
 - Explain how a Docker image is really a stack of layers, not a single blob
@@ -236,3 +238,5 @@ The Docker build cache isn't magic or unreliable — it's a mechanical set of ru
 - Combine related shell commands into one `RUN` so temporary files never get committed to their own persisted layer
 - Deleting a file in a later layer removes it from the final view but doesn't shrink the earlier layer that created it
 - `.dockerignore` keeps the build context small and prevents irrelevant files from entering a `COPY`'s cache checksum
+
+🔗 **Up Next (Part 3):** [Writing Efficient Multi-Stage Dockerfiles](/post/docker/multi-stage-dockerfiles) — takes the caching model from this post and uses it to separate build-time tooling from a slim runtime image.

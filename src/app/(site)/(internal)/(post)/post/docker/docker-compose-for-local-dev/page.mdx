@@ -10,6 +10,8 @@ You *can* wire all of that together by hand with a string of `docker run` comman
 
 Docker Compose solves this by describing your entire local stack — services, networks, volumes, configuration — in a single declarative file. One command brings the whole thing up in the right order, wired together correctly, every time. This post assumes you're already comfortable with the basics of Dockerfiles, images, and containers, and focuses specifically on using Compose to run a realistic multi-container dev environment on your own machine.
 
+This is **Part 4** of a six-part Docker series. If you haven't written a Dockerfile yet, [Dockerfile Basics for Beginners](/post/docker/dockerfile-basics-for-beginners) covers the fundamentals this post builds on.
+
 By the end of this post, you'll be able to:
 
 - Read and write a `compose.yaml` file describing multiple services
@@ -285,3 +287,5 @@ Compose doesn't introduce new Docker concepts so much as it removes the tedium a
 - Never commit a `.env` with real secrets — gitignore it and commit a `.env.example` instead
 - Plain `depends_on` only waits for a container to start; pair it with a `healthcheck:` and `condition: service_healthy` to wait for real readiness
 - A handful of commands — `up -d`, `down`, `logs -f`, `exec`, `ps`, `build`, `restart` — cover nearly all day-to-day operation of a local stack
+
+🔗 **Up Next (Part 5):** [Advanced Dockerfile Techniques and Optimization](/post/docker/advanced-dockerfile-optimization) — back to a single Dockerfile, this time squeezing more out of it with BuildKit-specific features.
