@@ -168,6 +168,25 @@ export const tutorials: Tutorial[] = [
       caption: "An element promoted to its own layer for smoother animation."
     },
     changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+  },
+  {
+    slug: "dynamic-viewport-height-units",
+    title: "Dynamic Viewport Height Units: `dvh`, `svh`, and `lvh`",
+    excerpt: "Tracks the mobile address bar's actual visible height live.",
+    description: "100vh has always meant the LARGEST possible viewport on mobile, so content sits behind the address bar until it's scrolled away. svh assumes the smallest viewport, lvh assumes the largest, and dvh is the only one of the three that tracks the browser chrome's actual current state, live.",
+    category: ["CSS"],
+    tags: ["css", "viewport-units", "dvh", "responsive-design", "mobile", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/dynamic-viewport-height-units/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Dynamic viewport units (dvh, svh, and lvh) illustrated on three mobile screens, showing how each unit represents the dynamic, small, and large viewport heights.",
+      caption: "Small, large and dynamic viewport heights as mobile browser bars show and hide."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication." }
+    ]
   }
 ];
 
