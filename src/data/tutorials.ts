@@ -25,6 +25,7 @@ export const tutorials: Tutorial[] = [
       caption: "The classic header, footer, two sidebars and centre column, built with Grid."
     },
     changelog: [
+      { date: "2026-09-19", change: "Added cross-reference to tutorial 'Dynamic Viewport Height Units'" },
       { date: "2026-07-27", change: "Initial publication" }
     ]
   },
