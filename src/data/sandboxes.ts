@@ -196,6 +196,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Set flex-grow, flex-shrink, and flex-basis on three items and a container width, then compare your hand-calculated widths against the real computed widths read from the DOM.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "flexbox-gotchas-and-debugging-techniques",
+    title: "min-width: auto Trap Demo",
+    description: "Toggle min-width: 0 on a flex item holding a long unbreakable filename to see the auto min-content floor stop flex-shrink in real time.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 

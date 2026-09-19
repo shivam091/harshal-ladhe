@@ -504,6 +504,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "flexbox-gotchas-and-debugging-techniques",
+    title: "Flexbox Gotchas and Debugging Techniques",
+    excerpt: "The min-width: auto trap, overflow surprises, and nested flex contexts that break in production.",
+    description: "A field guide to the CSS Flexbox bugs that actually show up in production — the min-width: auto trap, overflow in flex children, nested flex contexts — and how to debug and fix each one.",
+    category: ["CSS"],
+    tags: ["css", "flexbox", "debugging", "overflow", "advanced", "layout", "devtools"],
+    image: {
+      path: "/assets/img/posts/css/flexbox-gotchas-and-debugging-techniques/cover.webp",
+      width: 1200,
+      height: 630,
+      type: "image/webp",
+      alt: "Illustration of a flex row overflowing its container next to a DevTools panel highlighting a computed min-width value, representing common Flexbox debugging scenarios."
+    },
+    signoff: "This one's the field guide I wish I'd had the first dozen times a flex layout misbehaved on me — the min-width: auto trap especially, since it explains more mystery bugs than any other single mechanism in Flexbox. Thanks for sticking with the series all the way through. Go debug something with confidence. 🔍",
+    pinned: true,
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ],
   }
 ];
 

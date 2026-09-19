@@ -1,0 +1,72 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+}
+
+/*
+  The container under test: a FIXED, deliberately narrow 420px flex row, so its 3 columns are
+  forced to compete for space. demo-area (shared playground chrome) already scrolls (overflow:
+  auto), so when the unfixed filename column refuses to shrink, the row's real overflow is
+  visible as horizontal scroll rather than being silently clipped.
+*/
+.demo-row {
+  display: flex;
+  gap: 0.75rem;
+  inline-size: 420px;
+  padding: 0.25rem;
+}
+
+/* Each column is an equal-share flex item; nothing here overrides the browser's initial min-width: auto. */
+.demo-col {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-block: 0.75rem;
+  padding-inline: 0.875rem;
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: var(--pg-radius-sm);
+}
+
+/* Visually flags the column actually being tested, independent of the fix being on or off. */
+.demo-col--file {
+  border-color: var(--pg-primary-soft);
+}
+
+.demo-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
+}
+
+.demo-value {
+  font-family: var(--pg-mono);
+  font-size: 0.8rem;
+  color: var(--pg-text);
+}
+
+/*
+  The long, unbreakable string. No spaces means the browser's min-content measurement for this
+  span (and therefore for .demo-col--file, its flex-item ancestor) is the string's full rendered
+  width — this is what gives the "before" state a floor well past the 420px row.
+*/
+.demo-value--file {
+  white-space: nowrap;
+}
+
+/*
+  Applied only once the toggle is checked. min-width: 0 goes on the FLEX ITEM (.demo-col--file)
+  to remove its automatic min-content floor — that's the actual fix. The overflow/ellipsis trio
+  on the inner span is a separate, cosmetic choice for how the now-shrinkable text should look
+  once it's smaller than its own content; the layout fix works without it.
+*/
+.demo-col--fixed.demo-col--file {
+  min-width: 0;
+}
+
+.demo-col--fixed .demo-value--file {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

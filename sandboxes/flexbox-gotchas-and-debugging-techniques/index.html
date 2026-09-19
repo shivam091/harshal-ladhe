@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>min-width: auto Trap Demo</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>min-width: auto Trap Demo</h1>
+        <p>A fixed 420px, 3-column flex row. The middle column holds a long, unbreakable filename. Toggle the fix and watch a real browser reflow — nothing here is simulated.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Flex row preview">
+        <div class="demo-row" id="demo-row">
+          <div class="demo-col">
+            <span class="demo-label">Uploaded by</span>
+            <span class="demo-value">jamie</span>
+          </div>
+          <div class="demo-col demo-col--file" id="file-col">
+            <span class="demo-label">Filename</span>
+            <span class="demo-value demo-value--file" id="file-value">a-very-long-unbreakable-filename-that-wants-to-overflow.tar.gz</span>
+          </div>
+          <div class="demo-col">
+            <span class="demo-label">Size</span>
+            <span class="demo-value">2.4 MB</span>
+          </div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Fix</legend>
+        <label class="checkbox-field">
+          <input type="checkbox" id="fix-toggle">
+          Fix with <code>min-width: 0</code>
+        </label>
+        <p class="tip">Unchecked, the middle column keeps its initial <code>min-width: auto</code> and refuses to shrink below its min-content size — the long filename forces the 420px row to overflow. Checked, the column's floor is removed, it shrinks to its fair share, and the filename truncates with an ellipsis instead.</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
