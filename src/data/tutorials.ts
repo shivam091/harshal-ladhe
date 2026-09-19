@@ -28,6 +28,7 @@ export const tutorials: Tutorial[] = [
       alt: "Diagram showing a webpage layout with header, footer, two sidebars, and a center content area."
     },
     changelog: [
+      { date: "2026-09-19", change: "Added cross reference  to tutorial `Dynamic Viewport Height Units`" },
       { date: "2026-07-27", change: "Initial publication" }
     ]
   },
