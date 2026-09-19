@@ -1,0 +1,53 @@
+/*
+  vi/vb resolve against the WRITING-MODE OF THE ROOT ELEMENT specifically, never a locally-scoped
+  one — so this sandbox's own <html> has to actually flip for the demo to mean anything.
+*/
+html.vertical-mode {
+  writing-mode: vertical-rl;
+}
+
+/*
+  writing-mode is inherited, so without this the whole page (headings, button, readout) would
+  rotate along with <html> above. Forcing every visible element back to horizontal-tb isolates the
+  ONE thing under test to the two bars' sizes — their inline-size/block-size still resolve against
+  the (possibly vertical) root, since that half of vi/vb is deliberately immune to this override.
+*/
+.playground,
+.playground * {
+  writing-mode: horizontal-tb;
+}
+
+.demo-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.axis-row {
+  inline-size: 100%;
+}
+
+.axis-box {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-inline-end: 0.625rem;
+  font-family: var(--pg-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  transition: inline-size 0.2s ease, block-size 0.2s ease;
+}
+
+.axis-vi {
+  inline-size: 20vi;
+  block-size: 2.25rem;
+  background: color-mix(in oklch, var(--pg-primary) 80%, transparent);
+}
+
+.axis-vb {
+  inline-size: 2.25rem;
+  block-size: 20vb;
+  background: var(--pg-primary);
+}
