@@ -44,6 +44,13 @@ export const sandboxes: SandboxMeta[] = [
     entry: "/index.html"
   },
   {
+    slug: "dynamic-viewport-height-units",
+    title: "Dynamic Viewport Height Units Playground",
+    description: "Toggle a simulated mobile address bar to see lvh and svh stay constant while dvh alone tracks the actual visible height live.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "min-max-clamp-functions",
     title: "min() / max() / clamp() Playground",
     description: "Resize the frame and watch three common patterns resolve differently, live: a min(90%, 60ch) readable measure, a max(1rem, 4%) safe inset, and a clamp(200px, 50%, 500px) bounded card width.",
