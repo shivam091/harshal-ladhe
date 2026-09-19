@@ -53,6 +53,13 @@ export const sandboxes: SandboxMeta[] = [
     entry: "/index.html"
   },
   {
+    slug: "dynamic-viewport-inline-block-units",
+    title: "vi / vb Axis Swap Playground",
+    description: "Toggle the root's writing-mode and watch two bars sized with real vi/vb values swap which physical dimension, width or height, they actually track.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "min-max-clamp-functions",
     title: "min() / max() / clamp() Playground",
     description: "Resize the frame and watch three common patterns resolve differently, live: a min(90%, 60ch) readable measure, a max(1rem, 4%) safe inset, and a clamp(200px, 50%, 500px) bounded card width.",
