@@ -675,4 +675,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Fluid Typography with CSS",
     description: "Scaling font sizes smoothly with the viewport or container using `clamp()` instead of fixed breakpoints."
   },
+  "viewport-units": {
+    title: "CSS Viewport Units",
+    description: "Understanding viewport units — `vh`, `vw`, and the newer dynamic, small, large, and logical variants — and when to use each."
+  },
+  "dvh": {
+    title: "Dynamic Viewport Height (`dvh`)",
+    description: "Using `dvh`, `svh`, and `lvh` to size elements correctly as mobile browser toolbars appear and disappear."
+  },
+  "mobile": {
+    title: "Mobile-Friendly Web Techniques",
+    description: "CSS and layout techniques that account for mobile browser behaviour, small screens, and touch input."
+  },
 };
