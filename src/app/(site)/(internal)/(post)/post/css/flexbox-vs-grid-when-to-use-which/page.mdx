@@ -1,0 +1,283 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("flexbox-vs-grid-when-to-use-which");
+
+## Flexbox or Grid? Wrong Question.
+
+If you've landed here mid-layout, stuck between `display: flex` and `display: grid`, here's the short version: **you probably don't have to choose.** Most real interfaces use both — Grid for the big structural skeleton, Flexbox for the smaller pieces living inside it. The "vs" in the title is doing some clickbait work; the honest framing is "which one, where."
+
+But you do need a fast, reliable way to decide *for a given element* which model fits. So here's the one-sentence heuristic, memorize this and you're 90% of the way there:
+
+> **Flexbox** lays things out in **one dimension** — a row *or* a column — that flows and adapts to its content. **Grid** lays things out in **two dimensions** — rows *and* columns at once — with an explicit, predictable structure you define up front.
+
+Everything else in this post is that sentence, examined from six different angles, so you can apply it with confidence instead of guessing and fighting the layout for twenty minutes.
+
+<Info title="Already read the Grid series?">
+  [Getting Started with CSS Grid](/post/css/getting-started-with-css-grid) has its own short Grid-vs-Flexbox table near the top — that one's a quick beginner orientation written from Grid's point of view. This post is the deeper, standalone companion: a full decision framework covering both sides, with worked scenarios and a live side-by-side playground.
+</Info>
+
+<RainbowDivider />
+
+## The 10-Second Decision
+
+Before the deep comparison, here's the version you can actually use while your cursor is blinking in a CSS file:
+
+- **Are you aligning things in ONE direction** (a single row of nav links, a toolbar, a form's label + input pair)? → **Flexbox**.
+- **Do you need explicit rows AND columns that line up with each other** (a dashboard, a photo grid, a page skeleton)? → **Grid**.
+- **Is the number of items driving how many wrap onto the next line**, and you don't care exactly where the wrap happens? → **Flexbox**, with `flex-wrap: wrap`.
+- **Are you laying out the page shell itself** — header, sidebar, main content, footer — where regions need to line up against each other on both axes? → **Grid**.
+- **Do you need to overlap elements, span multiple tracks, or place something out of document order by coordinate** (not just visual order)? → **Grid**.
+- **Is the content unknown or variable-length, and you mostly want things to "just line up nicely" without pre-planning a structure**? → **Flexbox**.
+
+If you read that and still aren't sure, it's probably a sign the component has *both* a 1D concern and a 2D concern nested inside it — which is completely normal, and exactly what the [combining them](#you-can-and-often-should-combine-them) section below covers.
+
+<RainbowDivider />
+
+## Side-by-Side Comparison Table
+
+| Dimension | Flexbox | Grid |
+| --- | --- | --- |
+| **Layout dimension** | One axis at a time (main axis + cross axis, but only one is ever "the layout") | Two axes simultaneously (rows and columns, both explicit) |
+| **Mental model** | Content-first / flow-first — items are laid out in a line and sizing negotiates around their content | Layout-first / track-first — you declare the structure, then place content into it |
+| **Item sizing** | `flex-grow`, `flex-shrink`, `flex-basis` — items negotiate space along one axis relative to siblings | `fr` units, `minmax()`, explicit track sizes — items are sized by the track they occupy |
+| **Wrapping behavior** | `flex-wrap: wrap` creates new flex *lines*; each line sizes itself independently based on its own content | Wrapping isn't really a concept — you either define enough tracks, or use `repeat(auto-fit/auto-fill, ...)` to let the browser compute how many tracks fit |
+| **Cross-line/row alignment** | Wrapped lines do **not** align their cross-size to each other by default — row 1's height and row 2's height are computed separately | Rows are real tracks; `grid-auto-rows` / `grid-template-rows` (with `align-items: stretch`) can force every row to the same height, wrapped or not |
+| **Placement / DOM order** | Visual reordering via the `order` property (source order still drives default tab/reading order) | Line-based placement (`grid-column`, `grid-row`, `grid-area`) can place items anywhere on the grid, independent of DOM order |
+| **Alignment control** | `justify-content` (main axis), `align-items` / `align-self` (cross axis) | `justify-items` / `justify-self` (inline axis), `align-items` / `align-self` (block axis), plus `place-items` shorthand — alignment works on *both* axes |
+| **Gap support** | `gap`, `row-gap`, `column-gap` (all modern browsers) | Same `gap` properties — originally a Grid-only feature, later adopted into Flexbox |
+| **Nesting the other one inside it** | Yes — a flex item can itself be a grid container | Yes — a grid item (or grid area) can itself be a flex container. This is the normal, encouraged pattern, not a workaround |
+| **Notable Grid-only feature** | — | `subgrid` lets a nested grid inherit its parent's track sizing, so nested items can align to the outer grid's lines |
+| **Browser support** | Universal in evergreen browsers since ~2015 | Universal in evergreen browsers since ~2017; `subgrid` support is newer (Firefox first, Chrome/Edge and Safari caught up more recently) |
+| **Typical use cases** | Navbars, toolbars, button groups, form rows, tag/pill lists, centering a single element | Page skeletons, photo/card galleries, dashboards, calendars, anything with a genuine row × column structure |
+
+The most important row in that table, if you only remember one: Flexbox is **content-first** (you describe how items should behave, and the browser negotiates layout around what they contain), while Grid is **layout-first** (you describe the structure explicitly, and content gets placed into it). Neither is "better" — they solve different problems, which is exactly why both exist in the spec.
+
+If you haven't yet, it's worth reading [Getting Started with CSS Grid](/post/css/getting-started-with-css-grid) for the Grid fundamentals this table assumes, and [Getting Started with Flexbox](/post/css/getting-started-with-flexbox) for the Flexbox side.
+
+<RainbowDivider />
+
+## Real-World Scenarios
+
+Comparison tables are useful for reference, but decisions get made on actual components. Here are six you'll build constantly.
+
+### 1. Navbar
+
+A single row of links, maybe a logo on the left and actions on the right. This is textbook one-dimensional layout — reach for Flexbox every time.
+
+<CodeBlock language="css">
+{`
+  .navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+`}
+</CodeBlock>
+
+Using Grid here isn't *wrong*, exactly, but it's solving a 1D problem with 2D machinery — you'd be defining columns for something that's genuinely just "space these items out in a row."
+
+### 2. Card Gallery
+
+A gallery of product cards, blog previews, or team member tiles is a real 2D structure — rows and columns that should line up against each other. This is Grid's home turf, especially with `repeat(auto-fit, minmax(...))` for responsiveness (covered in depth in [Responsive CSS Grid Layouts](/post/css/responsive-css-grid-layouts)).
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1.5rem;
+  }
+`}
+</CodeBlock>
+
+### 3. Holy Grail Page Layout
+
+Header, footer, a sidebar, and a main content area, all needing to line up on both axes — this is the canonical 2D layout problem. Grid areas make it almost self-documenting. If you want a working, ready-to-reuse example, see the [Holy Grail Layout snippet](/snippet/holy-grail-layout), built with Grid template areas.
+
+<CodeBlock language="css">
+{`
+  .page {
+    display: grid;
+    grid-template-areas:
+      "header header"
+      "sidebar content"
+      "footer footer";
+    grid-template-columns: 16rem 1fr;
+    grid-template-rows: auto 1fr auto;
+    min-block-size: 100vh;
+  }
+`}
+</CodeBlock>
+
+### 4. Form Row (Label + Input)
+
+A label next to its input, or a label stacked above it with some helper text below — one dimension, content-driven. Flexbox handles this without ceremony.
+
+<CodeBlock language="css">
+{`
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+`}
+</CodeBlock>
+
+### 5. Pill / Tag List That Wraps
+
+An unknown number of tags that should flow left-to-right and wrap naturally, without pre-declaring how many will fit per row. This is exactly what `flex-wrap` was built for — you don't know (or care) how many tags land on each line, you just want them to flow.
+
+<CodeBlock language="css">
+{`
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+`}
+</CodeBlock>
+
+You *can* build this with Grid too (`grid-template-columns: repeat(auto-fill, minmax(...))`), but it's fighting the tool a little — Grid wants to know about tracks, and a tag list doesn't really have any.
+
+### 6. Dashboard With Mixed-Size Panels
+
+A big chart panel, a couple of small stat panels, a wide activity feed — panels of genuinely different sizes that still need to align to a shared underlying structure. That's a job for Grid's spanning (`grid-column: span 2`, `grid-row: span 2`), covered in [Mastering CSS Grid](/post/css/mastering-css-grid).
+
+<CodeBlock language="css">
+{`
+  .dashboard {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 8rem;
+    gap: 1rem;
+  }
+
+  .panel--chart {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+`}
+</CodeBlock>
+
+### 7. Centered Modal / Hero
+
+Centering one thing (or a small stack of things) inside a box, on both axes, is such a common ask that Flexbox's two-line centering trick has become a running joke in the CSS community — and it's genuinely the right tool, because you're aligning content within a single "box," not building a track structure.
+
+<CodeBlock language="css">
+{`
+  .hero {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: 60vh;
+  }
+`}
+</CodeBlock>
+
+`place-items: center` on a single-cell grid container achieves the same visual result — both are legitimate here, which is a good sign you're looking at a case where the two tools genuinely overlap.
+
+<RainbowDivider />
+
+## You Can (and Often Should) Combine Them
+
+This is the part of the "Flexbox vs Grid" debate that gets lost in comparison tables: **the two aren't mutually exclusive within a single component tree.** A very common, very good pattern is Grid for the outer page or section skeleton, and Flexbox for the internal alignment inside each grid area or card.
+
+Think of it as zoom levels: Grid answers "where does this *block* of content sit relative to the other blocks," and Flexbox answers "how are the *things inside* this block arranged relative to each other." You rarely need Grid's two-dimensional guarantees once you're down at "icon, then title, then a spacer, then a button" — that's a flow problem, and Flexbox is the more natural, more concise tool for it.
+
+<CodeBlock language="css">
+{`
+  /* Grid handles the page-level skeleton: header, sidebar, content, footer */
+  .page {
+    display: grid;
+    grid-template-areas:
+      "header header"
+      "sidebar content"
+      "footer footer";
+    grid-template-columns: 16rem 1fr;
+    gap: 1.5rem;
+  }
+
+  .content {
+    grid-area: content;
+  }
+
+  /* Flexbox handles alignment inside a single card living in the "content" area */
+  .card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+`}
+</CodeBlock>
+
+Nesting works in the other direction too — a flex item can be a grid container (a card in a horizontally-scrolling flex row that itself lays its internals out on a small grid). Neither direction is a hack; both are the spec working as intended.
+
+<RainbowDivider />
+
+## Interactive Example
+
+The table above describes the difference; this playground lets you feel it. The same six cards render inside one container — flip the mode to switch it between `display: flex; flex-wrap: wrap` and `display: grid`, then shrink the container until the cards wrap onto a second row. Watch what happens to row heights: in Flex mode each wrapped row is only as tall as its own tallest card, so row 1 and row 2 rarely line up. In Grid mode, the rows are real tracks, so they can be forced to match — everything snaps to a strict grid regardless of how much text is in any one card.
+
+<Sandbox slug="flexbox-vs-grid-when-to-use-which" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Common Mistakes When Choosing
+
+- **Reaching for Grid on a simple single-row navbar.** It works, but you end up defining columns for something that was never a 2D problem — more code, no real benefit, and it reads as if the layout has structure it doesn't actually have.
+- **Reaching for Flexbox for a page-level 2D layout, then fighting it with nested wrapper `div`s.** This is the classic "flexbox holy grail" pain point from before Grid existed — a header row, then a flex row containing a sidebar and content, then a footer row, each needing its own wrapper just to fake two dimensions. Grid does this natively, with less markup.
+- **Not realizing you can nest one inside the other.** Some developers treat the choice as all-or-nothing for an entire page, when in practice almost every non-trivial UI uses Grid in some places and Flexbox in others, often just a few DOM levels apart.
+- **Assuming Flexbox literally cannot do 2D.** It's more precise to say Flexbox *can* wrap into something that looks like a grid, but it doesn't give you Grid's guarantees — wrapped flex lines aren't aligned to each other as tracks, so rows can end up mismatched in height in ways a real grid never would. "Flexbox can't do 2D" is a useful simplification, but the accurate version is "Flexbox can wrap, but it can't align across wrapped lines the way Grid aligns across rows."
+- **Forgetting `gap` works in both.** Some older code still uses margin-based spacing hacks (`margin-right` on all-but-last-child) left over from a time before `gap` had full Flexbox support — if you're targeting modern browsers, `gap` is simpler and doesn't require exceptions for the last item.
+
+<Warning title="justify-items vs justify-content">
+  In Flexbox, `justify-content` positions items along the main axis — there's no `justify-items` because flex items don't sit in individually-addressable cells the way grid items do. In Grid, `justify-items` positions each item *within its own cell* on the inline axis, while `justify-content` positions the whole set of tracks within the grid container if they don't fill it. Mixing these up (typing `justify-items` on a flex container, or expecting it to do anything) is a quiet, easy-to-miss bug — the property is simply ignored, no warning, no error.
+</Warning>
+
+<RainbowDivider />
+
+## Frequently Asked Questions (FAQ)
+
+### Can I use Grid and Flexbox together?
+
+Yes, and you should — they're commonly combined in the same component tree. A very standard pattern is Grid for the page or section skeleton, with Flexbox handling alignment inside individual grid areas or cards. See [You Can (and Often Should) Combine Them](#you-can-and-often-should-combine-them) above for a worked example.
+
+---
+
+### Which one has better browser support?
+
+Both are supported in every evergreen browser today, so support alone shouldn't drive the decision for the vast majority of projects. Flexbox landed slightly earlier (around 2015) and Grid slightly later (around 2017), which matters only if you have a hard requirement to support very old browsers — in that narrow case, Flexbox is the safer bet. Grid's newer `subgrid` feature has a shorter support tail than baseline Grid, so double-check support if a design specifically needs it.
+
+---
+
+### Which is faster to render?
+
+In practice, the difference is not something you'll notice or should optimize for — both are native browser layout algorithms, implemented in C++ in the rendering engine, not JavaScript. Pick based on which model matches the problem; render performance is very rarely the deciding factor between the two.
+
+---
+
+### I'm a beginner — which should I learn first?
+
+Learn **Flexbox first.** It's the simpler mental model (one axis at a time), and most of the alignment concepts you'll pick up — `justify-content`, `align-items`, `gap` — carry over directly into Grid, which effectively extends the same ideas across two axes instead of one. Start with [Getting Started with Flexbox](/post/css/getting-started-with-flexbox), then move on to [Getting Started with CSS Grid](/post/css/getting-started-with-css-grid) once alignment feels natural.
+
+<RainbowDivider />
+
+## Conclusion
+
+Back to the one-sentence heuristic this whole post has been unpacking: **Flexbox for one dimension that flows with content, Grid for two dimensions with an explicit, predictable structure.** Use the [10-second decision](#the-10-second-decision) list when you're mid-layout and need a fast answer, use the [comparison table](#side-by-side-comparison-table) when you want the precise technical differences, and remember that the best real-world answer is very often "both, nested inside each other" rather than a single tool for the whole page.
+
+If you want to go deeper on either side:
+
+- **New to Flexbox?** Start with [Getting Started with Flexbox: A Beginner's Guide to 1D Layouts](/post/css/getting-started-with-flexbox), then continue through [Mastering Flexbox Alignment](/post/css/mastering-flexbox-alignment), [Responsive Flex Layouts Without Media Queries](/post/css/responsive-flex-layouts-without-media-queries), the [Sizing Algorithm Deep Dive](/post/css/flexbox-sizing-algorithm-deep-dive), and [Flexbox Gotchas and Debugging Techniques](/post/css/flexbox-gotchas-and-debugging-techniques).
+- **New to Grid?** Start with [Getting Started with CSS Grid: A Beginner's Guide to 2D Layouts](/post/css/getting-started-with-css-grid), then continue through [Mastering CSS Grid](/post/css/mastering-css-grid) and [Responsive CSS Grid Layouts](/post/css/responsive-css-grid-layouts).
+
+Either way, you'll end up reaching for both — this post was never really about picking a winner.

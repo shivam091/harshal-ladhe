@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flexbox vs Grid: Side by Side</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Flexbox vs Grid: Side by Side</h1>
+        <p>Same six cards, same gap — flip the mode and shrink the container to see how each model handles wrapping and row alignment.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Layout preview">
+        <div id="container-frame" class="container-frame">
+          <div id="layout-preview" class="layout-preview mode-flex">
+            <article class="layout-card">
+              <h3 class="layout-card-title">Onboarding</h3>
+              <p class="layout-card-body">Invite teammates and set roles.</p>
+            </article>
+            <article class="layout-card">
+              <h3 class="layout-card-title">Analytics</h3>
+              <p class="layout-card-body">Track pageviews, conversion funnels, and retention cohorts broken down by campaign, device, and referral source.</p>
+            </article>
+            <article class="layout-card">
+              <h3 class="layout-card-title">Billing</h3>
+              <p class="layout-card-body">Manage your plan.</p>
+            </article>
+            <article class="layout-card">
+              <h3 class="layout-card-title">Integrations</h3>
+              <p class="layout-card-body">Connect Slack, GitHub, and 40+ other tools without writing a single line of glue code.</p>
+            </article>
+            <article class="layout-card">
+              <h3 class="layout-card-title">Support</h3>
+              <p class="layout-card-body">Reach the team directly from inside the app — most tickets get a first response inside fifteen minutes, even on weekends.</p>
+            </article>
+            <article class="layout-card">
+              <h3 class="layout-card-title">API Keys</h3>
+              <p class="layout-card-body">Rotate and scope keys per environment.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <output id="layout-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Layout Mode</legend>
+
+        <div class="segmented-control" role="radiogroup" aria-label="Layout mode">
+          <label class="segment">
+            <input type="radio" name="mode" value="flex" checked>
+            <span>Flexbox</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="mode" value="grid">
+            <span>Grid</span>
+          </label>
+        </div>
+
+        <div class="fields-grid">
+          <div class="field">
+            <label for="container-width-input">Container width</label>
+            <div class="range-row">
+              <span class="range-edge">320px</span>
+              <div class="range-track">
+                <input type="range" id="container-width-input" min="320" max="820" step="20" value="640">
+                <output class="range-bubble" id="container-width-value" for="container-width-input">640px</output>
+              </div>
+              <span class="range-edge">820px</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="min-item-input">Min card width</label>
+            <div class="range-row">
+              <span class="range-edge">120px</span>
+              <div class="range-track">
+                <input type="range" id="min-item-input" min="120" max="260" step="10" value="180">
+                <output class="range-bubble" id="min-item-value" for="min-item-input">180px</output>
+              </div>
+              <span class="range-edge">260px</span>
+            </div>
+          </div>
+        </div>
+
+        <p class="tip">Shrink the container until the cards wrap onto a second row. In <strong>Grid</strong> mode every row stays the same height because rows are real tracks. In <strong>Flexbox</strong> mode each wrapped row sizes itself independently, based only on its own tallest card.</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

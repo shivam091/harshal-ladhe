@@ -168,6 +168,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Tune flex-direction, flex-wrap, justify-content, align-items, gap, and item count live to see the main and cross axes reflow the container.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "flexbox-vs-grid-when-to-use-which",
+    title: "Flexbox vs Grid Side-by-Side",
+    description: "Switch the same card gallery between Flexbox and Grid, then shrink the container to see how wrapped-row alignment differs between the two.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 

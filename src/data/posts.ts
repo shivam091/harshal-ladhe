@@ -424,6 +424,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "flexbox-vs-grid-when-to-use-which",
+    title: "Flexbox vs Grid: When to Use Which",
+    excerpt: "One axis or two — pick the right tool before you write a line of CSS.",
+    description: "A practical decision guide comparing CSS Flexbox and CSS Grid — when each one wins, when to combine them, and how to decide in seconds instead of guessing.",
+    category: ["CSS"],
+    tags: ["css", "flexbox", "css-grid", "grid", "layout", "web-design", "frontend", "decision-guide"],
+    image: {
+      path: "/assets/img/posts/css/flexbox-vs-grid-when-to-use-which/cover.webp",
+      width: 1200,
+      height: 630,
+      type: "image/webp",
+      alt: "Split-panel illustration contrasting a one-dimensional Flexbox row layout on one side with a two-dimensional CSS Grid layout on the other, joined by a decision-guide arrow."
+    },
+    signoff: "This one's less a tutorial and more a decision you can make in ten seconds flat — hope the heuristic saves you the twenty minutes of fighting the wrong layout model that it saved me more times than I'd like to admit. Thanks for reading — go pick the right tool the first time. 🧭",
+    pinned: true,
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ],
   }
 ];
 
