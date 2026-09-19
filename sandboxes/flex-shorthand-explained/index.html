@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>flex: 1 vs flex: auto</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>flex: 1 vs flex: auto</h1>
+        <p>Same three nav items, same fixed-width container — only the shorthand changes. Widths below are read live off the DOM, not simulated.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Shorthand</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="flex shorthand">
+          <label class="segment">
+            <input type="radio" name="flex-mode" value="one" checked>
+            <span>flex: 1</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="flex-mode" value="auto">
+            <span>flex: auto</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Flex preview">
+        <div id="flex-preview" class="flex-preview">
+          <div class="flex-item" id="item-0">
+            <span class="item-label">Home</span>
+            <span class="item-width" id="item-0-width">0px</span>
+          </div>
+          <div class="flex-item" id="item-1">
+            <span class="item-label">About Us</span>
+            <span class="item-width" id="item-1-width">0px</span>
+          </div>
+          <div class="flex-item" id="item-2">
+            <span class="item-label">Contact and Support</span>
+            <span class="item-width" id="item-2-width">0px</span>
+          </div>
+        </div>
+      </section>
+
+      <output id="flex-output" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -303,6 +303,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "flex-shorthand-explained",
+    title: "The flex: 1 1 0% Shorthand Explained",
+    excerpt: "flex: 1 is flex: 1 1 0% — and that's not the same thing as flex: auto.",
+    description: "A quick-reference card for the flex shorthand's keyword and single-number forms — what each one expands to, and why flex: 1 and flex: auto produce visibly different final widths despite looking almost identical.",
+    link: {
+      label: "Mastering Flexbox: Sizing Algorithm Deep Dive",
+      href: "/post/css/flexbox-sizing-algorithm-deep-dive"
+    },
+    category: ["CSS"],
+    tags: ["css", "flexbox", "flex-grow", "flex-shrink", "flex-basis", "cheatsheet"],
+    image: {
+      path: "/assets/img/goodies/snippets/flex-shorthand-explained/cover.webp",
+      width: 1536,
+      height: 1024,
+      type: "image/webp",
+      alt: "Reference card showing the flex shorthand expanding into flex-grow, flex-shrink, and flex-basis, with flex: 1 and flex: auto compared side by side."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

@@ -217,6 +217,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Simulates switching between a margin-based gap fallback and real flex gap to compare which CSS rule is providing spacing in each state.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "flex-shorthand-explained",
+    title: "flex: 1 vs flex: auto Comparator",
+    description: "Switch three differently-sized nav items between flex: 1 and flex: auto and compare their real, measured widths.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 

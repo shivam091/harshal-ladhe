@@ -1,0 +1,87 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("flex-shorthand-explained");
+
+## Introduction
+
+`flex` is shorthand for three longhands — `flex-grow`, `flex-shrink`, and `flex-basis` — but its keyword and single-number forms (`flex: auto`, `flex: none`, `flex: 1`) are used constantly by developers who couldn't tell you exactly what they expand to. This snippet is the quick-reference card. For the full sizing algorithm behind *why* these numbers produce the widths they do, see [Mastering Flexbox: Sizing Algorithm Deep Dive](/post/css/flexbox-sizing-algorithm-deep-dive).
+
+<RainbowDivider />
+
+## The Shorthand Expansion Table
+
+| Shorthand | Expands to (`grow shrink basis`) |
+| --- | --- |
+| `flex: initial` (or unset) | `0 1 auto` |
+| `flex: auto` | `1 1 auto` |
+| `flex: none` | `0 0 auto` |
+| `flex: 1` | `1 1 0%` |
+| `flex: <number>` | `<number> 1 0%` |
+
+A bare number always expands to a basis of `0%`, never `auto` — that single difference is the entire next section.
+
+<Info title="flex: 1 is literally flex: 1 1 0%">
+  There's no separate behavior to memorize here — writing `flex: 1` and writing `flex: 1 1 0%` produces byte-for-byte identical computed styles. The single-number form is purely a shorthand for that exact triple.
+</Info>
+
+<RainbowDivider />
+
+## flex: 1 vs flex: auto — the One-Line Version
+
+Both set `flex-grow: 1` and `flex-shrink: 1` — identical growth and shrink behavior. They disagree completely on **where sizing starts**:
+
+- **`flex: 1`** (basis `0%`) — every item starts from zero, ignoring its content size. All available width is then handed out purely by `flex-grow` ratio, so items with equal `flex-grow` end up **exactly equal width**, no matter how much text each one holds.
+- **`flex: auto`** (basis `auto`) — every item starts from its own content (or explicit `width`) size, and only the *leftover* space is distributed by `flex-grow` ratio. Widths stay **proportional to content**, stretched or shrunk from that starting point.
+
+<CodeBlock language="css">
+{`
+  .equal-width-tabs {
+    flex: 1; /* 1 1 0% — always equal width, content size ignored */
+  }
+
+  .content-aware-item {
+    flex: auto; /* 1 1 auto — starts from content size, then flexes */
+  }
+`}
+</CodeBlock>
+
+At a glance:
+
+| | `flex: 1` (`1 1 0%`) | `flex: auto` (`1 1 auto`) |
+| --- | --- | --- |
+| Starting size | Always `0` | Item's content size (or `width`) |
+| Content length matters? | No | Yes |
+| Final widths, equal `flex-grow` | Always equal | Proportional to content |
+
+<RainbowDivider />
+
+## When to Use Which
+
+Pick the shorthand based on whether content length *should* affect an item's final width:
+
+- **`flex: 1`** (or `flex: 1 1 0%`) — strict equal-width items: tabs, an evenly split toolbar.
+- **`flex: auto`** (or `flex: 1 1 auto`) — items that should keep their natural size as a starting point: buttons, form fields, anything where content length is meaningful.
+- **`flex: none`** — items that should never grow or shrink: fixed-size icons, avatars.
+- **`flex-shrink: 0`** alone (leaving grow/basis untouched) — an item that must never shrink even under space pressure, like a logo or a badge that has to stay legible.
+
+<RainbowDivider />
+
+## Try It Live
+
+Same three nav items ("Home", "About Us", "Contact and Support"), same fixed-width container — flip the shorthand and watch each item's real, measured width change below it.
+
+<Sandbox slug="flex-shorthand-explained" />
+
+<RainbowDivider />
+
+## Common Mistake
+
+<Warning title="flex: 1 and flex: 1 1 auto are not interchangeable">
+  Both look like "make it flexible" shorthand, but they aren't the same thing — they disagree on `flex-basis` (`0%` vs `auto`), which changes the final-size behavior entirely. Mix them up on siblings that are supposed to match widths and you'll get visibly uneven results: one item sized off its content, the other forced equal, sitting right next to each other.
+</Warning>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`flex: 1` forces equal final widths by discarding content size; `flex: auto` preserves content size as a starting point and only flexes from there. Neither is "correct" on its own — pick the one whose starting point matches what you actually want. For the full algorithm, worked numeric examples, and the flex-shrink basis-weighting formula, see [Mastering Flexbox: Sizing Algorithm Deep Dive](/post/css/flexbox-sizing-algorithm-deep-dive).
