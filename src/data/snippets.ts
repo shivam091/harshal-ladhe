@@ -331,6 +331,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "non-root-user-dockerfile",
+    title: "Non-Root User Dockerfile Snippet",
+    excerpt: "Drop root privileges in a container with a dedicated, minimal-permission user.",
+    description: "A reusable Dockerfile pattern for creating and switching to a non-root user, with the Debian and Alpine variants and the file-ownership gotcha that trips people up.",
+    category: ["Docker"],
+    tags: ["docker", "non-root-user", "docker-security", "dockerfile"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/non-root-user-dockerfile/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Illustration of a Docker container dropping root privileges for a dedicated, unprivileged application user."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 

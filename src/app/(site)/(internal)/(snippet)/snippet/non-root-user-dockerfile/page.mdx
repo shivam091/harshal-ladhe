@@ -1,0 +1,85 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("non-root-user-dockerfile");
+
+## Introduction
+
+Unless a base image says otherwise, a container's main process runs as `root` inside it by default. If an attacker ever exploits a container-escape vulnerability, the privilege they land with on the host is determined by the privilege they had inside the container — root inside plus a successful escape is effectively root-equivalent outside. A dedicated, unprivileged user removes that entire class of outcome.
+
+<RainbowDivider />
+
+## The Dockerfile (Debian/Ubuntu-based)
+
+<CodeBlock language="docker">
+{`
+  FROM node:20-slim
+
+  WORKDIR /app
+  COPY --chown=appuser:appgroup . .
+
+  RUN groupadd --gid 1001 appgroup \\
+      && useradd --uid 1001 --gid appgroup --shell /bin/false appuser
+
+  USER appuser
+  CMD ["node", "server.js"]
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Alpine Variant
+
+Alpine-based images don't ship `groupadd`/`useradd` — they use BusyBox's `addgroup`/`adduser`, with slightly different flags:
+
+<CodeBlock language="docker">
+{`
+  FROM node:20-alpine
+
+  WORKDIR /app
+
+  RUN addgroup --gid 1001 appgroup \\
+      && adduser --uid 1001 --ingroup appgroup --disabled-password --shell /sbin/nologin appuser
+
+  COPY --chown=appuser:appgroup . .
+  USER appuser
+  CMD ["node", "server.js"]
+`}
+</CodeBlock>
+
+Many official images already bake in a usable unprivileged user (`node`'s own images ship a `node` user, `nginx` ships `nginx`) — check the base image's documentation before rolling your own.
+
+<RainbowDivider />
+
+## How It Works
+
+1. A dedicated group and user are created with fixed, known UID/GID values (`1001` here) rather than relying on whatever the next available ID happens to be — useful when a host-mounted volume needs matching ownership.
+2. `COPY --chown=appuser:appgroup` sets file ownership at copy time, in the same layer, rather than needing a separate `RUN chown` pass afterward.
+3. `USER appuser` switches every subsequent instruction — and the eventual container process — to run as that user instead of `root`.
+
+<RainbowDivider />
+
+## Verifying It
+
+<CodeBlock language="bash">
+{`
+  $ docker run --rm myapp whoami
+  appuser
+
+  $ docker run --rm myapp id
+  uid=1001(appuser) gid=1001(appgroup) groups=1001(appgroup)
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`chown` before you switch `USER`, not after.** Once `USER` takes effect, every later instruction runs as that user, which typically can't `chown` anything. Any directory the app writes to at runtime — a cache folder, an upload directory — needs to be owned by the new user *before* the `USER` line, via `COPY --chown=` or a `RUN mkdir ... && chown ...` while still root.
+* **Binding to ports below 1024 requires elevated privileges on Linux.** A non-root process can't bind directly to port 80 or 443 — listen on a high port (e.g. `8080`) inside the container and map it at the host or load-balancer level instead of granting the process root or `CAP_NET_BIND_SERVICE`.
+* **Fixed UID/GID values matter for bind mounts.** If the container writes to a host-mounted directory, using a predictable UID (like `1001` above) makes it possible to `chown` that host directory to match, avoiding permission mismatches between the container and the host.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Creating a dedicated user and switching to it with `USER` is a small, mechanical addition to a Dockerfile that closes off an entire category of "container escape becomes host root" outcomes. Do the `chown` work while you're still root, and verify with `docker run --rm <image> whoami` before shipping.
