@@ -1,0 +1,104 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("dynamic-viewport-width-units");
+
+## Introduction
+
+`dvh`, `svh`, and `lvh` exist because a mobile browser's address bar is a vertical UI element that shows and hides while scrolling — so the viewport's *height* genuinely has three different useful answers. Width has the exact same three units — `100lvw`, `100svw`, and `100dvw` — but no equivalent horizontal UI element ships in any mainstream browser today. In practice, on virtually every current device, `vw`, `svw`, `lvw`, and `dvw` all resolve to the identical value.
+
+That doesn't make them useless — it just means the interesting question on the width axis isn't "which one is live," it's "what do you actually do with a viewport-width unit once you have one." The answer most developers reach for it for is the **full-bleed breakout**: escaping a centered, max-width layout to touch the true edges of the screen.
+
+<RainbowDivider />
+
+## The Three Units (For Symmetry)
+
+<CodeBlock language="css">
+{`
+  width: 100lvw; /* Large viewport width   — assumes browser UI is retracted */
+  width: 100svw; /* Small viewport width   — assumes browser UI is fully showing */
+  width: 100dvw; /* Dynamic viewport width — tracks whichever is ACTUALLY true right now, live */
+`}
+</CodeBlock>
+
+These mirror `lvh`/`svh`/`dvh` unit-for-unit, defined by the same spec for the same reason: consistency across both axes, and forward-compatibility for any future browser UI that *does* dynamically consume horizontal space. See [Dynamic Viewport Height Units](/tutorial/dynamic-viewport-height-units) for the height-axis version, where the three values genuinely do diverge.
+
+<Info title="Beginner's mental model">
+On the height axis, `svh`/`lvh` are a floor and ceiling with `dvh` moving between them as the address bar comes and goes. On the width axis, picture that same floor and ceiling collapsed onto each other — there's currently no browser chrome that eats horizontal space the way the address bar eats vertical space, so the "needle" has nowhere to move. All four numbers land on the same spot.
+</Info>
+
+<RainbowDivider />
+
+## Try It Live
+
+<Sandbox slug="dynamic-viewport-width-units" readOnly />
+
+This toggles a banner between staying inside a centered column and breaking out to the true edges of this preview, using `100dvw` and a negative `margin-inline`. That's the genuinely useful technique width-based viewport units enable — resize the preview panel and the readout updates to prove the banner always matches the actual viewport, not the column.
+
+<RainbowDivider />
+
+## The Real Use Case: Full-Bleed Breakouts
+
+A page is often built around a centered, max-width column (a `65ch` article body, a `40rem` card) — but a full-width image, banner, or divider inside that column still needs to reach the actual screen edges. `calc(50% - 50vw)` does that:
+
+<CodeBlock language="css">
+{`
+  .article {
+    max-width: 65ch;
+    margin-inline: auto;
+  }
+
+  .full-bleed-banner {
+    /* Escapes .article's max-width, regardless of how wide the viewport actually is. */
+    width: 100dvw;
+    margin-inline: calc(50% - 50dvw);
+  }
+`}
+</CodeBlock>
+
+`50%` here is relative to the banner's own containing block (`.article`); `50dvw` is relative to the true viewport. Subtracting one from the other produces exactly the negative margin needed to pull the banner's edges out to the screen, no matter where `.article` sits or how wide it is. The same trick works with plain `vw` too — `dvw` is just the more forward-compatible spelling of "the viewport, whatever that turns out to mean."
+
+<RainbowDivider />
+
+## A Common Misconception: `dvw` Doesn't Fix the Scrollbar-Overflow Bug
+
+`width: 100vw` has a well-known, separate gotcha: on a page with a vertical scrollbar, `100vw` includes the space the scrollbar occupies, so a full-bleed element ends up a few pixels wider than the space actually available for content — which can itself trigger a *horizontal* scrollbar.
+
+It's tempting to reach for `dvw` here, since "dynamic" sounds like it should mean "aware of what's actually going on." It doesn't — `dvw`'s dynamic behavior is specifically about browser UI showing and hiding, not about accounting for a scrollbar's width, and that accounting is inconsistent enough across browsers that no viewport-width unit is a reliable fix on its own. The robust fix doesn't depend on which one you pick:
+
+<CodeBlock language="css">
+{`
+  body {
+    /* Absorbs a few stray pixels from any full-bleed element, regardless of which
+       viewport unit caused them. */
+    overflow-x: hidden;
+  }
+`}
+</CodeBlock>
+
+<Warning title="Guard, don't rely">
+Treat `overflow-x: hidden` here as insurance for a full-bleed layout, not a substitute for getting the breakout math right — it hides the symptom of a slightly-too-wide element instead of explaining why the element is too wide in the first place.
+</Warning>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Full-bleed images, dividers, or color-block sections breaking out of an otherwise centered, max-width article or card layout
+- Edge-to-edge horizontal scroll-snap carousels on mobile, where each slide should be exactly one viewport wide
+- Anywhere you'd already reach for `dvh` on the height axis, for consistency — even though `dvw` rarely does anything `vw` wasn't already doing
+- Not worth an audit the way `100vh` is: there's no common bug today where `100vw` behaves wrong *because of dynamic browser chrome* specifically
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **In practice, `vw`, `svw`, `lvw`, and `dvw` render identically on essentially every current mainstream browser.** They only diverge if a browser ships UI that dynamically consumes horizontal space — nothing mainstream does today, so don't expect to see a visible difference the way toggling `dvh` produces one.
+* **The breakout technique needs its direct parent horizontally centered on the same axis as the viewport.** `calc(50% - 50dvw)` assumes the element's containing block is itself centered (e.g. via `margin-inline: auto`) — nested inside an off-center or asymmetrically-padded ancestor, the math no longer lines up.
+* **These units aren't the only logical pairing either.** `vi`/`vb` (viewport inline/block) exist as writing-mode-aware equivalents of `vw`/`vh` — see [Viewport Inline & Block Units](/tutorial/dynamic-viewport-inline-block-units) for why they're worth reaching for instead of `vw`/`vh` directly on anything that needs to keep working correctly in vertical writing modes.
+* **Browser support matches the height-axis units exactly** (Chrome/Edge 108+, Firefox 101+, Safari 15.4+ as of this writing), since `lvw`/`svw`/`dvw` ship as part of the same feature as `lvh`/`svh`/`dvh`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`dvw`, `svw`, and `lvw` exist for symmetry with the height-axis units that made `dvh` genuinely useful — but on the width axis, there's currently no browser chrome that dynamically consumes horizontal space, so all four values almost always agree. The width unit that actually earns its place in production CSS is `100vw`/`100dvw` paired with `margin-inline: calc(50% - 50dvw)`, for breaking a full-bleed section out of an otherwise centered layout — a different problem entirely from the one `dvh` solves on [the height axis](/tutorial/dynamic-viewport-height-units).
