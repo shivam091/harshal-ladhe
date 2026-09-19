@@ -180,6 +180,10 @@ Here's a categorized list of logical properties with their physical equivalents 
 | 5 | **`min-block-size`**  | Minimum height in the block axis | `min-height`            | `min-height`            |
 | 6 | **`max-block-size`**  | Maximum height in the block axis | `max-height`            | `max-height`            |
 
+<Info title="Sizing with viewport units">
+  `inline-size`/`block-size` also accept the logical viewport units `vi`/`vb`, which behave like `vw`/`vh` in `horizontal-tb` but swap to track the other physical axis in a vertical writing mode. See [Viewport Inline & Block Units](/tutorial/dynamic-viewport-inline-block-units) for how they work and the root-only gotcha that comes with them.
+</Info>
+
 ### Margin
 
 | # | Logical Property          | Description                                                      | Physical LTR Equivalent        | Physical RTL Equivalent        |
