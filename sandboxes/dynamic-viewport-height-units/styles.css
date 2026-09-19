@@ -1,0 +1,90 @@
+.demo-area {
+  display: flex;
+  justify-content: center;
+}
+
+/*
+  --chrome is the mocked address bar's height. lvh/svh are DEFINED as constants relative to it
+  (lvh always assumes chrome is gone, svh always assumes it's showing) — only dvh is meant to
+  track whichever is actually true right now, which the "chrome-hidden" class below simulates.
+*/
+.phone {
+  --chrome: 48px;
+  --screen: 380px;
+  position: relative;
+  width: 200px;
+  height: calc(var(--screen) + var(--chrome));
+  border: 3px solid var(--pg-border);
+  border-radius: 20px;
+  background: var(--pg-bg);
+  overflow: hidden;
+}
+
+.phone-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  gap: 6px;
+  padding: 12px;
+  transition: height 0.2s ease;
+}
+
+.unit-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 4px;
+  padding-bottom: 6px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-family: var(--pg-mono);
+  color: #fff;
+  transition: height 0.2s ease;
+}
+
+.unit-name {
+  font-weight: 700;
+}
+
+/* lvh: computed as if the chrome were ALWAYS retracted — a constant, never reacts to the toggle. */
+.unit-lvh {
+  height: 100%;
+  background: color-mix(in oklch, var(--pg-primary) 70%, transparent);
+}
+
+/* svh: computed as if the chrome were ALWAYS showing — also a constant, also never reacts. */
+.unit-svh {
+  height: calc(100% - var(--chrome));
+  background: color-mix(in oklch, var(--pg-primary) 45%, transparent);
+}
+
+/* dvh: the only one of the three that actually tracks the CURRENT chrome state, live. */
+.unit-dvh {
+  height: calc(100% - var(--chrome));
+  background: var(--pg-primary);
+}
+
+.phone-screen.chrome-hidden .unit-dvh {
+  height: 100%;
+}
+
+.phone-chrome {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--chrome, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+  border-top: 1px solid var(--pg-border);
+  transition: transform 0.2s ease;
+}
+
+.phone-chrome.hidden {
+  transform: translateY(100%);
+}
