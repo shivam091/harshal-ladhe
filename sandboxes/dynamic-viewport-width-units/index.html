@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Full-Bleed Breakout Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Full-Bleed Breakout</h1>
+        <p>Toggle the banner between staying inside this centered column and breaking out to the true edges of this preview, using <code>width: 100dvw</code> and a negative <code>margin-inline</code>. Resize the preview panel and the readout re-measures live.</p>
+      </header>
+
+      <button class="toggle-btn" id="breakout-toggle" type="button">Break out to full width</button>
+
+      <section class="demo-area" aria-label="Simulated centered page column">
+        <div class="column" id="column">
+          <p class="column-label">Centered column — this text stays inside it</p>
+          <div class="banner" id="banner">banner</div>
+          <p class="column-label">More column content below</p>
+        </div>
+      </section>
+
+      <output id="readout" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

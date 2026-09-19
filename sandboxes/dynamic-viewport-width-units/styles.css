@@ -1,0 +1,44 @@
+/*
+  The breakout banner needs to visually escape .demo-area's own box to reach the true preview
+  edges — the shared .demo-area clips overflow by default, so that clipping is turned off here
+  (the shared stylesheet's own header comment calls this out as an expected per-sandbox override).
+*/
+.demo-area {
+  overflow: visible;
+}
+
+.column {
+  max-inline-size: 26rem;
+  margin-inline: auto;
+  padding-block: 0.5rem;
+  border-inline: 0.0625rem dashed var(--pg-border);
+}
+
+.column-label {
+  margin: 0;
+  padding-block: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--pg-text-muted);
+}
+
+.banner {
+  margin-block: 0.75rem;
+  padding-block: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--pg-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  transition: width 0.25s ease, margin 0.25s ease;
+}
+
+/* width: 100dvw + a negative margin-inline pulls the banner out to the real viewport edges. */
+.banner.is-full-bleed {
+  width: 100dvw;
+  margin-inline: calc(50% - 50dvw);
+}
