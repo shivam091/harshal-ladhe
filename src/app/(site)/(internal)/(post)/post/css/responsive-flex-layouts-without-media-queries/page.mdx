@@ -1,0 +1,349 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("responsive-flex-layouts-without-media-queries");
+
+## Introduction
+
+Welcome to **Part 3** of the Flexbox Fundamentals series. In [Part 1](/post/css/getting-started-with-flexbox) you learned the container/item model, the main and cross axes, and how `flex-grow`, `flex-shrink`, and `flex-basis` divide up space. In [Part 2](/post/css/mastering-flexbox-alignment) you mastered alignment — `justify-content`, `align-items`, `align-self`, and the gap they leave when a container has more room than its items need.
+
+This part is about a different kind of problem: **making a layout respond to the space it actually has**, without writing a media query for every device width you can think of.
+
+Media queries are guesses. `@media (max-width: 768px)` assumes something is true about the world — that a tablet-sized viewport implies a tablet-sized *component*. That assumption breaks constantly: the same card grid might sit in a full-width page on one screen and a 300px sidebar widget on another, and a viewport breakpoint has no way to know which one it's looking at. It also means every new layout needs its own set of breakpoints, hand-picked and then re-picked every time a design changes.
+
+Flexbox offers an alternative: let each item declare how much space it *wants*, put the container in charge of wrapping, and let the browser figure out how many items fit per row at whatever width it's actually given. No breakpoints, no guessing — the layout reflows because the content's own sizing rules said it should.
+
+By the end of this post, you'll be able to:
+
+- Use `flex-wrap` correctly — and understand why wrapping alone isn't "responsive" yet
+- Build the one-line auto-wrapping card grid pattern with `flex: 1 1 <basis>`
+- Diagnose and fix the single most common flex-wrap bug: items shrinking to an unreadable width instead of wrapping
+- Combine `flex-basis` with `min()` so a layout never overflows, even on the narrowest containers
+- Recognize when this technique isn't enough, and reach for a media query or a container query instead
+
+<RainbowDivider />
+
+## `flex-wrap`: The Foundation
+
+By default, a flex container is `flex-wrap: nowrap` — every item is forced onto a single line, no matter how many items there are or how little room is left. If the items can't all shrink enough to fit, they overflow the container.
+
+<CodeBlock language="css">
+{`
+  .container {
+    display: flex;
+    flex-wrap: nowrap; /* default — everything stays on one line */
+  }
+`}
+</CodeBlock>
+
+`flex-wrap` has three values:
+
+- **`nowrap`** (default) — one line, always. Items shrink (or overflow) to fit.
+- **`wrap`** — items that don't fit on the current line drop down to a new one, top to bottom.
+- **`wrap-reverse`** — same wrapping behavior as `wrap`, but new lines stack from the bottom up (or right-to-left in a column layout) instead of top-down.
+
+<CodeBlock language="css">
+{`
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+  }
+`}
+</CodeBlock>
+
+Here's the important caveat: **`flex-wrap: wrap` on its own is not "responsive."** It's a release valve, not a layout strategy. All it does is say "items that don't fit may drop to a new line" — it says nothing about how big each item should try to be, so it has nothing to base a wrapping decision on. An item with no `flex-basis` and no width sizes to its content, which means a wrapped row of buttons might look fine while a wrapped row of cards looks like nothing changed at all.
+
+The actual responsive behavior — a card grid that reflows from four columns to two to one as its container narrows — comes from combining `flex-wrap: wrap` with sizing rules on the items themselves. That's the rest of this post.
+
+<RainbowDivider />
+
+## `flex-basis` and the "Auto-Wrapping Card Grid" Pattern
+
+The single most useful line in responsive Flexbox is this one:
+
+<CodeBlock language="css">
+{`
+  .container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .item {
+    flex: 1 1 200px;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="container">
+    <div class="item">Card 1</div>
+    <div class="item">Card 2</div>
+    <div class="item">Card 3</div>
+    <div class="item">Card 4</div>
+    <div class="item">Card 5</div>
+  </div>
+`}
+</CodeBlock>
+
+`flex: 1 1 200px` is shorthand for three separate values, and each one is doing real work here:
+
+- **`flex-grow: 1`** — if a row has leftover space after all its items are laid out, share it equally among the items on that row. This is what makes the last (often incomplete) row of cards stretch to fill the width instead of leaving a gap.
+- **`flex-shrink: 1`** — if the container can't give every item its full basis, items are allowed to shrink to make it fit.
+- **`flex-basis: 200px`** — the size an item *wants* to be before any growing or shrinking happens. This is the number the browser uses to decide how many items fit on a line.
+
+Read together, `flex: 1 1 200px` means: *"try to be 200px wide. If there's extra room on your row, grow to help fill it. If there isn't enough room, you're allowed to shrink."*
+
+Change the basis and you change how many items fit per row, without touching a single breakpoint. Drop `200px` to `140px` and a container that fit 3 cards across now fits 4 or 5. Raise it to `320px` and the same container might only fit 1 or 2. The number you choose is really just "the smallest comfortable width for this content" — the browser handles the arithmetic of how many of those fit in whatever space it's given.
+
+<RainbowDivider />
+
+## The `min-width` Trick for Wrapping at the Right Moment
+
+Here's the part that trips people up, and it's worth being precise about, because the mental model most people reach for — "the row keeps packing items in until it can't shrink any of them further" — isn't actually how the wrapping decision is made.
+
+Flexbox decides how many items belong on a line **before** any shrinking happens, using each item's *hypothetical main size* — effectively its `flex-basis` — not its shrunk size. It walks through the items in order and keeps adding them to the current line as long as their combined basis (plus `gap`) still fits; the moment the next item wouldn't fit, that item (and everything after it) starts a new line instead. Because of that, a line that ends up holding two or more items is, by construction, a line whose items' combined basis already fit — nothing on it needs to shrink. Any leftover space on that line is handled by `flex-grow`, not `flex-shrink`.
+
+So where does shrinking actually happen? It kicks in once a line is down to a single item — either because there genuinely was only one item left, or because the container has narrowed enough that no other item can share the row with it — and that lone item's own `flex-basis` is *still* bigger than the space it's been given. At that point `flex-shrink` takes over to squeeze that one item down to fit.
+
+And this is exactly where `min-width` matters. Without one, `flex-shrink` has nothing stopping it — as the container keeps narrowing, that lone item keeps shrinking with it, one pixel at a time, happily sliding past "a bit snug" into "unreadable" and on toward zero. There's no floor, so there's no moment where the browser says "that's too small, let's do something else."
+
+<CodeBlock language="css">
+{`
+  .item {
+    flex: 1 1 200px;
+    min-width: 200px; /* the floor flex-shrink cannot cross */
+  }
+`}
+</CodeBlock>
+
+Add a `min-width` — typically matching the `flex-basis` — and `flex-shrink` is clamped: the item's rendered width can never drop below `min-width`, no matter how much negative free space there is to resolve. Once the container is too narrow to honor that floor, the browser doesn't have a smaller size to fall back to — the item simply overflows its line instead of shrinking past the point of being usable. That overflow is a feature here, not a bug: it's a visible, honest signal that this container has run out of room for this content, instead of a silent slide into illegibility.
+
+<Warning title="The interaction, precisely">
+  `min-width` doesn't change *how many items get placed on a line* — that decision is already made from `flex-basis` before shrinking is considered. What it changes is what `flex-shrink` is allowed to do to a single item once that item is the only thing left on its own line and still doesn't fit: shrink to nothing (no `min-width`) versus hold a floor and overflow (`min-width` set). Try both in the [interactive example](#interactive-example) below with a narrow container and a large `flex-basis` — the difference is immediate.
+</Warning>
+
+<Details summary="Why doesn't the browser just wrap the oversized item to a new line instead of shrinking or overflowing it?">
+  Because by the time `flex-shrink` gets involved, that item is *already* alone on its own line — there's nowhere left to wrap it to. Line-breaking already ran once, using basis sizes, and already gave this item a line entirely to itself. The only question left is what happens inside that one-item line when even the whole line isn't wide enough: shrink the item to fit (no floor), or hold `min-width` and let it overflow (floor set). A flex container never inserts a *second* line beneath a single item to "share the load" — one item, one line, is as far as wrapping alone can take you. If you genuinely need the layout itself to change once nothing fits, that's the media query or container query territory covered later in this post.
+</Details>
+
+<RainbowDivider />
+
+## Combining with `min()`
+
+`min-width` protects an item once the container has narrowed *below* its basis. But there's a related problem on the very first line: if the container is narrower than a single item's `flex-basis` from the start — think a 200px card in a 160px-wide sidebar — that lone item is oversized before wrapping even had a chance to do anything, and the fix above forces it to overflow.
+
+A one-line modern fix is to cap the basis itself with `min()`:
+
+<CodeBlock language="css">
+{`
+  .item {
+    flex: 1 1 min(200px, 100%);
+  }
+`}
+</CodeBlock>
+
+`flex-basis: min(200px, 100%)` reads as "try to be 200px, but never more than 100% of the container." On any container wider than 200px, `min()` resolves to `200px` and behaves exactly like the earlier examples. On a container narrower than that, it resolves to `100%`, so the item's hypothetical size shrinks to match the container instead of guaranteeing an overflow. It's a small addition that makes the pattern safe even on the narrowest viewports, with no separate breakpoint needed for "what if the container is smaller than one card."
+
+`clamp()` extends the same idea with an upper bound too:
+
+<CodeBlock language="css">
+{`
+  .item {
+    /* never smaller than 160px, never bigger than 320px, otherwise ~25% of the container */
+    flex: 1 1 clamp(160px, 25%, 320px);
+  }
+`}
+</CodeBlock>
+
+`flex-basis: clamp(160px, 25%, 320px)` gives an item a size that scales with the container between two hard limits, instead of jumping straight from "its basis" to "100% of the container" the way `min()` alone does. Covering exactly how `min()`, `max()`, and `clamp()` resolve their arguments is its own topic — see the [`min()`/`max()`/`clamp()` snippet](/snippet/min-max-clamp-functions) for the deep dive.
+
+<RainbowDivider />
+
+## Real Patterns
+
+### Pattern 1: Auto-Wrapping Card Grid
+
+The pattern from earlier, with `min()` folded in for safety on narrow containers:
+
+<CodeBlock language="css">
+{`
+  .card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .card {
+    flex: 1 1 min(240px, 100%);
+    min-width: 200px;
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="card-grid">
+    <div class="card">Card 1</div>
+    <div class="card">Card 2</div>
+    <div class="card">Card 3</div>
+    <div class="card">Card 4</div>
+  </div>
+`}
+</CodeBlock>
+
+### Pattern 2: A Nav That Collapses Without a Media Query
+
+A horizontal nav that stacks its links vertically once the container is too narrow to hold them in a row — no breakpoint deciding when that happens.
+
+<CodeBlock language="css">
+{`
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+  }
+
+  .nav-link {
+    flex: 1 1 auto;
+    min-width: 8rem;
+    text-align: center;
+    padding-block: 0.5rem;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <nav class="nav">
+    <a class="nav-link" href="#home">Home</a>
+    <a class="nav-link" href="#docs">Docs</a>
+    <a class="nav-link" href="#pricing">Pricing</a>
+    <a class="nav-link" href="#about">About</a>
+    <a class="nav-link" href="#contact">Contact</a>
+  </nav>
+`}
+</CodeBlock>
+
+`min-width: 8rem` is what keeps a link from being crushed to icon-width before it gives up its spot on the row — without it, five links would rather squeeze into one cramped line than stack.
+
+### Pattern 3: A Responsive Form Row
+
+Label/input pairs that sit side by side in a wide form, and stack into a single column once the form's container narrows — a common case inside a modal or a sidebar, where the *page* might be wide but the *component* isn't.
+
+<CodeBlock language="css">
+{`
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    margin-block-end: 1rem;
+  }
+
+  .form-row label {
+    flex: 1 1 min(140px, 100%);
+  }
+
+  .form-row input {
+    flex: 3 1 min(220px, 100%);
+    min-width: 0; /* lets the input itself shrink inside its own flex line */
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="form-row">
+    <label for="email">Email address</label>
+    <input id="email" type="email" />
+  </div>
+`}
+</CodeBlock>
+
+The label and input have different `flex-grow` values (`1` and `3`) so the input claims most of the extra space on wide rows, but both are still allowed to wrap onto their own lines once the row can't comfortably fit `140px + 220px` side by side.
+
+<RainbowDivider />
+
+## When You Still Need a Media Query
+
+This technique is genuinely good at one specific job: deciding how many same-shaped items fit in a row. It is not a replacement for every kind of responsive decision.
+
+Some things it can't do:
+
+- **Removing something entirely.** A sidebar that should disappear on narrow screens rather than reflow underneath the main content isn't a wrapping problem — it's a structural one. That's still a job for a media query (or conditionally rendering the element).
+- **A fundamentally different layout, not just fewer columns.** If "narrow" means swapping a grid of cards for a completely different UI — a carousel, a bottom nav — that's a redesign at that size, not a reflow, and `flex-wrap` has no opinion on it.
+- **Sizing relative to a parent that isn't the viewport.** `flex-wrap` and `flex-basis` respond to the flex container's own size, which is often exactly what you want — but if you need a *descendant several levels down* to react to some *other* ancestor's size specifically, that's what container queries are for.
+
+<Info title="Container queries, briefly">
+  `@container` queries let an element respond to the size of a specific ancestor (one with `container-type` set), rather than the viewport or its immediate flex container. They're a natural complement to everything in this post: use `flex-wrap` + `flex-basis` for "how many of these fit in a row," and reach for `@container` when a component needs a genuinely different internal layout based on the space its *parent* has, not just how many siblings it can share a line with.
+</Info>
+
+<RainbowDivider />
+
+## Interactive Example
+
+Numbers only tell you so much about a shrink-versus-overflow decision — this one is much easier to feel than to read about. Narrow the container below the item's `flex-basis`, watch the first item's rendered width in the readout, then flip the `min-width` toggle and watch the exact same drag produce a completely different result.
+
+<Sandbox slug="responsive-flex-layouts-without-media-queries" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+- **Forgetting `flex-wrap: wrap` entirely.** With the default `nowrap`, items don't reflow at all — `flex-shrink` just keeps compressing every item on the single line, all the way down to nothing usable, no matter how generous your `flex-basis` was.
+- **`flex-basis` without a `min-width`.** As covered above, this is the classic version of the bug: a lone item on its own line, with no floor, shrinks well past a legible width instead of the container simply running out of room honestly.
+- **Percentage `flex-basis` fighting with `gap`.** `flex-basis: 33.333%` looks like "three per row," but `gap` is added *on top of* that percentage, not carved out of it — three items at exactly a third of the width, plus two gaps between them, add up to more than 100% and the row overflows or an item gets bumped to the next line early. You can compensate with `calc(33.333% - <gap-adjustment>)`, but it's usually simpler to prefer a fixed or `min()`-based basis (like the patterns above) over raw percentages once `gap` is in the picture.
+- **Relying on `flex-basis: auto` (the default) for text-heavy items.** `auto` sizes an item to its content — its declared `width` if it has one, or its natural content size if it doesn't. That's fine for a button, but for something like a paragraph of variable-length text, "size to content" can mean a different hypothetical main size for every item, which makes the number of items per row far less predictable than an explicit, uniform `flex-basis`.
+- **Letting DOM order and visual order drift apart.** Wrapping doesn't reorder anything on its own, but it's common to reach for the `order` property to fix how a wrapped layout *looks* — and that's purely visual. Keyboard and screen-reader navigation still follow DOM order, so a reordered wrap can leave sighted keyboard users tabbing in an order that no longer matches what they see.
+
+<RainbowDivider />
+
+## Quick Reference
+
+| Property | What it does here |
+| -------- | ------------------ |
+| `flex-wrap: wrap` | Allows items that don't fit on the current line to drop to a new one. Does nothing about sizing on its own. |
+| `flex-grow` (in `flex: <grow> ...`) | Share of a line's *leftover* space this item claims, relative to its siblings on the same line. |
+| `flex-shrink` (in `flex: ... <shrink> ...`) | Whether — and how aggressively, relative to siblings — this item gives up space when a line is short on room. |
+| `flex-basis` (in `flex: ... ... <basis>`) | The item's target main-axis size before grow/shrink apply. Drives the line-breaking (wrapping) decision. |
+| `min-width` | A hard floor `flex-shrink` cannot cross. Without it, a lone oversized item shrinks indefinitely instead of overflowing. |
+| `flex-basis: min(<px>, 100%)` | Caps the basis itself at the container's full width, so a single item can't be told to be wider than its container has room for. |
+| `gap` | Space between items on the same line *and* between wrapped lines — not part of any item's `flex-basis`, so percentage bases need to account for it separately. |
+
+<Info>
+  Want to see `flex-grow`, `flex-shrink`, and `flex-basis` pulling against each other on the same line, not just across wrapped rows? [Part 4's interactive playground](/post/css/flexbox-sizing-algorithm-deep-dive#interactive-example) is built for exactly that.
+</Info>
+
+<RainbowDivider />
+
+## Frequently Asked Questions (FAQ)
+
+### Is this actually better than media queries?
+
+For "how many cards/links/fields fit in this row," yes — it adapts to *any* container width automatically, including ones you didn't think to test, and it keeps working if the component gets reused somewhere narrower or wider than you originally designed for. It's not a wholesale replacement for media queries, though — see [When You Still Need a Media Query](#when-you-still-need-a-media-query) above for the layouts this approach genuinely can't handle.
+
+---
+
+### Does this work the same for `flex-direction: column`?
+
+The wrapping logic is the same, but the axes swap. In a row container, `flex-basis` sets a *width* and wrapping creates new *columns* stacking left-to-right (or right-to-left with `wrap-reverse`). In a `flex-direction: column` container, `flex-basis` sets a *height*, and `flex-wrap: wrap` creates new columns stacking side by side once a column runs out of vertical room — main and cross axis are swapped, so "wrapping" now produces horizontal columns instead of horizontal rows. `min-width` in the earlier examples would need to become `min-height` in a column container, since it's the main-axis size (height, here) that `flex-shrink` is clamping.
+
+---
+
+### Can I combine this with Grid's `auto-fit`/`auto-fill`?
+
+Conceptually, yes — they're solving the same problem with different tools. Grid's `repeat(auto-fit, minmax(200px, 1fr))` and Flexbox's `flex-wrap: wrap` + `flex: 1 1 200px` both let a fixed "ideal item size" determine how many items fit per row, without a media query. The main practical difference is that Grid tracks stay aligned into strict rows *and* columns, while Flexbox items only align along a single line at a time. For a deeper comparison of when to reach for which, see [Flexbox vs. Grid: When to Use Which](/post/css/flexbox-vs-grid-when-to-use-which) and the Grid series' own take on this exact topic in [Responsive CSS Grid Layouts](/post/css/responsive-css-grid-layouts).
+
+<RainbowDivider />
+
+## Conclusion
+
+`flex-wrap` gives items permission to drop to a new line. `flex-basis` (inside the `flex` shorthand) is what actually decides how many fit per line, by declaring the size each item wants before any growing or shrinking happens. And `min-width` is the detail that makes the whole thing trustworthy — without it, a lone item on its own line will shrink indefinitely instead of the browser ever admitting it's run out of room; with it, the item holds a legible floor and overflows honestly instead. Add `min()` (or `clamp()`) to the basis itself, and even the narrowest possible container can't force an item wider than it has room for.
+
+Put together, that's a layout that reflows because the content said how much space it needs — not because you guessed a device width.
+
+🔗 **Up Next (Part 4):** [Mastering Flexbox: Sizing Algorithm Deep Dive](/post/css/flexbox-sizing-algorithm-deep-dive) — this post leaned on `flex-grow`, `flex-shrink`, and `flex-basis` without fully deriving the math behind them. Part 4 opens up the actual sizing algorithm: how the browser computes each item's flex base size, how free space (positive *and* negative) gets distributed across a line using the scaled shrink factor, and why two items with the same `flex-shrink` value can still end up shrinking by very different amounts.

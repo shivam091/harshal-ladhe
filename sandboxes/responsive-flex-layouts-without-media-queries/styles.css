@@ -1,0 +1,40 @@
+:root {
+  --pg-accent: #34d399;
+  --pg-accent-dark: #10b981;
+  --pg-radius-sm: 0.5rem;
+}
+
+/*
+  The "narrowing viewport" stand-in — index.js drives its width from the container-width slider.
+  Deliberately left without overflow:hidden so an over-floored, un-shrinkable item can visibly
+  poke past the dashed edge instead of being silently clipped — that visible mismatch is the point.
+*/
+.container-frame {
+  max-inline-size: 100%;
+  padding: 0.625rem;
+  border: 0.125rem dashed var(--pg-primary-soft);
+  border-radius: var(--pg-radius-sm);
+  transition: width 0.15s ease;
+}
+
+.flex-preview {
+  display: flex;
+  flex-wrap: wrap;
+  /* gap and each item's flex/min-width are set inline by index.js so the readout can echo the exact live values. */
+}
+
+.flex-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 3.75rem;
+  padding-inline: 0.5rem;
+  border-radius: var(--pg-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  text-align: center;
+  background: linear-gradient(135deg, var(--pg-accent), var(--pg-accent-dark));
+  box-shadow: var(--pg-shadow-sm);
+  transition: flex-basis 0.15s ease, min-width 0.15s ease;
+}

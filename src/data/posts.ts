@@ -464,6 +464,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "responsive-flex-layouts-without-media-queries",
+    title: "Responsive Flex Layouts Without Media Queries",
+    excerpt: "Let flex-wrap, flex-basis, and min-width do the responsive work for you.",
+    description: "Build layouts that adapt to any container width using flex-wrap, flex-basis, and min-width tricks — no media query breakpoints required.",
+    category: ["CSS"],
+    tags: ["css", "flexbox", "flex-wrap", "flex-basis", "responsive", "layout", "frontend"],
+    image: {
+      path: "/assets/img/posts/css/responsive-flex-layouts-without-media-queries/cover.webp",
+      width: 1200,
+      height: 630,
+      type: "image/webp",
+      alt: "Illustration of a card row reflowing from four columns to two as a container narrows, with flex-wrap, flex-basis, and min-width labels along the shrinking arrow."
+    },
+    signoff: "This one's about trusting the content to tell the layout what it needs instead of guessing a device width — and once the flex-basis/min-width interaction clicks, media queries stop being your first instinct for this kind of problem. Thanks for reading. Go let your layouts reflow on their own. 📦",
+    pinned: true,
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ],
   }
 ];
 

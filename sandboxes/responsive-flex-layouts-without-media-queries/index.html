@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resizable Flex-Wrap Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Resizable Flex-Wrap Playground</h1>
+        <p>Drag the container width down below an item's <code>flex-basis</code> and watch what happens without a <code>min-width</code> floor — then flip the toggle and watch it happen differently.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Flex-wrap container preview">
+        <div id="container-frame" class="container-frame">
+          <div id="flex-preview" class="flex-preview"></div>
+        </div>
+      </section>
+
+      <p id="stats-output" class="tip" aria-live="polite"></p>
+
+      <output id="css-output" class="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Container</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label for="container-width-input">Container width</label>
+            <div class="range-row">
+              <span class="range-edge">200px</span>
+              <div class="range-track">
+                <input type="range" id="container-width-input" min="200" max="700" step="10" value="230">
+                <output class="range-bubble" id="container-width-value" for="container-width-input">230px</output>
+              </div>
+              <span class="range-edge">700px</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Items</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="basis-input">flex-basis</label>
+            <div class="range-row">
+              <span class="range-edge">80px</span>
+              <div class="range-track">
+                <input type="range" id="basis-input" min="80" max="300" step="10" value="260">
+                <output class="range-bubble" id="basis-value" for="basis-input">260px</output>
+              </div>
+              <span class="range-edge">300px</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="item-count-input">Item count</label>
+            <div class="range-row">
+              <span class="range-edge">2</span>
+              <div class="range-track">
+                <input type="range" id="item-count-input" min="2" max="10" step="1" value="5">
+                <output class="range-bubble" id="item-count-value" for="item-count-input">5</output>
+              </div>
+              <span class="range-edge">10</span>
+            </div>
+          </div>
+
+          <div class="field field--full">
+            <label for="gap-input">gap</label>
+            <div class="range-row">
+              <span class="range-edge">0px</span>
+              <div class="range-track">
+                <input type="range" id="gap-input" min="0" max="32" step="4" value="12">
+                <output class="range-bubble" id="gap-value" for="gap-input">12px</output>
+              </div>
+              <span class="range-edge">32px</span>
+            </div>
+          </div>
+
+          <div class="field field--full">
+            <label class="checkbox-field" for="min-width-toggle">
+              <input type="checkbox" id="min-width-toggle">
+              <span>Enforce <code>min-width</code> (matches <code>flex-basis</code>)</span>
+            </label>
+          </div>
+        </div>
+
+        <p class="tip">Unchecked, items have no shrink floor — narrow the container and a row's last item will happily compress to a sliver instead of giving up its spot. Checked, that same item holds its floor and overflows the container instead once there's truly no room.</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

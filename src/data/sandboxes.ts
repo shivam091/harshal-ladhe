@@ -182,6 +182,13 @@ export const sandboxes: SandboxMeta[] = [
     description: "Set flex-direction, flex-wrap, justify-content, align-items, align-content, and gap live, then override one item's cross-axis alignment with align-self.",
     template: "vanilla",
     entry: "/index.html"
+  },
+  {
+    slug: "responsive-flex-layouts-without-media-queries",
+    title: "Resizable Flex-Wrap Playground",
+    description: "Narrow a resizable container and tune flex-basis, item count, and gap to see the wrapping decision live, then toggle min-width to see the shrink floor it adds.",
+    template: "vanilla",
+    entry: "/index.html"
   }
 ];
 

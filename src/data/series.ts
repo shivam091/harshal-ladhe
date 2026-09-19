@@ -152,10 +152,12 @@ export const series: Series[] = [
     },
     parts: [
       "getting-started-with-flexbox",
-      "mastering-flexbox-alignment"
+      "mastering-flexbox-alignment",
+      "responsive-flex-layouts-without-media-queries"
     ],
     signoff: "Five parts, one axis at a time — from your very first flex container to the sizing math the browser runs under the hood. Thanks for working through it with me. Go build something that flexes without breaking. 🧩",
     changelog: [
+      { date: "2026-09-19", change: "Added Part 3: Responsive Flex Layouts Without Media Queries" },
       { date: "2026-09-19", change: "Added Part 2: Mastering Flexbox Alignment" },
       { date: "2026-09-19", change: "Initial publication — Part 1 live" }
     ]
