@@ -182,6 +182,8 @@ You can also use `place-items` as a shorthand — remember, the first value is `
 
 <GridContainerAlignmentDiagram variant="end-start" />
 
+Notice Grid gives you `justify-items` **and** `align-items` — a full alignment pair for both axes. Flexbox doesn't work the same way: it only ever gives you `align-items` for the cross axis, with no `justify-items` equivalent, since flex items don't sit in individually-addressable cells the way grid items do. See [Mastering Flexbox Alignment](/post/css/mastering-flexbox-alignment#frequently-asked-questions-faq) for exactly why that property is silently ignored on a flex container.
+
 ### Item-Level Alignment
 
 While container-level alignment applies to **all grid items**, item-level alignment lets you override alignment **per individual item**. These properties are set directly on the grid items themselves:
