@@ -295,6 +295,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "docker-healthcheck-pattern",
+    title: "Docker HEALTHCHECK Instruction Pattern",
+    excerpt: "Give Docker (and Compose) a real signal for when your container is actually ready, not just running.",
+    description: "A reusable HEALTHCHECK instruction pattern for Dockerfiles, plus how it powers Compose's condition: service_healthy dependency ordering.",
+    category: ["Docker"],
+    tags: ["docker", "healthcheck", "docker-compose", "containerization"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/docker-healthcheck-pattern/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Illustration of a Docker container health check cycle, showing a HEALTHCHECK probe and healthy/unhealthy status states."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 
