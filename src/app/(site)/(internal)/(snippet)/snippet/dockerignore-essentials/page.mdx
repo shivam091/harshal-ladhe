@@ -1,0 +1,77 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("dockerignore-essentials");
+
+## Introduction
+
+`docker build` sends everything in its build context — the directory you point it at — to the daemon before evaluating a single instruction, and any broad `COPY . .` hashes whatever's in that context to decide if its layer can be cached. A `.dockerignore` file, syntax borrowed straight from `.gitignore`, excludes paths from that context entirely: they're never uploaded, never considered by `COPY`/`ADD`, and never able to bust a cache check.
+
+Below is a baseline set of exclusions that applies to almost any project, grouped by what each group protects against.
+
+<RainbowDivider />
+
+## The .dockerignore
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  # Version control
+  .git
+  .gitignore
+
+  # Dependency directories (reinstalled fresh inside the image)
+  node_modules
+  vendor
+
+  # Environment and secrets — never let these into a build context
+  .env
+  .env.*
+  *.pem
+  *.key
+
+  # Build output and caches (regenerated during the build)
+  dist
+  build
+  coverage
+  .next
+  .turbo
+
+  # Editor and OS cruft
+  .vscode
+  .idea
+  .DS_Store
+
+  # Docker's own files — never useful inside the image being built
+  Dockerfile
+  .dockerignore
+  docker-compose*.yml
+  compose*.yaml
+
+  # Logs
+  npm-debug.log
+  *.log
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Why Each Group Matters
+
+* **Version control (`.git`)** — a repository's full history can be large and, if any secret was ever committed and later "removed," is still sitting in that history. There's no reason for it to exist inside a running container.
+* **Dependency directories (`node_modules`, `vendor`)** — these should be reinstalled fresh inside the image via `RUN npm ci` or your ecosystem's equivalent, not copied from the host, where they may not match the container's architecture or Node/language version.
+* **Environment and secrets (`.env`, `*.pem`, `*.key`)** — a stray `.env` with real credentials copied in by an unqualified `COPY . .` bakes that secret into an image layer, recoverable by anyone who later pulls it.
+* **Build output and caches** — these are regenerated during the build itself; shipping stale output from your host machine risks it silently overriding what the build produces.
+* **Editor/OS cruft and Docker's own files** — harmless but pure noise in the image, and excluding them keeps the build context smaller and faster to transfer.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **`.dockerignore` doesn't change how the cache itself works** — it changes what feeds into the checksum a `COPY`/`ADD` instruction checks. It has no effect on `RUN` instructions, since those aren't influenced by the build context's contents.
+* **Negation patterns work like `.gitignore`'s.** `!important-file.txt` after a broader exclusion re-includes that one path — useful when a build genuinely needs one file out of an otherwise-ignored directory.
+* **Keep it in the same directory as your Dockerfile** (or the build context root) — Docker only looks for `.dockerignore` there, not in subdirectories.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Start every new project's Dockerfile with a `.dockerignore` covering VCS metadata, dependency directories, secrets, and build output — it's a five-minute addition that prevents slow builds, cache-correctness surprises, and the specific, avoidable mistake of leaking a `.env` file into a shipped image layer.

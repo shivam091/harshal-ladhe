@@ -277,6 +277,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "dockerignore-essentials",
+    title: ".dockerignore Essentials",
+    excerpt: "The baseline set of paths every project should exclude from the Docker build context.",
+    description: "A ready-to-use .dockerignore covering the paths that should almost always be excluded from a Docker build context — VCS metadata, dependency directories, secrets, and build output.",
+    category: ["Docker"],
+    tags: ["docker", "dockerignore", "containerization", "cli"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/dockerignore-essentials/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Illustration of a .dockerignore file filtering out .git, node_modules, and .env from a Docker build context."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication" }
+    ]
   }
 ];
 
