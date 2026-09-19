@@ -206,6 +206,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "dynamic-viewport-inline-block-units",
+    title: "Viewport Inline & Block Units: `vi` and `vb`",
+    excerpt: "Viewport units that follow text flow, not fixed axes.",
+    description: "vi and vb behave like vw and vh in the default horizontal-tb writing mode, but unlike vw/vh they aren't tied to a fixed screen direction — switch to a vertical writing mode and the two swap, with vi tracking height and vb tracking width. They also resolve against the root element's writing-mode specifically, never a locally-scoped one, which is the detail most likely to trip someone up.",
+    category: ["CSS"],
+    tags: ["css", "viewport-units", "logical-properties", "writing-modes", "i18n", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/dynamic-viewport-inline-block-units/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "HD cover illustration for ‘Viewport Inline & Block Units: vi and vb’, showing CSS vi and vb viewport units adapting between horizontal and vertical writing modes, with logical inline and block axes highlighted.",
+      caption: "vi and vb units following the inline and block axes across writing modes."
+    },
+    changelog: [
+      { date: "2026-09-19", change: "Initial publication." }
+    ]
   }
 ];
 
