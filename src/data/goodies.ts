@@ -17,5 +17,11 @@ export const goodies: Goodie[] = [
     description: "Concise code fragments to solve discrete challenges.",
     icon: "codeBlock",
     href: "/snippets"
-  }
+  },
+  {
+    name: "Tutorials",
+    description: "In-depth, step-by-step guides for building things from scratch.",
+    icon: "bulb",
+    href: "/tutorials"
+  },
 ];
