@@ -65,6 +65,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-07-12", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-pointer-position",
+    title: "`usePointerPosition`: Track Cursor & Touch Position in React",
+    excerpt: "Track pointer position across mouse, touch, and pen input.",
+    description: "Build a usePointerPosition hook using the Pointer Events API to track pointer coordinates in React state — one listener covers mouse, touch, and stylus input, with a useMousePosition alias for drop-in compatibility.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "usePointerPosition", "useMousePosition", "pointer-events", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-pointer-position/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React usePointerPosition hook tracking cursor and touch coordinates across mouse, touch, and pen input, with viewport and element-relative pointer tracking examples.",
+      caption: "Cursor and touch coordinates tracked across mouse, touch and pen input."
+    },
+    changelog: [
+      { date: "2026-09-23", change: "Initial publication." }
+    ]
   }
 ];
 
