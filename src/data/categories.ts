@@ -30,5 +30,9 @@ export const categoryMeta: Record<string, CategoryMeta> = {
   javascript: {
     title: "JavaScript and Modern Web APIs",
     description: "Posts, tutorials, and snippets on JavaScript — from asynchronous programming fundamentals to modern browser APIs like the Observer family — covering the language and platform features that power interactive web applications.",
+  },
+  react: {
+    title: "React Hooks and Component Patterns",
+    description: "Posts, tutorials, and snippets on practical React — custom hooks, component patterns, and reusable logic for building interactive interfaces with modern React and TypeScript."
   }
 };
