@@ -1,9 +1,10 @@
 import type { JSX } from "react";
 import Link from "next/link";
 import VisuallyHidden from "@/components/VisuallyHidden";
-import { BookOpenIcon } from "@/components/Icon";
+import { BookOpenIcon, CalendarIcon } from "@/components/Icon";
 import type { SeriesListProps } from "@/components/SeriesList/SeriesList.types";
 import { PageMetaItem } from "@/components/PageMeta/PageMeta.styles";
+import { formatDate } from "@/utils/date";
 import {
   SeriesFeed,
   SeriesPreview,
@@ -15,7 +16,7 @@ import {
   SeriesCardFooter
 } from "@/components/SeriesList/SeriesList.styles";
 
-// The /series feed: one card per series with title, excerpt, description, and part count.
+// The /series feed: one card per series with title, excerpt, description, published date, and part count.
 export default function SeriesList({ series }: SeriesListProps): JSX.Element {
   return (
     <>
@@ -48,6 +49,14 @@ export default function SeriesList({ series }: SeriesListProps): JSX.Element {
               )}
 
               <SeriesCardFooter>
+                {item.publishedAt && (
+                  <PageMetaItem className="page-published-date">
+                    <CalendarIcon />
+                    <VisuallyHidden>Published at:</VisuallyHidden>
+                    <time dateTime={item.publishedAt}>{formatDate(item.publishedAt)}</time>
+                  </PageMetaItem>
+                )}
+
                 <PageMetaItem className="series-parts">
                   <BookOpenIcon />
                   <VisuallyHidden>Parts:</VisuallyHidden>

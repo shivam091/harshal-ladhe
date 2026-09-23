@@ -7,7 +7,8 @@
   Git helpers are shared with the MDX plugins via lib/git-dates.mjs.
 */
 import { join } from "node:path";
-import { createDatedLookup, type ContentDates } from "@/lib/content-dates";
+import { createDatedLookup, type ContentDates, type DatedContent } from "@/lib/content-dates";
+import { getSortedSeries, type Series } from "@/data/series";
 
 // Directory holding one sub-folder per series slug, each with a page.mdx intro.
 const SERIES_DIR = join(
@@ -24,3 +25,17 @@ export type SeriesDates = ContentDates;
 
 // Git-derived publish / last-modified dates for a series' intro MDX file.
 export const getSeriesDates = createDatedLookup(seriesFilePath);
+
+// A series registry entry merged with its git-derived publish/last-modified dates.
+export type DatedSeries = DatedContent<Series>;
+
+// Every series in curated order (data/series.ts's getSortedSeries), each merged with its git-derived dates — used by the /series list.
+export function getSortedSeriesWithDates(): DatedSeries[] {
+  return getSortedSeries().map((item) => ({ ...item, ...getSeriesDates(item.slug) }));
+}
+
+// Git-derived dates for every series, keyed by slug — handed down to the client
+// series detail layout, which can't call lib/series.ts itself (server-only).
+export function getSeriesDatesBySlug(): Record<string, SeriesDates> {
+  return Object.fromEntries(getSortedSeries().map((item) => [item.slug, getSeriesDates(item.slug)]));
+}

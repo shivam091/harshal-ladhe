@@ -2,7 +2,7 @@ import type { JSX } from "react";
 import type {Metadata } from "next";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import SeriesFeed from "@/app/(site)/(internal)/series/SeriesFeed";
-import { getSortedSeries } from "@/data/series";
+import { getSortedSeriesWithDates } from "@/lib/series";
 import { SeriesSection } from "@/app/(site)/(internal)/series/series.styles";
 
 export const metadata: Metadata = {
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   showing title, excerpt, description, and its part count.
 */
 export default function SeriesPage(): JSX.Element {
-  const series = getSortedSeries();
+  const series = getSortedSeriesWithDates();
 
   return (
     <>

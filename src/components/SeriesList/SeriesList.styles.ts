@@ -1,5 +1,6 @@
 import { styled } from "@linaria/react";
-import { clampedDescriptionCss, hoverShadowLiftCss, stretchedCardLinkCss } from "@/components/common.styles";
+import { clampedDescriptionCss, dotSeparatorCss, hoverShadowLiftCss, stretchedCardLinkCss } from "@/components/common.styles";
+import { BREAKPOINTS } from "@/constants/breakpoints";
 
 // Vertical feed of series cards.
 export const SeriesFeed = styled.ul`
@@ -60,13 +61,28 @@ export const SeriesCardDescription = styled.div`
   ${clampedDescriptionCss}
 `;
 
-// Card footer — part count.
+/*
+  Card footer — published date and part count. Same dot-separator/reflow
+  pattern as PostCardFooter (PostList.styles.ts) so series cards read
+  consistently with post cards.
+*/
 export const SeriesCardFooter = styled.footer`
-  display: flex;
-  flex-wrap: wrap;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  justify-content: start;
   align-items: center;
   row-gap: 0.5rem;
   margin-block-start: 0.5rem;
-  font-size: 0.875rem;
-  color: var(--color-fg-muted);
+
+  ${dotSeparatorCss}
+
+  @media ${BREAKPOINTS.smMobileAndSmaller} {
+    display: grid;
+    grid-auto-flow: initial;
+
+    > *:not(:last-child)::after {
+      display: none;
+    }
+  }
 `;
