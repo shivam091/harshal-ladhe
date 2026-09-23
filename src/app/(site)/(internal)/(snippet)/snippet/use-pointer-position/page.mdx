@@ -1,0 +1,120 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-pointer-position");
+
+## Introduction
+
+Most "mouse position" hooks listen for `mousemove`, which silently breaks on touchscreens and styluses. The **Pointer Events API** unifies mouse, touch, and pen input behind a single event, so one listener is enough to cover them all.
+
+This snippet provides a `usePointerPosition` hook that tracks the pointer's coordinates in React state — optionally scoped to a single element instead of the whole viewport — plus a `useMousePosition` alias for anyone migrating code that expects that name.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useEffect, useState, type RefObject } from "react";
+
+  interface PointerPosition {
+    x: number;
+    y: number;
+    pointerType: "mouse" | "touch" | "pen" | null;
+  }
+
+  export function usePointerPosition(target?: RefObject<HTMLElement | null>): PointerPosition {
+    const [position, setPosition] = useState<PointerPosition>({ x: 0, y: 0, pointerType: null });
+
+    useEffect(() => {
+      const node = target?.current ?? window;
+
+      function handlePointerMove(event: PointerEvent) {
+        const rect = target?.current?.getBoundingClientRect();
+        setPosition({
+          x: rect ? event.clientX - rect.left : event.clientX,
+          y: rect ? event.clientY - rect.top : event.clientY,
+          pointerType: event.pointerType as PointerPosition["pointerType"]
+        });
+      }
+
+      node.addEventListener("pointermove", handlePointerMove as EventListener);
+      return () => node.removeEventListener("pointermove", handlePointerMove as EventListener);
+    }, [target]);
+
+    return position;
+  }
+
+  // Drop-in replacement for code that expects the mouse-only name —
+  // pointermove already fires for mouse input, so nothing is lost.
+  export const useMousePosition = usePointerPosition;
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. Defaults to listening on `window`, or on a specific element when a `target` ref is passed in.
+2. On every `pointermove`, reads `clientX`/`clientY` from the native `PointerEvent`.
+3. If a `target` is given, subtracts the element's `getBoundingClientRect()` offset so coordinates are **relative to that element**, not the viewport.
+4. Also captures `event.pointerType` (`"mouse"`, `"touch"`, or `"pen"`), so consumers can adapt behavior per input device.
+5. Listener is attached and torn down inside `useEffect`, keyed on `target` so it re-subscribes if the ref's target changes.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Whole-viewport tracking
+  function CursorReadout() {
+    const { x, y, pointerType } = usePointerPosition();
+    return <p>{pointerType ?? "idle"} at ({x}, {y})</p>;
+  }
+
+  // Scoped to a single element — a spotlight effect that follows the pointer
+  function SpotlightCard({ children }: { children: React.ReactNode }) {
+    const ref = useRef<HTMLDivElement>(null);
+    const { x, y } = usePointerPosition(ref);
+
+    return (
+      <div
+        ref={ref}
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          background: \`radial-gradient(200px at \${x}px \${y}px, rgba(255,255,255,0.15), transparent 80%)\`
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Spotlight / glow hover effects** on cards, scoped to the element instead of the whole page.
+- **Custom cursors or drag previews** that need to track pointer position across input types.
+- **Whiteboard or drawing tools** that must handle mouse, touch, and stylus input identically.
+- **Analytics/heatmap prototypes** that log `pointerType` alongside coordinates.
+- **Tooltips or context menus** that position themselves relative to a container, not the viewport.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Throttle for high-frequency UI:** `pointermove` fires very often — wrap the setter in a `requestAnimationFrame` or debounce if you're driving expensive re-renders or animations.
+- **SSR-safe by construction:** the listener only attaches inside `useEffect`, which never runs on the server, so there's no `window is not defined` risk.
+- **`pointerType` over `useMediaQuery("(pointer: coarse)")`:** when you need to react to *this specific interaction* rather than the device's general capability, `pointerType` is the more accurate signal.
+- **Touch scrolling:** if you use this inside a scrollable touch area, you may need `touch-action: none` on the target to stop the browser from treating the drag as a scroll gesture.
+- **One listener, not three:** resist the urge to also attach `mousemove`/`touchmove` handlers alongside this — Pointer Events already supersede both.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`usePointerPosition` replaces separate mouse/touch tracking logic with a single Pointer Events listener, adds element-relative coordinates via an optional `target` ref, and stays a drop-in `useMousePosition` for existing call sites — one hook that works correctly across every pointing device.

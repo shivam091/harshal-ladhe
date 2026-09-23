@@ -559,6 +559,34 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "JavaScript Classes",
     description: "Working with JavaScript classes, from constructors and methods to private fields and static members."
   },
+  "react": {
+    title: "All Content Tagged React",
+    description: "React hooks, component patterns, and reusable logic for building interactive user interfaces."
+  },
+  "hooks": {
+    title: "React Hooks",
+    description: "Using and composing React hooks to manage state, effects, and browser events inside function components."
+  },
+  "custom-hooks": {
+    title: "Building Custom React Hooks",
+    description: "Building reusable custom React hooks that package stateful logic and browser APIs behind a small, clean interface."
+  },
+  "usepointerposition": {
+    title: "The `usePointerPosition` React Hook",
+    description: "A React hook that tracks pointer coordinates across mouse, touch, and pen input with a single Pointer Events listener."
+  },
+  "usemouseposition": {
+    title: "Tracking Mouse Position in React",
+    description: "Ways to track the cursor's position in React, including `useMousePosition` and its pointer-aware successor."
+  },
+  "pointer-events": {
+    title: "The Pointer Events API",
+    description: "Handling mouse, touch, and stylus input through one unified Pointer Events API instead of separate event families."
+  },
+  "typescript": {
+    title: "All Content Tagged TypeScript",
+    description: "TypeScript examples and patterns for adding static types to JavaScript, React components, and utility code."
+  },
   "responsive-design": {
     title: "Responsive Design Techniques",
     description: "Building layouts, type, and spacing that adapt smoothly to every screen size, from small phones to wide desktops."
