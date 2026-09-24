@@ -1,0 +1,137 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-interval-and-timeout");
+
+## Introduction
+
+Calling `setInterval` or `setTimeout` inside a React component looks simple, but it collides with how hooks capture values. The callback closes over the state from the render that created it, so an interval keeps reading **stale state** forever — and "fixing" that by adding the state to the effect's dependencies tears down and restarts the timer on every render.
+
+This snippet provides `useInterval` and `useTimeout`: declarative wrappers built on Dan Abramov's **saved-callback ref** pattern. The timer is created once per `delay`, always calls the latest callback, and pauses whenever `delay` is `null`. `useTimeout` also returns a `reset` / `clear` pair for restarting or cancelling it imperatively.
+
+<RainbowDivider />
+
+## The Hooks
+
+<CodeBlock language="tsx">
+{`
+  import { useCallback, useEffect, useRef } from "react";
+
+  export function useInterval(callback: () => void, delay: number | null) {
+    const savedCallback = useRef(callback);
+
+    // Keep the ref pointed at the newest closure without restarting the timer.
+    useEffect(() => {
+      savedCallback.current = callback;
+    }, [callback]);
+
+    useEffect(() => {
+      if (delay === null) return;
+      const id = setInterval(() => savedCallback.current(), delay);
+      return () => clearInterval(id);
+    }, [delay]);
+  }
+
+  export function useTimeout(callback: () => void, delay: number | null) {
+    const savedCallback = useRef(callback);
+    const timeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useEffect(() => {
+      savedCallback.current = callback;
+    }, [callback]);
+
+    const clear = useCallback(() => {
+      if (timeoutId.current === null) return;
+      clearTimeout(timeoutId.current);
+      timeoutId.current = null;
+    }, []);
+
+    const reset = useCallback(() => {
+      clear();
+      if (delay === null) return;
+      timeoutId.current = setTimeout(() => {
+        timeoutId.current = null;
+        savedCallback.current();
+      }, delay);
+    }, [delay, clear]);
+
+    // Start on mount and whenever the delay changes; always clean up on unmount.
+    useEffect(() => {
+      reset();
+      return clear;
+    }, [reset, clear]);
+
+    return { reset, clear };
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. Each hook stores the callback in a `ref` and refreshes it after every render, so the timer always invokes the **latest** closure with current props and state.
+2. The timer effect depends only on `delay` — changing the callback never tears the timer down.
+3. Passing `null` as the delay skips creating a timer entirely, which is how you **pause** without conditionally calling a hook.
+4. Changing `delay` clears the old timer and starts a new one with the new duration.
+5. `useTimeout` tracks its timer ID in a second ref, so `clear()` cancels a pending timeout and `reset()` restarts the countdown from zero.
+6. Every timer is cleared in the effect cleanup, so nothing fires after the component unmounts.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // A pausable counter — no stale state, no timer restarts on each tick
+  function Stopwatch() {
+    const [seconds, setSeconds] = useState(0);
+    const [running, setRunning] = useState(true);
+
+    useInterval(() => setSeconds(seconds + 1), running ? 1000 : null);
+
+    return (
+      <button onClick={() => setRunning((r) => !r)}>
+        {seconds}s — {running ? "Pause" : "Resume"}
+      </button>
+    );
+  }
+
+  // An auto-dismissing notice that restarts its countdown on hover-out
+  function Notice({ onDismiss }: { onDismiss: () => void }) {
+    const { reset, clear } = useTimeout(onDismiss, 5000);
+
+    return (
+      <div role="status" onMouseEnter={clear} onMouseLeave={reset}>
+        Settings saved.
+      </div>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Polling** a lightweight endpoint on a fixed cadence, paused while the tab is hidden.
+- **Clocks, countdowns, and stopwatches** that read the latest state on every tick.
+- **Auto-dismissing toasts** that pause on hover and restart on mouse-out — see [toast stack](/snippet/toast-stack).
+- **Carousels and slideshows** that advance on a timer and stop when the user interacts.
+- **Delayed UI hints** such as showing a spinner only if a request takes longer than 300ms.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **`null`, not `0`, means paused:** a `0` delay is a valid (and very fast) timer; only `null` disables it.
+- **Why a ref instead of dependencies:** listing the callback as a dependency would reset the interval on every render, so a 1s interval that re-renders every 900ms would never fire.
+- **Drift is normal:** browsers throttle timers in background tabs and don't guarantee exact timing — derive elapsed time from `Date.now()` if accuracy matters.
+- **Retries belong elsewhere:** for "try again until it works" logic with backoff and cancellation, reach for [`useRetryUntilResolved`](/snippet/use-retry-until-resolved) instead of hand-rolling it on top of `useInterval`.
+- **Respect motion preferences:** auto-advancing content should stop for users who prefer less movement — pair with [`usePrefersReducedMotion`](/snippet/use-prefers-reduced-motion).
+- **SSR-safe:** timers are only created inside `useEffect`, which never runs on the server.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useInterval` and `useTimeout` turn imperative timers into declarative hooks: the saved-callback ref keeps every tick reading fresh state, the effect restarts only when `delay` changes, `null` pauses cleanly, and cleanup guarantees nothing fires after unmount.

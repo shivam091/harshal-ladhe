@@ -174,6 +174,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-interval-and-timeout",
+    title: "`useInterval` & `useTimeout`: Declarative, Stale-Free Timers in React",
+    excerpt: "Run intervals and timeouts that always see the latest state.",
+    description: "Build useInterval and useTimeout hooks with the saved-callback ref pattern — declarative setInterval/setTimeout wrappers that never read stale state, pause with a null delay, and expose reset/clear controls with automatic cleanup.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useInterval", "useTimeout", "timers", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-interval-and-timeout/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useInterval and useTimeout hooks, showing a ticking clock and countdown timer driven by a saved callback ref with pause and reset controls."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
