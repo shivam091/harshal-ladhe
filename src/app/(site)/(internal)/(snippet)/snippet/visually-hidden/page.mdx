@@ -1,0 +1,131 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("visually-hidden");
+
+## Introduction
+
+Icon-only buttons, decorative charts, and "opens in a new tab" hints all have the same problem: sighted users get the meaning from the visuals, but screen reader users get nothing. `display: none` and `visibility: hidden` don't help, because they hide the content from assistive technology too.
+
+This snippet provides a `VisuallyHidden` component that removes content from the visual layout while keeping it in the accessibility tree. It also includes a small development-only trick: **hold the Alt key to reveal every hidden label**, so you can check them without opening a screen reader.
+
+<RainbowDivider />
+
+## The Component
+
+<CodeBlock language="tsx">
+{`
+  "use client";
+
+  import { useEffect, useState } from "react";
+  import type { CSSProperties, HTMLAttributes } from "react";
+
+  const hiddenStyles: CSSProperties = {
+    position: "absolute",
+    width: 1,
+    height: 1,
+    padding: 0,
+    margin: -1,
+    overflow: "hidden",
+    clip: "rect(0, 0, 0, 0)",
+    clipPath: "inset(50%)",
+    whiteSpace: "nowrap",
+    border: 0
+  };
+
+  type VisuallyHiddenProps = HTMLAttributes<HTMLSpanElement>;
+
+  export function VisuallyHidden({ children, style, ...rest }: VisuallyHiddenProps) {
+    const [forceShow, setForceShow] = useState(false);
+
+    useEffect(() => {
+      // Debug aid only — production users should never see hidden labels pop in.
+      if (process.env.NODE_ENV === "production") return;
+
+      const show = (event: KeyboardEvent) => event.key === "Alt" && setForceShow(true);
+      const hide = () => setForceShow(false);
+
+      window.addEventListener("keydown", show);
+      window.addEventListener("keyup", hide);
+      // Alt-Tabbing away never fires keyup here, so reset on blur too.
+      window.addEventListener("blur", hide);
+      return () => {
+        window.removeEventListener("keydown", show);
+        window.removeEventListener("keyup", hide);
+        window.removeEventListener("blur", hide);
+      };
+    }, []);
+
+    return (
+      <span {...rest} style={forceShow ? style : { ...hiddenStyles, ...style }}>
+        {children}
+      </span>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `position: absolute` takes the element out of the layout flow, so it never pushes other content around.
+2. A 1×1 box with `overflow: hidden` plus `clip` / `clip-path: inset(50%)` makes it invisible. `clip` is the older property and `clip-path` the modern one; using both covers every browser.
+3. `white-space: nowrap` stops the text from wrapping into a tall column, which some screen readers read one word at a time.
+4. The content stays in the DOM and the accessibility tree, so screen readers announce it as usual.
+5. In development, holding **Alt** sets `forceShow`, which drops the hiding styles so you can see every label on the page. The listener never attaches in production.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Icon-only button: the SVG shows the meaning, the hidden text names it
+  function CloseButton({ onClick }: { onClick: () => void }) {
+    return (
+      <button type="button" onClick={onClick}>
+        <XIcon aria-hidden="true" />
+        <VisuallyHidden>Close dialog</VisuallyHidden>
+      </button>
+    );
+  }
+
+  // Extra context that's obvious visually but not when read aloud
+  function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+    return (
+      <a href={href} target="_blank" rel="noreferrer">
+        {children}
+        <ExternalIcon aria-hidden="true" />
+        <VisuallyHidden>(opens in a new tab)</VisuallyHidden>
+      </a>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Icon-only buttons** such as close, menu, search, and social links.
+- **Form labels** for inputs whose purpose is clear from the layout, like a lone search field.
+- **Link and button context**, e.g. "Read more *about pricing*" or "(opens in a new tab)".
+- **Headings for landmark regions** that sighted users identify by their design alone.
+- **Text alternatives** for charts, color swatches, or status dots that only convey meaning visually.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Prefer a visible label when you can:** hidden text helps screen reader users, but voice-control users say what they *see*. Visible labels help everyone.
+- **`aria-label` is an alternative, not a replacement:** it works on interactive elements, but automatic page translation often skips it, while real text in the DOM gets translated.
+- **Hide the icon itself:** add `aria-hidden="true"` to decorative SVGs so screen readers don't also read out the icon's markup or title.
+- **Skip links need a different pattern:** a "Skip to content" link must become visible when focused. Use a CSS class that applies these same styles and removes them under `:focus-visible`, instead of this always-hidden component.
+- **It renders a `<span>`:** that's valid inside buttons, links, and paragraphs. If you need a different element, see [polymorphic-box](/snippet/polymorphic-box).
+- **The Alt shortcut is dev-only:** `process.env.NODE_ENV` is replaced at build time, so the check (and the listeners) disappear from production bundles.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`VisuallyHidden` hides content from sight while keeping it available to screen readers, using the well-tested clip pattern instead of `display: none`. A short development-only Alt shortcut lets you check every hidden label while you build, so icon buttons and visual-only cues still work for everyone.

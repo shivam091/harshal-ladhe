@@ -336,6 +336,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "visually-hidden",
+    title: "`<VisuallyHidden />`: Accessible Screen-Reader-Only Content in React",
+    excerpt: "Hide content visually while keeping it available to screen readers.",
+    description: "Build a VisuallyHidden React component that uses the clip/clip-path sr-only pattern to label icon-only buttons and visual-only cues for assistive technology, with a dev-only Alt-key toggle to reveal hidden labels.",
+    category: ["React"],
+    tags: ["react", "components", "VisuallyHidden", "accessibility", "a11y", "screen-readers", "sr-only", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/visually-hidden/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React VisuallyHidden component hiding a text label from view while a screen reader still announces it, next to an icon-only button."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
