@@ -1,0 +1,112 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-toggle");
+
+## Introduction
+
+Boolean state is everywhere: modals, dropdowns, accordions, "show password" switches. Each one ends up with the same inline `() => setOpen(o => !o)` arrow functions. Those arrows are new on every render, which breaks memoized children, and the familiar `toggle(value?)` shortcut has a subtle bug: `onClick={toggle}` passes the click event in as the "value".
+
+This snippet provides a `useToggle` hook that returns the boolean along with a **referentially stable** set of actions (`toggle`, `set`, and `reset`) that are safe to pass straight to event handlers and `React.memo` children.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useCallback, useMemo, useRef, useState } from "react";
+
+  interface ToggleActions {
+    toggle: () => void;
+    set: (value: boolean) => void;
+    reset: () => void;
+  }
+
+  export function useToggle(initialValue = false): [boolean, ToggleActions] {
+    const [value, setValue] = useState(initialValue);
+    // Pin the first initial value, so reset() doesn't change meaning if the prop changes later.
+    const initialRef = useRef(initialValue);
+
+    // toggle deliberately takes no arguments: onClick={toggle} would otherwise
+    // receive the event object and treat it as a truthy "value".
+    const toggle = useCallback(() => setValue(v => !v), []);
+    const set = useCallback((next: boolean) => setValue(next), []);
+    const reset = useCallback(() => setValue(initialRef.current), []);
+
+    const actions = useMemo(() => ({ toggle, set, reset }), [toggle, set, reset]);
+
+    return [value, actions];
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `useState` holds the boolean, and `initialRef` keeps the first `initialValue` for `reset`.
+2. `toggle` uses a **functional update** (`v => !v`), so it never reads a stale value and needs no dependencies.
+3. `set` wraps `setValue` in a function that takes a `boolean`, which rules out updater functions and event objects.
+4. Every callback has an empty dependency list, so each keeps the same identity for the component's lifetime.
+5. The actions object is memoized as well. Passing `actions` as a whole prop is just as safe for `React.memo` as passing each function.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  function PasswordField() {
+    const [visible, { toggle }] = useToggle();
+
+    return (
+      <label>
+        Password
+        <input type={visible ? "text" : "password"} />
+        <button type="button" onClick={toggle} aria-pressed={visible}>
+          {visible ? "Hide" : "Show"}
+        </button>
+      </label>
+    );
+  }
+
+  function FiltersDrawer() {
+    const [open, { set, reset }] = useToggle(false);
+
+    return (
+      <>
+        <button onClick={() => set(true)}>Filters</button>
+        <Drawer open={open} onClose={() => set(false)}>
+          <MemoizedFilterForm onApply={reset} />
+        </Drawer>
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Disclosure UI**, such as modals, drawers, dropdowns, popovers, and accordions.
+- **Visibility switches**, such as "show password", "show more", and spoiler reveals.
+- **Feature flags in dev tools**, such as debug overlays and grid outlines.
+- **Memoized children** that receive `toggle` as a prop and shouldn't re-render when a parent re-renders.
+- **Hooks built on top of it**, such as a keyboard shortcut that calls `toggle` through [`useEventListener`](/snippet/use-event-listener).
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Why `toggle` takes no value:** many `useToggle` versions accept `toggle(value?)`, but then `onClick={toggle}` quietly sets state to a `MouseEvent`, which is truthy, so the toggle gets stuck on `true`. A separate, typed `set(boolean)` makes the explicit case obvious, and TypeScript rejects `onClick={set}`.
+- **Tuple, not object:** returning `[value, actions]` lets each call site name the boolean however it likes (`open`, `visible`, `enabled`) without renaming on destructure.
+- **`reset` pins the first value:** if you want `reset` to follow a changing `initialValue` prop, sync `initialRef.current` in an effect. That's rarely what you want for a toggle.
+- **Need `on`/`off` shortcuts?** Add `setTrue`/`setFalse` callbacks in the same pattern. They're handy as `onFocus`/`onBlur` handlers.
+- **Persist it:** swap `useState` for [`useStickyState`](/snippet/use-sticky-state) to remember the toggle between visits.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useToggle` replaces scattered `setX(x => !x)` arrow functions with one boolean and a stable `toggle` / `set` / `reset` API. `toggle` ignores any arguments, so it's safe to pass directly as `onClick`, and every action keeps the same identity, so memoized children stay memoized.

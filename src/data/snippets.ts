@@ -156,6 +156,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-toggle",
+    title: "`useToggle`: Stable Boolean State Toggling in React",
+    excerpt: "Manage boolean state with a stable toggle, set, and reset API.",
+    description: "Build a useToggle hook that returns a boolean plus referentially stable toggle, set, and reset actions — safe to pass directly to onClick handlers and memoized children.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useToggle", "useCallback", "state-management", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-toggle/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useToggle hook flipping a boolean switch on and off, with stable toggle, set, and reset action controls."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
