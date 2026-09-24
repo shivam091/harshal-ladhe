@@ -192,6 +192,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-retry-until-resolved",
+    title: "`useRetryUntilResolved`: Retry & Poll Async Operations in React",
+    excerpt: "Retry an async operation with backoff until it succeeds or gives up.",
+    description: "Build a useRetryUntilResolved hook that polls or retries async work with a fixed interval or exponential backoff, caps attempts, passes an AbortSignal to each try, and cancels cleanly on unmount.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useRetryUntilResolved", "polling", "retry", "exponential-backoff", "abort-controller", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-retry-until-resolved/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useRetryUntilResolved hook retrying an async request with exponential backoff, showing pending, resolved, and failed states with an attempt counter."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

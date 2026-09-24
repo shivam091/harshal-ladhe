@@ -1,0 +1,151 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-retry-until-resolved");
+
+## Introduction
+
+Flaky networks, cold-starting servers, and background jobs that take a while to finish all lead to the same requirement: **keep trying until it works, then stop**. Hand-rolled retry loops in components tend to leak — they keep firing after unmount, call `setState` on a dead component, or race with a newer attempt.
+
+This snippet provides a `useRetryUntilResolved` hook that runs an async operation, retries it on failure with a fixed interval or **exponential backoff**, gives up after a maximum number of attempts, and exposes its `status`, `data`, `error`, attempt count, and a `retry()` function. Every attempt receives an `AbortSignal`, and everything is cancelled on unmount.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useCallback, useEffect, useRef, useState } from "react";
+
+  type RetryStatus = "pending" | "resolved" | "failed";
+
+  interface RetryOptions {
+    interval?: number;    // base delay between attempts (ms)
+    maxAttempts?: number; // pass Infinity to poll forever
+    backoff?: boolean;    // double the delay after each failure
+    maxDelay?: number;    // cap for the backoff delay (ms)
+  }
+
+  interface RetryState<T> {
+    status: RetryStatus;
+    data: T | undefined;
+    error: unknown;
+    attempts: number;
+  }
+
+  export function useRetryUntilResolved<T>(
+    operation: (signal: AbortSignal) => Promise<T>,
+    { interval = 1000, maxAttempts = 5, backoff = false, maxDelay = 30_000 }: RetryOptions = {}
+  ) {
+    const [runId, setRunId] = useState(0);
+    const [state, setState] = useState<RetryState<T>>({
+      status: "pending", data: undefined, error: undefined, attempts: 0
+    });
+
+    // Callers usually pass an inline function; a ref stops it from restarting the loop.
+    const operationRef = useRef(operation);
+    useEffect(() => {
+      operationRef.current = operation;
+    }, [operation]);
+
+    useEffect(() => {
+      const controller = new AbortController();
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      let attempt = 0;
+
+      async function run() {
+        attempt += 1;
+        setState((prev) => ({ ...prev, status: "pending", attempts: attempt }));
+
+        try {
+          const data = await operationRef.current(controller.signal);
+          if (controller.signal.aborted) return;
+          setState({ status: "resolved", data, error: undefined, attempts: attempt });
+        } catch (error) {
+          // Unmounted or restarted — this result belongs to a stale run.
+          if (controller.signal.aborted) return;
+          if (attempt >= maxAttempts) {
+            setState((prev) => ({ ...prev, status: "failed", error }));
+            return;
+          }
+          setState((prev) => ({ ...prev, error }));
+          const delay = backoff ? Math.min(interval * 2 ** (attempt - 1), maxDelay) : interval;
+          timer = setTimeout(run, delay);
+        }
+      }
+
+      run();
+      return () => {
+        controller.abort();
+        clearTimeout(timer);
+      };
+    }, [runId, interval, maxAttempts, backoff, maxDelay]);
+
+    const retry = useCallback(() => setRunId((id) => id + 1), []);
+
+    return { ...state, retry };
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. Each run of the effect owns one `AbortController` and a local `attempt` counter, so overlapping runs can never share state.
+2. `run()` calls the operation with the controller's `signal`; a resolved promise sets `status: "resolved"` and stops the loop.
+3. A rejected promise schedules the next attempt after `interval` ms — or `interval × 2ⁿ` (capped at `maxDelay`) when `backoff` is on — until `maxAttempts` is reached, then sets `status: "failed"`.
+4. Every `setState` after an `await` is guarded by `signal.aborted`, so nothing updates after unmount or after a restart.
+5. `retry()` bumps a `runId`, which re-runs the effect: the old run is aborted and a fresh loop starts from attempt one.
+6. The latest `operation` is kept in a ref, so re-renders with a new inline function don't restart the loop.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Poll a background job until it's done — throw to mean "not yet"
+  function ExportStatus({ jobId }: { jobId: string }) {
+    const { status, data, attempts, retry } = useRetryUntilResolved(
+      async (signal) => {
+        const res = await fetch(\`/api/exports/\${jobId}\`, { signal });
+        const job: { state: string; url?: string } = await res.json();
+        if (job.state !== "done") throw new Error("Still processing");
+        return job.url!;
+      },
+      { interval: 500, backoff: true, maxAttempts: 8 }
+    );
+
+    if (status === "resolved") return <a href={data}>Download export</a>;
+    if (status === "failed") return <button onClick={retry}>Try again</button>;
+    return <p aria-live="polite">Preparing export… (attempt {attempts})</p>;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Polling async jobs** — exports, video transcoding, or payment confirmation — until they complete.
+- **Retrying flaky requests** on unstable mobile connections without user intervention.
+- **Waiting for a cold-starting service** (serverless functions, preview deployments) to come online.
+- **Lazy-loaded resources** such as a script, font, or WebSocket handshake that occasionally fails.
+- **"Try again" UIs** where the user can manually restart after automatic retries are exhausted.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Throwing means "retry":** the hook only knows success from rejection, so for polling, throw when the result isn't ready yet — and remember `fetch` does **not** reject on 4xx/5xx, so check `res.ok` yourself.
+- **Forward the signal:** pass `signal` to `fetch` (or any abortable API) so in-flight requests are actually cancelled, not just ignored.
+- **Don't retry everything:** a 401 or 404 won't fix itself — rethrow a distinct error and branch on it, or cap `maxAttempts` low.
+- **Add jitter at scale:** if many clients retry the same endpoint, randomise the backoff delay slightly to avoid synchronized thundering herds.
+- **Changing options restarts:** `interval`, `maxAttempts`, `backoff`, and `maxDelay` are effect dependencies, so updating one begins a fresh loop.
+- **Fixed-cadence alternative:** if you just need "run this every N seconds" with no success condition, [`useInterval`](/snippet/use-interval-and-timeout) is simpler.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useRetryUntilResolved` wraps "try until it works" into one declarative hook: configurable interval, attempt cap, and exponential backoff, an `AbortSignal` for every attempt, a stale-safe ref for the operation, and full cancellation on unmount — with `status`, `data`, `error`, and `retry()` ready to drive your UI.
