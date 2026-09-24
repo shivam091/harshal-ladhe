@@ -354,6 +354,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "in-portal",
+    title: "`<InPortal />`: SSR-Safe Portals for Modals & Tooltips in React",
+    excerpt: "Render modals, tooltips, and dropdowns outside clipping ancestors safely.",
+    description: "Build an SSR-safe InPortal component around React's createPortal that waits for mount, targets any container or element id, and creates and cleans up its own host node, so overlays escape overflow and z-index traps.",
+    category: ["React"],
+    tags: ["react", "components", "InPortal", "createPortal", "portals", "modals", "ssr", "nextjs", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/in-portal/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React InPortal component moving a modal and tooltip out of a clipped container into a separate layer at the document body."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,122 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("in-portal");
+
+## Introduction
+
+Tooltips, dropdowns, and modals often need to escape their parent. An ancestor with `overflow: hidden`, a `transform`, or a low `z-index` can clip them or trap them under other content, however high you set their own `z-index`. React's `createPortal` solves this by rendering children into a different DOM node, but using it directly in a server-rendered app fails, because `document` doesn't exist on the server.
+
+This snippet provides an `InPortal` component that wraps `createPortal` safely. It renders nothing until it has mounted in the browser, can target any container or element id you pass, and **creates and removes its own host node** so it never leaves empty elements behind.
+
+<RainbowDivider />
+
+## The Component
+
+<CodeBlock language="tsx">
+{`
+  "use client";
+
+  import { useEffect, useState } from "react";
+  import { createPortal } from "react-dom";
+  import type { ReactNode } from "react";
+
+  interface InPortalProps {
+    children: ReactNode;
+    /** Element to render into. Takes precedence over \`id\`. */
+    container?: Element | null;
+    /** id of an existing element to render into. Falls back to <body>. */
+    id?: string;
+  }
+
+  export function InPortal({ children, container, id }: InPortalProps) {
+    const [host, setHost] = useState<HTMLElement | null>(null);
+
+    useEffect(() => {
+      const parent = container ?? (id ? document.getElementById(id) : null) ?? document.body;
+
+      // A dedicated node per portal means cleanup can never remove
+      // content that another portal (or your layout) still owns.
+      const node = document.createElement("div");
+      node.dataset.portal = "";
+      parent.appendChild(node);
+      setHost(node);
+
+      return () => {
+        node.remove();
+      };
+    }, [container, id]);
+
+    return host ? createPortal(children, host) : null;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. On the server and during hydration, `host` is `null`, so the component renders nothing. The server HTML and the first client render always match.
+2. After mounting, the effect picks a parent: the `container` prop, then the element with the given `id`, then `document.body`.
+3. It appends a fresh `div` to that parent and stores it in state. That re-render hands the node to `createPortal`.
+4. On unmount (or when `container` / `id` changes) the cleanup removes the node, so no empty wrappers pile up in the DOM.
+5. Each new portal is appended after existing ones, so a modal opened from a dropdown naturally stacks on top of it.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Render a modal into <body>, outside any clipping ancestors
+  function ConfirmDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+    if (!open) return null;
+
+    return (
+      <InPortal>
+        <div className="backdrop" onClick={onClose}>
+          <div role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+            <h2 id="confirm-title">Delete this file?</h2>
+            <button type="button" onClick={onClose}>Cancel</button>
+          </div>
+        </div>
+      </InPortal>
+    );
+  }
+
+  // Or target a dedicated layer declared in your root layout:
+  // <div id="tooltip-layer" />
+  function Tooltip({ children }: { children: React.ReactNode }) {
+    return (
+      <InPortal id="tooltip-layer">
+        <div role="tooltip">{children}</div>
+      </InPortal>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Modals and dialogs** that must cover the whole page regardless of where they're declared.
+- **Dropdown menus and popovers** inside cards or tables with `overflow: hidden`.
+- **Tooltips** that would otherwise be clipped by scroll containers.
+- **Toast notifications** rendered from deep in the tree, like the [toast-stack](/snippet/toast-stack) snippet.
+- **Third-party widget hosts** where you need React content inside a node you don't render yourself.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Events still bubble through the React tree:** a click inside the portal bubbles to the React parent that rendered `InPortal`, not to the DOM parent. Context providers work the same way. This is usually what you want, but a click inside a modal can trigger an `onClick` on the component that opened it, so call `stopPropagation` when needed.
+- **Why the mount gate:** `document` only exists in the browser. Waiting for an effect is the same idea as [use-has-mounted](/snippet/use-has-mounted), built into the component.
+- **Content appears one frame late:** because nothing renders until after mount, avoid portals for content that must be in the server HTML for SEO.
+- **Pass a stable `container`:** it's an effect dependency, so a new element on every render would recreate the host node each time. Store it in state or a ref.
+- **Focus management is on you:** a portal only moves DOM nodes. Modals still need focus trapping, `Escape` handling, and returning focus to the trigger (or use the native `<dialog>` element).
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`InPortal` makes `createPortal` safe to use with server rendering. It waits until mount, renders into any container, id, or `<body>`, and cleans up its own host node, so tooltips, dropdowns, and modals can escape clipping ancestors while keeping React context and event bubbling intact.
