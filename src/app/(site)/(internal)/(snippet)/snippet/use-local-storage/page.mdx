@@ -1,0 +1,152 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-local-storage");
+
+## Introduction
+
+Persisting state in `localStorage` sounds like a one-liner, but real apps hit the edge cases fast: `window` doesn't exist during server rendering, stored JSON can be corrupted or from an older schema, storage can throw in private mode, and two components reading the same key quietly **drift out of sync** — as do two open tabs.
+
+This snippet provides a full-featured `useLocalStorage` hook built on `useSyncExternalStore`. It reads safely during SSR, serializes to JSON with a fallback on bad data, supports functional updates, exposes a `remove()` function, and keeps every hook instance in sync — both across tabs and within the same tab. If you just need a value to survive a reload, the lighter [`useStickyState`](/snippet/use-sticky-state) is often enough.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
+  import type { SetStateAction } from "react";
+
+  // The native "storage" event only fires in *other* tabs, so same-tab instances need their own signal.
+  const LOCAL_EVENT = "local-storage-change";
+
+  function subscribe(onChange: () => void) {
+    window.addEventListener("storage", onChange);
+    window.addEventListener(LOCAL_EVENT, onChange);
+    return () => {
+      window.removeEventListener("storage", onChange);
+      window.removeEventListener(LOCAL_EVENT, onChange);
+    };
+  }
+
+  function readRaw(key: string): string | null {
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null; // storage disabled or blocked (e.g. some private modes)
+    }
+  }
+
+  function parse<T>(raw: string | null, fallback: T): T {
+    if (raw === null) return fallback;
+    try {
+      return JSON.parse(raw) as T;
+    } catch {
+      return fallback;
+    }
+  }
+
+  export function useLocalStorage<T>(key: string, initialValue: T) {
+    // Freeze the first initialValue so inline object literals don't bust the memo below.
+    const [fallback] = useState(initialValue);
+
+    // Snapshot the raw string: it's stable between reads, unlike a freshly parsed object.
+    const raw = useSyncExternalStore(subscribe, () => readRaw(key), () => null);
+    const value = useMemo(() => parse(raw, fallback), [raw, fallback]);
+
+    const setValue = useCallback((action: SetStateAction<T>) => {
+      // Read from storage, not the closure, so rapid successive updates compose correctly.
+      const prev = parse(readRaw(key), fallback);
+      const next = typeof action === "function" ? (action as (prev: T) => T)(prev) : action;
+      try {
+        window.localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        // Quota exceeded or storage unavailable — keep the app running.
+      }
+      window.dispatchEvent(new Event(LOCAL_EVENT));
+    }, [key, fallback]);
+
+    const remove = useCallback(() => {
+      try {
+        window.localStorage.removeItem(key);
+      } catch {
+        // Nothing to clean up if storage is unavailable.
+      }
+      window.dispatchEvent(new Event(LOCAL_EVENT));
+    }, [key]);
+
+    return [value, setValue, remove] as const;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `useSyncExternalStore` treats `localStorage` as an external store: `subscribe` wires up change events, and the snapshot function reads the current raw string for `key`.
+2. The **server snapshot** returns `null`, so SSR and the hydration pass render `initialValue`; React then re-renders with the real stored value on the client.
+3. The raw string is parsed with `JSON.parse` inside a `try/catch`, falling back to `initialValue` if the data is missing or corrupted.
+4. `setValue` accepts a value or an updater function, writes the JSON string, and dispatches a custom `local-storage-change` event.
+5. Every hook instance in the tab hears that event and re-reads its snapshot, while other tabs are updated by the browser's native `storage` event.
+6. `remove()` deletes the key and notifies subscribers, so all instances fall back to `initialValue`.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  type Theme = "light" | "dark" | "system";
+
+  function ThemePicker() {
+    const [theme, setTheme, resetTheme] = useLocalStorage<Theme>("theme", "system");
+
+    return (
+      <>
+        <select value={theme} onChange={(e) => setTheme(e.target.value as Theme)}>
+          <option value="system">System</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+        <button onClick={resetTheme}>Reset</button>
+      </>
+    );
+  }
+
+  // A second instance elsewhere on the page stays in sync automatically
+  function RecentSearches() {
+    const [recent, setRecent] = useLocalStorage<string[]>("recent-searches", []);
+    const add = (term: string) => setRecent((prev) => [term, ...prev.filter((t) => t !== term)].slice(0, 5));
+
+    return <ul>{recent.map((term) => <li key={term} onClick={() => add(term)}>{term}</li>)}</ul>;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **User preferences** — theme, language, density, or sidebar state — shared across every component that reads them.
+- **Recently viewed items or searches** that persist between sessions.
+- **Form drafts** that survive an accidental refresh or closed tab.
+- **Multi-tab apps** where logging out, switching workspaces, or toggling a setting should reflect everywhere at once.
+- **Feature flags or onboarding progress** stored per browser without a backend round trip.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Hydration flash:** the server can't see `localStorage`, so the first client render shows `initialValue` before switching to the stored value. For UI that must not flicker, render it only after mount with [`useHasMounted`](/snippet/use-has-mounted).
+- **Lightweight alternative:** [`useStickyState`](/snippet/use-sticky-state) covers the common "remember this across reloads" case with far less code — reach for this hook when you need sync, removal, or robust error handling.
+- **Only JSON-safe data:** `Date`, `Map`, `Set`, and class instances won't round-trip through `JSON.stringify` — store primitives and plain objects, or add a custom serializer.
+- **Version your keys:** when the stored shape changes, bump the key (`"settings:v2"`) instead of trusting old data to match the new type.
+- **Never store secrets:** anything in `localStorage` is readable by any script on the page — keep tokens in `httpOnly` cookies.
+- **Failed writes are silent:** if storage is full or blocked, the value simply doesn't change; surface an error if persistence is critical.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useLocalStorage` turns the browser's key–value store into reliable React state: `useSyncExternalStore` keeps every instance in sync within and across tabs, JSON parsing never crashes on bad data, SSR renders a safe fallback, and functional updates plus `remove()` give you the same ergonomics as `useState`.

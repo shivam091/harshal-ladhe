@@ -228,6 +228,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-local-storage",
+    title: "`useLocalStorage`: Synced, SSR-Safe Persistent State in React",
+    excerpt: "Persist state to localStorage and keep it in sync across tabs and components.",
+    description: "Build a full-featured useLocalStorage hook with useSyncExternalStore — SSR-safe reads, safe JSON parsing, functional updates, a remove() helper, and automatic sync across browser tabs and hook instances.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useLocalStorage", "localStorage", "useSyncExternalStore", "ssr", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-local-storage/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useLocalStorage hook persisting state to browser storage and syncing values across multiple tabs and components."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
