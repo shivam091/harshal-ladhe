@@ -102,6 +102,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-prefers-reduced-motion",
+    title: "`usePrefersReducedMotion`: Respect Motion Preferences in React",
+    excerpt: "Check the user's reduced-motion setting before firing any animation.",
+    description: "Build an SSR-safe usePrefersReducedMotion hook with useSyncExternalStore that tracks the prefers-reduced-motion media query live, defaulting to reduced motion on the server for accessible animations.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "usePrefersReducedMotion", "accessibility", "prefers-reduced-motion", "useSyncExternalStore", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-prefers-reduced-motion/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React usePrefersReducedMotion hook detecting the OS reduce-motion setting and pausing animations, with media query and accessibility icons."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

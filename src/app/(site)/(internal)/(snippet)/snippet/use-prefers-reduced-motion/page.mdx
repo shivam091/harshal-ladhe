@@ -1,0 +1,115 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-prefers-reduced-motion");
+
+## Introduction
+
+Some people get dizzy, nauseous, or distracted from motion on screen, so they turn on "reduce motion" in their OS settings. The browser passes that setting on through the `prefers-reduced-motion` media query. CSS can read it easily, but JavaScript-driven animations (springs, scroll effects, canvas loops) ignore it unless you check it yourself.
+
+This snippet provides a `usePrefersReducedMotion` hook built on `useSyncExternalStore`. It returns the user's current preference, re-renders if the preference changes while the page is open, and **assumes reduced motion on the server** so no animation plays before the client can check.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useSyncExternalStore } from "react";
+
+  const QUERY = "(prefers-reduced-motion: reduce)";
+
+  function subscribe(onChange: () => void) {
+    const mediaQueryList = window.matchMedia(QUERY);
+    mediaQueryList.addEventListener("change", onChange);
+    return () => mediaQueryList.removeEventListener("change", onChange);
+  }
+
+  function getSnapshot() {
+    return window.matchMedia(QUERY).matches;
+  }
+
+  // The server can't know the user's preference, so err on the side of no motion —
+  // an animation that starts late is harmless, one that shouldn't have played isn't.
+  function getServerSnapshot() {
+    return true;
+  }
+
+  export function usePrefersReducedMotion(): boolean {
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `subscribe` attaches a `change` listener to a `MediaQueryList`, so React re-renders as soon as the user toggles the OS setting.
+2. `getSnapshot` reads `matchMedia(...).matches` on the client. It returns a plain boolean, so React can compare snapshots cheaply and skip redundant renders.
+3. `getServerSnapshot` returns `true` during SSR **and during hydration**, so the server HTML and the first client render always match.
+4. Right after hydration, React re-reads the real value with `getSnapshot`. Users who allow motion then get their animations one render later.
+5. The helper functions are declared at module level, so their identities never change and React never re-subscribes needlessly.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  function HeroBanner() {
+    const prefersReducedMotion = usePrefersReducedMotion();
+
+    return (
+      <video
+        src="/hero.mp4"
+        autoPlay={!prefersReducedMotion}
+        loop={!prefersReducedMotion}
+        muted
+        playsInline
+        controls={prefersReducedMotion}
+      />
+    );
+  }
+
+  // Swap a motion-heavy transition for a simple fade
+  function Panel({ open }: { open: boolean }) {
+    const prefersReducedMotion = usePrefersReducedMotion();
+
+    return (
+      <div
+        style={{
+          opacity: open ? 1 : 0,
+          transform: prefersReducedMotion || open ? "none" : "translateY(24px)",
+          transition: "opacity 300ms, transform 300ms"
+        }}
+      />
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Gating spring and physics animations**, as in [`useBoop`](/snippet/use-boop), which skips its wobble when this returns `true`.
+- **Autoplaying media**: pause hero videos, carousels, and looping GIFs by default.
+- **Scroll-driven effects**: turn off parallax, scroll-jacking, and reveal-on-scroll motion.
+- **Canvas and WebGL loops**: render one static frame instead of running `requestAnimationFrame`.
+- **Motion libraries**: pass the flag to Framer Motion or react-spring configs that don't read it themselves.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **"Reduced" doesn't mean "none":** a quick opacity fade is usually fine. What to remove is large movement, zooming, spinning, and parallax.
+- **Why default to `true`:** if the server defaulted to `false`, a user who asked for less motion could see an animation start before hydration corrects it. Defaulting to `true` means the worst case is a slightly late animation.
+- **Prefer CSS when you can:** for plain CSS transitions, a `@media (prefers-reduced-motion: reduce)` block needs no JavaScript and applies before hydration.
+- **Generalize it:** this is a specialized [`useMediaQuery`](/snippet/use-media-query). Use that when you need other queries like `(pointer: coarse)` or `(prefers-color-scheme: dark)`.
+- **Old Safari:** `MediaQueryList.addEventListener` arrived in Safari 14. If you need to support older versions, fall back to the deprecated `addListener`/`removeListener`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`usePrefersReducedMotion` gives JavaScript animations the same accessibility check CSS gets for free. `useSyncExternalStore` keeps it in sync with the OS setting without tearing, and assuming reduced motion on the server means no user who asked for less motion ever sees an animation by accident.
