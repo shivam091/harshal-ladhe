@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Digital Clock Second Hand Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Ticking vs. Sweeping Second Hand</h1>
+        <p>Compare a mechanical "tick" (steps()) against a smooth quartz-style sweep (linear) on the same clock face.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Clock preview">
+        <div class="clock-face">
+          <div class="tick tick-0"></div>
+          <div class="tick tick-1"></div>
+          <div class="tick tick-2"></div>
+          <div class="tick tick-3"></div>
+          <div class="tick tick-4"></div>
+          <div class="tick tick-5"></div>
+          <div class="tick tick-6"></div>
+          <div class="tick tick-7"></div>
+          <div class="tick tick-8"></div>
+          <div class="tick tick-9"></div>
+          <div class="tick tick-10"></div>
+          <div class="tick tick-11"></div>
+          <div class="hand hour-hand"></div>
+          <div class="hand minute-hand"></div>
+          <div class="hand second-hand" id="second-hand"></div>
+          <div class="hub"></div>
+        </div>
+
+        <p class="readout">Tick <span id="step-readout">0</span> / <span id="step-total">60</span></p>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Motion Controls</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="mode-select">Motion</label>
+            <select id="mode-select">
+              <option value="steps" selected>Ticking — steps()</option>
+              <option value="linear">Sweeping — linear</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="steps-count">Ticks per revolution</label>
+            <input type="number" id="steps-count" min="4" max="60" step="1" value="60">
+          </div>
+
+          <div class="field">
+            <label for="duration-input">Revolution time</label>
+            <div class="field-input">
+              <input type="number" id="duration-input" min="3" max="60" step="1" value="60">
+              <select id="duration-unit" class="unit-select" aria-label="Revolution time unit">
+                <option value="s">s</option>
+                <option value="ms">ms</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <button id="replay-btn" class="toggle-btn">Restart</button>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
