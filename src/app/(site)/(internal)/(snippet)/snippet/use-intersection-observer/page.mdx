@@ -1,0 +1,128 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-intersection-observer");
+
+## Introduction
+
+Knowing when an element enters the viewport powers lazy loading, scroll-triggered animations, infinite lists, and impression tracking. Listening to `scroll` and calling `getBoundingClientRect()` works, but it runs on the main thread dozens of times per second and forces layout on every call.
+
+This snippet provides a `useIntersectionObserver` hook that wraps the browser's **IntersectionObserver API**. It returns a callback `ref` to attach to any element, plus the latest `IntersectionObserverEntry` and an `isIntersecting` flag — with support for `threshold`, `root`, `rootMargin`, and a `freezeOnceVisible` option for one-shot reveals.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useEffect, useState } from "react";
+
+  interface UseIntersectionObserverOptions extends IntersectionObserverInit {
+    freezeOnceVisible?: boolean;
+  }
+
+  export function useIntersectionObserver<T extends Element = Element>({
+    threshold = 0,
+    root = null,
+    rootMargin = "0px",
+    freezeOnceVisible = false
+  }: UseIntersectionObserverOptions = {}) {
+    // State, not a ref object, so the effect re-runs when the element mounts or changes.
+    const [node, setNode] = useState<T | null>(null);
+    const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
+
+    const frozen = freezeOnceVisible && !!entry?.isIntersecting;
+
+    useEffect(() => {
+      if (!node || frozen || typeof IntersectionObserver === "undefined") return;
+
+      const observer = new IntersectionObserver(
+        // Batched entries arrive oldest-first; only the most recent matters.
+        (entries) => setEntry(entries[entries.length - 1] ?? null),
+        { threshold, root, rootMargin }
+      );
+
+      observer.observe(node);
+      return () => observer.disconnect();
+    }, [node, frozen, threshold, root, rootMargin]);
+
+    return { ref: setNode, entry, isIntersecting: !!entry?.isIntersecting };
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The returned `ref` is a state setter used as a **callback ref**, so React hands the hook the DOM node once it mounts — and again if it's swapped for a different element.
+2. When a node exists, the effect creates an `IntersectionObserver` with the given `threshold`, `root`, and `rootMargin`, and starts observing.
+3. Each time visibility crosses a threshold, the browser calls back off the main scroll path and the hook stores the latest entry.
+4. With `freezeOnceVisible`, the first intersecting entry flips `frozen` to `true`, which disconnects the observer and keeps `isIntersecting` locked at `true`.
+5. The cleanup disconnects the observer on unmount or whenever the node or options change, so nothing leaks.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Lazy-load an image shortly before it scrolls into view
+  function LazyImage({ src, alt }: { src: string; alt: string }) {
+    const { ref, isIntersecting } = useIntersectionObserver<HTMLImageElement>({
+      rootMargin: "200px",
+      freezeOnceVisible: true
+    });
+
+    return <img ref={ref} src={isIntersecting ? src : undefined} alt={alt} width={640} height={360} />;
+  }
+
+  // Reveal a section once, when half of it is visible
+  function Reveal({ children }: { children: React.ReactNode }) {
+    const { ref, isIntersecting } = useIntersectionObserver<HTMLDivElement>({
+      threshold: 0.5,
+      freezeOnceVisible: true
+    });
+
+    return (
+      <div
+        ref={ref}
+        style={{
+          opacity: isIntersecting ? 1 : 0,
+          transform: isIntersecting ? "none" : "translateY(16px)",
+          transition: "opacity 600ms ease, transform 600ms ease"
+        }}
+      >
+        {children}
+      </div>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Lazy-loading images, iframes, or heavy components** just before they're needed.
+- **Scroll-reveal animations** that play once when a section enters the viewport — pair with [`FadeIn`](/snippet/fade-in).
+- **Infinite scrolling** by observing a sentinel element at the end of a list.
+- **Analytics impressions** that record when an ad or product card was actually seen.
+- **Pausing videos or animations** when they scroll out of view to save CPU and battery.
+- **Sticky header or "back to top" toggles** driven by whether a hero section is still visible.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Stabilise array thresholds:** `threshold: [0, 0.5, 1]` written inline is a new array every render and recreates the observer — hoist it to a module constant or `useMemo` it.
+- **`rootMargin` for preloading:** a positive margin like `"200px"` triggers before the element is on screen, hiding load latency.
+- **Native lazy loading first:** for plain images, `loading="lazy"` may be all you need; use this hook when you want control over the margin or to lazy-load non-image content.
+- **Reserve space:** give lazy content explicit dimensions (or `aspect-ratio`) so it doesn't cause layout shift when it loads.
+- **Respect reduced motion:** skip or shorten reveal transitions for users who opt out — see [`usePrefersReducedMotion`](/snippet/use-prefers-reduced-motion).
+- **SSR-safe:** the observer is only created inside `useEffect`, and the hook no-ops where `IntersectionObserver` is unavailable.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useIntersectionObserver` gives you efficient, declarative visibility tracking: attach a callback `ref`, read `isIntersecting` or the full entry, tune detection with `threshold`, `root`, and `rootMargin`, and use `freezeOnceVisible` for one-shot effects — all with automatic cleanup and no scroll listeners.

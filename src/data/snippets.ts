@@ -246,6 +246,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-intersection-observer",
+    title: "`useIntersectionObserver`: Detect Element Visibility in React",
+    excerpt: "Track when elements enter or leave the viewport.",
+    description: "Build a useIntersectionObserver hook that wraps the IntersectionObserver API with a callback ref, threshold, root, rootMargin, and freezeOnceVisible — ideal for lazy loading, scroll reveals, and infinite scroll.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useIntersectionObserver", "intersection-observer", "lazy-loading", "scroll-animation", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-intersection-observer/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useIntersectionObserver hook detecting elements entering the viewport to lazy-load images and trigger scroll-reveal animations."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
