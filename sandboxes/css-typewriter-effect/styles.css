@@ -1,0 +1,31 @@
+@keyframes reveal {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: calc(var(--chars, 0) * 1ch);
+  }
+}
+
+@keyframes blink-caret {
+  from,
+  to {
+    border-color: transparent;
+  }
+
+  50% {
+    border-color: var(--pg-primary);
+  }
+}
+
+.typewriter {
+  margin: 0;
+  font-family: var(--pg-mono);
+  font-size: 1.15rem;
+  color: var(--pg-text);
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 0.15em solid var(--pg-primary);
+  width: 0;
+}
