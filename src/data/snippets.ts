@@ -120,6 +120,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-sticky-state",
+    title: "`useStickyState`: Persist State to localStorage in React",
+    excerpt: "A drop-in useState that remembers its value between visits.",
+    description: "Build a minimal useStickyState hook that mirrors the useState API while automatically persisting the value to localStorage — ideal for UI preferences like sidebar and view-mode settings.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useStickyState", "localStorage", "state-management", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-sticky-state/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useStickyState hook saving component state to localStorage and restoring it after a page refresh."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

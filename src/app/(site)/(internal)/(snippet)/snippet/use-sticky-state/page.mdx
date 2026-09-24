@@ -1,0 +1,106 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-sticky-state");
+
+## Introduction
+
+Some UI state should survive a page refresh: a collapsed sidebar, a chosen view mode, the last-used filter. Wiring up `localStorage` by hand means reading it on mount, writing it on every change, and serializing the value both times. That boilerplate gets copied into every component that needs it.
+
+This snippet provides a `useStickyState` hook, a drop-in `useState` that also takes a storage key. It reads the saved value on first render and writes every update back to `localStorage`. The whole thing is about ten lines and deliberately does nothing more.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useEffect, useState } from "react";
+  import type { Dispatch, SetStateAction } from "react";
+
+  export function useStickyState<T>(
+    defaultValue: T,
+    key: string
+  ): [T, Dispatch<SetStateAction<T>>] {
+    const [value, setValue] = useState<T>(() => {
+      if (typeof window === "undefined") return defaultValue;
+      const stored = window.localStorage.getItem(key);
+      return stored !== null ? (JSON.parse(stored) as T) : defaultValue;
+    });
+
+    useEffect(() => {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    }, [key, value]);
+
+    return [value, setValue];
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. A **lazy initializer** reads `localStorage` only once, on the first render, rather than on every render.
+2. The `typeof window` guard returns `defaultValue` on the server, where `localStorage` doesn't exist.
+3. Values go through `JSON.stringify`/`JSON.parse`, so numbers, booleans, arrays, and plain objects keep their type.
+4. An effect writes the latest value back whenever `value` or `key` changes. Effects never run on the server, so this is SSR-safe.
+5. It returns the **real `setValue`**, so functional updates like `setCount(c => c + 1)` work just as they do with `useState`.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  function Sidebar() {
+    const [collapsed, setCollapsed] = useStickyState(false, "sidebar:collapsed");
+
+    return (
+      <aside data-collapsed={collapsed}>
+        <button onClick={() => setCollapsed(c => !c)}>
+          {collapsed ? "Expand" : "Collapse"}
+        </button>
+      </aside>
+    );
+  }
+
+  type View = "grid" | "list";
+
+  function ProductList() {
+    const [view, setView] = useStickyState<View>("grid", "products:view");
+
+    return (
+      <>
+        <button onClick={() => setView("grid")} aria-pressed={view === "grid"}>Grid</button>
+        <button onClick={() => setView("list")} aria-pressed={view === "list"}>List</button>
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Layout preferences**, such as a collapsed sidebar, a panel's width, or a grid vs list view.
+- **Dismissed UI**, such as "don't show this again" banners and onboarding tips.
+- **Form drafts**, so a half-written comment survives an accidental reload.
+- **Last-used options**, such as sort order, page size, or the selected tab.
+- **Prototypes and demos** where you want persistence without adding a state library.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Hydration mismatch:** on a server-rendered page, the server renders `defaultValue` but the client may read a different stored value, so React warns about a mismatch. If the value changes the markup, render that part only after mount with [`useHasMounted`](/snippet/use-has-mounted).
+- **Namespace your keys:** a prefix like `"sidebar:collapsed"` prevents collisions with other code on the same origin.
+- **Only store JSON-safe values:** `Date`, `Map`, `Set`, and class instances won't survive `JSON.stringify` unchanged.
+- **It's intentionally minimal:** it doesn't sync across tabs, has no `remove`, and doesn't catch corrupted JSON or storage-full errors. If you need any of those, upgrade to [`useLocalStorage`](/snippet/use-local-storage).
+- **Stable default:** the default is read only once, so passing a new object literal on every render is harmless.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useStickyState` has the same API as `useState`, plus a key, and remembers its value between visits. Use it for small preferences where ten lines beat a dependency, and move to `useLocalStorage` once you need cross-tab sync or error handling.
