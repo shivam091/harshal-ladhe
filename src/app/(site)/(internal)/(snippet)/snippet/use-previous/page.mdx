@@ -1,0 +1,126 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-previous");
+
+## Introduction
+
+React hands a component its *current* props and state, but plenty of UI depends on how a value **changed**: did the counter go up or down, did the price rise or fall, did this prop just flip? React doesn't keep the old value for you, so you have to capture it yourself.
+
+This snippet provides two versions of `usePrevious`: the classic ref-plus-effect hook that returns the value from the previous render, and a state-based `usePreviousDistinct` that follows the pattern the React docs recommend for [storing information from previous renders](https://react.dev/reference/react/useState#storing-information-from-previous-renders) — without reading a ref during render.
+
+<RainbowDivider />
+
+## The Hook
+
+The classic version — short, familiar, and fine for most read-only comparisons:
+
+<CodeBlock language="tsx">
+{`
+  import { useEffect, useRef } from "react";
+
+  export function usePrevious<T>(value: T): T | undefined {
+    const ref = useRef<T | undefined>(undefined);
+
+    // No dependency array on purpose: after every commit, remember what this render saw.
+    useEffect(() => {
+      ref.current = value;
+    });
+
+    return ref.current;
+  }
+`}
+</CodeBlock>
+
+The render-safe alternative — tracks the previous **distinct** value using state only:
+
+<CodeBlock language="tsx">
+{`
+  import { useState } from "react";
+
+  export function usePreviousDistinct<T>(value: T): T | undefined {
+    const [current, setCurrent] = useState(value);
+    const [previous, setPrevious] = useState<T | undefined>(undefined);
+
+    // Setting state during render is allowed for this pattern: React discards this
+    // render's output and immediately re-renders with the updated pair.
+    if (!Object.is(value, current)) {
+      setPrevious(current);
+      setCurrent(value);
+    }
+
+    return previous;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **`usePrevious`** returns `ref.current` *before* the effect updates it, so during render you see the value from the last committed render; the effect then stores the new value for next time.
+2. On the first render there is no previous value, so both hooks return `undefined`.
+3. **`usePreviousDistinct`** keeps the last seen value in state and compares it to the incoming one with `Object.is`.
+4. When they differ, it shifts `current` into `previous` during render; React restarts the render with the new state before touching the DOM, so children never see a mismatched pair.
+5. Unrelated re-renders (a parent updating, other state changing) leave `previous` untouched — it only moves when `value` itself changes.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Detect the direction of a change
+  function Counter() {
+    const [count, setCount] = useState(0);
+    const previous = usePrevious(count);
+    const direction = previous === undefined || previous === count ? "–" : count > previous ? "↑" : "↓";
+
+    return (
+      <div>
+        <button onClick={() => setCount((c) => c - 1)}>-</button>
+        <span>{count} {direction}</span>
+        <button onClick={() => setCount((c) => c + 1)}>+</button>
+      </div>
+    );
+  }
+
+  // Animate on value change — flash green or red when a price moves
+  function PriceTicker({ price }: { price: number }) {
+    const previous = usePreviousDistinct(price);
+    const trend = previous === undefined ? "flat" : price > previous ? "up" : "down";
+
+    // A new key restarts the CSS flash animation on every change.
+    return (
+      <span key={price} className={\`price price--\${trend}\`}>
+        {price.toFixed(2)}
+      </span>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Direction-aware UI:** up/down arrows, slide-left vs slide-right carousel transitions.
+- **Change highlighting:** flash a table cell, badge, or price when its value updates.
+- **Prop transition logic:** run something only when `isOpen` goes from `false` to `true`.
+- **Debugging re-renders:** log which props actually changed between renders.
+- **Undo hints:** show "changed from X" next to an edited field.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **The React docs caveat:** React advises against reading or writing `ref.current` during render because it makes output depend on something React doesn't track; the React Compiler's lint rules flag it too. `usePrevious` does exactly that read — prefer `usePreviousDistinct` if you use the compiler or concurrent features heavily.
+- **"Previous render" vs "previous value":** `usePrevious` returns whatever the last render saw, so after an unrelated re-render it equals the *current* value. `usePreviousDistinct` remembers the last *different* value — usually what you actually want.
+- **Don't reach for it to sync state:** if you're comparing old and new props just to reset state, a `key` on the component is often simpler.
+- **Objects and arrays:** both hooks compare by reference, so a new-but-equal object counts as a change; memoise upstream or compare a derived primitive.
+- **Setting state during render is narrow:** only update this component's own state, and always behind a condition — otherwise you'll loop.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`usePrevious` gives you last render's value in a few lines, while `usePreviousDistinct` tracks the last *different* value using state alone, sidestepping the reading-refs-during-render caveat — pick the ref version for quick comparisons and the state version when you need render-pure, Compiler-friendly change detection.

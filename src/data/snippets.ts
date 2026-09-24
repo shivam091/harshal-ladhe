@@ -318,6 +318,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-previous",
+    title: "`usePrevious`: Compare Current and Previous Values in React",
+    excerpt: "Capture a value from the previous render to detect how it changed.",
+    description: "Build a usePrevious hook to read a value from the previous render, plus a render-safe usePreviousDistinct alternative that follows the React docs pattern for storing information from previous renders.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "usePrevious", "useRef", "state-management", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-previous/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React usePrevious hook comparing current and previous values, with a counter showing change direction and a price ticker flashing on updates."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
