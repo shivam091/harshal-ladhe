@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Step-based Progress Bar Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Chunked Loading Bar</h1>
+        <p>A <code>width</code> transition run through <code>steps()</code> instead of easing — no @keyframes required.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Progress bar preview">
+        <div class="track">
+          <div id="fill" class="fill"></div>
+          <div class="grid-lines" id="grid-lines"></div>
+        </div>
+        <p class="readout">Chunk <span id="chunk-readout">0</span> / <span id="chunk-total">4</span>&nbsp;·&nbsp;<span id="percent-readout">0%</span></p>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Transition Controls</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="steps-count">Chunks (steps)</label>
+            <input type="number" id="steps-count" min="2" max="12" step="1" value="4">
+          </div>
+
+          <div class="field">
+            <label for="jump-term">Jump Term</label>
+            <select id="jump-term">
+              <option value="jump-end" selected>jump-end (default)</option>
+              <option value="jump-start">jump-start</option>
+              <option value="jump-none">jump-none</option>
+              <option value="jump-both">jump-both</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="duration-input">Duration</label>
+            <div class="field-input">
+              <input type="number" id="duration-input" min="0.5" max="5" step="0.5" value="2">
+              <select id="duration-unit" class="unit-select" aria-label="Duration unit">
+                <option value="s">s</option>
+                <option value="ms">ms</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <button id="load-btn" class="toggle-btn">Start Loading</button>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
