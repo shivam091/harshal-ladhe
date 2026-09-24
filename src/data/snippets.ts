@@ -426,6 +426,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "polymorphic-box",
+    title: "`<Box />`: Type-Safe Polymorphic `as` Prop Component in React",
+    excerpt: "Render any element or component with fully inferred, type-safe props.",
+    description: "Build a polymorphic Box component in React and TypeScript whose as prop infers the chosen element's props, omits conflicting native props, and forwards refs using React 19's ref-as-prop — with a reusable PolymorphicProps helper.",
+    category: ["React"],
+    tags: ["react", "components", "polymorphic-components", "as-prop", "generics", "design-systems", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/polymorphic-box/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React Box component morphing between div, anchor, and Link elements under a single as prop."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,128 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("polymorphic-box");
+
+## Introduction
+
+Layout and typography primitives constantly need to render as different elements: a card that's sometimes a `div` and sometimes an `a`, a heading style that must be an `h2` here and an `h3` there. The usual escape hatch — `as?: string` plus `[key: string]: any` — throws away every bit of type safety, so `href` on a `div` or a missing `href` on a `Link` goes unnoticed.
+
+This snippet provides a fully typed polymorphic `Box` with an `as` prop: the props of whichever element or component you pass are inferred, your own props override conflicting native ones, and refs flow through to the underlying element. A reusable `PolymorphicProps` helper lets you build other primitives the same way.
+
+<RainbowDivider />
+
+## The Component
+
+<CodeBlock language="tsx">
+{`
+  import type { ComponentPropsWithRef, ElementType } from "react";
+
+  // Own props win: any native prop with the same name is omitted so the two never intersect.
+  export type PolymorphicProps<E extends ElementType, OwnProps = object> = OwnProps & {
+    as?: E;
+  } & Omit<ComponentPropsWithRef<E>, keyof OwnProps | "as">;
+
+  export function Box<E extends ElementType = "div">({ as, ...props }: PolymorphicProps<E>) {
+    // Widened on purpose — the public signature above already enforces correct props.
+    const Component: ElementType = as ?? "div";
+    return <Component {...props} />;
+  }
+
+  // A primitive built on the same helper, with its own design-token props.
+  type TextOwnProps = {
+    size?: "sm" | "md" | "lg";
+    tone?: "default" | "muted";
+  };
+
+  export function Text<E extends ElementType = "span">({
+    as,
+    size = "md",
+    tone = "default",
+    className,
+    ...props
+  }: PolymorphicProps<E, TextOwnProps>) {
+    const Component: ElementType = as ?? "span";
+    const classes = ["text", \`text-\${size}\`, \`text-\${tone}\`, className].filter(Boolean).join(" ");
+    return <Component {...props} className={classes} />;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `Box` is generic over `E extends ElementType`, so TypeScript **infers** `E` from whatever you pass to `as` — `"a"`, `"button"`, or a component like `Link` — and falls back to `"div"`.
+2. `ComponentPropsWithRef<E>` pulls in every prop that element or component accepts, including `ref`, so `href` is allowed on `as="a"` and required on `as={Link}`.
+3. `Omit<..., keyof OwnProps | "as">` strips native props that clash with your own. Without it, `Text`'s `size: "sm"` would intersect with `input`'s `size: number` and collapse to `never`.
+4. Inside the component, `Component` is widened to `ElementType`. The strictness lives in the **call-site** signature, which is where mistakes actually happen.
+5. The snippet targets **React 19**, where `ref` is a regular prop: it's part of `ComponentPropsWithRef<E>`, travels through `...props`, and lands on the rendered element with no `forwardRef` needed.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  import Link from "next/link";
+  import { useRef } from "react";
+
+  function Examples() {
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    return (
+      <>
+        {/* Defaults to a div */}
+        <Box className="card">Plain container</Box>
+
+        {/* Anchor props are inferred — href, target, rel all typed */}
+        <Box as="a" href="https://react.dev" target="_blank" rel="noreferrer">
+          React docs
+        </Box>
+
+        {/* Next.js Link — href is required, prefetch is typed */}
+        <Box as={Link} href="/snippets" prefetch={false} className="card">
+          All snippets
+        </Box>
+
+        {/* Refs are typed to the chosen element */}
+        <Box as="button" ref={buttonRef} type="button" onClick={() => buttonRef.current?.blur()}>
+          Click me
+        </Box>
+
+        <Text as="h2" size="lg">Section title</Text>
+        <Text tone="muted">Supporting copy</Text>
+
+        {/* Type errors, caught at compile time: */}
+        {/* <Box href="/nope">…</Box>        — div has no href */}
+        {/* <Box as={Link}>…</Box>           — Link requires href */}
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Layout primitives** (`Box`, `Stack`, `Flex`, `Grid`) that need semantic elements like `section`, `nav`, or `ul`.
+- **Typography components** that separate visual size from heading level, e.g. a large-looking `h3`.
+- **Cards and list items** that are sometimes static and sometimes clickable links.
+- **Design-system buttons** that render as `button`, `a`, or a router `Link` with one set of styles.
+- **Wrapping third-party components** (router links, motion components) without losing their prop types.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Pre-React 19 (`forwardRef`):** `forwardRef` erases generics, so the usual workaround is to wrap the component and cast it back: `forwardRef(BoxImpl) as <E extends ElementType = "div">(props: PolymorphicProps<E>) => ReactNode`, typing the inner component's props with `ComponentPropsWithoutRef<E>` plus a separate `ref` argument.
+- **Semantics are still on you:** `as="div"` with an `onClick` type-checks fine but isn't keyboard accessible — reach for `as="button"` or `as="a"` for anything interactive.
+- **Type-check cost:** heavy use of deeply generic polymorphic components can slow the TypeScript server. Keep the helper type simple, as above, rather than piling on conditional types.
+- **Server-component friendly:** `Box` uses no hooks or browser APIs, so it needs no `"use client"` — though passing a client component to `as` still makes that subtree client-rendered.
+- **Composing with other snippets:** polymorphic primitives pair well with [`VisuallyHidden`](/snippet/visually-hidden), which often needs to render as a `span` or a `div` depending on context.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A polymorphic `Box` built on `ComponentPropsWithRef<E>` gives you one primitive that can render as any element or component while keeping every prop, required field, and ref correctly typed — and a small `PolymorphicProps` helper makes it easy to build the rest of your primitives the same way.
