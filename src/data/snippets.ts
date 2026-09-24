@@ -264,6 +264,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-media-query",
+    title: "`useMediaQuery`: Subscribe to CSS Media Queries in React",
+    excerpt: "Turn any CSS media query into live, SSR-safe React state.",
+    description: "Build a useMediaQuery hook with useSyncExternalStore that tracks any CSS media query in React state, re-subscribes when the query changes, and returns a predictable server default to avoid hydration mismatches.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useMediaQuery", "useSyncExternalStore", "media-queries", "responsive-design", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-media-query/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useMediaQuery hook subscribing to CSS media queries, with breakpoint, prefers-color-scheme, and pointer: coarse examples switching UI in real time."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

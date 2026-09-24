@@ -1,0 +1,103 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-media-query");
+
+## Introduction
+
+CSS media queries handle most responsive styling, but sometimes JavaScript needs the answer too — to render a different component on mobile, pick a chart size, or swap hover interactions for tap-friendly ones. Reading `window.matchMedia()` once isn't enough: the result changes when the window is resized, the device rotates, or the user flips their OS theme.
+
+This snippet provides a `useMediaQuery(query)` hook built on `useSyncExternalStore`. It returns whether the query currently matches, re-renders when that changes, re-subscribes when the query string itself changes, and returns a **predictable server default** so SSR never touches `window`.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useCallback, useSyncExternalStore } from "react";
+
+  export function useMediaQuery(query: string, serverDefault = false): boolean {
+    // A new subscribe function per query tells React to drop the old
+    // MediaQueryList listener and attach one for the new query.
+    const subscribe = useCallback(
+      (onChange: () => void) => {
+        const mediaQueryList = window.matchMedia(query);
+        mediaQueryList.addEventListener("change", onChange);
+        return () => mediaQueryList.removeEventListener("change", onChange);
+      },
+      [query]
+    );
+
+    return useSyncExternalStore(
+      subscribe,
+      () => window.matchMedia(query).matches,
+      // The server has no viewport — return a fixed, caller-chosen answer so the
+      // server HTML and the first client render agree, avoiding a hydration mismatch.
+      () => serverDefault
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `subscribe` creates a `MediaQueryList` for the query and listens for its `change` event, returning a cleanup that removes the listener.
+2. `getSnapshot` reads `matchMedia(query).matches` — a plain boolean, so React can compare snapshots cheaply and skip needless re-renders.
+3. `getServerSnapshot` returns `serverDefault` during SSR and hydration, then React immediately re-renders with the real client value.
+4. `subscribe` is memoised on `query`, so changing the query string (e.g. a dynamic breakpoint) re-subscribes cleanly instead of leaking the old listener.
+5. Because `useSyncExternalStore` reads the snapshot during render, components mounted on the client (after hydration) get the correct value on their **very first render** — no stale-state flash like the older `useState` + `useEffect` pattern.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Breakpoint switch — render a different navigation on small screens
+  function Navigation() {
+    const isDesktop = useMediaQuery("(min-width: 768px)");
+    return isDesktop ? <DesktopNav /> : <MobileMenu />;
+  }
+
+  // Follow the OS theme for a canvas or chart that can't use CSS variables
+  function ThemedChart({ data }: { data: number[] }) {
+    const prefersDark = useMediaQuery("(prefers-color-scheme: dark)");
+    return <Chart data={data} stroke={prefersDark ? "#e5e7eb" : "#111827"} />;
+  }
+
+  // Touch-first devices get bigger hit targets and no hover-only tooltips
+  function Toolbar() {
+    const isCoarsePointer = useMediaQuery("(pointer: coarse)");
+    return <ButtonGroup size={isCoarsePointer ? "large" : "medium"} showTooltips={!isCoarsePointer} />;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Conditional rendering by breakpoint:** swap entire components (drawer vs sidebar) rather than hiding them with CSS.
+- **Theme-aware JavaScript:** canvas, WebGL, or third-party widgets that need explicit colours for `prefers-color-scheme`.
+- **Input-capability tweaks:** `(pointer: coarse)` and `(hover: none)` for touch-friendly sizing and interactions.
+- **Accessibility preferences:** `prefers-contrast`, `prefers-reduced-transparency`, and friends.
+- **Print or orientation logic:** react to `print` or `(orientation: portrait)` in layout code.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Choose `serverDefault` deliberately:** it decides what the server renders. Match your most common audience (e.g. `false` for a mobile-first `min-width` query), or the safest fallback when getting it wrong is costly.
+- **Prefer CSS when CSS can do it:** if you're only changing styles, a real media query avoids the server/client flip entirely — reach for this hook when the *component tree* or *JavaScript values* must change.
+- **Hoist or memoise dynamic queries:** a query string built fresh each render is fine (it's compared by value), but avoid building it from unstable data that changes every render.
+- **Specialised sibling:** for motion preferences, [`usePrefersReducedMotion`](/snippet/use-prefers-reduced-motion) wraps this same pattern and defaults to *reduced* on the server so nothing animates before the client can check.
+- **Interaction vs capability:** `(pointer: coarse)` describes the device's primary input; to react to the pointer used for *this* interaction, check `event.pointerType` as in [`usePointerPosition`](/snippet/use-pointer-position).
+- **Old Safari:** versions before 14 only support the deprecated `addListener`/`removeListener` — add a fallback if you still target them.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useMediaQuery` turns any CSS media query into tear-free React state with `useSyncExternalStore`, re-subscribes when the query changes, and gives you explicit control over the server-rendered default — so responsive logic in JavaScript stays in sync with the browser without hydration surprises.
