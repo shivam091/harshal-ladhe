@@ -1,0 +1,70 @@
+:root {
+  --pg-accent: #34d399;
+  --pg-accent-dark: #10b981;
+}
+
+code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-primary);
+}
+
+.playground {
+  max-width: 480px;
+}
+
+.playground-header h1 {
+  font-size: 1.25rem;
+}
+
+.playground-header p {
+  font-size: 0.9rem;
+}
+
+/* Demo area */
+
+.demo-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.track {
+  position: relative;
+  height: 28px;
+  border: 1px solid var(--pg-border);
+  background: var(--pg-surface-muted);
+  overflow: hidden;
+}
+
+.fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--pg-accent), var(--pg-accent-dark));
+}
+
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.readout {
+  margin: 0;
+  font-family: var(--pg-mono);
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+.readout span {
+  color: var(--pg-text);
+  font-weight: 600;
+}
