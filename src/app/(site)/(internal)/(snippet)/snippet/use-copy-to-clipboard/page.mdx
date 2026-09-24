@@ -1,0 +1,127 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-copy-to-clipboard");
+
+## Introduction
+
+A "copy" button looks trivial until you build one properly: the Clipboard API is async and can reject (insecure origin, denied permission, unfocused document), users expect a brief "Copied!" confirmation, and a naive `setTimeout` to reset that label either cuts off a second click's feedback or fires after the component has unmounted.
+
+This snippet provides a `useCopyToClipboard` hook that wraps `navigator.clipboard.writeText` with a transient `status` (`"idle"` → `"copied"` or `"error"` → back to `"idle"`), exposes the underlying error, and manages its reset timer so repeated copies and unmounts are handled cleanly.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useCallback, useEffect, useRef, useState } from "react";
+
+  type CopyStatus = "idle" | "copied" | "error";
+
+  export function useCopyToClipboard(resetAfterMs = 2000) {
+    const [status, setStatus] = useState<CopyStatus>("idle");
+    const [error, setError] = useState<Error | null>(null);
+    const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+    // A pending reset must not outlive the component.
+    useEffect(() => () => clearTimeout(timerRef.current), []);
+
+    const copy = useCallback(
+      async (text: string): Promise<boolean> => {
+        let ok = false;
+        try {
+          if (!navigator.clipboard) throw new Error("Clipboard API unavailable (requires a secure context).");
+          await navigator.clipboard.writeText(text);
+          setError(null);
+          ok = true;
+        } catch (err) {
+          setError(err instanceof Error ? err : new Error("Copy failed."));
+        }
+
+        setStatus(ok ? "copied" : "error");
+        // Restart rather than stack timers, so a rapid second click gets its full feedback window.
+        clearTimeout(timerRef.current);
+        timerRef.current = setTimeout(() => setStatus("idle"), resetAfterMs);
+        return ok;
+      },
+      [resetAfterMs]
+    );
+
+    return { copy, status, error };
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `copy(text)` calls `navigator.clipboard.writeText`, guarding first for environments where the API doesn't exist (plain HTTP, some embedded webviews).
+2. Success sets `status` to `"copied"`; any rejection is captured in `error` and sets `status` to `"error"`.
+3. After either outcome, any pending reset timer is cleared and a fresh one scheduled, so the label returns to `"idle"` exactly `resetAfterMs` after the **latest** copy.
+4. An unmount-only effect clears the timer, so no state update is queued for a component that's gone.
+5. `copy` also resolves to a boolean, letting callers chain logic (analytics, closing a menu) without reading state.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  function CopyButton({ value }: { value: string }) {
+    const { copy, status } = useCopyToClipboard();
+
+    const label = status === "copied" ? "Copied!" : status === "error" ? "Copy failed" : "Copy";
+
+    return (
+      <>
+        <button type="button" onClick={() => copy(value)}>
+          {label}
+        </button>
+        {/* Announce the outcome to screen readers without changing the visual layout */}
+        <VisuallyHidden aria-live="polite">
+          {status === "copied" ? "Copied to clipboard" : status === "error" ? "Could not copy to clipboard" : ""}
+        </VisuallyHidden>
+      </>
+    );
+  }
+
+  // Using the returned boolean to chain follow-up work
+  function ShareLinkButton({ url }: { url: string }) {
+    const { copy } = useCopyToClipboard();
+
+    async function handleClick() {
+      if (await copy(url)) trackEvent("share_link_copied");
+    }
+
+    return <button type="button" onClick={handleClick}>Copy link</button>;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Code block "copy" buttons** in docs and blogs.
+- **Share links and invite codes** where the user needs a clear "done" signal.
+- **API keys and tokens** in dashboards, with error feedback when copying is blocked.
+- **Order or tracking numbers** in e-commerce confirmation screens.
+- **Colour pickers and design tools** that copy hex values on click.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Call it from a user gesture:** browsers only grant clipboard write access in response to a click or key press — calling `copy` from an effect or timer will usually reject.
+- **Secure context required:** `navigator.clipboard` is `undefined` over plain HTTP (except `localhost`), which is why the hook checks for it before calling.
+- **Keep the live region mounted:** screen readers only announce changes to an `aria-live` region that already exists, so render it unconditionally and change its text. [`VisuallyHidden`](/snippet/visually-hidden) keeps it off-screen but readable.
+- **SSR-safe:** `navigator` is only touched inside `copy`, which runs in event handlers, never during render.
+- **Rich content:** for HTML or images, swap `writeText` for `navigator.clipboard.write()` with `ClipboardItem`s — the status and timer logic stay the same.
+- **Avoid `document.execCommand("copy")`:** it's deprecated; only reach for it as a last-resort fallback for very old browsers.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useCopyToClipboard` packages the async Clipboard API, error handling, and a self-resetting "copied" status into one hook — with a single managed timer that restarts on repeat clicks and is cleared on unmount — so every copy button gets reliable, accessible feedback for free.

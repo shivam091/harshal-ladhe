@@ -282,6 +282,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-copy-to-clipboard",
+    title: "`useCopyToClipboard`: Copy Text with Instant Feedback in React",
+    excerpt: "Copy text to the clipboard with a self-resetting \"copied\" status.",
+    description: "Build a useCopyToClipboard hook around navigator.clipboard.writeText that exposes a transient copied/error status, captures failures, and manages its reset timer across repeated clicks and unmounts.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useCopyToClipboard", "clipboard-api", "accessibility", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-copy-to-clipboard/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useCopyToClipboard hook copying text with a copy button that flips to a transient \"Copied!\" confirmation and announces it via an aria-live region."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
