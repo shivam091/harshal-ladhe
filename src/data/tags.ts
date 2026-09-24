@@ -503,6 +503,42 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Microtasks and the Priority Queue",
     description: "The microtask queue that backs Promises and queueMicrotask, and how it's prioritized ahead of macrotasks like setTimeout."
   },
+  "css3": {
+    title: "CSS3 Features",
+    description: "CSS3 specifications and the modern features they introduced for styling and animating the web."
+  },
+  "css-animation": {
+    title: "CSS Animation Techniques",
+    description: "Animating elements with CSS, from timing functions to keyframe sequencing."
+  },
+  "steps": {
+    title: "The CSS `steps()` Timing Function",
+    description: "The `steps()` timing function for discrete, frame-based animation jumps instead of continuous easing."
+  },
+  "css-tricks": {
+    title: "Handy CSS Tricks and Techniques",
+    description: "Practical, lesser-known CSS techniques and tricks for solving common styling and animation problems."
+  },
+  "discrete-animation": {
+    title: "Discrete (Stepped) Animation Techniques",
+    description: "Animations that jump between fixed states rather than interpolating smoothly, such as those built with `steps()`."
+  },
+  "typewriter-effect": {
+    title: "Building CSS Typewriter Effects",
+    description: "Recreating the classic typewriter text-reveal effect using CSS animations and the `steps()` timing function."
+  },
+  "sprite-animation": {
+    title: "CSS Sprite Sheet Animation",
+    description: "Techniques for animating sprite sheets on the web by stepping through `background-position` frames with CSS."
+  },
+  "web-performance": {
+    title: "Web Performance Optimization",
+    description: "Content focused on keeping web interfaces fast and responsive, from rendering pipelines to animation efficiency."
+  },
+  "ui-animation": {
+    title: "UI Animation Design and Implementation",
+    description: "Animating interface elements to communicate state, guide attention, and improve perceived responsiveness."
+  },
   "objectfreeze": {
     title: "Using `Object.freeze()` in JavaScript",
     description: "How `Object.freeze()` locks an object's properties, where its shallow behaviour falls short, and how to freeze nested structures."
