@@ -462,6 +462,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "toast-stack",
+    title: "`<ToastProvider />`: Accessible Toast Notification Stack in React",
+    excerpt: "Show accessible, auto-dismissing toasts from anywhere via a portal.",
+    description: "Build a portal-based toast notification system in React with a ToastProvider and useToast() hook — info, success, and error variants, auto-dismiss with pause on hover and focus, and ARIA live regions for screen-reader announcements.",
+    category: ["React"],
+    tags: ["react", "components", "toast", "notifications", "context", "portal", "accessibility", "aria-live", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/toast-stack/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React ToastProvider component showing a glowing stack of info, success, and error notifications in the screen corner."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,237 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("toast-stack");
+
+## Introduction
+
+"Saved!" and "Something went wrong" messages need to appear from anywhere in the app — a form deep in a modal, a mutation in a list row — yet render in one consistent corner of the screen, above everything else. Wiring that up with local state in each component quickly leads to duplicated markup, overlapping toasts, and messages screen readers never announce.
+
+This snippet provides a `ToastProvider` and a `useToast()` hook: call `toast(message, options)` from any client component, and the provider renders a stacked, auto-dismissing list into a portal. Toasts come in `info`, `success`, and `error` variants, pause while hovered or focused, and are announced through ARIA live regions.
+
+<RainbowDivider />
+
+## The Component
+
+<CodeBlock language="tsx">
+{`
+  "use client";
+
+  import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+  import { InPortal } from "@/components/InPortal";
+  import type { ReactNode } from "react";
+
+  type ToastVariant = "info" | "success" | "error";
+
+  interface ToastOptions {
+    variant?: ToastVariant;
+    /** Milliseconds before auto-dismiss. Pass Infinity to keep it until closed. */
+    duration?: number;
+  }
+
+  interface Toast extends Required<ToastOptions> {
+    id: number;
+    message: ReactNode;
+  }
+
+  interface ToastContextValue {
+    toast: (message: ReactNode, options?: ToastOptions) => number;
+    dismiss: (id: number) => void;
+  }
+
+  const ToastContext = createContext<ToastContextValue | null>(null);
+
+  export function useToast() {
+    const context = useContext(ToastContext);
+    if (!context) throw new Error("useToast() must be used inside <ToastProvider>.");
+    return context;
+  }
+
+  let nextId = 0;
+
+  export function ToastProvider({ children }: { children: ReactNode }) {
+    const [toasts, setToasts] = useState<Toast[]>([]);
+
+    const dismiss = useCallback((id: number) => {
+      setToasts((current) => current.filter((t) => t.id !== id));
+    }, []);
+
+    const toast = useCallback((message: ReactNode, { variant = "info", duration = 5000 }: ToastOptions = {}) => {
+      const id = ++nextId;
+      setToasts((current) => [...current, { id, message, variant, duration }]);
+      return id;
+    }, []);
+
+    // Stable value, so components that only fire toasts don't re-render when the stack changes.
+    const value = useMemo(() => ({ toast, dismiss }), [toast, dismiss]);
+
+    const renderToasts = (errors: boolean) =>
+      toasts
+        .filter((t) => (t.variant === "error") === errors)
+        .map((t) => <ToastItem key={t.id} toast={t} onDismiss={dismiss} />);
+
+    return (
+      <ToastContext.Provider value={value}>
+        {children}
+        <InPortal>
+          <div className="toast-viewport">
+            {/* Live regions must exist before content arrives, or screen readers may skip it. */}
+            <div className="toast-region" role="status" aria-live="polite">{renderToasts(false)}</div>
+            <div className="toast-region" role="alert">{renderToasts(true)}</div>
+          </div>
+        </InPortal>
+      </ToastContext.Provider>
+    );
+  }
+
+  function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number) => void }) {
+    const [paused, setPaused] = useState(false);
+
+    useEffect(() => {
+      // setTimeout treats Infinity as 0, so sticky toasts must skip the timer entirely.
+      if (paused || !Number.isFinite(toast.duration)) return;
+      const timer = window.setTimeout(() => onDismiss(toast.id), toast.duration);
+      return () => window.clearTimeout(timer);
+    }, [paused, toast, onDismiss]);
+
+    return (
+      <div
+        className="toast"
+        data-variant={toast.variant}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onFocus={() => setPaused(true)}
+        onBlur={() => setPaused(false)}
+      >
+        <div className="toast-message">{toast.message}</div>
+        <button type="button" aria-label="Dismiss notification" onClick={() => onDismiss(toast.id)}>
+          ×
+        </button>
+      </div>
+    );
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .toast-viewport {
+    position: fixed;
+    inset-block-end: 1rem;
+    inset-inline-end: 1rem;
+    z-index: 1000;
+    width: min(22rem, calc(100vw - 2rem));
+  }
+
+  .toast-region {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .toast-region:not(:empty) + .toast-region:not(:empty) {
+    margin-block-start: 0.5rem;
+  }
+
+  .toast {
+    --toast-accent: #3b82f6;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    border-inline-start: 4px solid var(--toast-accent);
+    background: #111827;
+    color: #f9fafb;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  }
+
+  .toast[data-variant="success"] { --toast-accent: #22c55e; }
+  .toast[data-variant="error"] { --toast-accent: #ef4444; }
+  .toast-message { flex: 1; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .toast { animation: toast-in 200ms ease-out; }
+  }
+
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(0.5rem); }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `ToastProvider` keeps the list of toasts in state and exposes `toast` and `dismiss` through context. Both are wrapped in `useCallback`, and the context value in `useMemo`, so consumers stay stable.
+2. `toast()` appends an entry with a unique `id`, defaulting to the `info` variant and a 5-second `duration`, and returns the `id` so callers can `dismiss` it early.
+3. The stack renders through [`InPortal`](/snippet/in-portal) into `document.body`, escaping any `overflow: hidden` or stacking context. The portal only mounts in the browser, so the provider is safe to render on the server.
+4. Two **persistent** live regions split the stack: `role="status"` (polite) for info and success, and `role="alert"` (assertive) for errors, so failures interrupt while confirmations wait their turn.
+5. Each `ToastItem` owns its timer. Hovering or focusing it sets `paused`, which clears the timeout, and leaving restarts it.
+6. The CSS stacks toasts in a flex column pinned to the bottom-right corner, using the `data-variant` attribute to swap the accent color.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // app/layout.tsx — wrap once, near the root
+  export default function RootLayout({ children }: { children: React.ReactNode }) {
+    return (
+      <html lang="en">
+        <body>
+          <ToastProvider>{children}</ToastProvider>
+        </body>
+      </html>
+    );
+  }
+
+  // Any client component
+  function SaveButton({ onSave }: { onSave: () => Promise<void> }) {
+    const { toast, dismiss } = useToast();
+
+    async function handleClick() {
+      const pending = toast("Saving…", { duration: Infinity });
+      try {
+        await onSave();
+        toast("Changes saved", { variant: "success" });
+      } catch {
+        toast("Couldn't save your changes. Please try again.", { variant: "error", duration: 8000 });
+      } finally {
+        dismiss(pending);
+      }
+    }
+
+    return <button type="button" onClick={handleClick}>Save</button>;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Mutation feedback** — "Saved", "Deleted", "Copied" — especially alongside [`useCopyToClipboard`](/snippet/use-copy-to-clipboard).
+- **Background job updates** such as uploads finishing or exports becoming ready.
+- **Non-blocking errors** where a failed request shouldn't replace the whole page with an error state.
+- **Undo prompts** that render a button inside the toast's `message`.
+- **Pending states** using `duration: Infinity`, dismissed programmatically once work completes.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Don't hide critical info in toasts:** they disappear. Anything the user must act on, or read in full, belongs in the page or a dialog.
+- **Give errors more time:** people need longer to read and understand failures. Use a longer `duration` for errors, or `Infinity` so they stay until closed.
+- **Order across variants:** errors live in their own live region, so they always stack below non-error toasts rather than in strict chronological order. That's the trade-off for reliable announcements.
+- **Resume vs. restart:** pausing restarts the full timer on mouse leave. Track the remaining time in a ref if you need an exact resume.
+- **Cap the stack:** slice `toasts` to the most recent few in `renderToasts` if a burst of events could flood the screen.
+- **Motion:** the slide-in only runs under `prefers-reduced-motion: no-preference`. Use [`usePrefersReducedMotion`](/snippet/use-prefers-reduced-motion) if you animate in JavaScript instead.
+- **No `InPortal`?** Swap it for `createPortal(stack, document.body)` behind a [`useHasMounted`](/snippet/use-has-mounted) check to keep server rendering safe.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A context-backed `ToastProvider` with a portal-rendered stack gives every client component a one-line `toast()` call, while persistent live regions, pause-on-hover timers, and clear variants make notifications accessible without cluttering the rest of your UI.
