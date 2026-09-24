@@ -147,6 +147,8 @@ A small case study that combines a few of the basic shapes — concentric circle
 
 This is the asymmetric group from [The `transform-origin` Trap](#the-transform-origin-trap): `.sweep` wraps a wedge and a spoke that only reach from the center toward the top edge, so `transform-box: fill-box` would rotate the group around *its own* bounding-box center — nowhere near the radar's actual center. Setting `transform-origin: 50px 50px` directly, in the SVG's own coordinate space, sidesteps that entirely and pins the rotation to the right point.
 
+Want a mechanical, ticking sweep instead of a smooth one? Swap the sweep's timing function for `steps(12)` and it jumps from one clock position to the next — see [Mastering CSS steps() for Discrete, Stepped Animations](/post/animations/css-step-timing-function) for how the jump terms decide where each tick lands.
+
 Rotation speed maps to `radar-sweep`'s `animation-duration`, and pulse intensity maps to `radar-pulse`'s peak `scale()`:
 
 <InteractiveSvgPanel slug="radar-demo" />
