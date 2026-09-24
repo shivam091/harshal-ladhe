@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS steps() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS steps() Playground</h1>
+        <p>Compare a linear transition against steps() — tune step count, jump term, and duration to feel the difference.</p>
+      </header>
+
+      <section class="demo-area" aria-label="steps() comparison preview">
+        <div class="track-row">
+          <span class="track-label">linear</span>
+          <div class="track">
+            <div id="smooth-box" class="mover"></div>
+          </div>
+        </div>
+
+        <div class="track-row">
+          <span class="track-label">steps()</span>
+          <div class="track">
+            <div id="stepped-box" class="mover mover-accent"></div>
+          </div>
+        </div>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Step Controls</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="steps-count">Number of Steps</label>
+            <input type="number" id="steps-count" min="1" max="20" step="1" value="6">
+          </div>
+
+          <div class="field">
+            <label for="jump-term">Jump Term</label>
+            <select id="jump-term">
+              <option value="jump-end" selected>jump-end (default)</option>
+              <option value="jump-start">jump-start</option>
+              <option value="jump-none">jump-none</option>
+              <option value="jump-both">jump-both</option>
+              <option value="start">start (classic)</option>
+              <option value="end">end (classic)</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="duration-input">Duration</label>
+            <div class="field-input">
+              <input type="number" id="duration-input" min="0.5" max="6" step="0.5" value="2.5">
+              <select id="duration-unit" class="unit-select" aria-label="Duration unit">
+                <option value="s">s</option>
+                <option value="ms">ms</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <button id="replay-btn" class="toggle-btn">Replay</button>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
