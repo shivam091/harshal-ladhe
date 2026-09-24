@@ -372,6 +372,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "fade-in",
+    title: "`<FadeIn />`: Reduced-Motion-Friendly Entrance Animations in React",
+    excerpt: "Fade and slide content in on mount with a few simple props.",
+    description: "Build a FadeIn React wrapper powered by CSS keyframes, with duration, delay, direction, and distance props, backwards fill mode for staggered lists, and an automatic opacity-only fallback for prefers-reduced-motion.",
+    category: ["React"],
+    tags: ["react", "components", "FadeIn", "animation", "css-keyframes", "prefers-reduced-motion", "accessibility", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/fade-in/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React FadeIn component showing staggered cards fading and sliding into place, with direction arrows and a reduced-motion toggle."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

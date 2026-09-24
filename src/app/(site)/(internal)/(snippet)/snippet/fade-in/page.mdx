@@ -1,0 +1,161 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("fade-in");
+
+## Introduction
+
+A subtle fade-and-slide when content appears makes a page feel smoother. But writing the same keyframes, delays, and reduced-motion overrides by hand for every hero, card, and list item gets repetitive. Many developers add a full animation library just for this.
+
+This snippet provides a `FadeIn` wrapper that plays a CSS keyframe animation when it mounts. It takes `duration`, `delay`, `direction`, and `distance` props, uses `animation-fill-mode: backwards` so nothing flashes before the delay ends, and **switches to a plain opacity fade for users who prefer reduced motion**. It needs no JavaScript, so it also works in Server Components.
+
+<RainbowDivider />
+
+## The Component
+
+<CodeBlock language="tsx">
+{`
+  import type { CSSProperties, ReactNode } from "react";
+  import "./fade-in.css";
+
+  type Direction = "up" | "down" | "left" | "right" | "none";
+
+  interface FadeInProps {
+    children: ReactNode;
+    duration?: number; // ms
+    delay?: number; // ms
+    /** The direction the content travels as it appears. */
+    direction?: Direction;
+    distance?: number; // px
+    className?: string;
+    style?: CSSProperties;
+  }
+
+  // Starting offset per direction — "up" starts below and rises into place.
+  const OFFSETS: Record<Direction, [number, number]> = {
+    up: [0, 1],
+    down: [0, -1],
+    left: [1, 0],
+    right: [-1, 0],
+    none: [0, 0]
+  };
+
+  export function FadeIn({
+    children,
+    duration = 600,
+    delay = 0,
+    direction = "up",
+    distance = 16,
+    className,
+    style
+  }: FadeInProps) {
+    const [x, y] = OFFSETS[direction];
+
+    return (
+      <div
+        className={className ? \`fade-in \${className}\` : "fade-in"}
+        style={{
+          "--fade-x": \`\${x * distance}px\`,
+          "--fade-y": \`\${y * distance}px\`,
+          animationDuration: \`\${duration}ms\`,
+          animationDelay: \`\${delay}ms\`,
+          ...style
+        } as CSSProperties}
+      >
+        {children}
+      </div>
+    );
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* fade-in.css */
+  .fade-in {
+    animation-name: fade-in;
+    animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    /* Apply the "from" frame during the delay, so content doesn't flash in first. */
+    animation-fill-mode: backwards;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translate(var(--fade-x, 0), var(--fade-y, 0));
+    }
+  }
+
+  /* Opacity alone is gentle enough to keep — only the movement goes. */
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in {
+      animation-name: fade-in-opacity;
+    }
+  }
+
+  @keyframes fade-in-opacity {
+    from {
+      opacity: 0;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The component maps `direction` and `distance` to two CSS custom properties, `--fade-x` and `--fade-y`, so a single `@keyframes` rule covers every direction.
+2. Only a `from` keyframe is defined. The browser animates from there to the element's normal styles, so no `to` block is needed.
+3. `duration` and `delay` become inline `animation-duration` and `animation-delay`. The animation name stays in the stylesheet so the media query can swap it.
+4. `animation-fill-mode: backwards` applies the invisible, offset `from` frame during the delay, which makes staggered lists work.
+5. Under `prefers-reduced-motion: reduce`, the stylesheet switches to an opacity-only keyframe, so the content still fades in but doesn't move.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // A hero that rises into place
+  <FadeIn>
+    <h1>Hello there</h1>
+  </FadeIn>
+
+  // A staggered list sliding in from the left
+  <ul>
+    {features.map((feature, index) => (
+      <li key={feature.id}>
+        <FadeIn direction="right" distance={24} delay={index * 80}>
+          {feature.label}
+        </FadeIn>
+      </li>
+    ))}
+  </ul>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Hero sections and page headings** that should ease in on load.
+- **Staggered lists and grids** where each item's `delay` builds on the previous one.
+- **Content swapped in after fetching**, so it fades in instead of popping in.
+- **Toasts, banners, and empty states** that benefit from a gentle entrance.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Runs before hydration:** CSS animations start when the element is added to the DOM, so server-rendered content animates on first paint without waiting for JavaScript.
+- **Replay with a `key`:** the animation only runs on mount. Change the `key` prop to remount it and play it again.
+- **Reduced motion in JavaScript:** CSS handles it here with no flash. If you need the same check for a JS-driven animation, use [use-prefers-reduced-motion](/snippet/use-prefers-reduced-motion).
+- **Scroll-triggered variant:** pass `style={{ animationPlayState: isVisible ? "running" : "paused" }}`, with `isVisible` from [use-intersection-observer](/snippet/use-intersection-observer). While paused, the element stays on its hidden `from` frame.
+- **Inline content:** the wrapper is a `div`. Inside a paragraph, or anywhere a block element is invalid, switch it to a `span` with `display: inline-block`, because transforms don't apply to plain inline elements.
+- **CSS Modules work too:** rename the file to `fade-in.module.css` and use `styles["fade-in"]`. The keyframe names get scoped automatically.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`FadeIn` covers the most common entrance animation with a few props and one small stylesheet. Custom properties handle direction, `animation-fill-mode: backwards` keeps delayed content hidden until its turn, and a reduced-motion override keeps it comfortable for everyone, with no JavaScript and no animation library.
