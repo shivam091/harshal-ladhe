@@ -1,0 +1,128 @@
+:root {
+  --pg-accent: #f472b6;
+  --pg-accent-dark: #ec4899;
+}
+
+@keyframes rotate-hand {
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+.playground {
+  max-width: 460px;
+}
+
+.playground-header h1 {
+  font-size: 1.25rem;
+}
+
+.playground-header p {
+  font-size: 0.9rem;
+}
+
+/* Demo area */
+
+.demo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.clock-face {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border: 4px solid var(--pg-border);
+  border-radius: 50%;
+  background: var(--pg-surface-muted);
+  box-shadow: var(--pg-shadow-sm);
+}
+
+.tick {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 2px;
+  height: 12px;
+  background: var(--pg-text-muted);
+  transform-origin: 50% 104px;
+}
+
+.tick-0 { transform: translateX(-50%) rotate(0deg); }
+.tick-1 { transform: translateX(-50%) rotate(30deg); }
+.tick-2 { transform: translateX(-50%) rotate(60deg); }
+.tick-3 { transform: translateX(-50%) rotate(90deg); }
+.tick-4 { transform: translateX(-50%) rotate(120deg); }
+.tick-5 { transform: translateX(-50%) rotate(150deg); }
+.tick-6 { transform: translateX(-50%) rotate(180deg); }
+.tick-7 { transform: translateX(-50%) rotate(210deg); }
+.tick-8 { transform: translateX(-50%) rotate(240deg); }
+.tick-9 { transform: translateX(-50%) rotate(270deg); }
+.tick-10 { transform: translateX(-50%) rotate(300deg); }
+.tick-11 { transform: translateX(-50%) rotate(330deg); }
+
+.tick-0,
+.tick-3,
+.tick-6,
+.tick-9 {
+  height: 16px;
+  background: var(--pg-text);
+}
+
+.hand {
+  position: absolute;
+  bottom: 50%;
+  left: 50%;
+  transform-origin: bottom center;
+  border-radius: 4px;
+}
+
+.hour-hand {
+  width: 5px;
+  height: 55px;
+  background: var(--pg-text);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.minute-hand {
+  width: 3px;
+  height: 78px;
+  background: var(--pg-text-muted);
+  transform: translateX(-50%) rotate(160deg);
+}
+
+.second-hand {
+  width: 2px;
+  height: 90px;
+  background: var(--pg-accent);
+}
+
+.hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: var(--pg-accent);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: var(--pg-shadow-sm);
+}
+
+.readout {
+  margin: 0;
+  font-family: var(--pg-mono);
+  font-size: 0.9rem;
+  color: var(--pg-text-muted);
+}
+
+.readout span {
+  color: var(--pg-text);
+  font-weight: 600;
+}
