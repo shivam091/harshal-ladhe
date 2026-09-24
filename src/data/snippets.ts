@@ -390,6 +390,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "shift-by",
+    title: "`<ShiftBy />`: Pixel-Perfect Optical Alignment in React",
+    excerpt: "Nudge elements by a few pixels without affecting layout.",
+    description: "Build a tiny ShiftBy React component that uses transform: translate() to optically align icons and glyphs, moving what's drawn without the layout side effects of margins or relative positioning.",
+    category: ["React"],
+    tags: ["react", "components", "ShiftBy", "optical-alignment", "css-transforms", "design-details", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/shift-by/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React ShiftBy component nudging a play icon a few pixels inside a round button, with guide lines comparing mathematical and optical centering."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

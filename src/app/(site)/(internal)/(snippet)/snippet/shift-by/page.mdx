@@ -1,0 +1,93 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("shift-by");
+
+## Introduction
+
+Something can be perfectly centered by the numbers and still look wrong. A play icon looks too far left because most of its weight is on one side. An arrow sits a pixel too high next to text because the font's line box isn't where your eye expects. Designers fix this with **optical alignment**: moving an element a pixel or two by eye.
+
+The usual fixes, a negative `margin` or `position: relative` with `top` / `left`, work until they don't. Margins change the layout and push neighbours around. `position: relative` can shift the element into a new containing block or stacking order. This snippet provides a tiny `ShiftBy` component that moves its child with `transform: translate()`, which changes where it's drawn without affecting the layout.
+
+<RainbowDivider />
+
+## The Component
+
+<CodeBlock language="tsx">
+{`
+  import type { ReactNode } from "react";
+
+  interface ShiftByProps {
+    children: ReactNode;
+    x?: number; // px, positive moves right
+    y?: number; // px, positive moves down
+  }
+
+  export function ShiftBy({ x = 0, y = 0, children }: ShiftByProps) {
+    return (
+      // inline-block: transforms don't apply to plain inline boxes,
+      // and a span stays valid inside buttons, links, and paragraphs.
+      <span style={{ display: "inline-block", transform: \`translate(\${x}px, \${y}px)\` }}>
+        {children}
+      </span>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The child is wrapped in a `span` with `display: inline-block`, the smallest box that can be transformed and is still valid HTML almost anywhere.
+2. `transform: translate(x, y)` moves only the **painted** result. The browser still lays out the element where it originally was.
+3. Neighbouring elements, flex and grid gaps, and the parent's size stay exactly the same. Only the pixels move.
+4. There are no hooks or effects, so it works as a Server Component and adds nothing to the client bundle beyond its markup.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // A play triangle looks off-center when it's mathematically centered
+  <button type="button" className="round-button" aria-label="Play">
+    <ShiftBy x={2}>
+      <PlayIcon aria-hidden="true" />
+    </ShiftBy>
+  </button>
+
+  // Line an icon up with the text's x-height instead of its line box
+  <a href="/docs">
+    Read the docs
+    <ShiftBy y={1}>
+      <ArrowRightIcon aria-hidden="true" />
+    </ShiftBy>
+  </a>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Asymmetric icons** such as play buttons, chevrons, and arrows that look off-center when centered.
+- **Icon + text pairs** where the glyph needs to sit on the text's optical baseline.
+- **Typography tweaks** like hanging punctuation or nudging a large quotation mark.
+- **Badges and counters** that should overlap a corner slightly without changing the parent's size.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Why not margin:** margins take part in layout. A `margin-left: 2px` also moves every sibling after it and can change the parent's size, so one fix causes another misalignment.
+- **Why not `position: relative`:** it also leaves the layout alone, but it makes the element the containing block for absolutely positioned descendants and changes how it stacks. Transforms are the clearest way to say "just paint it over here".
+- **Transforms create a stacking context:** usually harmless for icons, but be aware if the child relies on `z-index` or `position: fixed` relative to the viewport.
+- **Keep the numbers small:** this is for 1–3 px optical tweaks. If you're shifting by 20px, the layout itself probably needs fixing.
+- **The `translate` property:** modern browsers support a standalone `translate: 2px 0` that combines with other transforms instead of replacing them. Use it if the child already has its own `transform`.
+- **Flex parents:** inside a flex or grid container the span becomes a block-level item automatically, so it behaves the same there.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`ShiftBy` gives you pixel-level optical alignment without side effects. Because it uses `transform: translate()` instead of margins or relative positioning, the element moves visually while every surrounding measurement stays the same, which is exactly what a small visual nudge should do.
