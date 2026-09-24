@@ -23,6 +23,48 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-keyframe-steps",
+    title: "Per-Keyframe steps() Playground",
+    description: "A box eases through its first half, then ticks through the second — set via animation-timing-function inside a single @keyframes block instead of on the whole animation.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
+    slug: "css-sprite-sheet-animation",
+    title: "Sprite Sheet Walk Cycle Playground",
+    description: "A canvas-generated alien sprite sheet, stepped frame-by-frame with steps() against background-position — tune frame count, jump term, and cycle time live.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
+    slug: "css-step-based-progress-bar",
+    title: "Step-based Progress Bar Playground",
+    description: "A width transition run through steps() instead of easing — tune chunk count, jump term, and duration to see the loader fill in discrete jumps.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
+    slug: "css-digital-clock-second-hand",
+    title: "Ticking Clock Second Hand Playground",
+    description: "A second hand that ticks via steps() instead of sweeping via linear — tune ticks per revolution and revolution time to compare the two.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
+    slug: "css-step-timing-function",
+    title: "CSS steps() Playground",
+    description: "Compare a linear move against a stepped one live — tune step count, jump term, and duration to feel the difference.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
+    slug: "css-typewriter-effect",
+    title: "CSS Typewriter Effect Playground",
+    description: "A width reveal ticked out by steps(n, end) — one step per character — paired with a step-end blinking cursor. Swap the phrase and duration to see the step count recalculate live.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "will-change-property",
     title: "will-change Playground",
     description: "Pick a strategy — no hint, toggle before/after, or always on — and move a box, while the log shows the box's real, live will-change value at every step.",
