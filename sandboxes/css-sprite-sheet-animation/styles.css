@@ -1,0 +1,63 @@
+code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-primary);
+}
+
+.playground {
+  max-width: 480px;
+}
+
+.playground-header h1 {
+  font-size: 1.25rem;
+}
+
+.playground-header p {
+  font-size: 0.9rem;
+}
+
+/* Demo area */
+
+.demo-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.stage {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 180px;
+  border: 1px dashed var(--pg-border);
+  background: var(--pg-surface-muted);
+  overflow: hidden;
+}
+
+.sprite {
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.sheet-preview {
+  max-width: 100%;
+  height: 40px;
+  width: auto;
+  border: 1px solid var(--pg-border);
+  background: var(--pg-surface-muted);
+  image-rendering: pixelated;
+}
+
+.readout {
+  margin: 0;
+  font-family: var(--pg-mono);
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+.readout span {
+  color: var(--pg-text);
+  font-weight: 600;
+}

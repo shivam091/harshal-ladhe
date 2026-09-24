@@ -1,0 +1,701 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-step-timing-function");
+
+## When Smooth Motion Isn't What You Want
+
+In CSS animation, we're trained to chase smoothness. We reach for `ease-in-out` or `cubic-bezier()` so elements glide across the screen. But what if you don't want a glide? What if you want a **jump**?
+
+The `steps()` timing function splits an animation into a fixed number of equal intervals. Instead of calculating every value in between, the browser snaps the animated value from one state to the next.
+
+Standard easing functions create **continuous** motion: an element moving from `0px` to `100px` passes through every fraction in between. `steps()` creates **discrete** motion: the in-between values are simply never drawn. That makes it the bridge between CSS and traditional frame-by-frame animation — flip books, sprite sheets, ticking clocks, and typewriters.
+
+Often, a jump communicates mechanical intent better than a glide — and that's where `steps()` shines.
+
+<Info title="Before you start">
+  This post assumes you know how `@keyframes` and the `animation-*` properties fit together. If you need a refresher, start with [An Interactive Guide to CSS Keyframes](/post/animations/css-keyframes-guide) and come back here.
+</Info>
+
+## Syntax
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  animation-timing-function: steps(<number-of-steps>, <jump-term>?);
+  transition-timing-function: steps(<number-of-steps>, <jump-term>?);
+`}
+</CodeBlock>
+
+1. **`<number-of-steps>`:** How many **equal-length intervals** the timeline is divided into. It must be a positive integer (and at least `2` with `jump-none` — more on that [below](#jump-none-needs-at-least-two-steps)).
+2. **`<jump-term>` (optional):** Where the instant jump happens within each interval. Defaults to `end`.
+   - `jump-end` (or `end`): Holds each value for the whole interval, then jumps at the end of it. This is the default.
+   - `jump-start` (or `start`): Jumps at the start of each interval, then holds.
+   - `jump-none`: No jump at either end of the timeline. The start and end values are each held for a full interval, so there is one jump **fewer** than `jump-start`/`jump-end`.
+   - `jump-both`: A jump at both ends of the timeline, so there is one jump **more** than `jump-start`/`jump-end`.
+
+With `jump-start`, the value reaches its first step immediately at `t = 0`; with `jump-end`, it holds its starting value through the entire first interval before jumping. To see exactly where each jump-term places its jumps, see [Visualizing the Jump Terms](#visualizing-the-jump-terms), which plots all four.
+
+### The Shorthand Keywords
+
+CSS provides two keywords for the most common single-step cases:
+
+- `step-start`: Equivalent to `steps(1, jump-start)`. The animation jumps to its end state immediately.
+- `step-end`: Equivalent to `steps(1, jump-end)`. The animation stays at its start state until the very end of the duration.
+
+Both are plotted in [`step-start` and `step-end`](#step-start-and-step-end), at the end of the visualization section.
+
+## Mental Model: What `steps()` Actually Does
+
+To really understand `steps()`, it helps to think in numbers.
+
+An animation's progress runs from `0` to `1` (or `0%` to `100%`). When you write:
+
+<CodeBlock language="css">
+{`
+  animation-timing-function: steps(5, end);
+`}
+</CodeBlock>
+
+you divide that timeline into **5 equal intervals**. Instead of smoothly interpolating across the whole timeline, the browser:
+
+1. Works out which interval the current progress falls into.
+2. Rounds the progress **down** (or up, depending on the jump term) to that interval's step value.
+3. Snaps the animated property straight to that value.
+
+**Conceptually:**
+
+- `steps(n, end)` behaves like `floor(progress × n) / n`
+- `steps(n, start)` behaves like `(floor(progress × n) + 1) / n`, capped at `1`
+
+That rounding is what removes every intermediate value:
+
+- No blending.
+- No sub-pixel in-betweens.
+- Only the defined states, and instant jumps between them.
+
+<Info title="For the curious: all four formulas">
+  For progress `p` between `0` and `1`, each jump term is `floor(p × n)` plus an offset, divided by the number of jumps:
+  `jump-end` → `floor(p·n) / n` · `jump-start` → `(floor(p·n) + 1) / n` · `jump-none` → `floor(p·n) / (n − 1)` · `jump-both` → `(floor(p·n) + 1) / (n + 1)`. Each result is capped at `1`.
+</Info>
+
+## `steps()` vs `linear` vs `cubic-bezier()`
+
+`steps()` doesn't make an animation "faster" or "slower." Every timing function takes the same duration — what changes is *how progress is mapped over that time*.
+
+- `linear` → Continuous interpolation at a constant rate.
+- `ease` / `cubic-bezier()` → Continuous interpolation that speeds up and slows down along a curve.
+- `steps()` → No interpolation at all. The value jumps instantly between discrete states.
+
+Even `linear` calculates and renders fractional values like `12.435px`. `steps()` never produces them.
+
+## Choosing Your "Jump" Logic: Start vs. End
+
+The difference between `start` and `end` is usually the biggest hurdle, so it's worth slowing down here.
+
+| Mode | When the jump happens | What you see | Common use case |
+| --- | --- | --- | --- |
+| **steps(n, end)** | At the **end** of each interval. | The starting value shows immediately; the final value only appears at 100%. | Typewriters, ticking clocks, sprite sheets |
+| **steps(n, start)** | At the **start** of each interval. | The starting value is skipped; the first step shows immediately and the final value is held for the last interval. | Progress or countdown indicators that should respond the instant they start |
+
+**Example difference:**
+
+<CodeBlock language="css">
+{`
+  animation-timing-function: steps(5, start);
+  /* vs */
+  animation-timing-function: steps(5, end);
+`}
+</CodeBlock>
+
+The browser isn't "fast-forwarding" through the animation — it simply never renders the in-between values. If you animate `width` from `0` to `100px` in 4 steps with `end`, the only widths that ever appear are `0px`, `25px`, `50px`, `75px`, and — at the final instant — `100px`. Values like `12.5px` or `33px` never exist on screen.
+
+<Info title="Pro Tip">
+  For a **typewriter effect**, `end` is usually the better choice: the line starts empty and each character appears after a short beat, like real typing. With `start`, the first character is already on screen the instant the animation begins.
+</Info>
+
+### Tracing `jump-end` Second by Second
+
+Here's an animation that counts from `0` to `10` in 5 steps:
+
+`animation: progress 5s steps(5, end);` **(default)**
+
+| Time interval (seconds) | Value displayed | Explanation |
+| --- | --- | --- |
+| 0s to \<1s | 0 | Holds the starting value. |
+| 1s to \<2s | 2 | Jumps to 2 at 1s. |
+| 2s to \<3s | 4 | Jumps to 4 at 2s. |
+| 3s to \<4s | 6 | Jumps to 6 at 3s. |
+| 4s to \<5s | 8 | Jumps to 8 at 4s. |
+| At 5s | 10 | Jumps to the final 10 at 5s. |
+
+With `jump-end`, each value is held for its **entire** interval, and the next value only appears once that interval is over. The final value arrives exactly when the duration ends — which is why you'll need `animation-fill-mode: forwards` if you want it to stay on screen (see [The Last Frame Never Shows](#the-last-frame-never-shows)).
+
+### Tracing `jump-start` Second by Second
+
+`animation: progress 5s steps(5, start);`
+
+| Time interval (seconds) | Value displayed | Explanation |
+| --- | --- | --- |
+| 0s to \<1s | 2 | Jumps to 2 immediately at 0s, then holds. |
+| 1s to \<2s | 4 | Jumps to 4 at 1s. |
+| 2s to \<3s | 6 | Jumps to 6 at 2s. |
+| 3s to \<4s | 8 | Jumps to 8 at 3s. |
+| 4s to \<5s | 10 | Jumps to 10 at 4s. |
+| At 5s | 10 | Holds 10 (already reached). |
+
+With `jump-start`, the jump happens at the very beginning of each interval. The starting value `0` is never shown, and the final value is reached one full interval **before** the animation ends.
+
+Both tables are plotted as staircases in the [`jump-end`](#jump-end) and [`jump-start`](#jump-start) graphs further down.
+
+## Modern Jump Terms: Precision Control
+
+`start` and `end` cover most needs, but the **CSS Easing Functions** specification added two more jump terms for the classic "missing frame" problem:
+
+- `jump-none`: Both the start (`0%`) and end (`100%`) values are held for a full interval each. Nothing is "lost" at either edge, which makes it ideal for looping between a fixed set of states.
+- `jump-both`: Jumps at both the `0%` and `100%` marks. The animation leaves its start value immediately and only lands on its end value at the very last instant, so during playback it never rests on either extreme.
+
+You can see both shapes, next to `jump-start` and `jump-end`, in the [`jump-none`](#jump-none) and [`jump-both`](#jump-both) graphs.
+
+### `jump-none` Needs at Least Two Steps
+
+`jump-none` holds the first *and* last value for a full interval, so it needs at least two intervals to do that. `steps(1, jump-none)` is **invalid**: the browser drops the whole declaration, and your animation falls back to whatever timing function it had before (usually `ease`), with no error in the console.
+
+<CodeBlock language="css">
+{`
+  .blink {
+    animation-timing-function: steps(1, jump-none); /* ❌ invalid — ignored */
+    animation-timing-function: steps(2, jump-none); /* ✅ holds 0, then 1 */
+  }
+`}
+</CodeBlock>
+
+### Jump-Term Cheat Sheet
+
+For `steps(n, <jump-term>)`:
+
+| Jump term | Number of jumps | Each jump moves | Value at `t = 0` | Final value held during the last interval? |
+| --- | --- | --- | --- | --- |
+| `jump-end` / `end` | `n` | `1/n` | `0` | No — reached only at `t = 1` |
+| `jump-start` / `start` | `n` | `1/n` | `1/n` | Yes |
+| `jump-none` | `n − 1` | `1/(n − 1)` | `0` | Yes |
+| `jump-both` | `n + 1` | `1/(n + 1)` | `1/(n + 1)` | No — reached only at `t = 1` |
+
+<Info title="Browser support">
+  The classic `start`/`end` keywords work everywhere. The `jump-*` names (including `jump-none` and `jump-both`) are supported in all modern browsers — Chrome and Edge 77+, Firefox 65+, and Safari 14+. If you need to support older engines, stick to `start`/`end`, which mean exactly the same thing as `jump-start`/`jump-end`.
+</Info>
+
+## Visualizing the Jump Terms
+
+Reading a table is one thing — watching where each jump-term actually places its "snap" is another. The four graphs below plot progress (`0` to `1`) against time for `steps(5, <jump-term>)`, so you can see exactly how each one spreads its jumps across the timeline. The two shorthand keywords follow, then a race that runs all six side by side.
+
+### `jump-start`
+
+<StepsEasingGraph name="jump-start" />
+
+The very first jump happens immediately, at `t = 0` — the value is never held at its starting point. From there it jumps again at every remaining interval boundary, reaching `1` one interval *before* the timeline ends and holding there. Use this shape when something should react the moment it starts, such as a progress bar that shows its first chunk as soon as the user clicks.
+
+### `jump-end`
+
+<StepsEasingGraph name="jump-end" />
+
+The mirror image, and the default when no jump-term is given (`steps(5)` means `steps(5, jump-end)`). The value holds at `0` through the entire first interval, then jumps at every following boundary, with the final jump landing exactly on `t = 1`. The digital clock second hand below behaves this way: it sits still for a full second before ticking, not the other way around.
+
+### `jump-none`
+
+<StepsEasingGraph name="jump-none" />
+
+Neither end gets a jump — only the boundaries in between do, so there is one fewer jump than with `jump-start`/`jump-end`. Because the value still has to start at exactly `0` and finish at exactly `1`, each jump is bigger: the range is split into `n - 1` equal pieces instead of `n`.
+
+### `jump-both`
+
+<StepsEasingGraph name="jump-both" />
+
+Every boundary jumps, including both ends — one more jump than `jump-start`/`jump-end`, so the range is split into `n + 1` smaller pieces. The value jumps away from `0` immediately *and* jumps again on arrival at `1`, making it the busiest-looking of the four.
+
+### `step-start` and `step-end`
+
+The two shorthand keywords are the single-step case: `step-start` is `steps(1, jump-start)` and `step-end` is `steps(1, jump-end)`. With only one interval there's no staircase left — just one jump, at the very start or the very end.
+
+<StepsEasingGraph name="step-start" />
+
+`step-start` jumps to `1` at `t = 0` and holds there, so the end state appears the instant the animation begins.
+
+<StepsEasingGraph name="step-end" />
+
+`step-end` holds at `0` for the entire duration and only jumps at `t = 1`. That makes it a natural fit for anything that should flip instantly on a cycle boundary, like a blinking text cursor (`animation: blink 1s step-end infinite`).
+
+### Racing all six
+
+<StepsEasingRace names={["jump-start", "jump-end", "jump-none", "jump-both", "step-start", "step-end"]} initialName="jump-start" />
+
+Race them back to back and watch where the ghost trail bunches up: `jump-start`'s dots crowd toward the beginning, `jump-end`'s crowd toward the finish, and `jump-both` visibly hops off the start line and hops again right at the finish. `jump-none` is the only one that doesn't jump at either edge. The shorthands are the extreme case: `step-start` teleports to the finish the moment the race begins, while `step-end` sits on the start line for the whole race and only arrives at the very last instant.
+
+## Interactive Example
+
+Now that you've seen how each jump term behaves on a graph, feel it on a moving element. The playground runs the same animation twice — once with `linear`, once with `steps()` — so you can compare them directly as you change the step count, jump term, and duration.
+
+<Sandbox slug="css-step-timing-function" defaultLayout="vertical" />
+
+## Practical Implementation
+
+### The Typewriter Effect: Using `steps()` with `@keyframes`
+
+The most popular use of `steps()` is the **typewriter effect**, which reveals text one character at a time. A smooth timing function can't do this — it would slice characters in half as the text grows.
+
+<CodeBlock language="html">
+{`
+  <p class="typewriter">Hello, world! This is a typewriter effect.</p>
+
+  <style>
+    .typewriter {
+      font-family: 'Courier New', monospace; /* Every character is exactly 1ch wide */
+      width: 0; /* Starts hidden */
+      white-space: nowrap; /* Keeps the text on one line */
+      overflow: hidden; /* Hides any text beyond the current width */
+      border-right: 0.15em solid orange; /* The cursor */
+      animation:
+        typing 4s steps(42, end) forwards, /* 42 characters, including spaces and punctuation */
+        blink-caret 0.75s step-end infinite; /* Cursor blinking animation */
+    }
+
+    /* Reveal exactly 42 characters' worth of width */
+    @keyframes typing {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 42ch;
+      }
+    }
+
+    /* Keyframes for the blinking cursor */
+    @keyframes blink-caret {
+      from,
+      to {
+        border-color: transparent; /* Cursor invisible */
+      }
+
+      50% {
+        border-color: orange; /* Cursor visible */
+      }
+    }
+  </style>
+`}
+</CodeBlock>
+
+**Why `steps(42, end)` and `42ch`?**
+
+1. The phrase "Hello, world! This is a typewriter effect." is **42 characters** long, counting spaces and punctuation.
+2. `steps(42)` makes `width` jump 42 times, and the `ch` unit is the width of one character in the current font. So each jump reveals **exactly one** character. (Animating to `100%` instead would stretch the reveal across the whole container, and the jumps would no longer line up with characters.)
+3. `end` holds each width for its full interval before revealing the next character, which gives the natural "type, pause, type" rhythm.
+4. `forwards` keeps the final state (`width: 42ch`) after the animation finishes, so the last character stays visible.
+
+<Warning title="Important">
+  This only works with a *monospaced font*, where every character is the same width. In proportional fonts (like Arial or Roboto), an `i` is much narrower than a `W`, so fixed-size jumps will cut characters in half.
+</Warning>
+
+<Sandbox slug="css-typewriter-effect" defaultLayout="vertical" />
+
+### Digital Clock Second Hand
+
+Picture a clock whose second hand ticks instead of sweeping smoothly. That needs 60 distinct positions — one for each second.
+
+<CodeBlock language="html">
+{`
+  <div class="clock-face">
+    <div class="second-hand"></div>
+  </div>
+
+  <style>
+    .clock-face {
+      width: 200px;
+      height: 200px;
+      border: 4px solid #333;
+      border-radius: 50%;
+      position: relative;
+      margin: 50px auto;
+    }
+
+    .second-hand {
+      position: absolute;
+      bottom: 50%; /* Pivot point is at the bottom center */
+      left: 50%;
+      width: 2px;
+      height: 90px;
+      background-color: red;
+      transform-origin: bottom center; /* Rotate around the base */
+      transform: translateX(-50%); /* Center the hand on left: 50% */
+
+      /* The magic happens here! */
+      animation: rotate-seconds 60s steps(60, end) infinite;
+    }
+
+    @keyframes rotate-seconds {
+      from {
+        transform: translateX(-50%) rotate(0deg);
+      }
+
+      to {
+        transform: translateX(-50%) rotate(360deg);
+      }
+    }
+  </style>
+`}
+</CodeBlock>
+
+**Why `steps(60, end)`?**
+
+1. A minute has 60 seconds, so a full turn (360°) needs 60 distinct ticks of 6° each (360° ÷ 60 = 6°).
+2. `steps(60)` divides the 60-second animation into sixty one-second intervals.
+3. `end` holds the hand still for each full second and ticks forward at the end of it — just like a real clock, which doesn't tick the instant you start watching.
+4. `infinite` keeps the clock ticking. Because the final jump to 360° looks identical to 0°, each loop continues seamlessly.
+
+<Sandbox slug="css-digital-clock-second-hand" defaultLayout="vertical" />
+
+### Step-based Transition (Progress Bar)
+
+`steps()` works on transitions too, not just keyframe animations. Applied to a simple `width` transition, it turns a smooth fill into a segmented progress bar — no `@keyframes` required.
+
+<CodeBlock language="html">
+{`
+  <div class="track">
+    <div class="fill"></div>
+  </div>
+
+  <style>
+    .track {
+      width: 240px;
+      height: 20px;
+      background: #ccc;
+    }
+
+    .fill {
+      width: 0%;
+      height: 100%;
+      background: #0af;
+      transition: width 2s steps(4, end);
+    }
+
+    .track:hover .fill {
+      width: 100%;
+    }
+  </style>
+`}
+</CodeBlock>
+
+**Why `steps(4, end)`?**
+
+1. **Chunked progress:** Four steps fill the bar in 25% increments (`100% / 4 = 25%`), like a system processing work in batches rather than as a steady stream.
+2. **The "waiting" feel:** With `end`, each 25% chunk only appears after its share of the duration has passed, creating a rhythmic "wait, then fill" pattern. Switch to `start` and the first chunk appears the moment you hover.
+3. **Less code:** Instead of writing five keyframes (`0%`, `25%`, `50%`, `75%`, `100%`), you define only the start and end values and let `steps()` handle the segmentation.
+
+<Sandbox slug="css-step-based-progress-bar" defaultLayout="vertical" />
+
+### Sprite Sheet Animation (Advanced)
+
+Before video and Lottie files, the web ran on **sprite sheets**: a single image containing every frame of an animation, laid out side by side. Using `steps()`, we slide that image behind a frame-sized window so exactly one frame shows at a time.
+
+<CodeBlock language="html">
+{`
+  <div class="alien-sprite"></div>
+
+  <style>
+    .alien-sprite {
+      width: 100px; /* Width of a single frame */
+      height: 100px; /* Height of a single frame */
+      background-image: url('/assets/img/alien-walk-sprite.png'); /* 5 frames, 500px wide in total */
+      background-repeat: no-repeat;
+
+      /* Animate background-position to show each frame */
+      animation: walk 1s steps(5) infinite; /* 5 frames, 1 second, loops */
+    }
+
+    @keyframes walk {
+      to {
+        background-position: -500px 0; /* Total width of all 5 frames (5 × 100px) */
+      }
+    }
+  </style>
+`}
+</CodeBlock>
+
+**Why `steps(5)`?**
+
+1. The sprite sheet has 5 frames, so we need 5 distinct `background-position` values.
+2. `steps(5)` makes the animation jump exactly 5 times over its 1-second duration.
+3. `background-position` moves from `0` to `-500px`, the full width of the sheet. Each step shifts the image left by `100px` (one frame), revealing the next frame of the walk.
+4. The default `end` is what makes this work. It shows frame 1 during the first interval, then frames 2 to 5. The final jump to `-500px` — which would show empty space past the last frame — happens at the exact instant the loop restarts, so you never see it.
+
+<Warning title="Why not start?">
+  With `steps(5, start)`, frame 1 is skipped and the *last* interval is spent at `-500px`, which is past the end of the sheet. With `background-repeat: no-repeat`, that shows as a blank flash on every loop. Try switching the jump term in the playground below to see it happen.
+</Warning>
+
+<Sandbox slug="css-sprite-sheet-animation" defaultLayout="vertical" />
+
+### Applying `steps()` to Individual Keyframes
+
+You don't have to use one timing function for the whole animation. Setting `animation-timing-function` **inside** a keyframe changes the timing for just one segment, so you can mix smooth and stepped motion in a single animation.
+
+<CodeBlock language="css">
+{`
+  @keyframes hybrid-move {
+    0% {
+      transform: translateX(0);
+      /* No timing function here, so 0% → 50% uses the animation's own (e.g. ease) */
+    }
+
+    50% {
+      transform: translateX(100px);
+      animation-timing-function: steps(2, end); /* Only 50% → 100% is stepped */
+    }
+
+    100% {
+      transform: translateX(200px);
+    }
+  }
+`}
+</CodeBlock>
+
+The rule to remember: **a keyframe's timing function applies to the segment that starts at that keyframe**, not the one that ends there. Here, the element glides smoothly to the halfway point, then ticks the rest of the way in two jumps. A timing function set on the `100%` keyframe would have no effect, because no segment starts there.
+
+<Sandbox slug="css-keyframe-steps" defaultLayout="vertical" />
+
+### Driving `steps()` from JavaScript
+
+The [Web Animations API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API) accepts the exact same `steps()` syntax through its `easing` option, which is handy when the step count isn't known until runtime — for example, the length of a string typed by the user.
+
+<CodeBlock language="js">
+{`
+  const phrase = "Typed at runtime!";
+  const el = document.querySelector(".typewriter");
+  el.textContent = phrase;
+
+  el.animate(
+    [{ width: "0ch" }, { width: \`\${phrase.length}ch\` }],
+    {
+      duration: 2000,
+      easing: \`steps(\${phrase.length}, jump-end)\`, // one step per character
+      fill: "forwards",
+    }
+  );
+`}
+</CodeBlock>
+
+Unlike CSS, `element.animate()` returns an `Animation` object, so you can pause, reverse, or restart the stepped animation (`animation.play()`) without the reflow trick CSS needs.
+
+### Stepping a Scroll-Driven Animation
+
+Timing functions still apply when an animation is driven by scroll position instead of time. Pair `steps()` with [`animation-timeline`](/post/animations/css-keyframes-guide#9-animation-timeline) and a reading-progress bar fills in whole chunks as you scroll, instead of creeping forward pixel by pixel.
+
+<CodeBlock language="css">
+{`
+  .reading-progress {
+    transform-origin: left;
+    animation: grow-progress auto steps(10, jump-end) both; /* 10% chunks */
+    animation-timeline: scroll(); /* Set after the shorthand, which resets it */
+  }
+
+  @keyframes grow-progress {
+    from {
+      transform: scaleX(0);
+    }
+
+    to {
+      transform: scaleX(1);
+    }
+  }
+`}
+</CodeBlock>
+
+Scroll-driven animations are currently supported only in Chromium-based browsers, so treat this as a progressive enhancement.
+
+## Troubleshooting Common `steps()` Bugs
+
+When a stepped animation looks wrong, it's almost always one of these four problems.
+
+### The Off-by-One Error
+
+Your sprite ends on the wrong frame, or flashes blank for a moment. This usually comes from a mismatch between your **step count** and your **keyframe end value**.
+
+**The rule of thumb:** with `N` frames and the default `jump-end`, use `steps(N)` and animate to the **total width of the sheet** (`-N × frameWidth`), not to the position of the last frame. The final jump lands exactly when the loop restarts, so that "one past the end" position is never actually shown.
+
+If you'd rather animate to the last frame's real position, use `jump-none` with the same step count. It holds both the first and the last value for a full interval:
+
+<CodeBlock language="css">
+{`
+  /* Option 1: default jump-end, animate past the last frame */
+  animation: walk 1s steps(5) infinite;
+  @keyframes walk {
+    to {
+      background-position: -500px 0;
+    }
+  }
+
+  /* Option 2: jump-none, animate exactly to the last frame (4 × 100px) */
+  animation: walk 1s steps(5, jump-none) infinite;
+  @keyframes walk {
+    to {
+      background-position: -400px 0;
+    }
+  }
+`}
+</CodeBlock>
+
+### The Last Frame Never Shows
+
+With `jump-end`, the final value appears only at the very last instant (`t = 1`). As soon as the animation finishes, the element snaps back to its un-animated styles, so that final value flashes by too quickly to see. Add [`animation-fill-mode: forwards`](/post/animations/css-keyframes-guide#7-animation-fill-mode) (or `forwards` in the shorthand) to keep it on screen, or switch to `jump-start`/`jump-none`, which both hold the final value for a full interval.
+
+### The Typewriter Reveals Too Much or Too Little
+
+Three usual suspects:
+
+- **Wrong step count.** Count every character, including spaces and punctuation. `"Hello, world!"` is 13 steps, not 10.
+- **Wrong end width.** Animate to `<character count>ch`, not `100%`. A percentage is relative to the parent's width, not the text.
+- **Proportional font.** `1ch` only matches every character in a monospaced font.
+
+### The Animation Won't Restart
+
+If you swap an animation off and on from JavaScript to replay it, the browser can merge the two changes and nothing happens. Force a reflow in between — see [Restarting an Animation from JavaScript](/post/animations/css-keyframes-guide#restarting-an-animation-from-javascript) — or use `element.animate()`, which returns an `Animation` you can simply `play()` again.
+
+## When to Use `steps()`
+
+**Use `steps()` for:**
+
+- **Retro aesthetics:** 8-bit or pixel-art motion.
+- **Loading states:** Chunked progress bars or pulsing indicator LEDs.
+- **Mechanical UI:** A toggle or dial that should "click" into place instead of sliding.
+- **Typewriters:** Any character-by-character text reveal.
+- **Sprite sheets and flip books:** Anything drawn as separate frames.
+- **Blinking:** Cursors and status lights that should be fully on or fully off, never half-faded.
+
+**Avoid `steps()` when:**
+
+- You need organic, fluid motion (use `ease` or `cubic-bezier()` instead).
+- The motion is large and fast — a low step count makes big jumps look choppy rather than intentional.
+
+## Performance
+
+A timing function only changes *which* value is shown at each moment — it doesn't change how the browser renders that value. That means:
+
+- `steps()` does **not** lower the frame rate. The browser still runs its animation loop at the display's refresh rate; it just draws the same value on many consecutive frames.
+- The cost depends on **which property you animate**, exactly as with any other timing function. `transform` and `opacity` can be handled by the compositor, while `width` and `background-position` trigger layout or repaint on every jump.
+
+For a long-running sprite loop, you can avoid repainting `background-position` by moving the sprite with `transform` inside a clipped window instead:
+
+<CodeBlock language="html">
+{`
+  <div class="sprite-window">
+    <img class="sprite-strip" src="/assets/img/alien-walk-sprite.png" width="500" height="100" alt="" />
+  </div>
+
+  <style>
+    .sprite-window {
+      width: 100px; /* One frame */
+      height: 100px;
+      overflow: hidden; /* Only one frame is ever visible */
+    }
+
+    .sprite-strip {
+      display: block;
+      animation: walk-strip 1s steps(5) infinite;
+    }
+
+    @keyframes walk-strip {
+      to {
+        transform: translateX(-500px);
+      }
+    }
+  </style>
+`}
+</CodeBlock>
+
+For more on why `transform` is cheaper, and when to hint layer promotion ahead of time, see [Why GPU-Accelerated Properties Are Cheap](/post/animations/css-transitions-guide#why-gpu-accelerated-properties-are-cheap) and [Hinting Layer Promotion with `will-change`](/tutorial/will-change-property).
+
+## Accessibility: Respecting User Preferences
+
+Sudden, jumping motion can be jarring — even physically distressing — for people with vestibular disorders. Respect the user's system setting by turning stepped animations off, and make sure each element falls back to a sensible final state:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) {
+    .typewriter,
+    .alien-sprite,
+    .second-hand {
+      animation: none !important;
+      width: auto; /* Show the full typewriter text */
+      background-position: 0 0; /* Show the first sprite frame */
+      transform: none;
+    }
+  }
+`}
+</CodeBlock>
+
+A few more things worth checking:
+
+- **Blinking cursors:** [WCAG 2.2.2 (Pause, Stop, Hide)](https://www.w3.org/WAI/WCAG22/Understanding/pause-stop-hide.html) asks that blinking content that starts automatically and lasts more than five seconds can be paused. An easy fix is to let the cursor blink a fixed number of times — for example `blink-caret 0.75s step-end 6` — instead of `infinite`.
+- **Flashing:** Keep fast `step-end` blinks well below three flashes per second, especially on large or high-contrast areas.
+- **Screen readers:** A CSS typewriter only hides text visually; the full sentence is in the DOM from the start, so screen readers announce it normally. Avoid "typing" text by adding characters with JavaScript, which can cause the text to be announced repeatedly or incompletely.
+
+## Pro Tips
+
+- Combine with `infinite` for looping, GIF-like effects.
+- Use the default `end` for sprite sheets, and animate to the full sheet width.
+- Pair `animation-direction: alternate` with `steps()` for back-and-forth flip-book motion, like a blinking eye or a waving hand.
+- When debugging, temporarily lower the step count and raise the duration — each individual jump becomes easy to see.
+- Open your browser DevTools' **Animations** panel to scrub through a stepped animation one frame at a time.
+
+## Frequently Asked Questions
+
+<Details summary="How many steps should I use?">
+  Match the number of visual states you want, not an arbitrary number:
+
+  - For typewriter effects → the number of characters
+  - For sprite sheets → the number of frames
+  - For ticking clocks → the number of positions (60 for a second hand)
+</Details>
+
+<Details summary="Why is my last frame not showing?">
+  This is usually an off-by-one issue. Check that:
+
+  - Your step count matches the number of visual states.
+  - Your `to` value covers the total distance (the full sheet width, not the last frame's position).
+  - You're using `forwards` when the final state should stay visible after the animation ends.
+
+  See [Troubleshooting Common `steps()` Bugs](#troubleshooting-common-steps-bugs) for fixes.
+</Details>
+
+<Details summary="Why does steps(1, jump-none) do nothing?">
+  It's invalid. `jump-none` needs at least two steps, so the browser ignores the declaration. Use
+  `steps(2, jump-none)` or `step-end` instead.
+</Details>
+
+<Details summary="Can steps() be used with transitions?">
+  Yes. Use it in `transition-timing-function` (or the `transition` shorthand) for segmented transitions such as
+  progress bars and toggles. [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) covers
+  the rest of the transition properties.
+</Details>
+
+<Details summary="Does steps() affect performance?">
+  Not meaningfully. It simply remaps progress, and it doesn't lower the frame rate. What affects performance is the
+  property you animate — see [Performance](#performance).
+</Details>
+
+<Details summary="Why does my scaled-up pixel-art sprite look blurry?">
+  `steps()` only controls _when_ the frames change, not how each one is drawn. When a small sprite sheet is scaled up,
+  the browser smooths it by default. Add `image-rendering: pixelated` to the element to keep the hard pixel edges.
+</Details>
+
+## Wrapping Up
+
+The CSS `steps()` timing function replaces fluid interpolation with deliberate, countable jumps. Once you understand where each jump term places those jumps, you can move beyond "floaty" web animation toward crisp, segmented motion: retro 8-bit characters, mechanical clocks, chunked loaders, and pixel-perfect typewriters.
+
+Whether you're animating a sprite-based character or a chunked loading bar, `steps()` gives you a kind of control no easing curve can. Experiment with the step count and jump term until the motion has exactly the "tick" you want.
+
+If you want the `@keyframes` fundamentals `steps()` builds on, see [An Interactive Guide to CSS Keyframes](/post/animations/css-keyframes-guide). And if you're applying it to a simple state change instead of a full animation, [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) covers `transition-timing-function` in depth.
+
+- **`steps(n, end)`:** Your reliable default for typewriters, clocks, and sprite sheets — the starting state is visible immediately.
+- **`steps(n, start)`:** For things that should respond instantly — the first step appears the moment the animation begins.
+- **`jump-none` / `jump-both`:** Precision tools for holding, or skipping, both ends of the timeline.
+- **Count your states:** Characters for typewriters, frames for sprites — the step count should always match what you want to see.
+
+**Master it once, and every animation in your toolkit gains a new level of precision.**
