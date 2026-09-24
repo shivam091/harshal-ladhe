@@ -1,0 +1,148 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-boop");
+
+## Introduction
+
+A static hover state works, but it feels flat. A tiny, springy nudge when you hover over an icon (a quick wiggle, a lift, a little bounce) makes an interface feel alive. The catch is that the motion has to be **brief**: a hover effect that holds its transform for as long as the cursor stays put quickly becomes annoying.
+
+This snippet provides a `useBoop` hook, inspired by Josh W. Comeau's "boop" pattern. It applies a short transform (translate, rotate, scale) that springs back after `timing` milliseconds. The spring comes from an overshooting `cubic-bezier` CSS transition, so there are no dependencies, and the hook does nothing when the user prefers reduced motion.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useCallback, useEffect, useMemo, useState } from "react";
+  import type { CSSProperties } from "react";
+  import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
+
+  interface BoopConfig {
+    x?: number;
+    y?: number;
+    rotation?: number;
+    scale?: number;
+    timing?: number;
+  }
+
+  // An easeOutBack curve: the value past 1 overshoots the target and settles back, like a spring.
+  const SPRING = "cubic-bezier(0.34, 1.56, 0.64, 1)";
+
+  export function useBoop({
+    x = 0,
+    y = 0,
+    rotation = 0,
+    scale = 1,
+    timing = 150
+  }: BoopConfig = {}): [CSSProperties, () => void] {
+    const prefersReducedMotion = usePrefersReducedMotion();
+    const [isBooped, setIsBooped] = useState(false);
+
+    useEffect(() => {
+      if (!isBooped) return;
+      const timeoutId = window.setTimeout(() => setIsBooped(false), timing);
+      return () => window.clearTimeout(timeoutId);
+    }, [isBooped, timing]);
+
+    const trigger = useCallback(() => setIsBooped(true), []);
+
+    const style = useMemo<CSSProperties>(() => {
+      if (prefersReducedMotion) return {};
+
+      return {
+        display: "inline-block",
+        backfaceVisibility: "hidden",
+        transform: isBooped
+          ? \`translate(\${x}px, \${y}px) rotate(\${rotation}deg) scale(\${scale})\`
+          : "translate(0px, 0px) rotate(0deg) scale(1)",
+        // Snap out quickly, then settle back more slowly so the spring reads clearly.
+        transition: \`transform \${isBooped ? 200 : 500}ms \${SPRING}\`
+      };
+    }, [prefersReducedMotion, isBooped, x, y, rotation, scale]);
+
+    return [style, trigger];
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `trigger` sets `isBooped` to `true`, which moves the element to its target transform.
+2. An effect watches `isBooped` and resets it after `timing` ms. The effect's cleanup clears the timeout if the component unmounts in the middle of a boop.
+3. Both directions use an **overshooting cubic-bezier**, so the element flies slightly past its target and then settles back, which is the essence of a spring.
+4. The outbound transition is shorter than the return, so the effect feels snappy on hover but lingers a little as it comes back.
+5. When [`usePrefersReducedMotion`](/snippet/use-prefers-reduced-motion) reports `true`, the style object is empty. `trigger` still works but has no visible effect.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  import type { ReactNode } from "react";
+
+  // A reusable wrapper, so call sites don't need to wire up the hook themselves
+  function Boop({ children, ...config }: BoopConfig & { children: ReactNode }) {
+    const [style, trigger] = useBoop(config);
+
+    return (
+      <span onMouseEnter={trigger} onFocus={trigger} style={style}>
+        {children}
+      </span>
+    );
+  }
+
+  function SocialLinks() {
+    return (
+      <nav>
+        <Boop rotation={20} timing={200}>
+          <a href="https://github.com">GitHub</a>
+        </Boop>
+        <Boop y={-4} scale={1.1}>
+          <a href="https://bsky.app">Bluesky</a>
+        </Boop>
+      </nav>
+    );
+  }
+
+  // Or boop on press, e.g. an "add to cart" icon
+  function CartButton({ onAdd }: { onAdd: () => void }) {
+    const [style, trigger] = useBoop({ scale: 1.2, rotation: -10 });
+
+    return (
+      <button onClick={() => { trigger(); onAdd(); }}>
+        <span style={style}>🛒</span> Add
+      </button>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Icon hover feedback**: in nav bars, social links, and toolbars.
+- **Confirming an action**: a bounce on "like", "copy", or "add to cart" presses.
+- **Pointing at a related element**: hover over a label and boop the icon beside it, since the trigger doesn't have to be on the element that moves.
+- **Playful empty states and illustrations** that react to the cursor.
+- **Form feedback**: a small shake (`x: 4`) on an invalid field.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Boop the child, not the trigger:** attach `trigger` to the larger clickable area and `style` to the icon inside it. Moving the hover target itself can make it jitter in and out of the cursor.
+- **Inline elements:** transforms don't apply to `display: inline` elements, which is why the hook sets `inline-block`. Override that if your element needs to be `block` or `flex`.
+- **Re-triggering:** calling `trigger` while an element is already booped doesn't extend the boop. That's usually what you want, since it stops a jittery cursor from pinning the effect in place.
+- **Want real physics?** Swap the CSS transition for [react-spring](https://www.react-spring.dev/)'s `useSpring` with `immediate: prefersReducedMotion` to get tension and friction controls and interruptible animations. The hook's API can stay the same.
+- **Keep it subtle:** a few pixels or a few degrees is usually enough. Bigger values read as a bug, not a delight.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useBoop` turns any element into a small, springy micro-interaction with one trigger function and one style object. It needs no animation library, cleans up its own timer, and skips the motion for users who've asked for less.

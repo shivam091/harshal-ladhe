@@ -84,6 +84,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-23", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-boop",
+    title: "`useBoop`: Add Springy Hover Micro-Interactions in React",
+    excerpt: "Add a brief, springy boop effect to any element on hover or press.",
+    description: "Build a dependency-free useBoop hook that applies a transient spring-like transform (translate, rotate, scale) on hover or click, then settles back — with built-in prefers-reduced-motion support.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useBoop", "animation", "micro-interactions", "accessibility", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-boop/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useBoop hook giving icons a springy wiggle and bounce on hover, with transform and cubic-bezier spring curve visuals."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
