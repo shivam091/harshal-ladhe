@@ -138,6 +138,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-has-mounted",
+    title: "`useHasMounted`: Avoid Hydration Mismatches in React",
+    excerpt: "Detect client-side mount to render browser-only content safely.",
+    description: "Build a useHasMounted hook and ClientOnly wrapper that defer browser-only rendering until after hydration, preventing SSR hydration mismatch errors in React and Next.js.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useHasMounted", "ssr", "hydration", "nextjs", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-has-mounted/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useHasMounted hook bridging server-rendered HTML and client hydration, with a ClientOnly wrapper deferring browser-only content."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

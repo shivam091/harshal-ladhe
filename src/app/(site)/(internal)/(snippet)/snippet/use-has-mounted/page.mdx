@@ -1,0 +1,105 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-has-mounted");
+
+## Introduction
+
+With server-side rendering, React expects the client's first render to match the server's HTML exactly. Any component that renders something only the browser knows (a `localStorage` value, the current time, `window.innerWidth`, a logged-in user from a cookie) produces different markup on the client, and React reports a **hydration mismatch**.
+
+This snippet provides a `useHasMounted` hook. It returns `false` on the server and during hydration, then `true` once the component has mounted in the browser. It also includes a `ClientOnly` wrapper, so you can defer a whole subtree to the client in a single line.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useEffect, useState } from "react";
+  import type { ReactNode } from "react";
+
+  export function useHasMounted(): boolean {
+    const [hasMounted, setHasMounted] = useState(false);
+
+    // Effects never run on the server, so this flips only after hydration.
+    useEffect(() => {
+      setHasMounted(true);
+    }, []);
+
+    return hasMounted;
+  }
+
+  interface ClientOnlyProps {
+    children: ReactNode;
+    fallback?: ReactNode;
+  }
+
+  export function ClientOnly({ children, fallback = null }: ClientOnlyProps) {
+    const hasMounted = useHasMounted();
+    return hasMounted ? children : fallback;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. State starts as `false`, so the server render and the client's hydration render produce the **same output**.
+2. `useEffect` runs only in the browser, after React has hydrated the component.
+3. Setting the state to `true` triggers a second render, and that render can safely use browser-only values.
+4. `ClientOnly` wraps the pattern: it shows `fallback` (default `null`) until mount, then renders `children`.
+5. The empty dependency array means the flip happens once per component instance, with nothing to clean up.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Hook form: guard the one value that differs between server and client
+  function LocalTime() {
+    const hasMounted = useHasMounted();
+
+    if (!hasMounted) return <span>--:--</span>;
+    return <span>{new Date().toLocaleTimeString()}</span>;
+  }
+
+  // Wrapper form: defer a whole browser-dependent subtree
+  function Header() {
+    return (
+      <header>
+        <Logo />
+        <ClientOnly fallback={<div className="avatar-skeleton" />}>
+          <UserMenu />
+        </ClientOnly>
+      </header>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Values persisted on the client**, such as a theme or a [`useStickyState`](/snippet/use-sticky-state) preference that the server can't know.
+- **Time- and locale-dependent output**, such as "5 minutes ago", local clocks, and formatted dates.
+- **Browser-only libraries** that touch `window` or `document` as soon as they render (maps, charts, rich-text editors).
+- **Auth-dependent UI** when session details live only in client storage.
+- **Portals**, which need a real `document.body` to render into. See [`InPortal`](/snippet/in-portal).
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Don't wrap everything:** anything inside `ClientOnly` is missing from the server HTML, so it can't be crawled, and it pops in after load. Keep the client-only area as small as possible.
+- **Reserve space with a fallback:** give the fallback the same size as the real content to avoid layout shift.
+- **Keep the `typeof window` check out of render:** `typeof window !== "undefined"` during render is `true` on the client and `false` on the server, which is exactly what causes the mismatch. Use this hook instead.
+- **Next.js alternative:** for a whole component, `dynamic(() => import("./Map"), { ssr: false })` also skips SSR and moves the component's code into a separate bundle.
+- **One extra render:** each consumer renders twice on mount. That's negligible for leaf components, but hoist the check higher if it's inside a long list.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useHasMounted` fixes hydration mismatches by matching the server on the first client render and then switching to browser-only content after mount. Use the hook to guard a single value, and `ClientOnly` to defer a whole subtree.
