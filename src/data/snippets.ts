@@ -444,6 +444,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "error-boundary",
+    title: "`<ErrorBoundary />`: Catch Render Errors with Reset & Retry in React",
+    excerpt: "Contain render crashes with a fallback UI that can retry and reset.",
+    description: "Build a typed class-based ErrorBoundary in React with a fallback render prop receiving error and reset, an onError callback for logging, and resetKeys that auto-recover when data changes — plus how it relates to Next.js error.tsx.",
+    category: ["React"],
+    tags: ["react", "components", "error-boundary", "error-handling", "resilience", "nextjs", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/error-boundary/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React ErrorBoundary component shielding an app from a crashing widget, with a glowing retry button."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

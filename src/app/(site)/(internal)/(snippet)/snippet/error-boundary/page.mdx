@@ -1,0 +1,141 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("error-boundary");
+
+## Introduction
+
+By default, a single uncaught error thrown while rendering unmounts your **entire** React tree — one broken widget turns the whole page blank. Error boundaries contain the damage, but React still only supports them as class components, and the bare-bones version from the docs has no way to recover without a full page reload.
+
+This snippet provides a small, typed `ErrorBoundary` with a real recovery story: a `fallback` render prop that receives `error` and `reset`, an `onError` callback for logging, and `resetKeys` that automatically clear the error when the data that caused it changes.
+
+<RainbowDivider />
+
+## The Component
+
+<CodeBlock language="tsx">
+{`
+  "use client";
+
+  import { Component } from "react";
+  import type { ErrorInfo, ReactNode } from "react";
+
+  export interface FallbackProps {
+    error: Error;
+    reset: () => void;
+  }
+
+  interface ErrorBoundaryProps {
+    children: ReactNode;
+    fallback: (props: FallbackProps) => ReactNode;
+    onError?: (error: Error, info: ErrorInfo) => void;
+    onReset?: () => void;
+    resetKeys?: readonly unknown[];
+  }
+
+  interface ErrorBoundaryState {
+    error: Error | null;
+  }
+
+  function haveKeysChanged(prev: readonly unknown[] = [], next: readonly unknown[] = []) {
+    return prev.length !== next.length || prev.some((key, i) => !Object.is(key, next[i]));
+  }
+
+  export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    state: ErrorBoundaryState = { error: null };
+
+    static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
+      // Anything can be thrown; normalize so the fallback can always read .message.
+      return { error: error instanceof Error ? error : new Error(String(error)) };
+    }
+
+    componentDidCatch(error: Error, info: ErrorInfo) {
+      this.props.onError?.(error, info);
+    }
+
+    componentDidUpdate(prevProps: ErrorBoundaryProps, prevState: ErrorBoundaryState) {
+      // Skip the commit that *caught* the error — otherwise a key change in that same
+      // render would reset immediately and loop straight back into the crash.
+      if (prevState.error && haveKeysChanged(prevProps.resetKeys, this.props.resetKeys)) {
+        this.reset();
+      }
+    }
+
+    reset = () => {
+      this.props.onReset?.();
+      this.setState({ error: null });
+    };
+
+    render() {
+      const { error } = this.state;
+      return error ? this.props.fallback({ error, reset: this.reset }) : this.props.children;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. When a descendant throws during render, a lifecycle method, or a constructor, React calls `getDerivedStateFromError`, which stores the error in state so the next render shows the fallback.
+2. `componentDidCatch` runs after that commit with the error and `info.componentStack`, making it the right place to forward to Sentry, Datadog, or your own logger via `onError`.
+3. `render` calls the `fallback` render prop with the `error` and a bound `reset` function, so each boundary can show context-appropriate UI and a retry button.
+4. `reset` fires the optional `onReset` (to clear caches or refetch) and clears the error, re-rendering `children` from scratch.
+5. `componentDidUpdate` compares `resetKeys` with `Object.is`; if any key changed **while the fallback is showing**, the boundary resets itself — no click needed.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  function ErrorFallback({ error, reset }: FallbackProps) {
+    return (
+      <div role="alert">
+        <p>Something went wrong: {error.message}</p>
+        <button type="button" onClick={reset}>Try again</button>
+      </div>
+    );
+  }
+
+  function UserPage({ userId }: { userId: string }) {
+    return (
+      <ErrorBoundary
+        fallback={ErrorFallback}
+        onError={(error, info) => reportError(error, { componentStack: info.componentStack })}
+        // Navigating to another user clears a stale error automatically.
+        resetKeys={[userId]}
+      >
+        <UserProfile userId={userId} />
+      </ErrorBoundary>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Isolating widgets** like charts, embeds, or third-party components so one failure doesn't blank the page.
+- **Route- or tab-scoped recovery** where `resetKeys={[pathname]}` or `resetKeys={[activeTab]}` clears errors on navigation.
+- **Retryable data views** that pair `reset` with a refetch in `onReset`.
+- **Error reporting** — centralizing `onError` so every boundary logs with its component stack.
+- **Progressive rollouts** that wrap a new feature so a crash degrades to a friendly message instead of an outage.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **What boundaries don't catch:** errors thrown in event handlers or in `setTimeout`/promise callbacks happen outside rendering, so the boundary never sees them. Handle those with `try`/`catch`, or rethrow into the boundary from a hook via `setState(() => { throw error; })`.
+- **Next.js route-level equivalent:** in the App Router, an `error.tsx` file is an error boundary for its route segment, receiving `error` and `reset` props with the same shape as `FallbackProps`. Use this component for finer-grained boundaries *inside* a page.
+- **Placement matters:** a boundary can't catch errors thrown by itself or its own fallback — only by descendants. Nest them close to the risky UI.
+- **Keep `resetKeys` stable:** keys are compared with `Object.is`, so an inline object like `resetKeys={[{ id }]}` counts as "changed" on every render. Pass primitives such as IDs or a memoized value.
+- **Development overlay:** in development, React and Next.js still show their error overlay even when a boundary catches the error; production shows only your fallback.
+- **Pair with retries:** for flaky network-driven renders, combine with [`useRetryUntilResolved`](/snippet/use-retry-until-resolved) so `reset` isn't the only path to recovery.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A reusable `ErrorBoundary` with a `fallback` render prop, `onError` logging, and `resetKeys` turns crashes from blank screens into recoverable, localized failures — use it for component-level isolation and lean on Next.js `error.tsx` for the route level.
