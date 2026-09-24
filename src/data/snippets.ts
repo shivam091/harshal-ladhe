@@ -408,6 +408,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "compound-tabs",
+    title: "Compound `<Tabs />`: Accessible, Composable Tabs with Context in React",
+    excerpt: "Build accessible tabs from composable parts that share state through context.",
+    description: "Build a compound Tabs component in React with Tabs.List, Tabs.Trigger, and Tabs.Panel sharing state via context — controlled or uncontrolled, with useId-based ARIA wiring, a roving tabindex, and Arrow/Home/End keyboard navigation.",
+    category: ["React"],
+    tags: ["react", "components", "compound-components", "context", "tabs", "accessibility", "aria", "keyboard-navigation", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/compound-tabs/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React Tabs compound component with a glowing tab list, active trigger, and linked content panel."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
