@@ -1,0 +1,134 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-event-listener");
+
+## Introduction
+
+Every `addEventListener` inside a `useEffect` needs a matching `removeEventListener` with the *same* function and the *same* capture flag — miss either and you leak listeners. Put the handler in the dependency array and the listener is torn down and re-attached on every render; leave it out and the handler reads stale props and state.
+
+This snippet provides a `useEventListener` hook that attaches a listener to `window`, `document`, or an element ref, removes it automatically, keeps the **latest handler** in a ref so the listener isn't re-attached each render, and infers the correct event type from `WindowEventMap`, `DocumentEventMap`, or `HTMLElementEventMap`.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useEffect, useRef } from "react";
+  import type { RefObject } from "react";
+
+  type Options = boolean | AddEventListenerOptions;
+
+  // Targets are passed as "document" or a ref rather than the objects themselves,
+  // so calling the hook during SSR never evaluates \`window\` or \`document\`.
+  export function useEventListener<K extends keyof WindowEventMap>(
+    type: K, handler: (event: WindowEventMap[K]) => void, target?: undefined, options?: Options
+  ): void;
+  export function useEventListener<K extends keyof DocumentEventMap>(
+    type: K, handler: (event: DocumentEventMap[K]) => void, target: "document", options?: Options
+  ): void;
+  export function useEventListener<K extends keyof HTMLElementEventMap>(
+    type: K, handler: (event: HTMLElementEventMap[K]) => void, target: RefObject<HTMLElement | null>, options?: Options
+  ): void;
+  export function useEventListener(
+    type: string,
+    handler: (event: Event) => void,
+    target?: "document" | RefObject<HTMLElement | null>,
+    options?: Options
+  ) {
+    const handlerRef = useRef(handler);
+    useEffect(() => {
+      handlerRef.current = handler;
+    });
+
+    // Primitives, so an inline options object doesn't re-attach the listener every render.
+    const capture = typeof options === "boolean" ? options : options?.capture;
+    const passive = typeof options === "object" ? options.passive : undefined;
+    const once = typeof options === "object" ? options.once : undefined;
+
+    useEffect(() => {
+      const node = target === undefined ? window : target === "document" ? document : target.current;
+      if (!node) return;
+
+      const listener = (event: Event) => handlerRef.current(event);
+      const listenerOptions = { capture, passive, once };
+
+      node.addEventListener(type, listener, listenerOptions);
+      return () => node.removeEventListener(type, listener, listenerOptions);
+    }, [type, target, capture, passive, once]);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Overloads** map each target to its event map, so `useEventListener("keydown", (e) => ...)` types `e` as `KeyboardEvent` without any casts.
+2. The handler is stored in `handlerRef` and refreshed after every render; the attached `listener` is a stable wrapper that always calls the **latest** handler.
+3. `options` is flattened to `capture`/`passive`/`once` primitives, so passing `{ passive: true }` inline doesn't count as a change.
+4. The subscribing effect resolves the target (`window` by default, `document`, or `ref.current`), attaches the wrapper, and removes it with the same options on cleanup.
+5. The listener is only re-attached when the event type, target, or options actually change.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Close a dialog on Escape — handler sees the latest onClose without re-attaching
+  function Dialog({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+    useEventListener("keydown", (event) => {
+      if (event.key === "Escape") onClose();
+    });
+
+    return <div role="dialog" aria-modal="true">{children}</div>;
+  }
+
+  // Passive scroll listener on a specific element
+  function ScrollShadowList({ items }: { items: string[] }) {
+    const listRef = useRef<HTMLUListElement>(null);
+    const [scrolled, setScrolled] = useState(false);
+
+    useEventListener("scroll", () => setScrolled((listRef.current?.scrollTop ?? 0) > 0), listRef, { passive: true });
+
+    return (
+      <ul ref={listRef} className={scrolled ? "list list--shadow" : "list"}>
+        {items.map((item) => <li key={item}>{item}</li>)}
+      </ul>
+    );
+  }
+
+  // Inside any component: document-level listeners, the second in the capture phase
+  useEventListener("visibilitychange", () => pauseVideo(), "document");
+  useEventListener("pointerdown", (event) => closeIfOutside(event), "document", true);
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Keyboard shortcuts:** Escape to close, `Cmd+K` to open search, arrow keys for carousels.
+- **Scroll-driven UI:** sticky headers, scroll shadows, and "back to top" buttons with passive listeners.
+- **Click-outside detection:** a capture-phase `pointerdown` on `document` for menus and popovers.
+- **Page lifecycle:** `visibilitychange`, `online`/`offline`, and `beforeunload` handling.
+- **Window geometry:** `resize` or `orientationchange` when a media query isn't enough (see [`useMediaQuery`](/snippet/use-media-query) when it is).
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Why `"document"` instead of `document`:** passing the object would evaluate `document` during render and crash on the server; the string defers the lookup to the effect.
+- **Options on `window`:** pass `undefined` as the target to keep the default, e.g. `useEventListener("scroll", onScroll, undefined, { passive: true })`.
+- **Ref timing:** the element is read from `ref.current` when the effect runs. If the ref starts pointing at a *different* element without the component re-rendering, the hook won't notice — key the component or use a callback ref for truly dynamic targets.
+- **Mark scroll and touch listeners passive:** it lets the browser scroll without waiting on your handler, and you can't call `preventDefault()` in them anyway.
+- **React 19.2+:** `useEffectEvent` is the built-in version of the latest-handler ref; swap `handlerRef` for it if you're on a recent React.
+- **Throttle hot events:** `scroll`, `resize`, and `pointermove` fire rapidly — wrap expensive work in `requestAnimationFrame` or a [debounced value](/snippet/use-debounced-value).
+- **Custom events:** extend the overloads with your own map (e.g. `keyof MyEventMap`) for typed `CustomEvent` payloads.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useEventListener` removes the add/remove boilerplate from every effect, keeps handlers fresh without re-subscribing, and infers event types from the target — giving you leak-free, SSR-safe DOM listeners for `window`, `document`, and elements in a single line.

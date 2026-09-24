@@ -300,6 +300,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-event-listener",
+    title: "`useEventListener`: Leak-Free, Typed DOM Events in React",
+    excerpt: "Attach typed DOM listeners that clean themselves up automatically.",
+    description: "Build a useEventListener hook with typed overloads for window, document, and element refs that keeps the latest handler in a ref, supports passive and capture options, and removes listeners automatically on cleanup.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useEventListener", "dom-events", "event-listeners", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-event-listener/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useEventListener hook attaching and detaching DOM event listeners on window, document, and element refs, with Escape-key and passive scroll examples."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 
