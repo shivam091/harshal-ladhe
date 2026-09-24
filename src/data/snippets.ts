@@ -210,6 +210,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "use-debounced-value",
+    title: "`useDebouncedValue`: Debounce Fast-Changing Values in React",
+    excerpt: "Update a value only after it stops changing.",
+    description: "Build a useDebouncedValue hook that delays updates until a value has settled — perfect for search-as-you-type, autosave, and live validation without firing a request on every keystroke.",
+    category: ["React"],
+    tags: ["react", "hooks", "custom-hooks", "useDebouncedValue", "debounce", "performance", "typescript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/use-debounced-value/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the React useDebouncedValue hook smoothing rapid keystrokes in a search input into a single delayed API request."
+    },
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication." }
+    ]
   }
 ];
 

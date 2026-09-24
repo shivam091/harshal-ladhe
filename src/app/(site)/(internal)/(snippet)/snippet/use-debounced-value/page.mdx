@@ -1,0 +1,106 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("use-debounced-value");
+
+## Introduction
+
+A search box that fires a request on every keystroke wastes bandwidth, hammers your API, and can render results out of order. What you usually want is to react only once the user **pauses typing** — but debouncing the `onChange` handler itself gets awkward in React, because the handler is recreated on every render.
+
+This snippet provides a `useDebouncedValue` hook that takes any value and returns a copy that only updates after the original has **stopped changing** for `delay` milliseconds. The input stays instant and controlled; only the expensive work downstream is debounced.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="tsx">
+{`
+  import { useEffect, useState } from "react";
+
+  export function useDebouncedValue<T>(value: T, delay = 300): T {
+    const [debounced, setDebounced] = useState(value);
+
+    useEffect(() => {
+      const id = setTimeout(() => setDebounced(value), delay);
+      // Each new value cancels the pending update — only the last one survives the quiet period.
+      return () => clearTimeout(id);
+    }, [value, delay]);
+
+    return debounced;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The hook starts with the current `value`, so the first render isn't delayed.
+2. Whenever `value` (or `delay`) changes, the effect schedules a `setTimeout` to copy it into `debounced` state.
+3. If `value` changes again before the timer fires, React runs the cleanup first — clearing the pending timeout — and schedules a new one.
+4. Only when the value sits unchanged for the full `delay` does the timer complete and the debounced value update.
+5. The cleanup also runs on unmount, so no state update happens after the component is gone.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  function ProductSearch() {
+    const [query, setQuery] = useState("");
+    const [results, setResults] = useState<string[]>([]);
+    const debouncedQuery = useDebouncedValue(query.trim(), 400);
+
+    useEffect(() => {
+      if (!debouncedQuery) {
+        setResults([]);
+        return;
+      }
+
+      // Abort the previous request so a slow response can't overwrite a newer one.
+      const controller = new AbortController();
+      fetch(\`/api/search?q=\${encodeURIComponent(debouncedQuery)}\`, { signal: controller.signal })
+        .then((res) => res.json())
+        .then(setResults)
+        .catch(() => {});
+
+      return () => controller.abort();
+    }, [debouncedQuery]);
+
+    return (
+      <>
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search products" />
+        {query !== debouncedQuery && <p>Typing…</p>}
+        <ul>{results.map((r) => <li key={r}>{r}</li>)}</ul>
+      </>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Search-as-you-type** inputs that hit an API or filter a large list.
+- **Autosave drafts** once the user stops editing a form or document.
+- **Live validation** — e.g. checking username availability — without a request per keystroke.
+- **Expensive derived computations** like filtering thousands of rows or re-rendering a chart.
+- **Resize- or slider-driven layouts** where only the settled value matters.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Debounced value vs debounced callback:** debouncing a *value* keeps the UI controlled and fits naturally with effects and data fetching; debouncing a *callback* (e.g. lodash's `debounce`) is better when you need to fire an event handler directly, like logging or an imperative API call — but it needs a stable ref to survive re-renders.
+- **Show pending state:** comparing `value !== debouncedValue` is a cheap way to render a "typing…" hint.
+- **Objects and arrays:** the effect compares by reference, so pass primitives or memoized objects — a new object literal every render resets the timer forever.
+- **Pick the delay by intent:** ~300ms feels responsive for search; 1000ms+ is more appropriate for autosave.
+- **Consider `useDeferredValue`:** for purely client-side rendering work, React's built-in `useDeferredValue` keeps typing smooth without a fixed delay — but it won't reduce network requests.
+- **Timer primitives:** if you need raw intervals or resettable timeouts instead, see [`useInterval` & `useTimeout`](/snippet/use-interval-and-timeout).
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`useDebouncedValue` separates what the user types from what your app reacts to: the input updates instantly, while fetches, validation, and heavy computations wait until the value has settled — all in a few lines, with automatic cleanup on every change and on unmount.
