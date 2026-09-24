@@ -409,6 +409,27 @@ export const posts: Post[] = [
       { date: "2026-09-13", change: "Added cross-reference to tutorial 'Hinting Layer Promotion with will-change'" },
       { date: "2026-09-13", change: "Initial publication" }
     ],
+  },
+  {
+    slug: "css-step-timing-function",
+    title: "Mastering CSS steps() for Discrete, Stepped Animations",
+    excerpt: "Master discrete frame-based jumps in CSS animations.",
+    description: "A comprehensive guide to the CSS steps() function, detailing its syntax, parameters, and practical applications for creating unique, stepped animation effects in web design. Boost your CSS animation skills.",
+    category: ["Animations"],
+    tags: ["css", "css3", "animation", "css-animation", "web-animation", "steps", "transition", "keyframes", "timing-function", "web-design", "css-tricks", "discrete-animation", "typewriter-effect", "sprite-animation", "web-performance", "ui-animation"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-step-timing-function/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-themed CSS steps() guide cover showing a staircase progress curve, a ticking digital clock second hand, a typewriter text reveal, sprite-sheet animation frames, and CSS code panels illustrating discrete, stepped motion on a dark developer workspace.",
+      caption: "A staircase timing curve behind ticking clocks, typewriter text and sprite frames."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one needed six separate playgrounds instead of one — a typewriter, a ticking clock, a chunked progress bar, a sprite-sheet walk cycle, per-keyframe steps, and a jump-term sandbox — plus a small SVG curve-plotting engine built from scratch just to make every jump-term's staircase, the step-start/step-end shorthands, and a six-way race between them visible instead of theoretical. Chasing down the off-by-one frames, the blank sprite flash, and the readouts that had to agree with what each jump term actually renders took longer than writing any single section. Thanks for ticking through every one of them with me — go find the one motion in your UI that wants to jump instead of glide. 🎞️",
+    changelog: [
+      { date: "2026-09-24", change: "Initial publication" },
+    ],
   }
 ];
 
