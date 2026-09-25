@@ -1,0 +1,106 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("branded-types-nominal-ids");
+
+## Introduction
+
+TypeScript is **structurally** typed: if two types have the same shape, they're interchangeable. That's usually helpful, but it means a `UserId` and an `OrderId` that are both `string` can be swapped without complaint. Call `cancelOrder(userId)` by mistake and the compiler is perfectly happy.
+
+**Branded types** add an invisible, compile-time-only tag to a primitive, so `UserId` and `OrderId` become incompatible even though both are strings at runtime. It's the standard way to get nominal typing in TypeScript without any runtime cost.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  declare const brand: unique symbol;
+
+  /** A T that TypeScript treats as distinct from any other brand of T. */
+  export type Brand<T, Name extends string> = T & { readonly [brand]: Name };
+
+  export type UserId = Brand<string, "UserId">;
+  export type OrderId = Brand<string, "OrderId">;
+  export type Cents = Brand<number, "Cents">;
+  export type Email = Brand<string, "Email">;
+
+  // Constructors are the only place a raw value becomes branded.
+  export const UserId = (value: string) => value as UserId;
+  export const OrderId = (value: string) => value as OrderId;
+
+  export function toCents(amount: number): Cents {
+    if (!Number.isInteger(amount)) throw new RangeError("Cents must be a whole number.");
+    return amount as Cents;
+  }
+
+  // A type guard can brand after a runtime check, without throwing.
+  export function isEmail(value: string): value is Email {
+    return /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `declare const brand: unique symbol` creates a symbol type that exists only for the compiler. Nothing is emitted in the JavaScript output.
+2. `Brand<T, Name>` intersects the base type with an object holding that symbol key, set to a literal name like `"UserId"`. Two brands with different names have incompatible `[brand]` properties, so they can't be assigned to each other.
+3. A branded value is still a `T`, so a `UserId` works anywhere a plain `string` is accepted: `.toUpperCase()`, template strings, `JSON.stringify`.
+4. The reverse is blocked: a plain `string` isn't a `UserId`. Values have to pass through a constructor (`UserId(...)`), a validating function (`toCents`), or a type guard (`isEmail`) first.
+5. Using the same name for the type and its constructor (`UserId`) is fine, because TypeScript keeps types and values in separate namespaces.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  function cancelOrder(orderId: OrderId) {
+    return fetch(\`/api/orders/\${orderId}/cancel\`, { method: "POST" });
+  }
+
+  const userId = UserId("usr_123");
+  const orderId = OrderId("ord_456");
+
+  cancelOrder(orderId);    // ✅
+  // cancelOrder(userId);  // ❌ 'UserId' is not assignable to 'OrderId'
+  // cancelOrder("ord_456"); // ❌ a plain string isn't an OrderId either
+
+  const total = toCents(1999);
+  // const price: Cents = 19.99; // ❌ must go through toCents()
+
+  function sendInvite(to: Email) {
+    /* ... */
+  }
+
+  const input = "ada@example.com";
+  if (isEmail(input)) sendInvite(input); // ✅ narrowed to Email by the guard
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Entity IDs** — `UserId`, `OrderId`, `ProductId` — so IDs can't be passed to the wrong function.
+- **Units** — `Cents` vs. `Dollars`, `Milliseconds` vs. `Seconds`, `Pixels` vs. `Rem`.
+- **Validated input** — `Email`, `Slug`, `NonEmptyString`, proving a check already ran.
+- **Sanitised content** — `SafeHtml`, so only escaped strings reach `dangerouslySetInnerHTML`.
+- **Absolute vs. relative paths**, or any two strings with the same shape but different meaning.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Brand at the boundary:** convert raw values right where they enter your system — API responses, route params, database rows — so the rest of the code only deals with branded types.
+- **Pair with a schema library:** validators like Zod support `.brand<"UserId">()`, so parsing and branding happen in one step.
+- **`as` is the escape hatch:** keep casts inside constructors and guards. A cast elsewhere defeats the purpose.
+- **Runtime is unchanged:** brands vanish after compilation, so they add no bytes or checks. Any runtime guarantee comes from the validation in your constructors.
+- **Serialisation strips brands:** values read back from JSON, `localStorage`, or a URL are plain strings again and need re-branding.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A `Brand<T, Name>` intersection with a `unique symbol` key gives primitives nominal identity at zero runtime cost, turning mixed-up IDs, units, and unvalidated input into compile errors instead of production bugs.

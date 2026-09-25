@@ -570,6 +570,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "branded-types-nominal-ids",
+    title: "Branded Types: Nominal IDs and Units in TypeScript",
+    excerpt: "Stop mixing up UserId and OrderId with zero-cost compile-time brands.",
+    description: "Add nominal typing to TypeScript with a Brand<T, Name> helper built on a unique symbol — incompatible UserId and OrderId strings, validated units like Cents, and type-guard branding, all erased at runtime.",
+    category: ["TypeScript"],
+    tags: ["typescript", "branded-types", "nominal-typing", "unique-symbol", "type-guards", "type-safety"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/branded-types-nominal-ids/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of TypeScript branded types showing two identical glowing strings stamped with different UserId and OrderId labels."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 
