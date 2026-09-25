@@ -516,6 +516,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "sleep-promise-delay",
+    title: "`sleep(ms)`: A Promise-Based, Cancellable Delay",
+    excerpt: "Await a pause in async code, and cancel it with an AbortSignal.",
+    description: "Wrap setTimeout in a promise so async functions and loops can await sleep(ms) — with optional AbortSignal support to cancel pending delays on unmount, plus patterns for polling, rate limiting, and minimum loader times.",
+    category: ["JavaScript"],
+    tags: ["javascript", "typescript", "async-await", "promises", "settimeout", "abortcontroller", "utilities"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/sleep-promise-delay/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the JavaScript sleep() helper showing a glowing hourglass beside an await keyword on a timeline."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 

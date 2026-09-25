@@ -1,0 +1,116 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("sleep-promise-delay");
+
+## Introduction
+
+Async code often needs to wait: pause between polling attempts, throttle a batch of requests, hold a success state on screen for a moment, or simulate network latency in a demo. `setTimeout` works, but its callback style doesn't fit neatly inside an `async` function or a loop.
+
+This snippet wraps `setTimeout` in a promise so you can simply `await sleep(500)`. It also accepts an optional `AbortSignal`, so a pending delay can be cancelled when a component unmounts or the user navigates away.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  export function sleep(ms: number, { signal }: { signal?: AbortSignal } = {}): Promise<void> {
+    return new Promise((resolve, reject) => {
+      // Already cancelled: fail straight away rather than starting a timer.
+      if (signal?.aborted) return reject(signal.reason);
+
+      const timer = setTimeout(() => {
+        signal?.removeEventListener("abort", onAbort);
+        resolve();
+      }, ms);
+
+      function onAbort() {
+        clearTimeout(timer);
+        reject(signal!.reason);
+      }
+
+      signal?.addEventListener("abort", onAbort, { once: true });
+    });
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `sleep` returns a promise that resolves after `ms` milliseconds, so `await sleep(ms)` pauses the current async function without blocking the main thread.
+2. If a `signal` is passed and has already been aborted, the promise rejects immediately with the signal's `reason` (an `AbortError` `DOMException` by default).
+3. Otherwise a timer starts, and an `abort` listener is attached with `{ once: true }`.
+4. If the signal aborts first, `onAbort` clears the timer and rejects, so no stray callback runs later.
+5. If the timer fires first, it removes the listener before resolving, so a long-lived signal doesn't collect listeners from every completed sleep.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  // Simple pause
+  await sleep(1000);
+
+  // Poll until a job finishes, waiting 2s between checks
+  async function waitForExport(jobId: string, signal: AbortSignal) {
+    while (true) {
+      const res = await fetch(\`/api/exports/\${jobId}\`, { signal });
+      const job = await res.json();
+      if (job.status === "done") return job.url;
+      await sleep(2000, { signal });
+    }
+  }
+
+  // Space out requests to respect a rate limit
+  for (const id of ids) {
+    await syncRecord(id);
+    await sleep(250);
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // Cancel the wait when the component unmounts
+  useEffect(() => {
+    const controller = new AbortController();
+
+    sleep(3000, { signal: controller.signal })
+      .then(() => setShowHint(true))
+      .catch((error) => {
+        if (error.name !== "AbortError") throw error;
+      });
+
+    return () => controller.abort();
+  }, []);
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Polling loops** that wait between status checks.
+- **Rate limiting** sequential requests to a third-party API.
+- **Retry delays** between attempts, combined with backoff.
+- **UX timing** — keeping a "Copied!" or "Saved" state visible briefly.
+- **Demos and tests** — simulating latency to exercise loading states.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Handle `AbortError`:** a cancelled sleep rejects. Catch it and ignore errors whose `name` is `"AbortError"`, while still rethrowing anything unexpected.
+- **Timers aren't precise:** the delay is a minimum, not a guarantee. Browsers throttle timers in background tabs, often to once per second or slower.
+- **Node already has one:** in Node.js, `import { setTimeout as sleep } from "node:timers/promises"` gives you an equivalent that also accepts `{ signal }`.
+- **Don't fake loading in production:** artificial delays to "show off" a spinner make the app slower. Keep them for demos, tests, and genuine pacing needs.
+- **Parallel waits:** `await Promise.all([fetchData(), sleep(300)])` guarantees a minimum display time for a loader without delaying fast responses further.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A promise-based `sleep(ms)` turns `setTimeout` into something you can `await` inside loops and async flows, and supporting an `AbortSignal` makes those pauses cancellable, so nothing fires after a component unmounts.
