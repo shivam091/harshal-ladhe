@@ -1,0 +1,122 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("scale-on-hover-pseudo-element");
+
+## Introduction
+
+`transform: scale(1.05)` on hover is the quickest way to make a card or button feel interactive. But scaling the element scales **everything inside it** too: text shifts and can blur mid-transition, icons grow, borders thicken, and the enlarged box can overlap its neighbours or trigger a hover flicker at the edges.
+
+A cleaner approach is to leave the element alone and scale a **pseudo-element background** behind it instead. The surface grows, and the content stays crisp and exactly where it was.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="css">
+{`
+  .hover-card {
+    position: relative;
+    /* Creates a stacking context, so the ::before at z-index -1 stays inside the card. */
+    isolation: isolate;
+    padding: 1.5rem;
+    border-radius: 1rem;
+  }
+
+  .hover-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: #1f2937;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hover-card::before {
+      transition: transform 200ms ease, box-shadow 200ms ease;
+    }
+  }
+
+  .hover-card:hover::before,
+  .hover-card:focus-visible::before {
+    transform: scale(1.04);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.35);
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <a class="hover-card" href="/snippet/range-number-array">
+    <h3>range()</h3>
+    <p>Generate number sequences with an exclusive end and negative steps.</p>
+  </a>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The card itself is `position: relative`, so its `::before` can be stretched over it with `position: absolute; inset: 0`.
+2. The pseudo-element carries the visual surface — background, radius (via `inherit`), and shadow — while the card keeps only layout and content.
+3. `z-index: -1` places the surface **behind** the card's text. `isolation: isolate` gives the card its own stacking context, so that negative z-index doesn't slip behind the page background.
+4. On `:hover` or `:focus-visible`, only the pseudo-element is scaled. The text isn't transformed, so it doesn't reflow, blur, or change size.
+5. Transforms don't affect layout, so the larger surface can grow past the card's edges without pushing its neighbours or reflowing the grid around it.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="css">
+{`
+  /* Reuse the pattern on a pill-shaped button */
+  .pill-button {
+    position: relative;
+    isolation: isolate;
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    color: white;
+  }
+
+  .pill-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    transition: transform 150ms ease;
+  }
+
+  .pill-button:hover::before { transform: scale(1.08); }
+  .pill-button:active::before { transform: scale(0.96); }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Cards and tiles** in grids, where scaling the whole card would cover neighbours or blur text.
+- **Buttons** that "press" on `:active` without shrinking their label.
+- **Navigation links** with a hover background that grows from behind the text.
+- **Icon buttons** where the circular hit surface should pulse but the icon stays still.
+- **List rows** that get a slightly larger highlight on hover.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Don't forget `isolation: isolate`:** without it, `z-index: -1` can send the pseudo-element behind the card's parent background, and it disappears.
+- **Keyboard parity:** mirror `:hover` with `:focus-visible` (on focusable elements) so keyboard users get the same feedback.
+- **Respect reduced motion:** the transition only runs under `prefers-reduced-motion: no-preference`. Users who opt out still see the change, just without animation.
+- **Leave room:** the surface grows beyond the element's box. Make sure a parent with `overflow: hidden` isn't clipping it, or add a little padding to the container.
+- **`::before` may already be taken:** use `::after` instead, or an inner wrapper element if both pseudo-elements are in use.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Scaling a `::before` background instead of the element itself gives you the tactile hover-grow effect without distorting text, icons, or borders — `isolation: isolate` and `z-index: -1` keep the surface neatly behind the content.

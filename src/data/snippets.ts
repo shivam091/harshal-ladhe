@@ -642,6 +642,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "scale-on-hover-pseudo-element",
+    title: "Scale-on-Hover With a Pseudo-Element, Without Distorting Content",
+    excerpt: "Grow a card's background on hover while its text stays crisp and still.",
+    description: "Scale a ::before background layer instead of the element itself for hover and press effects in CSS — no blurred or shifting text, no growing icons or borders, with isolation: isolate, focus-visible parity, and reduced-motion support.",
+    category: ["CSS"],
+    tags: ["css", "hover-effects", "transform", "pseudo-elements", "isolation", "micro-interactions", "prefers-reduced-motion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/scale-on-hover-pseudo-element/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a CSS card whose glowing background layer scales up on hover while the text on top stays sharp and unchanged."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 
