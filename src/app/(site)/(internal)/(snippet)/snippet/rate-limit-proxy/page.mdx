@@ -1,0 +1,185 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("rate-limit-proxy");
+
+## Introduction
+
+Public endpoints like a contact form, a login route, or a search API are easy targets: a script can hit them hundreds of times a second, running up database load, email costs, or brute-force attempts. The earliest place to stop that in Next.js is **Proxy** (called Middleware before Next.js 16), which runs before any route handler or page does any work.
+
+This snippet is a small sliding-window rate limiter for `proxy.ts`. It counts requests per client IP, returns `429 Too Many Requests` with standard `Retry-After` and `RateLimit-*` headers once the limit is exceeded, and uses a store interface so the in-memory version can be swapped for Redis in production.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  // lib/rate-limit.ts
+  export interface RateLimitResult {
+    allowed: boolean;
+    limit: number;
+    remaining: number;
+    /** Seconds until the oldest counted request leaves the window. */
+    resetIn: number;
+  }
+
+  export interface RateLimitStore {
+    /** Records a hit for key and returns the timestamps still inside the window. */
+    hit(key: string, now: number, windowMs: number): Promise<number[]>;
+  }
+
+  // Fine for one long-running server; each serverless instance would keep its own copy.
+  export function memoryStore(): RateLimitStore {
+    const hits = new Map<string, number[]>();
+
+    return {
+      async hit(key, now, windowMs) {
+        const recent = (hits.get(key) ?? []).filter((time) => time > now - windowMs);
+        recent.push(now);
+        hits.set(key, recent);
+
+        // Drop idle keys now and then so the map can't grow forever.
+        if (hits.size > 10_000) {
+          for (const [k, times] of hits) if (times[times.length - 1] <= now - windowMs) hits.delete(k);
+        }
+        return recent;
+      },
+    };
+  }
+
+  export function rateLimiter({ limit, windowMs, store = memoryStore() }: { limit: number; windowMs: number; store?: RateLimitStore }) {
+    return async function check(key: string): Promise<RateLimitResult> {
+      const now = Date.now();
+      const recent = await store.hit(key, now, windowMs);
+
+      return {
+        allowed: recent.length <= limit,
+        limit,
+        remaining: Math.max(limit - recent.length, 0),
+        resetIn: Math.ceil((recent[0] + windowMs - now) / 1000),
+      };
+    };
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="ts">
+{`
+  // proxy.ts (project root, or src/proxy.ts)
+  import { NextResponse } from "next/server";
+  import type { NextRequest } from "next/server";
+  import { rateLimiter } from "@/lib/rate-limit";
+
+  const limitApi = rateLimiter({ limit: 60, windowMs: 60_000 }); // 60 requests per minute
+  const limitAuth = rateLimiter({ limit: 5, windowMs: 60_000 });  // stricter for login attempts
+
+  function clientIp(request: NextRequest): string {
+    // Set by your host or reverse proxy; the first entry is the original client.
+    return request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || request.headers.get("x-real-ip") || "unknown";
+  }
+
+  export async function proxy(request: NextRequest) {
+    const isAuth = request.nextUrl.pathname.startsWith("/api/auth");
+    const check = isAuth ? limitAuth : limitApi;
+    const result = await check(\`\${isAuth ? "auth" : "api"}:\${clientIp(request)}\`);
+
+    const headers = {
+      "RateLimit-Limit": String(result.limit),
+      "RateLimit-Remaining": String(result.remaining),
+      "RateLimit-Reset": String(result.resetIn),
+    };
+
+    if (!result.allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please slow down." },
+        { status: 429, headers: { ...headers, "Retry-After": String(result.resetIn) } },
+      );
+    }
+
+    const response = NextResponse.next();
+    for (const [name, value] of Object.entries(headers)) response.headers.set(name, value);
+    return response;
+  }
+
+  export const config = {
+    matcher: "/api/:path*",
+  };
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `proxy.ts` exports a `proxy` function that Next.js runs before every request matching `config.matcher` — here, only `/api/*`, so pages and static assets skip the check.
+2. Each client is identified by IP from the `x-forwarded-for` header, prefixed with a bucket name (`auth:` or `api:`) so different routes can have separate limits.
+3. The store keeps a list of recent request timestamps per key. Each hit drops timestamps older than the window and adds the current one. This **sliding window** avoids the burst a fixed window allows at its boundary, such as 60 requests at 0:59 plus 60 more at 1:00.
+4. If the number of hits in the window exceeds `limit`, the proxy responds with `429` straight away, and the route handler never runs.
+5. Every response includes `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset`, and a blocked one adds `Retry-After`, so well-behaved clients know when to try again.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  // Production: back the limiter with Redis so every instance shares the counts
+  import { Redis } from "@upstash/redis";
+  import type { RateLimitStore } from "@/lib/rate-limit";
+
+  const redis = Redis.fromEnv();
+
+  export const redisStore: RateLimitStore = {
+    async hit(key, now, windowMs) {
+      const redisKey = \`rl:\${key}\`;
+      await redis.zremrangebyscore(redisKey, 0, now - windowMs);
+      await redis.zadd(redisKey, { score: now, member: \`\${now}-\${Math.random()}\` });
+      await redis.pexpire(redisKey, windowMs);
+      return (await redis.zrange<string[]>(redisKey, 0, -1)).map((member) => Number(member.split("-")[0]));
+    },
+  };
+
+  const limitApi = rateLimiter({ limit: 60, windowMs: 60_000, store: redisStore });
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // Client: surface the 429 instead of failing silently (toast() from the ToastProvider snippet)
+  const res = await fetch("/api/contact", { method: "POST", body: formData });
+
+  if (res.status === 429) {
+    const wait = res.headers.get("Retry-After");
+    toast(\`Too many attempts — try again in \${wait} seconds.\`, { variant: "error" });
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Login and password reset** — slowing brute-force and credential-stuffing attempts.
+- **Contact and sign-up forms** — limiting spam submissions and transactional email costs.
+- **Public APIs** — protecting expensive search or AI endpoints from abuse.
+- **Webhooks and callbacks** — stopping a misbehaving integration from flooding your app.
+- **Per-user quotas** — keying by user ID or API key instead of IP for authenticated routes.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Memory stores aren't shared:** on serverless or multi-instance hosting each instance keeps its own counts, and they reset on cold starts. Use Redis (or your platform's rate-limit/firewall feature) in production.
+- **Trust the right header:** `x-forwarded-for` can be spoofed unless your host or reverse proxy overwrites it. Check which header your platform sets reliably.
+- **Shared IPs:** offices, schools, and mobile carriers put many users behind one IP. Prefer user IDs or API keys as the key once a request is authenticated.
+- **Next.js 15 and earlier:** put the same code in `middleware.ts` and name the function `middleware`. There it runs on the Edge runtime by default; in Next.js 16, `proxy.ts` runs on Node.js.
+- **Blocked requests still count:** every hit is recorded, so a client that keeps hammering stays blocked until it backs off for a full window. Skip recording when `recent.length > limit` if you'd rather let the window drain on its own.
+- **Pairs with [`<ToastProvider />`](/snippet/toast-stack):** read `Retry-After` on the client and show a friendly error toast instead of a silent failure.
+- **Keep Proxy fast:** it runs on every matched request. Avoid slow lookups, and narrow the `matcher` to the routes that need protection.
+- **Race conditions:** the Redis example uses separate commands for clarity. Wrap them in a `MULTI` transaction or a Lua script for exact counts under heavy concurrency, or use a library like `@upstash/ratelimit`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A sliding-window limiter in `proxy.ts` rejects abusive traffic with a standards-friendly `429` before your route handlers run, and a pluggable store lets you start in memory and move to Redis when the app runs on more than one instance.

@@ -696,6 +696,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "rate-limit-proxy",
+    title: "Rate Limiting API Routes in Next.js Proxy (Middleware)",
+    excerpt: "Reject abusive traffic with a 429 before your route handlers run.",
+    description: "A sliding-window rate limiter for Next.js proxy.ts (middleware.ts before v16) — per-IP buckets with stricter auth limits, 429 responses with Retry-After and RateLimit headers, and a pluggable store to move from memory to Redis in production.",
+    category: ["Next.js"],
+    tags: ["nextjs", "proxy", "middleware", "rate-limiting", "security", "api-routes", "redis", "http-429"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/rate-limit-proxy/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of Next.js Proxy rate limiting showing a glowing gate letting a steady stream of requests through while blocking a flood with a 429 sign."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 
