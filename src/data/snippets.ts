@@ -624,6 +624,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "non-empty-array-type",
+    title: "`NonEmptyArray<T>`: Arrays With at Least One Element",
+    excerpt: "Prove an array isn't empty with a tuple type and a narrowing guard.",
+    description: "Encode \"at least one item\" in TypeScript with a NonEmptyArray<T> variadic tuple, an isNonEmpty type guard, and an assertNonEmpty assertion function — so items[0] is safely typed and empty-list bugs are caught at the boundary.",
+    category: ["TypeScript"],
+    tags: ["typescript", "tuples", "type-guards", "assertion-functions", "arrays", "type-safety"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/non-empty-array-type/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the TypeScript NonEmptyArray type showing a glowing array whose first slot is locked in place and always filled."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 

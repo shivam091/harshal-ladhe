@@ -1,0 +1,96 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("non-empty-array-type");
+
+## Introduction
+
+Plenty of functions only make sense with at least one item: picking a default from a list of options, computing a maximum, or sending a notification to "the recipients". With a plain `T[]`, TypeScript can't express that rule, so `items[0]` is typed as `T` even when the array might be empty (unless `noUncheckedIndexedAccess` is on, in which case it's `T | undefined` even when you know it isn't).
+
+A `NonEmptyArray<T>` tuple type encodes "at least one element" in the type system, and an `isNonEmpty` guard narrows ordinary arrays into it after a length check.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  /** An array guaranteed to contain at least one element. */
+  export type NonEmptyArray<T> = [T, ...T[]];
+
+  export function isNonEmpty<T>(items: readonly T[]): items is NonEmptyArray<T> {
+    return items.length > 0;
+  }
+
+  export function assertNonEmpty<T>(items: readonly T[], message = "Expected a non-empty array."): asserts items is NonEmptyArray<T> {
+    if (items.length === 0) throw new RangeError(message);
+  }
+
+  // Helpers that are only safe because the array can't be empty.
+  export const first = <T>(items: NonEmptyArray<T>): T => items[0];
+  export const last = <T>(items: NonEmptyArray<T>): T => items[items.length - 1]!;
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `[T, ...T[]]` is a **variadic tuple**: one required `T`, followed by any number of additional `T`s. An empty array literal `[]` isn't assignable to it.
+2. Because the first position is required, `items[0]` is typed as `T` — never `undefined` — even with `noUncheckedIndexedAccess` enabled.
+3. `isNonEmpty` is a **type guard**. After `if (isNonEmpty(list))`, TypeScript treats `list` as `NonEmptyArray<T>` inside that branch.
+4. `assertNonEmpty` is an **assertion function**. It throws for an empty array, and afterwards TypeScript treats the variable as non-empty for the rest of the scope.
+5. `first` and `last` accept only `NonEmptyArray<T>`, so the "could be empty" check moves to the caller, where it belongs, and happens exactly once.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  function maxOf(values: NonEmptyArray<number>): number {
+    return values.reduce((max, value) => (value > max ? value : max)); // no initial value needed
+  }
+
+  maxOf([3, 9, 4]);  // ✅ 9
+  // maxOf([]);      // ❌ '[]' is not assignable to 'NonEmptyArray<number>'
+
+  const scores: number[] = await loadScores();
+
+  if (isNonEmpty(scores)) {
+    console.log("Best score:", maxOf(scores)); // scores is NonEmptyArray<number> here
+  } else {
+    console.log("No scores yet");
+  }
+
+  // Or fail fast when an empty list is a bug
+  const recipients: string[] = getRecipients();
+  assertNonEmpty(recipients, "An email needs at least one recipient.");
+  sendEmail({ to: first(recipients) });
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Aggregations** — `max`, `min`, and `reduce` without an initial value, which throw on empty arrays.
+- **Defaults** — choosing `first(options)` as the selected value in a select or tab list.
+- **Required lists** — recipients, tags, or roles where "none" is invalid input.
+- **Validated API data** — narrowing a response after checking it has items, before rendering.
+- **Config** — typing settings like `locales: NonEmptyArray<string>` so the default locale always exists.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Array methods lose the guarantee:** `filter`, `slice`, and `map` on a `NonEmptyArray` return plain `T[]`, since TypeScript can't know the result is non-empty. `map` keeps the length at runtime, so re-check or re-guard as needed.
+- **Mutation can break it:** `pop()` or `splice()` can empty the array while its type still says otherwise. Prefer `readonly [T, ...T[]]` for values that shouldn't change.
+- **Literal arrays work directly:** `const tags: NonEmptyArray<string> = ["a", "b"]` compiles without a guard.
+- **`last` needs `!`:** `items[items.length - 1]` isn't a fixed tuple position, so TypeScript can't prove it exists; the non-null assertion is safe here because length is at least one.
+- **Pair with schemas:** Zod's `z.array(schema).nonempty()` infers `[T, ...T[]]`, so validated data arrives already typed.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`NonEmptyArray<T> = [T, ...T[]]` lets TypeScript prove an array has at least one element, and the `isNonEmpty` guard and `assertNonEmpty` assertion narrow ordinary arrays into it — so `items[0]` is safe and "empty list" bugs are caught where the data enters.
