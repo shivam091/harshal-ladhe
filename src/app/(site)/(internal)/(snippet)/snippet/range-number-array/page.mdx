@@ -1,0 +1,108 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("range-number-array");
+
+## Introduction
+
+JavaScript has no built-in `range()`. Pagination buttons, skeleton rows, calendar grids, and chart ticks all need "the numbers from here to there", so codebases end up with ad-hoc `Array.from({ length: n })` one-liners that each handle bounds, negative steps, and decimals slightly differently.
+
+This snippet is a single `range(start, end, step)` helper with Python-like semantics: `end` is exclusive, `step` can be negative to count down, and a one-argument call counts from zero.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  export function range(end: number): number[];
+  export function range(start: number, end: number, step?: number): number[];
+  export function range(start: number, end?: number, step?: number): number[] {
+    // range(5) is shorthand for range(0, 5).
+    if (end === undefined) {
+      end = start;
+      start = 0;
+    }
+
+    step ??= start <= end ? 1 : -1;
+
+    if (step === 0 || !Number.isFinite(step)) {
+      throw new RangeError("range() step must be a finite, non-zero number.");
+    }
+
+    // A step pointing away from end would never arrive, so the range is empty.
+    const length = Math.max(Math.ceil((end - start) / step), 0);
+
+    // Multiplying from start (instead of adding step repeatedly) avoids drift with decimal steps.
+    return Array.from({ length }, (_, index) => start + index * step);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Overloads** make `range(5)` and `range(2, 10, 2)` both type-check, while rejecting `range()` with no arguments.
+2. With one argument, that value becomes `end` and `start` falls back to `0`.
+3. When no `step` is given, the helper picks `1` or `-1` based on direction, so `range(5, 0)` counts down instead of returning an empty array.
+4. `Math.ceil((end - start) / step)` is the number of steps that fit before reaching `end`. If `step` points the wrong way the result is negative, and `Math.max(..., 0)` clamps it to an empty array.
+5. `Array.from({ length }, mapFn)` builds the array in one pass. Each value is computed as `start + index * step`, so floating-point error doesn't accumulate the way it would with a running `current += step`.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  range(5);            // [0, 1, 2, 3, 4]
+  range(1, 6);         // [1, 2, 3, 4, 5]
+  range(0, 20, 5);     // [0, 5, 10, 15]
+  range(5, 0);         // [5, 4, 3, 2, 1]
+  range(10, 0, -3);    // [10, 7, 4, 1]
+  range(0, 1, 0.25);   // [0, 0.25, 0.5, 0.75]
+  range(0, 5, -1);     // [] — step points away from end
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // Skeleton placeholders while a list loads
+  function ListSkeleton({ rows = 6 }: { rows?: number }) {
+    return (
+      <ul aria-hidden="true">
+        {range(rows).map((i) => (
+          <li key={i} className="skeleton-row" />
+        ))}
+      </ul>
+    );
+  }
+
+  // Page numbers for a paginator
+  const pages = range(1, totalPages + 1);
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Placeholder UI** — skeleton rows, loading cards, star ratings.
+- **Pagination** — page-number buttons from `1` to `totalPages`.
+- **Grids and calendars** — day cells, hour slots, column indices.
+- **Chart axes** — evenly spaced ticks with a decimal `step`.
+- **Test fixtures** — generating `n` records with `range(n).map(makeUser)`.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **`end` is exclusive:** `range(1, 5)` stops at `4`. Pass `end + 1` (or `end + step`) when you need it included.
+- **Decimal steps still round:** `start + index * step` avoids drift, but values like `0.1 * 3` are still `0.30000000000000004`. Round with `toFixed` or `Math.round(value * 100) / 100` before displaying them.
+- **Huge ranges allocate eagerly:** `range(1e7)` creates ten million numbers up front. For very large or unbounded sequences, use a generator function and iterate lazily instead.
+- **Zero step throws:** it would otherwise mean an infinite array. The `RangeError` surfaces the bug instead of hanging the tab.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A small, typed `range(start, end, step)` replaces scattered `Array.from` tricks with one predictable helper: exclusive end, automatic count-down, safe decimal steps, and a loud error for a zero step.

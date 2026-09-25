@@ -480,6 +480,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "range-number-array",
+    title: "`range(start, end, step)`: Generate a Number Array in JavaScript",
+    excerpt: "Generate number sequences with an exclusive end, negative steps, and decimals.",
+    description: "A typed range(start, end, step) helper for JavaScript and TypeScript — Python-like exclusive end, automatic count-down, negative and decimal steps without floating-point drift, and a RangeError for a zero step.",
+    category: ["JavaScript"],
+    tags: ["javascript", "typescript", "arrays", "range", "array-from", "utilities"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/range-number-array/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the JavaScript range() helper showing a glowing row of evenly spaced numbers counting up by a step."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 
