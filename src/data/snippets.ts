@@ -660,6 +660,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "typed-params-search-params",
+    title: "Typed `params` and `searchParams` in the Next.js App Router",
+    excerpt: "Type dynamic segments from the route and parse query strings safely.",
+    description: "Type App Router params and searchParams in Next.js with the generated PageProps, LayoutProps, and RouteContext helpers, plus small parsers that turn untyped query values into validated strings, arrays, clamped integers, and enum literals.",
+    category: ["Next.js"],
+    tags: ["nextjs", "app-router", "typescript", "params", "search-params", "pageprops", "typegen"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/typed-params-search-params/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a Next.js URL split into typed route segments and parsed query parameters with glowing type labels."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 

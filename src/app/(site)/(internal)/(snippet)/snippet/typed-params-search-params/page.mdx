@@ -1,0 +1,137 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("typed-params-search-params");
+
+## Introduction
+
+In the App Router, `params` and `searchParams` are **Promises**, and their shapes come from the folder structure: `app/shop/[category]/[id]/page.tsx` has `category` and `id` params, while query strings can hold anything. Hand-writing `{ params: Promise<{ category: string; id: string }> }` for every page is repetitive and quietly goes stale when a folder is renamed.
+
+Next.js generates route-aware `PageProps<"/route">` and `LayoutProps<"/route">` helpers for exactly this. This snippet pairs them with a small `searchParams` parser, so dynamic segments are typed from the route itself, and query values arrive as validated, well-typed values instead of `string | string[] | undefined`.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  // lib/search-params.ts
+  type RawSearchParams = Record<string, string | string[] | undefined>;
+
+  /** First value for a key — ?tag=a&tag=b gives "a". */
+  export function getString(params: RawSearchParams, key: string): string | undefined {
+    const value = params[key];
+    return Array.isArray(value) ? value[0] : value;
+  }
+
+  /** Every value for a key, always as an array. */
+  export function getAll(params: RawSearchParams, key: string): string[] {
+    const value = params[key];
+    return value === undefined ? [] : Array.isArray(value) ? value : [value];
+  }
+
+  /** A finite integer within bounds, or the fallback. */
+  export function getInt(params: RawSearchParams, key: string, fallback: number, { min = -Infinity, max = Infinity } = {}): number {
+    const parsed = Number.parseInt(getString(params, key) ?? "", 10);
+    return Number.isFinite(parsed) ? Math.min(Math.max(parsed, min), max) : fallback;
+  }
+
+  /** One of an allowed set of literals, or the fallback. */
+  export function getEnum<const T extends readonly string[]>(params: RawSearchParams, key: string, allowed: T, fallback: T[number]): T[number] {
+    const value = getString(params, key);
+    return allowed.includes(value as T[number]) ? (value as T[number]) : fallback;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // app/shop/[category]/[id]/page.tsx
+  import { notFound } from "next/navigation";
+  import { getAll, getEnum, getInt } from "@/lib/search-params";
+
+  const SORTS = ["newest", "price-asc", "price-desc"] as const;
+
+  export default async function ProductPage(props: PageProps<"/shop/[category]/[id]">) {
+    // Typed from the folder names: { category: string; id: string }
+    const { category, id } = await props.params;
+    const query = await props.searchParams;
+
+    const page = getInt(query, "page", 1, { min: 1, max: 500 });
+    const sort = getEnum(query, "sort", SORTS, "newest"); // "newest" | "price-asc" | "price-desc"
+    const colors = getAll(query, "color");                 // string[]
+
+    const product = await getProduct(category, id);
+    if (!product) notFound();
+
+    return <ProductView product={product} reviewsPage={page} sort={sort} colors={colors} />;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `PageProps<"/shop/[category]/[id]">` is a **global** type Next.js generates from your `app` directory during `next dev`, `next build`, or `next typegen`. No import is needed, and passing a route that doesn't exist is a type error.
+2. Its `params` is `Promise<{ category: string; id: string }>`, derived from the dynamic segments, so renaming a folder surfaces every page that needs updating. Catch-all segments like `[...slug]` become `string[]`.
+3. `searchParams` is always `Promise<Record<string, string | string[] | undefined>>`, because the URL can contain any key, zero, one, or many times.
+4. The helpers turn that loose record into specific types at one boundary: `getString` takes the first value, `getAll` normalises to an array, `getInt` parses and clamps, and `getEnum` only accepts known literals.
+5. Every helper has a fallback, so a hand-edited URL like `?page=abc&sort=hacked` degrades to sensible defaults instead of throwing or reaching your data layer.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // Layouts get typed params and named slots too
+  export default async function CategoryLayout(props: LayoutProps<"/shop/[category]">) {
+    const { category } = await props.params;
+    return (
+      <section>
+        <h1>{category}</h1>
+        {props.children}
+      </section>
+    );
+  }
+
+  // Metadata receives the same props shape
+  export async function generateMetadata(props: PageProps<"/shop/[category]/[id]">) {
+    const { category, id } = await props.params;
+    const product = await getProduct(category, id);
+    return { title: product?.name ?? "Product not found" };
+  }
+
+  // Route handlers use RouteContext
+  export async function GET(_request: Request, ctx: RouteContext<"/api/products/[id]">) {
+    const { id } = await ctx.params;
+    return Response.json(await getProductById(id));
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Listing pages** with `?page=`, `?sort=`, and `?filter=` query state.
+- **Detail pages** with one or more dynamic segments.
+- **Search results** reading `?q=` safely, including repeated keys.
+- **Layouts** that need the parent segment, like a category name in a header.
+- **Route handlers** under `app/api` with typed `ctx.params`.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Generate the types:** if `PageProps` shows as unknown, run `npx next typegen` (or start `next dev`) so the global helpers are created. They're available from Next.js 15.5.
+- **Awaiting opts into dynamic rendering:** reading `searchParams` makes the page render per request. Keep static pages free of it, or read query state in a Client Component with `useSearchParams` instead.
+- **Params are strings, not validated:** a typed `id` is still whatever the URL contains. Check it exists (and call `notFound()`) before trusting it.
+- **Need a full schema?** swap the helpers for Zod (`z.coerce.number().int().min(1).catch(1)`) when query state grows beyond a handful of keys.
+- **Keep links in sync:** build URLs with `URLSearchParams` so the keys you write match the keys you parse.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Generated `PageProps`, `LayoutProps`, and `RouteContext` helpers type `params` straight from your folder structure, while a few `searchParams` parsers convert the untyped query record into validated numbers, enums, and arrays — so both halves of the URL are type-safe at the page boundary.
