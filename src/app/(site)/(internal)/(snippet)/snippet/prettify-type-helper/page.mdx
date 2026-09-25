@@ -1,0 +1,97 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("prettify-type-helper");
+
+## Introduction
+
+Compose a few types with `&`, `Omit`, or `Pick`, hover the result in your editor, and TypeScript often shows you the recipe rather than the dish: `Omit<User, "password"> & { role: Role } & Timestamps`. To find out which properties the type actually has, you have to jump to each definition and assemble it in your head.
+
+`Prettify<T>` is a one-line helper that forces TypeScript to **resolve** the type into a single flat object, so hovers, error messages, and autocompletion show the final list of properties.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  export type Prettify<T> = {
+    [K in keyof T]: T[K];
+  } & {};
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `{ [K in keyof T]: T[K] }` is a **mapped type** that copies every property of `T`, including optional and `readonly` modifiers, into a new object type.
+2. Because it's a fresh object type, TypeScript has to evaluate the intersections and helper types inside `T` to know which keys exist. The result is displayed as a plain list of properties instead of the original expression.
+3. The trailing `& {}` is a small trick that nudges TypeScript to keep the evaluated form in tooltips rather than displaying the alias name `Prettify<...>`. Intersecting with `{}` doesn't change which values are allowed.
+4. It's purely cosmetic: `Prettify<A & B>` accepts and rejects exactly the same values as `A & B`.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  interface User {
+    id: string;
+    email: string;
+    password: string;
+  }
+
+  interface Timestamps {
+    createdAt: Date;
+    updatedAt: Date;
+  }
+
+  type PublicUser = Omit<User, "password"> & { role: "admin" | "member" } & Timestamps;
+  // Hover shows: Omit<User, "password"> & { role: "admin" | "member" } & Timestamps
+
+  type PublicUserPretty = Prettify<PublicUser>;
+  // Hover shows:
+  // {
+  //   id: string;
+  //   email: string;
+  //   role: "admin" | "member";
+  //   createdAt: Date;
+  //   updatedAt: Date;
+  // }
+
+  // Handy for generic return types too
+  function withTimestamps<T extends object>(value: T): Prettify<T & Timestamps> {
+    const now = new Date();
+    return { ...value, createdAt: now, updatedAt: now };
+  }
+
+  const post = withTimestamps({ title: "Hello" });
+  // Hover on post: { title: string; createdAt: Date; updatedAt: Date }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Composed props** — component props built from several `&`ed pieces, so consumers see every prop in one tooltip.
+- **Library return types** — generic helpers whose results would otherwise display as `T & U & V`.
+- **Readable errors** — mismatch messages list concrete properties instead of type expressions.
+- **Debugging types** — temporarily wrapping a complex type to see what it actually resolves to.
+- **Documentation** — exported types that read clearly in generated API docs and editor hovers.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Only one level deep:** nested objects keep their original display. Apply `Prettify` to the nested type too if its tooltip matters.
+- **Don't wrap everything:** named interfaces like `User` are already readable, and a hover showing `User` is often more useful than its 20 properties.
+- **Functions and classes:** mapping over a function type drops its call signature, so use `Prettify` on object shapes, not on callable types.
+- **No runtime effect:** it's a type-only helper. Nothing is emitted in the JavaScript output.
+- **Also known as `Simplify`:** libraries like `type-fest` ship the same helper under that name.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Prettify<T>` — a mapped type intersected with `{}` — flattens intersections and helper types into a single, readable object in hovers and errors, without changing what the type accepts.

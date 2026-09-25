@@ -606,6 +606,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "prettify-type-helper",
+    title: "`Prettify<T>`: Flatten Intersection Types for Readable Tooltips",
+    excerpt: "Turn T & U & Omit<...> hovers into one flat, readable object type.",
+    description: "A one-line Prettify<T> helper for TypeScript that resolves intersections, Omit, and Pick into a single flat object type — so editor hovers, autocompletion, and error messages show the final properties instead of the type expression.",
+    category: ["TypeScript"],
+    tags: ["typescript", "utility-types", "mapped-types", "intersection-types", "developer-experience"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/prettify-type-helper/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the TypeScript Prettify helper showing a tangled stack of intersected types flattening into one clean glowing object tooltip."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 
