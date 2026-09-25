@@ -1,0 +1,138 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("result-type-error-handling");
+
+## Introduction
+
+In TypeScript, a function's signature says nothing about what it might throw. `parseConfig(text): Config` could fail on bad JSON, a missing field, or an invalid value, and callers only find out at runtime. Wrapping everything in `try/catch` also hands you an `unknown` error you have to inspect before you can use it.
+
+A `Result<T, E>` type makes failure part of the return type: a function returns either `{ ok: true, value }` or `{ ok: false, error }`. The compiler then forces every caller to check `ok` before touching the value, and the error is fully typed.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  export type Result<T, E = Error> =
+    | { readonly ok: true; readonly value: T }
+    | { readonly ok: false; readonly error: E };
+
+  export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
+  export const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
+
+  /** Run code that may throw and capture the outcome as a Result. */
+  export function tryCatch<T>(fn: () => T): Result<T, Error> {
+    try {
+      return ok(fn());
+    } catch (error) {
+      return err(toError(error));
+    }
+  }
+
+  /** Async version: awaits the promise and captures a rejection as a Result. */
+  export async function tryCatchAsync<T>(promise: Promise<T>): Promise<Result<T, Error>> {
+    try {
+      return ok(await promise);
+    } catch (error) {
+      return err(toError(error));
+    }
+  }
+
+  // Anything can be thrown in JavaScript, so normalise non-Error values.
+  function toError(value: unknown): Error {
+    return value instanceof Error ? value : new Error(String(value));
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `Result<T, E>` is a **discriminated union**: the `ok` literal (`true` or `false`) tells TypeScript which branch it's in.
+2. Checking `if (result.ok)` narrows the type, so `result.value` is only accessible on success and `result.error` only on failure. Forgetting the check is a compile error, not a runtime crash.
+3. `ok()` and `err()` are small constructors. Their `never` type parameters let a function return both without extra annotations; TypeScript merges them into `Result<T, E>`.
+4. `tryCatch` and `tryCatchAsync` bridge the gap with code that throws, such as `JSON.parse` or `fetch`, turning exceptions into values at the boundary.
+5. `toError` guarantees the error side is always an `Error`, even when someone throws a string or a plain object.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  type ConfigError =
+    | { kind: "invalid-json"; message: string }
+    | { kind: "missing-field"; field: string };
+
+  interface Config {
+    apiUrl: string;
+    retries: number;
+  }
+
+  function parseConfig(text: string): Result<Config, ConfigError> {
+    const parsed = tryCatch(() => JSON.parse(text));
+    if (!parsed.ok) return err({ kind: "invalid-json", message: parsed.error.message });
+
+    const data = parsed.value;
+    if (typeof data.apiUrl !== "string") return err({ kind: "missing-field", field: "apiUrl" });
+
+    return ok({ apiUrl: data.apiUrl, retries: Number(data.retries ?? 3) });
+  }
+
+  const result = parseConfig(rawText);
+
+  if (result.ok) {
+    connect(result.value.apiUrl); // value is Config here
+  } else {
+    // error is ConfigError here — switch over it with full autocompletion
+    switch (result.error.kind) {
+      case "invalid-json":
+        console.error("Config isn't valid JSON:", result.error.message);
+        break;
+      case "missing-field":
+        console.error(\`Config is missing "\${result.error.field}"\`);
+        break;
+    }
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="ts">
+{`
+  // Wrapping a fetch at the boundary
+  async function getUser(id: string): Promise<Result<User, Error>> {
+    const response = await tryCatchAsync(fetch(\`/api/users/\${id}\`));
+    if (!response.ok) return response;
+    if (!response.value.ok) return err(new Error(\`HTTP \${response.value.status}\`));
+    return tryCatchAsync(response.value.json() as Promise<User>);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Parsing and validation** — config files, form input, URL params — where failure is expected, not exceptional.
+- **API clients** that distinguish network errors, HTTP errors, and bad payloads with typed error variants.
+- **Server Actions** returning `{ ok, error }` shapes that serialise cleanly to the client.
+- **Domain logic** such as "insufficient funds" or "slot already booked", which callers must handle.
+- **Pipelines** where each step can fail and you want to stop early with a clear reason.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Keep throwing for bugs:** use `Result` for failures the caller should handle. Programming errors and truly unexpected states can still throw and be caught by an error boundary or top-level handler.
+- **Early returns keep it flat:** `if (!result.ok) return result;` passes a failure up without nesting. A failed `Result<A, E>` is assignable to `Result<B, E>` only after narrowing, which is why returning the narrowed `result` works.
+- **Typed error unions pay off:** giving `E` a `kind` discriminant, as in `ConfigError`, lets callers `switch` over every failure mode with autocompletion.
+- **Serialisable by design:** plain objects cross the server/client boundary cleanly. Avoid putting `Error` instances in a result returned from a Server Action; send a message or code instead.
+- **Need `map`/`andThen`?** add small helpers as you need them, or reach for a library like `neverthrow` once chaining becomes common.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A `Result<T, E>` union moves failure from invisible `throw`s into the type signature, so TypeScript makes every caller handle both outcomes and gives them a fully typed error — with `tryCatch` helpers to wrap throwing code at the edges.

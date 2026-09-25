@@ -552,6 +552,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "result-type-error-handling",
+    title: "`Result<T, E>`: Exception-Free Error Handling in TypeScript",
+    excerpt: "Return typed success or failure values instead of throwing invisible exceptions.",
+    description: "Model failure in the return type with a Result<T, E> discriminated union in TypeScript — ok() and err() constructors, tryCatch helpers for throwing and async code, and typed error variants the compiler forces every caller to handle.",
+    category: ["TypeScript"],
+    tags: ["typescript", "error-handling", "result-type", "discriminated-unions", "type-narrowing", "functional-programming"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/result-type-error-handling/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the TypeScript Result type showing a glowing path splitting into an ok branch and an error branch."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 
