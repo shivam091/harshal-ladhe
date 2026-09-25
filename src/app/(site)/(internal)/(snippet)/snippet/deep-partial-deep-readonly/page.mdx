@@ -1,0 +1,115 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("deep-partial-deep-readonly");
+
+## Introduction
+
+TypeScript's built-in `Partial<T>` and `Readonly<T>` only work one level deep. `Partial<Settings>` makes `settings.theme` optional, but if you provide `theme`, every field inside it is still required. `Readonly<State>` stops `state.user = ...`, yet happily allows `state.user.name = ...`.
+
+Config overrides, test fixtures, and immutable state all need these modifiers applied **recursively**. This snippet provides `DeepPartial<T>` and `DeepReadonly<T>`, which walk through nested objects, arrays, `Map`s, and `Set`s while leaving functions and primitives alone.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  // Leaf values that should never be recursed into.
+  type Primitive = string | number | boolean | bigint | symbol | null | undefined;
+  type Leaf = Primitive | Date | RegExp | ((...args: any[]) => unknown);
+
+  export type DeepPartial<T> = T extends Leaf
+    ? T
+    : T extends Map<infer K, infer V>
+      ? Map<K, DeepPartial<V>>
+      : T extends Set<infer V>
+        ? Set<DeepPartial<V>>
+        : T extends readonly (infer U)[]
+          ? DeepPartial<U>[]
+          : { [K in keyof T]?: DeepPartial<T[K]> };
+
+  export type DeepReadonly<T> = T extends Leaf
+    ? T
+    : T extends Map<infer K, infer V>
+      ? ReadonlyMap<K, DeepReadonly<V>>
+      : T extends Set<infer V>
+        ? ReadonlySet<DeepReadonly<V>>
+        : T extends readonly (infer U)[]
+          ? readonly DeepReadonly<U>[]
+          : { readonly [K in keyof T]: DeepReadonly<T[K]> };
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. Both types are **conditional types** that check what kind of value `T` is, one case at a time.
+2. **Leaves** — primitives, `Date`, `RegExp`, and functions — are returned unchanged. Without this, a mapped type would try to make a `Date`'s methods optional, or turn a function into a plain object.
+3. **Collections** are rebuilt with their element types transformed. `DeepReadonly` also swaps `Map` and `Set` for `ReadonlyMap` and `ReadonlySet`, which drop `set`, `add`, and `delete`.
+4. **Arrays** (matched with `readonly (infer U)[]`, so readonly arrays too) keep their array shape, with each element made partial or readonly. `DeepReadonly` returns a `readonly` array, so `push` and index assignment are rejected.
+5. **Objects** fall through to a mapped type that adds `?` or `readonly` to every key and **recurses** into each value.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  interface Settings {
+    theme: { mode: "light" | "dark"; accent: string };
+    notifications: { email: boolean; push: boolean };
+    shortcuts: string[];
+  }
+
+  const defaults: Settings = {
+    theme: { mode: "light", accent: "#3b82f6" },
+    notifications: { email: true, push: false },
+    shortcuts: ["mod+k"],
+  };
+
+  // Override only what differs — nested fields included
+  function withSettings(overrides: DeepPartial<Settings>): Settings {
+    return {
+      theme: { ...defaults.theme, ...overrides.theme },
+      notifications: { ...defaults.notifications, ...overrides.notifications },
+      shortcuts: overrides.shortcuts ?? defaults.shortcuts,
+    };
+  }
+
+  withSettings({ theme: { mode: "dark" } }); // ✅ accent can be omitted
+
+  // Lock state all the way down
+  const state: DeepReadonly<Settings> = defaults;
+
+  // state.theme.mode = "dark";       // ❌ Cannot assign to 'mode' because it is a read-only property
+  // state.shortcuts.push("mod+s");   // ❌ Property 'push' does not exist on type 'readonly string[]'
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Config and theme overrides** — accept any subset of a nested settings object and merge it with defaults.
+- **Test fixtures** — `makeUser(overrides: DeepPartial<User>)` so tests only spell out the fields they care about.
+- **Immutable state** — `DeepReadonly<State>` for reducers, stores, or context values that must never be mutated in place.
+- **Frozen constants** — typing the result of a recursive `Object.freeze` helper.
+- **API patch payloads** — describing `PATCH` bodies that update a few nested fields.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Types only:** `DeepReadonly` prevents mutation at compile time but doesn't freeze anything at runtime. Combine it with a deep-freeze helper if you need both.
+- **Merging is still your job:** `DeepPartial` describes the input; a spread only merges one level. Use a recursive merge for arbitrarily deep overrides.
+- **Arrays aren't partial per index:** `DeepPartial<string[]>` is still an array of strings — you can't leave holes. That matches how arrays are usually replaced wholesale.
+- **Tuples widen to arrays:** `[number, string]` becomes `(number | string)[]`. To keep tuples, map over the array type directly (`{ [K in keyof T]: DeepReadonly<T[K]> }`) instead of inferring a single element type.
+- **Class instances:** instance methods pass through the function check, but private fields and class identity are lost in the mapped type. Add your own classes to `Leaf` if they should stay intact.
+- **Recursive types have limits:** very deep or self-referencing types can hit TypeScript's "type instantiation is excessively deep" error. Apply the helper to the smallest type that needs it.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`DeepPartial<T>` and `DeepReadonly<T>` extend TypeScript's shallow modifiers to every level of a nested type — skipping primitives, dates, and functions, and handling arrays, `Map`s, and `Set`s properly — so overrides can be partial all the way down and immutable state is immutable all the way down.

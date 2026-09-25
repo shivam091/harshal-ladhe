@@ -588,6 +588,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "deep-partial-deep-readonly",
+    title: "`DeepPartial<T>` and `DeepReadonly<T>`: Recursive Utility Types",
+    excerpt: "Make every nested field optional or readonly, not just the top level.",
+    description: "Recursive DeepPartial<T> and DeepReadonly<T> utility types for TypeScript — conditional types that skip primitives, dates, and functions, and correctly handle nested objects, arrays, Maps, and Sets for config overrides, fixtures, and immutable state.",
+    category: ["TypeScript"],
+    tags: ["typescript", "utility-types", "conditional-types", "mapped-types", "immutability", "recursion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/deep-partial-deep-readonly/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of TypeScript DeepPartial and DeepReadonly types showing a glowing nested object tree with lock and question-mark icons on every level."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 
