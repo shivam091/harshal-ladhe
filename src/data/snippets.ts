@@ -534,6 +534,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "deep-equal-comparator",
+    title: "`deepEqual(a, b)`: Structural Equality Without a Library",
+    excerpt: "Compare nested objects, arrays, Maps, Sets, and Dates by value — cycles included.",
+    description: "A dependency-free deepEqual(a, b) for JavaScript and TypeScript — key-order independent, NaN-safe via Object.is, aware of Date, RegExp, Map, Set, and typed arrays, and guarded against circular references, without JSON.stringify's silent gaps.",
+    category: ["JavaScript"],
+    tags: ["javascript", "typescript", "deep-equal", "comparison", "objects", "recursion", "utilities"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/deep-equal-comparator/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the JavaScript deepEqual() helper showing two glowing, identical nested object trees connected by an equals sign."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 

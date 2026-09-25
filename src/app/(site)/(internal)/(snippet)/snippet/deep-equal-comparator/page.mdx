@@ -1,0 +1,134 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("deep-equal-comparator");
+
+## Introduction
+
+`===` compares objects by reference, so two objects with identical contents are still "different". Checking whether form values changed from their defaults, skipping a redundant state update, or asserting on data in a test all need a **structural** comparison instead.
+
+`JSON.stringify(a) === JSON.stringify(b)` is the usual shortcut, but it depends on key order, drops `undefined`, turns `NaN` into `null`, and can't handle `Map`, `Set`, or circular references. This snippet is a dependency-free `deepEqual(a, b)` that handles all of those.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  export function deepEqual(a: unknown, b: unknown, seen = new WeakMap<object, object>()): boolean {
+    // Same reference or same primitive; Object.is also treats NaN as equal to NaN.
+    if (Object.is(a, b)) return true;
+
+    if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
+    if (Object.getPrototypeOf(a) !== Object.getPrototypeOf(b)) return false;
+
+    // Circular structures: if this pair is already being compared higher up, assume equal.
+    if (seen.get(a) === b) return true;
+    seen.set(a, b);
+
+    if (a instanceof Date) return a.getTime() === (b as Date).getTime();
+    if (a instanceof RegExp) return a.toString() === (b as RegExp).toString();
+
+    if (a instanceof Map) {
+      const other = b as Map<unknown, unknown>;
+      if (a.size !== other.size) return false;
+      for (const [key, value] of a) {
+        if (!other.has(key) || !deepEqual(value, other.get(key), seen)) return false;
+      }
+      return true;
+    }
+
+    if (a instanceof Set) {
+      const other = b as Set<unknown>;
+      if (a.size !== other.size) return false;
+      // Set members are compared by identity, matching how Set itself decides membership.
+      for (const value of a) if (!other.has(value)) return false;
+      return true;
+    }
+
+    if (ArrayBuffer.isView(a)) {
+      const x = a as unknown as ArrayLike<unknown>;
+      const y = b as unknown as ArrayLike<unknown>;
+      if (x.length !== y.length) return false;
+      for (let i = 0; i < x.length; i++) if (!Object.is(x[i], y[i])) return false;
+      return true;
+    }
+
+    // Arrays and plain objects: same own keys, and every value deeply equal.
+    const keysA = Reflect.ownKeys(a);
+    const keysB = Reflect.ownKeys(b);
+    if (keysA.length !== keysB.length) return false;
+
+    for (const key of keysA) {
+      if (!Object.prototype.hasOwnProperty.call(b, key)) return false;
+      if (!deepEqual((a as any)[key], (b as any)[key], seen)) return false;
+    }
+    return true;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Fast path:** `Object.is` returns `true` for identical references and equal primitives, and correctly treats `NaN` as equal to itself (unlike `===`).
+2. **Type gate:** if either side isn't an object at this point, they can't be equal. Comparing prototypes rejects mismatches like an array against an object, or a `Date` against a `Map`.
+3. **Cycle guard:** a `WeakMap` records which pairs are already being compared. Revisiting a pair returns `true` instead of recursing forever.
+4. **Special objects:** dates compare by timestamp, regular expressions by source and flags, `Map`s by keys and deeply compared values, `Set`s by membership, and typed arrays element by element.
+5. **Arrays and objects:** `Reflect.ownKeys` collects string and symbol keys (plus `length` for arrays). Both sides must have the same count, the same keys, and deeply equal values, regardless of key order.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  deepEqual({ a: 1, b: [1, 2] }, { b: [1, 2], a: 1 });     // true — key order doesn't matter
+  deepEqual([1, 2, 3], [1, 2, 4]);                          // false
+  deepEqual(NaN, NaN);                                      // true
+  deepEqual({ a: undefined }, {});                          // false — JSON.stringify says true
+  deepEqual(new Date("2026-01-01"), new Date("2026-01-01")); // true
+  deepEqual(new Map([["k", { x: 1 }]]), new Map([["k", { x: 1 }]])); // true
+
+  const loop: any = { name: "a" };
+  loop.self = loop;
+  const loop2: any = { name: "a" };
+  loop2.self = loop2;
+  deepEqual(loop, loop2);                                   // true — no stack overflow
+`}
+</CodeBlock>
+
+<CodeBlock language="tsx">
+{`
+  // Enable "Save" only when the form really differs from what was loaded
+  const isDirty = !deepEqual(values, initialValues);
+
+  <button type="submit" disabled={!isDirty}>Save changes</button>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Dirty-form detection** — comparing current values against the loaded defaults.
+- **Skipping redundant updates** — avoiding a state set or network call when the new data is identical.
+- **Custom memo comparisons** — as the equality check in a memoization helper or `React.memo`'s `arePropsEqual`.
+- **Tests** — lightweight structural assertions without a testing library.
+- **Syncing** — detecting whether a cached copy has drifted from the server response.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Cost grows with size:** deep comparison visits every nested value. Keep it out of hot render paths for large trees, and prefer immutable updates, where a cheap reference check is enough.
+- **Set members use identity:** `new Set([{ a: 1 }])` and `new Set([{ a: 1 }])` are not equal, because they hold different object references. Deep matching of object members would need a costly pairwise search.
+- **Only own keys are compared:** inherited properties, such as class methods on the prototype, are covered by the prototype check instead. Non-enumerable own keys are included, because `Reflect.ownKeys` returns them too.
+- **Functions compare by reference:** two identical-looking arrow functions are different values.
+- **`undefined` vs. missing:** `{ a: undefined }` and `{}` are treated as different. Strip `undefined` keys first if your data treats them the same.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A dependency-free `deepEqual` built on `Object.is`, prototype checks, and a `WeakMap` cycle guard gives you reliable structural equality — key-order independent, `NaN`-safe, and aware of `Date`, `Map`, `Set`, and circular data — without the silent gaps of `JSON.stringify`.
