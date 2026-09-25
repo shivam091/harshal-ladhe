@@ -1,0 +1,99 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("random-number-in-range");
+
+## Introduction
+
+`Math.random()` only gives you a float between `0` (inclusive) and `1` (exclusive). Every time you need "a random delay between 200 and 800 ms" or "a dice roll from 1 to 6", you have to rescale it yourself, and the classic off-by-one mistakes are easy to make: `Math.round` skews the ends, and forgetting `+ 1` means `max` never appears.
+
+This snippet provides two small helpers: `random(min, max)` for floats and `randomInt(min, max)` for integers where both bounds are **inclusive**, plus a `pick()` helper for choosing a random array item.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  /** Random float in [min, max). */
+  export function random(min: number, max: number): number {
+    if (min > max) [min, max] = [max, min];
+    return min + Math.random() * (max - min);
+  }
+
+  /** Random integer in [min, max] — both bounds included. */
+  export function randomInt(min: number, max: number): number {
+    // Shrink to the whole numbers actually inside the range, e.g. 1.5..4.2 → 2..4.
+    const low = Math.ceil(Math.min(min, max));
+    const high = Math.floor(Math.max(min, max));
+
+    if (low > high) throw new RangeError(\`No integer exists between \${min} and \${max}.\`);
+
+    // Math.floor keeps every integer equally likely; Math.round would halve the odds of both ends.
+    return low + Math.floor(Math.random() * (high - low + 1));
+  }
+
+  /** Random item from a non-empty array. */
+  export function pick<T>(items: readonly T[]): T {
+    if (items.length === 0) throw new RangeError("pick() needs at least one item.");
+    return items[randomInt(0, items.length - 1)];
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `Math.random()` returns a value in `[0, 1)`. Multiplying by `max - min` stretches it to `[0, max - min)`, and adding `min` shifts it to `[min, max)`.
+2. Both helpers accept bounds in either order. `random` swaps them, and `randomInt` uses `Math.min` and `Math.max`.
+3. `randomInt` first rounds the bounds inward (`ceil` the low end, `floor` the high end) so a range like `1.5–4.2` only produces the integers that are really inside it: `2`, `3`, or `4`.
+4. The span `high - low + 1` counts how many integers are available. `Math.floor(Math.random() * span)` picks one of them with equal probability, and adding `low` moves it into place.
+5. `pick` reuses `randomInt` for an index, so it inherits the same uniform distribution.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="ts">
+{`
+  randomInt(1, 6);              // dice roll: 1, 2, 3, 4, 5, or 6
+  random(200, 800);             // e.g. 413.27 — a jittered delay in ms
+  random(-1, 1);                // e.g. -0.62 — a random offset in either direction
+  pick(["red", "green", "blue"]); // e.g. "green"
+
+  // Natural-looking confetti — range() comes from the range snippet
+  const particles = range(40).map(() => ({
+    x: random(0, window.innerWidth),
+    rotation: randomInt(0, 359),
+    delay: random(0, 300),
+    color: pick(["#f472b6", "#60a5fa", "#facc15"]),
+  }));
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Animation variety** — randomized durations, offsets, and rotations so repeated effects don't look mechanical.
+- **Retry jitter** — spreading reconnect attempts so clients don't all retry at the same moment.
+- **Games and demos** — dice, card draws, spawn positions.
+- **Placeholder data** — fake prices, counts, or chart values in prototypes and stories.
+- **A/B-style sampling** — `random(0, 1) < 0.1` to run something for roughly 10% of calls.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Pairs with [`range()`](/snippet/range-number-array):** map over a range to generate many random values at once, as in the confetti example.
+- **Not for secrets:** `Math.random()` is predictable. For tokens, IDs, or anything security-related, use `crypto.getRandomValues()` or `crypto.randomUUID()`.
+- **`random` never returns `max`:** the float version is half-open, like `Math.random()` itself. That's usually what you want for positions and durations.
+- **Avoid `Math.round` for integers:** `Math.round(Math.random() * (max - min)) + min` gives the two end values only half the probability of the others.
+- **Deterministic tests:** inject a random source (`rng = Math.random`) as a parameter, or stub `Math.random` in tests, so outcomes are reproducible.
+- **SSR hydration:** a random value rendered on the server won't match the client. Generate it in an effect, or only after mount, when it affects markup.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Wrapping `Math.random()` in `random`, `randomInt`, and `pick` gets the scaling, bound order, and inclusive-integer maths right once, so every random delay, roll, or choice in your app is evenly distributed and free of off-by-one errors.

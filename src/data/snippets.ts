@@ -498,6 +498,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "random-number-in-range",
+    title: "`random(min, max)`: Random Numbers and Integers Within Bounds",
+    excerpt: "Get evenly distributed random floats, integers, and array picks within a range.",
+    description: "Small random(min, max), randomInt(min, max), and pick() helpers for JavaScript and TypeScript — correct scaling of Math.random(), inclusive integer bounds without off-by-one or rounding bias, and notes on when to reach for crypto instead.",
+    category: ["JavaScript"],
+    tags: ["javascript", "typescript", "math-random", "random", "utilities", "numbers"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/random-number-in-range/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the JavaScript random() helper showing glowing dice and a number line with a highlighted range between min and max."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 
