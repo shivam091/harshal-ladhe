@@ -678,6 +678,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "tag-based-cache-revalidation",
+    title: "Tag-Based Cache Revalidation with `revalidateTag` and `updateTag`",
+    excerpt: "Cache data until it actually changes, then invalidate exactly what changed.",
+    description: "Replace guesswork revalidate timers in Next.js with cache tags — tag fetch calls with next.tags, invalidate them from a secured CMS webhook with revalidateTag(tag, \"max\"), and show users their own edits instantly with updateTag in Server Actions.",
+    category: ["Next.js"],
+    tags: ["nextjs", "app-router", "caching", "revalidatetag", "updatetag", "server-actions", "route-handlers", "webhooks"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/tag-based-cache-revalidation/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of Next.js cache tags showing glowing labelled cache boxes, with one tag being refreshed by an incoming webhook signal."
+    },
+    changelog: [
+      { date: "2026-09-25", change: "Initial publication." }
+    ]
   }
 ];
 

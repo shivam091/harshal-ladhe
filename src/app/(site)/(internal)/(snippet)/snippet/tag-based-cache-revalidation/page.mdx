@@ -1,0 +1,151 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("tag-based-cache-revalidation");
+
+## Introduction
+
+Time-based revalidation (`revalidate: 3600`) is a guess: set it too long and editors wait an hour to see a fix go live; set it too short and you refetch unchanged data constantly. What you usually want is "cache this until it actually changes".
+
+Next.js supports that with **cache tags**. You label cached data — `"posts"`, `"post:hello-world"` — and when the data changes, you invalidate exactly those labels. This snippet shows the full loop: tagging `fetch` calls, invalidating from a CMS webhook with `revalidateTag`, and giving users their own edits instantly with `updateTag`.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="ts">
+{`
+  // lib/posts.ts — tag every cached read
+  export const tags = {
+    posts: "posts",
+    post: (slug: string) => \`post:\${slug}\`,
+  };
+
+  export async function getPosts() {
+    const res = await fetch("https://cms.example.com/api/posts", {
+      cache: "force-cache",
+      next: { tags: [tags.posts] },
+    });
+    return res.json() as Promise<Post[]>;
+  }
+
+  export async function getPost(slug: string) {
+    const res = await fetch(\`https://cms.example.com/api/posts/\${slug}\`, {
+      cache: "force-cache",
+      next: { tags: [tags.posts, tags.post(slug)] },
+    });
+    return res.ok ? (res.json() as Promise<Post>) : null;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="ts">
+{`
+  // app/api/revalidate/route.ts — called by the CMS when content changes
+  import { revalidateTag } from "next/cache";
+  import { tags } from "@/lib/posts";
+
+  export async function POST(request: Request) {
+    if (request.headers.get("x-webhook-secret") !== process.env.CMS_WEBHOOK_SECRET) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { slug } = (await request.json()) as { slug?: string };
+
+    // "max" marks entries stale: the next visitor gets cached content while fresh data loads.
+    revalidateTag(tags.posts, "max");
+    if (slug) revalidateTag(tags.post(slug), "max");
+
+    return Response.json({ revalidated: true, slug: slug ?? null });
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="ts">
+{`
+  // app/posts/actions.ts — the author's own edit should show up immediately
+  "use server";
+
+  import { updateTag } from "next/cache";
+  import { tags } from "@/lib/posts";
+
+  export async function renamePost(slug: string, title: string) {
+    await cms.posts.update(slug, { title });
+
+    // Expires the entries now, so the redirect or refresh after this action reads fresh data.
+    updateTag(tags.posts);
+    updateTag(tags.post(slug));
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `cache: "force-cache"` stores the `fetch` response in Next.js's data cache, and `next.tags` attaches labels to that entry. A single entry can carry several tags, such as the collection and the specific item.
+2. A small `tags` object keeps tag names in one place, so reads and invalidations can't drift apart through typos.
+3. The CMS calls the route handler whenever content changes. The shared secret stops anyone else from triggering revalidation.
+4. `revalidateTag(tag, "max")` marks every entry with that tag as stale. The next request serves the cached version once while fetching fresh data in the background (stale-while-revalidate), so no visitor waits on the CMS.
+5. `updateTag(tag)` is for **read-your-own-writes** in Server Actions. It expires the entry immediately, so the person who just made the change sees it on the very next render instead of a stale copy.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="tsx">
+{`
+  // app/posts/[slug]/page.tsx — no time-based revalidate needed
+  import { notFound } from "next/navigation";
+  import { getPost } from "@/lib/posts";
+
+  export default async function PostPage(props: PageProps<"/posts/[slug]">) {
+    const { slug } = await props.params;
+    const post = await getPost(slug);
+    if (!post) notFound();
+
+    return (
+      <article>
+        <h1>{post.title}</h1>
+        <div dangerouslySetInnerHTML={{ __html: post.html }} />
+      </article>
+    );
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="bash">
+{`
+  # What the CMS webhook sends after publishing "hello-world"
+  curl -X POST https://example.com/api/revalidate \\
+    -H "x-webhook-secret: $CMS_WEBHOOK_SECRET" \\
+    -H "content-type: application/json" \\
+    -d '{ "slug": "hello-world" }'
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Headless CMS content** — blog posts, docs, and landing pages refreshed on publish.
+- **Product catalogues** — invalidate one product's tag when its price or stock changes.
+- **Admin dashboards** — Server Actions calling `updateTag` so editors see their changes instantly.
+- **Shared data across pages** — a `"navigation"` tag used by every layout, refreshed once when the menu changes.
+- **Per-user caches** — tags like `\`user:\${id}\`` to clear one user's cached data after a profile update.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Pick the right function:** `revalidateTag(tag, "max")` for webhooks and background updates, where serving stale content once is fine. `updateTag(tag)` inside Server Actions, when the user must see their own write.
+- **The single-argument form is deprecated:** `revalidateTag(tag)` without a profile still exists for older code, but new code should pass `"max"` (or another cache profile).
+- **Tag broadly and narrowly:** a collection tag (`posts`) plus an item tag (`post:slug`) lets you refresh everything or just one entry.
+- **`"use cache"` works too:** functions using the `"use cache"` directive tag their results with `cacheTag(...)`, and the same `revalidateTag` / `updateTag` calls invalidate them.
+- **Limits:** tags are case-sensitive, up to 256 characters each, and a `fetch` can carry up to 128 of them.
+- **Not in Proxy or the browser:** both functions only run in Server Functions and route handlers (`updateTag` only in Server Actions).
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Tagging cached reads and invalidating them with `revalidateTag` (from webhooks) or `updateTag` (from Server Actions) replaces guesswork `revalidate` timers with cache that lives exactly as long as the data stays the same.
