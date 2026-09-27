@@ -57,6 +57,12 @@ import MicrotaskMacrotaskTimelineDiagram from "@/components/mdx/MicrotaskMacrota
 import AnimationRangeDiagram from "@/components/mdx/AnimationRangeDiagram";
 import KeyframeStopsDiagram from "@/components/mdx/KeyframeStopsDiagram";
 import AnimationShorthandBuilder from "@/components/mdx/AnimationShorthandBuilder";
+import BackgroundClipTextDiagram from "@/components/mdx/BackgroundClipTextDiagram";
+import BoxDecorationBreakDiagram from "@/components/mdx/BoxDecorationBreakDiagram";
+import GradientStrokeDiagram from "@/components/mdx/GradientStrokeDiagram";
+import AnimatedStripDiagram from "@/components/mdx/AnimatedStripDiagram";
+import FixedAttachmentDiagram from "@/components/mdx/FixedAttachmentDiagram";
+import GlyphOverflowDiagram from "@/components/mdx/GlyphOverflowDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -150,6 +156,12 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     AnimationRangeDiagram,
     KeyframeStopsDiagram,
     AnimationShorthandBuilder,
+    BackgroundClipTextDiagram,
+    BoxDecorationBreakDiagram,
+    GradientStrokeDiagram,
+    AnimatedStripDiagram,
+    FixedAttachmentDiagram,
+    GlyphOverflowDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
