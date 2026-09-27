@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gradient Text Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Gradient Text Playground</h1>
+        <p>Every technique from the post in one place — pick one, tune the angle and colors live, and copy the CSS for exactly what you see.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Gradient text preview">
+        <!-- Most techniques: one clipped heading. -->
+        <div class="stage" id="text-stage">
+          <h2 class="text-demo"><span class="gradient-demo" id="gradient-demo">Gradient Text</span></h2>
+        </div>
+
+        <!-- Window effect: several headings in a scroll box, all cut from one viewport-pinned gradient. -->
+        <div class="stage" id="window-stage" hidden>
+          <div class="window-scroll" tabindex="0" aria-label="Scroll to move the headings across the fixed gradient">
+            <p>Scroll this box ↓</p>
+            <h2 class="text-demo"><span class="gradient-demo mode-window">Window One</span></h2>
+            <h2 class="text-demo"><span class="gradient-demo mode-window">Window Two</span></h2>
+            <h2 class="text-demo"><span class="gradient-demo mode-window">Window Three</span></h2>
+            <h2 class="text-demo"><span class="gradient-demo mode-window">Window Four</span></h2>
+          </div>
+        </div>
+
+        <!-- Video knockout: the text sits over a real <video>, fed here by a canvas so no file is needed. -->
+        <div class="stage" id="video-stage" hidden>
+          <div class="video-text">
+            <video id="knockout-video" autoplay muted loop playsinline></video>
+            <h2>Gradient</h2>
+          </div>
+        </div>
+
+        <!-- SVG fail-safe: the gradient is part of the graphic, no background clipping involved. -->
+        <div class="stage" id="svg-stage" hidden>
+          <svg class="svg-demo" viewBox="0 0 400 60" role="img" aria-label="SVG Gradient Text">
+            <defs>
+              <linearGradient id="svg-grad" gradientUnits="objectBoundingBox">
+                <stop offset="0%" id="svg-stop-1" stop-color="#ff6a00" />
+                <stop offset="100%" id="svg-stop-2" stop-color="#ee0979" />
+              </linearGradient>
+            </defs>
+            <text x="200" y="45" text-anchor="middle" fill="url(#svg-grad)" font-size="40" font-weight="800" font-family="system-ui, sans-serif">SVG Gradient Text</text>
+          </svg>
+        </div>
+      </section>
+
+      <p class="stage-note" id="stage-note"></p>
+
+      <ul class="contrast" id="contrast" aria-label="Contrast of each color stop against the preview background"></ul>
+
+      <output id="gradient-text-output" class="readout" aria-live="polite"></output>
+
+      <div class="tabs" role="tablist" aria-label="Technique group" id="group-switch">
+        <button class="tab tab--active" type="button" data-mode="essentials" role="tab" aria-selected="true">Essentials</button>
+        <button class="tab" type="button" data-mode="advanced" role="tab" aria-selected="false">Advanced</button>
+        <button class="tab" type="button" data-mode="pitfalls" role="tab" aria-selected="false">Pitfalls &amp; Fixes</button>
+      </div>
+
+      <div id="essentials-demo" class="tab-panel tab-panel--active">
+        <fieldset class="control-group">
+          <legend>Technique</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Essential technique">
+            <label class="segment"><input type="radio" name="technique" value="linear" checked><span>Linear</span></label>
+            <label class="segment"><input type="radio" name="technique" value="radial"><span>Radial</span></label>
+            <label class="segment"><input type="radio" name="technique" value="conic"><span>Conic</span></label>
+            <label class="segment"><input type="radio" name="technique" value="animated"><span>Animated</span></label>
+            <label class="segment"><input type="radio" name="technique" value="stroke"><span>Stroke</span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="advanced-demo" class="tab-panel">
+        <fieldset class="control-group">
+          <legend>Technique</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Advanced technique">
+            <label class="segment"><input type="radio" name="technique" value="shadow"><span>Shadow</span></label>
+            <label class="segment"><input type="radio" name="technique" value="blend"><span>Blend</span></label>
+            <label class="segment"><input type="radio" name="technique" value="image"><span>Image</span></label>
+            <label class="segment"><input type="radio" name="technique" value="video"><span>Video</span></label>
+            <label class="segment"><input type="radio" name="technique" value="window"><span>Window</span></label>
+            <label class="segment"><input type="radio" name="technique" value="property"><span>@property</span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="pitfalls-demo" class="tab-panel">
+        <fieldset class="control-group">
+          <legend>Pitfall</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Pitfall">
+            <label class="segment"><input type="radio" name="technique" value="wrap"><span>Multi-line</span></label>
+            <label class="segment"><input type="radio" name="technique" value="descenders"><span>Descenders</span></label>
+            <label class="segment"><input type="radio" name="technique" value="shorthand"><span>Shorthand</span></label>
+            <label class="segment"><input type="radio" name="technique" value="supports"><span>@supports</span></label>
+            <label class="segment"><input type="radio" name="technique" value="svg"><span>SVG</span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <fieldset class="control-group" id="options-group">
+        <legend>Options</legend>
+
+        <div class="segmented-control" id="shadow-variant" role="radiogroup" aria-label="Shadow approach" hidden>
+          <label class="segment"><input type="radio" name="shadow-variant" value="drop-shadow" checked><span>drop-shadow()</span></label>
+          <label class="segment"><input type="radio" name="shadow-variant" value="layered"><span>Layered</span></label>
+          <label class="segment"><input type="radio" name="shadow-variant" value="text-shadow"><span>text-shadow ✗</span></label>
+        </div>
+
+        <div class="segmented-control" id="image-variant" role="radiogroup" aria-label="Image type" hidden>
+          <label class="segment"><input type="radio" name="image-variant" value="static" checked><span>Static image</span></label>
+          <label class="segment"><input type="radio" name="image-variant" value="animated"><span>Animated (GIF-style)</span></label>
+        </div>
+
+        <div class="segmented-control" id="property-variant" role="radiogroup" aria-label="Animated property" hidden>
+          <label class="segment"><input type="radio" name="property-variant" value="rotate" checked><span>Rotate angle</span></label>
+          <label class="segment"><input type="radio" name="property-variant" value="hues"><span>Shift colors</span></label>
+        </div>
+
+        <div class="segmented-control" id="shorthand-variant" role="radiogroup" aria-label="Hover override" hidden>
+          <label class="segment"><input type="radio" name="shorthand-variant" value="image" checked><span>background-image ✓</span></label>
+          <label class="segment"><input type="radio" name="shorthand-variant" value="shorthand"><span>background ✗</span></label>
+        </div>
+
+        <div class="segmented-control" id="supports-variant" role="radiogroup" aria-label="Simulated browser" hidden>
+          <label class="segment"><input type="radio" name="supports-variant" value="supported" checked><span>Modern browser</span></label>
+          <label class="segment"><input type="radio" name="supports-variant" value="unsupported"><span>No background-clip: text</span></label>
+        </div>
+
+        <div class="fields-grid">
+          <div class="field field--full" id="angle-field">
+            <label for="angle-input" id="angle-label">Angle</label>
+            <div class="range-row">
+              <span class="range-edge">0deg</span>
+              <div class="range-track">
+                <input type="range" id="angle-input" min="0" max="360" step="1" value="90">
+                <output class="range-bubble" id="angle-value" for="angle-input">90deg</output>
+              </div>
+              <span class="range-edge">360deg</span>
+            </div>
+          </div>
+
+          <div class="field" id="focal-x-field" hidden>
+            <label for="focal-x-input">Focal point X</label>
+            <div class="range-row">
+              <span class="range-edge">0%</span>
+              <div class="range-track">
+                <input type="range" id="focal-x-input" min="0" max="100" step="1" value="30">
+                <output class="range-bubble" id="focal-x-value" for="focal-x-input">30%</output>
+              </div>
+              <span class="range-edge">100%</span>
+            </div>
+          </div>
+          <div class="field" id="focal-y-field" hidden>
+            <label for="focal-y-input">Focal point Y</label>
+            <div class="range-row">
+              <span class="range-edge">0%</span>
+              <div class="range-track">
+                <input type="range" id="focal-y-input" min="0" max="100" step="1" value="40">
+                <output class="range-bubble" id="focal-y-value" for="focal-y-input">40%</output>
+              </div>
+              <span class="range-edge">100%</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="color-1">Color 1</label>
+            <input type="color" id="color-1" value="#ff6a00">
+          </div>
+          <div class="field">
+            <label for="color-2">Color 2</label>
+            <input type="color" id="color-2" value="#ee0979">
+          </div>
+
+          <div class="field field--full" id="stroke-width-field" hidden>
+            <label for="stroke-width-input">Stroke width</label>
+            <div class="range-row">
+              <span class="range-edge">1px</span>
+              <div class="range-track">
+                <input type="range" id="stroke-width-input" min="1" max="6" step="1" value="2">
+                <output class="range-bubble" id="stroke-width-value" for="stroke-width-input">2px</output>
+              </div>
+              <span class="range-edge">6px</span>
+            </div>
+          </div>
+
+          <div class="field field--full" id="shadow-offset-field" hidden>
+            <label for="shadow-offset-input">Shadow offset</label>
+            <div class="range-row">
+              <span class="range-edge">1px</span>
+              <div class="range-track">
+                <input type="range" id="shadow-offset-input" min="1" max="8" step="1" value="4">
+                <output class="range-bubble" id="shadow-offset-value" for="shadow-offset-input">4px</output>
+              </div>
+              <span class="range-edge">8px</span>
+            </div>
+          </div>
+
+          <div class="field field--full" id="blend-mode-field" hidden>
+            <label for="blend-mode-select">mix-blend-mode</label>
+            <select id="blend-mode-select">
+              <option value="color-dodge" selected>color-dodge</option>
+              <option value="screen">screen</option>
+              <option value="overlay">overlay</option>
+              <option value="hard-light">hard-light</option>
+              <option value="difference">difference</option>
+              <option value="luminosity">luminosity</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="checkbox-field" for="multiline-toggle" id="multiline-field" hidden>
+          <input type="checkbox" id="multiline-toggle" checked>
+          <span>Force multi-line demo text</span>
+        </label>
+        <label class="checkbox-field" for="wrapfix-toggle" id="wrapfix-field" hidden>
+          <input type="checkbox" id="wrapfix-toggle">
+          <span>Apply <code>box-decoration-break: clone</code></span>
+        </label>
+        <label class="checkbox-field" for="descender-fix-toggle" id="descender-fix-field" hidden>
+          <input type="checkbox" id="descender-fix-toggle">
+          <span>Add <code>line-height</code> + padding fix</span>
+        </label>
+        <label class="checkbox-field" for="hover-toggle" id="hover-field" hidden>
+          <input type="checkbox" id="hover-toggle" checked>
+          <span>Hold the <code>:hover</code> state on</span>
+        </label>
+        <label class="checkbox-field" for="guard-toggle" id="guard-field" hidden>
+          <input type="checkbox" id="guard-toggle">
+          <span>Guard the gradient with <code>@supports</code></span>
+        </label>
+      </fieldset>
+
+      <fieldset class="control-group" id="output-group">
+        <legend>Production CSS</legend>
+        <label class="checkbox-field" for="vars-toggle">
+          <input type="checkbox" id="vars-toggle">
+          <span>Use CSS variables for the color stops</span>
+        </label>
+        <label class="checkbox-field" for="fluid-toggle">
+          <input type="checkbox" id="fluid-toggle">
+          <span>Fluid <code>font-size</code> with <code>clamp()</code></span>
+        </label>
+        <label class="checkbox-field" for="forced-toggle">
+          <input type="checkbox" id="forced-toggle">
+          <span>Add a <code>forced-colors</code> reset</span>
+        </label>
+        <p class="tip">Animated techniques always get a <code>prefers-reduced-motion</code> rule. The chips above check each color stop against the preview background (WCAG AA for large text needs 3:1).</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
