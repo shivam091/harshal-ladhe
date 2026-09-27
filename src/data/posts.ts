@@ -419,6 +419,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-24", change: "Initial publication" },
     ],
+  },
+  {
+    slug: "css-gradient-text",
+    title: "CSS Gradient Text Guide: Background-Clip, Animation & Advanced Tricks",
+    excerpt: "Create stunning gradient text effects with CSS",
+    description: "Learn how to create CSS gradient text using background-clip, animation, stroke effects, @property, multi-line fixes, and accessible, responsive techniques with real-world examples.",
+    category: ["CSS"],
+    tags: ["css", "gradients", "gradient-text", "typography", "background-clip", "text-effects", "css-animation", "accessibility", "frontend-development", "web-design", "responsive", "advanced-css", "svg", "progressive-enhancement", "browser-support", "css-custom-properties"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/css-gradient-text/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-themed CSS gradient text guide cover featuring colorful “Gradient Text” typography, background-clip: text styling, a CSS code panel, gradient color controls, animation settings, and a list of gradient text techniques on a dark futuristic background."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "The four-line recipe was the easy part — the real work was proving every variant actually renders the way the prose claims. The stroke, blend-mode, and video examples all had to be rebuilt after testing them in a real browser, and the playground's wrap-fix toggle only started doing anything once the gradient moved onto an inline span the flex layout couldn't blockify. I hope flipping that toggle, and watching the readout print the exact CSS behind each change, makes the whole clipping trick click. Thanks for reading all the way to the last gradient stop. 🌈",
+    changelog: [
+      { date: "2026-09-27", change: "Initial publication" }
+    ]
   }
 ];
 

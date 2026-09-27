@@ -23,6 +23,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-gradient-text",
+    title: "Gradient Text Playground",
+    description: "Switch between linear, animated, and stroke gradient text, tune the angle and colors live, and toggle the multi-line wrap fix to see box-decoration-break in action.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-keyframe-steps",
     title: "Per-Keyframe steps() Playground",
     description: "A box eases through its first half, then ticks through the second — set via animation-timing-function inside a single @keyframes block instead of on the whole animation.",
