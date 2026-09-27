@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS if() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Priority Badge, styled with CSS if()</h1>
+        <p>Pick a priority. JavaScript only sets <code>--priority</code>; the badge's color is chosen entirely in the stylesheet by an <code>if(style(...))</code> chain.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Badge preview">
+        <div class="card" id="card">
+          <span class="badge" id="badge">Priority: none</span>
+          <p class="card-body">One declaration in the stylesheet covers every priority, with no class per state.</p>
+        </div>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>--priority</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Priority">
+          <label class="segment"><input type="radio" name="priority" value="none" checked><span>None</span></label>
+          <label class="segment"><input type="radio" name="priority" value="low"><span>Low</span></label>
+          <label class="segment"><input type="radio" name="priority" value="medium"><span>Medium</span></label>
+          <label class="segment"><input type="radio" name="priority" value="high"><span>High</span></label>
+        </div>
+        <p class="tip">"None" removes <code>--priority</code>, so no <code>style()</code> test matches and the <code>else</code> branch picks the gray.</p>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
