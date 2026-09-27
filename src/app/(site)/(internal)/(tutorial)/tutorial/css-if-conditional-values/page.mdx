@@ -1,0 +1,246 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-if-conditional-values");
+
+## Introduction
+
+Conditional styling in CSS has always meant one of two workarounds: toggling a class from JavaScript, or duplicating
+a whole rule inside `@media` or `@supports`. The new **`if()`** function collapses that into a single property
+value. It picks between several values, right inside a declaration, based on a condition CSS can already evaluate:
+a media query, a feature check, or — the genuinely new part — the current value of a custom property.
+
+<Info title="New to custom properties?">
+  A custom property is a variable you define yourself, such as `--priority: high`. It's written with two leading
+  dashes, inherits down the tree like `color` does, and is read back with `var(--priority)`. `if()` can test its
+  value directly, which is what makes the examples below work. For another function that picks a value for you,
+  see [One-Line Theme-Aware Colors with `light-dark()`](/tutorial/light-dark-color-scheme).
+</Info>
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .badge {
+    background: if(
+      style(--priority: high): crimson;
+      style(--priority: medium): darkorange;
+      else: seagreen
+    );
+  }
+`}
+</CodeBlock>
+
+How to read it:
+
+- **Each branch is a `condition: value` pair**, and branches are separated by semicolons.
+- **Branches are checked top to bottom, and the first match wins.** Later branches are never considered once one
+  matches.
+- **`else:` is the catch-all**, used when no condition matches.
+
+Change `--priority` — from JavaScript, or from another CSS rule — and the background follows. There's no class
+list to keep in sync with the state.
+
+<RainbowDivider />
+
+## The Three Condition Types
+
+<CodeBlock language="css">
+{`
+  .card {
+    width: if(
+      media(width > 900px): 32rem;
+      supports(color: oklch(0.7 0.15 30)): 24rem;
+      else: 100%
+    );
+  }
+`}
+</CodeBlock>
+
+- **`media()`** takes the same conditions as `@media`, such as viewport width or `prefers-color-scheme`.
+- **`supports()`** takes the same conditions as `@supports`, checking whether the browser understands a property
+  and value.
+- **`style()`** checks a custom property's current value. This is what makes `if()` new: a *value*, not a whole
+  block, that reacts to state.
+
+<Warning title="There is no container() condition">
+  `if()` can't test container queries. For styles that depend on a parent's size, `@container` is still the only
+  option.
+</Warning>
+
+### Where `style()` Reads From
+
+`style()` tests the custom property's value **on the element being styled** — whether that value was set on the
+element itself or inherited from an ancestor. That's why the demo below can set `--priority` once on the card and
+have the badge inside it react. (Container style queries work differently: they read the value from the
+container.)
+
+<RainbowDivider />
+
+## Try It Live
+
+Pick a priority. JavaScript only sets the `--priority` custom property on the card; the stylesheet's `if()` chain
+decides the badge's color. Choose **None** to remove the property and watch the `else` branch take over.
+
+If your browser doesn't support `if()` yet, every option shows the same gray, and the readout under the controls
+tells you so. That gray comes from a plain `background` declared just before the `if()` version — see
+[Always Pair It with a Fallback](#always-pair-it-with-a-fallback).
+
+<Sandbox slug="css-if-conditional-values" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Branch Order Matters
+
+Because the first matching branch wins, put the most specific conditions first. A broad condition placed early hides
+every narrower one after it:
+
+<CodeBlock language="css">
+{`
+  /* ❌ The 900px branch never runs: any width over 900px is also over 600px */
+  .panel {
+    padding: if(
+      media(width > 600px): 1.5rem;
+      media(width > 900px): 2.5rem;
+      else: 1rem
+    );
+  }
+
+  /* ✅ Narrowest condition first */
+  .panel {
+    padding: if(
+      media(width > 900px): 2.5rem;
+      media(width > 600px): 1.5rem;
+      else: 1rem
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Always Pair It with a Fallback
+
+Browser support is still limited, so declare a plain value first and the `if()` version second:
+
+<CodeBlock language="css">
+{`
+  .badge {
+    background: gray; /* Every browser reads this */
+    background: if(
+      style(--priority: high): crimson;
+      else: gray
+    );
+  }
+`}
+</CodeBlock>
+
+This protects two different cases in two different ways:
+
+- **Browsers without `if()`** can't parse the second declaration, so they drop it while reading the stylesheet and
+  only the first one ever reaches the cascade. No `@supports` block is needed.
+- **Browsers with `if()`** use the second declaration, and the first one is simply overridden. If no branch matches
+  and there's no `else`, the property becomes *invalid at computed-value time* and behaves as if it were never
+  set. The earlier fallback does **not** come back — so always include an `else`.
+
+<RainbowDivider />
+
+## Going Further
+
+### Combining Conditions
+
+Conditions can be combined with `and`, `or`, and `not`, just like in `@media`:
+
+<CodeBlock language="css">
+{`
+  .toolbar {
+    gap: if(
+      media(width > 900px) and style(--density: compact): 0.5rem;
+      not media(width > 900px): 0.25rem;
+      else: 1rem
+    );
+  }
+`}
+</CodeBlock>
+
+### Using `if()` Inside Other Values
+
+`if()` stands in for part of a value, so it can sit inside a shorthand, a `calc()`, or a custom property:
+
+<CodeBlock language="css">
+{`
+  .card {
+    /* Only the inline margin changes */
+    margin: 0 if(media(width > 900px): 2rem; else: 1rem);
+
+    /* One branch of a larger calculation */
+    padding: calc(if(style(--density: compact): 0.5rem; else: 1rem) * 2);
+
+    /* Resolve once, reuse everywhere */
+    --accent: if(style(--priority: high): crimson; else: royalblue);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Relationship to @media, @supports and @container
+
+<CodeBlock language="css">
+{`
+  /* Before: the same rule duplicated per breakpoint */
+  .panel { padding: 1rem; }
+  @media (width > 900px) {
+    .panel { padding: 2rem; }
+  }
+
+  /* After: one declaration */
+  .panel {
+    padding: if(media(width > 900px): 2rem; else: 1rem);
+  }
+`}
+</CodeBlock>
+
+The at-rules still own conditional *rules*: new selectors, several declarations at once, or restructuring a layout.
+`if()` is for a conditional *value* inside a rule you're already writing — exactly the case that used to force
+either duplicating the whole rule or falling back to JavaScript. If the value should scale smoothly rather than jump
+between fixed options, [`min()`, `max()`, and `clamp()`](/tutorial/min-max-clamp-functions) are usually the better
+fit.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A single custom property (`--variant`, `--size`, `--state`) driving several unrelated declarations across a
+  component, without a class for every combination
+- Small value swaps (a color, a spacing step, a font-weight) that don't justify duplicating an entire rule under
+  `@media`
+- Replacing a JavaScript-driven inline style or class toggle whose only job was picking between a few known CSS
+  values
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Check support before relying on it.** `if()` shipped in Chrome and Edge 137. Check current Firefox and Safari
+  support on [Can I use](https://caniuse.com/?search=if()) before depending on it without a fallback.
+* **Declare the fallback first, and always include `else`.** The fallback covers browsers without `if()`; `else`
+  covers browsers with it. You need both (see [Always Pair It with a Fallback](#always-pair-it-with-a-fallback)).
+* **Feature-detect with `@supports` when a whole block depends on it.** `@supports (color: if(else: red))` is true
+  only in browsers that understand `if()`.
+* **`style()` only reads custom properties in current browsers.** A test like `style(color: red)` on a standard
+  property isn't supported yet; branch on a `--custom-property` instead.
+* **It's a value, not a control-flow statement.** `if()` can't leave out a declaration or a selector. For that,
+  `@media`, `@supports`, and `@container` are still what you reach for.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`if()` fills the one gap the conditional at-rules never covered: a single value, inside a declaration you're
+already writing, chosen by a condition — most usefully the live value of a custom property. Order branches from
+most to least specific, always end with `else`, and keep a plain fallback declared first while browser support
+catches up.

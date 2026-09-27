@@ -226,6 +226,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-19", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-if-conditional-values",
+    title: "Conditional CSS Values with the `if()` Function",
+    excerpt: "Swap CSS values by media, supports, or style conditions.",
+    description: "The if() function picks between several values inside one CSS declaration based on a media(), supports(), or style() condition — collapsing what used to require duplicating an entire rule under @media/@supports, or a JS class toggle, into one line, with a fallback for browsers that don't support it yet.",
+    category: ["CSS"],
+    tags: ["css", "if-function", "conditional-css", "css-custom-properties", "css-functions", "media-queries", "progressive-enhancement", "browser-support", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-if-conditional-values/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A priority badge changing color based on a custom property, driven entirely by an if(style(...)) conditional value in the stylesheet.",
+      caption: "A priority badge changing colour from a single if() value."
+    },
+    changelog: [
+      { date: "2026-09-27", change: "Initial publication." }
+    ]
   }
 ];
 
