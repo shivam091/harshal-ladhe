@@ -779,4 +779,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Full-Bleed Layouts in CSS",
     description: "Techniques for letting elements break out of a centred content column and span the full width of the viewport."
   },
+  "if-function": {
+    title: "The CSS `if()` Function",
+    description: "Using the CSS `if()` function to choose property values inline based on media, support, or style queries."
+  },
+  "conditional-css": {
+    title: "Conditional Logic in CSS",
+    description: "Ways to apply styles conditionally in CSS, from queries and custom properties to the new `if()` function."
+  },
 };

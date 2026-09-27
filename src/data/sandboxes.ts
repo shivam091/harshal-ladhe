@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-if-conditional-values",
+    title: "Conditional CSS Values with if()",
+    description: "A priority badge whose color is chosen entirely by if(style(--priority: ...)) in the stylesheet — pick a priority, or None to see the else branch, while a readout shows the live --priority value and whether your browser supports if() or is using the plain-gray fallback.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-gradient-text",
     title: "Gradient Text Playground",
     description: "Switch between linear, animated, and stroke gradient text, tune the angle and colors live, and toggle the multi-line wrap fix to see box-decoration-break in action.",
