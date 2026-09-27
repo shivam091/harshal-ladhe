@@ -14,7 +14,7 @@ import type { PushButtonProps } from "@/components/PushButton/PushButton.types";
 */
 export default function PushButton({ sound, ...rest }: PushButtonProps): JSX.Element {
   const { src, sprite, downIds, upIds, volume } = sound;
-  const [playSprite, , stopSprite] = useSound(src, { sprite, volume });
+  const [playSprite, { stop: stopSprite }] = useSound(src, { sprite, volume });
 
   function handleRelease() {
     stopSprite();

@@ -17,7 +17,7 @@ export default function HitCounter() {
   const pathname = usePathname();
   const [views, setViews] = useState<number | null>(null);
   const [isOn, setIsOn] = useState(false);
-  const [playPress, , stopPress] = useSound("/sounds/pop-down.mp3");
+  const [playPress, { stop: stopPress }] = useSound("/sounds/pop-down.mp3");
   const [playOn] = useSound("/sounds/pop-up-on.mp3");
   const [playOff] = useSound("/sounds/pop-up-off.mp3");
 
