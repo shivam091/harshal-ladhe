@@ -660,7 +660,7 @@ band at the edge — turning the filled disc into a ring, entirely with CSS and 
   "gray zone" seen in RGB interpolation.
 - **Maintain accessibility (A11y):** Always ensure text placed over gradients meets **WCAG 2.1** contrast ratios. Verify contrast
   using tools like Whocanuse or browser dev tools.
-- **Preserve readability:** Avoid placing critical text on busy gradients. If using `background-clip: text`, test across themes and screen types.
+- **Preserve readability:** Avoid placing critical text on busy gradients. If using `background-clip: text`, test across themes and screen types — the [CSS Gradient Text Guide](/post/css/css-gradient-text) covers contrast, fallbacks, and reduced motion in depth.
 - **Optimize animation performance:** Never animate `background-image` directly. Instead, animate `opacity` or `transform` on
   a pseudo-element (`::before` or `::after`) to maintain smooth 60fps rendering.
 - **Use gradients sparingly:** Gradients draw attention—overusing them can feel noisy and unprofessional.
