@@ -1,0 +1,52 @@
+.demo-area {
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  inline-size: 100%;
+  max-inline-size: 22rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  padding: 1rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+}
+
+.card-body {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--pg-text-muted);
+}
+
+.playground code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+.badge {
+  align-self: flex-start;
+  padding-block: 0.25rem;
+  padding-inline: 0.625rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+
+  /* Plain fallback — the declaration every browser without if() support actually uses. */
+  background: hsl(213, 10%, 40%);
+
+  /*
+    Re-declared with if(): a browser that can't parse if() drops this WHOLE declaration while
+    reading the stylesheet, so only the fallback above ever reaches the cascade — no @supports
+    needed. The else branch matters in browsers that DO support if(): without it, an unmatched
+    chain makes the property invalid at computed-value time, and the fallback does not come back.
+  */
+  background: if(
+    style(--priority: high): hsl(356, 71%, 48%);
+    style(--priority: medium): hsl(30, 90%, 50%);
+    style(--priority: low): hsl(142, 55%, 38%);
+    else: hsl(213, 10%, 40%)
+  );
+}
