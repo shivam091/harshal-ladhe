@@ -431,6 +431,26 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Streamlined Styling with SCSS and Preprocessors",
     description: "Optimize your CSS workflow using SCSS (Sass) features like variables, nesting, mixins, and modular imports for scalable and maintainable code."
   },
+  "gradient-text": {
+    title: "CSS Gradient Text Techniques",
+    description: "Clipping gradients to typography with background-clip: text, from static headings to animated and stroke-outlined text effects."
+  },
+  "background-clip": {
+    title: "Mastering the CSS background-clip Property",
+    description: "Using background-clip: text and border-box/padding-box tricks for gradient text, gradient borders, and other clipped background effects."
+  },
+  "text-effects": {
+    title: "Creative CSS Text Effects",
+    description: "Techniques for styling typography beyond flat color, including gradients, strokes, shadows, and other CSS-only text treatments."
+  },
+  "typography": {
+    title: "Styling Web Typography with CSS",
+    description: "Styling text on the web with CSS, from readable, accessible type to decorative treatments like gradient fills and outlined headings."
+  },
+  "css-custom-properties": {
+    title: "CSS Custom Properties (Variables) and @property",
+    description: "Theming and runtime styling with CSS custom properties, and on registering typed properties with @property so values like angles and colors can animate."
+  },
   "web-apis": {
     title: "Browser Web APIs for Modern Frontends",
     description: "Coverage of native browser APIs — beyond the core language — that power reactive, high-performance web applications."
