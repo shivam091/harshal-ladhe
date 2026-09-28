@@ -1,0 +1,765 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-gradient-borders");
+
+Borders don't have to be boring. With a few lines of CSS, you can create **gradient borders** that add depth and
+visual interest to your UI.
+
+The challenge is that CSS does **not accept gradients in `border-color`** — it only takes solid colors. So instead
+of styling the border directly, we have to simulate a gradient border with other properties.
+
+Each approach in this guide answers one core question:
+
+<Quote>
+  How do we paint a gradient only where the border should appear?
+</Quote>
+
+We'll explore:
+
+- `border-image` for simple, square-cornered borders
+- `background-clip` for rounded, flexible borders
+- `mask` for borders with a see-through center
+- Animated, rotating, and hover-only gradient borders
+- A reusable **SCSS mixin** for production use
+
+<Info title="Default to background-clip">
+  In most real-world cases, `background-clip` offers the best balance of flexibility, performance, and browser
+  support.
+</Info>
+
+This post assumes you're comfortable writing gradients. If linear, radial, and conic gradients are new to you,
+start with [Mastering CSS Gradients: Types, Use Cases, and Best Practices](/post/css/mastering-css-gradients).
+
+<RainbowDivider />
+
+## How a Border Is Painted
+
+Every element is made of nested boxes, and the two gradient-border techniques that use backgrounds depend on
+knowing which one is which:
+
+- **Content box** — where the text and children sit.
+- **Padding box** — the content box plus its `padding`.
+- **Border box** — the padding box plus the `border`. This is the element's full outer edge.
+
+By default, an element's background is painted across the whole **border box** — it runs underneath the border
+too. You normally don't see that, because a solid border covers it. But make the border `transparent`, and whatever
+background sits underneath shows through the border area.
+
+That one fact is the foundation of most gradient borders: **a transparent border is a window onto the background
+beneath it**, and the techniques below differ only in what they put behind that window.
+
+**Visual Illustration**
+
+<BorderBoxLayersDiagram variant="box-model" />
+
+<RainbowDivider />
+
+## Core Techniques
+
+### `border-image` — Simple and Native
+
+<CodeBlock language="css">
+{`
+  .gradient-border {
+    border: 5px solid;
+    border-image: linear-gradient(45deg, #ff6a00, #ee0979) 1;
+  }
+`}
+</CodeBlock>
+
+#### How It Works
+
+`border-image` replaces the border's normal color with an image — and a gradient counts as an image.
+
+- `border` → sets the thickness (and a style, which is required for the border to exist at all)
+- `border-image` → paints the gradient into that border area
+
+The `1` at the end is the **slice value**. It tells the browser to cut a 1-pixel frame from the edges of the
+gradient and stretch it along each side of the border. Leave it out and the slice defaults to `100%`, which puts
+the whole gradient into the four corners and leaves the sides empty — the most common reason a `border-image`
+gradient "doesn't show up."
+
+#### Great for Single Sides
+
+Because `border-image` works per side, it's the easiest way to add a gradient to just one edge — like a gradient
+underline under a heading:
+
+<CodeBlock language="css">
+{`
+  .gradient-underline {
+    border-bottom: 4px solid;
+    border-image: linear-gradient(90deg, #ff6a00, #ee0979) 1;
+  }
+`}
+</CodeBlock>
+
+#### When to Use
+
+- You need a **quick gradient border** with square corners
+- You only want a gradient on **one or two sides**
+- The inside of the element must stay **transparent**
+
+#### Limitations
+
+- **Ignores `border-radius` completely** — the corners are always square, no matter what radius you set
+- Harder to animate than the background-based techniques
+
+### `background-clip` — The Most Practical Approach
+
+<CodeBlock language="css">
+{`
+  .gradient-border {
+    border: 5px solid transparent;
+    border-radius: 12px;
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      linear-gradient(45deg, #ff6a00, #ee0979) border-box;
+  }
+`}
+</CodeBlock>
+
+#### How It Works
+
+This technique uses **two background layers** on the same element, each clipped to a different box:
+
+- **Layer 1 (`padding-box`)** → a solid white fill that stops at the inner edge of the border
+- **Layer 2 (`border-box`)** → the gradient, which reaches all the way to the outer edge
+
+**Visual Illustration**
+
+<BorderBoxLayersDiagram variant="layers" />
+
+The first layer listed is painted on top. It covers the gradient everywhere except the border ring, and because
+the border is transparent, that ring is exactly where the gradient shows through. (`linear-gradient(#fff, #fff)`
+is just a way to write a solid color as an image, since only images can be layered.)
+
+#### Why This Is Preferred
+
+- Works perfectly with `border-radius`
+- Supports every gradient type
+- Easy to animate and theme
+
+#### Limitation: The Center Isn't See-Through
+
+The inner layer has to be a **solid color** that matches your element's background. If the element sits on a
+photo, a pattern, or another gradient, that solid fill hides it. When you need a see-through center, use the
+`mask` technique below instead.
+
+<Success title="Mental model">
+  You're not styling the border — you're painting a gradient behind it and covering everything except the border
+  ring.
+</Success>
+
+### `mask` — Advanced and Precise
+
+<CodeBlock language="css">
+{`
+  .gradient-border {
+    position: relative;
+    border-radius: 12px;
+  }
+
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 3px; /* The border thickness */
+    border-radius: inherit;
+    background: linear-gradient(90deg, #ff6a00, #ee0979);
+    pointer-events: none;
+
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#fff 0 0) content-box exclude,
+      linear-gradient(#fff 0 0);
+  }
+`}
+</CodeBlock>
+
+#### How It Works
+
+A pseudo-element covers the whole element with the gradient, then a mask cuts out the middle:
+
+- The pseudo-element (`::before`) is stretched over the element with `inset: 0`, and its `padding` is set to the
+  border thickness you want.
+- It gets two mask layers. The first covers only its **content box** (the area inside that padding); the second
+  covers the **whole** pseudo-element.
+- `exclude` keeps only the parts where the two layers *don't* overlap — which is exactly the padding ring. The
+  gradient shows there, and everything inside is cut away.
+
+**Visual Illustration**
+
+<MaskBorderRingDiagram />
+
+Unlike `background-clip`, nothing is painted over the center, so **whatever is behind the element shows through**.
+
+#### When to Use
+
+- The element sits on an image, a pattern, or a translucent (glassmorphism) background
+- You need a gradient border without a solid inner fill
+- Custom border effects and advanced UI animations
+
+#### Trade-offs
+
+- Uses up the element's `::before` pseudo-element
+- Older Safari and Chromium versions need the `-webkit-mask` lines — and they use `xor`, not `exclude`
+- Slightly more expensive to render than the other methods
+
+<Warning title="Keep the content above the pseudo-element">
+  The `::before` sits on top of the element's content. `pointer-events: none` stops it from blocking clicks, and
+  the mask removes it from the center, so text stays visible — but if you give children their own `position`,
+  check their stacking order too.
+</Warning>
+
+<RainbowDivider />
+
+## Advanced & Interactive Techniques
+
+### Animated Gradient Borders
+
+<CodeBlock language="css">
+{`
+  @keyframes border-animation {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  .animated-border {
+    border: 4px solid transparent;
+    border-radius: 12px;
+
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      linear-gradient(90deg, #ff6a00, #ee0979, #00c6ff) border-box;
+
+    background-size: 300% 300%;
+    animation: border-animation 6s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animated-border {
+      animation: none;
+    }
+  }
+`}
+</CodeBlock>
+
+#### How It Works
+
+Browsers can't smoothly animate from one gradient image to another, so instead we make the gradient three times
+bigger than the element (`background-size: 300% 300%`) and **slide it back and forth** with `background-position`.
+Only part of the gradient is visible through the border at any moment, so the colors appear to flow. (The solid
+inner layer is resized too, but a solid color looks the same at any size.)
+
+The keyframes go out to `100%` and back to `0%`, so the loop never jumps. For more on `@keyframes`, see the
+[CSS keyframes guide](/post/animations/css-keyframes-guide).
+
+#### Best Use Cases
+
+Buttons and CTAs, highlighted cards, hero elements.
+
+<Info title="Performance note">
+  Animating `background-position` repaints the element on every frame — it can't be handed to the GPU the way
+  `transform` and `opacity` can. That's fine for a small button or card, but avoid animating borders on many
+  elements at once. See
+  [Why GPU-Accelerated Properties Are Cheap](/post/animations/css-transitions-guide#why-gpu-accelerated-properties-are-cheap)
+  for the details.
+</Info>
+
+You can try this live — switch the [playground](#try-it-yourself) further down this post to **Advanced →
+Animated** and watch the same `background-position` trick run in real time.
+
+### Rotating Conic Borders with `@property`
+
+Sliding `background-position` doesn't work well for conic gradients — it just zooms into one part of the color
+wheel. What you really want is to **rotate** the gradient, and that means animating its starting angle.
+
+Normally that's impossible: a custom property like `--angle` is an untyped string, so the browser can't
+interpolate it. Registering it with `@property` gives it a type (`<angle>`), and a typed property *can* be
+animated:
+
+<CodeBlock language="css">
+{`
+  @property --angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+  }
+
+  .spinning-border {
+    border: 4px solid transparent;
+    border-radius: 16px;
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      conic-gradient(from var(--angle), #ff6a00, #ee0979, #00c6ff, #ff6a00) border-box;
+    animation: spin-border 4s linear infinite;
+  }
+
+  @keyframes spin-border {
+    to {
+      --angle: 360deg;
+    }
+  }
+`}
+</CodeBlock>
+
+The gradient itself spins while the element stays perfectly still. That's the key difference from the
+[Border Beam](/post/css/mastering-css-gradients#the-border-beam-conic-perimeter) technique in the gradients guide,
+which rotates an oversized pseudo-element instead.
+
+<Info title="Browser support">
+  `@property` works in all modern browsers (Firefox added it in version 128). Where it isn't supported, the border
+  simply stays still at its `initial-value` — a safe fallback.
+</Info>
+
+Switch the [playground](#try-it-yourself) to **Advanced → Rotating conic** to see this exact technique running.
+
+### Hover-Only Gradient Borders
+
+Show a plain border by default and reveal the gradient on interaction. A plain swap from a solid border to a
+gradient happens instantly, because `background-image` can't be transitioned. Registering the gradient's colors
+with `@property` makes them transitionable, so the border can fade smoothly from gray to gradient:
+
+<CodeBlock language="css">
+{`
+  @property --border-start {
+    syntax: "<color>";
+    inherits: false;
+    initial-value: #d0d7de;
+  }
+
+  @property --border-end {
+    syntax: "<color>";
+    inherits: false;
+    initial-value: #d0d7de;
+  }
+
+  .card {
+    border: 2px solid transparent;
+    border-radius: 12px;
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      linear-gradient(45deg, var(--border-start), var(--border-end)) border-box;
+    transition: --border-start 0.3s ease, --border-end 0.3s ease;
+  }
+
+  .card:hover,
+  .card:focus-within {
+    --border-start: #ff6a00;
+    --border-end: #ee0979;
+  }
+`}
+</CodeBlock>
+
+Both colors start as the same gray, so the border looks solid until hover. Including `:focus-within` gives
+keyboard users the same feedback when they tab into the card.
+
+**Why use this:** keeps the UI calm by default and gives clear interaction feedback. For more on how transitions
+decide what can animate, see the [CSS transitions guide](/post/animations/css-transitions-guide).
+
+### Conic Gradient Borders
+
+You can create circular or angular gradient borders using `conic-gradient`.
+
+<CodeBlock language="css">
+{`
+  .conic-border {
+    border: 4px solid transparent;
+    border-radius: 50%;
+
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      conic-gradient(red, yellow, lime, cyan, blue, magenta, red) border-box;
+  }
+`}
+</CodeBlock>
+
+Ending on the same color you started with (`red`) avoids a hard seam at the top. For a deeper understanding of
+how conic gradients work, see the
+[conic gradient section](/post/css/mastering-css-gradients#conic-gradient) of the gradients guide.
+
+**When to use:** circular elements (avatars, loaders), decorative UI elements, experimental or modern designs.
+
+### Radial Gradient Borders
+
+A radial gradient spreads outward from the center, so the border ring only ever shows its outer colors. The
+middle of each side is closest to the center and picks up more of the first color, while the corners are farthest
+away and get the last color — a soft, glowing falloff around the element.
+
+<CodeBlock language="css">
+{`
+  .radial-border {
+    border: 4px solid transparent;
+    border-radius: 12px;
+
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      radial-gradient(circle, #ff6a00, #ee0979) border-box;
+  }
+`}
+</CodeBlock>
+
+For a deeper understanding of radial gradients, see the
+[radial gradient section](/post/css/mastering-css-gradients#radial-gradient) of the gradients guide.
+
+**When to use:** glow effects, soft UI highlights, focus states.
+
+### Dynamic, Theme-Aware Borders with CSS Variables
+
+Hard-coding `#fff` for the inner layer breaks as soon as you add a dark theme — the card turns into a white box.
+Store both the gradient and the surface color in CSS variables instead:
+
+<CodeBlock language="css">
+{`
+  :root {
+    --surface: #fff;
+    --gradient-start: #ff6a00;
+    --gradient-end: #ee0979;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #0d1117;
+    }
+  }
+
+  .dynamic-border {
+    border: 4px solid transparent;
+    background:
+      linear-gradient(var(--surface), var(--surface)) padding-box,
+      linear-gradient(90deg, var(--gradient-start), var(--gradient-end)) border-box;
+  }
+`}
+</CodeBlock>
+
+**Benefits:** easy theme switching, works with dark mode, and can be driven by JavaScript or UI sliders — exactly
+how the [playground](#try-it-yourself) updates its border live.
+
+<RainbowDivider />
+
+## Reusable SCSS Mixin
+
+Here's a mixin you can drop into your SCSS setup. It wraps the `background-clip` technique so every card and
+button gets the same layering without repeating it:
+
+<CodeBlock language="scss">
+{`
+  @mixin gradient-border($colors, $size: 4px, $radius: 0, $direction: 90deg, $inner: #fff, $animate: false) {
+    border: $size solid transparent;
+    border-radius: $radius;
+    background:
+      linear-gradient($inner, $inner) padding-box,
+      linear-gradient($direction, $colors) border-box;
+
+    @if $animate {
+      background-size: 300% 300%;
+      animation: gradient-border-anim 5s linear infinite;
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+      }
+    }
+  }
+
+  @keyframes gradient-border-anim {
+    0% {
+      background-position: 0% 50%;
+    }
+
+    50% {
+      background-position: 100% 50%;
+    }
+
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+`}
+</CodeBlock>
+
+### How the Mixin Works
+
+- `$colors` → a list of gradient colors, e.g. `(#ff6a00, #ee0979)`
+- `$size` → border thickness
+- `$radius` → corner rounding
+- `$direction` → gradient angle
+- `$inner` → the fill color inside the border (pass a CSS variable for theme support)
+- `$animate` → turns on the flowing animation, with a reduced-motion guard built in
+
+Because the colors are passed as **one list** rather than as separate arguments, every other parameter keeps its
+default and can be set by name, in any order.
+
+**Example usage:**
+
+<CodeBlock language="scss">
+{`
+  // Static gradient border
+  .card {
+    @include gradient-border((#ff6a00, #ee0979), $radius: 12px, $direction: 45deg);
+  }
+
+  // Animated rainbow border on a themed surface
+  .button {
+    @include gradient-border(
+      (red, orange, yellow, green, blue, indigo, violet),
+      $size: 3px,
+      $radius: 8px,
+      $inner: var(--surface),
+      $animate: true
+    );
+  }
+`}
+</CodeBlock>
+
+### Why Use This
+
+- Avoid repeating the two-layer syntax on every component
+- Keep **border thickness, radius, and motion consistent** across the UI
+- Plug straight into **design tokens and themes** through `$inner` and `$colors`
+
+<Success title="The key idea">
+  You define the gradient once, and the mixin handles the layering logic.
+</Success>
+
+The gradients guide has a companion
+[SCSS gradient mixin](/post/css/mastering-css-gradients#unified-scss-gradient-mixin) for backgrounds, if you want the
+two to share the same color tokens.
+
+<RainbowDivider />
+
+## Real-World Example: Contact Form
+
+This technique is used in production on the contact page of this blog, where a repeating gradient border creates
+a subtle yet visually engaging frame around the form.
+
+<CodeBlock language="html">
+{`
+  <div class="contact-form-container">
+    <form class="contact-form">
+      <!-- form fields -->
+    </form>
+  </div>
+`}
+</CodeBlock>
+
+The `.contact-form-container` uses the **background-clip + layered gradient** technique to simulate a gradient
+border:
+
+<CodeBlock language="css">
+{`
+  .contact-form-container {
+    border: 0.5rem solid transparent;
+
+    background:
+      linear-gradient(var(--color-bg-muted), var(--color-bg-muted)) padding-box,
+      repeating-linear-gradient(
+        45deg,
+        var(--color-bg-danger-emphasis) 0 15px,
+        var(--color-bg-default) 15px 25px,
+        var(--color-bg-accent-emphasis) 25px 40px,
+        var(--color-bg-default) 40px 50px
+      ) border-box;
+
+    background-clip: padding-box, border-box;
+    border-radius: 0.75rem;
+    padding: 0.25rem;
+  }
+`}
+</CodeBlock>
+
+### Why This Works
+
+- The **transparent border** creates space for the gradient
+- The **first background layer** fills the inner area with the site's muted background color
+- The **second layer (repeating gradient)** shows only through the border
+- The explicit `background-clip` line repeats what the `padding-box` / `border-box` keywords already set — it's
+  not required, but it makes the intent obvious to anyone reading the stylesheet
+
+### Design Highlights
+
+- Uses **`repeating-linear-gradient`** for a striped, patterned border
+- Fully integrated with **design tokens** (`--color-*`), so both layers follow the light and dark themes
+- Maintains **consistent border radius and spacing**
+
+### When to Use This Pattern
+
+This approach works especially well for contact forms, highlighted containers, cards that need emphasis, and
+sections that need subtle visual separation.
+
+This example shows how gradient borders can move beyond decorative demos and become a **practical UI pattern** in
+real-world layouts.
+
+<RainbowDivider />
+
+## Try It Yourself
+
+Now that you've seen the different techniques, try every one of them interactively:
+
+- **Core:** `background-clip`, `border-image` (all sides or a single-side underline), and `mask`. Turn on the
+  patterned backdrop to see which ones keep a see-through center.
+- **Advanced:** animated borders, rotating conic borders with `@property`, hover-only borders that fade in, and
+  theme-aware borders you can flip between dark and light.
+- **Pitfalls:** each of the [common pitfalls](#common-pitfalls) below, reproduced live with a toggle that applies
+  the fix.
+
+Swap the gradient between linear, radial, conic, and repeating stripes, then adjust thickness, radius, direction,
+and colors. The panel under the preview always shows the CSS for exactly what you're looking at. The
+**Production CSS** options can switch it to CSS variables, add a `:focus-visible` outline, or output it as the
+[SCSS mixin](#reusable-scss-mixin).
+
+<Sandbox slug="css-gradient-borders" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Choosing the Right Technique
+
+<BorderTechniqueCompare />
+
+| Technique          | Rounded corners | See-through center | Easy to animate | Best for                       |
+| ------------------ | --------------- | ------------------ | --------------- | ------------------------------ |
+| `border-image`     | ❌              | ✅                 | ❌              | Square borders, single sides   |
+| `background-clip`  | ✅              | ❌                 | ✅              | Most cards, buttons, and forms |
+| `mask`             | ✅              | ✅                 | ✅              | Borders over images or glass   |
+
+A quick rule of thumb:
+
+- **Rounded element on a solid background?** Use `background-clip`.
+- **Rounded element on an image or translucent background?** Use `mask`.
+- **Square corners, or just one side?** Use `border-image`.
+
+<RainbowDivider />
+
+## Best Practices
+
+- Prefer `background-clip` for most use cases
+- Keep borders **subtle (2–4px)** so they frame content instead of competing with it
+- Use animation only for emphasis, and always add a `prefers-reduced-motion` guard
+- Test in both light and dark themes — especially the inner fill color
+
+### Accessibility
+
+- **Don't use a gradient border as your only focus indicator.** Keep a visible `:focus-visible` outline;
+  a subtle color shift in the border isn't enough on its own.
+- **Don't rely on the border to carry meaning.** A gradient border can't signal an error or a selected state by
+  itself — pair it with text or an icon.
+- **Respect reduced motion.** Stop animated borders for visitors who have asked for less motion — see
+  [Respecting Motion Preferences](/post/animations/css-keyframes-guide#accessibility-respecting-motion-preferences).
+
+### Browser Support
+
+- **`border-image`** → supported everywhere.
+- **`background-clip` with `padding-box` / `border-box`** → supported everywhere.
+- **`mask`** → supported unprefixed in all modern browsers; keep the `-webkit-mask` lines for older Safari and
+  Chromium versions.
+- **`@property`** → all modern browsers (Firefox from version 128); without it, animations simply don't run.
+
+### Performance
+
+- Static gradient borders are cheap — they're painted once like any other background.
+- Animated borders repaint on every frame, so keep them to a few elements at a time.
+- `mask` is slightly heavier than the other techniques, because the browser has to composite the mask layers.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Border Not Showing
+
+For the `background-clip` technique, check that the border is `transparent` — a solid border color covers the
+gradient. For `border-image`, check that you included the slice value (the `1`); without it, the gradient only
+appears in the corners.
+
+### 2. Gradient Bleeding Into the Content (or Hidden Border)
+
+The two background layers fail in opposite ways when one piece is missing:
+
+- **No inner layer:** nothing covers the middle, so the gradient bleeds under your content.
+- **Inner layer without `padding-box`:** it falls back to the default `border-box` and paints over the border
+  ring too, so the border disappears entirely.
+
+Make sure the background lists both layers, each with its box:
+
+<CodeBlock language="css">
+{`
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    linear-gradient(45deg, #ff6a00, #ee0979) border-box;
+`}
+</CodeBlock>
+
+### 3. Square Corners Despite `border-radius`
+
+`border-image` ignores `border-radius` entirely. Switch to `background-clip` (or `mask`) for rounded UI.
+
+### 4. Animation Not Moving
+
+`background-position` can't move a gradient that's the same size as its element — there's nothing extra to slide
+into view. Set `background-size` to at least `200%` (this post uses `300%`).
+
+### 5. Mask Not Working in Safari
+
+Include both the `-webkit-mask` and `-webkit-mask-composite: xor` lines alongside the standard `mask`. The
+prefixed version uses the older keyword `xor`, while the standard one uses `exclude`.
+
+### 6. White Box in Dark Mode
+
+The inner `padding-box` layer is hard-coded to `#fff`. Use a CSS variable for the surface color, as shown in
+[Dynamic, Theme-Aware Borders](#dynamic-theme-aware-borders-with-css-variables).
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Can I put a gradient in border-color?">
+  No — `border-color` only accepts solid colors. Every technique in this post works around that by painting the
+  gradient with `border-image`, a background, or a masked pseudo-element instead.
+</Details>
+
+<Details summary="Which technique should I use for a rounded card?">
+  `background-clip`, as long as the card sits on a solid background. If the card sits on an image or a translucent
+  background, use the `mask` technique so the center stays see-through.
+</Details>
+
+<Details summary="Why does my gradient border have square corners?">
+  You're using `border-image`, which ignores `border-radius`. Switch to the `background-clip` technique.
+</Details>
+
+<Details summary="Can I animate a gradient border without JavaScript?">
+  Yes. Slide an oversized gradient with `background-position`, or register an angle with `@property` and animate it
+  to rotate a conic gradient. Both are pure CSS.
+</Details>
+
+<Details summary="How do I make a gradient border work in dark mode?">
+  Replace the hard-coded inner color with a CSS variable (such as `--surface`) and change that variable per theme.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Gradient borders are a small detail that can significantly improve the **visual polish and hierarchy** of your
+UI.
+
+More importantly, you now understand the **core techniques behind them**, not just the syntax: `border-image`
+for quick square borders, two background layers for rounded ones, and a mask when the center needs to stay
+see-through. That lets you build reusable utilities, integrate them with your design system, and create custom
+variations confidently.
+
+Experiment, combine techniques, and adapt them to your components — this is where CSS truly becomes powerful.
+
+If you want the same layering trick applied to typography instead of borders, the companion post
+**[CSS Gradient Text Guide](/post/css/css-gradient-text)** covers `background-clip: text` in full, including
+animated and stroke variants. And for the gradients themselves — color spaces, layering, and more animated
+effects — revisit **[Mastering CSS Gradients](/post/css/mastering-css-gradients)**.
