@@ -47,6 +47,7 @@ import FilterPipelineDiagram from "@/components/mdx/FilterPipelineDiagram";
 import ClipUnitsDiagram from "@/components/mdx/ClipUnitsDiagram";
 import ClipVsMaskDiagram from "@/components/mdx/ClipVsMaskDiagram";
 import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
+import GroupTransformDiagram from "@/components/mdx/GroupTransformDiagram";
 import LuminanceAlphaDiagram from "@/components/mdx/LuminanceAlphaDiagram";
 import MaskRegionDiagram from "@/components/mdx/MaskRegionDiagram";
 import MiterLimitDiagram from "@/components/mdx/MiterLimitDiagram";
@@ -55,9 +56,11 @@ import PatternTransformDiagram from "@/components/mdx/PatternTransformDiagram";
 import PatternUnitsDiagram from "@/components/mdx/PatternUnitsDiagram";
 import PolyClosingDiagram from "@/components/mdx/PolyClosingDiagram";
 import SeamlessTileDiagram from "@/components/mdx/SeamlessTileDiagram";
+import SymbolViewBoxDiagram from "@/components/mdx/SymbolViewBoxDiagram";
 import TextAnchorDiagram from "@/components/mdx/TextAnchorDiagram";
 import TextBaselineDiagram from "@/components/mdx/TextBaselineDiagram";
 import TextPathAnatomyDiagram from "@/components/mdx/TextPathAnatomyDiagram";
+import UseShadowTreeDiagram from "@/components/mdx/UseShadowTreeDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -120,6 +123,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ClipUnitsDiagram,
     ClipVsMaskDiagram,
     FillRuleRayDiagram,
+    GroupTransformDiagram,
     LuminanceAlphaDiagram,
     MaskRegionDiagram,
     MiterLimitDiagram,
@@ -128,9 +132,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PatternUnitsDiagram,
     PolyClosingDiagram,
     SeamlessTileDiagram,
+    SymbolViewBoxDiagram,
     TextAnchorDiagram,
     TextBaselineDiagram,
     TextPathAnatomyDiagram,
+    UseShadowTreeDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with

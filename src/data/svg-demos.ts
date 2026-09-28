@@ -1657,8 +1657,9 @@ ${dots}
     <path id="leaf-shape" d="M0,20 C0,8 8,0 20,0 C20,12 12,20 0,20 Z" transform="translate(10,20)" />
   </g>
 
-  <!-- Duplicate: does NOT inherit the <g>'s blue — falls back to SVG's default black fill unless given its own. -->
-  <use href="#leaf-shape" transform="translate(55,20)"${duplicateFill} />
+  <!-- Duplicate: the path's own translate(10,20) travels with the clone, so this extra translate(45,0) lands it beside the original. -->
+  <!-- It does NOT inherit the <g>'s blue — it falls back to SVG's default black fill unless given its own. -->
+  <use href="#leaf-shape" transform="translate(45,0)"${duplicateFill} />
 </svg>`;
     }
   },
@@ -1685,6 +1686,66 @@ ${dots}
     <rect width="10" height="10" fill="#171a2b" />
     <circle cx="5" cy="5" r="3.5" fill="#6366f1" />
   </svg>
+</svg>`;
+    }
+  },
+  {
+    slug: "group-opacity-demo",
+    title: "Interactive Example - Group opacity vs. Per-Child opacity",
+    controls: [
+      { id: "mode", label: "Where the transparency is set", type: "select", options: ["opacity on the g", "opacity on each circle", "fill-opacity on the g"], defaultValue: "opacity on the g" },
+      { id: "amount", label: "Value", type: "range", min: 0.2, max: 1, step: 0.05, defaultValue: 0.5 }
+    ],
+    // opacity isn't inherited, so "on the g" composites the pair once — only the per-shape modes let the overlap show through.
+    render: (values) => {
+      const mode = String(values.mode);
+      const amount = Number(values.amount);
+      const groupAttr = mode === "opacity on the g" ? ` opacity="${amount}"` : mode === "fill-opacity on the g" ? ` fill-opacity="${amount}"` : "";
+      const childAttr = mode === "opacity on each circle" ? ` opacity="${amount}"` : "";
+
+      return `
+<svg viewBox="0 0 100 60" width="300" height="180">
+  <!-- Backdrop stripe, so the transparency of whatever sits on top of it is visible. -->
+  <rect x="0" y="26" width="100" height="8" fill="var(--color-fg-muted)" />
+
+  <!-- The group: where the transparency lives decides whether the overlap between the circles shows through. -->
+  <g${groupAttr}>
+    <circle cx="38" cy="30" r="22" fill="#6366f1"${childAttr} />
+    <circle cx="62" cy="30" r="22" fill="#f59e0b"${childAttr} />
+  </g>
+</svg>`;
+    }
+  },
+  {
+    slug: "use-theming-demo",
+    title: "Interactive Example - Theming use Instances",
+    controls: [
+      { id: "primary", label: "color (currentColor) on the use", type: "color", defaultValue: "#6366f1" },
+      { id: "accent", label: "--icon-accent on the use", type: "color", defaultValue: "#f59e0b" },
+      { id: "setAccent", label: "Set --icon-accent on the second instance", type: "checkbox", defaultValue: true }
+    ],
+    // Both values ride in on the use element and inherit into the clone — the symbol itself never names a colour.
+    render: (values) => {
+      const primary = String(values.primary);
+      const accent = String(values.accent);
+      const setAccent = Boolean(values.setAccent);
+      const secondStyle = setAccent ? `color: ${primary}; --icon-accent: ${accent};` : `color: ${primary};`;
+
+      return `
+<svg viewBox="0 0 100 44" width="300" height="132">
+  <defs>
+    <!-- Two-tone badge: the ring follows currentColor, the dot follows --icon-accent, falling back to currentColor. -->
+    <symbol id="theming-badge" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" />
+      <circle cx="12" cy="12" r="4" style="fill: var(--icon-accent, currentColor)" />
+    </symbol>
+  </defs>
+
+  <!-- Instance 1: only color is set, so the dot falls back to currentColor. -->
+  <use href="#theming-badge" x="10" y="6" width="32" height="32" style="color: ${primary};" />
+
+  <!-- Instance 2: color plus the custom property, inherited into its own clone only. -->
+  <use href="#theming-badge" x="58" y="6" width="32" height="32" style="${secondStyle}" />
 </svg>`;
     }
   },

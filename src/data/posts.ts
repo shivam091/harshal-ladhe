@@ -373,10 +373,12 @@ export const posts: Post[] = [
     slug: "svg-essentials-g-defs-symbol-and-use",
     title: "SVG Essentials: g, defs, symbol, and use",
     excerpt: "SVG's native component system predates every JS framework's.",
-    description: "A complete guide to SVG's four container elements — g for grouping shared attributes, defs for reference-only definitions, symbol and use for independently-scaled, independently-styled reusable instances, nested svg for a viewport within a viewport, and switch for conditional rendering.",
+    description: "A complete guide to SVG's g, defs, symbol, and use — inherited vs. group-level properties like opacity, nested transforms, symbol viewBox and preserveAspectRatio, theming use instances with currentColor and custom properties, the use shadow tree, and building an accessible, production-ready icon sprite system.",
     category: ["SVG"],
-    tags: ["svg", "g", "defs", "symbol", "use", "nested-svg", "icon-sprites", "reuse", "vector-graphics", "frontend-development"],
+    tags: ["svg", "g", "defs", "symbol", "use", "nested-svg", "icon-sprites", "currentcolor", "custom-properties", "shadow-dom", "accessibility", "reuse", "vector-graphics", "frontend-development"],
+    toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-09-28", change: "Expanded with group opacity, use positioning, preserveAspectRatio, currentColor/custom-property theming, an accessible end-to-end sprite system, shadow-tree styling, events, performance, and corrected same-origin rules, plus three new diagrams and two interactive demos" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },

@@ -8,15 +8,17 @@ Every SVG document you've built so far in this series has been a flat list of sh
 
 SVG solves this with four container elements that don't draw anything new on their own — they organize and reuse the shapes you already know:
 
-* **`g`** groups elements together so a shared `transform`, `fill`, `opacity`, or event handler can apply to the whole group at once, instead of being repeated on every child.
+* **`g`** groups elements together so a shared `transform`, an inherited `fill` or `stroke`, a group-wide effect like `opacity` or `filter`, or a single event handler can apply to the whole group at once, instead of being repeated on every child.
 * **`defs`** holds elements that exist purely to be *referenced* — nothing inside a `defs` block is rendered where it's defined.
-* **`symbol`** and **`use`** together form SVG's native "component" system: define a reusable template once, then stamp out as many independently-styled instances of it as you like. This predates the idea of a "component" in any JavaScript framework — SVG has had it since its earliest specification.
+* **`symbol`** and **`use`** together form SVG's native "component" system: define a reusable template once, then stamp out as many independently-styled instances of it as you like. This predates the idea of a "component" in any JavaScript framework — both elements have been in SVG since the 1.0 specification.
 
 <Quote>
   `g`, `defs`, `symbol`, and `use` don't add new geometry to SVG's vocabulary — they add structure, letting the shapes you already know scale from "a few hand-written elements" to "a real, reusable graphics system."
 </Quote>
 
-By the end of this post, you'll know when to reach for each of these, how `use` actually behaves under the hood, and how to build a small icon sprite system the SVG-native way — no icon font, no repeated markup.
+By the end of this post, you'll know when to reach for each of these, how `use` actually behaves under the hood, how to theme and size its instances, and how to build a production-ready, accessible icon sprite system the SVG-native way — no icon font, no repeated markup.
+
+This post assumes you're comfortable with the coordinate and `viewBox` fundamentals from [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes) and the `d` strings from [SVG Essentials: Mastering the Path Element](/post/svg/svg-essentials-mastering-the-path-element).
 
 <RainbowDivider />
 
@@ -44,12 +46,12 @@ The `rect`, `circle`, and `line` above were authored as if the group's origin we
 
 ### Shared Presentation Attributes
 
-The same idea applies to presentation attributes. Set `fill`, `stroke`, or `opacity` on a `g`, and every child that doesn't set its own value for that attribute inherits it:
+The same idea applies to presentation attributes — with one important split. **Inherited** properties like `fill`, `stroke`, `stroke-width`, `fill-opacity`, `stroke-opacity`, `color`, and the font properties cascade from the `g` to every child that doesn't set its own value:
 
 <CodeBlock language="xml">
 {`
   <svg viewBox="0 0 100 100">
-    <g fill="#10b981" opacity="0.85">
+    <g fill="#10b981" fill-opacity="0.85">
       <circle cx="30" cy="50" r="18" />
       <circle cx="70" cy="50" r="18" />
     </g>
@@ -57,13 +59,27 @@ The same idea applies to presentation attributes. Set `fill`, `stroke`, or `opac
 `}
 </CodeBlock>
 
-Both circles are green at 85% opacity without repeating `fill` and `opacity` on each one. A child can still override any inherited attribute locally — inheritance flows one direction, from the group down to its children, never back up.
+Both circles are green with an 85% fill opacity, without repeating `fill` and `fill-opacity` on each one. A child can still override any inherited property locally — inheritance flows one direction, from the group down to its children, never back up.
+
+### Group `opacity` Is Not Inherited
+
+`opacity` looks like it belongs in that list, but it doesn't. `opacity` is **not an inherited property** — set on a `g`, it doesn't pass down to the children at all. Instead, the browser renders the whole group as one flattened layer first, then fades that finished layer once. The same is true of `filter`, `clip-path`, and `mask` on a group: they apply to the group's composited result, not to each child separately.
+
+That difference is visible whenever children overlap:
+
+* **`opacity` on the `g`:** the circles are painted fully opaque into the layer, so where they overlap, the front circle completely hides the back one — then the whole silhouette fades together.
+* **`opacity` (or `fill-opacity`) on each circle:** each shape is faded on its own, so the back circle shows through the front one in the overlap.
+
+<InteractiveSvgPanel slug="group-opacity-demo" />
+
+It also means a child can't "opt out" of a group's fade: `opacity="1"` on a child is already the default, and the group's `opacity` is applied on top of the result regardless. A child with `opacity="0.5"` inside a group with `opacity="0.5"` ends up at 25% effective opacity.
 
 <Info title="Remember">
   `g` groups **behavior**, not just geometry:
 
   * A shared `transform` moves the whole group as a unit.
-  * Shared presentation attributes (`fill`, `stroke`, `opacity`, …) cascade down to children that don't override them.
+  * Inherited properties (`fill`, `stroke`, `fill-opacity`, `stroke-opacity`, `color`, …) cascade down to children that don't override them.
+  * Non-inherited effects (`opacity`, `filter`, `clip-path`, `mask`) apply once, to the group's flattened result.
   * The group itself has no visual geometry — remove every child and the `g` renders nothing.
 </Info>
 
@@ -86,18 +102,20 @@ Groups can nest inside other groups, and each level's transform composes with th
 `}
 </CodeBlock>
 
-The body's `rotate(20)` only affects the body — the head keeps its own position relative to the outer group's `translate`, completely unaffected by the body's local rotation. Nesting groups is how you isolate a transform to exactly the part of the illustration it should touch.
+<GroupTransformDiagram />
+
+Each `transform` creates a new local coordinate system for everything inside it. The outer `translate(50, 50)` moves the origin to the centre of the canvas, and both the body and the head are authored against that new origin. The inner `rotate(20)` then tilts the axes again — but only for the body, because only the body lives inside that inner group. The head keeps its position relative to the outer group's translate, completely unaffected by the body's local rotation. Nesting groups is how you isolate a transform to exactly the part of the illustration it should touch.
 
 ### `g` as an Event-Handling Boundary
 
 Because `g` is a real element in the DOM, it can carry its own event listeners — and a click, hover, or focus event anywhere inside the group bubbles up through it just like it would through a `div` wrapping several HTML elements.
 
-That makes `g` the natural boundary for "this icon is one clickable thing," even when the icon itself is built from several separate shapes:
+That makes `g` the natural boundary for "this icon is one clickable thing," even when the icon itself is built from several separate shapes. If you make a group interactive, though, give it everything a real control needs — a role, an accessible name, focusability, and keyboard support:
 
 <CodeBlock language="xml">
 {`
   <svg viewBox="0 0 100 100">
-    <g class="icon-button" role="button" tabindex="0">
+    <g class="icon-button" role="button" tabindex="0" aria-label="Play video">
       <circle cx="50" cy="50" r="35" fill="#6366f1" fill-opacity="0.15" />
       <path d="M40,35 L65,50 L40,65 Z" fill="#4338ca" />
     </g>
@@ -107,18 +125,43 @@ That makes `g` the natural boundary for "this icon is one clickable thing," even
 
 <CodeBlock language="javascript">
 {`
-  document.querySelector(".icon-button").addEventListener("click", () => {
-    // One handler for the whole play-button icon, regardless of whether the
-    // click landed on the background circle or the triangle inside it.
-    playVideo();
+  const playButton = document.querySelector(".icon-button");
+
+  // One handler for the whole play-button icon, regardless of whether the
+  // click landed on the background circle or the triangle inside it.
+  playButton.addEventListener("click", playVideo);
+
+  // role="button" promises keyboard support, so Enter and Space must activate it too.
+  playButton.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      playVideo();
+    }
   });
 `}
 </CodeBlock>
 
 One listener on the `g` covers clicks on the background circle *and* the triangle, without needing a listener on each shape or a check for which child was the actual target. This is the same delegation pattern you'd use with a `div` wrapping several HTML children — `g` just gives you the equivalent boundary inside SVG.
 
+<Success title="Usually better: wrap the SVG in a real button">
+  Recreating a button by hand on a `g` means re-implementing focus, keyboard activation, and the accessible name yourself. When the whole SVG is the control, an HTML `button` does all of that for free:
+
+  <CodeBlock language="html">
+  {`
+    <button type="button" class="play-button" aria-label="Play video">
+      <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <circle cx="50" cy="50" r="35" fill="#6366f1" fill-opacity="0.15" />
+        <path d="M40,35 L65,50 L40,65 Z" fill="#4338ca" />
+      </svg>
+    </button>
+  `}
+  </CodeBlock>
+
+  Reserve `role="button"` on a `g` for cases where several separate clickable regions live inside one SVG, like hotspots on a diagram. [SVG Essentials: Metadata, Links, and Interactivity](/post/svg/svg-essentials-metadata-and-interactivity) covers SVG accessibility and events in depth.
+</Success>
+
 <Warning title="g is not a hit-testing shortcut for everything">
-  A click only lands on a `g` if it lands on one of its *painted* children. An empty region inside the group's visual bounding box — the gap between the circle and the triangle above, for instance — does not trigger the group's listener unless something is actually painted there (or `pointer-events` is set to treat the group as a single hit area).
+  A click only lands on a `g` if it lands on one of its *painted* children. In the example above the background circle is filled, so its whole disc is clickable — but switch it to `fill="none"` with only a stroke, and the empty ring interior would stop responding. Setting `pointer-events` on the `g` doesn't turn the group's bounding box into a hit area; it only sets the value its children inherit. (SVG 2 defines a `pointer-events="bounding-box"` value for exactly that, but it's only implemented in Chromium-based browsers — test before relying on it.) The portable fixes are a background `rect` with `fill="transparent"` as the group's first child, or `pointer-events="all"` on a child that should be hittable even where it isn't painted.
 </Warning>
 
 <RainbowDivider />
@@ -168,6 +211,7 @@ That circle is completely invisible until something references `#dot` — most c
 * [Gradients](/post/svg/svg-essentials-gradients) and [patterns](/post/svg/svg-essentials-pattern-element), referenced via `fill="url(#id)"` or `stroke="url(#id)"`.
 * [Filters](/post/svg/svg-essentials-filters-fundamentals), referenced via `filter="url(#id)"`.
 * [Clip paths and masks](/post/svg/svg-essentials-clippath-and-mask), referenced via `clip-path="url(#id)"` and `mask="url(#id)"`.
+* [Markers](/post/svg/svg-essentials-marker-element), referenced via `marker-start`, `marker-mid`, and `marker-end`.
 * Reusable shapes and `symbol` templates, referenced by `use href="#id"`.
 
 <Warning title="An id alone doesn't require defs">
@@ -194,11 +238,61 @@ This is where reuse in SVG becomes genuinely powerful. `symbol` defines a reusab
 `}
 </CodeBlock>
 
+A `symbol` is never rendered on its own — like anything in `defs`, it only appears through a `use`. (It doesn't even need to sit inside `defs`; a `symbol` anywhere in the document is invisible until referenced. Wrapping it in `defs` is just the tidy convention.)
+
+<Info title="href vs. xlink:href">
+  Older tutorials write `xlink:href="#star-icon"` (with an `xmlns:xlink` declaration on the root `svg`). SVG 2 made the plain `href` attribute standard, and every current browser supports it. The only reason to still emit `xlink:href` on `use` is support for Safari versions before 12.1 — or tooling that only understands SVG 1.1. If you need both, put both on the element; `href` wins where it's supported.
+</Info>
+
 ### Why `symbol` Carries Its Own `viewBox`
 
 A plain `g` has no coordinate system of its own — it just inherits whatever coordinate space it's placed into. A `symbol` is different: its `viewBox` defines a self-contained coordinate system, the same way the outer `svg` element's `viewBox` does. That's what lets a `use` instance scale a `symbol` to *any* `width`/`height` and have its internal geometry rescale proportionally to fit — exactly like an `svg` document embedded via `img`, rather than raw markup being stretched.
 
-That's the core difference from just wrapping shapes in a `g` and giving it an `id`: a `g` has no `viewBox`, so a `use` targeting a `g` reproduces its geometry at 1:1 scale (`x`/`y`/`transform` can move or scale it, but there's no independent internal coordinate system to resize against). A `symbol` gives every instance an independent "canvas" to scale into, driven by that instance's own `width`/`height`.
+<SymbolViewBoxDiagram />
+
+That's the core difference from just wrapping shapes in a `g` and giving it an `id`: a `g` has no `viewBox`, so a `use` targeting a `g` reproduces its geometry at 1:1 scale (`x`/`y`/`transform` can move or scale it, but there's no independent internal coordinate system to resize against). A `symbol` gives every instance an independent "canvas" to scale into, driven by that instance's own `width`/`height`. It's the same idea [`marker`](/post/svg/svg-essentials-marker-element) uses for its own `viewBox`.
+
+### Fitting a Mismatched Box: `preserveAspectRatio`
+
+When a `use` box has the same aspect ratio as the symbol's `viewBox` — a 24 × 24 icon drawn at 16 × 16 or 32 × 32 — the fit is a plain uniform scale. When the ratios differ, the symbol's `preserveAspectRatio` attribute decides what happens, exactly as it does on a root `svg`. The default, `xMidYMid meet`, scales the artwork until it fits entirely inside the box and centres it, leaving empty space on the long axis:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 220 64" width="440" height="128" role="img" aria-label="Three stars in identical 48 by 24 boxes: centred, left-aligned, and stretched">
+    <defs>
+      <symbol id="par-star-meet" viewBox="0 0 24 24">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+      </symbol>
+      <symbol id="par-star-min" viewBox="0 0 24 24" preserveAspectRatio="xMinYMid meet">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+      </symbol>
+      <symbol id="par-star-none" viewBox="0 0 24 24" preserveAspectRatio="none">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+      </symbol>
+    </defs>
+
+    <!-- Every use box is 48 x 24; the dashed rect outlines it -->
+    <rect x="10" y="14" width="48" height="24" fill="none" stroke="#94a3b8" stroke-dasharray="2 2" />
+    <use href="#par-star-meet" x="10" y="14" width="48" height="24" fill="#6366f1" />
+    <text x="34" y="54" font-size="7" text-anchor="middle" fill="#64748b">xMidYMid meet</text>
+
+    <rect x="86" y="14" width="48" height="24" fill="none" stroke="#94a3b8" stroke-dasharray="2 2" />
+    <use href="#par-star-min" x="86" y="14" width="48" height="24" fill="#10b981" />
+    <text x="110" y="54" font-size="7" text-anchor="middle" fill="#64748b">xMinYMid meet</text>
+
+    <rect x="162" y="14" width="48" height="24" fill="none" stroke="#94a3b8" stroke-dasharray="2 2" />
+    <use href="#par-star-none" x="162" y="14" width="48" height="24" fill="#f59e0b" />
+    <text x="186" y="54" font-size="7" text-anchor="middle" fill="#64748b">none</text>
+  </svg>
+`}
+</SvgSnippet>
+
+`preserveAspectRatio` lives on the `symbol`, not the `use`, so it's a property of the icon's design: decide once whether the artwork may be stretched (`none`, useful for a divider or background flourish) or must keep its proportions (the default, right for almost every icon).
+
+Two related details are worth knowing:
+
+* **Overflow is clipped.** Each instance of a `symbol` establishes its own viewport, and browsers clip that viewport by default — so a stroke or shadow that pokes outside the `viewBox` gets cut off. Leave some padding inside the `viewBox`, or set `overflow="visible"` on the `symbol` when you intentionally draw past its edges.
+* **SVG 2 adds `refX`/`refY` to `symbol`.** They set a reference point inside the symbol that aligns with the `use` element's `x`/`y`, the same way `refX`/`refY` anchor a `marker`. Support is still limited, so check it in your target browsers before relying on it; offsetting with `x`/`y` on the `use` works everywhere.
 
 ### How `use` Stamps Out Instances
 
@@ -206,23 +300,99 @@ Each `use` element referencing the same `symbol` is completely independent. Posi
 
 <CodeBlock language="xml">
 {`
-  <use href="#star-icon" x="10" y="10" width="16" height="16" fill="#f59e0b" />
-  <use href="#star-icon" x="40" y="10" width="24" height="24" fill="#6366f1" transform="rotate(15 52 22)" />
-  <use href="#star-icon" x="70" y="10" width="32" height="32" fill="#10b981" />
+  <svg viewBox="0 0 112 52">
+    <defs>
+      <symbol id="star-icon" viewBox="0 0 24 24">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+      </symbol>
+    </defs>
+
+    <use href="#star-icon" x="10" y="10" width="16" height="16" fill="#f59e0b" />
+    <use href="#star-icon" x="40" y="10" width="24" height="24" fill="#6366f1" transform="rotate(15 52 22)" />
+    <use href="#star-icon" x="70" y="10" width="32" height="32" fill="#10b981" />
+  </svg>
 `}
 </CodeBlock>
 
-Three completely different-looking stars, one `path` written exactly once. Try it below — each instance has its own fill and its own transform, and changing one never touches the other two or the original `symbol`:
+Three completely different-looking stars, one `path` written exactly once. Try it below — each instance has its own fill and its own size, and changing one never touches the other two or the original `symbol`:
 
 <InteractiveSvgPanel slug="symbol-use-gallery-demo" />
+
+### Positioning and Sizing: `x`, `y`, `width`, `height`, and `transform`
+
+A `use` element takes the same four geometry attributes you've seen on `rect` and nested `svg`, plus `transform` — but they interact in a specific order:
+
+* **`x` and `y`** don't move the target's coordinates; they add an extra `translate(x, y)` that's applied *after* the `use` element's own `transform`, inside the coordinate system that transform created. `transform="rotate(15 52 22)" x="40" y="10"` behaves exactly like `transform="rotate(15 52 22) translate(40 10)"`. That's why the middle star above rotates neatly in place: `(52, 22)` is the centre of the 24 × 24 box that starts at `(40, 10)`.
+* **`width` and `height`** only matter when the target is a `symbol` or an `svg`, because only those establish a viewport to size. On a `use` pointing at a `path`, `rect`, or `g`, they're ignored. When omitted on a `symbol` instance, they default to `100%` — the instance fills the nearest viewport, which is exactly what makes the `<svg class="icon"><use href="#icon-star" /></svg>` pattern in the sprite section work with no numbers at all.
+
+<CodeBlock language="xml">
+{`
+  <!-- These two instances render identically -->
+  <use href="#star-icon" transform="rotate(15 52 22)" x="40" y="10" width="24" height="24" />
+
+  <g transform="rotate(15 52 22) translate(40 10)">
+    <use href="#star-icon" width="24" height="24" />
+  </g>
+`}
+</CodeBlock>
 
 <Info title="Remember">
   `symbol` + `use` in one line:
 
   **Define once, with its own `viewBox`. Stamp out as many independently-sized, independently-styled instances as you need.**
 
-  This is the same mental model as a component in a UI framework — a template plus props — except it's been part of the SVG spec since SVG 1.1, long before component-based UI libraries existed.
+  This is the same mental model as a component in a UI framework — a template plus props — except it's been part of the SVG spec since SVG 1.0, long before component-based UI libraries existed.
 </Info>
+
+<RainbowDivider />
+
+## Theming Instances with `currentColor` and Custom Properties
+
+Setting `fill` on each `use` works for a one-color icon, but it scales poorly: every color decision lives in markup, and you can't reach a second color inside the icon at all. The production pattern is to have the `symbol` *ask* for its colors instead of hard-coding them, and let each instance answer through inheritance.
+
+Two mechanisms do that, and both flow from the `use` into its cloned content because both are inherited:
+
+* **`currentColor`** resolves to the element's inherited `color` property. Draw the icon with `fill="currentColor"` (or `stroke="currentColor"`), and every instance takes whatever text color surrounds it — a link turns its icon blue, a disabled button greys its icon out, with no icon-specific CSS.
+* **CSS custom properties** inherit into the clone too, so a second color can be passed as `--icon-accent` — with a fallback, so instances that don't set it still look right.
+
+<CodeBlock language="xml">
+{`
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <symbol id="icon-status" viewBox="0 0 24 24">
+      <!-- Primary tone: follows the inherited text color -->
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" />
+      <!-- Accent tone: uses --icon-accent if the instance sets it, else currentColor -->
+      <circle cx="12" cy="12" r="4" style="fill: var(--icon-accent, currentColor)" />
+    </symbol>
+  </svg>
+
+  <svg class="icon"><use href="#icon-status" /></svg>
+  <svg class="icon icon--online"><use href="#icon-status" /></svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .icon {
+    inline-size: 1.5em;
+    block-size: 1.5em;
+    color: #6366f1;
+  }
+
+  /* One modifier class recolors just the accent, per instance */
+  .icon--online {
+    --icon-accent: #10b981;
+  }
+`}
+</CodeBlock>
+
+The accent circle uses `style="fill: var(...)"` rather than a `fill="var(...)"` attribute on purpose: `var()` is reliably supported in CSS declarations, while its support inside presentation attributes has historically varied between engines. Adjust both colors below — the first instance only sets `color`, so its dot falls back to `currentColor`; the second also sets `--icon-accent`:
+
+<InteractiveSvgPanel slug="use-theming-demo" />
+
+<Warning title="Only unset properties can be themed">
+  Inheritance only fills gaps. If the `symbol`'s shapes carry a hard-coded `fill="#6366f1"`, no `color`, `fill`, or custom property on the `use` can change them — the explicit value on the original always wins (see [The `use` Shadow Clone](#the-use-shadow-clone) below). Icons exported from design tools usually arrive with hard-coded fills, so stripping them (or replacing them with `currentColor`) is the first step of preparing a sprite.
+</Warning>
 
 <RainbowDivider />
 
@@ -243,13 +413,15 @@ Notice that toggling the duplicate's fill off doesn't make it fall back to the o
     </g>
 
     <!-- Duplicate: does NOT pick up the blue from the <g> above — it needs its own fill -->
-    <use href="#leaf-shape" transform="translate(45,40)" fill="#f59e0b" />
+    <use href="#leaf-shape" transform="translate(30,0)" fill="#f59e0b" />
   </svg>
 `}
 </CodeBlock>
 
+Note that the original's own `transform="translate(15,40)"` *does* travel with the clone, because it's an attribute on the referenced element itself — so the `use` element's `translate(30,0)` lands the duplicate at an effective `(45, 40)`, right beside the original.
+
 <Warning title="use doesn't clone the original's rendering context">
-  A `use` element re-renders the *geometry* of its target, not the DOM position it happened to sit in. If the original picks up its appearance from a wrapping `g`'s inherited attributes rather than its own explicit ones, that inherited appearance does not travel with the reference — only attributes set directly on the referenced element itself, or on the `use` element, apply to the duplicate.
+  A `use` element re-renders its target, not the DOM position it happened to sit in. If the original picks up its appearance from a wrapping `g`'s inherited attributes rather than its own explicit ones, that inherited appearance does not travel with the reference — only what applies to the referenced element itself (its own attributes, plus stylesheet rules that match it) and what the `use` element passes down by inheritance reach the duplicate.
 </Warning>
 
 <RainbowDivider />
@@ -276,7 +448,7 @@ An `svg` element can be nested inside another `svg`, establishing its own comple
 `}
 </CodeBlock>
 
-This is useful whenever you want to embed a self-contained piece of graphics — a small chart, an icon with its own internal grid, a mini-map — at a specific position, without recalculating every one of its internal coordinates against the outer document's coordinate space. Author the inner diagram once, in whatever coordinate system is convenient for it, then place the whole thing with a single `x`/`y`/`width`/`height` on the nested `svg`.
+This is useful whenever you want to embed a self-contained piece of graphics — a small chart, an icon with its own internal grid, a mini-map — at a specific position, without recalculating every one of its internal coordinates against the outer document's coordinate space. Author the inner diagram once, in whatever coordinate system is convenient for it, then place the whole thing with a single `x`/`y`/`width`/`height` on the nested `svg`. The same `x`/`y`/`width`/`height` placement model also governs raster content embedded with `image`, covered in [SVG Essentials: image and foreignObject](/post/svg/svg-essentials-image-and-foreignobject).
 
 <Info title="How is this different from symbol + use?">
   A nested `svg` is drawn exactly where it's written — there's no separate "definition" and "instance" step. `symbol` + `use` is built for *repeating* the same template multiple times; a nested `svg` is built for embedding *one* self-contained region with its own coordinate system, drawn once, in place.
@@ -286,7 +458,7 @@ This is useful whenever you want to embed a self-contained piece of graphics —
 
 ## `switch` for Conditional Rendering
 
-`switch` is a narrower, more legacy-leaning tool: it evaluates its children in order and renders **only the first one** whose test attribute passes — `requiredFeatures`, `requiredExtensions`, or `systemLanguage`. Every other child is skipped entirely, not just hidden.
+`switch` is a narrower, more legacy-leaning tool: it evaluates its direct children in order and renders **only the first one** whose conditional attributes all pass — in practice `systemLanguage` and `requiredExtensions`. Every other child is skipped entirely, not just hidden. (Older material also lists `requiredFeatures`; SVG 2 removed it, and browsers now treat it as always passing, so don't use it as a test.)
 
 The most practical use is picking a localized label based on the user's browser language:
 
@@ -309,34 +481,138 @@ Only one `text` element renders — whichever is the first match for the user's 
 
 ## A Practical Icon Sprite System
 
-Put `defs`, `symbol`, and `use` together, and you get the SVG-native alternative to an icon font or copy-pasting the same inline markup everywhere: a single `defs` block of `symbol` icons — either at the top of the page or in one sprite file loaded once — referenced by `use` wherever an icon is needed.
+Put `defs`, `symbol`, and `use` together, and you get the SVG-native alternative to an icon font or copy-pasting the same inline markup everywhere: a single sheet of `symbol` icons — either inlined at the top of the page or in one sprite file — referenced by `use` wherever an icon is needed. This section builds one end to end: the sheet, the way it's hidden, the way icons pick up color, how they're made accessible, and when to move the sheet into its own file.
+
+### The Idea in Miniature
 
 <SvgSnippet>
 {`
-  <svg viewBox="0 0 220 60" width="440" height="120">
+  <svg viewBox="0 0 220 60" width="440" height="120" role="img" aria-label="Five icons from one sprite: three stars and two hearts in different colors">
     <defs>
       <symbol id="icon-star" viewBox="0 0 24 24">
-        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+        <path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
       </symbol>
       <symbol id="icon-heart" viewBox="0 0 24 24">
-        <path d="M12 21s-6.7-4.35-9.3-8.1C.6 9.9 1.9 6 5.4 6c2 0 3.4 1.1 4.1 2.4C10.2 7.1 11.6 6 13.6 6c3.5 0 4.8 3.9 2.7 6.9C18.7 16.65 12 21 12 21z" />
+        <path fill="currentColor" d="M12 21s-6.7-4.35-9.3-8.1C.6 9.9 1.9 6 5.4 6c2 0 3.4 1.1 4.1 2.4C10.2 7.1 11.6 6 13.6 6c3.5 0 4.8 3.9 2.7 6.9C18.7 16.65 12 21 12 21z" />
       </symbol>
     </defs>
 
-    <use href="#icon-star" x="10" y="18" width="24" height="24" fill="#f59e0b" />
-    <use href="#icon-star" x="50" y="18" width="24" height="24" fill="#6366f1" />
-    <use href="#icon-heart" x="90" y="18" width="24" height="24" fill="#f43f5e" />
-    <use href="#icon-heart" x="130" y="18" width="24" height="24" fill="#10b981" />
-    <use href="#icon-star" x="170" y="18" width="24" height="24" fill="#be185d" />
+    <use href="#icon-star" x="10" y="18" width="24" height="24" style="color: #f59e0b" />
+    <use href="#icon-star" x="50" y="18" width="24" height="24" style="color: #6366f1" />
+    <use href="#icon-heart" x="90" y="18" width="24" height="24" style="color: #f43f5e" />
+    <use href="#icon-heart" x="130" y="18" width="24" height="24" style="color: #10b981" />
+    <use href="#icon-star" x="170" y="18" width="24" height="24" style="color: #be185d" />
   </svg>
 `}
 </SvgSnippet>
 
-Two `symbol` definitions, five `use` instances, and not one `path` string repeated. Update the star's `d` attribute in the one `symbol` and every instance across the entire page updates with it — the same "single source of truth" benefit a component gives you in a UI framework, achieved with plain markup.
+Two `symbol` definitions, five `use` instances, and not one `path` string repeated. Update the star's `d` attribute in the one `symbol` and every instance across the entire page updates with it — the same "single source of truth" benefit a component gives you in a UI framework, achieved with plain markup. The paths use `fill="currentColor"`, so each instance's color comes from the `color` it inherits rather than from the icon.
 
-<Info title="One sprite file, loaded once">
-  In a real app, the `defs` block of `symbol` icons is often pulled out into its own `icons.svg` file, injected into the page once (or referenced via `use href="/icons.svg#icon-star"`), so every page on the site shares the same definitions instead of re-declaring them per-page.
-</Info>
+### Step 1: The Sprite Sheet
+
+In a real page, the sheet is its own `svg` — usually placed right after the opening `body` tag — holding nothing but `symbol` definitions. Each symbol gets a namespaced `id`, a `viewBox` matching the grid it was designed on, and `currentColor` wherever it should be themeable:
+
+<CodeBlock language="html">
+{`
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+    <symbol id="icon-star" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+    </symbol>
+    <symbol id="icon-heart" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 21s-6.7-4.35-9.3-8.1C.6 9.9 1.9 6 5.4 6c2 0 3.4 1.1 4.1 2.4C10.2 7.1 11.6 6 13.6 6c3.5 0 4.8 3.9 2.7 6.9C18.7 16.65 12 21 12 21z" />
+    </symbol>
+  </svg>
+`}
+</CodeBlock>
+
+### Step 2: Hiding the Sheet Without Breaking It
+
+The sheet itself must not take up space or be announced by screen readers — but *how* you hide it matters. The obvious choice, `display: none` (or the `hidden` attribute), is a trap: in several browsers, gradients, clip paths, masks, patterns, and filters defined inside a `display: none` subtree stop working when referenced from elsewhere, so any icon that uses a [gradient](/post/svg/svg-essentials-gradients) or a [clipPath](/post/svg/svg-essentials-clippath-and-mask) internally renders flat or not at all.
+
+The sheet above avoids that by staying rendered but taking up no room:
+
+* `width="0" height="0"` gives it an empty viewport.
+* `style="position: absolute"` takes it out of the layout flow, so it doesn't leave a blank line where it sits.
+* `aria-hidden="true"` removes it from the accessibility tree — its symbols are templates, not content.
+
+`symbol` content is never painted in place, so nothing leaks visually even though the sheet is technically displayed.
+
+### Step 3: Placing and Theming Icons
+
+Each icon is a tiny `svg` wrapper holding a single `use`. With no `width`/`height` on the `use`, the instance fills the wrapper at the default `100%`, and CSS sizes the wrapper:
+
+<CodeBlock language="html">
+{`
+  <svg class="icon" aria-hidden="true" focusable="false">
+    <use href="#icon-star" />
+  </svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .icon {
+    inline-size: 1em;
+    block-size: 1em;
+    vertical-align: -0.125em;
+    flex-shrink: 0;
+  }
+`}
+</CodeBlock>
+
+Sizing in `em` makes an icon track the font size of the text beside it, and because the symbols paint with `currentColor`, the icon also tracks that text's color — hover states, dark mode, and disabled styles all apply to icons for free. For a second tone, use the `--icon-accent` custom-property pattern from [Theming Instances](#theming-instances-with-currentcolor-and-custom-properties).
+
+### Step 4: Accessible Icons
+
+Every icon is either **decorative** (its meaning is already carried by visible text) or **meaningful** (it's the only thing conveying that meaning). They need opposite treatment:
+
+<CodeBlock language="html">
+{`
+  <!-- Decorative: the text says it all, so hide the icon -->
+  <button type="button">
+    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-heart" /></svg>
+    Add to favourites
+  </button>
+
+  <!-- Icon-only control: the name goes on the control, the icon stays hidden -->
+  <button type="button" aria-label="Add to favourites">
+    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-heart" /></svg>
+  </button>
+
+  <!-- Meaningful standalone image: role="img" plus a name on the OUTER svg -->
+  <svg class="icon" role="img" aria-label="Featured">
+    <use href="#icon-star" />
+  </svg>
+`}
+</CodeBlock>
+
+* **Decorative icons** get `aria-hidden="true"`. `focusable="false"` is a legacy attribute that only old Internet Explorer and pre-Chromium Edge honored — they made inline SVG a tab stop by default — and it's harmless everywhere else.
+* **Meaningful icons** get `role="img"` and an accessible name on the *outer* `svg`, via `aria-label` or a `title` child referenced with `aria-labelledby`. Don't count on a `title` placed inside the `symbol`: it lives in the cloned shadow content, and screen readers don't reliably announce it.
+* **Icon-only controls** carry the name on the control itself, keeping the icon decorative — that way there's exactly one name, in the place assistive tech expects it.
+
+### Step 5: Moving the Sheet into Its Own File
+
+For a site with many pages, the sheet can move out of the HTML into a standalone `icons.svg` — the same markup as Step 1, saved as its own file with the `xmlns` declaration — and be referenced by URL:
+
+<CodeBlock language="html">
+{`
+  <svg class="icon" aria-hidden="true" focusable="false">
+    <use href="/icons.svg#icon-star" />
+  </svg>
+`}
+</CodeBlock>
+
+The trade-offs versus an inline sheet:
+
+* **Caching:** the file is downloaded once and cached across every page, instead of re-shipping every symbol in every HTML response. For a large icon set this is the main reason to externalize.
+* **Loading:** icons appear only after the sprite file arrives, so there's a brief blank moment on a cold cache that an inline sheet never has.
+* **Styling:** your page's stylesheet can't reach into an external file, so rules matching the symbols' internals won't apply — theming has to come entirely through inherited properties like `color`, `currentColor`, and custom properties, which is one more reason to build symbols that way from the start.
+* **Internal references:** gradients, masks, or filters defined inside the external sprite and used by its own symbols have historically been unreliable across browsers — keep sprite icons to plain shapes where you can, and test the ones that aren't.
+* **Origin:** the file must be served from the **same origin** as the page — see [Cross-Origin `use`](#cross-origin-use) below.
+
+### Build Tooling
+
+Nobody hand-assembles a sprite with hundreds of icons. Tools like [svg-sprite](https://github.com/svg-sprite/svg-sprite) or a bundler plugin take a folder of individual `.svg` files and generate the sheet, turning each file's root `svg` into a `symbol` with its `viewBox` intact and an `id` derived from the file name. Run the source files through [SVGO](https://github.com/svg/svgo) first to strip editor metadata and redundant attributes — and check its config keeps each icon's `viewBox` and doesn't rename the `id`s you reference, since both are load-bearing for `use`. This is also the natural step to replace hard-coded fills with `currentColor`.
 
 <RainbowDivider />
 
@@ -344,7 +620,7 @@ Two `symbol` definitions, five `use` instances, and not one `path` string repeat
 
 `g`, `defs`, `symbol`, and `use` earn their keep in a specific set of situations:
 
-* **Icon systems and sprite sheets.** A `defs` block of `symbol` icons, referenced by `use` throughout the UI, is the direct SVG equivalent of an icon font — without the font-loading overhead or the accessibility pitfalls of encoding icons as text glyphs.
+* **Icon systems and sprite sheets.** A sheet of `symbol` icons, referenced by `use` throughout the UI, is the direct SVG equivalent of an icon font — without the font-loading overhead or the accessibility pitfalls of encoding icons as text glyphs.
 * **Repeated decorative elements that should stay in sync.** Five stars in a rating widget, a grid of dots in a background pattern, a row of identical dividers — define the shape once as a `symbol` (or a plain referenced element), and every instance updates the moment the master definition changes.
 * **Complex illustrations built from reusable parts.** A scene made of several trees, or a diagram with several identical connector arrows, benefits from defining the reusable part once and placing many `use` instances rather than duplicating the underlying path data.
 * **Any transform or event handler that should apply to a multi-shape unit as one thing.** That's squarely `g`'s job — grouping shapes that should move, style, or respond to interaction together.
@@ -357,21 +633,91 @@ Where they *don't* pull their weight: a shape you're only ever going to draw onc
 
 ### The `use` Shadow Clone
 
-Under the hood, a `use` element behaves as if the browser clones its referenced content into a shadow tree anchored at the `use` element's position — conceptually similar to how a Web Component's shadow DOM works. That model explains a couple of behaviors that otherwise look surprising:
+Under the hood, a `use` element renders a *clone* of its referenced content inside a closed shadow tree attached to the `use` element — conceptually similar to a Web Component's shadow DOM. The clone isn't part of the regular document tree, and that single fact explains every styling behavior of `use`:
 
-* CSS or presentation attributes applied to the `use` element itself *can* override the original's presentation attributes — but only for properties the original element doesn't already set explicitly on itself (as seen in the [`use` Without `symbol`](#use-without-symbol) demo above, where the clone falls back to black rather than the original's inherited blue).
-* An ID-based CSS selector that targets something *inside* the original element's structure — a nested `path` by its own `id`, say — does not reach into the `use` clone. The clone is a copy of the rendered result, not a live, selector-addressable mirror of the original's internal DOM.
+<UseShadowTreeDiagram />
+
+* **Inheritance flows from the `use` into the clone.** The clone's root is treated as a child of the `use` element, so every inherited property — `fill`, `stroke`, `color`, font properties, custom properties — flows from the `use` (and the `use` element's own ancestors) down into the cloned shapes.
+* **Anything set explicitly on the original wins.** Inheritance only supplies a value when the original element doesn't have one. A `fill` attribute, an inline `style`, or a stylesheet rule that applies to the original element is carried into every clone, and nothing on the `use` can override it — that's why the circle stays tomato in both instances above.
+* **Stylesheet rules match the original, not the clone.** Under SVG 2, which current browsers follow, document CSS rules that match the *original* element — including `#id` and class selectors — style every clone of it. What doesn't work is per-instance targeting: a selector like `.card use path` never matches, because the cloned `path` isn't a descendant of the `use` in the document, and selectors can't cross into the shadow tree.
+* **Interaction states can't be per-instance inside the clone.** You can't write a selector that hovers one inner shape of one instance. Put the state on the `use` itself and let it inherit instead.
+
+<CodeBlock language="css">
+{`
+  /* Works: matches the ORIGINAL path, so every instance gets a stroke */
+  #icon-star path {
+    stroke: black;
+  }
+
+  /* Never matches: .card use path would have to reach into the shadow tree */
+  .card use path {
+    fill: red;
+  }
+
+  /* Works per instance: style the use, let the value inherit into its clone
+     (the symbol's path must paint with currentColor for this to show) */
+  .card use:hover {
+    color: red;
+  }
+`}
+</CodeBlock>
 
 <Warning title="Don't rely on selectors reaching through a use clone">
-  If you need per-instance control over an element *inside* a referenced group, expose that control through an attribute on the `use` element (like the `fill` override above) or a CSS custom property inherited into the clone — not a selector chasing an `id` that lives inside the original's markup.
+  If you need per-instance control over an element *inside* a referenced symbol, leave that property unset on the original and expose it through something that inherits — `color` with `currentColor`, an attribute on the `use` element, or a CSS custom property — not a selector chasing an element that lives inside the clone. Older engines implemented these styling rules differently, so if you support them, test the pattern there.
 </Warning>
+
+### Events and `use`
+
+Events on cloned content are retargeted: in browsers following SVG 2, a click on a shape inside a `use` instance reports the `use` element itself as `event.target`, not the cloned shape — the same way events from inside a closed shadow root report the host. Put any data you need on the `use` element and read it from there:
+
+<CodeBlock language="html">
+{`
+  <svg class="toolbar" viewBox="0 0 80 24">
+    <use href="#icon-star" data-action="favourite" x="0" width="24" height="24" />
+    <use href="#icon-heart" data-action="like" x="32" width="24" height="24" />
+  </svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="javascript">
+{`
+  document.querySelector(".toolbar").addEventListener("click", (event) => {
+    const icon = event.target.closest("use");
+    if (!icon) return;
+    handleAction(icon.dataset.action);
+  });
+`}
+</CodeBlock>
+
+SVG 1.1 exposed the clone through `SVGElementInstance` objects with `correspondingElement` and `correspondingUseElement` properties; those are deprecated and have been removed from modern browsers, so don't write code that expects them. (A toolbar of real controls should still be HTML `button`s — this pattern is for graphics like diagrams and maps where the clickable parts are SVG.)
+
+### Performance of `use`
+
+Every `use` instance builds and maintains its own shadow tree, so reuse saves *markup*, not rendering work. A few dozen icons on a page cost nothing noticeable, but a few thousand `use` elements — a dense map or a generated data visualization — each carry their own clone. Deep chains (a `use` referencing a `g` full of other `use` elements) multiply that, and editing the original makes the browser update every instance that references it. If you're stamping out thousands of instances or animating the source, profile it; for very large counts, plain `path` output or a `canvas` rendering is often cheaper.
 
 ### Cross-Origin `use`
 
-Everything above assumes `use` is referencing something in the *same* SVG document. `use` can also point at an external file — `href="icons.svg#icon-star"` — but that comes with a stricter requirement: the browser applies same-origin rules to cross-document `use` references, more strictly than it does to same-document ones. Referencing a `symbol` in a file served from a different origin without the right CORS headers in place will silently fail to render, rather than falling back to some partial result.
+Everything above assumes `use` references something in the *same* document. `use` can also point at an external file — `href="/icons.svg#icon-star"` — but external references are **same-origin only**, in every browser. Unlike `fetch` or `img`, `use` has no CORS mode: adding `Access-Control-Allow-Origin` headers to a sprite on a CDN doesn't make a cross-origin `use` reference work. The icon simply fails to render, with no fallback. Modern browsers also block `data:` URLs as `use` targets, so inlining the sprite as a data URI in `href` isn't a workaround either.
 
 <Info title="Practical takeaway">
-  For an icon sprite loaded from its own file, serve it from the same origin as the page (or with appropriate CORS headers) if you plan to reference it with `use href="icons.svg#icon-name"`. Referencing symbols defined inline in the current document never runs into this at all — same-document `href="#icon-name"` references have no origin to cross.
+  For an icon sprite loaded from its own file, serve it from the same origin as the page. If the sprite has to live on a CDN, either proxy it through your own origin (a rewrite rule so `/icons.svg` is served from your domain), or fetch it — which *does* honor CORS — and inline it into the page once:
+
+  <CodeBlock language="javascript">
+  {`
+    fetch("https://cdn.example.com/icons.svg")
+      .then((response) => response.text())
+      .then((markup) => {
+        const holder = document.createElement("div");
+        // Hidden without display: none, so gradients inside the symbols keep working
+        holder.style.cssText = "position: absolute; width: 0; height: 0; overflow: hidden";
+        holder.setAttribute("aria-hidden", "true");
+        holder.innerHTML = markup; // only for a sprite you control and trust
+        document.body.prepend(holder);
+      });
+  `}
+  </CodeBlock>
+
+  After that, same-document `href="#icon-star"` references work everywhere — they have no origin to cross.
 </Info>
 
 <RainbowDivider />
@@ -380,13 +726,14 @@ Everything above assumes `use` is referencing something in the *same* SVG docume
 
 `g`, `defs`, `symbol`, and `use` turn SVG from "a flat list of shapes" into an actual graphics system with reuse and organization built in:
 
-* **`g`:** Groups elements so a shared `transform`, presentation attribute, or event listener applies to the whole group at once — and nested groups let you isolate a transform to exactly the part of an illustration it should touch.
-* **`defs`:** Holds elements meant to be referenced, not rendered directly where they're defined — the natural home for gradients, filters, clip paths, and reusable shapes.
-* **`symbol` and `use`:** SVG's native component system. A `symbol`'s own `viewBox` lets every `use` instance scale independently, and each instance can carry its own position, size, transform, and color without touching the shared definition or any other instance.
+* **`g`:** Groups elements so a shared `transform`, inherited presentation properties, or one event listener applies to the whole group at once. `opacity`, `filter`, `clip-path`, and `mask` aren't inherited — they apply once, to the group's flattened result — and nested groups compose their transforms, isolating each one to exactly the part it should touch.
+* **`defs`:** Holds elements meant to be referenced, not rendered directly where they're defined — the natural home for gradients, filters, clip paths, markers, and reusable shapes.
+* **`symbol` and `use`:** SVG's native component system, around since SVG 1.0. A `symbol`'s own `viewBox` and `preserveAspectRatio` let every `use` instance scale independently; `x`/`y` add a translate after the `use` element's `transform`, and `width`/`height` size `symbol` and `svg` targets only.
+* **Theming:** Leave colors unset in the symbol and paint with `currentColor` and `var(--icon-accent, currentColor)`, so each instance is themed by what it inherits from its `use`.
 * **`use` without `symbol`:** Any element with an `id` is a valid `use` target — useful for simple duplication when you don't need `symbol`'s independent `viewBox` scaling.
 * **Nested `svg`:** A viewport within a viewport, useful for embedding a self-contained mini-diagram at a specific position without recalculating its internal coordinates.
-* **`switch`:** A narrow, legacy-leaning tool for picking the first child whose feature or language test passes — most commonly `systemLanguage`-based localization.
-* **Icon sprite systems:** A `defs` block of `symbol` icons, referenced by `use` throughout a page, is the SVG-native alternative to an icon font or repeated inline markup.
-* **Production edge cases:** `use` behaves like a shadow-DOM clone — attributes on the `use` element can override the original's *unset* properties, but ID-based selectors don't reach into the clone, and cross-origin `use href` references need same-origin or CORS handling that same-document references never require.
+* **`switch`:** A narrow, legacy-leaning tool for rendering the first child whose `systemLanguage` or `requiredExtensions` test passes.
+* **Icon sprite systems:** A sheet of `currentColor` symbols, hidden with zero size rather than `display: none`, marked decorative or given a name on the outer `svg`, and optionally moved to a same-origin sprite file built with tooling like svg-sprite and SVGO.
+* **Production edge cases:** `use` renders a shadow-tree clone — properties inherit in from the `use` but explicit values on the original win, selectors can't target one instance's internals, events retarget to the `use` element, every instance has a rendering cost, and external references are same-origin only, with no CORS escape hatch.
 
-With shapes, paths, text, and now reuse and organization covered, you have the full toolkit for building real, maintainable SVG documents — not just one-off graphics, but systems of them.
+With grouping and reuse in place, `defs` is about to fill up. Next in the series, [SVG Essentials: linearGradient, radialGradient, and stop](/post/svg/svg-essentials-gradients) puts it to work with the first of SVG's reference-by-`id` paint servers.
