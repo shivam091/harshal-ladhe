@@ -455,6 +455,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-27", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-gradient-borders",
+    title: "CSS Gradient Borders: Complete Guide with Techniques & Examples",
+    excerpt: "Build gradient borders using modern CSS techniques",
+    description: "A complete guide to CSS gradient borders using border-image, background-clip, mask, conic and radial gradients, @property animations, and a reusable SCSS mixin with real-world examples.",
+    category: ["CSS"],
+    tags: ["css", "gradients", "borders", "background-clip", "scss", "mixins", "animation", "accessibility", "ui-design", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/css-gradient-borders/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS Gradient Borders tutorial banner featuring colorful neon gradient border techniques, including linear, conic, mask, animated, radial, and SCSS mixin examples, with the title “CSS Gradient Borders” and supporting technique icons.",
+      caption: "Linear, conic, radial and animated gradient borders around UI boxes."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Three techniques that look alike on a white page turned out to behave very differently once I put them over a striped background — which is how the see-through-center rule for picking mask over background-clip ended up at the heart of this post. Rebuilding the playground's conic animation around an @property angle, after the background-position version just zoomed into one flat hue, and reworking the mixin so every argument can be named, took more iterations than the rest of the post combined. I hope the side-by-side comparison saves you from guessing which one to reach for. Thanks for bordering on obsessive with me. 🖼️",
+    changelog: [
+      { date: "2026-09-28", change: "Initial publication" }
+    ]
   }
 ];
 
