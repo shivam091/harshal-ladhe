@@ -288,6 +288,7 @@ export const posts: Post[] = [
     },
     signoff: "The five diagrams gave me the most trouble up front—getting the off-center radial boundaries to line up with the actual math, and the conic sweep to read as clockwise-from-the-top at a glance—and turning the playground into three real tabs (gradient types plus repeating, a toggleable glass layer stack, and all three animated demos with a reduced-motion switch) took a lot more wiring than the original single-panel version. I hope dragging every one of those controls makes gradients click in a way reading about them never quite does. Thanks for gradient-ing along with me. 🌈",
     changelog: [
+      { date: "2026-09-28", change: "Added cross-reference to post 'CSS Gradient Borders: Complete Guide with Techniques & Examples'" },
       { date: "2026-09-27", change: "Added cross-reference to post 'CSS Gradient Text Guide: Background-Clip, Animation & Advanced Tricks'" },
       { date: "2026-09-04", change: "Initial publication" }
     ]
