@@ -6,6 +6,69 @@ export const metadata = buildPostMetadata("svg-essentials-filters-fundamentals")
 
 `<filter>` applies a graphics-editor-style effect pipeline — blur, offset, color manipulation, lighting, noise — to any SVG element, referenced via `filter="url(#id)"`. The real power isn't any single effect; it's that a filter is a *chain* of small, composable primitives, each one a step simple enough to understand on its own, combining into effects none of them could produce alone.
 
+<Quote>
+  A filter doesn't change the shape you drew. It takes a rendered snapshot of it, runs that snapshot through a pipeline of image operations, and paints the result in its place.
+</Quote>
+
+This post covers the machinery every filter is built on: where filters can be applied, the filter region and why effects get clipped, how primitives hand results to each other, the color space filters work in, and the handful of primitives — `feGaussianBlur`, `feOffset`, `feFlood`, `feBlend`, `feMerge`, plus a first look at `feComposite` — you need to build real drop shadows and glows by hand. It builds on the `url(#id)` referencing pattern from [gradients](/post/svg/svg-essentials-gradients) and [clipPath and mask](/post/svg/svg-essentials-clippath-and-mask), and the [next post](/post/svg/svg-essentials-advanced-filter-primitives) picks up with color matrices, compositing operators, noise, and lighting.
+
+<RainbowDivider />
+
+## Applying a Filter
+
+There are three ways to put a filter on something, and they aren't interchangeable.
+
+### The `filter` Attribute on SVG Elements
+
+The classic form: define a `<filter>` with an `id` and reference it from any shape, `<text>`, `<g>`, `<use>`, or `<image>`.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 100">
+    <defs>
+      <filter id="soft-blur">
+        <feGaussianBlur stdDeviation="2" />
+      </filter>
+    </defs>
+    <circle cx="50" cy="50" r="30" fill="#6366f1" filter="url(#soft-blur)" />
+  </svg>
+`}
+</CodeBlock>
+
+Putting `filter` on a `<g>` filters the group *as a whole*: the children are rendered together first, and the combined image is filtered once. That's different from giving each child its own filter — overlapping children blur into each other instead of each blurring separately.
+
+### CSS `filter: url(#id)`
+
+`filter` is also a CSS property, so the same reference works from a stylesheet — including, in principle, on HTML elements:
+
+<CodeBlock language="css">
+{`
+  .icon       { filter: url(#soft-blur); }
+  .card-image { filter: url(#soft-blur); }  /* an HTML element */
+`}
+</CodeBlock>
+
+On SVG elements this is equivalent to the attribute. On HTML elements, support is less uniform: Chromium and Firefox apply SVG filters referenced from HTML, but Safari has a long history of partial support and rendering bugs for `url()` filters on HTML content. Test in your target browsers before relying on it, and prefer the CSS filter functions below when one of them covers the effect.
+
+### CSS Filter Functions
+
+CSS defines ten shorthand filter functions that need no `<filter>` element at all. Each one is specified as an equivalent SVG filter chain, so knowing the mapping tells you which primitive to reach for once the shorthand isn't enough:
+
+| CSS function | SVG equivalent |
+| --- | --- |
+| `blur()` | `feGaussianBlur` |
+| `drop-shadow()` | `feGaussianBlur` + `feOffset` + `feFlood` + `feComposite` + `feMerge` (or `feDropShadow`) |
+| `brightness()` | `feComponentTransfer` (linear) |
+| `contrast()` | `feComponentTransfer` (linear) |
+| `invert()` | `feComponentTransfer` (table) |
+| `opacity()` | `feComponentTransfer` (table on alpha) |
+| `grayscale()` | `feColorMatrix` (matrix) |
+| `sepia()` | `feColorMatrix` (matrix) |
+| `saturate()` | `feColorMatrix type="saturate"` |
+| `hue-rotate()` | `feColorMatrix type="hueRotate"` |
+
+They also chain — `filter: blur(2px) saturate(1.5) url(#grain)` applies each step in order, so a CSS function list and an SVG `url()` reference can be mixed in one declaration.
+
 <RainbowDivider />
 
 ## The `<filter>` Element and Its Region
@@ -18,15 +81,148 @@ export const metadata = buildPostMetadata("svg-essentials-filters-fundamentals")
 `}
 </CodeBlock>
 
-`x`/`y`/`width`/`height` define the **filter region** — a bounding box the effect is allowed to paint within, expressed (by default, via `filterUnits="objectBoundingBox"`) as a percentage of the filtered element's own box. Effects that spill outward — a blur, a drop shadow — need a region *larger* than 100%, or the effect gets visibly clipped at the element's original edges. This is the single most common SVG-filter bug: an effect that looks cut off almost always means the filter region needs expanding.
+`x`/`y`/`width`/`height` define the **filter region** — the rectangle the filter is allowed to paint in. Anything a primitive produces outside it is discarded. When you leave these attributes off, the defaults are:
+
+* `x="-10%"` and `y="-10%"`
+* `width="120%"` and `height="120%"`
+
+In other words, the region is the element's bounding box plus a 10% margin on every side. That margin is enough for many subtle effects, but a blur spreads roughly three times its `stdDeviation` outward, and a drop shadow also shifts by its offset. Once the effect spills past that 10% margin, it gets sliced off with a hard straight edge:
+
+<FilterRegionDiagram />
+
+Both shapes above use the same blur. The only difference is the region. That's the single most common SVG-filter bug: an effect that looks cut off almost always means the region needs expanding. Expand it only as much as the effect needs, though, because every pixel of region is a pixel the browser has to process (see [Performance](#performance)).
+
+### `filterUnits`: What the Percentages Mean
+
+`filterUnits` decides the coordinate system for the region's `x`/`y`/`width`/`height`:
+
+* **`objectBoundingBox` (default)** — values are fractions or percentages of the filtered element's bounding box. `x="-0.1"` and `x="-10%"` mean the same thing. The region scales with the element, so one filter works for small and large shapes alike.
+* **`userSpaceOnUse`** — values are absolute user units in the coordinate system of the element that references the filter. Use this when the effect's size must not depend on the shape's size, or when the bounding box is degenerate.
+
+<CodeBlock language="xml">
+{`
+  <filter id="line-glow" filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="100">
+    <feGaussianBlur stdDeviation="3" />
+  </filter>
+`}
+</CodeBlock>
+
+<Warning title="Horizontal and vertical lines vanish under objectBoundingBox">
+  A perfectly horizontal `<line>` has a bounding box with zero height, so a percentage-based region is also zero pixels tall — and the filtered line disappears completely. The same happens to perfectly vertical lines and to any path whose bounding box collapses in one dimension. Switch the filter to `filterUnits="userSpaceOnUse"` with explicit dimensions.
+</Warning>
+
+### Primitive Subregions and `primitiveUnits`
+
+Each primitive can also take its own `x`/`y`/`width`/`height`, defining a **primitive subregion** — the area *that one step* computes and writes into, clipped to the overall filter region. When they're omitted, a primitive's subregion defaults to the union of the subregions of the inputs it references. For a primitive with no referenced inputs (such as `feFlood`) or with only built-in inputs like `SourceGraphic`, it defaults to the whole filter region.
+
+Those per-primitive values — and every length inside a primitive, like `stdDeviation`, `dx`, and `dy` — are interpreted according to the filter's `primitiveUnits` attribute:
+
+* **`userSpaceOnUse` (default)** — plain user units. `stdDeviation="3"` means three user units, whatever the element's size.
+* **`objectBoundingBox`** — fractions of the element's bounding box. `stdDeviation="0.05"` becomes 5% of the box's width horizontally and 5% of its height vertically, so the blur scales with the shape.
+
+<CodeBlock language="xml">
+{`
+  <!-- Flood only the top half of the element's box, using bbox fractions. -->
+  <filter id="half-tint" primitiveUnits="objectBoundingBox">
+    <feFlood flood-color="#f59e0b" flood-opacity="0.5" x="0" y="0" width="1" height="0.5" />
+    <feComposite in2="SourceAlpha" operator="in" />
+    <feMerge>
+      <feMergeNode in="SourceGraphic" />
+      <feMergeNode />
+    </feMerge>
+  </filter>
+`}
+</CodeBlock>
+
+In that example the second `<feMergeNode>` has no `in`, so it picks up the previous primitive's output — which is the next topic.
+
+<Info title="filterUnits and primitiveUnits are independent">
+  `filterUnits` only controls the filter region. `primitiveUnits` controls everything inside the primitives. The defaults are deliberately mismatched — a percentage region, but user-unit blur radii — so it's common to set one and forget the other applies separately.
+</Info>
 
 <RainbowDivider />
 
 ## The Named-Result Pipeline
 
+Every primitive reads one or two inputs and writes one output image. Three attributes wire them together:
+
+* **`in`** — the primitive's input.
+* **`in2`** — a second input, only on primitives that combine two images: `feComposite`, `feBlend`, and `feDisplacementMap`.
+* **`result`** — a name for this primitive's output, so any *later* primitive in the same `<filter>` can refer to it.
+
+`feMerge` is the exception to the one-or-two-inputs rule. It has no `in` or `in2` of its own. Instead it takes any number of `<feMergeNode in="...">` children and stacks them.
+
 <FilterPipelineDiagram />
 
-Every filter chain starts from one of two implicit inputs: `SourceGraphic` (the element being filtered, as rendered) or `SourceAlpha` (just its alpha channel). Each primitive can name its own output with `result="someName"`, and any *later* primitive can pick that output back up via `in="someName"` (or `in2` for primitives taking two inputs, like `feMerge`/`feComposite`). That named hand-off — diagrammed above — is the entire mechanism that turns several individually-simple primitives into one compound effect.
+The diagram above is the standard colored drop-shadow chain, which the rest of this post builds step by step. Notice that each result name is just a label. The flow isn't defined by the order of the boxes but by which `in`/`in2` names which `result`.
+
+### Built-in Inputs
+
+Besides earlier `result` names, `in` and `in2` accept a few keywords:
+
+* **`SourceGraphic`** — the filtered element exactly as it would have rendered, colors and all.
+* **`SourceAlpha`** — the same image with every pixel's color set to black and only its alpha channel kept: a silhouette.
+* **`BackgroundImage`**, **`BackgroundAlpha`**, **`FillPaint`**, **`StrokePaint`** — defined in the spec, but effectively unsupported in current browsers. Don't build on them. For "whatever is behind this element", use CSS `backdrop-filter` instead.
+
+### Implicit Chaining
+
+`in` is optional, and leaving it off doesn't mean "nothing". For the **first** primitive in a filter, an omitted `in` means `SourceGraphic`. For **every later** primitive, it means the result of the primitive immediately before it. So these two filters are identical:
+
+<CodeBlock language="xml">
+{`
+  <!-- Implicit: each step reads the one before it. -->
+  <filter id="implicit">
+    <feGaussianBlur stdDeviation="3" />
+    <feOffset dx="2" dy="2" />
+  </filter>
+
+  <!-- Explicit: the same wiring, spelled out. -->
+  <filter id="explicit">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="a" />
+    <feOffset in="a" dx="2" dy="2" />
+  </filter>
+`}
+</CodeBlock>
+
+The output of the whole filter is always the output of its **last** primitive. Implicit chaining keeps linear filters short. Name results explicitly as soon as the chain branches — for example, when one output is needed twice or `SourceGraphic` has to come back in at the end — because a mistaken implicit input is silent: the filter still renders, just wrongly.
+
+<RainbowDivider />
+
+## `color-interpolation-filters`: The Color Space Filters Work In
+
+Filter primitives do arithmetic on color values — blurring averages neighbouring pixels, blending multiplies them. The result of that arithmetic depends on which color space the numbers are in, and SVG filters default to a different one than the rest of the web:
+
+* **`linearRGB` (default)** — values are converted to linear light before the math and back afterwards. Averages behave physically, so a blur between two saturated colors stays bright through the transition.
+* **`sRGB`** — the math runs directly on the gamma-encoded values you wrote in CSS. Transitions between saturated colors go darker and muddier in the middle, but numeric operations (like a color matrix) produce the exact values you'd predict from the hex codes.
+
+The same blur, over the same red and blue squares, in both spaces:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="400" height="200">
+    <defs>
+      <filter id="ff-cif-linear" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="linearRGB">
+        <feGaussianBlur stdDeviation="6" />
+      </filter>
+      <filter id="ff-cif-srgb" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+        <feGaussianBlur stdDeviation="6" />
+      </filter>
+    </defs>
+    <g filter="url(#ff-cif-linear)">
+      <rect x="10" y="12" width="40" height="55" fill="#ef4444" />
+      <rect x="50" y="12" width="40" height="55" fill="#3b82f6" />
+    </g>
+    <g filter="url(#ff-cif-srgb)">
+      <rect x="110" y="12" width="40" height="55" fill="#ef4444" />
+      <rect x="150" y="12" width="40" height="55" fill="#3b82f6" />
+    </g>
+    <text x="50" y="96" font-size="8" text-anchor="middle" fill="currentColor">linearRGB (default)</text>
+    <text x="150" y="96" font-size="8" text-anchor="middle" fill="currentColor">sRGB</text>
+  </svg>
+`}
+</SvgSnippet>
+
+This is why a hand-built SVG filter can look subtly different from the "same" CSS filter function: the CSS shorthand functions are specified to operate in sRGB. When you're trying to match a CSS effect, a design tool's output, or exact color values from a matrix, set `color-interpolation-filters="sRGB"` on the `<filter>` (it's inherited by every primitive inside) or on individual primitives.
 
 <RainbowDivider />
 
@@ -36,19 +232,87 @@ Every filter chain starts from one of two implicit inputs: `SourceGraphic` (the 
 {`<feGaussianBlur in="SourceGraphic" stdDeviation="3" />`}
 </CodeBlock>
 
-The most common single primitive, and often used standalone for a plain blur. `stdDeviation` controls the blur radius:
+The most common single primitive, and often used on its own for a plain blur. `stdDeviation` sets the blur's strength: the standard deviation of the Gaussian bell curve, in `primitiveUnits`. Visible spread reaches roughly three times that value, which is the number to budget for in the filter region.
+
+`stdDeviation` accepts **one or two values**. One value blurs both axes equally. Two values — `stdDeviation="8 0"` — set the horizontal and vertical amounts separately, and a zero on one axis means no blur on that axis at all. That's a cheap directional motion blur:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 80" width="400" height="160">
+    <defs>
+      <!-- Only x/width are widened; the y axis isn't blurred, so the default y/height are enough. -->
+      <filter id="ff-motion-blur" x="-60%" width="220%">
+        <feGaussianBlur stdDeviation="8 0" />
+      </filter>
+    </defs>
+    <circle cx="55" cy="40" r="22" fill="#6366f1" />
+    <circle cx="145" cy="40" r="22" fill="#6366f1" filter="url(#ff-motion-blur)" />
+  </svg>
+`}
+</SvgSnippet>
+
+Try both axes and the region in the demo below. With the default region, anything past a `stdDeviation` of about 2 starts to show hard edges, because this 60-unit square only gets 6 units of margin:
 
 <InteractiveSvgPanel slug="gaussian-blur-demo" />
+
+### `edgeMode`
+
+`edgeMode` controls what the blur samples when it reaches past the edge of its input image:
+
+* **`none` (default for `feGaussianBlur`)** — pixels outside the input are treated as transparent, so edges fade out. Right for blurring a shape.
+* **`duplicate`** — the edge pixels are extended outward, so a blurred full-bleed image keeps solid edges instead of a faded halo.
+* **`wrap`** — samples wrap around from the opposite edge, like a tile.
+
+`duplicate` is the one you'll want for blur-up image placeholders, where a faded border would look wrong. `edgeMode` on `feGaussianBlur` arrived later than the primitive itself, so check it in your target browsers. If it isn't honored, a common fallback is to make the filtered content slightly larger than its container and clip it.
 
 <RainbowDivider />
 
 ## `<feOffset>`
 
 <CodeBlock language="xml">
-{`<feOffset in="blurred" dx="4" dy="4" result="offsetBlur" />`}
+{`<feOffset in="blur" dx="4" dy="4" result="offsetBlur" />`}
 </CodeBlock>
 
-Shifts an input's position by `dx`/`dy`. Combined with blur, this is literally how a drop shadow is built from scratch: blur a copy of the source, offset that blurred copy, then paint it *underneath* the original.
+`feOffset` shifts its input by `dx` and `dy` (both default to `0`), measured in `primitiveUnits` — user units by default. It doesn't change the pixels; it only moves them, and whatever moves past the filter region is clipped like anything else.
+
+Because the offset is in the element's own user space, it follows the element's transforms. Rotate a shape that has a `dy="4"` shadow and the shadow rotates with it, instead of staying below the shape like a real light source would. If the shadow must always fall "down the screen", put the filter on an untransformed parent `<g>` and the transform on the child.
+
+On its own, `feOffset` isn't very useful. Paired with a blurred silhouette, it becomes the offset shadow in a drop-shadow chain.
+
+<RainbowDivider />
+
+## `<feFlood>` and `<feBlend>`
+
+### `<feFlood>`
+
+<CodeBlock language="xml">
+{`<feFlood flood-color="#6366f1" flood-opacity="0.5" result="flood" />`}
+</CodeBlock>
+
+`feFlood` takes no input. It fills its **primitive subregion** with one solid color, and since that subregion defaults to the whole filter region, a bare `feFlood` paints a solid rectangle covering the entire region, not the shape. `flood-color` defaults to black and `flood-opacity` to `1`.
+
+A flood becomes useful once it's combined with something shaped: trimmed to a silhouette with `feComposite`, or mixed with the source through `feBlend`. That's how filters get their color — no other primitive in this post can introduce a new one.
+
+### `<feBlend>`
+
+<CodeBlock language="xml">
+{`<feBlend in="flood" in2="SourceGraphic" mode="multiply" />`}
+</CodeBlock>
+
+`feBlend` combines two images with a blend mode. `in` is the top layer and `in2` is the backdrop beneath it. The `mode` values are the same ones as CSS `mix-blend-mode`:
+
+* **Darkening** — `multiply`, `darken`, `color-burn`
+* **Lightening** — `screen`, `lighten`, `color-dodge`
+* **Contrast** — `overlay`, `soft-light`, `hard-light`
+* **Comparative** — `difference`, `exclusion`
+* **Component** — `hue`, `saturation`, `color`, `luminosity`
+* **`normal`** (default) — `in` painted over `in2`
+
+The original SVG spec only defined `normal`, `multiply`, `screen`, `darken`, and `lighten`. The rest came from the CSS Compositing spec, and current browsers accept them, but if you have to support older engines, stick to the original five.
+
+Here a flood is blended into a gradient-filled circle. A final `feComposite` trims the result back to the circle's silhouette, because the flood covers the whole region:
+
+<InteractiveSvgPanel slug="filters-feblend-mode-demo" />
 
 <RainbowDivider />
 
@@ -57,31 +321,26 @@ Shifts an input's position by `dx`/`dy`. Combined with blur, this is literally h
 <CodeBlock language="xml">
 {`
   <feMerge>
-    <feMergeNode in="offsetBlur" />   <!-- painted first: behind -->
-    <feMergeNode in="SourceGraphic" /> <!-- painted last: in front -->
+    <feMergeNode in="shadow" />         <!-- painted first: behind -->
+    <feMergeNode in="SourceGraphic" />  <!-- painted last: in front -->
   </feMerge>
 `}
 </CodeBlock>
 
-Stacks multiple inputs on top of each other in the order given — exactly what's needed to layer an offset, blurred shadow copy beneath the crisp original.
-
-<RainbowDivider />
-
-## `<feFlood>` and `<feBlend>`
-
-`<feFlood flood-color="..." flood-opacity="...">` fills the entire filter region with a solid color — useful as a base layer for colorizing a shape via compositing (the actual compositing primitives, `feComposite` and blend modes beyond `feBlend`, are covered in the next post in this series). `<feBlend mode="multiply|screen|darken|...">` blends two inputs together the same way CSS `mix-blend-mode` does — the mode values match directly.
+`feMerge` paints each `<feMergeNode>`'s input on top of the previous ones, in source order, using plain "over" compositing. It's the tool for layering a shadow or glow beneath the crisp original, and it accepts as many nodes as you need. Listing the same result twice strengthens it, since the semi-transparent edges are painted over themselves — a cheap way to make a soft glow brighter.
 
 <RainbowDivider />
 
 ## A Practical Drop Shadow, Built Step by Step
 
-Putting `feGaussianBlur` → `feOffset` → `feMerge` together into one real, reusable effect:
+### The Naive Version — and Why It's Wrong
 
-<InteractiveSvgPanel slug="drop-shadow-filter-demo" />
+The obvious approach is to blur `SourceGraphic`, offset it, and merge the original on top:
 
 <CodeBlock language="xml">
 {`
-  <filter id="drop-shadow" x="-50%" y="-50%" width="200%" height="200%">
+  <!-- Works, but the "shadow" is a blurred copy of the shape's own colors. -->
+  <filter id="naive-shadow" x="-50%" y="-50%" width="200%" height="200%">
     <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blurred" />
     <feOffset in="blurred" dx="4" dy="4" result="offsetBlur" />
     <feMerge>
@@ -92,28 +351,160 @@ Putting `feGaussianBlur` → `feOffset` → `feMerge` together into one real, re
 `}
 </CodeBlock>
 
+That shadow is tinted like the source: an orange shape casts an orange smear, and a multicolored icon casts a multicolored one. It reads more like a glow than a shadow.
+
+### The Standard Recipe: Start from `SourceAlpha`
+
+A real shadow depends only on the shape's *silhouette*, not its colors. So start from `SourceAlpha`, which is black wherever the shape is opaque:
+
+<CodeBlock language="xml">
+{`
+  <filter id="drop-shadow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+    <feOffset in="blur" dx="4" dy="4" result="offsetBlur" />
+    <feMerge>
+      <feMergeNode in="offsetBlur" />
+      <feMergeNode in="SourceGraphic" />
+    </feMerge>
+  </filter>
+`}
+</CodeBlock>
+
+That gives a correct, fully opaque black shadow. Two things are still missing: control over its color, and control over its opacity independently of the shape.
+
+### The Colored Shadow Recipe
+
+This is the full chain from the diagram earlier: `SourceAlpha` → `feGaussianBlur` → `feOffset` → `feFlood` → `feComposite operator="in"` → `feMerge`.
+
+<CodeBlock language="xml">
+{`
+  <filter id="colored-shadow" x="-50%" y="-50%" width="200%" height="200%">
+    <!-- 1. Silhouette, blurred and shifted. -->
+    <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+    <feOffset in="blur" dx="4" dy="4" result="offsetBlur" />
+
+    <!-- 2. A solid shadow color, at its own opacity. -->
+    <feFlood flood-color="#1e1b4b" flood-opacity="0.5" result="flood" />
+
+    <!-- 3. Keep the flood only where the offset silhouette has alpha. -->
+    <feComposite in="flood" in2="offsetBlur" operator="in" result="shadow" />
+
+    <!-- 4. Shadow behind, original on top. -->
+    <feMerge>
+      <feMergeNode in="shadow" />
+      <feMergeNode in="SourceGraphic" />
+    </feMerge>
+  </filter>
+`}
+</CodeBlock>
+
+`feComposite operator="in"` outputs `in` wherever `in2` is opaque, scaled by `in2`'s alpha. So the flat flood takes on the soft, blurred shape of the silhouette, while keeping the flood's color. `feComposite` has several other operators, and the [advanced primitives post](/post/svg/svg-essentials-advanced-filter-primitives) covers the whole set.
+
+Change the shadow's color and opacity in the demo below. The orange shape itself never changes:
+
+<InteractiveSvgPanel slug="drop-shadow-filter-demo" />
+
 <Info title="Why not just filter: drop-shadow()?">
-  CSS's `drop-shadow()` filter function does exactly this, in one line, for the common case. The hand-built version earns its keep once the shadow itself needs its own color layer, its own separate opacity from the source, or needs to feed into further primitives — control CSS's shorthand doesn't expose.
+  CSS's `drop-shadow()` builds this same chain — including its own color and opacity — in one line, and that's the right choice for a single shadow on one element. The hand-built version earns its keep when the shadow has to feed into further primitives (a shadow that's also blurred into a glow, or textured with noise), when you want layered shadows with different colors in one filter, or when the effect has to live inside a standalone SVG file with no stylesheet.
 </Info>
+
+### The One-Primitive Shortcut: `feDropShadow`
+
+SVG also has a shorthand primitive that performs the whole recipe above in one element:
+
+<CodeBlock language="xml">
+{`
+  <filter id="quick-shadow" x="-50%" y="-50%" width="200%" height="200%">
+    <feDropShadow dx="4" dy="4" stdDeviation="2" flood-color="#1e1b4b" flood-opacity="0.5" />
+  </filter>
+`}
+</CodeBlock>
+
+It's newer than the individual primitives, so it's worth testing in older engines. The [advanced primitives post](/post/svg/svg-essentials-advanced-filter-primitives) covers it in more detail. Knowing the long form is still valuable, because it's what you edit the moment you need the shadow's intermediate results for something else.
+
+<RainbowDivider />
+
+## Colored Glows
+
+A glow is a drop shadow with no offset, a larger blur, and a bright color — and usually drawn twice for intensity. It uses the same pieces:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="400" height="200">
+    <defs>
+      <filter id="ff-glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur" />
+        <feFlood flood-color="#10b981" flood-opacity="0.9" result="color" />
+        <feComposite in="color" in2="blur" operator="in" result="glow" />
+        <feMerge>
+          <feMergeNode in="glow" />
+          <feMergeNode in="glow" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    <circle cx="55" cy="50" r="24" fill="#6366f1" filter="url(#ff-glow)" />
+    <text x="140" y="58" font-size="26" font-weight="700" text-anchor="middle" fill="#6366f1" filter="url(#ff-glow)">glow</text>
+  </svg>
+`}
+</SvgSnippet>
+
+Because the glow's color comes from `feFlood` rather than from the source, the same filter gives any shape the same brand-colored halo. Swap `SourceAlpha` for `SourceGraphic` in the first step if you actually *want* a glow tinted by the shape's own colors. The blur's `stdDeviation` can also be animated for a pulsing glow — see [SMIL animation](/post/svg/svg-essentials-smil-animation) — with the accessibility caveats covered below.
 
 <RainbowDivider />
 
 ## Where Should You Use This?
 
-- Custom drop shadows needing more control than CSS `filter: drop-shadow()` (per-layer color, independent opacity)
-- Any effect needing more than one primitive chained together
-- Effects that must live in the SVG document itself — portable, working even if the SVG is extracted or embedded elsewhere, independent of the consuming page's own CSS
+* **Brand-colored shadows and glows** — a navy shadow under a card illustration, or an accent-colored focus glow on an icon, where CSS `drop-shadow()`'s single layer isn't enough or the SVG has to carry the effect itself.
+* **Layered or multi-step effects** — a tight dark contact shadow plus a large soft ambient one in a single filter, or a shadow that then gets textured or warped by the primitives in the [advanced post](/post/svg/svg-essentials-advanced-filter-primitives).
+* **Directional blur** — two-value `stdDeviation` for motion trails and speed lines in illustrations and loaders.
+* **Blur-up image placeholders** — a tiny raster inside an [`<image>`](/post/svg/svg-essentials-image-and-foreignobject), blurred with `edgeMode="duplicate"` and scaled to fill, while the full image loads. Images can also enter a filter chain directly via `feImage`.
+* **Blurring parts of a composition** — depth-of-field on background layers of an illustration, applied to one `<g>` while the foreground stays sharp.
+* **Self-contained SVG assets** — effects that must survive being exported as a standalone `.svg`, embedded via `<img>`, or used where the consuming page's CSS isn't available.
+
+For a single shadow or blur on an HTML element, the CSS filter functions are simpler and usually faster. Reach for `<filter>` when you need what they can't express.
+
+<RainbowDivider />
+
+## Performance
+
+Filters are among the more expensive things you can ask a browser to render, and the cost isn't uniform:
+
+* **CSS shorthand functions are the fast path.** Functions like `blur()`, `drop-shadow()`, and `brightness()` are well understood by browsers, and on HTML elements they can often be GPU-accelerated.
+* **`url(#id)` filters often fall back to CPU rasterization.** An arbitrary SVG primitive graph is harder to accelerate, especially when it's applied to HTML elements, and it may be recomputed on every repaint of the element.
+* **Cost scales with region area.** Every primitive processes every pixel of its subregion, so a `200%`-sized region costs four times the pixels of a `100%` one. Size the region to what the effect needs.
+* **Cost scales with `stdDeviation`.** Larger blurs sample wider neighbourhoods. Very large blurs over large regions are the classic cause of janky scrolling.
+* **Animation multiplies all of the above.** Animating `stdDeviation`, or animating an element that has a filter, means the whole filter re-runs every frame. Profile it on low-end devices before shipping.
+
+<RainbowDivider />
+
+## Browser Support and Accessibility
+
+The core primitives in this post (`feGaussianBlur`, `feOffset`, `feFlood`, `feBlend`, `feMerge`, `feComposite`) and the `filter` attribute on SVG elements are long-established and consistent across modern browsers. The places to test are the newer or thinner edges: `url()` filters on HTML elements (especially in Safari), `edgeMode` on `feGaussianBlur`, `feDropShadow` in older engines, and the extended `feBlend` modes.
+
+For accessibility:
+
+* **Blurred text is hard to read.** A glow or shadow behind text should improve contrast, not replace it. Check the text's contrast against its actual background with the filter off, and don't blur text people need to read.
+* **Filters don't change semantics.** A filter is purely visual, so it's never a way to hide content from assistive technology or to convey information on its own. If a glow means "selected", expose that state some other way too.
+* **Respect `prefers-reduced-motion` for animated filters.** Pulsing glows and animated blurs can be uncomfortable or disorienting. CSS-driven animation can be switched off in an `@media (prefers-reduced-motion: reduce)` block. SMIL animations don't respond to media queries, so gate them from script (for example, by removing or pausing the animation when `matchMedia("(prefers-reduced-motion: reduce)")` matches).
+* **Check forced-colors modes.** High-contrast themes may drop shadows and glows or render them unpredictably. Make sure nothing depends on them being visible.
 
 <RainbowDivider />
 
 ## Production Considerations & Edge Cases
 
-* **A clipped-looking effect almost always means the filter region is too tight.** Expand `x`/`y`/`width`/`height` past 100% before debugging anything else.
-* **SVG filters are generally more render-expensive than the equivalent CSS `filter` function** for simple single-effect cases — reach for the CSS property first when one effect is enough, and native SVG filters once the primitive-chaining flexibility is actually needed.
-* **`id` collisions apply here too** — the same caveat as gradients/patterns/markers for repeated inline SVG on one page.
+* **A clipped-looking effect almost always means the filter region is too tight.** The default region is only `-10%` / `120%`. Expand `x`/`y`/`width`/`height` to cover the blur's roughly 3 × `stdDeviation` spread plus any offset, and not much more.
+* **Zero-area bounding boxes make filtered elements disappear.** Horizontal and vertical lines need `filterUnits="userSpaceOnUse"`.
+* **Colors differ from CSS because of `linearRGB`.** Set `color-interpolation-filters="sRGB"` when matching CSS filter functions or exact design values.
+* **Shadows follow transforms.** `dx`/`dy` are in the element's user space, so rotating the element rotates its shadow. Filter an untransformed parent if you need a fixed light direction.
+* **On HTML elements, `filter` has layout side effects.** Any value other than `none` creates a stacking context and becomes the containing block for `position: fixed` descendants — a common cause of "my fixed header stopped being fixed".
+* **`id` collisions apply here too.** It's the same caveat as for gradients, patterns, and markers: repeated inline SVGs on one page that define the same filter `id` will all resolve to the first one.
+* **`result` names are local to one `<filter>`.** They can't be referenced across filters, so a shared step has to be repeated in each filter that needs it.
 
 <RainbowDivider />
 
 ## Wrapping Up
 
-A filter is a chain, not a single effect — `SourceGraphic`/`SourceAlpha` in, a sequence of named-result primitives, a final composited output. `feGaussianBlur`, `feOffset`, and `feMerge` alone already cover a genuinely useful case (a real drop shadow); the [next post in this series](/post/svg/svg-essentials-advanced-filter-primitives) picks up from here with color manipulation, compositing, noise, and lighting.
+A filter is a chain, not a single effect. Built-in inputs (`SourceGraphic`, `SourceAlpha`) go in; primitives pass images along through `in`, `in2`, and `result` — or implicitly, to the next primitive; and the last primitive's output is painted, clipped to the filter region. Most filter bugs come from three places: a region that's too small (the default is only 10% of margin), the `linearRGB` default color space, or a shadow built from `SourceGraphic` instead of `SourceAlpha`.
+
+With `feGaussianBlur`, `feOffset`, `feFlood`, `feComposite`, and `feMerge` you can already build correct colored drop shadows and glows by hand. The [next post in this series](/post/svg/svg-essentials-advanced-filter-primitives) picks up from here with color matrices, the full set of compositing operators, procedural noise, displacement, and lighting.

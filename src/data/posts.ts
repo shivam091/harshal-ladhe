@@ -410,10 +410,11 @@ export const posts: Post[] = [
     slug: "svg-essentials-filters-fundamentals",
     title: "SVG Essentials: Filter Fundamentals",
     excerpt: "A filter is a chain of primitives, not one single effect.",
-    description: "A complete guide to SVG filter fundamentals — the filter region, SourceGraphic/SourceAlpha, chaining primitives via in/in2/result, feGaussianBlur, feOffset, feMerge, feFlood, feBlend, and building a real hand-crafted drop shadow from scratch.",
+    description: "A complete guide to SVG filter fundamentals — applying filters via attribute, CSS url() and the ten CSS filter functions, the filter region and primitive subregions, filterUnits vs primitiveUnits, implicit chaining with in/in2/result, color-interpolation-filters, feGaussianBlur, feOffset, feFlood, feBlend, feMerge, and building correct colored drop shadows and glows from SourceAlpha.",
     category: ["SVG"],
-    tags: ["svg", "filters", "fegaussianblur", "feoffset", "femerge", "drop-shadow", "vector-graphics", "frontend-development"],
+    tags: ["svg", "filters", "fegaussianblur", "feoffset", "femerge", "feflood", "feblend", "fedropshadow", "css-filter", "drop-shadow", "vector-graphics", "frontend-development"],
     changelog: [
+      { date: "2026-09-28", change: "Expanded into a full guide: fixed the default filter region, in2 and SourceGraphic-shadow inaccuracies; added applying filters, region vs primitive subregion, implicit chaining, color-interpolation-filters, colored shadows and glows, feDropShadow, performance, and accessibility sections, a FilterRegionDiagram, a SourceAlpha-based pipeline diagram, and new blur/blend demos" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },

@@ -47,6 +47,7 @@ import FilterPipelineDiagram from "@/components/mdx/FilterPipelineDiagram";
 import ClipUnitsDiagram from "@/components/mdx/ClipUnitsDiagram";
 import ClipVsMaskDiagram from "@/components/mdx/ClipVsMaskDiagram";
 import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
+import FilterRegionDiagram from "@/components/mdx/FilterRegionDiagram";
 import GradientTransformDiagram from "@/components/mdx/GradientTransformDiagram";
 import GradientUnitsDiagram from "@/components/mdx/GradientUnitsDiagram";
 import GroupTransformDiagram from "@/components/mdx/GroupTransformDiagram";
@@ -131,6 +132,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ClipUnitsDiagram,
     ClipVsMaskDiagram,
     FillRuleRayDiagram,
+    FilterRegionDiagram,
     GradientTransformDiagram,
     GradientUnitsDiagram,
     GroupTransformDiagram,

@@ -1929,20 +1929,29 @@ ${dots}
     slug: "gaussian-blur-demo",
     title: "Interactive Example - feGaussianBlur",
     controls: [
-      { id: "stdDeviation", label: "stdDeviation", type: "range", min: 0, max: 8, step: 0.25, defaultValue: 2 }
+      { id: "stdDeviationX", label: "stdDeviation (x)", type: "range", min: 0, max: 8, step: 0.25, defaultValue: 4 },
+      { id: "stdDeviationY", label: "stdDeviation (y)", type: "range", min: 0, max: 8, step: 0.25, defaultValue: 4 },
+      { id: "region", label: "Filter region", type: "select", options: ["default (-10% / 120%)", "expanded (-30% / 160%)"], defaultValue: "default (-10% / 120%)" }
     ],
     render: (values) => {
-      const stdDeviation = Number(values.stdDeviation);
+      const sx = Number(values.stdDeviationX);
+      const sy = Number(values.stdDeviationY);
+      const expanded = String(values.region).startsWith("expanded");
+      // One value when both axes match, two when they differ — the attribute takes either form.
+      const stdDeviation = sx === sy ? `${sx}` : `${sx} ${sy}`;
+      const regionAttrs = expanded ? ` x="-30%" y="-30%" width="160%" height="160%"` : "";
 
       return `
 <svg viewBox="0 0 100 100" width="220" height="220">
   <defs>
-    <filter id="blur-demo-filter" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="${stdDeviation}" />
+    <!-- ${expanded ? "Expanded region: room for the blur to spill outward." : "No x/y/width/height: the default -10%/120% region, only 6 units of margin here."} -->
+    <filter id="blur-demo-filter"${regionAttrs}>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="${stdDeviation}" />
     </filter>
   </defs>
 
-  <!-- The filter region (x/y/width/height above) is expanded past the shape's own box — blur spills outward, and a tight region would clip it. -->
+  <!-- Dashed outline: the rect's own bounding box, for reference. -->
+  <rect x="20" y="20" width="60" height="60" fill="none" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" />
   <rect x="20" y="20" width="60" height="60" rx="8" fill="#6366f1" filter="url(#blur-demo-filter)" />
 </svg>`;
     }
@@ -1953,28 +1962,69 @@ ${dots}
     controls: [
       { id: "dx", label: "dx (offset x)", type: "range", min: -10, max: 10, step: 0.5, defaultValue: 4 },
       { id: "dy", label: "dy (offset y)", type: "range", min: -10, max: 10, step: 0.5, defaultValue: 4 },
-      { id: "stdDeviation", label: "stdDeviation", type: "range", min: 0, max: 6, step: 0.25, defaultValue: 2 }
+      { id: "stdDeviation", label: "stdDeviation", type: "range", min: 0, max: 6, step: 0.25, defaultValue: 2 },
+      { id: "shadowColor", label: "Shadow color", type: "color", defaultValue: "#1e1b4b" },
+      { id: "shadowOpacity", label: "Shadow opacity", type: "range", min: 0, max: 1, step: 0.05, defaultValue: 0.5 }
     ],
     render: (values) => {
       const dx = Number(values.dx);
       const dy = Number(values.dy);
       const stdDeviation = Number(values.stdDeviation);
+      const shadowColor = String(values.shadowColor);
+      const shadowOpacity = Number(values.shadowOpacity);
 
       return `
 <svg viewBox="0 0 100 100" width="220" height="220">
   <defs>
     <filter id="shadow-demo-filter" x="-50%" y="-50%" width="200%" height="200%">
-      <!-- Chain: blur the source, offset the blurred copy, then stack it BEHIND the crisp original. -->
-      <feGaussianBlur in="SourceGraphic" stdDeviation="${stdDeviation}" result="blurred" />
-      <feOffset in="blurred" dx="${dx}" dy="${dy}" result="offsetBlur" />
+      <!-- Blur the silhouette (SourceAlpha), not the colored source, so the shadow isn't tinted like the shape. -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="${stdDeviation}" result="blur" />
+      <feOffset in="blur" dx="${dx}" dy="${dy}" result="offsetBlur" />
+      <!-- Paint a solid color, then keep it only where the offset silhouette is. -->
+      <feFlood flood-color="${shadowColor}" flood-opacity="${shadowOpacity}" result="flood" />
+      <feComposite in="flood" in2="offsetBlur" operator="in" result="shadow" />
+      <!-- Stack the colored shadow BEHIND the crisp original. -->
       <feMerge>
-        <feMergeNode in="offsetBlur" />
+        <feMergeNode in="shadow" />
         <feMergeNode in="SourceGraphic" />
       </feMerge>
     </filter>
   </defs>
 
   <rect x="25" y="25" width="50" height="50" rx="8" fill="#f59e0b" filter="url(#shadow-demo-filter)" />
+</svg>`;
+    }
+  },
+  {
+    slug: "filters-feblend-mode-demo",
+    title: "Interactive Example - feBlend Modes",
+    controls: [
+      { id: "mode", label: "mode", type: "select", options: ["normal", "multiply", "screen", "overlay", "darken", "lighten", "color-dodge", "color-burn", "hard-light", "soft-light", "difference", "exclusion", "hue", "saturation", "color", "luminosity"], defaultValue: "multiply" },
+      { id: "floodColor", label: "flood-color", type: "color", defaultValue: "#f59e0b" }
+    ],
+    render: (values) => {
+      const mode = String(values.mode);
+      const floodColor = String(values.floodColor);
+
+      return `
+<svg viewBox="0 0 100 100" width="220" height="220">
+  <defs>
+    <linearGradient id="blend-demo-gradient" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6366f1" />
+      <stop offset="1" stop-color="#10b981" />
+    </linearGradient>
+    <!-- No filter attributes: the default region is fine because nothing here spills outward. -->
+    <filter id="blend-demo-filter">
+      <!-- feFlood fills its subregion (the whole filter region by default) with one solid color. -->
+      <feFlood flood-color="${floodColor}" result="flood" />
+      <!-- in = top layer, in2 = bottom layer, combined like CSS mix-blend-mode. -->
+      <feBlend in="flood" in2="SourceGraphic" mode="${mode}" result="blended" />
+      <!-- Trim the flood back to the shape's own silhouette. -->
+      <feComposite in="blended" in2="SourceAlpha" operator="in" />
+    </filter>
+  </defs>
+
+  <circle cx="50" cy="50" r="38" fill="url(#blend-demo-gradient)" filter="url(#blend-demo-filter)" />
 </svg>`;
     }
   },
