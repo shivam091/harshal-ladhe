@@ -349,10 +349,11 @@ export const posts: Post[] = [
     slug: "svg-essentials-clippath-and-mask",
     title: "SVG Essentials: clipPath and mask",
     excerpt: "Hard edges with clipPath, soft fades with mask.",
-    description: "A complete guide to SVG's <clipPath> and <mask> elements — hard-edged clipping vs. luminance- and alpha-driven masking, clipPathUnits, maskUnits/maskContentUnits, compound multi-shape clip regions, mask-type, and production gotchas like id collisions and performance at scale.",
+    description: "A complete guide to SVG's <clipPath> and <mask> elements — hard-edged clipping vs. luminance × alpha and alpha masking, what a clip may contain, clip-rule, intersections and knockout cutouts, text as a clip, clipPathUnits and the per-axis objectBoundingBox stretch, the mask region and maskUnits/maskContentUnits, feathered masks with filters, responsive clips and masks on HTML via CSS, animated reveals, and production gotchas like hit-testing, zero-size bounding boxes, seams, accessibility, and performance.",
     category: ["SVG"],
-    tags: ["svg", "clip-path", "clippath", "mask", "masking", "luminance", "alpha-channel", "vector-graphics", "frontend", "web-design", "css"],
+    tags: ["svg", "clip-path", "clippath", "mask", "masking", "mask-image", "mask-type", "mask-region", "clip-rule", "objectboundingbox", "luminance", "alpha-channel", "hit-testing", "vector-graphics", "frontend", "web-design", "css"],
     changelog: [
+      { date: "2026-09-28", change: "Corrected CSS clip-path curve support, objectBoundingBox scaling, luminance × alpha masking, and clip-vs-mask hit-testing; added sections on clip children, clip-rule, intersections, text clips, the mask region, knockouts, filtered soft masks, clipping/masking HTML with CSS, animation, seams, accessibility, and browser caveats; added four diagrams" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },

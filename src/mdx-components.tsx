@@ -44,7 +44,11 @@ import ConicGradientDiagram from "@/components/mdx/ConicGradientDiagram";
 import RepeatingGradientDiagram from "@/components/mdx/RepeatingGradientDiagram";
 import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
 import FilterPipelineDiagram from "@/components/mdx/FilterPipelineDiagram";
+import ClipUnitsDiagram from "@/components/mdx/ClipUnitsDiagram";
+import ClipVsMaskDiagram from "@/components/mdx/ClipVsMaskDiagram";
 import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
+import LuminanceAlphaDiagram from "@/components/mdx/LuminanceAlphaDiagram";
+import MaskRegionDiagram from "@/components/mdx/MaskRegionDiagram";
 import MiterLimitDiagram from "@/components/mdx/MiterLimitDiagram";
 import PolyClosingDiagram from "@/components/mdx/PolyClosingDiagram";
 import TextAnchorDiagram from "@/components/mdx/TextAnchorDiagram";
@@ -109,7 +113,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     RepeatingGradientDiagram,
     GradientLayeringDiagram,
     FilterPipelineDiagram,
+    ClipUnitsDiagram,
+    ClipVsMaskDiagram,
     FillRuleRayDiagram,
+    LuminanceAlphaDiagram,
+    MaskRegionDiagram,
     MiterLimitDiagram,
     PolyClosingDiagram,
     TextAnchorDiagram,
