@@ -122,7 +122,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "ui-design": {
     title: "Articles on User Interface (UI) Design Principles",
-    description: "Content covering the visual and interactive elements of interface design, where animation plays a key role in communicating state and flow."
+    description: "Content covering the visual and interactive elements of interface design, from color, gradients, and borders to motion that communicates state and flow."
   },
   "keyframes": {
     title: "Animating with CSS `@keyframes`",
@@ -436,6 +436,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Streamlined Styling with SCSS and Preprocessors",
     description: "Optimize your CSS workflow using SCSS (Sass) features like variables, nesting, mixins, and modular imports for scalable and maintainable code."
   },
+  "mixins": {
+    title: "Reusable Styles with Sass Mixins",
+    description: "Write once, include everywhere: guides on building reusable Sass @mixin blocks with named, defaulted arguments to keep repeated CSS patterns DRY and consistent."
+  },
   "gradient-text": {
     title: "CSS Gradient Text Techniques",
     description: "Guides on clipping gradients to typography with background-clip: text, from static headings to animated and stroke-outlined text effects."
@@ -455,6 +459,10 @@ export const tagMeta: Record<string, TagMeta> = {
   "css-custom-properties": {
     title: "CSS Custom Properties (Variables) and @property",
     description: "Guides on theming and runtime styling with CSS custom properties, and on registering typed properties with @property so values like angles and colors can animate."
+  },
+  "borders": {
+    title: "Advanced CSS Border Styling",
+    description: "Techniques for styling element borders beyond a flat color, including gradients, images, and animated effects using modern CSS."
   },
   "web-apis": {
     title: "Browser Web APIs for Modern Frontends",

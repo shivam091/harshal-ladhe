@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gradient Border Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Gradient Border Playground</h1>
+        <p>Every technique from the post in one place — pick one, swap the gradient type, tune thickness, radius and colors live, and copy the CSS for exactly what you see.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Gradient border preview">
+        <div class="stage" id="stage">
+          <div class="gradient-border-card mode-background-clip" id="gradient-border-card" tabindex="0">
+            <span id="card-label">Gradient Border</span>
+          </div>
+        </div>
+      </section>
+
+      <p class="stage-note" id="stage-note"></p>
+
+      <output id="border-output" class="readout" aria-live="polite"></output>
+
+      <div class="tabs" role="tablist" aria-label="Technique group" id="group-switch">
+        <button class="tab tab--active" type="button" data-mode="core" role="tab" aria-selected="true">Core</button>
+        <button class="tab" type="button" data-mode="advanced" role="tab" aria-selected="false">Advanced</button>
+        <button class="tab" type="button" data-mode="pitfalls" role="tab" aria-selected="false">Pitfalls</button>
+      </div>
+
+      <div id="core-demo" class="tab-panel tab-panel--active">
+        <fieldset class="control-group">
+          <legend>Technique</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Core technique">
+            <label class="segment"><input type="radio" name="technique" value="background-clip" checked><span>background-clip</span></label>
+            <label class="segment"><input type="radio" name="technique" value="border-image"><span>border-image</span></label>
+            <label class="segment"><input type="radio" name="technique" value="mask"><span>mask</span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="advanced-demo" class="tab-panel">
+        <fieldset class="control-group">
+          <legend>Technique</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Advanced technique">
+            <label class="segment"><input type="radio" name="technique" value="animated"><span>Animated</span></label>
+            <label class="segment"><input type="radio" name="technique" value="rotating"><span>Rotating conic</span></label>
+            <label class="segment"><input type="radio" name="technique" value="hover"><span>Hover-only</span></label>
+            <label class="segment"><input type="radio" name="technique" value="theme"><span>Theme-aware</span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="pitfalls-demo" class="tab-panel">
+        <fieldset class="control-group">
+          <legend>Pitfall</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Pitfall">
+            <label class="segment"><input type="radio" name="technique" value="not-showing"><span>Not showing</span></label>
+            <label class="segment"><input type="radio" name="technique" value="bleeding"><span>Bleeding</span></label>
+            <label class="segment"><input type="radio" name="technique" value="corners"><span>Square corners</span></label>
+            <label class="segment"><input type="radio" name="technique" value="not-moving"><span>Not moving</span></label>
+            <label class="segment"><input type="radio" name="technique" value="safari-mask"><span>Safari mask</span></label>
+            <label class="segment"><input type="radio" name="technique" value="white-box"><span>White box</span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>Options</legend>
+
+        <div class="segmented-control" id="gradient-type" role="radiogroup" aria-label="Gradient type">
+          <label class="segment"><input type="radio" name="gradient-type" value="linear" checked><span>Linear</span></label>
+          <label class="segment"><input type="radio" name="gradient-type" value="radial"><span>Radial</span></label>
+          <label class="segment"><input type="radio" name="gradient-type" value="conic"><span>Conic</span></label>
+          <label class="segment"><input type="radio" name="gradient-type" value="stripes"><span>Stripes</span></label>
+        </div>
+
+        <div class="segmented-control" id="sides-variant" role="radiogroup" aria-label="Sides" hidden>
+          <label class="segment"><input type="radio" name="sides-variant" value="all" checked><span>All sides</span></label>
+          <label class="segment"><input type="radio" name="sides-variant" value="bottom"><span>Bottom only</span></label>
+        </div>
+
+        <div class="segmented-control" id="theme-variant" role="radiogroup" aria-label="Color scheme" hidden>
+          <label class="segment"><input type="radio" name="theme-variant" value="dark" checked><span>Dark</span></label>
+          <label class="segment"><input type="radio" name="theme-variant" value="light"><span>Light</span></label>
+        </div>
+
+        <div class="segmented-control" id="not-showing-variant" role="radiogroup" aria-label="Cause" hidden>
+          <label class="segment"><input type="radio" name="not-showing-variant" value="solid" checked><span>Solid border color</span></label>
+          <label class="segment"><input type="radio" name="not-showing-variant" value="slice"><span>Missing slice</span></label>
+        </div>
+
+        <div class="segmented-control" id="bleeding-variant" role="radiogroup" aria-label="Cause" hidden>
+          <label class="segment"><input type="radio" name="bleeding-variant" value="no-inner" checked><span>No inner layer</span></label>
+          <label class="segment"><input type="radio" name="bleeding-variant" value="no-keyword"><span>No padding-box</span></label>
+        </div>
+
+        <div class="fields-grid">
+          <div class="field" id="thickness-field">
+            <label for="thickness-input">Thickness</label>
+            <div class="range-row">
+              <span class="range-edge">2px</span>
+              <div class="range-track">
+                <input type="range" id="thickness-input" min="2" max="12" step="1" value="4">
+                <output class="range-bubble" id="thickness-value" for="thickness-input">4px</output>
+              </div>
+              <span class="range-edge">12px</span>
+            </div>
+          </div>
+
+          <div class="field" id="radius-field">
+            <label for="radius-input">Radius</label>
+            <div class="range-row">
+              <span class="range-edge">0px</span>
+              <div class="range-track">
+                <input type="range" id="radius-input" min="0" max="65" step="1" value="16">
+                <output class="range-bubble" id="radius-value" for="radius-input">16px</output>
+              </div>
+              <span class="range-edge">65px</span>
+            </div>
+          </div>
+
+          <div class="field field--full" id="angle-field">
+            <label for="angle-input" id="angle-label">Direction</label>
+            <div class="range-row">
+              <span class="range-edge">0deg</span>
+              <div class="range-track">
+                <input type="range" id="angle-input" min="0" max="360" step="1" value="90">
+                <output class="range-bubble" id="angle-value" for="angle-input">90deg</output>
+              </div>
+              <span class="range-edge">360deg</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="fields-grid fields-grid--3">
+          <div class="field">
+            <label for="color-1">Color 1</label>
+            <input type="color" id="color-1" value="#ff6a00">
+          </div>
+          <div class="field">
+            <label for="color-2">Color 2</label>
+            <input type="color" id="color-2" value="#ee0979">
+          </div>
+          <div class="field" id="color-3-field">
+            <label for="color-3">Color 3</label>
+            <input type="color" id="color-3" value="#00c6ff">
+          </div>
+        </div>
+
+        <label class="checkbox-field" for="pattern-toggle" id="pattern-field">
+          <input type="checkbox" id="pattern-toggle">
+          <span>Put a patterned backdrop behind the card</span>
+        </label>
+        <label class="checkbox-field" for="hover-toggle" id="hover-field" hidden>
+          <input type="checkbox" id="hover-toggle" checked>
+          <span>Hold the <code>:hover</code> state on</span>
+        </label>
+        <label class="checkbox-field" for="fix-toggle" id="fix-field" hidden>
+          <input type="checkbox" id="fix-toggle">
+          <span id="fix-label">Apply the fix</span>
+        </label>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Production CSS</legend>
+        <label class="checkbox-field" for="vars-toggle">
+          <input type="checkbox" id="vars-toggle">
+          <span>Use CSS variables for the colors and surface</span>
+        </label>
+        <label class="checkbox-field" for="focus-toggle">
+          <input type="checkbox" id="focus-toggle">
+          <span>Add a <code>:focus-visible</code> outline</span>
+        </label>
+        <label class="checkbox-field" for="mixin-toggle" id="mixin-field">
+          <input type="checkbox" id="mixin-toggle">
+          <span>Output as the SCSS <code>gradient-border</code> mixin</span>
+        </label>
+        <p class="tip">Animated borders always get a <code>prefers-reduced-motion</code> rule. The gradient border is decoration, so keep a real focus outline rather than relying on it.</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
