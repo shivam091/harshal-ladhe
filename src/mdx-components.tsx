@@ -44,6 +44,7 @@ import ConicGradientDiagram from "@/components/mdx/ConicGradientDiagram";
 import RepeatingGradientDiagram from "@/components/mdx/RepeatingGradientDiagram";
 import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
 import FilterPipelineDiagram from "@/components/mdx/FilterPipelineDiagram";
+import AccessibleNameDiagram from "@/components/mdx/AccessibleNameDiagram";
 import ClipUnitsDiagram from "@/components/mdx/ClipUnitsDiagram";
 import ClipVsMaskDiagram from "@/components/mdx/ClipVsMaskDiagram";
 import ColorMatrixDiagram from "@/components/mdx/ColorMatrixDiagram";
@@ -65,9 +66,11 @@ import MiterLimitDiagram from "@/components/mdx/MiterLimitDiagram";
 import PatternTileGridDiagram from "@/components/mdx/PatternTileGridDiagram";
 import PatternTransformDiagram from "@/components/mdx/PatternTransformDiagram";
 import PatternUnitsDiagram from "@/components/mdx/PatternUnitsDiagram";
+import PointerEventsHitAreaDiagram from "@/components/mdx/PointerEventsHitAreaDiagram";
 import PolyClosingDiagram from "@/components/mdx/PolyClosingDiagram";
 import PreserveAspectRatioDiagram from "@/components/mdx/PreserveAspectRatioDiagram";
 import RadialFocalDiagram from "@/components/mdx/RadialFocalDiagram";
+import ScreenToUserSpaceDiagram from "@/components/mdx/ScreenToUserSpaceDiagram";
 import SeamlessTileDiagram from "@/components/mdx/SeamlessTileDiagram";
 import SpreadMethodDiagram from "@/components/mdx/SpreadMethodDiagram";
 import SvgEmbedContextDiagram from "@/components/mdx/SvgEmbedContextDiagram";
@@ -136,6 +139,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     RepeatingGradientDiagram,
     GradientLayeringDiagram,
     FilterPipelineDiagram,
+    AccessibleNameDiagram,
     ClipUnitsDiagram,
     ClipVsMaskDiagram,
     ColorMatrixDiagram,
@@ -157,9 +161,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PatternTileGridDiagram,
     PatternTransformDiagram,
     PatternUnitsDiagram,
+    PointerEventsHitAreaDiagram,
     PolyClosingDiagram,
     PreserveAspectRatioDiagram,
     RadialFocalDiagram,
+    ScreenToUserSpaceDiagram,
     SeamlessTileDiagram,
     SpreadMethodDiagram,
     SvgEmbedContextDiagram,

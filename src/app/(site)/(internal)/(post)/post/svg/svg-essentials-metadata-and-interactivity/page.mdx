@@ -4,100 +4,725 @@ export const metadata = buildPostMetadata("svg-essentials-metadata-and-interacti
 
 ## Introduction
 
-This closes out the SVG Essentials series with the smaller elements and attributes that turn a bag of shapes into a real, robust document: proper accessible names, correct ARIA, native links, deep-linkable views, and the security awareness that comes with SVG being able to hold real CSS and real JavaScript.
+Every post in this series so far has been about what an SVG *looks like*: shapes, paths, text, paint servers, clipping, filters, animation. This closing post is about what an SVG *does* once it's on a real page. How does a screen reader describe it? Which pixels respond to a click? How does JavaScript read and move its shapes? What can a hostile file do if you let users upload one?
+
+Those questions split into four layers, and the post takes them in order:
+
+* **Accessibility.** How browsers compute an accessible name from `<title>`, `<desc>`, and ARIA, how to name individual shapes, and how to give charts a real text alternative.
+* **Interactivity.** Native `<a>` links, keyboard focus, `pointer-events` hit-testing, CSS `:hover`/`:focus-visible` theming, events, JavaScript DOM manipulation, pointer-to-user-unit conversion, drag-and-drop, and reduced motion.
+* **Document features.** Deep-linkable `<view>` viewports, how the embedding method changes what an SVG can do, and `<metadata>`.
+* **Security.** Why inline `<style>` leaks across the page, and how to handle untrusted SVG without opening a stored-XSS hole.
+
+This post builds directly on [Making SVGs Accessible](/post/svg/svg-essentials-mastering-basic-shapes#making-svgs-accessible) from the first post, which covered the two basic patterns: `role="img"` plus `<title>` for meaningful graphics, and `aria-hidden="true"` for decorative ones. Everything below assumes those two and goes further.
 
 <RainbowDivider />
 
-## `<title>` and `<desc>`
+## Accessible Names: `<title>`, `<desc>`, and ARIA
+
+`<title>` is a child *element*, not an attribute. It plays roughly the role `alt` plays for an `<img>`, supplying a short name for the element it sits in. `<desc>` supplies a longer description alongside it.
 
 <CodeBlock language="xml">
 {`
-  <svg role="img" aria-labelledby="chart-title">
-    <title id="chart-title">Quarterly revenue, upward trend</title>
-    <desc>A line chart showing revenue increasing from $2M to $5M over four quarters.</desc>
-    <!-- shapes -->
+  <svg viewBox="0 0 100 60" role="img" aria-labelledby="revenue-title" aria-describedby="revenue-desc">
+    <title id="revenue-title">Quarterly revenue, upward trend</title>
+    <desc id="revenue-desc">A line chart showing revenue rising from $2M in Q1 to $5M in Q4.</desc>
+    <polyline points="10,50 35,40 60,25 90,10" fill="none" stroke="#10b981" stroke-width="3" />
   </svg>
 `}
 </CodeBlock>
 
-`<title>` is the *first* accessible name a screen reader announces for an SVG, or for any individual shape within it — a child element, not an attribute, functioning much like an `<img>`'s `alt`. `<desc>` supplements it with a longer description. Both need to be the **first child** of the element they describe. A common mistake: a `<title>` only on the root `<svg>`, when individual meaningful sub-shapes (separate clickable icons, say) need their own.
+### The Naming Order
 
-<RainbowDivider />
+It's tempting to think of `<title>` as *the* accessible name, but it is actually the **fallback**. When a browser computes an SVG element's accessible name, it checks these sources in order and stops at the first one that produces text:
 
-## ARIA and Roles in SVG
+1. **`aria-labelledby`.** The text content of the referenced element(s), joined in id order.
+2. **`aria-label`.** The attribute's string value.
+3. **The `<title>` child.** Used only when neither ARIA attribute supplied a name.
+
+Before any of that, `aria-hidden="true"` removes the element and its whole subtree from the accessibility tree, so naming never runs at all.
+
+<AccessibleNameDiagram />
+
+That order explains a pattern you'll see everywhere, including in this post's own code: `aria-labelledby` pointing at the `<title>`'s `id`. The `<title>` alone would usually be enough. The explicit reference is belt-and-braces for older browser and screen-reader pairings that didn't always pick up the `<title>` fallback on their own.
+
+<Info title="Where the title goes">
+  SVG 1.1 required `<title>` to be the *first* child of its parent. SVG 2 relaxed that: the browser uses the first `<title>` child wherever it appears. Keep it first anyway. It costs nothing, and older tools and assistive technology still expect it there.
+</Info>
+
+Try the three strategies below. The readout underneath shows what a screen reader would announce. The readout is itself `aria-hidden`, so it never leaks into the real name.
 
 <InteractiveSvgPanel slug="svg-accessible-name-demo" />
 
-- `role="img"` + `aria-labelledby` (pointing at a `<title>`'s `id`) — the standard pattern for a meaningful, non-interactive SVG
-- `aria-hidden="true"` (or `role="presentation"`) — for a genuinely decorative SVG that shouldn't be announced at all
-- `focusable="false"` — a legacy attribute some older IE/Edge versions needed explicitly on decorative SVGs to avoid an unwanted tab stop; rarely needed in current browsers, but you'll still see it in older codebases
+### `<desc>` and `aria-describedby`
+
+A `<desc>` child is exposed as the element's *description*: secondary text a screen reader can read after the name, or on request. The SVG accessibility mapping lets browsers pick up `<desc>` automatically, but pointing `aria-describedby` at its `id` (as in the first example above) is more reliable across screen readers.
+
+You'll also see `aria-labelledby="chart-title chart-desc"`, listing both ids in the *label*. That's what this blog's own diagrams do. It folds the description into one long name that's read in full every time. Use `aria-describedby` when the description is long enough that users should be able to skip it.
+
+### The Tooltip Side Effect
+
+Most desktop browsers show a `<title>` child's text as a native hover tooltip, the same way they show an HTML `title` attribute. That's fine on a chart, but usually unwanted on a small icon inside a button that already has a visible label, where it duplicates the label and appears after a delay.
+
+<Warning title="SVG elements have no title attribute">
+  An HTML element's `title="..."` attribute has no equivalent on SVG shapes. `<circle title="...">` does nothing. The *child element* `<title>` is the only thing that produces both the accessible name fallback and the hover tooltip. If you want a name without a tooltip, use `aria-label` on the element and leave `<title>` out.
+</Warning>
+
+### Naming Individual Shapes
+
+Here's the trap. `role="img"` tells assistive technology to treat the whole SVG as **one opaque image**, which makes every child *presentational*. A `<title>` on an inner `<rect>` inside a `role="img"` root is never exposed. Neither is any `<text>` inside.
+
+When individual parts need their own names (bars in a chart, regions on a map), give the root a grouping role and give each named part its own role:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 200 100" role="group" aria-labelledby="regions-title">
+    <title id="regions-title">Sales by region</title>
+
+    <g role="img" aria-labelledby="north-title">
+      <title id="north-title">North: 40% of sales</title>
+      <rect x="20" y="20" width="60" height="70" fill="#6366f1" />
+    </g>
+
+    <g role="img" aria-labelledby="south-title">
+      <title id="south-title">South: 25% of sales</title>
+      <rect x="110" y="46" width="60" height="44" fill="#10b981" />
+    </g>
+  </svg>
+`}
+</CodeBlock>
+
+The root is now a named group, and each `<g role="img">` is a separately named image inside it. Plain shapes with no role and no name are ignored, which is usually what you want. Interactive parts should be real links instead (see [below](#a-native-svg-hyperlinks)); a link is already named by its text content.
+
+### Decorative SVGs
+
+For a graphic that adds nothing a nearby text label doesn't already say, use `aria-hidden="true"` on the root `<svg>`. It removes the entire subtree from the accessibility tree.
+
+`role="presentation"` (or its synonym `role="none"`) is **not** equivalent. It only strips the root element's own semantics. Children with their own names or roles can still be exposed, and browsers repair the role back if the element is focusable or has a global ARIA attribute. For "hide this completely," `aria-hidden="true"` is the right tool.
+
+`focusable="false"` is a legacy attribute that some older IE/Edge versions needed on decorative SVGs to avoid a stray tab stop. Current browsers don't need it, but you'll still see it in older icon libraries, and it's harmless.
+
+<RainbowDivider />
+
+## ARIA Graphics Roles
+
+The WAI-ARIA Graphics Module defines three roles aimed specifically at structured graphics:
+
+* **`graphics-document`.** The root of a graphic whose parts are meant to be explored individually, such as a diagram, map, or chart. Children keep their own semantics, unlike under `role="img"`.
+* **`graphics-object`.** A meaningful section within that document, like a node in a flowchart or a group of related marks.
+* **`graphics-symbol`.** A single symbol whose meaning comes from convention, like a map legend icon or a status glyph.
+
+On paper, these are a better fit than `group`/`img` for complex graphics. In practice, support is uneven. Browsers map the roles, but screen readers vary widely in how (or whether) they announce them, and some fall back to something generic.
+
+<Info title="Honest advice on graphics roles">
+  For a simple icon or single-message chart, `role="img"` is still the most reliable choice. For structured graphics, `role="group"` with named children (as above) is the safe baseline. If you use `graphics-document`, test with the screen readers your users actually rely on, and make sure the graphic stays understandable if the role is announced as nothing more than "group."
+</Info>
+
+<RainbowDivider />
+
+## Text Alternatives for Charts
+
+A one-line name like "Quarterly revenue, upward trend" tells a screen-reader user the chart exists and what it's about. It doesn't give them the *data*. For anything someone might need to read values from, provide a real text alternative next to the graphic:
+
+<CodeBlock language="html">
+{`
+  <figure>
+    <svg viewBox="0 0 100 60" role="img" aria-labelledby="q-title" aria-describedby="q-summary">
+      <title id="q-title">Quarterly revenue, 2026</title>
+      <polyline points="10,50 35,40 60,25 90,10" fill="none" stroke="#10b981" stroke-width="3" />
+    </svg>
+    <figcaption id="q-summary">Revenue grew every quarter, from $2M in Q1 to $5M in Q4.</figcaption>
+
+    <details>
+      <summary>Show the data</summary>
+      <table>
+        <thead><tr><th scope="col">Quarter</th><th scope="col">Revenue</th></tr></thead>
+        <tbody>
+          <tr><td>Q1</td><td>$2M</td></tr>
+          <tr><td>Q2</td><td>$2.8M</td></tr>
+          <tr><td>Q3</td><td>$4M</td></tr>
+          <tr><td>Q4</td><td>$5M</td></tr>
+        </tbody>
+      </table>
+    </details>
+  </figure>
+`}
+</CodeBlock>
+
+This pattern has three layers:
+
+* **The name** (`<title>`) says what the chart is.
+* **The visible caption** (wired up via `aria-describedby`) says what it *means*. Sighted users benefit from that too.
+* **The table** holds the actual numbers, in a structure screen readers navigate well.
+
+The same table also helps anyone who can't distinguish your series colors, and anyone who wants to copy the data.
 
 <RainbowDivider />
 
 ## `<a>`: Native SVG Hyperlinks
 
+Wrapping any shape or group in `<a href="...">` makes it a real link. It's keyboard-focusable, activates with Enter, shows up in a screen reader's links list, supports middle-click and "open in new tab," and gets its accessible name from the text inside it. That's everything a click handler on a `<g>` would have to rebuild by hand.
+
 <SvgSnippet>
 {`
 <svg viewBox="0 0 100 50" width="240" height="120">
-  <a href="#" aria-label="View report">
-    <rect x="10" y="10" width="80" height="30" rx="6" fill="#6366f1" style="outline-offset: 2px" />
-    <text x="50" y="29" font-size="9" text-anchor="middle" fill="white">View report</text>
+  <a href="/post/svg/svg-essentials-mastering-basic-shapes">
+    <rect x="10" y="10" width="80" height="30" rx="6" fill="#6366f1" />
+    <text x="50" y="28" font-size="9" text-anchor="middle" fill="white">Start the series</text>
   </a>
 </svg>
 `}
 </SvgSnippet>
 
-Wrapping any shape or group in `<a href="...">` makes it a real, keyboard-focusable, screen-reader-announced link — the SVG-native equivalent of wrapping a `<div>` in an anchor tag, with the same native keyboard/focus behavior a synthetic click handler on a `<g>` would otherwise have to reimplement by hand.
+The link's name is simply "Start the series," taken from the `<text>`. There's no need for an `aria-label` repeating the same words. Only add `aria-label` when the visible text is ambiguous out of context: a link that just says "More," for example.
+
+Links should always point somewhere real. `href="#"` makes a link that goes nowhere, jumps the page to the top, and tells screen-reader users "link" for something that is really a button. If an element triggers an action instead of navigating, it's a button, and it belongs in the [keyboard focus section](#keyboard-focus-and-custom-controls) below.
+
+### Styling the Focus Ring
+
+Keyboard focus lands on the `<a>`, not on the `<rect>` inside it. That's why `outline-offset` on the rect does nothing, and why browsers' default outline around an SVG `<a>` often looks clipped or oddly placed. Style the shape *through* the focused link instead:
+
+<CodeBlock language="css">
+{`
+  a:focus-visible {
+    outline: none; /* replaced by the stroke below */
+  }
+
+  a:focus-visible rect {
+    stroke: #f59e0b;
+    stroke-width: 3;
+  }
+`}
+</CodeBlock>
+
+`:focus-visible` shows the ring for keyboard focus without flashing it on every mouse click, the same as it does for HTML controls.
+
+<RainbowDivider />
+
+## Keyboard Focus and Custom Controls
+
+SVG 2 made `tabindex` a valid attribute on every SVG element, and current browsers honor it. `tabindex="0"` puts a shape or group into the tab order. But a focusable element with a click handler still isn't a *button*: it has no role, and it doesn't respond to Enter or Space on its own. You have to supply all of that:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 100" width="48" height="48">
+    <g class="play-control" role="button" tabindex="0" aria-label="Play video">
+      <circle cx="50" cy="50" r="40" fill="#6366f1" />
+      <path d="M40,32 L70,50 L40,68 Z" fill="white" />
+    </g>
+  </svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const control = document.querySelector(".play-control");
+
+  control.addEventListener("click", playVideo);
+
+  control.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault(); // stop Space from scrolling the page
+      playVideo();
+    }
+  });
+`}
+</CodeBlock>
+
+<Success title="Prefer a real HTML button">
+  For a standalone control, `<button type="button" aria-label="Play video"><svg aria-hidden="true">...</svg></button>` gets you the role, focus, Enter/Space activation, disabled state, and form behavior for free. Reach for `role="button"` on SVG content only when the control really has to live *inside* a larger graphic, like a clickable node in a diagram. And for navigation, use `<a>`.
+</Success>
+
+### Forced Colors
+
+In Windows High Contrast and other forced-colors modes, the browser replaces your page's colors with a small system palette. How that treatment applies to SVG `fill` and `stroke` varies by browser, so don't rely on it. Two habits make SVG controls hold up:
+
+* Paint icons with `currentColor`. The forced text color then flows into them automatically.
+* Give focus states an explicit forced-colors fallback, using system color keywords:
+
+<CodeBlock language="css">
+{`
+  @media (forced-colors: active) {
+    a:focus-visible rect,
+    .play-control:focus-visible circle {
+      stroke: Highlight;
+      stroke-width: 3;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## `pointer-events`: What Counts as a Hit
+
+Every pointer event on an SVG starts with *hit-testing*: which element, if any, is under the pointer? For HTML, the answer is "whatever box is there." For SVG, the answer depends on the `pointer-events` property, which decides whether an element's **fill region**, its **stroke band**, or (in SVG 2) its **bounding box** counts as clickable.
+
+<PointerEventsHitAreaDiagram />
+
+The default, `visiblePainted`, hit-tests only the parts that are actually painted (and visible):
+
+* **Fill region.** Only if `fill` is not `none`.
+* **Stroke band.** Only if `stroke` is not `none`.
+
+That default explains a classic confusion: **a hollow outline icon isn't clickable in the middle.** A ring drawn with `fill="none"` responds only to the thin band of its stroke. The hole is empty, so the click falls straight through to whatever is behind it.
+
+The other values change the rule:
+
+* **`visible`.** Fill and stroke regions both hit-test regardless of paint, as long as the element is visible.
+* **`painted`.** Like `visiblePainted`, but ignores `visibility`.
+* **`fill` / `stroke`.** Only that one region, regardless of paint.
+* **`all`.** Both regions, regardless of paint and visibility.
+* **`none`.** Never hit-tested. Events pass through to whatever lies beneath. This is ideal for decorative overlays, labels on top of interactive shapes, and tooltips that follow the cursor.
+* **`bounding-box`.** An SVG 2 addition: the element's whole bounding box hit-tests, gaps included. Browser support is less established than for the other values, so test it before relying on it.
+
+<InteractiveSvgPanel slug="svg-pointer-events-demo" />
+
+Switch `fill` between `none` and `transparent` with the default `visiblePainted` and hover the hole. `fill="transparent"` is still a paint (a fully transparent color), so the fill region counts as painted and hit-tests. `fill="none"` means no paint at all, so it doesn't. That makes `fill="transparent"` the quickest way to make a hollow icon clickable across its whole area, with no change to how it looks.
+
+<Info title="Groups hit-test through their children">
+  A `<g>` has no geometry of its own, so a click lands on a group only by landing on one of its painted children. The gaps between them don't count. If a multi-shape icon needs one solid hit area, the reliable fix is an invisible backing shape (`<rect fill="transparent">`) inside the group. [`g` as an Event-Handling Boundary](/post/svg/svg-essentials-g-defs-symbol-and-use#g-as-an-event-handling-boundary) covers the delegation side of this.
+</Info>
+
+<RainbowDivider />
+
+## Styling Interaction with CSS
+
+Inline SVG elements are ordinary DOM elements, so every CSS state selector works on them: `:hover`, `:focus-visible`, `:active`, and even `:has()`. SVG presentation properties like `fill`, `stroke`, `stroke-width`, and `opacity` transition smoothly. [CSS-Only Styles & Interactivity](/post/svg/svg-essentials-mastering-basic-shapes#css-only-styles-interactivity) introduced this. Two techniques turn it into a proper theming system.
+
+### Theming with `currentColor`
+
+`currentColor` resolves to the element's inherited CSS `color`. An icon painted with it automatically matches the text around it, and changes whenever that text does:
+
+<CodeBlock language="html">
+{`
+  <a class="nav-link" href="/settings">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
+    </svg>
+    Settings
+  </a>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .nav-link { color: #475569; }
+  .nav-link:hover,
+  .nav-link:focus-visible { color: #4f46e5; }
+`}
+</CodeBlock>
+
+One `color` change on the link recolors both the text and the icon. The SVG itself carries no hover rules at all.
+
+### Multi-Color Theming with Custom Properties
+
+`currentColor` gives you one color. For icons with two or more tones, CSS custom properties inherit into inline SVG the same way, and a fallback keeps the icon usable where the variable isn't set:
+
+<CodeBlock language="xml">
+{`
+  <svg class="status-icon" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" style="fill: var(--icon-bg, #e0e7ff)" />
+    <path d="M7,12 L11,16 L17,8" fill="none" stroke-width="2.5" style="stroke: var(--icon-fg, #4338ca)" />
+  </svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .status-icon:hover {
+    --icon-bg: #4338ca;
+    --icon-fg: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .status-icon { --icon-bg: #312e81; --icon-fg: #c7d2fe; }
+  }
+`}
+</CodeBlock>
+
+Custom properties also reach into `<use>` shadow clones, where ordinary selectors can't. That makes them the standard way to theme [sprite icons](/post/svg/svg-essentials-g-defs-symbol-and-use#a-practical-icon-sprite-system).
+
+<RainbowDivider />
+
+## Events on SVG Shapes
+
+SVG elements fire the full set of DOM events: `click`, the `pointer*` family, `focus`/`blur`, `keydown`. Prefer **pointer events** (`pointerdown`, `pointermove`, `pointerup`) over separate mouse and touch listeners. One code path then handles mouse, pen, and touch.
+
+Events bubble through SVG exactly as they do through HTML, so one listener on a parent `<g>` or on the `<svg>` itself can serve hundreds of shapes. That matters for charts and maps, where attaching a listener per mark gets expensive:
+
+<CodeBlock language="js">
+{`
+  const chart = document.querySelector("#bar-chart");
+
+  chart.addEventListener("click", (event) => {
+    // event.target is the painted shape that was actually hit — often a child
+    // of the element you care about, so walk up to the nearest data mark.
+    const bar = event.target.closest("[data-region]");
+    if (!bar) return;
+    showDetails(bar.dataset.region);
+  });
+`}
+</CodeBlock>
+
+Keep in mind that `event.target` is always the **painted element that was hit**. That might be a `<path>` or `<text>` nested inside the `<g>` you attached data to, which is why `closest()` does the work above. Content cloned through `<use>` is the exception: events are retargeted to the `<use>` element itself, because the clone lives in a shadow tree ([The `use` Shadow Clone](/post/svg/svg-essentials-g-defs-symbol-and-use#the-use-shadow-clone) covers why).
+
+On touch devices, a finger dragging across an SVG normally scrolls or zooms the page, and the browser then sends `pointercancel` to your listeners. For a drawing surface or draggable diagram, opt the outer `<svg>` out of browser gestures with `touch-action: none` (or `touch-action: pan-y` to keep vertical scrolling).
+
+<RainbowDivider />
+
+## Manipulating SVG with JavaScript
+
+### Creating Elements: `createElementNS`
+
+SVG elements live in the SVG namespace. `document.createElement("circle")` creates an HTML element that happens to be named `circle`. It's an `HTMLUnknownElement`: it appears in the DOM inspector but renders nothing. Create SVG elements with the namespace-aware call:
+
+<CodeBlock language="js">
+{`
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  const svg = document.querySelector("#canvas");
+  const dot = document.createElementNS(SVG_NS, "circle");
+  dot.setAttribute("cx", "50");
+  dot.setAttribute("cy", "50");
+  dot.setAttribute("r", "6");
+  dot.setAttribute("fill", "#6366f1");
+  svg.append(dot);
+`}
+</CodeBlock>
+
+Setting `innerHTML` on an element that's already inside an `<svg>` also works, because the HTML parser knows it's in SVG content and creates the children in the right namespace. It's still string-based HTML injection, though, so never feed it anything you didn't author ([see sanitization below](#sanitizing-untrusted-svg)).
+
+### Attributes vs. Animated Properties
+
+`setAttribute` / `getAttribute` always work, and always deal in strings. SVG geometry attributes are also exposed as typed **animated properties**, which skip the string round trip:
+
+<CodeBlock language="js">
+{`
+  dot.cx.baseVal.value = 60;       // same effect as setAttribute("cx", "60")
+  const r = dot.r.baseVal.value;   // a number, not "6"
+
+  // animVal reflects any running SMIL animation; baseVal is the underlying value
+  const currentX = dot.cx.animVal.value;
+`}
+</CodeBlock>
+
+There's one well-known trip-up here. On SVG elements, `className` is an `SVGAnimatedString` object, not a string, so `el.className = "active"` doesn't do what you expect. Use `el.classList` (which works identically on SVG and HTML) or `setAttribute("class", ...)`.
+
+### Measuring: `getBBox()` and `getTotalLength()`
+
+`getBBox()` returns an element's tight bounding box `{ x, y, width, height }`, and it's easy to misread. The box is in the element's **own user space**: **before** its `transform` and any ancestor transforms are applied, and **excluding** stroke width, markers, and filter effects. A rotated shape reports its unrotated box. A shape with a thick stroke reports a box smaller than what you see. When you need where something actually appears on screen, use `getBoundingClientRect()`, which reports client pixels after all transforms.
+
+On `<path>` and the basic shapes, `getTotalLength()` returns the geometric length of the outline, and `getPointAtLength(d)` returns the point at distance `d` along it. Those two drive the classic line-draw effect (set `stroke-dasharray` and `stroke-dashoffset` to the total length) and let you place a label or marker at "60% of the way along this route."
+
+<RainbowDivider />
+
+## Converting Pointer Coordinates to User Units
+
+Pointer events report `clientX` / `clientY` in **CSS pixels from the top-left of the viewport**. Your shapes live in **user units** defined by the `viewBox`. The two differ by an offset (where the `<svg>` sits on the page) and a scale (the `viewBox` size compared to the rendered size), plus any `preserveAspectRatio` letterboxing and CSS transforms. Doing that math by hand gets fragile fast.
+
+The browser already knows the full mapping. `getScreenCTM()` returns the matrix from an element's user space to client pixels, so its **inverse** maps a client point back into user units:
+
+<ScreenToUserSpaceDiagram />
+
+<CodeBlock language="js">
+{`
+  // Converts a pointer event's client position into the given element's user units.
+  function toUserSpace(element, event) {
+    const ctm = element.getScreenCTM();
+    if (!ctm) return null; // element isn't rendered (display: none, detached)
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(ctm.inverse());
+  }
+`}
+</CodeBlock>
+
+Pass the element whose coordinate system you care about. For shapes placed directly in the root, that's the `<svg>` itself. For a shape inside a transformed `<g>`, pass the `<g>` (or the shape), and the result already accounts for that transform. You'll also see older code using `svg.createSVGPoint()` in place of `new DOMPoint()`; it does the same job.
+
+### Drag-and-Drop
+
+With that one helper, dragging a shape takes about twenty lines:
+
+<CodeBlock language="xml">
+{`
+  <svg id="board" viewBox="0 0 100 100" width="300" height="300" style="touch-action: none">
+    <rect width="100" height="100" fill="#f1f5f9" />
+    <circle class="handle" cx="30" cy="50" r="8" fill="#6366f1" />
+    <circle class="handle" cx="70" cy="50" r="8" fill="#10b981" />
+  </svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const board = document.querySelector("#board");
+  let dragging = null;
+  let grabOffset = { x: 0, y: 0 };
+
+  board.addEventListener("pointerdown", (event) => {
+    const handle = event.target.closest(".handle");
+    if (!handle) return;
+
+    const point = toUserSpace(board, event);
+    dragging = handle;
+    // Remember where inside the circle it was grabbed, so it doesn't jump to center.
+    grabOffset = { x: point.x - handle.cx.baseVal.value, y: point.y - handle.cy.baseVal.value };
+    // Keep receiving events even when the pointer outruns the shape.
+    handle.setPointerCapture(event.pointerId);
+  });
+
+  board.addEventListener("pointermove", (event) => {
+    if (!dragging) return;
+    const point = toUserSpace(board, event);
+    dragging.cx.baseVal.value = point.x - grabOffset.x;
+    dragging.cy.baseVal.value = point.y - grabOffset.y;
+  });
+
+  function endDrag() {
+    dragging = null;
+  }
+
+  board.addEventListener("pointerup", endDrag);
+  board.addEventListener("pointercancel", endDrag);
+`}
+</CodeBlock>
+
+Three details make this robust:
+
+* **`setPointerCapture`** keeps the drag alive when a fast pointer outruns the shape.
+* **`touch-action: none`** stops touch drags from scrolling the page mid-gesture.
+* **Converting through `getScreenCTM()`** means the drag stays accurate no matter how the SVG is scaled or where it scrolls.
+
+<Warning title="Dragging needs a non-drag alternative">
+  A drag-only interaction locks out keyboard and switch users (WCAG 2.2 calls this out under "Dragging Movements"). Make the handles focusable and let arrow keys nudge the focused one, or provide inputs or buttons that achieve the same result.
+</Warning>
+
+<RainbowDivider />
+
+## Respecting Reduced Motion
+
+Interactive graphics often animate: hover transitions, spinners, attention-grabbing pulses. Users who set their OS to reduce motion should get a calmer version. For CSS-driven SVG animation, the media query is all you need, and it works inside a standalone SVG's own `<style>` too:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) {
+    .spinner,
+    .pulse {
+      animation: none;
+    }
+
+    .interactive-shape {
+      transition: none;
+    }
+  }
+`}
+</CodeBlock>
+
+[SMIL animations](/post/svg/svg-essentials-smil-animation) ignore CSS entirely, so they need JavaScript. The root `<svg>` element's `pauseAnimations()` and `unpauseAnimations()` freeze and resume every SMIL timeline in that SVG:
+
+<CodeBlock language="js">
+{`
+  const svg = document.querySelector("#animated-logo");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function applyMotionPreference() {
+    if (reduceMotion.matches) svg.pauseAnimations();
+    else svg.unpauseAnimations();
+  }
+
+  applyMotionPreference();
+  reduceMotion.addEventListener("change", applyMotionPreference);
+`}
+</CodeBlock>
+
+An SVG loaded through `<img>` can't run that script. If it carries SMIL animation that might bother motion-sensitive users, either keep the animation subtle or embed it in a way that allows control.
 
 <RainbowDivider />
 
 ## `<view>`: Named Viewports
 
+A `<view>` element names an alternative `viewBox` for the document, so that linking to its `id` zooms and pans straight to that region:
+
 <CodeBlock language="xml">
 {`
-  <svg>
-    <view id="chart-detail" viewBox="40 10 30 30" />
-    <!-- full diagram content -->
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <view id="harbour" viewBox="40 10 30 30" />
+    <view id="old-town" viewBox="5 55 40 40" />
+    <!-- full map content -->
   </svg>
 `}
 </CodeBlock>
 
-Linking to `map.svg#chart-detail` jumps directly to that specific zoomed/panned region — a native "deep link into part of an SVG" mechanism, useful for a large diagram or map where different anchors should present different zoomed views without any JavaScript.
+The catch: **fragment views only apply when the SVG is its own document.** That includes:
+
+* navigating directly to `map.svg#harbour`
+* `<img src="map.svg#harbour">`
+* `<object data="map.svg#harbour">` or an `<iframe>`
+
+An inline `<svg>` is part of the HTML page. There, `#harbour` is just a page fragment and does nothing to the viewBox. That's one reason `<view>` is also a neat sprite technique: one file with several named views, each referenced from a separate `<img>`.
+
+SVG also defines an ad-hoc form that needs no `<view>` element at all: `map.svg#svgView(viewBox(40,10,30,30))`. Support for the `svgView()` syntax has historically been patchier than for named views, notably in Safari, so test it in your target browsers before depending on it.
+
+<RainbowDivider />
+
+## How Embedding Changes What an SVG Can Do
+
+Nearly every interactive feature in this post (scripts, events, `:hover`, page CSS, even `<view>` links) depends on *how* the SVG got onto the page. The same file loses capabilities as it moves from being part of the page's DOM, to being its own nested document, to being a flat picture:
+
+<SvgEmbedContextDiagram />
+
+* **Inline `<svg>`** is part of the page. Page CSS and scripts reach every shape, and everything in this post works.
+* **`<img>` and CSS `background-image`** treat the SVG as a picture. Scripts don't run, external resources don't load, there's no interactivity, page CSS can't reach in, and the accessible name comes from the `<img>`'s `alt`, not the SVG's internal `<title>`. That's safe and cacheable, but inert.
+* **`<object>` / `<iframe>`** give the SVG its own document. Scripts and interactivity work inside it, but the host page's stylesheets don't apply. Accessibility exposure varies by browser.
+* **Drawn to `<canvas>`**, it's just pixels.
+
+[SVG Essentials: image and foreignObject](/post/svg/svg-essentials-image-and-foreignobject) covers the image-embedding side of this in depth.
 
 <RainbowDivider />
 
 ## `<style>` and `<script>` Inside SVG
 
-An SVG document can contain its own `<style>` block (real CSS, scoped to that document when standalone) and even `<script>` (real JavaScript).
+An SVG can carry its own `<style>` block (real CSS) and `<script>` (real JavaScript). In a standalone `.svg` file opened directly, or loaded through `<object>`/`<iframe>`, both are scoped to that SVG's own document. Inline, they're not.
 
-<Warning title="script inside SVG is a real, historically-exploited XSS vector">
-  Never render user-supplied SVG content inline without sanitizing it first — stripping `<script>` elements, event-handler attributes (`onload`, `onclick`, and similar), and any other executable content. An SVG upload feature that renders the file inline/embedded without sanitization is a documented, real-world attack surface, not a theoretical one.
+<Warning title="Inline SVG <style> is global to the whole page">
+  Once an SVG is pasted inline into HTML, its `<style>` element is just another stylesheet in the page. Its rules apply to *every* matching element in the document, not just the SVG they arrived in. Design-tool exports are the usual casualty. Illustrator names classes `.cls-1`, `.cls-2`, and so on in every file, so two inlined exports on one page overwrite each other's colors, and the last one wins. A stray `text` or `a` selector in an SVG's styles will restyle the page's own content too.
+</Warning>
+
+The fixes, from most to least robust:
+
+* **Let the build rewrite exports.** Run SVGO with its `prefixIds` plugin so classes and ids become unique per file, or have it inline styles as presentation attributes.
+* **Scope rules by hand.** Prefix every selector with a unique root class or id (`.logo-2026 .cls-1`).
+* **Drop the embedded styles.** Remove the `<style>` element and theme the icon from page CSS, using `currentColor` and custom properties as shown above.
+
+The same page-global rule applies to **ids**. Two inline SVGs that both define `id="gradient1"` collide, and every `url(#gradient1)` on the page resolves to the first one in document order.
+
+An inline `<script>` inside inline SVG runs like any other page script, with full access to your page. The next section is about making sure only *your* scripts get that chance.
+
+<RainbowDivider />
+
+## Sanitizing Untrusted SVG
+
+An SVG file is a document that can carry executable content. The moment your product accepts SVG uploads (avatars, logos, user-drawn diagrams), every one of these has to be assumed hostile:
+
+* **`<script>` elements** and **event-handler attributes**: `onload`, `onclick`, `onmouseover`, `onbegin` on animation elements, and many more.
+* **`javascript:` URLs** in `<a href>` / `xlink:href`, which run when the link is clicked.
+* **Animation that rewrites attributes.** `<animate>` or `<set attributeName="href" to="javascript:...">` can turn an innocent-looking link into a script URL *after* a naive sanitizer has already inspected it.
+* **`<foreignObject>`**, which can embed arbitrary HTML: `<iframe>`, `<form>` elements that phish for credentials, and anything else HTML allows.
+* **External references.** `<use href="https://evil.example/x.svg#payload">`, `<image href>`, and CSS `url()` can pull in outside content or quietly track who viewed the file.
+* **XML tricks.** Entity declarations can blow up memory (the "billion laughs" attack), or read server files if an XML parser on your back end resolves external entities (XXE).
+
+Stripping `<script>` with a regex catches none of the other items. Use a real, maintained, allow-list sanitizer. On the client, or on the server with a DOM implementation like jsdom, DOMPurify has a dedicated SVG profile:
+
+<CodeBlock language="js">
+{`
+  import DOMPurify from "dompurify";
+
+  // Allow SVG and SVG filter elements only — no HTML, no scripts, no handlers.
+  const cleanSvg = DOMPurify.sanitize(untrustedSvg, {
+    USE_PROFILES: { svg: true, svgFilters: true }
+  });
+`}
+</CodeBlock>
+
+Sanitization is only half the defense. **How you serve and embed the file matters just as much:**
+
+* **Display uploads through `<img>`**, never inline and never through `<object>`/`<iframe>`. In image mode, scripts don't run and external resources don't load, even if something slipped past the sanitizer.
+* **Serve uploads from a separate origin** (a dedicated user-content domain, not your app's domain), so even a script that runs can't read your cookies or call your APIs as the user.
+* **Send restrictive response headers** on the files themselves:
+
+<CodeBlock language="text">
+{`
+  Content-Type: image/svg+xml
+  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox
+  Content-Disposition: attachment
+  X-Content-Type-Options: nosniff
+`}
+</CodeBlock>
+
+Use `Content-Disposition: attachment` wherever users don't need to view the file directly in the browser. It forces a download instead of rendering.
+
+<Warning title="The stored-XSS path most teams miss">
+  An `<img>` preview can be perfectly safe while the "view original" link next to it is not. Opening an uploaded `.svg` directly in a tab, or embedding it with `<object>`/`<iframe>`, renders it as a full document. If that file is served from your own origin, its scripts run *as your site*. That's a stored XSS, triggered by anyone who clicks the link. Separate origin, CSP, and sanitization together close it. Any one alone doesn't.
 </Warning>
 
 <RainbowDivider />
 
 ## `<metadata>`
 
-A container for machine-readable metadata (often RDF/Dublin Core, commonly seen in files exported from professional design tools) — not rendered, not meant for human reading. You'll encounter it mostly as boilerplate in exported files rather than something to author by hand.
+`<metadata>` holds machine-readable information about the file itself: authorship, license, source, keywords. It's never rendered and isn't exposed to assistive technology. Design tools such as Inkscape write RDF with Dublin Core and Creative Commons vocabularies:
+
+<CodeBlock language="xml">
+{`
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <metadata>
+      <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+               xmlns:dc="http://purl.org/dc/elements/1.1/"
+               xmlns:cc="http://creativecommons.org/ns#">
+        <cc:Work rdf:about="">
+          <dc:title>Harbour district map</dc:title>
+          <dc:creator><cc:Agent><dc:title>Jane Doe</dc:title></cc:Agent></dc:creator>
+          <dc:date>2026-09-28</dc:date>
+          <cc:license rdf:resource="https://creativecommons.org/licenses/by/4.0/" />
+        </cc:Work>
+      </rdf:RDF>
+    </metadata>
+    <!-- drawing -->
+  </svg>
+`}
+</CodeBlock>
+
+For web delivery, `<metadata>` is usually dead weight. SVGO's default preset removes it (the `removeMetadata` plugin). That's fine for icons, but if a license *requires* attribution to travel with the file, turn that plugin off for those assets or keep the attribution in visible text. Also check what your optimizer does with `<title>` and `<desc>`: some SVGO versions and configurations remove them too, which silently strips the accessible name you carefully wrote.
+
+<Info title="A related document-level feature: switch">
+  `<switch>` with `systemLanguage` lets an SVG choose which child to render based on the user's language, with no script at all. [switch for Conditional Rendering](/post/svg/svg-essentials-g-defs-symbol-and-use#switch-for-conditional-rendering) walks through it.
+</Info>
 
 <RainbowDivider />
 
 ## Where Should You Use This?
 
-- Any SVG conveying real information (a chart, an icon with meaning) needs `<title>` and appropriate ARIA
-- Any clickable SVG element should be a real `<a>`, not a `<g>` with a synthetic click handler and no keyboard support
-- Any product accepting user-uploaded SVGs needs sanitization before rendering them inline
+* **Any SVG that conveys information** needs an accessible name. Use `aria-labelledby` / `aria-label`, or `<title>` as the fallback. Charts also need a real text alternative for their data.
+* **Any SVG that's purely decorative** gets `aria-hidden="true"`, not `role="presentation"`.
+* **Anything clickable that navigates** should be a real `<a>`. Anything that performs an action should be a real `<button>` where possible, or `role="button"` plus `tabindex="0"` plus Enter/Space handling when it has to live inside the graphic.
+* **Hollow or multi-shape icons that must be clickable** need `fill="transparent"` or an invisible backing shape. Overlays that must *not* intercept clicks need `pointer-events: none`.
+* **Any drag, draw, or click-to-place interaction** should convert coordinates through `getScreenCTM().inverse()`, not hand-rolled offset math.
+* **Any product accepting user-uploaded SVGs** needs sanitization, `<img>`-only display, and a separate origin with restrictive headers.
 
 <RainbowDivider />
 
 ## Production Considerations & Edge Cases
 
-* **The `<script>`-in-SVG XSS risk is the most operationally important point in this post** — sanitize before rendering any SVG your application didn't author itself.
-* **`<title>` the element is not the same as the `title` attribute** — the attribute is a native hover tooltip some elements also support; the child *element* is what assistive technology actually reads as the accessible name. Don't confuse the two.
-* **SVG accessibility support has historically been uneven across browser/AT combinations** — test with a real screen reader for anything accessibility-critical rather than trusting markup alone.
+* **Security is the most operationally important point in this post.** Sanitize before rendering any SVG you didn't author. Never open or embed an uploaded SVG as a document on your own origin.
+* **`role="img"` flattens everything inside it.** Named children, `<text>`, and nested links lose their semantics. Switch the root to `role="group"` the moment any part needs its own name.
+* **Inline SVG shares the page's global namespace for styles and ids.** Prefix classes and ids in build tooling before inlining third-party or design-tool exports.
+* **Your optimizer can undo your accessibility work.** Confirm your SVGO configuration keeps `<title>`, `<desc>`, and ARIA attributes on the assets that need them.
+* **`getBBox()` ignores transforms and stroke.** Use `getBoundingClientRect()` for on-screen geometry, and `getScreenCTM()` for pointer conversion.
+* **Embedding decides capability.** `<img>` SVGs can't be scripted, styled from the page, or made interactive. That's a feature for untrusted files and a limitation for your own interactive graphics.
+* **SVG accessibility support has historically been uneven across browser and screen-reader combinations**, especially for graphics roles and nested names. Test anything accessibility-critical with a real screen reader rather than trusting the markup alone.
 
 <RainbowDivider />
 
 ## Wrapping Up the Series
 
-That's the full spread of SVG — from [shapes, coordinates, and styling](/post/svg/svg-essentials-mastering-basic-shapes) and [the path element](/post/svg/svg-essentials-mastering-the-path-element) through [polygon vs. polyline](/post/svg/polygon-vs-polyline), [text](/post/svg/svg-essentials-mastering-text), [g/defs/symbol/use](/post/svg/svg-essentials-g-defs-symbol-and-use), [gradients](/post/svg/svg-essentials-gradients), [patterns](/post/svg/svg-essentials-pattern-element), [clipPath and mask](/post/svg/svg-essentials-clippath-and-mask), [markers](/post/svg/svg-essentials-marker-element), [filter fundamentals](/post/svg/svg-essentials-filters-fundamentals) and [advanced filter primitives](/post/svg/svg-essentials-advanced-filter-primitives), [native SMIL animation](/post/svg/svg-essentials-smil-animation), [image and foreignObject](/post/svg/svg-essentials-image-and-foreignobject), and now the accessibility/metadata/interactivity layer that ties it all together into a real, robust document. Thanks for reading the whole spec with me.
+This post covered the layer that turns a drawing into a working part of a page:
+
+* **Accessible names** come from `aria-labelledby`, then `aria-label`, then `<title>`. `role="img"` flattens children, so individually named parts need a grouping root.
+* **Charts need more than a name.** A caption and a data table make the information itself accessible.
+* **Links and controls** should be real `<a>` and `<button>` elements where possible, with visible `:focus-visible` styling and keyboard support when you build your own.
+* **`pointer-events`** decides which painted regions are clickable. `fill="none"` leaves a hole; `fill="transparent"` doesn't.
+* **JavaScript** needs `createElementNS`, understands animated properties, measures with `getBBox()` / `getTotalLength()`, and converts pointer positions with `getScreenCTM().inverse()`.
+* **Embedding method, style leakage, and sanitization** decide whether an SVG is powerful, inert, or dangerous.
+
+And that's the full spread of SVG. It started with [shapes, coordinates, and styling](/post/svg/svg-essentials-mastering-basic-shapes) and [the path element](/post/svg/svg-essentials-mastering-the-path-element), then moved through:
+
+* [polygon vs. polyline](/post/svg/polygon-vs-polyline)
+* [text](/post/svg/svg-essentials-mastering-text)
+* [g/defs/symbol/use](/post/svg/svg-essentials-g-defs-symbol-and-use)
+* [gradients](/post/svg/svg-essentials-gradients)
+* [patterns](/post/svg/svg-essentials-pattern-element)
+* [clipPath and mask](/post/svg/svg-essentials-clippath-and-mask)
+* [markers](/post/svg/svg-essentials-marker-element)
+* [filter fundamentals](/post/svg/svg-essentials-filters-fundamentals)
+* [advanced filter primitives](/post/svg/svg-essentials-advanced-filter-primitives)
+* [native SMIL animation](/post/svg/svg-essentials-smil-animation)
+* [image and foreignObject](/post/svg/svg-essentials-image-and-foreignobject)
+
+It ends here, with the accessibility, interactivity, and security layer that ties it all together into a real, robust document. Thanks for reading the whole spec with me.

@@ -2429,23 +2429,80 @@ ${dots}
     slug: "svg-accessible-name-demo",
     title: "Interactive Example - title and role",
     controls: [
-      { id: "decorative", label: "Purely decorative (aria-hidden)", type: "checkbox", defaultValue: false }
+      {
+        id: "naming",
+        label: "Naming strategy",
+        type: "select",
+        options: ["title + aria-labelledby", "aria-label (beats title)", "aria-hidden (decorative)"],
+        defaultValue: "title + aria-labelledby"
+      }
     ],
     // ARIA/title changes are invisible to a sighted reader by default, so this demo renders a live
-    // text readout of what a screen reader would actually announce, right inside the SVG itself.
+    // text readout of what a screen reader would announce — itself aria-hidden so it never pollutes the real name.
     render: (values) => {
-      const decorative = Boolean(values.decorative);
-      const attrs = decorative ? 'aria-hidden="true"' : 'role="img" aria-labelledby="chart-icon-title"';
-      const titleEl = decorative ? "" : '<title id="chart-icon-title">Upward sales trend</title>';
-      const announcement = decorative ? "(skipped entirely — not announced)" : '"Upward sales trend, image"';
+      const naming = String(values.naming);
+      const decorative = naming === "aria-hidden (decorative)";
+      const useAriaLabel = naming === "aria-label (beats title)";
+
+      const rootAttrs = decorative
+        ? 'aria-hidden="true"'
+        : useAriaLabel
+          ? 'role="img" aria-label="Sales up 40% this year"'
+          : 'role="img" aria-labelledby="sales-trend-title"';
+      const titleEl = decorative ? "" : '\n  <title id="sales-trend-title">Upward sales trend</title>';
+      const announcement = decorative
+        ? "(skipped entirely)"
+        : useAriaLabel
+          ? '"Sales up 40% this year, image"'
+          : '"Upward sales trend, image"';
 
       return `
-<svg viewBox="0 0 100 70" width="260" height="182">
-  <g ${attrs}>
-    ${titleEl}
-    <polyline points="10,50 30,35 50,42 70,15 90,20" fill="none" stroke="#10b981" stroke-width="3" />
-  </g>
-  <text x="10" y="65" font-size="7" fill="var(--color-fg-muted)">Screen reader announces: ${announcement}</text>
+<svg viewBox="0 0 100 70" width="260" height="182" ${rootAttrs}>${titleEl}
+  <polyline points="10,50 30,35 50,42 70,15 90,20" fill="none" stroke="#10b981" stroke-width="3" />
+  <!-- Visual readout only: hidden so it never becomes part of the accessible name -->
+  <text x="6" y="64" font-size="6" fill="var(--color-fg-muted)" aria-hidden="true">Announced: ${announcement}</text>
+</svg>`;
+    }
+  },
+  {
+    slug: "svg-pointer-events-demo",
+    title: "Interactive Example - pointer-events hit-testing",
+    controls: [
+      {
+        id: "pointerEvents",
+        label: "pointer-events",
+        type: "select",
+        options: ["visiblePainted", "visible", "painted", "fill", "stroke", "all", "none", "bounding-box"],
+        defaultValue: "visiblePainted"
+      },
+      { id: "fill", label: "fill", type: "select", options: ["none", "transparent", "#c7d2fe"], defaultValue: "none" }
+    ],
+    // Hit-testing is only observable by pointing, so the ring recolors on :hover — class names are prefixed
+    // because a <style> inside inline SVG applies to the whole page, not just this graphic.
+    render: (values) => {
+      const pointerEvents = String(values.pointerEvents);
+      const fill = String(values.fill);
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <style>
+    .pe-demo-ring {
+      pointer-events: ${pointerEvents};
+      cursor: pointer;
+      transition: stroke 150ms;
+    }
+
+    .pe-demo-ring:hover {
+      stroke: #f59e0b;
+    }
+  </style>
+
+  <!-- Dashed outline marks the ring's geometry bounding box (stroke excluded) -->
+  <rect x="22" y="22" width="56" height="56" fill="none" stroke="var(--color-border-default)" stroke-dasharray="2 2" pointer-events="none" />
+
+  <circle class="pe-demo-ring" cx="50" cy="50" r="28" fill="${fill}" stroke="#6366f1" stroke-width="8" />
+
+  <text x="50" y="96" font-size="6" text-anchor="middle" fill="var(--color-fg-muted)" pointer-events="none">Hover the ring, the hole, and the corners</text>
 </svg>`;
     }
   },

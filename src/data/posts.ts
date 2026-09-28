@@ -456,11 +456,12 @@ export const posts: Post[] = [
   {
     slug: "svg-essentials-metadata-and-interactivity",
     title: "SVG Essentials: Metadata, Links, and Interactivity",
-    excerpt: "Accessible names, native links, deep-linkable views, and a real XSS warning.",
-    description: "The closing post in the SVG Essentials series — title and desc as accessible names, ARIA roles in SVG, native <a> hyperlinks, deep-linkable <view> viewports, <style>/<script> inside SVG and the real XSS risk they carry, and <metadata>.",
+    excerpt: "Accessible names, keyboard-ready links, pointer hit-testing, JavaScript DOM control, and safe handling of untrusted SVG.",
+    description: "The closing post in the SVG Essentials series — accessible-name computation with title, desc, and ARIA, text alternatives for charts, native <a> links and keyboard focus, pointer-events hit-testing, CSS hover/focus theming, JavaScript DOM manipulation and screen-to-user-space coordinate conversion, drag-and-drop, reduced motion, deep-linkable <view> viewports, embedding-context capabilities, <metadata>, and sanitizing untrusted SVG against XSS.",
     category: ["SVG"],
-    tags: ["svg", "accessibility", "aria", "title", "a11y", "xss", "security", "vector-graphics", "frontend-development"],
+    tags: ["svg", "accessibility", "aria", "title", "a11y", "interactivity", "pointer-events", "javascript", "sanitization", "xss", "security", "vector-graphics", "frontend-development"],
     changelog: [
+      { date: "2026-09-28", change: "Expanded into a full interactivity guide: corrected accessible-name order and role=\"img\" child semantics, added ARIA graphics roles, chart text alternatives, keyboard focus, pointer-events, CSS theming, JavaScript DOM and coordinate conversion with drag-and-drop, reduced motion, embedding-context capabilities, and a thorough sanitization section, plus three new diagrams" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   }
