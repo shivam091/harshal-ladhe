@@ -421,11 +421,12 @@ export const posts: Post[] = [
   {
     slug: "svg-essentials-advanced-filter-primitives",
     title: "SVG Essentials: Advanced Filter Primitives",
-    excerpt: "Color manipulation, compositing, noise, displacement, and lighting.",
-    description: "A complete guide to SVG's advanced filter primitives — feColorMatrix, feComponentTransfer, feComposite's compositing operators, feTurbulence procedural noise, feDisplacementMap warping, the feDropShadow shorthand, and the feDiffuseLighting/feSpecularLighting family.",
+    excerpt: "Colour matrices, compositing maths, morphology, kernels, noise, displacement, lighting — and complete recipes built from them.",
+    description: "A complete guide to SVG's advanced filter primitives — feColorMatrix (hand-written matrices for greyscale, sepia, duotone and gooey alpha contrast), feComponentTransfer's transfer functions, every feComposite operator including arithmetic, feMorphology, feConvolveMatrix kernels, feTurbulence and feDisplacementMap mechanics, what feDropShadow really expands to, diffuse and specular lighting with all three light sources, feTile and feImage, animating filters with SMIL, production recipes, and cross-browser caveats.",
     category: ["SVG"],
-    tags: ["svg", "filters", "fecolormatrix", "fecomposite", "feturbulence", "fedisplacementmap", "fedropshadow", "vector-graphics", "frontend-development"],
+    tags: ["svg", "filters", "fecolormatrix", "fecomponenttransfer", "fecomposite", "femorphology", "feconvolvematrix", "feturbulence", "fedisplacementmap", "fedropshadow", "lighting", "vector-graphics", "frontend-development"],
     changelog: [
+      { date: "2026-09-28", change: "Major expansion: corrected feDropShadow, atop, lighting and luminanceToAlpha details; added feMorphology, feConvolveMatrix, feComposite arithmetic, colour-matrix worked examples, light sources, displacement mechanics, filter animation, recipes, browser-support notes, four diagrams and new interactive demos" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },

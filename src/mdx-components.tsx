@@ -46,11 +46,15 @@ import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
 import FilterPipelineDiagram from "@/components/mdx/FilterPipelineDiagram";
 import ClipUnitsDiagram from "@/components/mdx/ClipUnitsDiagram";
 import ClipVsMaskDiagram from "@/components/mdx/ClipVsMaskDiagram";
+import ColorMatrixDiagram from "@/components/mdx/ColorMatrixDiagram";
+import DisplacementMapDiagram from "@/components/mdx/DisplacementMapDiagram";
+import FeCompositeOperatorsDiagram from "@/components/mdx/FeCompositeOperatorsDiagram";
 import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
 import FilterRegionDiagram from "@/components/mdx/FilterRegionDiagram";
 import GradientTransformDiagram from "@/components/mdx/GradientTransformDiagram";
 import GradientUnitsDiagram from "@/components/mdx/GradientUnitsDiagram";
 import GroupTransformDiagram from "@/components/mdx/GroupTransformDiagram";
+import LightingDiagram from "@/components/mdx/LightingDiagram";
 import LuminanceAlphaDiagram from "@/components/mdx/LuminanceAlphaDiagram";
 import MarkerAnatomyDiagram from "@/components/mdx/MarkerAnatomyDiagram";
 import MarkerOrientDiagram from "@/components/mdx/MarkerOrientDiagram";
@@ -131,11 +135,15 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     FilterPipelineDiagram,
     ClipUnitsDiagram,
     ClipVsMaskDiagram,
+    ColorMatrixDiagram,
+    DisplacementMapDiagram,
+    FeCompositeOperatorsDiagram,
     FillRuleRayDiagram,
     FilterRegionDiagram,
     GradientTransformDiagram,
     GradientUnitsDiagram,
     GroupTransformDiagram,
+    LightingDiagram,
     LuminanceAlphaDiagram,
     MarkerAnatomyDiagram,
     MarkerOrientDiagram,

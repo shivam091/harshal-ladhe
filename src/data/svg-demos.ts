@@ -2033,17 +2033,24 @@ ${dots}
     title: "Interactive Example - feTurbulence",
     controls: [
       { id: "baseFrequency", label: "baseFrequency", type: "range", min: 0.01, max: 0.3, step: 0.01, defaultValue: 0.05 },
-      { id: "type", label: "type", type: "select", options: ["fractalNoise", "turbulence"], defaultValue: "fractalNoise" }
+      { id: "type", label: "type", type: "select", options: ["fractalNoise", "turbulence"], defaultValue: "fractalNoise" },
+      { id: "numOctaves", label: "numOctaves", type: "range", min: 1, max: 6, step: 1, defaultValue: 3 },
+      { id: "seed", label: "seed", type: "range", min: 0, max: 50, step: 1, defaultValue: 0 },
+      { id: "colorSpace", label: "color-interpolation-filters", type: "select", options: ["linearRGB", "sRGB"], defaultValue: "linearRGB" }
     ],
     render: (values) => {
       const baseFrequency = Number(values.baseFrequency);
       const type = String(values.type);
+      const numOctaves = Number(values.numOctaves);
+      const seed = Number(values.seed);
+      const colorSpace = String(values.colorSpace);
 
       return `
 <svg viewBox="0 0 100 100" width="220" height="220">
   <defs>
-    <filter id="turbulence-demo-filter">
-      <feTurbulence type="${type}" baseFrequency="${baseFrequency}" numOctaves="3" />
+    <!-- The same noise numbers read as noticeably lighter under linearRGB (the default) than under sRGB. -->
+    <filter id="turbulence-demo-filter" color-interpolation-filters="${colorSpace}">
+      <feTurbulence type="${type}" baseFrequency="${baseFrequency}" numOctaves="${numOctaves}" seed="${seed}" />
     </filter>
   </defs>
 
@@ -2055,18 +2062,27 @@ ${dots}
     slug: "fedisplacementmap-demo",
     title: "Interactive Example - feDisplacementMap",
     controls: [
-      { id: "scale", label: "scale", type: "range", min: 0, max: 40, step: 1, defaultValue: 15 }
+      { id: "scale", label: "scale", type: "range", min: 0, max: 40, step: 1, defaultValue: 15 },
+      { id: "baseFrequency", label: "baseFrequency (noise)", type: "range", min: 0.005, max: 0.1, step: 0.005, defaultValue: 0.03 },
+      { id: "xChannel", label: "xChannelSelector", type: "select", options: ["R", "G", "B", "A"], defaultValue: "R" },
+      { id: "yChannel", label: "yChannelSelector", type: "select", options: ["R", "G", "B", "A"], defaultValue: "G" },
+      { id: "colorSpace", label: "color-interpolation-filters", type: "select", options: ["sRGB", "linearRGB"], defaultValue: "sRGB" }
     ],
     render: (values) => {
       const scale = Number(values.scale);
+      const baseFrequency = Number(values.baseFrequency);
+      const xChannel = String(values.xChannel);
+      const yChannel = String(values.yChannel);
+      const colorSpace = String(values.colorSpace);
 
       return `
 <svg viewBox="0 0 100 100" width="220" height="220">
   <defs>
-    <filter id="displace-demo-filter" x="-30%" y="-30%" width="160%" height="160%">
+    <!-- sRGB keeps the map's 0.5 grey at 0.5; under linearRGB the map values shift, and so does the "neutral" point. -->
+    <filter id="displace-demo-filter" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="${colorSpace}">
       <!-- The noise's own color channels drive HOW MUCH (and which direction) each pixel of SourceGraphic shifts. -->
-      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise" />
-      <feDisplacementMap in="SourceGraphic" in2="noise" scale="${scale}" xChannelSelector="R" yChannelSelector="G" />
+      <feTurbulence type="fractalNoise" baseFrequency="${baseFrequency}" numOctaves="2" result="noise" />
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="${scale}" xChannelSelector="${xChannel}" yChannelSelector="${yChannel}" />
     </filter>
   </defs>
 
@@ -2078,22 +2094,210 @@ ${dots}
     slug: "fecomposite-operator-demo",
     title: "Interactive Example - feComposite Operators",
     controls: [
-      { id: "operator", label: "operator", type: "select", options: ["over", "in", "out", "atop", "xor"], defaultValue: "in" }
+      { id: "operator", label: "operator", type: "select", options: ["over", "in", "out", "atop", "xor", "arithmetic"], defaultValue: "in" },
+      { id: "k1", label: "k1 (arithmetic only)", type: "range", min: -1, max: 1, step: 0.1, defaultValue: 0 },
+      { id: "k2", label: "k2 (arithmetic only)", type: "range", min: -1, max: 1, step: 0.1, defaultValue: 1 },
+      { id: "k3", label: "k3 (arithmetic only)", type: "range", min: -1, max: 1, step: 0.1, defaultValue: 1 },
+      { id: "k4", label: "k4 (arithmetic only)", type: "range", min: -1, max: 1, step: 0.1, defaultValue: 0 }
     ],
     render: (values) => {
       const operator = String(values.operator);
+      // Rounded so the slider's float steps (0.30000000000000004) don't leak into the displayed markup.
+      const k = [values.k1, values.k2, values.k3, values.k4].map((value) => Math.round(Number(value) * 10) / 10);
+      const kAttributes = operator === "arithmetic" ? ` k1="${k[0]}" k2="${k[1]}" k3="${k[2]}" k4="${k[3]}"` : "";
 
       return `
-<svg viewBox="0 0 100 100" width="220" height="220">
+<svg viewBox="0 0 100 100" width="240" height="240">
   <defs>
-    <filter id="composite-demo-filter" x="-20%" y="-20%" width="140%" height="140%">
-      <!-- A solid color flood, composited against the STAR's own alpha silhouette (not its fill) — the operator decides which parts of the flood/star survive. -->
-      <feFlood flood-color="#6366f1" result="flood-a" />
-      <feComposite in="flood-a" in2="SourceAlpha" operator="${operator}" />
+    <filter id="composite-demo-filter" filterUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+      <!-- in (A): a blue square — feFlood limited to a primitive subregion instead of the whole filter region. -->
+      <feFlood x="12" y="12" width="48" height="48" flood-color="#6366f1" result="square" />
+      <!-- in2 (B): the orange circle itself (SourceGraphic). The operator decides which parts of A and B survive. -->
+      <feComposite in="square" in2="SourceGraphic" operator="${operator}"${kAttributes} />
     </filter>
   </defs>
 
-  <path d="M50,15 L61,40 L88,40 L66,57 L75,83 L50,67 L25,83 L34,57 L12,40 L39,40 Z" filter="url(#composite-demo-filter)" />
+  <circle cx="60" cy="60" r="28" fill="#f59e0b" filter="url(#composite-demo-filter)" />
+
+  <!-- Dashed guides (outside the filter) mark where A and B sit, even when the operator hides them. -->
+  <rect x="12" y="12" width="48" height="48" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
+  <circle cx="60" cy="60" r="28" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
+</svg>`;
+    }
+  },
+  {
+    slug: "fecolormatrix-presets-demo",
+    title: "Interactive Example - feColorMatrix type=\"matrix\"",
+    controls: [
+      { id: "preset", label: "matrix preset", type: "select", options: ["identity", "greyscale", "sepia", "invert", "duotone", "swap R/B"], defaultValue: "greyscale" },
+      { id: "colorSpace", label: "color-interpolation-filters", type: "select", options: ["sRGB", "linearRGB"], defaultValue: "sRGB" }
+    ],
+    render: (values) => {
+      // Each row is one output channel (R′ G′ B′ A′); each column multiplies R G B A, and the last column is a constant offset.
+      const presets: Record<string, string> = {
+        identity: "1 0 0 0 0\n              0 1 0 0 0\n              0 0 1 0 0\n              0 0 0 1 0",
+        greyscale: "0.2126 0.7152 0.0722 0 0\n              0.2126 0.7152 0.0722 0 0\n              0.2126 0.7152 0.0722 0 0\n              0      0      0      1 0",
+        sepia: "0.393 0.769 0.189 0 0\n              0.349 0.686 0.168 0 0\n              0.272 0.534 0.131 0 0\n              0     0     0     1 0",
+        invert: "-1  0  0 0 1\n               0 -1  0 0 1\n               0  0 -1 0 1\n               0  0  0 1 0",
+        duotone: "0.184  0.619  0.063 0 0.118\n              0.137  0.460  0.046 0 0.106\n              -0.033 -0.109 -0.011 0 0.294\n              0      0      0     1 0",
+        "swap R/B": "0 0 1 0 0\n              0 1 0 0 0\n              1 0 0 0 0\n              0 0 0 1 0"
+      };
+      const matrix = presets[String(values.preset)] ?? presets.identity;
+      const colorSpace = String(values.colorSpace);
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <!-- The duotone offsets (navy → amber) are sRGB numbers, so the demo defaults to sRGB; flip to linearRGB to see them drift. -->
+    <filter id="colormatrix-demo-filter" color-interpolation-filters="${colorSpace}">
+      <feColorMatrix type="matrix"
+        values="${matrix}" />
+    </filter>
+  </defs>
+
+  <g filter="url(#colormatrix-demo-filter)">
+    <rect x="5" y="5" width="90" height="90" rx="8" fill="#fef3c7" />
+    <circle cx="35" cy="38" r="20" fill="#ef4444" />
+    <circle cx="65" cy="38" r="20" fill="#22c55e" />
+    <circle cx="50" cy="64" r="20" fill="#3b82f6" />
+  </g>
+</svg>`;
+    }
+  },
+  {
+    slug: "femorphology-demo",
+    title: "Interactive Example - feMorphology",
+    controls: [
+      { id: "operator", label: "operator", type: "select", options: ["dilate", "erode"], defaultValue: "dilate" },
+      { id: "radius", label: "radius", type: "range", min: 0, max: 5, step: 0.5, defaultValue: 1.5 },
+      { id: "outline", label: "Outline recipe (dilate alpha, flood, merge under)", type: "checkbox", defaultValue: false }
+    ],
+    render: (values) => {
+      const operator = String(values.operator);
+      const radius = Number(values.radius);
+      const outline = Boolean(values.outline);
+      const primitives = outline
+        ? `<!-- Grow (or shrink) the silhouette, paint it one flat color, then stack the original on top. -->
+      <feMorphology in="SourceAlpha" operator="${operator}" radius="${radius}" result="grown" />
+      <feFlood flood-color="#0f172a" />
+      <feComposite in2="grown" operator="in" result="outline" />
+      <feMerge>
+        <feMergeNode in="outline" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>`
+        : `<!-- Applied straight to SourceGraphic: every channel, color included, takes the min (erode) or max (dilate) of its neighbours. -->
+      <feMorphology in="SourceGraphic" operator="${operator}" radius="${radius}" />`;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <filter id="morphology-demo-filter" x="-20%" y="-20%" width="140%" height="140%">
+      ${primitives}
+    </filter>
+  </defs>
+
+  <g filter="url(#morphology-demo-filter)">
+    <text x="50" y="45" text-anchor="middle" font-size="26" font-weight="700" font-family="system-ui, sans-serif" fill="#f59e0b">Morph</text>
+    <!-- A 1.5-unit hairline: erode past radius 0.75 and it disappears entirely. -->
+    <line x1="15" y1="62" x2="85" y2="62" stroke="#6366f1" stroke-width="1.5" />
+    <circle cx="50" cy="80" r="8" fill="#10b981" />
+  </g>
+</svg>`;
+    }
+  },
+  {
+    slug: "feconvolvematrix-kernel-demo",
+    title: "Interactive Example - feConvolveMatrix",
+    controls: [
+      { id: "kernel", label: "kernelMatrix preset", type: "select", options: ["identity", "sharpen", "box blur", "emboss", "edge detect"], defaultValue: "emboss" },
+      { id: "preserveAlpha", label: "preserveAlpha", type: "checkbox", defaultValue: true }
+    ],
+    render: (values) => {
+      // 3×3 kernels, read row by row. The divisor defaults to the kernel's sum (or 1 when the sum is 0).
+      const kernels: Record<string, string> = {
+        identity: "0 0 0  0 1 0  0 0 0",
+        sharpen: "0 -1 0  -1 5 -1  0 -1 0",
+        "box blur": "1 1 1  1 1 1  1 1 1",
+        emboss: "-2 -1 0  -1 1 1  0 1 2",
+        "edge detect": "-1 -1 -1  -1 8 -1  -1 -1 -1"
+      };
+      const kernelMatrix = kernels[String(values.kernel)] ?? kernels.identity;
+      const preserveAlpha = Boolean(values.preserveAlpha);
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <radialGradient id="convolve-demo-gradient" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#fde68a" />
+      <stop offset="1" stop-color="#b45309" />
+    </radialGradient>
+    <!-- The kernel runs over device pixels, so the same kernel reads stronger on a 1x screen than on a 2x one. -->
+    <filter id="convolve-demo-filter">
+      <feConvolveMatrix order="3" kernelMatrix="${kernelMatrix}" edgeMode="duplicate" preserveAlpha="${preserveAlpha}" />
+    </filter>
+  </defs>
+
+  <g filter="url(#convolve-demo-filter)">
+    <rect x="5" y="5" width="90" height="90" rx="6" fill="#e0e7ff" />
+    <circle cx="50" cy="42" r="26" fill="url(#convolve-demo-gradient)" />
+    <text x="50" y="86" text-anchor="middle" font-size="16" font-weight="700" font-family="system-ui, sans-serif" fill="#312e81">Kernel</text>
+  </g>
+</svg>`;
+    }
+  },
+  {
+    slug: "felighting-demo",
+    title: "Interactive Example - feDiffuseLighting / feSpecularLighting",
+    controls: [
+      { id: "lighting", label: "primitive", type: "select", options: ["feDiffuseLighting", "feSpecularLighting"], defaultValue: "feDiffuseLighting" },
+      { id: "azimuth", label: "azimuth (feDistantLight)", type: "range", min: 0, max: 360, step: 5, defaultValue: 225 },
+      { id: "elevation", label: "elevation (feDistantLight)", type: "range", min: 0, max: 90, step: 1, defaultValue: 45 },
+      { id: "surfaceScale", label: "surfaceScale", type: "range", min: 0, max: 10, step: 0.5, defaultValue: 4 },
+      { id: "blur", label: "bump blur (stdDeviation)", type: "range", min: 0, max: 5, step: 0.5, defaultValue: 2 },
+      { id: "clip", label: "Clip light to SourceAlpha (feComposite in)", type: "checkbox", defaultValue: true }
+    ],
+    render: (values) => {
+      const specular = values.lighting === "feSpecularLighting";
+      const azimuth = Number(values.azimuth);
+      const elevation = Number(values.elevation);
+      const surfaceScale = Number(values.surfaceScale);
+      const blur = Number(values.blur);
+      const clip = Boolean(values.clip);
+      const lit = clip ? "litShape" : "light";
+      const light = `<feDistantLight azimuth="${azimuth}" elevation="${elevation}" />`;
+      const lightingPrimitive = specular
+        ? `<feSpecularLighting in="bump" surfaceScale="${surfaceScale}" specularConstant="1" specularExponent="20" lighting-color="#ffffff" result="light">
+        ${light}
+      </feSpecularLighting>`
+        : `<feDiffuseLighting in="bump" surfaceScale="${surfaceScale}" diffuseConstant="1" lighting-color="#ffffff" result="light">
+        ${light}
+      </feDiffuseLighting>`;
+      const clipPrimitive = clip
+        ? `
+      <!-- Lighting output ignores the shape: cut it back to the silhouette. -->
+      <feComposite in="light" in2="SourceAlpha" operator="in" result="litShape" />`
+        : "";
+      const combine = specular
+        ? `<!-- Specular output is a highlight layer: ADD it to the source (k2 = source, k3 = highlight). -->
+      <feComposite in="SourceGraphic" in2="${lit}" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />`
+        : `<!-- Diffuse output is a shading layer: MULTIPLY the source by it. -->
+      <feBlend in="SourceGraphic" in2="${lit}" mode="multiply" />`;
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <defs>
+    <filter id="lighting-demo-filter">
+      <!-- The alpha channel is the height map; blurring it turns a hard cliff edge into a rounded bevel. -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="${blur}" result="bump" />
+      ${lightingPrimitive}${clipPrimitive}
+      ${combine}
+    </filter>
+  </defs>
+
+  <g filter="url(#lighting-demo-filter)">
+    <circle cx="30" cy="50" r="18" fill="#f59e0b" />
+    <rect x="54" y="28" width="36" height="44" rx="8" fill="#6366f1" />
+  </g>
 </svg>`;
     }
   },

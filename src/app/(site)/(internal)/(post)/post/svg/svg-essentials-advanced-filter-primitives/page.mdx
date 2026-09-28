@@ -4,68 +4,391 @@ export const metadata = buildPostMetadata("svg-essentials-advanced-filter-primit
 
 ## Introduction
 
-[Filter Fundamentals](/post/svg/svg-essentials-filters-fundamentals) covered the chaining mechanism itself — `SourceGraphic`/`SourceAlpha`, named results, `feGaussianBlur`/`feOffset`/`feMerge`/`feFlood`/`feBlend`. This post picks up from there with the primitives that go beyond simple blur-and-offset: color manipulation, precise compositing, procedural noise, displacement, and lighting.
+[Filter Fundamentals](/post/svg/svg-essentials-filters-fundamentals) covered how a filter works: the filter region, the `SourceGraphic`/`SourceAlpha` inputs, named `result`s and implicit chaining, `color-interpolation-filters`, and the everyday primitives (`feGaussianBlur`, `feOffset`, `feMerge`, `feFlood`, `feBlend`). This post assumes all of that and moves on to the primitives that do the heavier lifting:
+
+* **Colour math:** `feColorMatrix` and `feComponentTransfer`.
+* **Compositing:** `feComposite`, including its `arithmetic` mode.
+* **Shape and neighbourhood operations:** `feMorphology` and `feConvolveMatrix`.
+* **Procedural texture and distortion:** `feTurbulence` and `feDisplacementMap`.
+* **The shorthand:** `feDropShadow`, and when to build a shadow by hand instead.
+* **Lighting:** `feDiffuseLighting`, `feSpecularLighting`, and their three light sources.
+* **External and repeated input:** `feImage` and `feTile`.
+
+After the primitives come animation, a set of complete recipes (gooey blobs, duotone, paper grain, inner shadow, text outline), and the browser-support caveats that matter in production.
+
+<Quote>
+  None of these primitives change how a filter works. Each one is just another step that reads an `in` (and sometimes an `in2`) and writes a `result`. What changes is how much each step can do.
+</Quote>
+
+<Info title="Colour space matters more from here on">
+  Filters compute in `linearRGB` by default (`color-interpolation-filters`, covered in the fundamentals post). For blurs you rarely notice it. For the primitives in this post, which do exact arithmetic on channel values (matrices, lookup tables, displacement maps), it changes the output visibly. Several examples below set `color-interpolation-filters="sRGB"` on purpose, and the reason is explained each time.
+</Info>
 
 <RainbowDivider />
 
 ## `<feColorMatrix>`
 
+`feColorMatrix` recomputes every pixel's colour from its own R, G, B and A values. It has four `type`s. Three are shorthands for common matrices; the fourth, `matrix`, lets you write the matrix yourself.
+
 <CodeBlock language="xml">
 {`
-  <feColorMatrix type="saturate" values="0.3" />
-  <feColorMatrix type="hueRotate" values="90" />
-  <feColorMatrix type="luminanceToAlpha" />
+  <feColorMatrix type="saturate" values="0.3" />      <!-- 0 = greyscale, 1 = unchanged -->
+  <feColorMatrix type="hueRotate" values="90" />      <!-- degrees around the colour wheel -->
+  <feColorMatrix type="luminanceToAlpha" />           <!-- no values attribute -->
+  <feColorMatrix type="matrix" values="...20 numbers..." />
 `}
 </CodeBlock>
 
-`type="matrix"` exposes the full 20-value RGBA transform matrix; the named shorthand types (`saturate`, `hueRotate`, `luminanceToAlpha`) cover the common cases without hand-deriving a matrix. `luminanceToAlpha` is worth remembering specifically: it converts an image's *brightness* into its *transparency*, which is exactly the mechanism behind an SVG `<mask>`'s default luminance-based behavior.
+* **`saturate`** takes a single number. `0` removes all colour and `1` (the default) leaves the image unchanged. The spec defines the range as 0–1; most engines also accept values above `1` to oversaturate, but test that before relying on it.
+* **`hueRotate`** takes an angle in degrees and rotates every colour's hue by that amount.
+* **`luminanceToAlpha`** computes each pixel's luminance (`0.2125·R + 0.7154·G + 0.0721·B`) and writes it into the **alpha** channel, while setting R, G and B to **0**. The output is black, and its opacity follows the input's brightness: bright areas become opaque black and dark areas transparent. This is the same brightness-to-opacity conversion that a luminance [`<mask>`](/post/svg/svg-essentials-clippath-and-mask) performs, which makes it useful for building mask-like inputs for `feComposite`.
+
+### `type="matrix"`: The 4×5 Grid
+
+<ColorMatrixDiagram />
+
+The `values` attribute holds 20 numbers, read as four rows of five. Each row computes one output channel: the first four numbers in the row multiply the input R, G, B and A, and the fifth is a constant added at the end. Written out for the red row:
+
+<CodeBlock language="text">
+{`
+  R′ = m11·R + m12·G + m13·B + m14·A + m15
+  G′ = m21·R + m22·G + m23·B + m24·A + m25
+  B′ = m31·R + m32·G + m33·B + m34·A + m35
+  A′ = m41·R + m42·G + m43·B + m44·A + m45
+`}
+</CodeBlock>
+
+All values are in the 0–1 range, so an offset of `0.5` means "add half of full intensity", not "add 0.5 out of 255". Results are clamped to 0–1. The matrix works on non-premultiplied colour, so a semi-transparent pixel's colour isn't darkened by its own alpha before the maths runs.
+
+Once each row reads as "the recipe for one output channel", the common effects are easy to write by hand.
+
+**Greyscale.** Every output channel receives the same weighted sum of the inputs, using the standard luminance weights (green counts most, blue least):
+
+<CodeBlock language="xml">
+{`
+  <feColorMatrix type="matrix"
+    values="0.2126 0.7152 0.0722 0 0
+            0.2126 0.7152 0.0722 0 0
+            0.2126 0.7152 0.0722 0 0
+            0      0      0      1 0" />
+`}
+</CodeBlock>
+
+**Sepia.** This works like greyscale, but each output row has slightly different weights, so the resulting grey leans warm:
+
+<CodeBlock language="xml">
+{`
+  <feColorMatrix type="matrix"
+    values="0.393 0.769 0.189 0 0
+            0.349 0.686 0.168 0 0
+            0.272 0.534 0.131 0 0
+            0     0     0     1 0" />
+`}
+</CodeBlock>
+
+**Duotone in one matrix.** To map dark to colour 1 and light to colour 2, compute the luminance L and then interpolate: `channel′ = c1 + (c2 − c1)·L`. Expanding L into its weights gives each row's first three numbers, and the fifth column holds the colour-1 value. For navy `(0.118, 0.106, 0.294)` to amber `(0.984, 0.749, 0.141)`:
+
+<CodeBlock language="xml">
+{`
+  <feColorMatrix type="matrix"
+    values=" 0.184  0.619  0.063 0 0.118
+             0.137  0.460  0.046 0 0.106
+            -0.033 -0.109 -0.011 0 0.294
+             0      0      0     1 0" />
+`}
+</CodeBlock>
+
+In the blue row the weights are negative because amber has *less* blue than navy, so blue has to fall as brightness rises. Those offsets are sRGB numbers, which is why the filter needs `color-interpolation-filters="sRGB"` to land on the intended colours.
+
+**Alpha contrast (the "gooey" matrix).** Only the last row changes. It multiplies alpha by a large number and subtracts a constant:
+
+<CodeBlock language="xml">
+{`
+  <feColorMatrix type="matrix"
+    values="1 0 0 0  0
+            0 1 0 0  0
+            0 0 1 0  0
+            0 0 0 20 -8" />
+`}
+</CodeBlock>
+
+`A′ = 20·A − 8` is fully transparent below about 0.4 alpha and fully opaque above about 0.45. Applied to a *blurred* input, it snaps the soft blur back into hard edges, and wherever two blurs overlapped enough, those edges merge. That is the whole trick behind [gooey blobs](#recipes).
+
+<InteractiveSvgPanel slug="fecolormatrix-presets-demo" />
+
+Switch between the presets above. `identity` is the diagonal from the diagram, and the other presets are small deviations from it: `invert` uses `−1` multipliers plus a `1` offset, and `swap R/B` simply moves the two diagonal 1s. With `duotone` selected, flip the colour space to `linearRGB` and watch both endpoint colours shift, because the same offsets are now read as linear-light values.
 
 <RainbowDivider />
 
 ## `<feComponentTransfer>`
 
+A colour matrix can mix channels together. `feComponentTransfer` cannot: it remaps each channel **independently** through its own transfer function. You declare one child per channel you want to change (`feFuncR`, `feFuncG`, `feFuncB`, `feFuncA`). Any channel without a child passes through unchanged.
+
 <CodeBlock language="xml">
 {`
   <feComponentTransfer>
     <feFuncR type="linear" slope="1.2" intercept="0" />
-    <feFuncG type="linear" slope="1.2" intercept="0" />
-    <feFuncB type="linear" slope="1.2" intercept="0" />
+    <feFuncG type="gamma" amplitude="1" exponent="0.8" offset="0" />
+    <feFuncB type="table" tableValues="0 0.6 1" />
+    <feFuncA type="discrete" tableValues="0 1" />
   </feComponentTransfer>
 `}
 </CodeBlock>
 
-Per-channel transfer functions (`feFuncR`/`G`/`B`/`A`), each with its own `type` (`linear`, `gamma`, `table`, `discrete`) — a levels/gamma adjustment, or (with `discrete` and a short table) a posterize effect.
+Each function's `type` decides which other attributes it reads. Throughout, C is the incoming channel value in 0–1:
+
+| `type` | Attributes | Output C′ |
+| --- | --- | --- |
+| `identity` | — | C (unchanged; the default when a channel has no function) |
+| `linear` | `slope` (default 1), `intercept` (default 0) | `slope·C + intercept` |
+| `gamma` | `amplitude` (1), `exponent` (1), `offset` (0) | `amplitude·C^exponent + offset` |
+| `table` | `tableValues` (n+1 values) | Piecewise-linear interpolation between the listed values, spread evenly across 0–1 |
+| `discrete` | `tableValues` (n values) | A step function: 0–1 is cut into n equal bands, and each band outputs its value |
+
+The output is clamped to 0–1, and like `feColorMatrix`, the functions run on non-premultiplied colour.
+
+`table` and `discrete` are the two that repay attention:
+
+* `tableValues="1 0"` on `table` is an **invert**: 0 maps to 1, 1 maps to 0, and everything in between is interpolated.
+* `tableValues="0 0.33 0.66 1"` on `discrete` is a **posterize**: every value falls into one of four flat levels.
+* A two-value `table` such as `tableValues="0.118 0.984"` maps black to one number and white to another. Using a different pair for each channel gives a **duotone** (see the recipes below).
+* `feFuncA` works on transparency. `type="linear" slope="0.4"` fades the whole input to 40%, and `type="discrete" tableValues="0 1"` hard-thresholds alpha at 0.5. That threshold is an alternative to the gooey matrix above, with a fixed cut-off point.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 112" width="450" height="168">
+    <defs>
+      <linearGradient id="afp-ct-gradient">
+        <stop offset="0" stop-color="#1e3a8a" />
+        <stop offset="0.5" stop-color="#f472b6" />
+        <stop offset="1" stop-color="#fde68a" />
+      </linearGradient>
+      <filter id="afp-ct-posterize" color-interpolation-filters="sRGB">
+        <feComponentTransfer>
+          <feFuncR type="discrete" tableValues="0 0.33 0.66 1" />
+          <feFuncG type="discrete" tableValues="0 0.33 0.66 1" />
+          <feFuncB type="discrete" tableValues="0 0.33 0.66 1" />
+        </feComponentTransfer>
+      </filter>
+      <filter id="afp-ct-invert" color-interpolation-filters="sRGB">
+        <feComponentTransfer>
+          <feFuncR type="table" tableValues="1 0" />
+          <feFuncG type="table" tableValues="1 0" />
+          <feFuncB type="table" tableValues="1 0" />
+        </feComponentTransfer>
+      </filter>
+      <filter id="afp-ct-fade">
+        <feComponentTransfer>
+          <feFuncA type="linear" slope="0.4" />
+        </feComponentTransfer>
+      </filter>
+    </defs>
+    <text x="0" y="19" font-size="10" fill="currentColor">original</text>
+    <rect x="80" y="5" width="215" height="20" rx="3" fill="url(#afp-ct-gradient)" />
+    <text x="0" y="46" font-size="10" fill="currentColor">discrete</text>
+    <rect x="80" y="32" width="215" height="20" rx="3" fill="url(#afp-ct-gradient)" filter="url(#afp-ct-posterize)" />
+    <text x="0" y="73" font-size="10" fill="currentColor">table 1 0</text>
+    <rect x="80" y="59" width="215" height="20" rx="3" fill="url(#afp-ct-gradient)" filter="url(#afp-ct-invert)" />
+    <text x="0" y="100" font-size="10" fill="currentColor">feFuncA 0.4</text>
+    <rect x="80" y="86" width="215" height="20" rx="3" fill="url(#afp-ct-gradient)" filter="url(#afp-ct-fade)" />
+  </svg>
+`}
+</SvgSnippet>
+
+The same [gradient](/post/svg/svg-essentials-gradients) is shown four times: unchanged, posterized to four levels per channel, inverted, and faded via `feFuncA`. The posterize and invert filters set `sRGB` so that the level boundaries and the inversion happen in the same colour space the gradient was authored in.
 
 <RainbowDivider />
 
 ## `<feComposite>`
 
+`feComposite` combines two inputs, `in` (call it A) and `in2` (B), using the Porter–Duff compositing operators. These operators decide, **by each input's alpha**, which of four regions survive: A only, B only, where the two overlap, and neither.
+
+<FeCompositeOperatorsDiagram />
+
+* **`over`** (the default): A on top of B, the ordinary stacking you get from painting one shape after another.
+* **`in`**: only the part of A that lies inside B. B's alpha acts as a stencil and B's colours are discarded.
+* **`out`**: only the part of A that lies *outside* B. This is `in` inverted, and is useful for cutting holes.
+* **`atop`**: the part of A inside B, drawn on top of **all of B**. The result has exactly B's silhouette: B shows everywhere, and A shows only where it overlaps B.
+* **`xor`**: both inputs, with the overlap removed.
+* **`arithmetic`**: no stencil at all. It is a per-channel formula with four coefficients:
+
+<CodeBlock language="text">
+{`
+  result = k1·i1·i2 + k2·i1 + k3·i2 + k4
+`}
+</CodeBlock>
+
+Here `i1` is `in`, `i2` is `in2`, and `k1`–`k4` default to `0`. The formula runs on every channel, **including alpha**, using premultiplied values, and the result is clamped to 0–1. A few coefficient sets cover most real uses:
+
+| `k1 k2 k3 k4` | Effect |
+| --- | --- |
+| `0 1 1 0` | **Add** the two inputs (a highlight or glow layer on top of a source) |
+| `1 0 0 0` | **Multiply** them (and the alphas multiply too) |
+| `0 0.5 0.5 0` | 50/50 **cross-fade** |
+| `0 1 -1 0` | **Subtract** `in2` from `in` |
+
+Because `k4` is added to alpha as well, any positive `k4` fills the *entire* primitive subregion, not just where the shapes are. Try it in the demo below.
+
 <InteractiveSvgPanel slug="fecomposite-operator-demo" />
 
-`operator` decides which parts of two inputs survive, by their alpha channels — `over` (default, normal stacking), `in` (only where both overlap, first input's color), `out` (only where the first input does NOT overlap the second), `atop` (first input, clipped to the second's shape), `xor` (only where they don't overlap). Above, a solid color flood is composited against a star's own silhouette (`SourceAlpha`) — switching `operator` changes which parts of the flood/star combination actually paint.
+The blue square is `in`. It comes from an `feFlood` limited to a primitive subregion with `x`/`y`/`width`/`height`, which is a handy way to make a second input shape inside a filter. The orange circle is `in2` (the `SourceGraphic`), and the dashed outlines show where both inputs sit even when an operator hides them. Compare `in` with `atop`: both paint the blue overlap, but `atop` also keeps the rest of the circle. With `arithmetic` and the default `k2 = k3 = 1`, the overlap adds up and clamps. It comes out pink rather than white because the sum happens in the default `linearRGB`, where this orange carries almost no blue and less green than its sRGB numbers suggest.
+
+<Info title="SourceAlpha vs SourceGraphic as in2">
+  With the stencil operators (`in`, `out`, `atop`, `xor`), only `in2`'s **alpha** decides the region. Compositing against `SourceAlpha` or against `SourceGraphic` therefore gives the same `in`/`out` result. They differ with `over`, `atop` and `xor`, which also paint `in2` itself: `SourceAlpha` paints a black silhouette, while `SourceGraphic` paints the element's real colours.
+</Info>
+
+<Info title="A newer operator: lighter">
+  The Filter Effects spec also lists `operator="lighter"` (a plain additive `A + B`, clamped). It was added later than the others, so check support in your target browsers. `arithmetic` with `k2="1" k3="1"` gives the same result everywhere.
+</Info>
+
+<RainbowDivider />
+
+## `<feMorphology>`
+
+`feMorphology` grows or shrinks what it is given. For every pixel, it looks at a rectangle of neighbours `radius` units out in each direction and takes either the **maximum** (`operator="dilate"`, which thickens) or the **minimum** (`operator="erode"`, the default, which thins). It does this on every channel, alpha included.
+
+<CodeBlock language="xml">
+{`
+  <feMorphology in="SourceAlpha" operator="dilate" radius="2" />
+  <feMorphology in="SourceGraphic" operator="erode" radius="1 3" />  <!-- rx ry -->
+`}
+</CodeBlock>
+
+`radius` takes one or two numbers (x, then y) in the filter's `primitiveUnits`, so user units by default. A radius of `0` disables the effect, and the primitive passes its input through unchanged.
+
+<InteractiveSvgPanel slug="femorphology-demo" />
+
+Two things stand out in the demo:
+
+* **Applied to `SourceGraphic`, it acts on colour too.** A dilate spreads each shape's colour outward, and an erode pulls it in. Erode the 1.5-unit hairline by more than 0.75 and the line disappears entirely, because no pixel in it keeps its full coverage.
+* **Tick the outline checkbox and it becomes a recipe.** Dilate the *alpha*, flood it with one colour, clip the flood to that grown silhouette with `feComposite operator="in"`, and merge the original on top. That is a text or shape outline drawn **outside** the glyphs, which `stroke` (centred on the edge) can't do by itself.
+
+Because the neighbourhood is a rectangle, a dilated shape's rounded corners grow *squarish*, and the effect becomes more obvious as the radius increases. For outlines up to a few units this is invisible. For large spreads, follow the dilate with a small `feGaussianBlur` and an alpha-contrast `feColorMatrix` to round the corners back off. Large radii are also expensive: the work grows with the size of the neighbourhood.
+
+Other uses for `feMorphology`:
+
+* **Shadow spread**: dilate `SourceAlpha` before blurring it, which is the equivalent of CSS `box-shadow`'s spread value (see [feDropShadow](#fedropshadow-the-shorthand) below).
+* **Knockout outlines**: `feComposite in="dilated" in2="SourceAlpha" operator="out"` keeps only the ring, not the fill.
+* **Thinning heavy artwork**: a small erode on `SourceGraphic` can make a heavy icon read lighter without re-drawing it.
+
+<RainbowDivider />
+
+## `<feConvolveMatrix>`
+
+`feConvolveMatrix` is the classic image-processing kernel. Each output pixel is a weighted sum of the input pixel and its neighbours, using a small grid of weights you supply. Sharpening, embossing, edge detection and box blur are all just different grids.
+
+<CodeBlock language="xml">
+{`
+  <feConvolveMatrix
+    order="3"
+    kernelMatrix="0 -1  0
+                 -1  5 -1
+                  0 -1  0"
+    divisor="1"
+    bias="0"
+    edgeMode="duplicate"
+    preserveAlpha="true" />
+`}
+</CodeBlock>
+
+* **`order`** is the grid size: `3` means 3×3 (the default), and `"5 3"` means 5 columns by 3 rows.
+* **`kernelMatrix`** holds order-x × order-y weights, listed row by row. The spec applies the kernel rotated 180°, as true convolution does. For the symmetric kernels below that makes no difference, but it matters when you design a directional one.
+* **`divisor`** divides the weighted sum. It defaults to the sum of all weights, or `1` if they sum to 0, so a kernel whose weights add up to 1 keeps overall brightness.
+* **`bias`** is added after dividing. A `bias` of `0.5` lifts an edge-detect result so negative values show as dark and positive values as light, instead of being clamped to black.
+* **`targetX`/`targetY`** choose which kernel cell sits on the output pixel. They default to the centre.
+* **`edgeMode`** controls what the kernel reads past the image edge: `duplicate` (repeat the edge pixel, the default for this primitive), `wrap` (take pixels from the opposite edge), or `none` (transparent black).
+* **`preserveAlpha`**: when `false` (the default), the kernel runs over alpha as well, on premultiplied values. Set it to `true` to convolve only the colour and keep the input's alpha exactly as it was, which you almost always want for sharpening or embossing.
+
+<InteractiveSvgPanel slug="feconvolvematrix-kernel-demo" />
+
+The presets are:
+
+| Effect | `kernelMatrix` (3×3) | Weights sum to |
+| --- | --- | --- |
+| Identity | `0 0 0  0 1 0  0 0 0` | 1 |
+| Sharpen | `0 -1 0  -1 5 -1  0 -1 0` | 1 |
+| Box blur | `1 1 1  1 1 1  1 1 1` | 9 (so the default divisor is 9) |
+| Emboss | `-2 -1 0  -1 1 1  0 1 2` | 1 |
+| Edge detect | `-1 -1 -1  -1 8 -1  -1 -1 -1` | 0 (so the default divisor is 1) |
+
+Try unticking `preserveAlpha` on edge detect: the weights sum to 0, so flat areas get zero alpha and nearly everything turns transparent.
+
+<Warning title="Kernels run on device pixels">
+  A 3×3 kernel covers 3×3 *device* pixels, not user units. The same sharpen looks strong on a 1× screen, softer on a 2× screen, and changes again when the page is zoomed. `kernelUnitLength` is meant to pin the kernel to user units, but engine support for it has been inconsistent. Treat `feConvolveMatrix` as a subtle finishing touch that can vary between devices, not something the design depends on.
+</Warning>
 
 <RainbowDivider />
 
 ## `<feTurbulence>`
 
+`feTurbulence` doesn't read an input at all. It **generates** Perlin noise across its subregion, which makes it a zero-byte texture source and the usual driver for `feDisplacementMap`.
+
+<CodeBlock language="xml">
+{`
+  <feTurbulence
+    type="fractalNoise"
+    baseFrequency="0.02 0.08"
+    numOctaves="3"
+    seed="7"
+    stitchTiles="stitch" />
+`}
+</CodeBlock>
+
+* **`type`** is either `turbulence` or `fractalNoise`. **The default is `turbulence`**, the harsher, vein-like noise that looks like marble or flames. `fractalNoise` is softer and more cloud-like, and it is what most texture recipes want, so spell it out.
+* **`baseFrequency`** is the noise's scale. Small values (0.005–0.05) give large, smooth features, and large values (0.5–1) give fine grain. Two numbers set x and y separately: `"0.02 0.08"` stretches the noise horizontally into a wood-grain or brushed-metal look.
+* **`numOctaves`** layers more copies of the noise, each at double the frequency and half the amplitude. It defaults to `1`. Each octave adds detail and rendering cost, and beyond about 4 or 5 the extra detail is too fine to see.
+* **`seed`** picks a different, but statistically identical, noise field. Use it to vary two textures that share the same settings, or animate it (see [Animating Filters](#animating-filters)) for a hand-drawn "boil".
+* **`stitchTiles="stitch"`** adjusts the frequencies slightly so the noise tiles seamlessly at the subregion edges, which you need before handing it to `feTile`. The default, `noStitch`, doesn't adjust anything.
+
+The output fills all four channels with noise, **including alpha**, so raw `feTurbulence` is semi-transparent. That's why the recipes below usually pass it through an `feColorMatrix` to take control of the alpha before using it.
+
 <InteractiveSvgPanel slug="feturbulence-noise-demo" />
 
-Generates procedural noise natively — `type="fractalNoise"` (softer, cloud/marble-like) or `type="turbulence"` (harsher, more textured), `baseFrequency` controlling the noise's scale, `numOctaves` its detail level. Useful standalone as a texture, or as an input to `feDisplacementMap` next.
+Change `seed` and the pattern changes while its character stays the same. Change the colour space and the *same* noise numbers look noticeably lighter under `linearRGB`, because the values are read as linear light and brighten when converted to sRGB for display.
+
+<Info title="Is feTurbulence the same in every browser?">
+  The algorithm is fully specified; the spec even includes reference code. So the same attributes produce the same noise field everywhere. Visible differences come from elsewhere: the resolution the filter is rendered at (device pixel ratio, zoom, transforms) and the colour space it's computed and composited in. Set `color-interpolation-filters` explicitly, and don't expect pixel-identical screenshots across engines or screens.
+</Info>
 
 <RainbowDivider />
 
 ## `<feDisplacementMap>`
 
-<InteractiveSvgPanel slug="fedisplacementmap-demo" />
+`feDisplacementMap` warps one input (`in`) by reading offsets from a second input (`in2`, the **map**). Each output pixel is fetched from a shifted position in the source, and the shift comes from one colour channel of the map at that pixel.
 
-<CodeBlock language="xml">
+<DisplacementMapDiagram />
+
+For a map channel value C between 0 and 1:
+
+<CodeBlock language="text">
 {`
-  <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise" />
-  <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
+  output(x, y) = source( x + scale·(Cx − 0.5),  y + scale·(Cy − 0.5) )
 `}
 </CodeBlock>
 
-Uses a second input's color channels (commonly `feTurbulence`'s noise) to warp another input's pixels — `xChannelSelector`/`yChannelSelector` pick which color channel drives horizontal/vertical displacement, `scale` controls the warp's intensity. This is the mechanism behind "hand-drawn wobbly edge" and "glass distortion" effects.
+* **0.5 means no shift.** A 50% grey map leaves the image untouched, black (0) pulls from `scale/2` units in the negative direction, and white (1) from `scale/2` units in the positive direction. A map made from a flat black shape therefore shifts everything by half the scale, which is a common surprise.
+* **`xChannelSelector` / `yChannelSelector`** (`R`, `G`, `B` or `A`, default `A`) choose which map channel drives horizontal and vertical displacement. Using two *different* channels of noise (`R` and `G`) gives displacement in both directions that isn't correlated, so the warp looks organic rather than diagonal.
+* **`scale`** is measured in the filter's `primitiveUnits`, user units by default, so the same `scale="15"` warps a small icon far more than a large illustration.
+* It **samples** rather than pushes. The output at a point copies the source from somewhere else, so content appears to move *opposite* to the offset arrows in the diagram.
+
+<CodeBlock language="xml">
+{`
+  <filter id="wobble" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" result="noise" />
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="15" xChannelSelector="R" yChannelSelector="G" />
+  </filter>
+`}
+</CodeBlock>
+
+<InteractiveSvgPanel slug="fedisplacementmap-demo" />
+
+Try setting both selectors to the same channel: every pixel then moves diagonally by the same amount, which reads as a shear rather than a wobble. Set a selector to `A` and that axis barely moves in places where the noise alpha stays near 0.5.
+
+<Warning title="color-interpolation-filters changes the map">
+  The spec applies `color-interpolation-filters` to the **map** (`in2`) but not to the image being displaced. Under the default `linearRGB`, the map's values are converted before they're read, so a grey that is 0.5 in sRGB is no longer 0.5, and a hand-made map (a gradient, or an `feImage` of a displacement texture) no longer centres where you painted it. Engines have also differed on this in the past. Set `color-interpolation-filters="sRGB"` on displacement filters so that 0.5 grey stays neutral.
+</Warning>
+
+Displacement moves pixels outward, so give the filter region enough padding for `scale/2` units on every side. Otherwise the displaced edges get clipped.
 
 <RainbowDivider />
 
@@ -75,47 +398,392 @@ Uses a second input's color channels (commonly `feTurbulence`'s noise) to warp a
 {`<feDropShadow dx="4" dy="4" stdDeviation="2" flood-color="#000" flood-opacity="0.4" />`}
 </CodeBlock>
 
-One primitive combining blur + offset + color + compositing into a single element — functionally equivalent to the `feGaussianBlur` → `feOffset` → `feMerge` chain from the fundamentals post, just shorter. Reach for the shorthand when a plain drop shadow is all that's needed; build the chain by hand when the shadow needs its own independent color layer or has to feed into further primitives.
+`feDropShadow` isn't a blur of the element itself. It builds its shadow from the input's **alpha**, and the spec defines it as equivalent to this chain:
+
+<CodeBlock language="xml">
+{`
+  <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+  <feOffset dx="4" dy="4" result="offsetBlur" />
+  <feFlood flood-color="#000" flood-opacity="0.4" />
+  <feComposite in2="offsetBlur" operator="in" />
+  <feMerge>
+    <feMergeNode />                    <!-- the coloured, offset shadow -->
+    <feMergeNode in="SourceGraphic" /> <!-- the original on top -->
+  </feMerge>
+`}
+</CodeBlock>
+
+In words: it blurs the input's silhouette, offsets it, fills it with `flood-color` at `flood-opacity`, and merges the original on top. The shadow colour is always the flat flood colour, whatever colours the element has. This differs from the [fundamentals post's hand-built shadow](/post/svg/svg-essentials-filters-fundamentals), which blurs `SourceGraphic` so its shadow takes on the shape's own colours.
+
+The shorthand is the right choice for a plain shadow. Build the chain by hand when you need an **intermediate result** the shorthand doesn't expose:
+
+* **Spread**: dilate the silhouette before blurring it (CSS `box-shadow`'s fourth length).
+* **Inner shadow**: the shadow belongs inside the shape, not behind it (see [recipes](#recipes)).
+* **Multiple independent shadows**: for example, a tight contact shadow plus a soft ambient one. Chaining two `feDropShadow`s doesn't do this, because the second one shadows the first one's output, shadow included.
+* **A shadow from colour, not alpha**: a glow tinted by the artwork's own colours.
+
+<CodeBlock language="xml">
+{`
+  <filter id="spread-shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="spread" />
+    <feGaussianBlur in="spread" stdDeviation="4" />
+    <feOffset dy="6" result="offsetBlur" />
+    <feFlood flood-color="#0f172a" flood-opacity="0.35" />
+    <feComposite in2="offsetBlur" operator="in" result="shadow" />
+    <feMerge>
+      <feMergeNode in="shadow" />
+      <feMergeNode in="SourceGraphic" />
+    </feMerge>
+  </filter>
+`}
+</CodeBlock>
 
 <RainbowDivider />
 
 ## Lighting: `<feDiffuseLighting>` and `<feSpecularLighting>`
 
+The two lighting primitives treat their input's **alpha channel as a height map**, where transparent is low ground and opaque is high ground, and shine a light across that surface. Colour in the input is ignored.
+
+<LightingDiagram />
+
+Height is `surfaceScale × alpha` (`surfaceScale` defaults to 1). Light only responds to *slopes*: a flat region reflects the same amount everywhere, so an unblurred shape (alpha jumping straight from 0 to 1) lights up as a flat plate with a thin rim. Blurring `SourceAlpha` first turns that cliff into a ramp, and the ramp is what catches light and reads as a bevel.
+
+### What Each Primitive Outputs
+
+This is the part that trips people up when they paste a lighting example and get a solid grey rectangle:
+
+* **`feDiffuseLighting`** outputs an **opaque** image covering its whole subregion, which by default is the whole filter region. Its RGB is the matte shading (`diffuseConstant × N·L × lighting-color`), and its alpha is 1 everywhere, including outside your shape. You have to clip it back to the silhouette with `feComposite operator="in"` against `SourceAlpha`, then combine it with the artwork, typically with `feBlend mode="multiply"` so it shades the real colours.
+* **`feSpecularLighting`** outputs only the **highlights** (`specularConstant × (N·H)^specularExponent × lighting-color`), with alpha derived from their brightness. It is meant to be **added** on top of the source with `feComposite operator="arithmetic" k2="1" k3="1"`. Clip it to the shape first too, or flat areas outside the shape can pick up a faint haze.
+
 <CodeBlock language="xml">
 {`
-  <feDiffuseLighting in="bumpMap" surfaceScale="4" diffuseConstant="1" lighting-color="white">
-    <feDistantLight azimuth="235" elevation="60" />
-  </feDiffuseLighting>
+  <!-- Diffuse: shade the artwork (matte, embossed look) -->
+  <filter id="emboss-diffuse">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="bump" />
+    <feDiffuseLighting in="bump" surfaceScale="4" diffuseConstant="1" lighting-color="#ffffff" result="light">
+      <feDistantLight azimuth="225" elevation="45" />
+    </feDiffuseLighting>
+    <feComposite in="light" in2="SourceAlpha" operator="in" result="litShape" />
+    <feBlend in="SourceGraphic" in2="litShape" mode="multiply" />
+  </filter>
+
+  <!-- Specular: add a glossy highlight on top of the artwork -->
+  <filter id="gloss-specular">
+    <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="bump" />
+    <feSpecularLighting in="bump" surfaceScale="5" specularConstant="0.9" specularExponent="20" lighting-color="#ffffff" result="spec">
+      <fePointLight x="-50" y="-100" z="200" />
+    </feSpecularLighting>
+    <feComposite in="spec" in2="SourceAlpha" operator="in" result="specInShape" />
+    <feComposite in="SourceGraphic" in2="specInShape" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+  </filter>
 `}
 </CodeBlock>
 
-Treats an input (often a noise pattern or an alpha channel) as a bump map and simulates a light source (`feDistantLight`, `fePointLight`, or `feSpotLight` as a child) shining across it — producing an embossed or engraved look from a flat shape. A niche corner of the spec, but the only native way to fake 3D-lit texture without an actual raster/WebGL pipeline.
+<InteractiveSvgPanel slug="felighting-demo" />
+
+Untick **Clip light to SourceAlpha** and the diffuse output's opaque box appears around the shapes. That box is the bug the `feComposite operator="in"` step exists to fix. Drag `azimuth` around to move the lit edge, lower `elevation` toward 0 for long, raking light, and set the bump blur to 0 to see why a hard alpha edge makes a poor height map.
+
+### Light Sources
+
+Each lighting primitive takes exactly **one** light-source child:
+
+* **`<feDistantLight azimuth elevation>`** is a light infinitely far away, like the sun, so its rays are parallel and the light is even across the element. `azimuth` is the direction *toward* the light in the x–y plane, in degrees from the +x axis. Because SVG's y axis points down, positive angles turn **clockwise** on screen: `azimuth="45"` puts the light at the bottom-right. `elevation` is the angle above the surface: `90` shines straight down and `0` grazes it.
+* **`<fePointLight x y z>`** is a light at a specific position in the filter's `primitiveUnits` (user space by default). Positive `z` comes *out of* the screen toward the viewer. Because each pixel sees the light from a different angle, you get a falloff or hotspot that a distant light can't produce.
+* **`<feSpotLight x y z pointsAtX pointsAtY pointsAtZ specularExponent limitingConeAngle>`** is a point light aimed at a target point. Its own `specularExponent` (default 1) controls how quickly the light falls off away from the beam's centre, and `limitingConeAngle` (in degrees, optional) cuts the beam off hard at that half-angle.
+
+The remaining attributes:
+
+* **`lighting-color`** (a property, default white) tints the light.
+* **`diffuseConstant`** and **`specularConstant`** scale the output brightness.
+* **`specularExponent`** on `feSpecularLighting` (1–128, default 1) sets how *tight* the highlight is. Higher values give a smaller, shinier spot.
+
+Lighting is computed per device pixel, like `feConvolveMatrix`, so the fine detail of a bevel can shift with zoom and screen density.
 
 <RainbowDivider />
 
 ## `<feTile>` and `<feImage>`
 
-Brief mentions: `feTile` repeats a smaller filter result to fill the region (paired with a deliberately-cropped input); `feImage` pulls in an external image or another SVG element as a filter input, the same way `<image>`/`<use>` reference external content elsewhere in this series.
+### `<feTile>`
+
+`feTile` fills its subregion with repeated copies of its input. The input has to be small for this to do anything: `feTile` repeats the input's own **primitive subregion**, so you create that small tile with `x`/`y`/`width`/`height` on an earlier primitive. Unlike most primitives, `feTile`'s own subregion defaults to the whole filter region, even when its input is smaller.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="400" height="200">
+    <defs>
+      <filter id="afp-checker" filterUnits="userSpaceOnUse" x="0" y="0" width="200" height="100">
+        <feFlood x="0" y="0" width="20" height="20" flood-color="#e2e8f0" result="bg" />
+        <feFlood x="0" y="0" width="10" height="10" flood-color="#94a3b8" result="a" />
+        <feFlood x="10" y="10" width="10" height="10" flood-color="#94a3b8" result="b" />
+        <feMerge x="0" y="0" width="20" height="20" result="tile">
+          <feMergeNode in="bg" />
+          <feMergeNode in="a" />
+          <feMergeNode in="b" />
+        </feMerge>
+        <feTile in="tile" result="checker" />
+        <feComposite in="checker" in2="SourceAlpha" operator="in" />
+      </filter>
+    </defs>
+    <rect x="10" y="10" width="180" height="80" rx="12" fill="#000" filter="url(#afp-checker)" />
+  </svg>
+`}
+</SvgSnippet>
+
+Three `feFlood`s limited to small subregions build a single 20×20 checker tile, `feTile` repeats it across the region, and `feComposite operator="in"` clips the result to the rounded rectangle. For static textures, a [`<pattern>`](/post/svg/svg-essentials-pattern-element) is usually simpler. `feTile` earns its place when the tile is itself a filter result, such as stitched noise from `feTurbulence stitchTiles="stitch"`.
+
+### `<feImage>`
+
+`feImage` brings an image into the filter as an input. It can be an external file or a `data:` URI, and it is positioned by the primitive's `x`/`y`/`width`/`height` and fitted with `preserveAspectRatio`, the same as the [`<image>` element](/post/svg/svg-essentials-image-and-foreignobject).
+
+<CodeBlock language="xml">
+{`
+  <filter id="texture-fill" x="0" y="0" width="100%" height="100%">
+    <feImage href="texture.png" x="0" y="0" width="40" height="40" preserveAspectRatio="xMidYMid slice" result="tile" />
+    <feTile in="tile" result="tiled" />
+    <feComposite in="tiled" in2="SourceAlpha" operator="in" />
+  </filter>
+`}
+</CodeBlock>
+
+Typical uses are a photographic texture clipped to a shape, a hand-painted displacement map for `feDisplacementMap`, or a light map to blend over artwork.
+
+<Warning title="feImage pointing at an element doesn't work in Firefox">
+  The spec also allows `href="#some-element"` to render an element from the same document into the filter. Chromium and WebKit support this, but Firefox does not, and simply produces no image. For anything cross-browser, reference an external file or a `data:` URI (an inline SVG can be URL-encoded into one) instead of an in-document `#id`.
+</Warning>
+
+<RainbowDivider />
+
+## Animating Filters
+
+Filter primitive attributes aren't CSS properties, so CSS transitions and keyframes can't animate `baseFrequency` or `scale`. [SMIL](/post/svg/svg-essentials-smil-animation) can, by placing `<animate>` directly inside the primitive:
+
+<CodeBlock language="xml">
+{`
+  <filter id="wobble-anim" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="1" result="noise">
+      <animate attributeName="baseFrequency" values="0.02;0.035;0.02" dur="6s" repeatCount="indefinite" />
+    </feTurbulence>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G">
+      <animate attributeName="scale" values="4;10;4" dur="3s" repeatCount="indefinite" />
+    </feDisplacementMap>
+  </filter>
+`}
+</CodeBlock>
+
+A popular variant for a hand-drawn "line boil" is to step `seed` through a few values with `calcMode="discrete"` (`values="1;2;3" dur="0.3s"`). Because the noise field jumps rather than flows, this gives the jittery, redrawn-every-frame look of hand animation.
+
+Keep the cost in mind. An animated filter re-renders its **entire region every frame**, and an animated `feTurbulence` regenerates its noise from scratch each time. Keep animated filter regions small and `numOctaves` low, and profile on a low-end device rather than a development laptop.
+
+You can also switch the effect on and off from the outside. `filter` is a presentation attribute, so CSS can override it. For example, add the filter to a card only while it is hovered or focused, and leave it off for the rest of the page.
+
+<Warning title="Respect prefers-reduced-motion">
+  SMIL animations don't stop by themselves when a user asks for reduced motion. Handle it explicitly: either remove the filter under the media query, as shown below, or keep the static look and freeze the animation with script, calling `svgElement.pauseAnimations()` when `matchMedia("(prefers-reduced-motion: reduce)").matches`.
+</Warning>
+
+Removing the filter works because CSS overrides the `filter` presentation attribute:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) {
+    .wobbly { filter: none; }
+  }
+`}
+</CodeBlock>
+
+### Accessibility of Distorted and Textured Content
+
+* **Filtered text is still text.** It stays selectable, searchable and readable by screen readers, which is a real advantage over baking an effect into an image. But it only *looks* legible if the distortion is mild, so keep displacement `scale` small on anything people must read, and never on body copy.
+* **Noise and grain reduce effective contrast.** Check contrast against the *darkest and lightest* parts of a texture, not the base colour.
+* **Flicker is a seizure risk.** A fast discrete `seed` animation on high-contrast noise can flash. Keep it subtle, low-contrast and small, and stay well under three flashes per second.
+
+<RainbowDivider />
+
+## Recipes
+
+Each recipe below is complete and can be copied as-is; every id it references is defined inside it.
+
+### Gooey Blobs
+
+Blur the shapes so they bleed together, sharpen the blurred alpha back into hard edges with the alpha-contrast matrix, then paint the crisp original `atop` the goo so the solid colour stays sharp.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 120" width="450" height="180">
+    <defs>
+      <filter id="afp-gooey" x="-20%" y="-40%" width="140%" height="180%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+        <feColorMatrix in="blur" type="matrix"
+          values="1 0 0 0 0
+                  0 1 0 0 0
+                  0 0 1 0 0
+                  0 0 0 20 -8" result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+    </defs>
+    <g filter="url(#afp-gooey)" fill="#6366f1">
+      <circle cx="70" cy="60" r="32" />
+      <circle cx="125" cy="60" r="22" />
+      <circle cx="170" cy="60" r="18" />
+      <circle cx="225" cy="60" r="30" />
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+The circles don't touch, since there are gaps of 5–7 units between them, yet the goo bridges them. Put a SMIL `<animate>` on a circle's `cx` and the bridge stretches and snaps as the circles pull apart. Because the filter works on the *group*, you need a solid fill colour for the bridges to match.
+
+### Duotone
+
+Remove the colour, then map black to one colour and white to another with a two-value `table` per channel. This does the same job as the one-matrix duotone above, but is easier to retune: each pair is simply "shadow value, highlight value".
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 110" width="450" height="165">
+    <defs>
+      <filter id="afp-duotone" color-interpolation-filters="sRGB">
+        <feColorMatrix type="saturate" values="0" />
+        <feComponentTransfer>
+          <feFuncR type="table" tableValues="0.118 0.984" />
+          <feFuncG type="table" tableValues="0.106 0.749" />
+          <feFuncB type="table" tableValues="0.294 0.141" />
+        </feComponentTransfer>
+      </filter>
+      <g id="afp-duotone-art">
+        <rect x="0" y="0" width="130" height="100" rx="10" fill="#e0f2fe" />
+        <circle cx="45" cy="45" r="28" fill="#ef4444" />
+        <circle cx="85" cy="55" r="28" fill="#22c55e" />
+        <rect x="20" y="78" width="90" height="12" rx="6" fill="#1d4ed8" />
+      </g>
+    </defs>
+    <use href="#afp-duotone-art" x="10" y="5" />
+    <use href="#afp-duotone-art" x="160" y="5" filter="url(#afp-duotone)" />
+  </svg>
+`}
+</SvgSnippet>
+
+The artwork is defined once and drawn twice with [`<use>`](/post/svg/svg-essentials-g-defs-symbol-and-use): unchanged on the left, and navy-to-amber on the right.
+
+### Paper Grain
+
+Generate fine noise, turn it into a neutral grey at a fixed, low opacity, clip it to the shape, and multiply it over the artwork.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 120" width="450" height="180">
+    <defs>
+      <filter id="afp-grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch" result="noise" />
+        <feColorMatrix in="noise" type="matrix"
+          values="0.33 0.33 0.33 0 0
+                  0.33 0.33 0.33 0 0
+                  0.33 0.33 0.33 0 0
+                  0    0    0    0 0.2" result="grain" />
+        <feComposite in="grain" in2="SourceAlpha" operator="in" result="grainInShape" />
+        <feBlend in="SourceGraphic" in2="grainInShape" mode="multiply" />
+      </filter>
+    </defs>
+    <g filter="url(#afp-grain)">
+      <rect x="10" y="10" width="280" height="100" rx="14" fill="#fef3c7" />
+      <circle cx="80" cy="60" r="30" fill="#f59e0b" />
+      <rect x="130" y="45" width="140" height="30" rx="6" fill="#0ea5e9" />
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+The last matrix row, `0 0 0 0 0.2`, discards the noise's own varying alpha and replaces it with a constant 20%, so the grain is even across the whole shape. Raise or lower that one number to control the grain's strength.
+
+### Inner Shadow
+
+This is the SVG version of CSS `box-shadow: inset 3px 3px 6px`. Blur and offset the silhouette, keep the part of the shape it *no longer covers* (`operator="out"`), colour that band, and lay it over the original.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 120" width="450" height="180">
+    <defs>
+      <filter id="afp-inner-shadow">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+        <feOffset dx="3" dy="3" result="offsetBlur" />
+        <feComposite in="SourceAlpha" in2="offsetBlur" operator="out" result="rim" />
+        <feFlood flood-color="#0f172a" flood-opacity="0.6" />
+        <feComposite in2="rim" operator="in" result="innerShadow" />
+        <feComposite in="innerShadow" in2="SourceGraphic" operator="over" />
+      </filter>
+    </defs>
+    <rect x="20" y="20" width="120" height="80" rx="16" fill="#e0e7ff" filter="url(#afp-inner-shadow)" />
+    <circle cx="220" cy="60" r="40" fill="#fde68a" filter="url(#afp-inner-shadow)" />
+  </svg>
+`}
+</SvgSnippet>
+
+The shadow stays inside the shape because `rim` is derived from `SourceAlpha`. No filter-region padding is needed, since nothing is painted outside the element.
+
+### Text Outline
+
+Dilate the glyphs' alpha, flood it, and merge the original text on top. The outline sits entirely outside the letterforms, so the fill keeps its full weight.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 90" width="450" height="135">
+    <defs>
+      <filter id="afp-text-outline" x="-5%" y="-20%" width="110%" height="140%">
+        <feMorphology in="SourceAlpha" operator="dilate" radius="2" result="thick" />
+        <feFlood flood-color="#0f172a" />
+        <feComposite in2="thick" operator="in" result="outline" />
+        <feMerge>
+          <feMergeNode in="outline" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    <text x="150" y="60" text-anchor="middle" font-size="44" font-weight="800" font-family="system-ui, sans-serif" fill="#fbbf24" filter="url(#afp-text-outline)">Outline</text>
+  </svg>
+`}
+</SvgSnippet>
+
+For a plain outline, `stroke` with `paint-order="stroke"` (see [Mastering Text](/post/svg/svg-essentials-mastering-text)) is cheaper and usually looks crisper. The filter version is worth it when you want what a stroke can't give you: a blurred halo (add `feGaussianBlur` after the dilate), a knockout outline (`operator="out"` against `SourceAlpha`), or one outline around a whole group of overlapping shapes rather than around each one.
 
 <RainbowDivider />
 
 ## Where Should You Use This?
 
-- Organic/hand-drawn illustration styles — a wobbly outline via `feTurbulence` + `feDisplacementMap`
-- Procedural texture generation (marble, paper grain, static) without an image asset
-- Color grading/duotone effects via `feColorMatrix`
-- Precise venn-diagram-style compositing between two shapes via `feComposite`'s operators
+* **Organic, hand-drawn illustration styles**: wobbly outlines from `feTurbulence` plus `feDisplacementMap`, optionally with a seed-stepped boil.
+* **Procedural textures** such as paper grain, marble, clouds and static, without shipping an image asset.
+* **Colour treatments**: greyscale, sepia, duotone and posterize with `feColorMatrix` and `feComponentTransfer`, applied to SVG artwork or, via `feImage`, to photos.
+* **Precise shape combination** with `feComposite`'s operators, when a [clip path or mask](/post/svg/svg-essentials-clippath-and-mask) can't express the result (for example, an `xor` knockout or an `arithmetic` blend).
+* **Outlines, spreads and halos** with `feMorphology`, where `stroke` or `feDropShadow` falls short.
+* **Subtle depth**: bevels and gloss from the lighting primitives on icons and badges.
+
+If CSS already has a function for the effect (`blur()`, `drop-shadow()`, `grayscale()`, `sepia()`, `hue-rotate()`, `saturate()`, `invert()`), prefer it for simple cases. It is shorter, and some engines can accelerate it more readily than an arbitrary SVG filter chain. Reach for these primitives when the effect has no CSS function, or needs a chain.
 
 <RainbowDivider />
 
-## Production Considerations & Edge Cases
+## Browser Support & Production Considerations
 
-* **These primitives are considerably more render-expensive than basic blur/offset**, especially `feTurbulence`/`feDisplacementMap`/lighting at large filter regions — profile before applying to anything animated or large.
-* **`feTurbulence`'s exact noise pattern isn't guaranteed pixel-identical across browser engines.** Don't rely on it for pixel-perfect cross-browser reproducibility, only for the general textured/organic look.
-* **Compositing operators need the right `in2`.** `feComposite` against `SourceAlpha` (a shape's silhouette) behaves very differently from compositing against `SourceGraphic` (the shape's actual rendered colors) — pick deliberately based on whether the *shape* or the *shape's own colors* should drive the result.
+All of the primitives in this post are supported in current Chromium, Firefox and WebKit. The differences are in the edge cases, and these are the ones worth testing:
+
+* **`feImage` with `href="#id"`** (an in-document element) doesn't render in Firefox. Use an external file or a `data:` URI.
+* **`color-interpolation-filters`**: engines have differed over which inputs a primitive converts, especially for `feDisplacementMap`'s map. Set it explicitly (usually `sRGB` for colour recipes and displacement) instead of relying on the default.
+* **Resolution-dependent primitives** (`feConvolveMatrix`, the lighting primitives, and to a lesser degree `feTurbulence` and `feMorphology`) work on device pixels, so they look different at 1× vs 2×, at different zoom levels, and under transforms. Check your target densities.
+* **Newer additions** such as `feComposite operator="lighter"` may not be available everywhere, and `kernelUnitLength` has been implemented inconsistently. Stick to the long-standing attributes for anything critical.
+* **CSS `filter: url(#id)` on HTML elements** works in modern engines, but historically this path has been less consistent than filtering SVG content. Test each browser if you filter HTML this way.
+
+Performance and robustness:
+
+* **These primitives cost far more than a blur or an offset.** `feTurbulence` with several octaves, `feDisplacementMap`, `feConvolveMatrix`, large-radius `feMorphology` and lighting all scale with the number of pixels in the filter region. Keep regions tight (a region that is too generous costs as much as one that clips), and avoid applying them to elements that scroll, resize or animate constantly.
+* **Filters are raster.** The result is re-rendered whenever the element's size or zoom changes, and the effect is only as sharp as the pixel density. Don't use the old `filterRes` attribute: it has been removed from the spec and modern engines ignore it.
+* **Know what each `in2` contributes.** With stencil operators only alpha matters. With `over`, `atop` and `xor`, `SourceAlpha` contributes black, while `SourceGraphic` contributes real colour.
+* **Lighting output must be clipped.** Always `feComposite operator="in"` with `SourceAlpha` after `feDiffuseLighting` (and usually `feSpecularLighting`), or you get an opaque box.
+* **Give distortion room.** `feDisplacementMap` needs `scale/2` of padding, and dilations and shadows need their radius plus blur, or the edges clip at the filter region.
+* **Honour reduced motion** for animated filters, and keep textured or distorted text legible (see [Animating Filters](#animating-filters)).
 
 <RainbowDivider />
 
 ## Wrapping Up
 
-Between this post and [Filter Fundamentals](/post/svg/svg-essentials-filters-fundamentals), the full `<fe*>` primitive family is covered — chaining, blur, offset, merging, color, compositing, noise, displacement, and lighting. Every one of them is just another step in the same named-result pipeline; the effects get more elaborate, but the underlying mechanism never changes.
+Between this post and [Filter Fundamentals](/post/svg/svg-essentials-filters-fundamentals), every primitive in the `<fe*>` family is covered:
+
+* **Fundamentals:** blur, offset, merge, flood and blend.
+* **This post:** colour math (`feColorMatrix`, `feComponentTransfer`), compositing (`feComposite` and its `arithmetic` mode), neighbourhood operations (`feMorphology`, `feConvolveMatrix`), procedural texture and distortion (`feTurbulence`, `feDisplacementMap`), the `feDropShadow` shorthand, lighting with its three light sources, and external or repeated input (`feImage`, `feTile`).
+
+The recipes show how few ideas they rest on. Alpha is both a stencil and a height map, 0.5 is neutral for a displacement map, a matrix row is one output channel's recipe, and any `result` can feed any later step. Once those ideas are clear, most filter effects you see online can be read as a short chain of these steps and rebuilt from them.
