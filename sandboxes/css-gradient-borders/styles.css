@@ -1,0 +1,318 @@
+/*
+  index.js builds the live gradient into --border-gradient (linear, radial, conic or repeating
+  stripes), so every technique below is written once and works with any gradient type — just as
+  in the post, where the gradient function can be swapped without touching the technique.
+*/
+
+.stage[hidden],
+.field[hidden],
+.checkbox-field[hidden],
+.segmented-control[hidden] {
+  display: none;
+}
+
+.stage {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 12px;
+  transition: background-color 0.2s ease;
+}
+
+/* A busy backdrop so the difference between a solid center (background-clip) and a see-through one (mask, border-image) is obvious. */
+.stage--pattern {
+  background-color: #1d2137;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(129, 140, 248, 0.35) 0 10px, transparent 10px 20px),
+    radial-gradient(circle at 20% 30%, rgba(0, 198, 255, 0.45), transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(238, 9, 121, 0.4), transparent 45%);
+}
+
+/* The light half of the theme demo — the surface token flips with it. */
+.stage--light {
+  background-color: #f6f8fa;
+}
+
+.gradient-border-card {
+  --border-size: 4px;
+  --border-radius: 16px;
+  --surface: var(--pg-surface);
+  --border-gradient: linear-gradient(90deg, #ff6a00, #ee0979);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 220px;
+  height: 130px;
+  padding: 12px;
+  text-align: center;
+  color: var(--pg-text);
+  border-radius: var(--border-radius);
+}
+
+.gradient-border-card span {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.stage--light .gradient-border-card {
+  color: #1f2328;
+}
+
+/* ---------- Core: background-clip ---------- */
+
+/* Both layers share one element: the padding-box layer paints the fill, and the border-box layer shows only through the transparent border ring. */
+.gradient-border-card.mode-background-clip {
+  border: var(--border-size) solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--border-gradient) border-box;
+}
+
+/* ---------- Core: border-image ---------- */
+
+/* The `1` is the slice — without it the gradient only lands in the four corners. border-radius is ignored, so corners stay square. */
+.gradient-border-card.mode-border-image {
+  border: var(--border-size) solid;
+  border-image: var(--border-gradient) 1;
+  background: none;
+}
+
+/*
+  A single side, like a gradient underline under a heading. border-width, not `border: 0`: the
+  border shorthand also resets border-image, which would drop the gradient.
+*/
+.gradient-border-card.mode-border-image.side-bottom {
+  border-width: 0 0 var(--border-size);
+}
+
+/* ---------- Core: mask ---------- */
+
+/* Nothing paints the center, so whatever sits behind the card shows through it. */
+.gradient-border-card.mode-mask::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: var(--border-size); /* The border thickness */
+  border-radius: inherit;
+  background: var(--border-gradient);
+  pointer-events: none;
+
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box exclude,
+    linear-gradient(#fff 0 0);
+}
+
+/* ---------- Advanced ---------- */
+
+/* An oversized gradient slides back and forth; background-position is the only way to "move" one without @property. */
+.gradient-border-card.mode-animated {
+  background-size: 300% 300%;
+  animation: gb-flow 6s linear infinite;
+}
+
+@keyframes gb-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/*
+  Registered so the browser knows it's an <angle> and can interpolate it — an unregistered custom
+  property is just a string, and animating it would flip between the two keyframe values instead.
+  index.js writes var(--spin) into the conic's `from` angle, so the gradient turns while the card stays still.
+*/
+@property --spin {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.gradient-border-card.mode-rotating {
+  animation: gb-spin 4s linear infinite;
+}
+
+@keyframes gb-spin {
+  to {
+    --spin: 360deg;
+  }
+}
+
+/* Typed colors can transition, so the border fades from gray to the gradient instead of swapping instantly. */
+@property --hover-start {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #4b5170;
+}
+
+@property --hover-end {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #4b5170;
+}
+
+.gradient-border-card.mode-hover {
+  --hover-start: var(--rest-color);
+  --hover-end: var(--rest-color);
+
+  border: var(--border-size) solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    linear-gradient(var(--border-angle), var(--hover-start), var(--hover-end)) border-box;
+  transition: --hover-start 0.3s ease, --hover-end 0.3s ease;
+  cursor: pointer;
+}
+
+/* `.is-hovered` lets the playground hold the state on without a mouse. */
+.gradient-border-card.mode-hover:is(:hover, :focus-within, .is-hovered) {
+  --hover-start: var(--color-1);
+  --hover-end: var(--color-2);
+}
+
+/* ---------- Pitfalls (each reproduces the broken version; the fix class restores the working one) ---------- */
+
+/* 1a. A solid border color sits on top of the background and covers the gradient. */
+.gradient-border-card.pit-solid-border {
+  border: var(--border-size) solid #4b5170;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--border-gradient) border-box;
+}
+
+.gradient-border-card.pit-solid-border.fixed {
+  border-color: transparent;
+}
+
+/* 1b. No slice value: it defaults to 100%, so the whole gradient is squeezed into the corners. */
+.gradient-border-card.pit-no-slice {
+  border: var(--border-size) solid;
+  border-image: var(--border-gradient);
+  background: none;
+}
+
+.gradient-border-card.pit-no-slice.fixed {
+  border-image: var(--border-gradient) 1;
+}
+
+/* 2a. No inner layer: the gradient fills the whole card and bleeds under the content. */
+.gradient-border-card.pit-no-inner {
+  border: var(--border-size) solid transparent;
+  background: var(--border-gradient) border-box;
+}
+
+/* 2b. Inner layer without padding-box: it defaults to border-box and paints over the ring, so the border disappears. */
+.gradient-border-card.pit-no-keyword {
+  border: var(--border-size) solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)),
+    var(--border-gradient) border-box;
+}
+
+.gradient-border-card.pit-no-inner.fixed,
+.gradient-border-card.pit-no-keyword.fixed {
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--border-gradient) border-box;
+}
+
+/* 3. border-image ignores border-radius; the fix switches to background-clip. */
+.gradient-border-card.pit-corners {
+  border: var(--border-size) solid;
+  border-image: var(--border-gradient) 1;
+  background: var(--surface);
+}
+
+.gradient-border-card.pit-corners.fixed {
+  border: var(--border-size) solid transparent;
+  border-image: none;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--border-gradient) border-box;
+}
+
+/* 4. Same size as the element, so there's nothing extra to slide into view. */
+.gradient-border-card.pit-static {
+  border: var(--border-size) solid transparent;
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--border-gradient) border-box;
+  animation: gb-flow 6s linear infinite;
+}
+
+.gradient-border-card.pit-static.fixed {
+  background-size: 300% 300%;
+}
+
+/*
+  5. Simulates an older Safari that only understands -webkit-mask: without those lines the mask is
+  dropped entirely, and the unmasked ::before paints a solid gradient over the whole card.
+*/
+.gradient-border-card.pit-safari:not(.fixed)::before {
+  -webkit-mask: none;
+  mask: none;
+}
+
+/* 6. The inner layer is hard-coded to white (index.js sets --surface to #fff), so on a dark page the card turns into a white box. */
+.gradient-border-card.pit-white-box:not(.fixed) {
+  color: #1f2328;
+}
+
+/* ---------- Production extras ---------- */
+
+.gradient-border-card.with-focus-ring:focus-visible {
+  outline: 2px solid var(--color-1);
+  outline-offset: 4px;
+}
+
+input[type="color"] {
+  inline-size: 100%;
+  block-size: 2.625rem;
+  padding: 0.25rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  cursor: pointer;
+}
+
+.stage-note {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+.stage-note code {
+  font-family: var(--pg-mono);
+  font-size: 0.8rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-border-card.mode-animated,
+  .gradient-border-card.mode-rotating,
+  .gradient-border-card.pit-static {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .stage {
+    padding: 16px 8px;
+  }
+
+  .gradient-border-card {
+    width: 180px;
+    height: 110px;
+  }
+}
