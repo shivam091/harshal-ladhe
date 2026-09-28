@@ -2,31 +2,33 @@ import { buildPostMetadata } from "@/utils/post-metadata";
 
 export const metadata = buildPostMetadata("svg-essentials-mastering-text");
 
-Every shape we've built so far in this series — lines, curves, filled paths — describes geometry. Text is different. When you drop real
-words into an SVG with the `<text>` element, you aren't drawing letter-shaped outlines; you're placing genuine, selectable,
-screen-reader-friendly text into the document, then telling it where to sit using SVG's own coordinate system rather than the CSS
-box-model flow that governs a paragraph in HTML.
+## Introduction
+
+Every shape we've built so far in this series (lines, curves, filled paths) describes geometry. Text is different. When you drop real
+words into an SVG with the `<text>` element, you aren't drawing letter-shaped outlines. You're placing genuine text into the document,
+then telling it where to sit using SVG's own coordinate system rather than the CSS box-model flow that governs a paragraph in HTML.
 
 That distinction matters more than it looks. A logo wordmark baked into a raster image can't be copied, searched with Ctrl+F, or picked
-up by a screen reader. Text drawn stroke-by-stroke onto a `<canvas>` has the exact same problem — the browser only ever sees pixels.
-SVG text is real DOM text with actual `textContent`, so it inherits every accessibility and searchability guarantee HTML text gets,
-while still living inside a resolution-independent vector canvas.
+up by a screen reader. Text drawn stroke-by-stroke onto a `<canvas>` has exactly the same problem, because the browser only ever sees
+pixels. SVG text is real DOM text with actual `textContent`. When the SVG is **inline** in your HTML, it gets the same selection,
+find-in-page, and screen-reader behavior as HTML text, while still living inside a resolution-independent vector canvas. (An SVG loaded
+through `<img>` is a different story, covered in [the accessibility section](#accessibility-and-seo).)
 
 What SVG doesn't give you is the layout system you're used to. There's no automatic wrapping, no `line-height`, no flow around floats.
-Positioning is deliberate: you say exactly where the baseline sits, exactly how each line breaks, and — if you want a headline to trace
-a curve — exactly which path it should follow. This post covers the building blocks that make that possible: `<text>`'s own
-positioning attributes, `<tspan>` for multi-line and per-word styling, `<textPath>` for text that rides a curve, and where CSS and
-presentation attributes fit around all of it.
+Positioning is deliberate: you say exactly where the baseline sits, exactly how each line breaks, and, if you want a headline to trace
+a curve, exactly which path it should follow. This post starts with the building blocks (`<text>`'s positioning attributes, `<tspan>`
+for multi-line and per-word styling, `<textPath>` for text on a curve) and works up to the production concerns: outlined, vertical,
+and right-to-left text, wrapping and measuring text with JavaScript, font loading, scaling, and accessibility.
 
 If you haven't already, it's worth being comfortable with [the coordinate system and viewBox](/post/svg/svg-essentials-mastering-basic-shapes)
-first — text positioning leans on exactly the same top-left-origin, user-unit grid every shape in this series has used.
+first. Text positioning leans on exactly the same top-left-origin, user-unit grid every shape in this series has used.
 
 <RainbowDivider />
 
 ## The `<text>` Element
 
 In HTML, an element's position usually describes a box's top-left corner. `<text>` doesn't work that way. Its `x` and `y` attributes
-place the **baseline** — the invisible line most letters sit on, and the one descenders like `g`, `y`, and `p` dip below.
+place the **baseline**: the invisible line most letters sit on, and the one descenders like `g`, `y`, and `p` dip below.
 
 <CodeBlock language="xml">
 {`
@@ -37,16 +39,16 @@ place the **baseline** — the invisible line most letters sit on, and the one d
 `}
 </CodeBlock>
 
-Draw a guide line at `y="25"` next to that `<text>` and you'll see it run straight under every letter — cutting through the bottom of
-the flat-bottomed ones and clipping through the tail of any descender. `x` and `y` are a single point, not a bounding box, and by
-default that point is the **start of the baseline**, not a top-left corner the way `<rect>`'s `x`/`y` are.
+Draw a guide line at `y="25"` next to that `<text>` and you'll see it run straight along the bottom of every flat-bottomed letter, while
+any descender's tail hangs below it. `x` and `y` are a single point, not a bounding box, and by default that point is the **start of the
+baseline**, not a top-left corner the way `<rect>`'s `x`/`y` are.
 
 <Info title="Remember">
   For `<text>`:
 
   `(x, y)` → a point **on the baseline**, not a top-left corner
 
-  Everything else — how the text lines up horizontally against that point, and how it sits vertically around it — is a separate pair
+  Everything else (how the text lines up horizontally against that point, and how it sits vertically around it) is a separate pair
   of attributes, covered next.
 </Info>
 
@@ -56,47 +58,65 @@ default that point is the **start of the baseline**, not a top-left corner the w
 
 | Value | Behavior |
 | --- | --- |
-| `start` (default) | The text **begins** at `x` and extends toward the reading direction (rightward in LTR text). |
+| `start` (default) | The text **begins** at `x` and extends in the reading direction (rightward in left-to-right text). |
 | `middle` | The text is **centered** on `x`, extending equally in both directions. |
 | `end` | The text **ends** at `x`, extending backward from it. |
 
-Unlike CSS's `text-align`, there's no container to align within — `text-anchor` only ever cares about that one `x` coordinate. That
+<TextAnchorDiagram />
+
+Unlike CSS's `text-align`, there's no container to align within. `text-anchor` only ever cares about that one `x` coordinate. That
 makes it the tool of choice any time you need text centered or right-aligned against a specific point rather than a box, like a label
 sitting above a data point in a chart.
 
-### Vertical Alignment: `dominant-baseline` and `alignment-baseline`
+Note that `start` and `end` are **logical**, not physical: they follow the text's direction. In right-to-left text, `start` puts the
+string's right edge on `x` and it extends leftward. See [Vertical and Bidirectional Text](#vertical-and-bidirectional-text) below.
 
-The vertical counterpart is `dominant-baseline` (set on the `<text>` or an ancestor) and its per-element override,
-`alignment-baseline` (set directly on a `<tspan>` or other text content child). Both accept the same core set of values:
+### Vertical Alignment: `dominant-baseline`
 
-* `auto` (default): uses the font's normal alphabetic baseline — the one the guide line above sat on.
-* `middle`: centers the text around the midpoint of lowercase letters (roughly where an `x` sits).
-* `central`: centers around the exact vertical middle of the font's full em box — usually a hair different from `middle`, but close
-  enough that either works for most "center this vertically" needs.
-* `hanging`: aligns to the top of the text, the way most scripts that hang from a top line (like Devanagari) are set — a reasonable
-  stand-in for "top-aligned" in Latin text too.
+The vertical counterpart is `dominant-baseline`, set on the `<text>` (or inherited from an ancestor). It picks which of the font's
+baselines is lined up with `y`:
 
-Seeing all four side by side against one shared guide line makes the differences concrete:
+* `auto` (default) / `alphabetic`: the normal Latin baseline, the one the guide line above sat on.
+* `middle`: halfway up the font's x-height (roughly the middle of a lowercase `x`).
+* `central`: the center of the font's em box. It's usually a hair away from `middle`, and either works for most "center this
+  vertically" jobs.
+* `hanging`: the **hanging baseline** used by Indic scripts such as Devanagari, whose letters hang from a headline. In a Latin font
+  it's synthesized somewhere near the top of the capitals, so it's *not* a precise "top" alignment.
+* `text-top` / `text-before-edge`: the top of the em box, which is the closest thing to "top-aligned". Support for these varies
+  between browsers, so test them before you rely on them.
+* `ideographic` and `mathematical`: the baseline CJK ideographs sit on (near the bottom of the em box), and the baseline math
+  operators like `−` and `+` center on.
+
+<TextBaselineDiagram />
+
+Seeing the four most useful values side by side against one shared guide line makes the differences concrete:
 
 <SvgSnippet>
 {`
   <svg viewBox="0 0 200 70" width="400" height="140">
     <line x1="5" y1="35" x2="195" y2="35" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" />
     <text x="10" y="35" font-size="10" dominant-baseline="auto" fill="currentColor">auto</text>
-    <text x="65" y="35" font-size="10" dominant-baseline="middle" fill="currentColor">middle</text>
-    <text x="120" y="35" font-size="10" dominant-baseline="hanging" fill="currentColor">hanging</text>
-    <text x="170" y="35" font-size="10" dominant-baseline="central" fill="currentColor">central</text>
+    <text x="55" y="35" font-size="10" dominant-baseline="middle" fill="currentColor">middle</text>
+    <text x="110" y="35" font-size="10" dominant-baseline="central" fill="currentColor">central</text>
+    <text x="160" y="35" font-size="10" dominant-baseline="hanging" fill="currentColor">hanging</text>
   </svg>
 `}
 </SvgSnippet>
 
-Try the anchor point and both alignment axes together below — the marked point stays fixed while the text moves around it:
+<Warning title="alignment-baseline is not a reliable alternative">
+  You'll see `alignment-baseline` recommended as the "per-element" version of `dominant-baseline`. In practice it's unreliable on
+  text: Firefox doesn't support it, and Chrome ignores it on `<text>` itself (it only applies to child content such as a `<tspan>`).
+  Use `dominant-baseline` on the `<text>`. If you need identical results everywhere, skip the baseline keywords entirely and shift the
+  text with `dy` in `em` units instead: `dy="0.35em"` roughly centers Latin text on `y`, and `dy="0.8em"` roughly top-aligns it.
+</Warning>
+
+Try the anchor point and both alignment axes together below. The marked point stays fixed while the text moves around it:
 
 <InteractiveSvgPanel slug="text-anchor-baseline-demo" />
 
 <Info title="The centering combo to remember">
-  `text-anchor="middle"` paired with `dominant-baseline="middle"` (or `central`) is the single most common combination in real SVG
-  work — it's how you center a label exactly on a point without eyeballing `x`/`y` offsets by hand.
+  `text-anchor="middle"` paired with `dominant-baseline="central"` (or `middle`) is the single most common combination in real SVG
+  work. It's how you center a label exactly on a point without eyeballing `x`/`y` offsets by hand.
 </Info>
 
 <RainbowDivider />
@@ -104,11 +124,11 @@ Try the anchor point and both alignment axes together below — the marked point
 ## Multi-Line Text with `<tspan>`
 
 `<text>` has no line-wrapping of its own. Type a newline inside one in your markup and, just like in HTML, it collapses into a single
-space — the browser doesn't reflow long text onto multiple lines just because it doesn't fit.
+space. The browser doesn't reflow long text onto multiple lines just because it doesn't fit.
 
 <CodeBlock language="xml">
 {`
-  <!-- This renders as one long line, not two — the newline in the source collapses to a space. -->
+  <!-- This renders as one long line, not two: the newline in the source collapses to a space. -->
   <text x="10" y="20">
     First line
     Second line
@@ -120,9 +140,12 @@ To actually build multiple lines, you nest `<tspan>` elements inside `<text>` an
 
 ### Positioning Each Line: `x` and `dy`
 
-* **`x`** on a `tspan` resets the horizontal cursor back to that coordinate, the same way `x` works on the parent `<text>`.
-* **`dy`** is a **relative** vertical offset from the previous line's baseline — think of it as your line-height, applied line by
-  line rather than declared once.
+SVG text has a **current text position**: a cursor that starts at the `<text>`'s `x`/`y` and advances past each glyph as it's laid
+out. `<tspan>` attributes move that cursor.
+
+* **`x`** on a `tspan` sets the cursor's horizontal position to that coordinate, the same way `x` works on the parent `<text>`.
+* **`dy`** shifts the cursor vertically, **relative to wherever it currently is**. After a line of horizontal text the cursor is still
+  on that line's baseline, so in practice `dy` acts as your line height, applied line by line rather than declared once.
 
 <CodeBlock language="xml">
 {`
@@ -136,19 +159,20 @@ To actually build multiple lines, you nest `<tspan>` elements inside `<text>` an
 `}
 </CodeBlock>
 
-The first `tspan`'s `dy="0"` is there for symmetry — the parent `<text>`'s own `y` already places that line — but every line after
-it needs its own `dy` to step down by your chosen line spacing.
+The first `tspan`'s `dy="0"` is there for symmetry, since the parent `<text>`'s own `y` already places that line. Every line after it
+needs its own `dy` to step down by your chosen line spacing. Writing `dy` in `em` (for example `dy="1.2em"`) ties the spacing to the
+font size, so changing `font-size` keeps the lines proportionally spaced.
 
 <Warning title="Forgetting x on a tspan">
-  If you give a `tspan` a `dy` but leave off `x`, it doesn't drop back to the left margin — it continues from wherever the previous
-  `tspan`'s text cursor ended horizontally, just shifted down by `dy`. Left unset, multi-line text turns into a descending staircase
-  instead of a neat paragraph.
+  If you give a `tspan` a `dy` but leave off `x`, it doesn't drop back to the left margin. It continues from wherever the text cursor
+  ended horizontally, just shifted down by `dy`. Left unset, multi-line text turns into a descending staircase instead of a neat
+  paragraph.
 </Warning>
 
 ### Per-tspan Styling
 
-Because a `tspan` is its own element, it accepts the same presentation attributes `<text>` does — `fill`, `font-weight`, `font-style`,
-and so on — scoped to just that piece of the string. That's how you color a single word differently inside an otherwise plain
+Because a `tspan` is its own element, it accepts the same presentation attributes `<text>` does (`fill`, `font-weight`, `font-style`,
+and so on), scoped to just that piece of the string. That's how you color a single word differently inside an otherwise plain
 sentence, or bold one term for emphasis, without splitting the sentence into separate `<text>` elements that would each need their own
 baseline math.
 
@@ -165,18 +189,87 @@ track the same values:
 
 <InteractiveSvgPanel slug="tspan-multiline-demo" />
 
+### Whitespace: `xml:space` Is Deprecated
+
+By default SVG collapses runs of spaces and strips leading and trailing whitespace, just like HTML. Older SVG preserved it with the
+`xml:space="preserve"` attribute. SVG 2 deprecates `xml:space` in favor of the CSS `white-space` property, so new markup should use
+`white-space: pre` (or `pre-wrap`, though SVG text still won't wrap on its own). Browsers still honor `xml:space` for old files, and
+support for `white-space` on SVG text is newer, so check it in your target browsers if exact spacing matters.
+
+<CodeBlock language="xml">
+{`
+  <text x="10" y="20" style="white-space: pre">Column A    Column B</text>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Per-Glyph Positioning: `x`, `y`, `dx`, `dy`, and `rotate` Lists
+
+Every positioning attribute on `<text>` and `<tspan>` also accepts a **list** of values, one per character. Each value applies to the
+character at the same index:
+
+* **`x`/`y` lists** place each character at an absolute coordinate. Characters beyond the end of the list simply continue from the
+  current text position.
+* **`dx`/`dy` lists** nudge each character relative to where it would otherwise be. The shifts accumulate: a `dy` of `-5` on one
+  letter moves every following letter up too, until another `dy` moves it back.
+* **`rotate` lists** turn each glyph around its own origin on the baseline. Unlike the others, **the last value repeats** for every
+  remaining character. Rotation also doesn't move the cursor, so rotated glyphs keep their normal spacing.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 80" width="480" height="160">
+    <text x="10" y="35" font-size="14" dy="0 -5 10 -10 10 -10" fill="currentColor">Bounce</text>
+    <text x="90" y="35" font-size="14" rotate="0 10 20 30" fill="currentColor">ROTATE</text>
+    <text x="175 190 205 220" y="35" font-size="14" fill="currentColor">GRID</text>
+    <text x="10" y="68" font-size="8" fill="var(--color-fg-muted)">dy list</text>
+    <text x="90" y="68" font-size="8" fill="var(--color-fg-muted)">rotate list (30 repeats)</text>
+    <text x="175" y="68" font-size="8" fill="var(--color-fg-muted)">x list</text>
+  </svg>
+`}
+</SvgSnippet>
+
+This is the tool for effects like a wavy headline, a monospace-style grid of characters, or a single letter lifted as a superscript
+(`dy="-0.4em"` on that one character, then `dy="0.4em"` on the next to return to the baseline). Keep in mind that the lists count
+**characters**, not visual glyphs, so ligatures, emoji, and combining accents can make the indexing surprising.
+
+<RainbowDivider />
+
+## Fitting Text to a Width: `textLength` and `lengthAdjust`
+
+`textLength` tells the browser exactly how long the text's advance should be, in user units. The browser then squeezes or stretches
+the text to fit, and `lengthAdjust` decides how:
+
+* **`spacing`** (default): only the gaps between glyphs change. Letter shapes stay intact.
+* **`spacingAndGlyphs`**: the glyphs themselves are scaled horizontally as well, so squeezed text looks condensed and stretched text
+  looks extended.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 40">
+    <text x="10" y="25" font-size="10" textLength="80" lengthAdjust="spacing">Fit to width</text>
+  </svg>
+`}
+</CodeBlock>
+
+The practical win is predictability. The text's width no longer depends on which fallback font actually loaded, which makes
+`textLength` useful for a wordmark that has to fill a fixed slot. The cost is that extreme values look bad, since heavily spaced or
+distorted type is harder to read. Use it to absorb small font-to-font differences, not to force a long string into a tiny box.
+
+<InteractiveSvgPanel slug="text-textlength-demo" />
+
 <RainbowDivider />
 
 ## Text Along a Path with `<textPath>`
 
-Sometimes a straight baseline isn't the goal at all — a circular badge, a wax-seal stamp, or a logo lockup that curves around an
+Sometimes a straight baseline isn't the goal at all. A circular badge, a wax-seal stamp, or a logo lockup that curves around an
 emblem all need text that follows a curve instead of a line. `<textPath>` does exactly that: it flows a `<text>`'s content
 glyph-by-glyph along the length of a referenced `<path>`.
 
 ### Setting Up the Path
 
-The path itself usually lives inside `<defs>`, where it's defined but never painted on its own — `<textPath>` then points at it by
-`id` through the `href` attribute.
+The path itself usually lives inside `<defs>` (covered in [SVG Essentials: g, defs, symbol, and use](/post/svg/svg-essentials-g-defs-symbol-and-use)),
+where it's defined but never painted on its own. `<textPath>` then points at it by `id` through the `href` attribute.
 
 <CodeBlock language="xml">
 {`
@@ -192,151 +285,417 @@ The path itself usually lives inside `<defs>`, where it's defined but never pain
 </CodeBlock>
 
 <Info title="href vs. xlink:href">
-  `href` is the modern, SVG2 way to make this reference and is all you need in current browsers. You'll still see `xlink:href` in
-  older exported SVGs and tutorials — it's the same idea under SVG1.1's namespaced syntax, kept working today for backward
+  `href` is the modern, SVG 2 way to make this reference and is all you need in current browsers. You'll still see `xlink:href` in
+  older exported SVGs and tutorials. It's the same idea under SVG 1.1's namespaced syntax, and it still works for backward
   compatibility, but `href` alone is the form to reach for in new markup.
 </Info>
 
-### `startOffset`, `side`, and `spacing`/`method`
+### How Text Sits on the Path
 
-A handful of attributes on `<textPath>` fine-tune exactly how the text sits on that curve:
+Three rules decide where the glyphs land. Text starts at the path's **first point** (its `M`) and travels in the **direction the path
+data is drawn**. Each glyph's baseline is laid along the path's **tangent** at that point. And the glyphs stand on the **left-hand side
+of the direction of travel**, which is above the curve for a path drawn left to right.
 
-* **`startOffset`**: how far along the path (as a length, or a percentage of the path's total length) the text's start point
-  begins — effectively padding-left measured along the curve instead of along a straight line.
-* **`side`**: `left` (the default) keeps the text upright, reading in the path's normal direction. `side="right"` flips it to the
-  other side of the path — handy for the bottom half of a circular badge, where you want text right-side-up without having to
-  reverse the underlying path data itself.
-* **`spacing`**: `auto` (default) lets the browser adjust letter spacing slightly so glyphs fit smoothly around curves; `exact`
-  disables that adjustment and places each glyph at its precise, unadjusted position along the path.
-* **`method`**: `align` (default) keeps each glyph's own baseline flush against the path with no distortion; `stretch` instead
-  stretches each glyph's outline to exactly span its segment of the path — a more aggressive, less common effect.
+<TextPathAnatomyDiagram />
 
-`method`'s two values are subtle on gently curved text and more obvious on a tight curve — stacking both against their own copy of
-the same curve shows the difference:
+### `startOffset`
+
+`startOffset` sets how far along the path the text begins, as a length in user units or as a percentage of the path's total length.
+It's measured **along the curve**, not in a straight line, so it works like left padding that bends with the path. Pair
+`startOffset="50%"` with `text-anchor="middle"` to center text on a curve.
+
+### Flipping Sides: Reverse the Path, Not `side`
+
+SVG 2 added `side="right"` to put text on the other side of the path, but at the time of writing only Firefox implements it, so it
+isn't a portable choice. The dependable approach is to **reverse the path's direction**: draw the same curve from its other end, and
+the glyphs flip to the opposite side, still reading upright.
+
+A circular badge is the classic case. The top text rides an arc drawn clockwise over the top, and the bottom text rides an arc drawn
+counter-clockwise under the bottom. Both travel left to right, so both read upright:
 
 <SvgSnippet>
 {`
-  <svg viewBox="0 0 200 100" width="400" height="200">
+  <svg viewBox="0 0 200 200" width="240" height="240">
     <defs>
-      <path id="curve-align" d="M 10 40 Q 100 5 190 40" />
-      <path id="curve-stretch" d="M 10 90 Q 100 55 190 90" />
+      <path id="badge-top" d="M 30 100 A 70 70 0 0 1 170 100" />
+      <path id="badge-bottom" d="M 18 100 A 82 82 0 0 0 182 100" />
     </defs>
-    <path d="M 10 40 Q 100 5 190 40" fill="none" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
-    <path d="M 10 90 Q 100 55 190 90" fill="none" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.5" />
-    <text font-size="10" fill="currentColor">
-      <textPath href="#curve-align" method="align">method="align" (default)</textPath>
+    <circle cx="100" cy="100" r="92" fill="none" stroke="currentColor" stroke-width="2" />
+    <circle cx="100" cy="100" r="56" fill="none" stroke="currentColor" stroke-width="1" />
+    <text font-size="14" font-weight="700" letter-spacing="2" text-anchor="middle" fill="currentColor">
+      <textPath href="#badge-top" startOffset="50%">HANDMADE</textPath>
     </text>
-    <text font-size="10" fill="currentColor">
-      <textPath href="#curve-stretch" method="stretch">method="stretch"</textPath>
+    <text font-size="14" font-weight="700" letter-spacing="2" text-anchor="middle" fill="currentColor">
+      <textPath href="#badge-bottom" startOffset="50%">SINCE 2026</textPath>
     </text>
   </svg>
 `}
 </SvgSnippet>
 
-Slide `startOffset` below to move the text's starting point along the curve, and flip `side` to see the text jump to the path's other
-edge:
+The bottom arc uses a larger radius (82 vs. 70) on purpose. The top text stands *outside* its arc and the bottom text stands *inside*
+its arc, so the offset radii put both rings of text in the same band between the two circles.
+
+Slide `startOffset` below, switch between an arch and a bowl, and reverse the path's direction to see the text flip to the other side
+of the same curve (the arrowhead shows which way the path data runs):
 
 <InteractiveSvgPanel slug="textpath-startoffset-demo" />
 
+### `spacing` and `method`: Spec Only
+
+The spec defines two more `<textPath>` attributes. `spacing` (`auto` or `exact`) is meant to let the browser adjust letter spacing
+around tight curves, and `method` (`align` or `stretch`) is meant to choose between placing each glyph rigidly or warping its outline
+to the curve. Browsers have effectively never implemented either, so both render identically to the defaults today. You'll see them
+in the spec and in some exported files, but don't design around them. If glyphs crowd on a tight curve, loosen them with
+`letter-spacing` or use a gentler curve.
+
 <Info title="Animating text along a curve">
-  Transitioning `startOffset` directly with CSS isn't reliably supported today, so `<textPath>` is best treated as a static layout
-  tool rather than something you animate in place. For text that genuinely needs to move along a curve, `offset-path` and
-  `offset-distance` — covered in [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes) —
-  work on `<text>` exactly the same way they work on any other element, and are the more dependable route to real motion.
+  `startOffset` is an attribute, not a CSS property, so CSS transitions and keyframes can't animate it. SMIL can: an
+  `<animate attributeName="startOffset" from="0%" to="100%" dur="4s" repeatCount="indefinite" />` inside the `<textPath>` makes the
+  text genuinely flow along the curve, bending as it goes (see [SVG Essentials: Native Animation with SMIL](/post/svg/svg-essentials-smil-animation)).
+  JavaScript that updates the attribute every frame works too. CSS `offset-path` and `offset-distance`, covered in
+  [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes), are a different effect:
+  they move the **whole** `<text>` element along a path as one rigid block, without bending its glyphs to the curve.
 </Info>
+
+<RainbowDivider />
+
+## Outlined Text: `stroke` and `paint-order`
+
+Text accepts `stroke` just like any shape, which is how you get outlined headlines or a contrasting halo that keeps labels readable
+over a busy map or chart. There's one catch: a stroke is centered on the glyph outline, and by default it's painted **on top of** the
+fill. A thick stroke therefore eats into the letterforms and makes them look thinner and blobby.
+
+`paint-order="stroke"` fixes that by painting the stroke first and the fill over it, so only the outer half of the stroke shows:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 64" width="480" height="128">
+    <text x="10" y="38" font-size="26" font-weight="800" fill="currentColor" stroke="var(--color-fg-accent)" stroke-width="4" stroke-linejoin="round">Outline</text>
+    <text x="125" y="38" font-size="26" font-weight="800" fill="currentColor" stroke="var(--color-fg-accent)" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Outline</text>
+    <text x="10" y="58" font-size="8" fill="var(--color-fg-muted)">default: stroke over fill</text>
+    <text x="125" y="58" font-size="8" fill="var(--color-fg-muted)">paint-order="stroke"</text>
+  </svg>
+`}
+</SvgSnippet>
+
+`stroke-linejoin="round"` is worth adding alongside it, because the default miter joins can spike out at sharp corners in letters like
+`M` and `A`. For a label halo, set the stroke to the background color: the text then appears to punch a clean gap through whatever
+lines run behind it.
+
+<RainbowDivider />
+
+## Vertical and Bidirectional Text
+
+### `writing-mode`
+
+`writing-mode` switches the inline direction from horizontal to vertical. SVG 2 uses the CSS values `horizontal-tb` (default),
+`vertical-rl`, and `vertical-lr`. You'll also see the older SVG 1.1 values (`tb`, `tb-rl`, `lr`) in existing files. In vertical text,
+the cursor advances downward, so `x`/`y` still mark the start of the line and `text-anchor` now aligns along the vertical axis.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 60 160">
+    <text x="30" y="10" font-size="14" writing-mode="vertical-rl">縦書きのテキスト</text>
+  </svg>
+`}
+</CodeBlock>
+
+CJK characters stay upright in vertical text, while Latin text is rotated sideways by default. The CSS `text-orientation` property
+changes that behavior. Vertical-text support in SVG has historically been less consistent than in HTML, so test vertical layouts in
+every browser you target. For a simple rotated axis label, `transform="rotate(-90 x y)"` on ordinary horizontal text is often the
+more predictable choice.
+
+### Right-to-Left Text
+
+Arabic and Hebrew characters are reordered right-to-left automatically by the Unicode bidirectional algorithm, but the paragraph's
+**base direction** comes from the `direction` property. Set `direction="rtl"` on the `<text>` and two things change. Mixed strings
+order correctly, so punctuation and embedded Latin words land where an RTL reader expects them. And `text-anchor` flips: `start` now
+anchors the string's **right** edge on `x`.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 200 40">
+    <!-- Starts at x = 190 and extends leftward, because start follows the RTL direction. -->
+    <text x="190" y="25" font-size="14" direction="rtl" text-anchor="start">שלום, SVG!</text>
+  </svg>
+`}
+</CodeBlock>
+
+That's why it pays to think in `start`/`end` rather than "left"/"right". A chart that anchors its labels at `start` mirrors correctly
+when you flip `direction` for an RTL locale. A chart that hard-codes `end` to mean "right-aligned" doesn't.
+
+<RainbowDivider />
+
+## Wrapping Text
+
+SVG 1.1 text never wraps. SVG 2 specifies an `inline-size` property that would turn a `<text>` into auto-wrapping text, but browser
+support is effectively absent at the time of writing, so treat it as unavailable. That leaves two practical options.
+
+**Break the lines yourself with JavaScript.** Measure words with `getComputedTextLength()` and start a new `<tspan>` whenever a line
+would exceed your width. `getComputedTextLength()` returns user units, so `maxWidth` is in the same units as your `viewBox`:
+
+<CodeBlock language="javascript">
+{`
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  // Rebuilds a <text>'s content as one <tspan> per line, breaking at word boundaries.
+  function wrapText(textEl, maxWidth, lineHeight) {
+    const words = textEl.textContent.trim().split(" ").filter(Boolean);
+    const x = textEl.getAttribute("x");
+    textEl.textContent = "";
+
+    let tspan = document.createElementNS(SVG_NS, "tspan");
+    tspan.setAttribute("x", x);
+    textEl.appendChild(tspan);
+    let line = [];
+
+    for (const word of words) {
+      line.push(word);
+      tspan.textContent = line.join(" ");
+
+      if (tspan.getComputedTextLength() > maxWidth && line.length > 1) {
+        line.pop();
+        tspan.textContent = line.join(" ");
+        line = [word];
+        tspan = document.createElementNS(SVG_NS, "tspan");
+        tspan.setAttribute("x", x);
+        tspan.setAttribute("dy", lineHeight);
+        tspan.textContent = word;
+        textEl.appendChild(tspan);
+      }
+    }
+  }
+
+  // Measure only after web fonts load, or the breaks are computed with the fallback font.
+  document.fonts.ready.then(() => {
+    wrapText(document.querySelector("#caption"), 180, "1.2em");
+  });
+`}
+</CodeBlock>
+
+**Or embed HTML with `<foreignObject>`.** A `<foreignObject>` holding a `<div>` gets full CSS text layout (wrapping, hyphenation,
+`line-height`, `text-overflow`) inside the SVG. It's the better choice for long, variable-length copy, with trade-offs around sizing and
+non-browser renderers. [SVG Essentials: image and foreignObject](/post/svg/svg-essentials-image-and-foreignobject) covers it in depth,
+including a worked auto-wrapping diagram label.
+
+<RainbowDivider />
+
+## Measuring Text with JavaScript
+
+Because SVG text isn't boxed by layout, you often need to ask the browser how big it turned out to be. Text elements expose a small
+measurement API, and every value it returns is in the element's **user units**:
+
+| Method | Returns | Typical use |
+| --- | --- | --- |
+| `getBBox()` | The tight bounding box (`x`, `y`, `width`, `height`) of the rendered text. | Sizing a background pill, collision checks between labels. |
+| `getComputedTextLength()` | The total advance width of the text. | Line breaking, truncating with an ellipsis. |
+| `getNumberOfChars()` | The number of addressable characters. | Iterating characters for per-glyph effects. |
+| `getSubStringLength(start, count)` | The advance width of part of the string. | Placing a marker under one specific word. |
+
+The most common job is a label with a background that fits its text exactly:
+
+<CodeBlock language="javascript">
+{`
+  const label = document.querySelector("#price-label");
+  const pill = document.querySelector("#price-pill");
+  const pad = 4;
+
+  // getBBox measures the text as rendered, in the same user units the <rect> uses.
+  const box = label.getBBox();
+  pill.setAttribute("x", box.x - pad);
+  pill.setAttribute("y", box.y - pad);
+  pill.setAttribute("width", box.width + pad * 2);
+  pill.setAttribute("height", box.height + pad * 2);
+  pill.setAttribute("rx", (box.height + pad * 2) / 2);
+`}
+</CodeBlock>
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 200 60">
+    <rect id="price-pill" fill="var(--color-bg-accent-muted)" />
+    <text id="price-label" x="20" y="35" font-size="14">$1,299</text>
+  </svg>
+`}
+</CodeBlock>
+
+The same bounding boxes power label collision avoidance in charts: measure every label, and nudge or hide any whose boxes intersect.
+
+<Warning title="Measure rendered text, after fonts load">
+  These methods only return useful numbers for text that's actually rendered. An element inside `display: none` (or a detached node)
+  can return zeros, and some browsers throw. Measure after `document.fonts.ready` resolves too. Otherwise you measure the fallback font,
+  and when the web font swaps in, the real text no longer matches your pills, line breaks, or collision boxes.
+</Warning>
 
 <RainbowDivider />
 
 ## Presentation Attributes vs. CSS for Text
 
 The same presentation-attribute rules from [the basic shapes post](/post/svg/svg-essentials-mastering-basic-shapes#styling-and-visual-attributes)
-apply to text — they're low-priority attributes that CSS always wins over — but text brings its own small set of them:
+apply to text: they're low-priority attributes that any CSS rule overrides. Text brings its own set of them:
 
 | Attribute | Description | CSS Equivalent |
 | --- | --- | --- |
 | `font-family` | The typeface stack to render with. | `font-family` |
-| `font-size` | The glyph size — in user units, see the next section. | `font-size` |
+| `font-size` | The glyph size, in user units (see [Sizing and Scaling](#sizing-and-scaling-text-inside-a-scaled-viewbox)). | `font-size` |
 | `font-weight` | Boldness (`normal`, `bold`, `100`–`900`). | `font-weight` |
 | `font-style` | `normal` or `italic`. | `font-style` |
+| `font-variant` | Small caps and other OpenType variants. | `font-variant` |
+| `letter-spacing` | Extra space between characters. | `letter-spacing` |
+| `word-spacing` | Extra space between words. | `word-spacing` |
+| `text-decoration` | Underline, overline, or line-through, painted with the text's `fill`. | `text-decoration` |
 | `fill` | The text's **color**. | `fill` |
+| `stroke` / `stroke-width` | An outline around each glyph (see [Outlined Text](#outlined-text-stroke-and-paint-order)). | `stroke` / `stroke-width` |
+| `text-anchor` | Horizontal alignment against `x`. | `text-anchor` |
+| `dominant-baseline` | Vertical alignment against `y`. | `dominant-baseline` |
+
+`letter-spacing`, `word-spacing`, and `text-decoration` on SVG text have historically been patchier than their HTML counterparts, so
+give them a quick check across browsers if a design depends on them.
+
+One difference between the two forms trips people up. The **attribute** accepts a bare number (`font-size="14"`), but in **CSS** a
+length needs a unit. `font-size: 14` is invalid and ignored, so write `font-size: 14px`. Inside SVG, `14px` means exactly 14 user units,
+the same value as the attribute.
 
 ### `fill`, Not `color`
 
-The one attribute that trips people up: SVG never uses `color` to paint anything. Every SVG element — text included — paints itself
-through `fill` and `stroke`. Setting `color` on a `<text>` element does nothing to how it looks, on its own.
+SVG never uses `color` to paint anything. Every SVG element, text included, paints itself through `fill` and `stroke`. Setting `color`
+on a `<text>` element does nothing to how it looks, on its own.
 
 <Quote>
-  The bridge between the two is the keyword `currentColor` — set `fill="currentColor"` and the text picks up whatever `color`
-  the CSS cascade resolves to at that element, letting a piece of SVG text follow the surrounding page's text color instead of a
-  hardcoded value.
+  The bridge between the two is the keyword `currentColor`. Set `fill="currentColor"` and the text picks up whatever `color` the CSS
+  cascade resolves to at that element, so a piece of SVG text follows the surrounding page's text color instead of a hardcoded value.
 </Quote>
 
-### Real CSS Still Applies — Including `@font-face`
+### Page CSS and `@font-face` Reach Inline SVG Only
 
-None of this makes SVG text a special, isolated renderer. It's ordinary DOM content, so ordinary CSS reaches it: a stylesheet rule
-like `text { font-family: "Inter", sans-serif; }` applies exactly as you'd expect, custom `@font-face` fonts load and render the same
-way they do for any other text on the page, and `:hover` or media queries work without any SVG-specific caveats.
+When an SVG is written **inline** in your HTML, its text is ordinary DOM content and your page's CSS reaches it. A rule like
+`text { font-family: "Inter", sans-serif; }` applies as you'd expect. Fonts loaded with your page's `@font-face` rules render in it.
+`:hover`, media queries, and custom properties all work.
+
+That's not true when the same file is loaded as `<img src="chart.svg">` or as a CSS `background-image`. The SVG is then rendered as an
+isolated image document. Your page's stylesheets don't apply to it, and for privacy and security reasons it can't fetch external
+resources: no external stylesheets, and no web fonts loaded by URL. See the next section for what to do about fonts.
+
+<RainbowDivider />
+
+## Fonts: Loading, Fallbacks, and the `<img>` Problem
+
+Text is the one part of an SVG whose appearance depends on something outside the file: the font. A few habits keep that dependency
+under control.
+
+* **Always write a full fallback stack.** `font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"` means the
+  text still renders sensibly if the web font is missing or slow. A system-font stack on its own is a perfectly good choice for UI
+  labels and charts, since it costs no download at all.
+* **Expect the swap.** With `font-display: swap`, text first renders in the fallback font and then re-renders once the web font
+  arrives. Glyph widths change when that happens, so anything computed from measured text (wrapped lines, label pills, collision
+  offsets) should be recomputed after `document.fonts.ready`, or computed only then.
+* **For `<img>` and CSS-background SVGs, embed the font or don't depend on one.** The SVG can't load your web font, so it falls back to
+  whatever fonts the user has installed. Your options are to stick to system fonts, embed a subset of the font as a `data:` URI inside
+  an `@font-face` rule in the SVG's own `<style>` (which grows the file), or convert the text to paths.
 
 <RainbowDivider />
 
 ## Sizing and Scaling: Text Inside a Scaled `viewBox`
 
-Here's the part that genuinely distinguishes SVG text from HTML text, and it's worth stating precisely rather than glossing over: a
-`font-size` written as a plain number inside an SVG is measured in the same **user units** as everything else on that `viewBox`
-grid — not pixels. That means it scales exactly the way a `circle`'s `r` or a `rect`'s `width` does.
+Here's the part that genuinely distinguishes SVG text from HTML text. A `font-size` inside an SVG is measured in the same **user units**
+as everything else on the `viewBox` grid, so it scales exactly the way a `circle`'s `r` or a `rect`'s `width` does.
 
 <Quote>
-  A `font-size="10"` inside `viewBox="0 0 100 100"` isn't 10 pixels — it's 10 user units, the same kind of value as a shape's
-  radius — so it grows and shrinks in lockstep with the SVG the moment the element's own rendered size changes.
+  A `font-size="10"` inside `viewBox="0 0 100 100"` is 10 user units, the same kind of value as a shape's radius. Render that SVG at
+  400px wide and each user unit is 4 screen pixels, so the text renders 40px tall. Render it at 200px wide and the same text renders
+  at 20px.
 </Quote>
 
 ### Why This Is a Feature, Not a Bug
 
-Contrast that with HTML: a `<span style="font-size: 16px">` inside a container scaled up with `transform: scale(2)` visually
-enlarges, but the layout metrics used to wrap and measure that text were still computed at the original 16px — visuals and layout
-can drift apart at extreme scales.
+If a chart's whole `<svg>` gets resized (say, from 300px wide on mobile up to 900px wide on desktop) by changing only its
+`width`/`height` and keeping the same `viewBox`, every axis label scales right along with the bars and gridlines it's labeling. There
+are no separate breakpoints, and no JavaScript resize listener recalculating font sizes to keep labels proportional to the chart. The
+same mechanism that keeps a `circle` in place at any render size keeps a label sized correctly too.
 
-In SVG, there's no such split. If a chart's whole `<svg>` gets resized — say, from 300px wide on mobile up to 900px wide on desktop —
-by changing only its `width`/`height` and keeping the same `viewBox`, every axis label's `font-size` scales right along with the
-bars and gridlines it's labeling. No separate breakpoints, no JavaScript resize listener recalculating font sizes to keep labels
-proportional to the chart — the same mechanism that keeps a `circle` centered at any render size keeps a label sized correctly too.
+### CSS Units Change the Value, Not the Scaling
 
-### When CSS Units Break That Scaling
+It's tempting to assume that a "real" CSS unit escapes the `viewBox`. It doesn't. Inside SVG, one CSS `px` **is** one user unit, and
+every other CSS length first resolves to a number of user units:
 
-This only holds when `font-size` is a bare number resolved as a user unit. The moment you give it a real CSS length instead — `rem`,
-`em`, `pt`, or a fixed `px` value from an external stylesheet — you've opted back into ordinary CSS sizing, resolved against the
-page's font metrics rather than the `viewBox`. A `font-size: 14px` rule on SVG text stays a fixed, real 14 CSS pixels regardless of
-how much the SVG itself is scaled up or down, the same way it would on any other element on the page.
+* `font-size="14"`, `font-size: 14px`, and `font-size: 10.5pt` all resolve to 14 user units.
+* `font-size: 1rem` resolves to the page's root font size, typically 16 user units. It tracks the user's browser font-size setting,
+  but the result still scales with the `viewBox` like everything else.
+* `em` and `%` resolve against the parent's font size, which is itself in user units.
 
-<Info title="Rule of thumb">
-  Leave `font-size` as a plain, unitless number (attribute or CSS) whenever you want a label to scale with the graphic around it.
-  Reach for a real CSS length only when you deliberately want that one piece of text to stay a fixed, real-world size no matter how
-  the SVG is displayed — a watermark or copyright line, for instance.
+After that, the whole SVG, text included, goes through the same `viewBox`-to-viewport transform. So units decide **what number** the
+font size resolves to, never **whether** it scales. There's no text equivalent of `vector-effect="non-scaling-stroke"`.
+
+<Info title="When you need fixed-size text">
+  If a label must stay, say, 12 screen pixels tall no matter how the graphic is displayed, you have three real options:
+
+  * **Drop the `viewBox`** (or keep it at 1:1 with the rendered size), so user units equal CSS pixels. You then handle
+    responsiveness yourself.
+  * **Counter-scale with JavaScript.** Compute the current scale (rendered width ÷ `viewBox` width) on resize and set
+    `font-size` to the target size ÷ that scale.
+  * **Overlay HTML.** Position ordinary HTML labels over the SVG, where normal CSS sizing applies. This is common in charting
+    libraries for tooltips and annotations.
 </Info>
 
 <RainbowDivider />
 
-## Accessibility
+## Converting Text to Paths
 
-Because `<text>` is real text, most of the accessibility work here is already done for you: it's selectable by dragging, searchable
-with Ctrl+F, read aloud by screen readers, and picked up by the browser's built-in translation tools — none of which works on text
-flattened into a PNG or drawn stroke-by-stroke with canvas's `fillText`.
+Design tools offer "Create Outlines" or "Object to Path", which replaces every glyph with a `<path>`. It's sometimes the right call,
+but it's a trade:
 
-That doesn't mean every text-bearing SVG is automatically self-explanatory, though. A lone wordmark rendered as SVG text — a logo,
-say — can still lack context a screen reader needs, exactly like any other meaningful graphic. The fix is the same pattern from
-[the basic shapes post's accessibility section](/post/svg/svg-essentials-mastering-basic-shapes#making-svgs-accessible): a `<title>`
-as the first child, paired with `role="img"` on the `<svg>`.
+| | Live `<text>` | Text converted to paths |
+| --- | --- | --- |
+| Looks identical everywhere | Only if the font loads | Yes: no font dependency at all |
+| Works in `<img>` / CSS backgrounds with custom fonts | No (unless the font is embedded) | Yes |
+| Selectable, searchable, translatable | Yes (inline SVG) | No |
+| Read by screen readers | Yes (inline SVG) | No: needs a `<title>` or `aria-label` |
+| Editable later | Yes: change the string | No: re-export from the source file |
+| File size | Tiny | Often much larger, since every glyph is its own path |
+
+A reasonable rule: convert **logos** whose exact letterforms are part of the brand, and keep **everything else** (labels, captions,
+UI text) as live text. When you do convert, give the graphic an accessible name, because the words no longer exist in the markup.
+
+<RainbowDivider />
+
+## Accessibility and SEO
+
+### Inline SVG Text Is Real Text
+
+When an SVG is inline, `<text>` is part of the page's content. It's selectable, found by Ctrl+F, read by screen readers, handled by
+the browser's translation tools, and visible to crawlers that read the page's text. None of that applies to text flattened into a PNG or
+drawn with canvas's `fillText`.
+
+### SVG in `<img>` Is an Image, Not Text
+
+Load the same SVG through `<img>` or a CSS background and its text stops being page text. It isn't selectable or searchable, screen
+readers see only the image, and search engines treat it as an image rather than indexing its words as page content. The `alt`
+attribute then has to carry the meaning:
 
 <CodeBlock language="xml">
 {`
-  <svg viewBox="0 0 200 60" role="img">
-    <title>Acme, Inc.</title>
+  <img src="/logo.svg" alt="Acme, Inc." width="200" height="60" />
+`}
+</CodeBlock>
+
+If the words in a graphic matter (a chart's labels, a diagram's captions), that's a strong reason to inline it.
+
+### When to Use `role="img"`, and When Not To
+
+For a graphic that's a single "picture", like a logo wordmark, the pattern from
+[the basic shapes post's accessibility section](/post/svg/svg-essentials-mastering-basic-shapes#making-svgs-accessible) applies: a
+`<title>` as the first child, paired with `role="img"` on the `<svg>`.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 200 60" role="img" aria-labelledby="acme-logo-title">
+    <title id="acme-logo-title">Acme, Inc.</title>
     <text x="10" y="40" font-size="32" font-weight="700">Acme</text>
   </svg>
 `}
 </CodeBlock>
 
-For a small inline graphic, `aria-label` directly on the `<svg>` is a lighter-weight equivalent to reach for instead of a `<title>`:
+For a small inline graphic, `aria-label` directly on the `<svg>` is a lighter-weight equivalent:
 
 <CodeBlock language="xml">
 {`
@@ -346,38 +705,56 @@ For a small inline graphic, `aria-label` directly on the `<svg>` is a lighter-we
 `}
 </CodeBlock>
 
+Understand what `role="img"` does, though. It turns the whole SVG into one atomic image, and its children, **including every
+`<text>`**, become presentational. Screen readers announce only the accessible name. That's exactly right for a logo, where
+"Acme, Inc." is all anyone needs. It's wrong for a chart, where the axis labels and values *are* the content. Putting `role="img"` on a
+chart with only a vague `aria-label` hides the data from screen-reader users. For text-rich graphics, either leave the text exposed
+(for example `role="group"` with an `aria-label` summarizing the chart) or write an accessible name and description that genuinely carry
+the data. [SVG Essentials: Metadata, Links, and Interactivity](/post/svg/svg-essentials-metadata-and-interactivity) covers `<title>`,
+`<desc>`, and ARIA roles in SVG in more depth.
+
 <RainbowDivider />
 
 ## Where Should You Use This?
 
-* **Logos and wordmarks** that should stay real, selectable, searchable, and translatable text instead of a flattened image —
-  labeled with `<title>`/`aria-label` where the glyphs alone don't carry enough context.
-* **Curved or circular text effects** — badges, stamps, seals, circular buttons — via `<textPath>`, with no image editor or
-  manually-traced letterforms required.
-* **Data visualization labels** — axis ticks, bar values, pie-slice callouts — that need to resize in lockstep with the rest of the
-  chart, exactly as the scaling section above describes.
-* **Diagram captions** that need to be anchored precisely against a shape they're describing — `text-anchor` and
-  `dominant-baseline` position a caption against a single point far more precisely than trying to center an HTML element over an
-  SVG from the outside.
+* **Logos and wordmarks** that should stay real, selectable, searchable, and translatable text instead of a flattened image,
+  labeled with `<title>`/`aria-label` where the glyphs alone don't carry enough context. Convert to paths only when the exact
+  letterforms are part of the brand.
+* **Curved or circular text effects** (badges, stamps, seals, circular buttons) via `<textPath>`, with no image editor or
+  manually-traced letterforms required. Reverse the path data, rather than relying on `side`, to set the text on the other side of a curve.
+* **Data visualization labels** (axis ticks, bar values, pie-slice callouts) that scale in lockstep with the rest of the chart through
+  the `viewBox`, with a label halo from `paint-order="stroke"` where they overlap gridlines. When a label must stay a fixed screen size,
+  counter-scale it with JavaScript or overlay HTML, since no CSS unit escapes the `viewBox`.
+* **Diagram captions** anchored precisely against the shape they describe. `text-anchor` and `dominant-baseline` position a caption
+  against a single point far more precisely than centering an HTML element over an SVG from the outside, and
+  `getBBox()` handles background pills and collisions.
+* **Multilingual graphics** that need to mirror for right-to-left locales. Logical `start`/`end` anchors plus `direction="rtl"` do
+  most of the work.
 
 <RainbowDivider />
 
 ## Wrapping Up
 
-Text turns out to be one of the more deceptively deep corners of SVG — simple to place badly, and genuinely rewarding once its
+Text turns out to be one of the more deceptively deep corners of SVG. It's simple to place badly, and genuinely rewarding once its
 positioning model clicks:
 
-* **The `<text>` Element:** `x`/`y` place a point on the **baseline**, not a top-left corner; `text-anchor` decides horizontal
-  alignment against that point, and `dominant-baseline`/`alignment-baseline` decide vertical alignment.
-* **`<tspan>`:** `<text>` never wraps on its own — `tspan`s with `x` (to reset the line start) and `dy` (a relative line-height
-  step) are how real multi-line text gets built, and each `tspan` can carry its own presentation attributes for per-word styling.
-* **`<textPath>`:** `href` points at a `<path>` defined in `<defs>`; `startOffset` slides the start point along it, `side` picks
-  which edge of the path the text sits on, and `spacing`/`method` fine-tune how glyphs fit the curve — [Animating SVG](/post/animations/svg-transitions-and-keyframes)
-  picks up from here with `offset-path` for text that actually needs to move.
-* **Presentation Attributes vs. CSS:** `font-family`, `font-size`, `font-weight`, and `fill` (never `color`) work as presentation
-  attributes, ordinary CSS and `@font-face` both reach SVG text normally, and `currentColor` is the bridge between the two color
-  systems.
-* **Sizing and Scaling:** a unitless `font-size` is a user unit like any shape's dimensions, so it scales with the SVG exactly the
-  way a `circle`'s `r` does — a real CSS length opts back out of that and stays fixed.
-* **Accessibility:** real text is inherently selectable, searchable, and screen-reader-friendly — `<title>`/`role="img"` or
-  `aria-label` fill in the context a bare wordmark's glyphs can't carry on their own.
+* **The `<text>` Element:** `x`/`y` place a point on the **baseline**, not a top-left corner. `text-anchor` decides horizontal
+  alignment against that point (logically, so it flips in RTL), and `dominant-baseline` decides vertical alignment. Skip
+  `alignment-baseline`, and fall back to `dy` in `em` when you need identical results everywhere.
+* **`<tspan>`:** `<text>` never wraps on its own. `tspan`s with `x` (to reset the line start) and `dy` (a shift relative to the current
+  text position) are how real multi-line text gets built, and each `tspan` can carry its own presentation attributes.
+* **Per-glyph control:** `x`, `y`, `dx`, `dy`, and `rotate` all take per-character lists (only `rotate`'s last value repeats), and
+  `textLength` with `lengthAdjust` forces text to an exact width.
+* **`<textPath>`:** `href` points at a `<path>`, text travels in the path's direction and stands on its left side, and `startOffset`
+  slides the start point along the arc. Reverse the path to flip sides portably, treat `spacing`/`method` as spec-only, and animate
+  `startOffset` with [SMIL](/post/svg/svg-essentials-smil-animation) rather than CSS.
+* **Outlines, vertical, and RTL text:** `paint-order="stroke"` keeps outlined glyphs crisp, `writing-mode` sets text vertically
+  (test it), and `direction="rtl"` sets the base direction.
+* **Wrapping and measuring:** wrap with JavaScript and `getComputedTextLength()`, or with
+  [`<foreignObject>`](/post/svg/svg-essentials-image-and-foreignobject). Measure with `getBBox()` and friends, after
+  `document.fonts.ready`.
+* **CSS, fonts, and scaling:** page CSS and `@font-face` reach **inline** SVG only. `fill` (never `color`) paints text. Every
+  `font-size` unit resolves to user units and scales with the `viewBox`, so fixed-size text needs a 1:1 `viewBox`, counter-scaling, or
+  an HTML overlay.
+* **Accessibility:** inline text is selectable, searchable, and screen-reader-friendly. `<img>` SVG text is not. `role="img"` suits a
+  logo but hides a chart's labels, so choose it deliberately.

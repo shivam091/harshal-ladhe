@@ -1393,30 +1393,61 @@ ${dots}
   },
   {
     slug: "textpath-startoffset-demo",
-    title: "Interactive Example - textPath startOffset",
+    title: "Interactive Example - textPath startOffset and Path Direction",
     controls: [
       { id: "startOffset", label: "startOffset (%)", type: "range", min: 0, max: 100, step: 1, defaultValue: 0 },
-      { id: "side", label: "side", type: "select", options: ["left", "right"], defaultValue: "left" }
+      { id: "curveShape", label: "Curve shape", type: "select", options: ["arch", "bowl"], defaultValue: "arch" },
+      { id: "direction", label: "Path direction", type: "select", options: ["left to right", "right to left (reversed)"], defaultValue: "left to right" }
     ],
+    // Flips which side the glyphs land on by reversing the path data itself — the portable alternative to side="right", which only Firefox implements.
     render: (values) => {
       const offset = Number(values.startOffset);
-      const side = String(values.side);
-      const curve = "M 10 70 Q 50 10 90 70";
+      const reversed = values.direction !== "left to right";
+      const controlY = values.curveShape === "bowl" ? 90 : 10;
+      const endY = values.curveShape === "bowl" ? 30 : 70;
+      const curve = reversed ? `M 90 ${endY} Q 50 ${controlY} 10 ${endY}` : `M 10 ${endY} Q 50 ${controlY} 90 ${endY}`;
 
       return `
 <svg viewBox="0 0 100 100" width="280" height="200">
   <defs>
     <!-- The path textPath below rides along — only referenced, never itself painted. -->
     <path id="text-curve" d="${curve}" />
+    <!-- Arrowhead showing which way the path data travels — glyphs always stand on the left of that direction. -->
+    <marker id="text-curve-direction" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="var(--color-fg-muted)" />
+    </marker>
   </defs>
 
   <!-- Guide: a faint preview of the same curve, drawn separately since the <defs> copy has no stroke of its own. -->
-  <path d="${curve}" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" opacity="0.5" />
+  <path d="${curve}" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" stroke-dasharray="2 2" marker-end="url(#text-curve-direction)" />
 
-  <!-- Shape: <textPath> lays this <text> along "#text-curve"; startOffset slides the start point along it, side flips which edge of the path the text sits on. -->
+  <!-- Shape: <textPath> lays this <text> along "#text-curve"; startOffset slides the start point along it from wherever the path data begins. -->
   <text font-size="9" font-family="sans-serif" fill="#be185d">
-    <textPath href="#text-curve" startOffset="${offset}%" side="${side}">Riding the curve</textPath>
+    <textPath href="#text-curve" startOffset="${offset}%">Riding the curve</textPath>
   </text>
+</svg>`;
+    }
+  },
+  {
+    slug: "text-textlength-demo",
+    title: "Interactive Example - textLength and lengthAdjust",
+    controls: [
+      { id: "textLength", label: "textLength", type: "range", min: 30, max: 90, step: 1, defaultValue: 80 },
+      { id: "lengthAdjust", label: "lengthAdjust", type: "select", options: ["spacing", "spacingAndGlyphs"], defaultValue: "spacing" }
+    ],
+    // Guides mark the exact target width so it's visible that the text is forced to span it, whichever lengthAdjust mode does the fitting.
+    render: (values) => {
+      const length = Number(values.textLength);
+      const adjust = String(values.lengthAdjust);
+
+      return `
+<svg viewBox="0 0 100 60" width="300" height="180">
+  <!-- Guides: the start x and the start x + textLength the text is forced to fill. -->
+  <line x1="10" y1="10" x2="10" y2="50" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" />
+  <line x1="${10 + length}" y1="10" x2="${10 + length}" y2="50" stroke="var(--color-border-default)" stroke-width="0.5" stroke-dasharray="2 2" />
+
+  <!-- Shape: textLength sets the advance width; lengthAdjust picks whether only the gaps change or the glyphs stretch too. -->
+  <text x="10" y="35" font-size="10" font-family="sans-serif" textLength="${length}" lengthAdjust="${adjust}" fill="#4338ca">Fit to width</text>
 </svg>`;
     }
   },

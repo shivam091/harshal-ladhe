@@ -336,11 +336,12 @@ export const posts: Post[] = [
     slug: "svg-essentials-mastering-text",
     title: "SVG Essentials: Text, tspan, and textPath",
     excerpt: "Position, style, and curve real SVG text.",
-    description: "Learn how to position, style, and curve real SVG text — the <text> element's baseline model, text-anchor and dominant-baseline, multi-line layout with <tspan>, curved text with <textPath>, presentation attributes vs. CSS, viewBox-relative scaling, and accessibility.",
+    description: "Learn how to position, style, and curve real SVG text — the baseline model, text-anchor and dominant-baseline, multi-line and per-glyph positioning with <tspan>, textLength, curved text with <textPath>, outlined, vertical, and RTL text, wrapping and measuring text with JavaScript, font loading, how font-size scales with the viewBox, and accessibility.",
     category: ["SVG"],
-    tags: ["svg", "text", "tspan", "textpath", "typography", "accessibility", "fill", "font-size", "viewbox", "data-visualization", "frontend-development"],
+    tags: ["svg", "text", "tspan", "textpath", "typography", "dominant-baseline", "textlength", "paint-order", "writing-mode", "getbbox", "web-fonts", "accessibility", "data-visualization", "frontend-development"],
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-09-28", change: "Corrected font-size scaling, baseline, textPath side/spacing/method, and startOffset animation guidance; added per-glyph positioning, textLength, outlined, vertical and RTL text, wrapping, JS measurement, font loading, whitespace, text-to-path, and expanded accessibility sections, plus baseline, text-anchor, and textPath anatomy diagrams" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },

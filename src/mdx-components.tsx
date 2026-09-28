@@ -47,6 +47,9 @@ import FilterPipelineDiagram from "@/components/mdx/FilterPipelineDiagram";
 import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
 import MiterLimitDiagram from "@/components/mdx/MiterLimitDiagram";
 import PolyClosingDiagram from "@/components/mdx/PolyClosingDiagram";
+import TextAnchorDiagram from "@/components/mdx/TextAnchorDiagram";
+import TextBaselineDiagram from "@/components/mdx/TextBaselineDiagram";
+import TextPathAnatomyDiagram from "@/components/mdx/TextPathAnatomyDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -109,6 +112,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     FillRuleRayDiagram,
     MiterLimitDiagram,
     PolyClosingDiagram,
+    TextAnchorDiagram,
+    TextBaselineDiagram,
+    TextPathAnatomyDiagram,
     /*
       Demoted to h2, not h1: every post/snippet/series/tag/category layout already
       renders its own page <h1> via PageHeading. No current .mdx content starts with
