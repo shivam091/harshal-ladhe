@@ -444,11 +444,12 @@ export const posts: Post[] = [
   {
     slug: "svg-essentials-image-and-foreignobject",
     title: "SVG Essentials: image and foreignObject",
-    excerpt: "SVG's two escape hatches into raster images and real HTML.",
-    description: "A complete guide to SVG's image and foreignObject elements — preserveAspectRatio's meet/slice fitting behavior, why <image> beats a plain <img> for vector-manipulable embedding, auto-wrapping real HTML text via foreignObject, and the XML-namespace gotchas that matter for standalone SVG files.",
+    excerpt: "SVG's two escape hatches into raster images and real HTML — fitting, namespaces, sizing, exporting, and where each one leaks.",
+    description: "SVG's image and foreignObject elements from basics to production — href vs. xlink:href, the full preserveAspectRatio grammar mapped to object-fit/object-position, data-URI sources, what <image> really offers over <img>, foreignObject namespaces, sizing and overflow, why SVG-as-image loads no external resources, rasterizing to canvas, CORS, accessibility, and security.",
     category: ["SVG"],
-    tags: ["svg", "image", "foreignobject", "preserveaspectratio", "embedding", "vector-graphics", "frontend-development"],
+    tags: ["svg", "image", "foreignobject", "preserveaspectratio", "embedding", "data-uri", "cors", "canvas", "vector-graphics", "frontend-development"],
     changelog: [
+      { date: "2026-09-28", change: "Expanded into a full guide: corrected the <image> vs. <img> comparison and preserveAspectRatio alignment, added href vs. xlink:href, data URIs, loading attributes, foreignObject namespaces, sizing and overflow, SVG-as-image restrictions, rasterizing and export, Safari caveats, accessibility, and security, plus three new diagrams and an expanded demo set" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },

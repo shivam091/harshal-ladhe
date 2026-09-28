@@ -4,68 +4,548 @@ export const metadata = buildPostMetadata("svg-essentials-image-and-foreignobjec
 
 ## Introduction
 
-SVG can embed content that isn't native SVG markup at all: `<image>` for raster or vector image files, `<foreignObject>` for an entirely different XML namespace — almost always real HTML. Both let SVG interoperate with the rest of the web platform instead of being a closed, vector-only system.
+Everything else in this series draws with SVG's own vocabulary: shapes, paths, text, gradients, filters. Two elements break out of that vocabulary on purpose. `<image>` pulls in an external picture (a PNG, a JPEG, a WebP, or another SVG file) and places it on the canvas like any other shape. `<foreignObject>` goes further: it carves out a rectangle of the SVG canvas and hands it to a different XML namespace, which in practice always means real HTML, laid out by CSS, with real paragraph wrapping.
+
+Both let SVG work with the rest of the web platform instead of being a sealed, vector-only system. Both also come with more edge cases than their short attribute lists suggest: how an image fits a box of a different shape, which namespace a `<div>` actually ends up in, why a logo's web font vanishes the moment the file is used as an `<img>`, and why exporting HTML-in-SVG to a PNG is harder than it looks.
+
+<Quote>
+  `<image>` brings a picture into SVG's coordinate system; `<foreignObject>` brings SVG's coordinate system to a block of HTML. Everything else in this post is about where those two boundaries leak.
+</Quote>
+
+By the end of this post you'll know:
+
+* How `<image>` sizes, positions, and fits its source with the full `preserveAspectRatio` grammar, and how that maps onto CSS `object-fit` and `object-position`.
+* When to write `href` rather than `xlink:href`, how to embed sources as data URIs, and which loading attributes `<image>` does and doesn't support.
+* What `<image>` genuinely offers over a plain HTML `<img>`, and what it doesn't.
+* How `<foreignObject>` switches namespaces, why its size is fixed, and how to measure and resize it around its content.
+* Why SVGs used as images can't load external resources, and how that shapes rasterizing, exporting, security, and accessibility.
+
+This post assumes you're comfortable with `viewBox` and user units from [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes), and it builds on the `<text>` limits covered in [SVG Essentials: Mastering Text](/post/svg/svg-essentials-mastering-text).
 
 <RainbowDivider />
 
 ## `<image>`: Embedding Raster or Vector Images
 
+An `<image>` is positioned and sized like a `<rect>`: `x` and `y` place its top-left corner in user units, and `width` and `height` define the box the picture is drawn into.
+
 <CodeBlock language="xml">
-{`<image href="photo.jpg" x="10" y="10" width="80" height="80" preserveAspectRatio="xMidYMid slice" />`}
+{`
+  <svg viewBox="0 0 200 100">
+    <image href="photo.jpg" x="10" y="10" width="80" height="80" preserveAspectRatio="xMidYMid slice" />
+  </svg>
+`}
 </CodeBlock>
 
-`preserveAspectRatio` controls how a source image of one aspect ratio fits into a differently-shaped target box — the same mechanism the root `<svg>` element itself uses to reconcile its `viewBox` against its actual viewport. `meet` (default) letterboxes the whole image inside the box; `slice` crops it to fill the box completely, similar in spirit to CSS `object-fit: contain` vs. `cover`. The alignment keyword (`xMidYMid`, `xMinYMin`, `xMaxYMax`, ...) decides which part of the image stays visible when cropping:
+SVG 2 lets `width` and `height` default to `auto`, meaning the image's own intrinsic size. Older renderers and many non-browser tools treat a missing `width` or `height` as `0`, though, and then draw nothing at all. Always set both explicitly; it costs nothing and removes a whole category of "why is my image invisible?" bugs.
 
-<InteractiveSvgPanel slug="image-preserve-aspect-ratio-demo" />
+### `href` vs. the Deprecated `xlink:href`
+
+SVG 1.1 pointed `<image>` at its source through the XLink namespace: `xlink:href`, which in a standalone file also needs `xmlns:xlink` declared on the root. SVG 2 replaced it with a plain `href`, and every modern browser supports it. When both are present, `href` wins.
+
+<CodeBlock language="xml">
+{`
+  <!-- SVG 2: preferred -->
+  <image href="photo.jpg" x="0" y="0" width="100" height="100" />
+
+  <!-- SVG 1.1: only for very old renderers or tools that still require it -->
+  <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <image xlink:href="photo.jpg" x="0" y="0" width="100" height="100" />
+  </svg>
+`}
+</CodeBlock>
+
+The difference matters most in JavaScript. A plain `href` is an ordinary attribute; `xlink:href` is a namespaced one, and setting it with plain `setAttribute("xlink:href", ...)` creates an attribute whose literal *name* contains a colon but lives in no namespace, so many renderers ignore it.
+
+<CodeBlock language="javascript">
+{`
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const XLINK_NS = "http://www.w3.org/1999/xlink";
+
+  const image = document.createElementNS(SVG_NS, "image");
+  image.setAttribute("width", "80");
+  image.setAttribute("height", "80");
+
+  // Modern: a plain attribute.
+  image.setAttribute("href", "photo.jpg");
+
+  // Legacy: must go through the XLink namespace to count.
+  image.setAttributeNS(XLINK_NS, "xlink:href", "photo.jpg");
+`}
+</CodeBlock>
+
+### Raster vs. SVG Sources
+
+`<image>` accepts any format the browser can decode as an image: PNG, JPEG, GIF, WebP, AVIF, and SVG itself. The two families behave differently once they're inside the box.
+
+* **A raster source** has fixed pixel dimensions. It's scaled like any bitmap, so on a high-density screen, or inside a `viewBox` that scales up, it needs to be supplied at a higher resolution than its user-unit box, or it will look soft. With no `srcset`, pick one source large enough for the biggest likely render size, or swap `href` from JavaScript.
+* **An SVG source** is first fitted by *its own* `viewBox` into its intrinsic size, and then that result is fitted into the `<image>` box by the `<image>` element's `preserveAspectRatio`. It stays sharp at any scale. The referenced file is rendered as an *image*, not as part of your document, which comes with real restrictions, covered in [SVG as an Image](#svg-as-an-image-what-loads-and-what-runs) below.
+
+<Info title="The old defer keyword is gone">
+  SVG 1.1 let `preserveAspectRatio="defer xMidYMid"` hand the fitting decision to the referenced SVG's own `preserveAspectRatio`. SVG 2 dropped `defer`. The `<image>` element's value is what counts, so treat any `defer` you find in old markup as dead weight.
+</Info>
+
+### Data URIs: Self-Contained Sources
+
+A `data:` URI embeds the image bytes directly in `href`, so the SVG carries its own picture with no separate request and no dependency on a server. For raster formats the bytes are binary, so they must be base64-encoded. For SVG sources there are two options:
+
+<CodeBlock language="xml">
+{`
+  <!-- Base64: opaque, and roughly a third larger than the source -->
+  <image href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMCAxMCI+PGNpcmNsZSBjeD0iNSIgY3k9IjUiIHI9IjQiIGZpbGw9IiM2MzY2ZjEiLz48L3N2Zz4="
+    x="0" y="0" width="40" height="40" />
+
+  <!-- URL-encoded: readable, usually smaller, and it compresses better -->
+  <image href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Ccircle cx='5' cy='5' r='4' fill='%236366f1'/%3E%3C/svg%3E"
+    x="50" y="0" width="40" height="40" />
+`}
+</CodeBlock>
+
+Base64 inflates every 3 bytes into 4 characters, a size overhead of about 33%, and it destroys the repetition that gzip and Brotli compress so well. URL-encoding an SVG only escapes the characters that must be escaped, so for SVG sources it's usually the better choice. The one character that always breaks it if left raw is `#`, which a URL treats as the start of a fragment. That's why the colour above is written `%236366f1`. Using single quotes inside the encoded markup keeps it from colliding with the double quotes around `href`.
+
+In JavaScript, `encodeURIComponent` handles every escape for you:
+
+<CodeBlock language="javascript">
+{`
+  const markup = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+    '<circle cx="5" cy="5" r="4" fill="#6366f1" /></svg>';
+
+  image.setAttribute("href", "data:image/svg+xml," + encodeURIComponent(markup));
+`}
+</CodeBlock>
+
+<Warning title="Data URIs aren't free">
+  An inlined image can't be cached separately. It's re-downloaded with every copy of the document that contains it, and a large one bloats the SVG, and any HTML it's inlined into. Data URIs are right for small icons and textures, and for anything that must survive being used as an image or exported (see below). Large photos are better off as a normal URL.
+</Warning>
+
+### Loading Attributes and Events
+
+`<image>` shares a few loading controls with HTML's `<img>`, though not all of them:
+
+* **`crossorigin`** (`anonymous` or `use-credentials`) requests the image in CORS mode. That matters only if the pixels will later be read back, for example after drawing the SVG to a `<canvas>`.
+* **`decoding`** (`async`, `sync`, `auto`) is a hint about whether decoding may happen off the main thread, the same as on `<img>`.
+* **`load` and `error` events** fire as on `<img>`, so you can wait for an image before measuring or exporting.
+* **`decode()`** is specified on `SVGImageElement`, mirroring `HTMLImageElement.decode()`. Support has historically been less uniform than on `<img>`, so feature-detect it before relying on it.
+
+<CodeBlock language="javascript">
+{`
+  image.setAttribute("crossorigin", "anonymous");
+  image.setAttribute("href", "https://cdn.example.com/photo.jpg");
+
+  if (typeof image.decode === "function") {
+    await image.decode();
+  } else {
+    await new Promise((resolve, reject) => {
+      image.addEventListener("load", resolve, { once: true });
+      image.addEventListener("error", reject, { once: true });
+    });
+  }
+`}
+</CodeBlock>
+
+What `<image>` does *not* have: there's no standard `loading="lazy"`, and no `srcset` or `sizes` for responsive resolution switching. If you need either, a plain HTML `<img>` layered over or beside the SVG is often the pragmatic answer. Test in your target browsers before assuming any of these work on `<image>`.
 
 <RainbowDivider />
 
-## Why `<image>` Instead of a Plain `<img>`
+## Fitting the Image: `preserveAspectRatio`
 
-An `<image>` living inside an SVG document can be clipped, masked, filtered, and transformed using every other mechanism covered elsewhere in this series — [`<clipPath>`/`<mask>`](/post/svg/svg-essentials-clippath-and-mask), [`<filter>`](/post/svg/svg-essentials-filters-fundamentals) — capabilities a regular HTML `<img>` simply doesn't have natively.
+A source image rarely has the same aspect ratio as the box you give it. `preserveAspectRatio` decides what happens, using the same mechanism the root `<svg>` uses to reconcile its `viewBox` with its viewport. If that mechanism is new to you, [What if the Aspect Ratios Don't Match?](/post/svg/svg-essentials-mastering-basic-shapes#what-if-the-aspect-ratios-dont-match) covers it for `viewBox`. Here the "canvas" is the source image and the "window" is the `<image>` box.
+
+The full grammar is one alignment value, optionally followed by a scaling keyword:
+
+<CodeBlock language="text">
+{`
+  preserveAspectRatio = "<align> [meet | slice]"
+
+  <align> = none
+          | xMinYMin | xMidYMin | xMaxYMin
+          | xMinYMid | xMidYMid | xMaxYMid
+          | xMinYMax | xMidYMax | xMaxYMax
+
+  default: xMidYMid meet
+`}
+</CodeBlock>
+
+* **`meet`** (the default) scales the image uniformly until it *fits entirely inside* the box, leaving empty bars on the axis that doesn't fill.
+* **`slice`** scales the image uniformly until it *covers the box completely*, cropping whatever spills past the box on the other axis.
+* **`none`** abandons uniform scaling and stretches the image to exactly fill the box, distorting it. The `meet`/`slice` keyword is ignored with `none`.
+
+The alignment value is often explained only as "which part survives the crop", but it does just as much work under `meet`: it decides where the letterboxed image sits inside its box. `xMin`/`xMid`/`xMax` align the image's left edge, centre, or right edge with the box's; `yMin`/`yMid`/`yMax` do the same vertically.
+
+<PreserveAspectRatioDiagram />
+
+Notice that only one half of each keyword ever matters for a given image and box. A wide source in a square box fills the width exactly under `meet`, so only the `Y` part can move it; under `slice` it fills the height exactly, so only the `X` part can choose the crop. A tall source flips both. Try all nine alignments, and `none`, on a wide source here:
+
+<InteractiveSvgPanel slug="image-preserve-aspect-ratio-demo" />
+
+### Mapping to CSS `object-fit` and `object-position`
+
+If you already know how CSS fits replaced elements, `preserveAspectRatio` is the same idea under different names:
+
+| `preserveAspectRatio` | CSS equivalent |
+| --- | --- |
+| `xMidYMid meet` (default) | `object-fit: contain; object-position: 50% 50%` |
+| `xMidYMid slice` | `object-fit: cover; object-position: 50% 50%` |
+| `xMinYMin meet` | `object-fit: contain; object-position: 0% 0%` |
+| `xMaxYMax slice` | `object-fit: cover; object-position: 100% 100%` |
+| `xMinYMid slice` | `object-fit: cover; object-position: 0% 50%` |
+| `none` | `object-fit: fill` |
+
+The general rule: `meet` is `contain`, `slice` is `cover`, and each `Min`/`Mid`/`Max` is an `object-position` of `0%`/`50%`/`100%` on its axis. The mapping only goes one way, though. CSS's `object-fit: none` and `scale-down`, and arbitrary positions like `object-position: 30% 70%`, have no `preserveAspectRatio` equivalent. For those you'd adjust the `<image>` box's own geometry, or clip it.
+
+<RainbowDivider />
+
+## Why `<image>` Instead of a Plain `<img>`?
+
+It's tempting to say `<image>` is the only way to clip, mask, or filter a picture, but that isn't true on today's web. CSS `clip-path`, `mask`, and `filter`, including `url(#id)` references to SVG `<clipPath>`, `<mask>`, and `<filter>` definitions, can all be applied to an ordinary HTML `<img>`. Support for `url()` filters on HTML elements has been uneven in some engines, so test there, but the capability isn't unique to SVG.
+
+What `<image>` really offers is **membership in the SVG document itself**:
+
+* **It lives in SVG's coordinate system.** It's positioned in user units, scales with the `viewBox`, and sits inside the same `transform` stack as every shape around it. A photo pinned to a rotated card in a diagram stays pinned no matter how the diagram is scaled.
+* **It's part of one self-contained, exportable file.** With a data-URI source, the SVG plus its picture is a single file that can be downloaded, emailed, or opened in a design tool without an HTML page around it.
+* **It can be used where only SVG content is allowed.** An `<image>` can be the tile inside a [`<pattern>`](/post/svg/svg-essentials-pattern-element), the luminance source inside a [`<mask>`](/post/svg/svg-essentials-clippath-and-mask), or referenced through [`<use>`](/post/svg/svg-essentials-g-defs-symbol-and-use). A close cousin, `feImage`, pulls an image straight into a [filter pipeline](/post/svg/svg-essentials-advanced-filter-primitives). None of those slots accept an HTML `<img>`.
+* **SVG-only paint order and composition apply.** It's painted in document order among shapes and text, so you can put a vector stroke, a gradient overlay, or a label directly on top of it.
+
+Here's a typical case: an avatar cropped to a circle, with a ring and a label drawn in the same coordinate system. It's one file, and it's scaled as a unit by its `viewBox`:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 220 100" width="440" height="200">
+    <defs>
+      <clipPath id="image-fo-avatar-clip">
+        <circle cx="50" cy="50" r="38" />
+      </clipPath>
+    </defs>
+    <image href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 90'%3E%3Crect width='160' height='90' fill='%236366f1'/%3E%3Ccircle cx='80' cy='36' r='17' fill='%23fde68a'/%3E%3Crect x='52' y='58' width='56' height='44' rx='22' fill='%23fde68a'/%3E%3C/svg%3E"
+      x="12" y="12" width="76" height="76" preserveAspectRatio="xMidYMid slice"
+      clip-path="url(#image-fo-avatar-clip)" />
+    <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" stroke-width="3" />
+    <text x="104" y="46" font-size="14" font-weight="600" fill="currentColor">Ada Lovelace</text>
+    <text x="104" y="64" font-size="10" fill="currentColor" opacity="0.7">Analyst, Engine No. 1</text>
+  </svg>
+`}
+</SvgSnippet>
+
+And a case `<img>` can't handle at all: an `<image>` used as the repeating tile inside a `<pattern>`, filling an arbitrary shape:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 200 100">
+    <defs>
+      <pattern id="image-fo-texture" width="20" height="20" patternUnits="userSpaceOnUse">
+        <image href="texture.png" x="0" y="0" width="20" height="20" />
+      </pattern>
+    </defs>
+    <path d="M10,90 L60,10 L110,90 Z" fill="url(#image-fo-texture)" stroke="currentColor" />
+  </svg>
+`}
+</CodeBlock>
+
+If all you need is a picture on a page, with lazy loading, `srcset`, and `alt` text, use `<img>`. Reach for `<image>` when the picture is *part of the graphic*.
 
 <RainbowDivider />
 
 ## `<foreignObject>`: Embedding Real HTML
 
-<InteractiveSvgPanel slug="foreignobject-text-wrap-demo" />
+`<foreignObject>` defines a rectangle in user units, `x`, `y`, `width`, and `height`, and renders content from another namespace inside it. On the web that content is XHTML: `<div>`s, `<p>`s, lists, even form controls, laid out by CSS exactly as they would be on a page.
 
 <CodeBlock language="xml">
 {`
-  <foreignObject x="10" y="10" width="60" height="40">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px sans-serif;">
-      Real HTML, with real automatic text wrapping.
-    </div>
-  </foreignObject>
+  <svg viewBox="0 0 200 100">
+    <foreignObject x="10" y="10" width="120" height="60">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font: 10px/1.4 sans-serif;">
+        Real HTML, with real automatic text wrapping at the region's width.
+      </div>
+    </foreignObject>
+  </svg>
 `}
 </CodeBlock>
 
-Real HTML — with real text flow and automatic wrapping, which native SVG [`<text>`](/post/svg/svg-essentials-mastering-text) fundamentally lacks — rendered inside an otherwise-vector document, positioned by a rectangular `x`/`y`/`width`/`height` region exactly like any other SVG element.
+The region is an SVG element like any other: it can be transformed, clipped, masked, and filtered, and it's painted in document order. Inside the region, though, SVG positioning stops and the CSS box model takes over.
+
+<ForeignObjectRegionDiagram />
+
+<Warning title="width and height are effectively required">
+  A `<foreignObject>` without `width` and `height` is a 0 × 0 region. Its HTML content is laid out, but with the default `overflow: hidden` nothing is painted. If a foreignObject renders nothing at all, check its size first.
+</Warning>
+
+Drag the width below and watch the paragraph re-wrap. Then shrink the height and switch `overflow` to see that the region never grows to fit its content:
+
+<InteractiveSvgPanel slug="foreignobject-text-wrap-demo" />
+
+### The Namespace Switch: Inline SVG vs. Standalone `.svg`
+
+Whether that `xmlns="http://www.w3.org/1999/xhtml"` is needed depends entirely on *which parser* reads the markup.
+
+**Inline SVG in an HTML page** is parsed by the HTML parser. It knows `<foreignObject>` is an *HTML integration point*: everything inside it is parsed back into the HTML namespace automatically. A `<div>` there is an HTML `<div>` whether or not you write `xmlns`, and HTML's forgiving rules (unclosed `<p>`, bare `<br>`, unescaped `&` in text) still apply.
+
+**A standalone `.svg` file**, and any string parsed with `DOMParser` as `image/svg+xml`, is parsed as strict XML. Now nothing is inferred:
+
+* The HTML root element inside the region needs `xmlns="http://www.w3.org/1999/xhtml"`. Without it, the `<div>` is an unknown element in the SVG namespace and renders nothing.
+* The markup must be well-formed: void elements self-closed (`<br />`, `<img />`), every tag closed, `&` written as `&amp;`, and element names lowercase.
+* HTML named entities like `&nbsp;` aren't defined in XML; use numeric ones (`&#160;`).
+
+<CodeBlock language="xml">
+{`
+  <!-- card.svg: strict XML -->
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100">
+    <foreignObject x="10" y="10" width="180" height="80">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font: 12px/1.4 sans-serif;">
+        <p>Q3 revenue&#160;&amp; margin</p>
+        <br />
+      </div>
+    </foreignObject>
+  </svg>
+`}
+</CodeBlock>
+
+This is the classic "works inline, breaks when saved as a file" bug: the inline version was silently repaired by the HTML parser, and the XML parser refuses to guess.
+
+In JavaScript, the `<foreignObject>` itself must be created in the SVG namespace, but its HTML children should be created in the XHTML namespace. In an HTML document, `document.createElement("div")` already does that. The mistake is creating the `<div>` with the SVG namespace because the surrounding code does:
+
+<CodeBlock language="javascript">
+{`
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const XHTML_NS = "http://www.w3.org/1999/xhtml";
+
+  const region = document.createElementNS(SVG_NS, "foreignObject");
+  region.setAttribute("x", "10");
+  region.setAttribute("y", "10");
+  region.setAttribute("width", "120");
+  region.setAttribute("height", "60");
+
+  // Correct: an HTML div (same as document.createElement("div") in an HTML page).
+  const box = document.createElementNS(XHTML_NS, "div");
+  box.textContent = "Wrapped label";
+
+  // Wrong: an SVG-namespace "div", an unknown element that renders nothing.
+  // const box = document.createElementNS(SVG_NS, "div");
+
+  region.append(box);
+  svg.append(region);
+`}
+</CodeBlock>
+
+### Sizing, Overflow, and Units
+
+The region is a fixed box. HTML content inside it can be shorter or taller than `height`, but the region never grows or shrinks to match. Browsers give `<foreignObject>` `overflow: hidden` by default, the same as nested `<svg>`, `<symbol>`, and `<marker>`, so taller content is clipped at the bottom edge. Setting `overflow: visible` lets it paint past the edge, but the region's geometry, and anything positioned relative to it, still assumes the declared height.
+
+When the content height isn't known ahead of time, measure it and write it back. Inside a foreignObject, **one CSS pixel equals one user unit**: the HTML is laid out in the region's local coordinate system and then transformed with the rest of the SVG. So `scrollHeight` or `offsetHeight` gives you user units directly, while `getBoundingClientRect()` returns *screen* pixels after the `viewBox` scaling has been applied, which is usually the wrong number here.
+
+<CodeBlock language="javascript">
+{`
+  // Start generous so the content can lay out at its natural height, then shrink to fit.
+  region.setAttribute("height", "1000");
+  region.setAttribute("height", String(box.scrollHeight));
+
+  // Keep it in sync when the text changes or web fonts finish loading.
+  new ResizeObserver(() => {
+    region.setAttribute("height", String(box.scrollHeight));
+  }).observe(box);
+`}
+</CodeBlock>
+
+The same "CSS pixel equals user unit" rule has a side effect on text size. A `font-size: 16px` inside a foreignObject is 16 *user units*, so it scales with the `viewBox`. In a `viewBox="0 0 100 100"` rendered 400 pixels wide, that text appears at 64 screen pixels. Size fonts in the SVG's own unit scale, as the demos in this post do with 8px and 10px fonts. `rem` resolves against the root element's font size: the page's `<html>` for inline SVG, but not a meaningful value in a standalone `.svg`, where the root is the `<svg>` itself. Prefer `px` or `em` inside a foreignObject that might end up in either context.
+
+<Info title="The SVG 2 alternative that isn't here yet">
+  SVG 2 specifies native wrapped text through the `inline-size` and `shape-inside` properties on `<text>`. Browser support is thin and inconsistent, so test carefully before using them. For now, `<foreignObject>` is the practical route to multi-line flowing text in SVG.
+</Info>
 
 <RainbowDivider />
 
 ## Practical Use: Auto-Wrapping Text in a Diagram
 
-Since native `<text>` needs manual `<tspan>` line breaks, `<foreignObject>` is the pragmatic escape hatch anytime real paragraph-flow text needs to live at a precise SVG-coordinate position — a chart's rich annotation, a callout with more than a line or two of text, a label whose length isn't known ahead of time.
+Native `<text>` never wraps: each line is a separate `<tspan>` with its own position, and you choose the breaks. That's fine for short fixed labels, as covered in [SVG Essentials: Mastering Text](/post/svg/svg-essentials-mastering-text), and painful for anything whose length you don't control. Here's the same chart annotation built both ways.
+
+The `<tspan>` version hard-codes three line breaks. Translate it, change the copy, or change the font, and the breaks are wrong:
+
+<CodeBlock language="xml">
+{`
+  <text x="16" y="20" font-size="8" fill="currentColor">
+    <tspan x="16" dy="0">Spring launch: sign-ups</tspan>
+    <tspan x="16" dy="10.8">jumped 45% in two weeks</tspan>
+    <tspan x="16" dy="10.8">after the pricing change.</tspan>
+  </text>
+`}
+</CodeBlock>
+
+The `<foreignObject>` version declares a box and lets CSS break the lines, add padding, and draw the accent border:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 120" width="480" height="240">
+    <line x1="10" y1="110" x2="230" y2="110" stroke="currentColor" stroke-width="0.75" opacity="0.4" />
+    <polyline points="10,100 50,80 90,85 130,40 170,55 230,20" fill="none" stroke="#6366f1" stroke-width="2" />
+    <circle cx="130" cy="40" r="3.5" fill="#6366f1" />
+    <line x1="110" y1="36" x2="126" y2="39" stroke="#6366f1" stroke-width="1" />
+    <foreignObject x="10" y="6" width="100" height="60">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font: 8px/1.35 sans-serif; color: currentColor; padding: 4px 6px; border-left: 2px solid #6366f1; background: rgba(99, 102, 241, 0.12);">
+        Spring launch: sign-ups jumped 45% in two weeks after the pricing change.
+      </div>
+    </foreignObject>
+  </svg>
+`}
+</SvgSnippet>
+
+The annotation box is still positioned in chart coordinates, so it stays next to its data point as the chart scales, and the leader line from `(110, 36)` to the point at `(130, 40)` is ordinary SVG. Only the paragraph is HTML. For annotations whose text comes from data, pair this with the measure-and-resize pattern above so the box height always matches its content.
+
+<RainbowDivider />
+
+## SVG as an Image: What Loads and What Runs
+
+The same `.svg` file behaves very differently depending on how it reaches the page. Inline, it's part of the document. Through `<object>` or `<iframe>`, it's a separate document of its own. Through `<img>`, a CSS `background-image`, or anything that ends up drawing it to a `<canvas>`, it's treated as an **image**, and browsers render images in a locked-down mode for security and privacy.
+
+<SvgEmbedContextDiagram />
+
+The row that surprises people most is the first one. **An SVG rendered as an image loads no external resources at all.** Every `<image href="https://...">`, every `@font-face` with a `url()`, and every linked stylesheet inside the file is ignored, even if it's same-origin. A logo that looks perfect inline loses its embedded photo and falls back to a system font the moment it's used as `<img src="logo.svg">`.
+
+The fix is to make the file self-contained: inline every image as a data URI, embed fonts as data URIs inside the `@font-face` rule (or convert text to paths for a logo), and put styles in an internal `<style>` element. Anything already inside the file, including data URIs, keeps working in every context.
+
+<Info title="Where this is covered from the other side">
+  Scripts, links, and interactivity per context are covered in [How Embedding Changes What an SVG Can Do](/post/svg/svg-essentials-metadata-and-interactivity#how-embedding-changes-what-an-svg-can-do). Declarative animation, the one capability that survives as an image, is the subject of [SVG Essentials: Native Animation with SMIL](/post/svg/svg-essentials-smil-animation).
+</Info>
+
+<RainbowDivider />
+
+## Exporting and Rasterizing `<foreignObject>`
+
+A popular trick for "screenshot this DOM node" is to wrap HTML in an SVG `<foreignObject>`, load that SVG as an image, and draw the image to a canvas. Libraries like html-to-image and dom-to-image work this way. Because it goes through the SVG-as-image path above, every restriction in that diagram applies: nothing external loads, so the pipeline has to inline everything first.
+
+<CodeBlock language="javascript">
+{`
+  async function rasterize(svgElement, width, height) {
+    // 1. Serialize. Everything the SVG needs must already be inside it:
+    //    computed styles copied inline, images and fonts as data URIs.
+    const markup = new XMLSerializer().serializeToString(svgElement);
+
+    // 2. Load it as an image. XMLSerializer emits strict XML, so namespaces are preserved.
+    const blob = new Blob([markup], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+    const img = new Image(width, height);
+    img.src = url;
+    await img.decode();
+
+    // 3. Draw it to a canvas and export.
+    const canvas = document.createElement("canvas");
+    canvas.width = width * devicePixelRatio;
+    canvas.height = height * devicePixelRatio;
+    const context = canvas.getContext("2d");
+    context.scale(devicePixelRatio, devicePixelRatio);
+    context.drawImage(img, 0, 0, width, height);
+    URL.revokeObjectURL(url);
+
+    return new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  }
+`}
+</CodeBlock>
+
+The "inline everything" step is where the real work is. Page stylesheets don't reach inside an image, so each element's computed styles have to be copied into `style` attributes or an internal `<style>`. Every `<img>` and CSS `background-image` has to become a data URI. Every web font has to be fetched and embedded as a data URI in an `@font-face` inside the SVG. Skip any of these and the export silently differs from the screen.
+
+<Warning title="Two separate failure modes">
+  **Missing content** and **a tainted canvas** are different problems. Missing images and fonts come from the SVG-as-image rule: nothing external loads, regardless of CORS. A tainted canvas, where `toBlob()` and `getImageData()` throw a security error, happens when cross-origin pixels are drawn without CORS permission. For images drawn directly, set `crossorigin="anonymous"` and serve them with the right CORS headers. Separately, Safari has historically marked a canvas as tainted after drawing any SVG that contains a `<foreignObject>`, even a fully self-contained one. Test this pipeline in WebKit specifically.
+</Warning>
+
+Outside browsers, support drops off sharply. Inkscape, librsvg-based converters, resvg, many PDF and print pipelines, and most design-tool importers ignore `<foreignObject>` or render it poorly, so the region simply comes out empty. If a file must survive those tools, the SVG-native fallback is `<switch>`: the first child whose conditions a renderer supports is drawn, and the rest are skipped.
+
+<CodeBlock language="xml">
+{`
+  <switch>
+    <foreignObject x="10" y="10" width="120" height="60" requiredExtensions="http://www.w3.org/1999/xhtml">
+      <div xmlns="http://www.w3.org/1999/xhtml">A label that wraps in browsers.</div>
+    </foreignObject>
+    <!-- Drawn by renderers that don't support HTML in foreignObject -->
+    <text x="10" y="24" font-size="10">A label that wraps in browsers.</text>
+  </switch>
+`}
+</CodeBlock>
+
+How consistently `requiredExtensions` is evaluated varies between renderers, so test this in the specific tool the file is headed for.
+
+<RainbowDivider />
+
+## Accessibility
+
+**`<image>` has no `alt` attribute.** Give a meaningful image an accessible name the SVG way: `role="img"` with `aria-label`, or a `<title>` child. Hide a decorative one with `aria-hidden="true"`.
+
+<CodeBlock language="xml">
+{`
+  <!-- Meaningful: named -->
+  <image href="ada.jpg" x="0" y="0" width="80" height="80" role="img" aria-label="Portrait of Ada Lovelace" />
+
+  <!-- Decorative: hidden from assistive technology -->
+  <image href="texture.png" x="0" y="0" width="200" height="100" aria-hidden="true" />
+`}
+</CodeBlock>
+
+**HTML inside an inline `<foreignObject>` is exposed like any other HTML.** Headings, links, lists, and form controls keep their native semantics, are keyboard-focusable where they normally would be, and their text is selectable and searchable with find-in-page. That's a real advantage over hand-broken `<tspan>` lines, which read as separate fragments.
+
+One trap: if the outer `<svg>` carries `role="img"`, all of its descendants, foreignObject HTML included, are treated as presentational and collapsed into the single image name. That's right for a static chart with a good `aria-label`, and wrong for an SVG that contains a real link or button. Naming and roles in depth are covered in [SVG Essentials: Metadata, Links, and Interactivity](/post/svg/svg-essentials-metadata-and-interactivity).
+
+<RainbowDivider />
+
+## Security: `<foreignObject>` in Untrusted SVG
+
+`<foreignObject>` can hold *any* HTML, including `<iframe>`, `<form>`, `<input>`, `<a>`, `<script>`, and elements with `on*` event handlers. In an SVG you wrote, that's a feature. In an SVG a user uploaded, it's an attack surface: inlined into your page, that markup runs with your page's origin, and it can draw a convincing fake login form over your UI.
+
+Displaying untrusted SVG through `<img>` is much safer, because the image context runs no scripts and allows no interaction (see the diagram above). If you must inline it, sanitize it first with an allow-list sanitizer configured for SVG, and strip `<foreignObject>` entirely unless you have a concrete need for it. The full checklist is in [Sanitizing Untrusted SVG](/post/svg/svg-essentials-metadata-and-interactivity#sanitizing-untrusted-svg).
 
 <RainbowDivider />
 
 ## Where Should You Use This?
 
-- Applying vector manipulation (clip/mask/filter) to a raster source image, via `<image>`
-- Auto-wrapping text labels inside a generated diagram or data visualization, via `<foreignObject>`
-- Embedding a small interactive HTML widget at a precise position within a larger SVG-based diagram or map
+* **A picture that's part of a graphic:** an avatar clipped to a shape in an org chart, a photo pinned to a map, a texture tile inside a `<pattern>`, a mask source. Use `<image>`.
+* **A self-contained SVG file that must carry its own pictures** for download, export, or use as an `<img>`: `<image>` with data-URI sources.
+* **Wrapped text at a precise SVG position:** chart annotations, diagram node labels, tooltips, callouts whose length isn't known ahead of time. Use `<foreignObject>`.
+* **A small HTML widget inside a larger SVG diagram or map,** such as a styled legend, an input, or a formatted table, where the widget has to move and scale with the diagram. Use `<foreignObject>`.
+* **Not** as a general way to show a picture on a page (use `<img>`), and not for anything that must render in non-browser tools without a fallback.
 
 <RainbowDivider />
 
 ## Production Considerations & Edge Cases
 
-* **`<foreignObject>` content needs valid, correctly-namespaced XHTML in a strict-XML standalone `.svg` file** — the `xmlns="http://www.w3.org/1999/xhtml"` on the wrapping element matters there. SVG inlined directly inside an HTML document is more forgiving, since the browser's HTML parser handles it rather than a strict XML parser — a common source of confusion when markup that works fine inlined suddenly breaks once exported as a standalone `.svg` file.
-* **`<foreignObject>` rendering fidelity has historically been inconsistent across export/rasterization contexts** (converting to PNG, PDF) even though on-screen browser rendering is solid — worth testing specifically if the SVG needs to be exported or rasterized, not just displayed live.
-* **`<image>` embedding a cross-origin file is subject to the same CORS/tainted-canvas rules** as any other cross-origin image, once the SVG itself gets rasterized (drawn to a `<canvas>`, say).
+### Safari and `<foreignObject>`
+
+<Warning title="Test foreignObject in WebKit">
+  WebKit has long-standing `<foreignObject>` bugs. Content can ignore transforms on ancestor elements, positioned (`position: relative`/`absolute`) children can be offset from where other engines place them, clipping and `overflow` can misbehave, and content can render blurry when the page is zoomed or the SVG is scaled up. Details change between releases, so keep the HTML inside a foreignObject simple (avoid positioned children and complex transforms) and test in Safari before shipping.
+</Warning>
+
+### `<image>` Doesn't Reserve Intrinsic Space
+
+The `<image>` box is always the `width` and `height` you gave it, so the surrounding SVG doesn't shift when the file loads, but nothing is drawn until it arrives. For a meaningful image, set a background shape or a low-resolution data-URI placeholder behind it rather than leaving an empty hole.
+
+### Many `<foreignObject>`s Aren't Free
+
+Each region is a separate CSS layout context composited into the SVG. A handful of annotations is fine; thousands of foreignObject labels in a large graph can be noticeably slower than the same labels as `<text>`. For dense data visualizations, use `<text>` for short labels and save foreignObject for the few that genuinely need wrapping.
+
+### `id` Collisions
+
+Every `<clipPath>`, `<pattern>`, or `<mask>` an `<image>` references by `url(#id)` has the usual caveat: render the same inline SVG twice on one page and the `id`s collide. The same goes for HTML `id`s inside foreignObject content, which share the page's single `id` space. Generate unique `id`s per instance.
+
+<RainbowDivider />
+
+## `<image>` and `<foreignObject>` at a Glance
+
+| Attribute | Element | Purpose |
+| --- | --- | --- |
+| `x` / `y` | both | Top-left corner of the box, in user units |
+| `width` / `height` | both | Size of the box; always set them (a foreignObject without them is 0 × 0) |
+| `href` | `<image>` | The source URL or data URI; replaces deprecated `xlink:href` |
+| `preserveAspectRatio` | `<image>` | How the source fits the box: an alignment value, plus `meet` (default) or `slice`, or `none` |
+| `crossorigin` | `<image>` | Fetches in CORS mode so a canvas the SVG is drawn to isn't tainted |
+| `decoding` | `<image>` | Decode-timing hint, as on `<img>` |
+| `overflow` | `<foreignObject>` | `hidden` by default; `visible` lets content paint past the region's edge |
+| `xmlns="http://www.w3.org/1999/xhtml"` | the HTML root inside `<foreignObject>` | Required in standalone `.svg`/XML; inferred by the HTML parser inline |
 
 <RainbowDivider />
 
 ## Wrapping Up
 
-`<image>` and `<foreignObject>` are SVG's two escape hatches out of vector-only content — a real image asset, gaining every SVG manipulation trick in the process, and real HTML, gaining real text flow. Reach for either the moment a document needs something SVG's own primitives genuinely can't provide on their own.
+`<image>` and `<foreignObject>` are SVG's two escape hatches out of vector-only content, and both are simple to use and subtle to get right:
+
+* **`<image>`** places a raster or SVG source in a user-unit box. Use `href`, not `xlink:href`; set `width` and `height` explicitly; and use URL-encoded data URIs for small, self-contained SVG sources.
+* **`preserveAspectRatio`** is one of nine alignment values plus `meet` or `slice`, or `none`. It maps directly onto `object-fit: contain`/`cover`/`fill` and `object-position`, and the alignment positions a letterboxed image just as much as it chooses a crop.
+* **`<image>` versus `<img>`:** CSS can clip, mask, and filter an `<img>` too. `<image>`'s real value is living inside the SVG: its coordinates, transforms, patterns, masks, filters, and a single exportable file.
+* **`<foreignObject>`** is a fixed user-unit region hosting real HTML. The HTML parser switches namespaces for you inline; strict XML needs the XHTML `xmlns`. Content is clipped at the region's edge, and CSS pixels inside are user units, so measure with `scrollHeight` and remember that font sizes scale with the `viewBox`.
+* **As an image,** an SVG loads nothing external and runs nothing, which is why exports must inline fonts and images, why cross-origin drawing needs CORS, and why `<img>` is the safer way to show untrusted SVG.
+* **In production,** test foreignObject in Safari and in any non-browser renderer the file will meet, name `<image>` elements for assistive technology, and sanitize user-supplied SVG before inlining it.
+
+Next time a diagram needs a photo, or a label that wraps, you'll know which escape hatch to reach for and where it can leak.

@@ -51,6 +51,7 @@ import DisplacementMapDiagram from "@/components/mdx/DisplacementMapDiagram";
 import FeCompositeOperatorsDiagram from "@/components/mdx/FeCompositeOperatorsDiagram";
 import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
 import FilterRegionDiagram from "@/components/mdx/FilterRegionDiagram";
+import ForeignObjectRegionDiagram from "@/components/mdx/ForeignObjectRegionDiagram";
 import GradientTransformDiagram from "@/components/mdx/GradientTransformDiagram";
 import GradientUnitsDiagram from "@/components/mdx/GradientUnitsDiagram";
 import GroupTransformDiagram from "@/components/mdx/GroupTransformDiagram";
@@ -65,9 +66,11 @@ import PatternTileGridDiagram from "@/components/mdx/PatternTileGridDiagram";
 import PatternTransformDiagram from "@/components/mdx/PatternTransformDiagram";
 import PatternUnitsDiagram from "@/components/mdx/PatternUnitsDiagram";
 import PolyClosingDiagram from "@/components/mdx/PolyClosingDiagram";
+import PreserveAspectRatioDiagram from "@/components/mdx/PreserveAspectRatioDiagram";
 import RadialFocalDiagram from "@/components/mdx/RadialFocalDiagram";
 import SeamlessTileDiagram from "@/components/mdx/SeamlessTileDiagram";
 import SpreadMethodDiagram from "@/components/mdx/SpreadMethodDiagram";
+import SvgEmbedContextDiagram from "@/components/mdx/SvgEmbedContextDiagram";
 import SvgGradientVectorDiagram from "@/components/mdx/SvgGradientVectorDiagram";
 import SymbolViewBoxDiagram from "@/components/mdx/SymbolViewBoxDiagram";
 import TextAnchorDiagram from "@/components/mdx/TextAnchorDiagram";
@@ -140,6 +143,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     FeCompositeOperatorsDiagram,
     FillRuleRayDiagram,
     FilterRegionDiagram,
+    ForeignObjectRegionDiagram,
     GradientTransformDiagram,
     GradientUnitsDiagram,
     GroupTransformDiagram,
@@ -154,9 +158,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PatternTransformDiagram,
     PatternUnitsDiagram,
     PolyClosingDiagram,
+    PreserveAspectRatioDiagram,
     RadialFocalDiagram,
     SeamlessTileDiagram,
     SpreadMethodDiagram,
+    SvgEmbedContextDiagram,
     SvgGradientVectorDiagram,
     SymbolViewBoxDiagram,
     TextAnchorDiagram,

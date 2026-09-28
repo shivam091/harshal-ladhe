@@ -2367,13 +2367,20 @@ ${dots}
     slug: "image-preserve-aspect-ratio-demo",
     title: "Interactive Example - image preserveAspectRatio",
     controls: [
-      { id: "align", label: "align", type: "select", options: ["xMidYMid", "xMinYMin", "xMaxYMax"], defaultValue: "xMidYMid" },
+      {
+        id: "align",
+        label: "align",
+        type: "select",
+        options: ["xMinYMin", "xMidYMin", "xMaxYMin", "xMinYMid", "xMidYMid", "xMaxYMid", "xMinYMax", "xMidYMax", "xMaxYMax", "none"],
+        defaultValue: "xMidYMid"
+      },
       { id: "meetOrSlice", label: "meet vs. slice", type: "select", options: ["meet", "slice"], defaultValue: "meet" }
     ],
     // Self-contained "image" content (an inline data URI) so this demo never depends on an external network resource.
     render: (values) => {
       const align = String(values.align);
-      const meetOrSlice = String(values.meetOrSlice);
+      // "none" stretches to fill and takes no meet/slice keyword, so it's emitted alone to keep the code view honest.
+      const value = align === "none" ? "none" : `${align} ${String(values.meetOrSlice)}`;
       const inner = encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90">' +
           '<rect width="160" height="90" fill="#0f1220" />' +
@@ -2386,7 +2393,7 @@ ${dots}
 <svg viewBox="0 0 100 100" width="220" height="220">
   <!-- The source image is wide (160x90) but the target box below is square — preserveAspectRatio decides how it fits. -->
   <image href="data:image/svg+xml,${inner}" x="10" y="10" width="80" height="80"
-    preserveAspectRatio="${align} ${meetOrSlice}" />
+    preserveAspectRatio="${value}" />
   <rect x="10" y="10" width="80" height="80" fill="none" stroke="var(--color-border-default)" stroke-width="0.75" />
 </svg>`;
     }
@@ -2395,19 +2402,26 @@ ${dots}
     slug: "foreignobject-text-wrap-demo",
     title: "Interactive Example - foreignObject Text Wrap",
     controls: [
-      { id: "width", label: "Box width", type: "range", min: 30, max: 90, step: 1, defaultValue: 55 }
+      { id: "width", label: "Box width", type: "range", min: 30, max: 90, step: 1, defaultValue: 55 },
+      { id: "height", label: "Box height", type: "range", min: 20, max: 80, step: 1, defaultValue: 60 },
+      { id: "overflow", label: "overflow", type: "select", options: ["hidden", "visible"], defaultValue: "hidden" }
     ],
     render: (values) => {
       const width = Number(values.width);
+      const height = Number(values.height);
+      const overflow = String(values.overflow);
 
       return `
 <svg viewBox="0 0 100 100" width="240" height="240">
   <!-- Native <text> has no automatic line-wrapping — foreignObject's real HTML does, driven by ordinary CSS width/wrapping. -->
-  <foreignObject x="5" y="20" width="${width}" height="60">
-    <div xmlns="http://www.w3.org/1999/xhtml" style="font: 8px sans-serif; color: #e7e9f5; line-height: 1.4;">
+  <foreignObject x="5" y="15" width="${width}" height="${height}" style="overflow: ${overflow};">
+    <div xmlns="http://www.w3.org/1999/xhtml" style="font: 8px sans-serif; color: currentColor; line-height: 1.4;">
       This paragraph wraps automatically, the way real HTML text always has — no manual tspan line breaks required.
     </div>
   </foreignObject>
+
+  <!-- The region's own box, outlined so you can see where content is clipped (or spills past, with overflow: visible). -->
+  <rect x="5" y="15" width="${width}" height="${height}" fill="none" stroke="#6366f1" stroke-width="0.5" stroke-dasharray="2 1.5" />
 </svg>`;
     }
   },
