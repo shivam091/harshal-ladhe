@@ -386,10 +386,11 @@ export const posts: Post[] = [
     slug: "svg-essentials-marker-element",
     title: "SVG Essentials: The marker Element",
     excerpt: "Attach reusable arrowheads and ticks to a path's own vertices.",
-    description: "A complete guide to the SVG marker element — attaching markers via marker-start/mid/end, defining a marker's viewBox/refX/refY anchor point, orient auto and auto-start-reverse for direction-following arrowheads, markerUnits, and building a real reusable arrowhead for diagrams and charts.",
+    description: "A complete guide to the SVG marker element — marker-start/mid/end and how closed shapes and curves place vertices, the viewBox/refX/refY anchor point, orient auto, bisectors, and auto-start-reverse, markerUnits, colouring with context-stroke, setting markers from CSS, paint order and clipping, animation, accessibility, and building a real reusable arrowhead for diagrams and charts.",
     category: ["SVG"],
-    tags: ["svg", "marker", "arrowheads", "orient", "markerunits", "diagrams", "data-visualization", "vector-graphics", "frontend-development"],
+    tags: ["svg", "marker", "arrowheads", "orient", "markerunits", "refx", "context-stroke", "diagrams", "data-visualization", "vector-graphics", "frontend-development"],
     changelog: [
+      { date: "2026-09-28", change: "Corrected refX and closed-polygon marker placement, fixed the flowchart example, added anatomy/vertex/orient diagrams, stroke-width and markerUnits demo controls, and new sections on colouring, context-stroke, curves, CSS, paint order, animation, accessibility, and browser support" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },

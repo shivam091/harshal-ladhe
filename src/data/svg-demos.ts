@@ -1782,24 +1782,35 @@ ${dots}
   },
   {
     slug: "marker-orient-units-demo",
-    title: "Interactive Example - marker orient",
+    title: "Interactive Example - marker orient and markerUnits",
     controls: [
-      { id: "orient", label: "orient", type: "select", options: ["auto", "0", "auto-start-reverse"], defaultValue: "auto" }
+      { id: "orient", label: "orient", type: "select", options: ["auto", "0", "auto-start-reverse"], defaultValue: "auto" },
+      { id: "markerUnits", label: "markerUnits", type: "select", options: ["strokeWidth", "userSpaceOnUse"], defaultValue: "strokeWidth" },
+      { id: "strokeWidth", label: "Stroke width", type: "range", min: 0.5, max: 4, step: 0.5, defaultValue: 2 }
     ],
     render: (values) => {
       const orient = String(values.orient);
+      const markerUnits = String(values.markerUnits);
+      const strokeWidth = Number(values.strokeWidth);
+      /*
+        12 user units in userSpaceOnUse mode equals 6 stroke-widths at the default stroke width of 2, so both modes
+        start out the same size and only diverge once the slider moves.
+      */
+      const markerSize = markerUnits === "userSpaceOnUse" ? 12 : 6;
 
       return `
 <svg viewBox="0 0 100 60" width="280" height="168">
   <defs>
     <!-- Same marker referenced at BOTH ends — orient decides whether the two arrows point outward correctly or not. -->
-    <marker id="orient-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="${orient}">
+    <!-- markerUnits decides whether markerWidth/markerHeight are multiples of stroke-width or plain user units. -->
+    <marker id="orient-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="${markerSize}" markerHeight="${markerSize}"
+      markerUnits="${markerUnits}" orient="${orient}">
       <path d="M0,0 L10,5 L0,10 Z" fill="#f59e0b" />
     </marker>
   </defs>
 
   <!-- Shape: a bent path — its two ends travel in different directions, making orient's effect obvious. -->
-  <path d="M15,45 L50,15 L85,45" stroke="#f59e0b" stroke-width="2" fill="none"
+  <path d="M15,45 L50,15 L85,45" stroke="#f59e0b" stroke-width="${strokeWidth}" fill="none"
     marker-start="url(#orient-arrow)" marker-end="url(#orient-arrow)" />
 </svg>`;
     }

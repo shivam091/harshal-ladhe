@@ -49,6 +49,9 @@ import ClipVsMaskDiagram from "@/components/mdx/ClipVsMaskDiagram";
 import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
 import GroupTransformDiagram from "@/components/mdx/GroupTransformDiagram";
 import LuminanceAlphaDiagram from "@/components/mdx/LuminanceAlphaDiagram";
+import MarkerAnatomyDiagram from "@/components/mdx/MarkerAnatomyDiagram";
+import MarkerOrientDiagram from "@/components/mdx/MarkerOrientDiagram";
+import MarkerVertexDiagram from "@/components/mdx/MarkerVertexDiagram";
 import MaskRegionDiagram from "@/components/mdx/MaskRegionDiagram";
 import MiterLimitDiagram from "@/components/mdx/MiterLimitDiagram";
 import PatternTileGridDiagram from "@/components/mdx/PatternTileGridDiagram";
@@ -125,6 +128,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     FillRuleRayDiagram,
     GroupTransformDiagram,
     LuminanceAlphaDiagram,
+    MarkerAnatomyDiagram,
+    MarkerOrientDiagram,
+    MarkerVertexDiagram,
     MaskRegionDiagram,
     MiterLimitDiagram,
     PatternTileGridDiagram,

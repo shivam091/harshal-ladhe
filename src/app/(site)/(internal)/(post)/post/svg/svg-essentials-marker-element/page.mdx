@@ -10,6 +10,8 @@ SVG has a purpose-built element for exactly this job: `<marker>`. A `<marker>` i
   A `<marker>` is to a line's vertices what a `<symbol>` is to a spot on the canvas: define the artwork once, reference it by `id`, and let the browser do the positioning math.
 </Quote>
 
+If `<symbol>` and `<defs>` are new to you, [SVG Essentials: g, defs, symbol, and use](/post/svg/svg-essentials-g-defs-symbol-and-use) covers that define-once, reference-by-`id` pattern in depth — `<marker>` is the same idea, specialised for vertices.
+
 This post assumes you're comfortable with the coordinate and `viewBox` fundamentals from [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes), and with the `<path>`, `<line>`, `<polyline>`, and `<polygon>` elements markers attach to, covered in depth in [SVG Essentials: Mastering the Path Element](/post/svg/svg-essentials-mastering-the-path-element). With that groundwork in place, `<marker>` is a small element with an outsized payoff once you understand its handful of attributes.
 
 <RainbowDivider />
@@ -21,6 +23,8 @@ A marker is attached through one of three presentation properties, each targetin
 * **`marker-start`** — applies only to the **first** vertex.
 * **`marker-mid`** — applies to **every interior vertex** (every point that is neither the first nor the last).
 * **`marker-end`** — applies only to the **last** vertex.
+
+<MarkerVertexDiagram />
 
 Each of the three is set independently. You can point `marker-end` at an arrowhead, leave `marker-start` unset, and give `marker-mid` a completely different marker — nothing requires them to match, or even to all be defined.
 
@@ -47,8 +51,8 @@ Toggle each dropdown above between `none`, `dot`, and `arrow` on the same four-p
 * `marker-mid` places its marker on **both** interior vertices at once — there's no way to target just one of several interior points with `marker-mid` alone.
 * Setting any of the three to `none` removes just that attachment point; the other two are unaffected.
 
-<Info title="A closed polygon still has a start and an end">
-  A `<polygon>` draws a closing segment back to its first point automatically, but that closing segment doesn't invent a new vertex. The point you listed first in `points` is still where `marker-start` lands, and the point you listed last is still where `marker-end` lands — the auto-closed segment between them is just an ordinary segment, with no marker of its own.
+<Info title="A closed polygon ends where it started">
+  A `<polygon>` behaves like a path ending in a `Z` (closepath) command, and closing a subpath adds one more vertex: the end of the closing segment, back on the first point. So on a four-point polygon, `marker-start` **and** `marker-end` both land on the first point you listed, and the point you listed last becomes an ordinary interior vertex that gets `marker-mid` — exactly what the right half of the diagram above shows. The same applies to any `<path>` that ends in `Z`. If you want a marker on the last listed point and not on the first, use a `<polyline>` instead; [Polygon vs. Polyline](/post/svg/polygon-vs-polyline) covers the rest of the differences between the two.
 </Info>
 
 ### The marker Shorthand
@@ -56,8 +60,22 @@ Toggle each dropdown above between `none`, `dot`, and `arrow` on the same four-p
 If you want the same marker on all three positions, the `marker` shorthand property sets `marker-start`, `marker-mid`, and `marker-end` in one declaration:
 
 <CodeBlock language="xml">
-{`<path d="M10,80 L50,20 L90,80" stroke="#10b981" stroke-width="2" fill="none" marker="url(#dot)" />`}
+{`
+  <svg viewBox="0 0 100 100">
+    <style>
+      .dotted-route { marker: url(#dot); }
+    </style>
+    <defs>
+      <marker id="dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4">
+        <circle cx="5" cy="5" r="4" fill="#10b981" />
+      </marker>
+    </defs>
+    <path class="dotted-route" d="M10,80 L50,20 L90,80" stroke="#10b981" stroke-width="2" fill="none" />
+  </svg>
+`}
 </CodeBlock>
+
+Set the shorthand from CSS, as above, rather than as a `marker="..."` attribute. SVG 2 lists the three longhands as presentation attributes, but the shorthand is a CSS property, so the attribute form isn't something you can rely on across browsers. Writing out `marker-start`, `marker-mid`, and `marker-end` as attributes always works.
 
 In practice, the three longhand properties are what you reach for most often — real diagrams tend to want an arrow only at the end, or a dot only at the interior points, rather than the same shape everywhere.
 
@@ -73,7 +91,7 @@ Nothing surprising here: `id` is what `marker-start`, `marker-mid`, `marker-end`
 
 ### `viewBox`, `markerWidth`, and `markerHeight` — the Marker's Own Canvas
 
-A `<marker>` has its **own internal coordinate system**, defined by its own `viewBox` — completely separate from the coordinate system of the shape it's attached to. This works the same way a `<symbol>`'s `viewBox` does: you draw the marker's contents using whatever coordinate grid is convenient, and the browser scales that grid to fit inside a box sized by `markerWidth` and `markerHeight` (both default to `3`, in marker units — see [`markerUnits`](#markerunits) below).
+A `<marker>` has its **own internal coordinate system**, defined by its own `viewBox` — completely separate from the coordinate system of the shape it's attached to. This works the same way a `<symbol>`'s or a [`<pattern>`](/post/svg/svg-essentials-pattern-element)'s `viewBox` does: you draw the marker's contents using whatever coordinate grid is convenient, and the browser scales that grid to fit inside a box sized by `markerWidth` and `markerHeight` (both default to `3`, in marker units — see [`markerUnits`](#markerunits) below). If the `viewBox` and the box have different aspect ratios, `preserveAspectRatio` (default `xMidYMid meet`) decides how the grid fits, just as it does on `<svg>`.
 
 <CodeBlock language="xml">
 {`
@@ -83,50 +101,61 @@ A `<marker>` has its **own internal coordinate system**, defined by its own `vie
 `}
 </CodeBlock>
 
-Here the marker's artwork is drawn on a `0 0 10 10` grid — a triangle with its tip at `(10, 5)` — and that whole grid is scaled to render at `6 × 6` marker units.
+Here the marker's artwork is drawn on a `0 0 10 10` grid — a triangle with its tip at `(10, 5)` — and that whole grid is scaled to render at `6 × 6` marker units. With the default `markerUnits="strokeWidth"`, that means 6 stroke-widths square: on a line with `stroke-width="2"`, 12 user units.
 
 ### `refX` and `refY` — Anchoring the Marker to the Vertex
 
 This is the attribute that trips people up most, and it's the one that actually determines whether a marker looks right. `refX` and `refY` name a **point inside the marker's own `viewBox` coordinate space** — and that point, not the marker's top-left corner and not its geometric center, is what gets aligned to the vertex it's attached to.
 
 <Warning title="The default refX/refY is (0, 0)">
-  If you don't set `refX`/`refY`, they default to `(0, 0)` — the marker's top-left corner. For an arrowhead, that means the corner of its bounding box lands on the vertex, not the tip, and the whole shape visibly overshoots past where the line actually ends.
+  If you don't set `refX`/`refY`, they default to `(0, 0)` — the origin of the marker's `viewBox`, which for `0 0 10 10` is its top-left corner. For an arrowhead, that means the corner of its bounding box lands on the vertex, not the tip, and the whole shape sits visibly off to one side of the line.
 </Warning>
 
-For an arrowhead drawn with its tip at `(10, 5)` in a `0 0 10 10` viewBox, `refX="8" refY="5"` positions the reference point a little behind the very tip — so the tip sits just past the line's true endpoint, which reads visually as the tip terminating exactly where the line does, rather than the marker's tip and the line's end double-covering the same pixel with a slightly blunt seam. Setting `refX="10" refY="5"` (the tip's exact coordinate) is also valid and simply places the very point of the tip exactly on the vertex.
+<MarkerAnatomyDiagram />
 
-<CodeBlock language="text">
-{`
-  refX, refY = the point inside the marker's own viewBox
-               that gets aligned to the vertex it's attached to
-`}
-</CodeBlock>
+For an arrowhead drawn with its tip at `(10, 5)` in a `0 0 10 10` viewBox, there are two sensible choices, and the diagram above draws both at true scale:
+
+* **`refX="10" refY="5"`** — the tip's exact coordinate. The very point of the arrow lands on the vertex, which is geometrically precise. The catch is that the line's stroke also ends at that vertex, and a butt-capped stroke ends in a square exactly one `stroke-width` wide. Right at the tip the arrow is zero units wide, so the stroke's two corners poke out on either side of the point. On a thin line you'll never notice; on a thick one it looks like a notch.
+* **`refX="8" refY="5"`** — a point 2 units behind the tip. Now the line ends inside the arrow, at a spot where the triangle is 2 marker units wide. With `markerWidth="6"` that's `2 × 0.6 = 1.2` stroke-widths — wider than the stroke itself, so the stroke's square end is completely covered. The cost is that the tip now overshoots the vertex by those same 2 marker units (1.2 stroke-widths). When the arrow has to touch something exactly, such as a box edge in a flowchart, shorten the path by that amount.
+
+The rest of this post uses `refX="8"` throughout, because arrows on connector lines are usually thick enough for the notch to matter.
 
 <Info title="Think of it like transform-origin">
-  `refX`/`refY` plays a similar role to CSS's `transform-origin`: it doesn't move or resize the artwork itself, it just changes which point of that artwork lines up with the anchor (the vertex, for a marker; the element's box, for `transform-origin`).
+  `refX`/`refY` plays a similar role to CSS's `transform-origin`: it doesn't move or resize the artwork itself, it just changes which point of that artwork lines up with the anchor (the vertex, for a marker; the element's box, for `transform-origin`). It's also the pivot `orient` rotates around, which is why a badly placed reference point makes a rotated arrow swing off the line.
 </Info>
 
 <RainbowDivider />
 
 ## `orient`: auto and auto-start-reverse
 
-Without `orient`, a marker is drawn at a fixed angle — whatever angle its artwork was authored at — regardless of which direction the line is travelling at that vertex. That's rarely what you want for an arrowhead: a line that bends should have its arrow bend with it.
+Without `orient` (its default is `0`), a marker is drawn at a fixed angle — whatever angle its artwork was authored at — regardless of which direction the line is travelling at that vertex. That's rarely what you want for an arrowhead: a line that bends should have its arrow bend with it.
+
+<MarkerOrientDiagram />
 
 ### `orient="auto"` — Following the Line's Direction
 
-Setting `orient="auto"` on the `<marker>` rotates it, at render time, to match the **direction of travel** of the path at the vertex it's attached to. An arrowhead authored pointing "right" in its own `viewBox` will point wherever the line is actually heading — left, down, at a diagonal, whatever the geometry calls for — because the browser computes the tangent angle at that vertex and rotates the marker to match it.
+Setting `orient="auto"` on the `<marker>` rotates it, at render time, to match the **direction of travel** of the path at the vertex it's attached to. An arrowhead authored pointing "right" (along +x) in its own `viewBox` will point wherever the line is actually heading — left, down, at a diagonal, whatever the geometry calls for.
+
+"Direction of travel" means slightly different things at different vertices:
+
+* **At the first vertex**, it's the direction the first segment leaves in.
+* **At the last vertex**, it's the direction the last segment arrives in.
+* **At an interior vertex**, two segments meet, so there are two directions. `orient="auto"` uses the **bisector** of the incoming and outgoing directions, which splits the corner evenly. In the middle panel above, the path arrives heading up-right and leaves heading down-right, so the mid marker points straight right.
+* **On a curve**, the direction is the tangent of the curve at that end, not the straight line to the next point.
 
 <CodeBlock language="xml">
-{`<marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-  <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
-</marker>`}
+{`
+  <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+  </marker>
+`}
 </CodeBlock>
 
 This is why `orient="auto"` shows up on nearly every arrowhead marker you'll encounter — without it, an arrow only looks correct on lines running in the one direction it happened to be drawn for.
 
 ### `orient="auto-start-reverse"` — Two Outward-Pointing Ends from One Marker
 
-A double-headed line — arrows pointing outward at both ends — needs the start arrow rotated 180° relative to the end arrow, since "pointing along the direction of travel" at the start of a line means pointing backward out of it, not forward into it. `orient="auto-start-reverse"` handles exactly this: it behaves like `auto`, except that when the marker is used as `marker-start`, it's additionally flipped 180° first.
+A double-headed line — arrows pointing outward at both ends — needs the start arrow rotated 180° relative to the end arrow, since "pointing along the direction of travel" at the start of a line means pointing forward into the line, not backward out of it. `orient="auto-start-reverse"` handles exactly this: it behaves like `auto`, except that when the marker is used as `marker-start`, it's additionally flipped 180°.
 
 <Warning title="auto-start-reverse only reverses marker-start usage">
   `orient="auto-start-reverse"` is set on the `<marker>` element itself, and its 180° flip only applies when that marker is referenced through `marker-start`. If the exact same marker is also referenced through `marker-end` on the same shape, that `marker-end` instance behaves identically to plain `orient="auto"` — no flip. This asymmetry is what lets one marker definition serve both ends of a double-headed line correctly.
@@ -146,15 +175,17 @@ A double-headed line — arrows pointing outward at both ends — needs the star
 `}
 </CodeBlock>
 
-Both ends of that single straight line reference the same `#double-arrow` marker, and both arrows point outward — one pointing left, one pointing right — instead of both pointing in whatever direction the path's coordinates happen to run.
+Both ends of that single straight line reference the same `#double-arrow` marker, and both arrows point outward — one pointing left, one pointing right — instead of both pointing in whatever direction the path's coordinates happen to run. Many of the diagrams on this blog, such as the filter pipeline in [SVG Essentials: Filter Fundamentals](/post/svg/svg-essentials-filters-fundamentals), define their connector arrowheads exactly this way. One `auto-start-reverse` marker per diagram covers every connector, whichever end it's attached to.
 
 ### Fixed Angles
 
 `orient` also accepts a plain angle, like `orient="45"`, which rotates the marker by that many degrees and holds it there regardless of the line's direction. This is occasionally useful for a marker that's meant to look identical everywhere (a small compass rose, say) but it's the exception — for arrowheads and directional ticks, `auto` or `auto-start-reverse` is almost always the right choice.
 
+SVG 2 also allows CSS angle units, such as `orient="45deg"` or `orient="0.5turn"`. A bare number (degrees) is the most widely supported form, so stick to that unless you've tested the unit form in your target browsers.
+
 <InteractiveSvgPanel slug="marker-orient-units-demo" />
 
-The path above bends partway through, so its two ends travel in different directions. Switch `orient` to `auto` and both arrows rotate to match their own end's direction; switch to `0` and both point the same fixed way regardless of the bend — visibly wrong at one end or the other; switch to `auto-start-reverse` and the start arrow flips outward while the end arrow keeps behaving exactly like `auto`, exactly the asymmetry described above.
+The path above bends partway through, so its two ends travel in different directions. Switch `orient` to `auto` and both arrows rotate to match their own end's direction — the start arrow points into the line, because that's the direction of travel there. Switch to `0` and both point the same fixed way regardless of the bend, which looks wrong at one end or the other. Switch to `auto-start-reverse` and the start arrow flips outward while the end arrow keeps behaving exactly like `auto`, which is the asymmetry described above. Leave the other two controls alone for now; they belong to the next section.
 
 <RainbowDivider />
 
@@ -166,22 +197,129 @@ The path above bends partway through, so its two ends travel in different direct
 
 By default, a marker's `markerWidth`/`markerHeight` are expressed in multiples of the **`stroke-width`** of the element the marker is attached to. Practically, this means the marker scales up and down automatically as the line's stroke width changes — a thicker line gets a proportionally bigger arrowhead with no extra work, and a thinner line gets a proportionally smaller one. This is almost always what you want for an arrowhead: it should look like it belongs to the line, not like a fixed-size sticker sitting on top of it.
 
+The scaling applies to the marker's whole coordinate system, not just its outline. If the marker's own artwork has a stroke, say `stroke-width="1"` on the arrowhead path, that stroke grows too. A stroke that looks right on a 1px line becomes a heavy outline on a 6px line, because it's measured in the scaled marker units.
+
 ### `markerUnits="userSpaceOnUse"`
 
 Setting `markerUnits="userSpaceOnUse"` instead measures `markerWidth`/`markerHeight` in the ordinary user units of the coordinate system the marker is placed into — a fixed, absolute size that does **not** respond to the referencing element's `stroke-width` at all. Increase the stroke width and the line gets thicker while the marker stays exactly the same size.
 
-<CodeBlock language="text">
+<CodeBlock language="xml">
 {`
-  markerUnits="strokeWidth"     → marker size scales with stroke-width (default)
-  markerUnits="userSpaceOnUse"  → marker size is a fixed absolute size, always
+  <defs>
+    <!-- 3 × stroke-width: 3 units on a 1-wide line, 12 on a 4-wide line. -->
+    <marker id="dot-scaled" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3" markerHeight="3">
+      <circle cx="5" cy="5" r="4" fill="#10b981" />
+    </marker>
+
+    <!-- Always 8 user units, whatever the line's stroke-width. -->
+    <marker id="dot-fixed" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse">
+      <circle cx="5" cy="5" r="4" fill="#6366f1" />
+    </marker>
+  </defs>
 `}
 </CodeBlock>
 
-Use the demo above again, this time watching the **Stroke width** slider: with `markerUnits` set to `strokeWidth`, dragging it makes the arrowhead grow right along with the line. Switch to `userSpaceOnUse` and drag the same slider — the line gets thicker, but the arrowhead stays exactly the same size throughout.
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="400" height="200">
+    <defs>
+      <marker id="dot-scaled" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="3" markerHeight="3">
+        <circle cx="5" cy="5" r="4" fill="#10b981" />
+      </marker>
+      <marker id="dot-fixed" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse">
+        <circle cx="5" cy="5" r="4" fill="#6366f1" />
+      </marker>
+    </defs>
+    <!-- strokeWidth units: the dots grow with the line. -->
+    <path d="M20,15 L100,15 L180,15" stroke="currentColor" stroke-width="1" fill="none"
+      marker-start="url(#dot-scaled)" marker-mid="url(#dot-scaled)" marker-end="url(#dot-scaled)" />
+    <path d="M20,40 L100,40 L180,40" stroke="currentColor" stroke-width="4" fill="none"
+      marker-start="url(#dot-scaled)" marker-mid="url(#dot-scaled)" marker-end="url(#dot-scaled)" />
+    <!-- userSpaceOnUse: the dots stay the same size. -->
+    <path d="M20,65 L100,65 L180,65" stroke="currentColor" stroke-width="1" fill="none"
+      marker-start="url(#dot-fixed)" marker-mid="url(#dot-fixed)" marker-end="url(#dot-fixed)" />
+    <path d="M20,88 L100,88 L180,88" stroke="currentColor" stroke-width="4" fill="none"
+      marker-start="url(#dot-fixed)" marker-mid="url(#dot-fixed)" marker-end="url(#dot-fixed)" />
+  </svg>
+`}
+</SvgSnippet>
+
+The top two lines share `#dot-scaled`: the 1-wide line gets 3-unit dots, and the 4-wide line gets 12-unit dots that swallow the stroke. The bottom two share `#dot-fixed`, and every dot is 8 units across whatever the line's thickness.
+
+Use the orient demo above again, this time with the **Stroke width** slider. With `markerUnits` set to `strokeWidth`, dragging it makes the arrowheads grow right along with the line. Switch to `userSpaceOnUse` and drag the same slider — the line gets thicker, but the arrowheads stay exactly the same size throughout. The demo sets the fixed size to 12 user units, which is what 6 stroke-widths comes to at the default stroke width of 2, so the two modes only look different once you move the slider.
 
 <Info title="When userSpaceOnUse earns its keep">
   Reach for `userSpaceOnUse` when the marker itself is the thing that needs a consistent size — waypoint dots along route lines of varying thickness, for instance, where you want every dot to read as "the same dot" regardless of how bold any one segment's line is drawn.
 </Info>
+
+<RainbowDivider />
+
+## Colouring Markers
+
+Markers are where SVG's colour inheritance surprises people most, because it doesn't come from where you'd expect.
+
+### Inheritance Comes from the `<marker>`, Not the Line
+
+A marker's contents inherit properties such as `fill`, `stroke`, and `color` from the `<marker>` element's **own ancestors in the document tree**, not from the path that references it. The referencing path is not a parent of the marker's contents, so nothing flows from it:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 60">
+    <defs>
+      <!-- No fill set here, so the triangle inherits from <defs> and <svg>: the default, black. -->
+      <marker id="plain-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" />
+      </marker>
+    </defs>
+
+    <!-- fill and color on the line do NOT reach the arrowhead. -->
+    <g fill="#10b981" color="#10b981">
+      <path d="M10,30 L85,30" stroke="#10b981" stroke-width="2" marker-end="url(#plain-arrow)" />
+    </g>
+  </svg>
+`}
+</CodeBlock>
+
+That arrowhead renders black, not green. This is also why `fill="currentColor"` inside a marker is so useful for single-colour diagrams: `color` inherits from the marker's ancestors, which usually means from the `<svg>` and the page around it, so the arrow follows the text colour of the surrounding content and the site's theme. It won't follow a `color` set on one particular line, though.
+
+### `context-stroke` and `context-fill`
+
+SVG 2 added two paint values for exactly this problem. Inside a marker, `fill="context-stroke"` means "use the stroke paint of the element referencing me", and `context-fill` means the same for its fill. One arrowhead definition can then match every line colour it's attached to:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 120 60">
+    <style>
+      /* Browsers that don't understand context-stroke drop the second declaration and keep the first. */
+      .arrow-head { fill: #6366f1; fill: context-stroke; }
+    </style>
+    <defs>
+      <marker id="ctx-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path class="arrow-head" d="M0,0 L10,5 L0,10 Z" />
+      </marker>
+    </defs>
+    <path d="M10,20 L100,20" stroke="#6366f1" stroke-width="2" marker-end="url(#ctx-arrow)" />
+    <path d="M10,40 L100,40" stroke="#10b981" stroke-width="2" marker-end="url(#ctx-arrow)" />
+  </svg>
+`}
+</CodeBlock>
+
+Browser support for `context-stroke` and `context-fill` has historically been uneven, so test them in the browsers you target before relying on them. The double declaration above is the safe pattern: where the value is supported, each arrow matches its line; where it isn't, every arrow falls back to indigo instead of black. If every arrow has to match its line everywhere, the portable fallback is simply one marker per colour, such as `#arrow-indigo` and `#arrow-green`, each with its own hard-coded fill.
+
+### Softening an Arrowhead with `stroke-linejoin`
+
+A filled triangle has razor-sharp corners. Giving the marker's path a stroke in the same colour, with `stroke-linejoin="round"`, rounds them off:
+
+<CodeBlock language="xml">
+{`
+  <!-- viewBox padded by 1 on every side so the outline isn't clipped by the marker's own box. -->
+  <marker id="soft-arrow" viewBox="-1 -1 12 12" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" stroke="#6366f1" stroke-width="1.5" stroke-linejoin="round" />
+  </marker>
+`}
+</CodeBlock>
+
+Two things to watch. First, the outline straddles the triangle's edge, so half of it falls outside a `0 0 10 10` viewBox and gets clipped (see [paint order and bounds](#paint-order-and-bounds) below). That's why the viewBox is padded to `-1 -1 12 12`; `refX`/`refY` are still measured in the same coordinates, so they don't change. Second, the outline adds length to the tip, so with `refX="8"` the arrow now overshoots the vertex a little more than before. Under the default `markerUnits="strokeWidth"`, the outline also scales with the line, as described in the previous section.
 
 <RainbowDivider />
 
@@ -192,39 +330,47 @@ With all four pieces — `viewBox`/`markerWidth`/`markerHeight`, `refX`/`refY`, 
 **Step 1 — Draw the shape on its own small grid.**
 
 <CodeBlock language="xml">
-{`<marker id="arrow">
-  <path d="M0,0 L10,5 L0,10 Z" />
-</marker>`}
+{`
+  <marker id="arrow">
+    <path d="M0,0 L10,5 L0,10 Z" />
+  </marker>
+`}
 </CodeBlock>
 
-A simple triangle, tip pointing right, on an implied coordinate space. Nothing renders correctly yet — there's no `viewBox` telling the browser how big that space is meant to be.
+A simple triangle, tip pointing right. Without a `viewBox`, those coordinates are read directly in marker units and clipped to the default `3 × 3` box, so only a corner of the triangle shows.
 
 **Step 2 — Give it a `viewBox` and a render size.**
 
 <CodeBlock language="xml">
-{`<marker id="arrow" viewBox="0 0 10 10" markerWidth="6" markerHeight="6">
-  <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
-</marker>`}
+{`
+  <marker id="arrow" viewBox="0 0 10 10" markerWidth="6" markerHeight="6">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+  </marker>
+`}
 </CodeBlock>
 
 Now the triangle's `0 0 10 10` grid is scaled into a `6 × 6` marker-unit box.
 
-**Step 3 — Anchor the tip with `refX`/`refY`.**
+**Step 3 — Anchor it with `refX`/`refY`.**
 
 <CodeBlock language="xml">
-{`<marker id="arrow" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="8" refY="5">
-  <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
-</marker>`}
+{`
+  <marker id="arrow" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="8" refY="5">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+  </marker>
+`}
 </CodeBlock>
 
-Without this, the marker's top-left corner would land on the vertex, not the tip. `refX="8" refY="5"` lands the tip on the vertex instead.
+Without this, the marker's top-left corner would land on the vertex. `refX="8" refY="5"` puts a point on the arrow's centre line, 2 units behind the tip, on the vertex instead. The line's end is hidden inside the arrow, and the tip reaches just past the vertex. Use `refX="10"` if you need the tip exactly on the vertex and the line is thin enough that its end won't show.
 
 **Step 4 — Rotate it to match direction of travel.**
 
 <CodeBlock language="xml">
-{`<marker id="arrow" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="8" refY="5" orient="auto">
-  <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
-</marker>`}
+{`
+  <marker id="arrow" viewBox="0 0 10 10" markerWidth="6" markerHeight="6" refX="8" refY="5" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+  </marker>
+`}
 </CodeBlock>
 
 That's the complete, reusable definition. Attach it to a few different lines and it adapts to each one automatically:
@@ -252,20 +398,186 @@ That's the complete, reusable definition. Attach it to a few different lines and
 
 Every one of those three paths references the exact same `#arrow` definition, yet each arrowhead points along its own line's direction and is sized proportionally to its own line's stroke width — because `orient="auto"` and the default `markerUnits="strokeWidth"` are doing that adaptation automatically. Nothing about the marker definition itself changed between the three.
 
+**Step 5 — Compensate for the overshoot when the tip has to touch something.**
+
+With `refX="8"`, the tip lands 2 marker units past the vertex. In user units, that overshoot is:
+
+<CodeBlock language="text">
+{`
+  overshoot = (tip x − refX) × (markerWidth ÷ viewBox width) × stroke-width
+            = (10 − 8)       × (6 ÷ 10)                    × stroke-width
+            = 1.2 × stroke-width
+`}
+</CodeBlock>
+
+On a `stroke-width="1.5"` connector that's 1.8 units, so a line meant to end with its tip on a box edge at `x="140"` should stop at `x="138.2"`. The flowchart example further down does exactly that.
+
+<RainbowDivider />
+
+## Markers on Curves: marker-mid Only Sees Joints
+
+A marker's "vertices" are the points where one path segment ends and the next begins — not every point along the line, and not the control points of a curve. That matters for `marker-mid` on curved paths:
+
+* A path made of a single cubic `C` or quadratic `Q` command has exactly two vertices, its start and end. `marker-mid` never fires, however curvy the line looks.
+* Every additional segment adds one interior vertex at the join. The waypoint example further down, `M15,70 Q60,10 100,45 T185,20`, has two segments, so `marker-mid` paints once, at `(100, 45)`.
+
+To get a mid marker partway along a single curve, **subdivide** it: split the one curve into two that trace exactly the same shape and meet at the point you want. For a cubic split at its halfway parameter, the new control points are the midpoints of the old ones (de Casteljau's construction):
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 70" width="400" height="140">
+    <defs>
+      <marker id="curve-dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse">
+        <circle cx="5" cy="5" r="4" fill="#f59e0b" />
+      </marker>
+    </defs>
+    <!-- One cubic: two vertices, no interior vertex, so marker-mid never fires. -->
+    <path d="M10,35 C40,0 60,70 90,35" fill="none" stroke="currentColor" stroke-width="2"
+      marker-start="url(#curve-dot)" marker-mid="url(#curve-dot)" marker-end="url(#curve-dot)" />
+    <!-- The same curve split in two at its midpoint: identical shape, plus a vertex at (150, 35). -->
+    <path d="M110,35 C125,17.5 137.5,26.25 150,35 C162.5,43.75 175,52.5 190,35" fill="none" stroke="currentColor" stroke-width="2"
+      marker-start="url(#curve-dot)" marker-mid="url(#curve-dot)" marker-end="url(#curve-dot)" />
+  </svg>
+`}
+</SvgSnippet>
+
+Both curves have the same shape, but only the right one gets a middle dot. For evenly spaced markers along a long curve, such as arrows showing flow along a pipe, split it into as many segments as you need markers. If you're generating the path in code, that's easy to automate.
+
+<RainbowDivider />
+
+## Setting Markers from CSS
+
+`marker-start`, `marker-mid`, and `marker-end` are presentation attributes, which means they're also CSS properties. That's often the cleaner way to apply them across a whole diagram:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 80">
+    <style>
+      .connector { marker-end: url(#arrow); }
+      .connector.two-way { marker-start: url(#arrow); }
+      .connector.plain { marker-end: none; }
+      .route { marker: url(#waypoint); }
+    </style>
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+      </marker>
+      <marker id="waypoint" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" markerUnits="userSpaceOnUse">
+        <circle cx="5" cy="5" r="4" fill="#10b981" />
+      </marker>
+    </defs>
+
+    <path class="connector" d="M10,15 L90,15" stroke="#6366f1" fill="none" />
+    <path class="connector two-way" d="M10,30 L90,30" stroke="#6366f1" fill="none" />
+    <!-- The attribute loses: .connector.plain sets marker-end: none, so no arrow is drawn. -->
+    <path class="connector plain" d="M10,45 L90,45" stroke="#6366f1" fill="none" marker-end="url(#arrow)" />
+    <path class="route" d="M10,70 L50,55 L90,70" stroke="#10b981" stroke-width="2" fill="none" />
+  </svg>
+`}
+</CodeBlock>
+
+The precedence rules are the ones from [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes): presentation attributes sit at the very bottom of the cascade. **Any** CSS rule that sets a marker property, however low its specificity, overrides a `marker-end="..."` attribute, and an inline `style` overrides both. If an arrow refuses to appear or disappear when you change its attribute, look for a stylesheet rule setting the same property. And, as covered earlier, the `marker` shorthand belongs in CSS rather than in an attribute.
+
+<RainbowDivider />
+
+## Paint Order and Bounds
+
+### Markers Paint Last
+
+A marked element paints in three passes: its fill, then its stroke, then its markers. That's why an arrowhead covers the end of its line rather than sitting underneath it, and why the `refX="8"` trick works at all.
+
+The CSS `paint-order` property can change that order. `paint-order: markers` paints the markers first, then the fill and stroke on top of them:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 40">
+    <defs>
+      <marker id="halo-dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse">
+        <circle cx="5" cy="5" r="5" fill="#c7d2fe" />
+      </marker>
+    </defs>
+    <!-- A thick line drawn over its own dot, so the dot shows as a halo around the vertex. -->
+    <path d="M10,30 L50,10 L90,30" stroke="#6366f1" stroke-width="4" fill="none"
+      style="paint-order: markers;" marker-mid="url(#halo-dot)" />
+  </svg>
+`}
+</CodeBlock>
+
+It's rarely needed for arrowheads, but it's useful for vertex dots you want tucked behind a line.
+
+### Markers Don't Count Toward the Bounding Box
+
+`getBBox()` measures an element's geometry only, without its stroke or its markers. SVG 2 describes an options argument, `getBBox({ markers: true })`, but support for it is patchy, so test before relying on it. In practice, code that sizes a `viewBox` from `getBBox()` will crop arrowheads off.
+
+The same thing happens by hand. The outer `<svg>` clips everything outside its viewport, so an arrow at the very edge of the `viewBox` loses its tip:
+
+<CodeBlock language="xml">
+{`
+  <!-- The line ends at the right edge, so the overshooting tip is clipped. -->
+  <svg viewBox="0 0 100 20">
+    <defs>
+      <marker id="edge-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+      </marker>
+    </defs>
+    <path d="M0,10 L100,10" stroke="#6366f1" stroke-width="2" marker-end="url(#edge-arrow)" />
+  </svg>
+
+  <!-- Fix: pad the viewBox on the side the arrow points to (or stop the line short). -->
+  <!-- Same page, so #edge-arrow from the first <svg> is reachable here too. -->
+  <svg viewBox="0 0 106 20">
+    <path d="M0,10 L100,10" stroke="#6366f1" stroke-width="2" marker-end="url(#edge-arrow)" />
+  </svg>
+`}
+</CodeBlock>
+
+### The Marker's Own `overflow`
+
+A `<marker>`'s own rendering box (the `markerWidth × markerHeight` area) clips its content by default: the user-agent stylesheet sets `overflow: hidden` on `<marker>`, just as it does on nested `<svg>`, `<symbol>`, and `<pattern>`. If a marker's internal artwork extends past its declared `viewBox` — a stroke straddling the edge of the box, for instance — the part that spills over is silently clipped rather than rendered past the edge. If a marker looks like it's missing a sliver at its edge, this is almost always why. Either size the `viewBox` with a small margin, as the rounded arrowhead above does, or set `overflow="visible"` on the marker if the bleed is intentional. This is the same rectangular clipping that [SVG Essentials: clipPath and mask](/post/svg/svg-essentials-clippath-and-mask) lets you do deliberately, applied automatically.
+
+<RainbowDivider />
+
+## Animating Marked Paths
+
+Markers aren't placed once and frozen. They're recomputed from the path's current geometry every time it renders, so if the path's `d` is animated, every marker follows: it moves with its vertex and re-rotates to the new direction of travel.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 60">
+    <defs>
+      <marker id="swing-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+      </marker>
+    </defs>
+    <!-- Every keyframe uses the same M/L structure, so the browser can interpolate between them. -->
+    <path d="M10,30 L50,30 L90,30" stroke="#6366f1" stroke-width="2" fill="none"
+      marker-mid="url(#swing-arrow)" marker-end="url(#swing-arrow)">
+      <animate attributeName="d" dur="3s" repeatCount="indefinite"
+        values="M10,30 L50,30 L90,30; M10,30 L50,10 L90,50; M10,30 L50,30 L90,30" />
+    </path>
+  </svg>
+`}
+</CodeBlock>
+
+The interior arrow tracks the bisector and the end arrow tracks the last segment on every frame, with no extra work. It's the same idea as `<animateMotion rotate="auto">`, which rotates a moving element to follow the tangent of its motion path. [SVG Essentials: Native Animation with SMIL](/post/svg/svg-essentials-smil-animation) covers both `<animate>` on `d` and `<animateMotion>` in detail, including the rule that every keyframe needs the same command structure.
+
 <RainbowDivider />
 
 ## Marker Attributes at a Glance
 
-| Attribute | Set on | Purpose |
-| --- | --- | --- |
-| `marker-start` / `marker-mid` / `marker-end` | the shape (`path`, `line`, `polyline`, `polygon`) | Which vertices get a marker, and which `<marker>` each one references |
-| `marker` | the shape | Shorthand that sets all three of the above at once |
-| `id` | the `<marker>` | The name `marker-*` properties reference via `url(#id)` |
-| `viewBox` | the `<marker>` | The marker's own internal coordinate system |
-| `markerWidth` / `markerHeight` | the `<marker>` | The render size of that coordinate system, in marker units (default `3` each) |
-| `refX` / `refY` | the `<marker>` | The point inside the marker's own `viewBox` that aligns to the vertex |
-| `orient` | the `<marker>` | `auto` rotates to match travel direction; `auto-start-reverse` additionally flips `marker-start` usage 180°; a number holds a fixed angle |
-| `markerUnits` | the `<marker>` | Whether `markerWidth`/`markerHeight` scale with `stroke-width` (default) or stay a fixed `userSpaceOnUse` size |
+| Attribute | Set on | Default | Purpose |
+| --- | --- | --- | --- |
+| `marker-start` / `marker-mid` / `marker-end` | the shape (`path`, `line`, `polyline`, `polygon`) | `none` | Which vertices get a marker, and which `<marker>` each one references |
+| `marker` | the shape, from CSS | `none` | Shorthand that sets all three of the above at once |
+| `id` | the `<marker>` | — | The name `marker-*` properties reference via `url(#id)` |
+| `viewBox` | the `<marker>` | none (marker units map 1:1) | The marker's own internal coordinate system |
+| `preserveAspectRatio` | the `<marker>` | `xMidYMid meet` | How the `viewBox` fits the box when their aspect ratios differ |
+| `markerWidth` / `markerHeight` | the `<marker>` | `3` | The render size of that coordinate system, in marker units |
+| `refX` / `refY` | the `<marker>` | `0` | The point inside the marker's own `viewBox` that aligns to the vertex |
+| `orient` | the `<marker>` | `0` | `auto` rotates to match travel direction (the bisector at interior vertices); `auto-start-reverse` additionally flips `marker-start` usage 180°; a number holds a fixed angle |
+| `markerUnits` | the `<marker>` | `strokeWidth` | Whether `markerWidth`/`markerHeight` scale with `stroke-width` or stay a fixed `userSpaceOnUse` size |
+| `overflow` | the `<marker>` | `hidden` | Whether artwork outside the marker's box is clipped |
+| `context-stroke` / `context-fill` | `fill` or `stroke` inside the marker | — | Paint the marker with the referencing element's stroke or fill |
 
 <Info title="The mental checklist">
   **Where does it attach?** → `marker-start` / `marker-mid` / `marker-end`
@@ -277,6 +589,8 @@ Every one of those three paths references the exact same `#arrow` definition, ye
   **Which way does it face?** → `orient`
 
   **Does it scale with the line?** → `markerUnits`
+
+  **What colour is it?** → the marker's own ancestors, or `context-stroke`
 </Info>
 
 <RainbowDivider />
@@ -285,25 +599,41 @@ Every one of those three paths references the exact same `#arrow` definition, ye
 
 Three shapes account for the overwhelming majority of real-world marker usage, and all three follow directly from what's above.
 
-**Direction-indicating arrows on a flowchart's connecting lines.** Every box-to-box connector in a flowchart or a directed graph needs to show which way the relationship flows — exactly the `marker-end="url(#arrow)"` plus `orient="auto"` pattern from the practical example, just repeated across however many connector lines the diagram has.
+**Direction-indicating arrows on a flowchart's connecting lines.** Every box-to-box connector in a flowchart or a directed graph needs to show which way the relationship flows — exactly the `marker-end="url(#arrow)"` plus `orient="auto"` pattern from the practical example, just repeated across however many connector lines the diagram has. Each connector below starts on one box's edge and stops 1.8 units short of the next box's edge, so the overshooting tip lands exactly on it.
 
 <SvgSnippet>
 {`
-  <svg viewBox="0 0 220 90" width="440" height="180">
+  <svg viewBox="0 0 220 115" width="440" height="230" role="img" aria-labelledby="flow-title flow-desc">
+    <title id="flow-title">Approval flow</title>
+    <desc id="flow-desc">Start leads to Approve, which leads to Done.</desc>
     <defs>
       <marker id="flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
         <path d="M0,0 L10,5 L0,10 Z" fill="currentColor" />
       </marker>
     </defs>
+
+    <!-- Start: y 30–60, right edge at x 70. -->
     <rect x="10" y="30" width="60" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" />
-    <text x="40" y="49" font-size="9" text-anchor="middle" fill="currentColor">Start</text>
-    <path d="M70,45 L138,45" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#flow-arrow)" />
-    <rect x="140" y="10" width="70" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" />
-    <text x="175" y="29" font-size="9" text-anchor="middle" fill="currentColor">Approve</text>
-    <path d="M175,60 L175,72 L145,72 L145,64" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#flow-arrow)" />
+    <text x="40" y="48" font-size="9" text-anchor="middle" fill="currentColor">Start</text>
+
+    <!-- Start's right edge → Approve's left edge (x 140), stopped 1.8 short for the tip. -->
+    <path d="M70,45 L138.2,45" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#flow-arrow)" />
+
+    <!-- Approve: y 30–60, bottom edge at y 60. -->
+    <rect x="140" y="30" width="70" height="30" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <text x="175" y="48" font-size="9" text-anchor="middle" fill="currentColor">Approve</text>
+
+    <!-- Approve's bottom edge → down → left to Done's right edge (x 70), stopped 1.8 short. -->
+    <path d="M175,60 L175,92.5 L71.8,92.5" stroke="currentColor" stroke-width="1.5" fill="none" marker-end="url(#flow-arrow)" />
+
+    <!-- Done: y 80–105, vertical centre at y 92.5. -->
+    <rect x="10" y="80" width="60" height="25" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" />
+    <text x="40" y="95.5" font-size="9" text-anchor="middle" fill="currentColor">Done</text>
   </svg>
 `}
 </SvgSnippet>
+
+The second connector bends, and `orient="auto"` turns its arrow to point left along the final segment without any extra work.
 
 **Tick marks along an axis.** An axis line's interior points — the values you're labeling — are a natural fit for `marker-mid`: define one small perpendicular tick, and every interior point along the axis line gets it automatically, without a separate `<line>` per tick.
 
@@ -320,7 +650,7 @@ Three shapes account for the overwhelming majority of real-world marker usage, a
 `}
 </SvgSnippet>
 
-**Waypoint dots along a route line on a map.** A route drawn as a `<polyline>` or a curved `<path>` often needs to call out each stop along the way — a job for `marker-mid` (and often `marker-start`/`marker-end` too) referencing a small dot, sized with `userSpaceOnUse` so every waypoint reads as the same size regardless of how thick any one leg of the route is drawn.
+**Waypoint dots along a route line on a map.** A route drawn as a `<polyline>` or a curved `<path>` often needs to call out each stop along the way — a job for `marker-mid` (and often `marker-start`/`marker-end` too) referencing a small dot, sized with `userSpaceOnUse` so every waypoint reads as the same size regardless of how thick any one leg of the route is drawn. Remember that on a curved route, each stop needs to be a segment joint.
 
 <SvgSnippet>
 {`
@@ -330,11 +660,26 @@ Three shapes account for the overwhelming majority of real-world marker usage, a
         <circle cx="5" cy="5" r="4" fill="currentColor" />
       </marker>
     </defs>
+    <!-- Two segments (Q, then T), so one interior vertex at (100, 45) gets marker-mid. -->
     <path d="M15,70 Q60,10 100,45 T185,20" fill="none" stroke="currentColor" stroke-width="2"
       marker-start="url(#waypoint)" marker-mid="url(#waypoint)" marker-end="url(#waypoint)" />
   </svg>
 `}
 </SvgSnippet>
+
+<RainbowDivider />
+
+## Accessibility: an Arrow Is Only a Picture
+
+A marker is pure decoration as far as assistive technology is concerned. Screen readers don't announce markers, and nothing in the accessibility tree says which way an arrowhead points. In a flowchart, the direction of the arrows is often the whole meaning of the diagram, and none of it reaches a non-visual reader.
+
+So state the relationships in text:
+
+* Give the diagram `role="img"` with a `<title>` and a `<desc>` that spells out the flow, as the flowchart above does: "Start leads to Approve, which leads to Done."
+* Don't rely on the arrowhead alone to show direction when a visible label would help sighted readers too, such as "yes" and "no" on the branches of a decision.
+* For larger, interactive diagrams, per-element `<title>`s and ARIA attributes can describe individual connectors.
+
+[SVG Essentials: Metadata, Links, and Interactivity](/post/svg/svg-essentials-metadata-and-interactivity) covers `<title>`, `<desc>`, and ARIA labelling for SVG in depth.
 
 <RainbowDivider />
 
@@ -350,15 +695,20 @@ Three shapes account for the overwhelming majority of real-world marker usage, a
 
 ### Markers Only Work on `path`, `line`, `polyline`, and `polygon`
 
-`marker-start`/`marker-mid`/`marker-end` only have an effect on the four elements that are defined by a discrete sequence of vertices. A `<rect>`, `<circle>`, or `<ellipse>` has no equivalent notion of "first point," "interior points," and "last point" — their geometry is described by position-and-size or center-and-radius, not a vertex list — so setting a `marker-*` property on one of those elements is simply ignored; it isn't an error, it just does nothing.
-
-### `overflow` Defaults to Hidden
-
-A `<marker>`'s own rendering box (the `markerWidth × markerHeight` area) clips its content by default, the same as `<svg>` and `<symbol>` do. If a marker's internal artwork extends past its declared `viewBox`/`markerWidth`/`markerHeight` — a thick internal stroke straddling the edge of the box, for instance — the part that spills over is silently clipped rather than rendered past the edge. If a marker looks like it's missing a sliver at its edge, this is almost always why; either size the `viewBox` with a small margin, or set `overflow: visible` on the marker if the bleed is intentional.
+`marker-start`/`marker-mid`/`marker-end` only have an effect on the four elements that are defined by a discrete sequence of vertices. A `<rect>`, `<circle>`, or `<ellipse>` has no equivalent notion of "first point," "interior points," and "last point" — their geometry is described by position-and-size or center-and-radius, not a vertex list — so setting a `marker-*` property on one of those elements is simply ignored; it isn't an error, it just does nothing. If you need a marker on a rounded rectangle's outline, draw it as a `<path>` instead.
 
 ### `id` Collisions in Repeated Inline SVG
 
-Like every other feature that's referenced by `url(#id)` — gradients, `clipPath`, `<use>`/`<symbol>`, `<textPath>`'s `href` — a `<marker>`'s `id` has to be unique within the document. Render the same inline SVG component multiple times on one page without varying its marker `id`s, and every instance after the first either loses its marker or silently borrows another instance's definition, whichever the browser resolves the collision to. The fix is the same one that applies across this series: scope or generate unique `id`s per rendered instance rather than hardcoding one.
+Like every other feature that's referenced by `url(#id)` — gradients, `clipPath`, `<use>`/`<symbol>`, `<textPath>`'s `href` — a `<marker>`'s `id` has to be unique within the document. Render the same inline SVG component multiple times on one page without varying its marker `id`s, and every instance after the first either loses its marker or silently borrows another instance's definition, whichever the browser resolves the collision to. The fix is the same one that applies across this series: scope or generate unique `id`s per rendered instance rather than hardcoding one. The diagrams in this post prefix every marker `id` with the diagram's own name for exactly this reason.
+
+### Browser Support Caveats
+
+The core of `<marker>` — the three attachment properties, `viewBox`, `refX`/`refY`, `markerWidth`/`markerHeight`, `markerUnits`, and `orient="auto"` — has been reliable across browsers for many years. A few newer SVG 2 pieces deserve a test in your target browsers before you depend on them:
+
+* **`orient="auto-start-reverse"`** is well supported in current browsers, but older engines treated it as an invalid value, which falls back to the default `orient="0"`. If you support legacy browsers, the safe alternative is two markers, one drawn pointing each way.
+* **`context-stroke` / `context-fill`** have historically had the least consistent support. Use the CSS double declaration shown earlier, or one marker per colour.
+* **Angle units in `orient`** (`45deg`, `0.5turn`) are SVG 2 additions; a bare number of degrees is the portable form.
+* **`getBBox({ markers: true })`** isn't something to rely on; pad the `viewBox` by hand instead.
 
 <RainbowDivider />
 
@@ -366,11 +716,13 @@ Like every other feature that's referenced by `url(#id)` — gradients, `clipPat
 
 `<marker>` turns "draw this small shape at this vertex" from a manual, per-coordinate chore into a declarative attachment you set once and reuse everywhere:
 
-* **Attachment points:** `marker-start`, `marker-mid`, and `marker-end` each target a different subset of a shape's vertices, and each can reference a different marker (or none) independently.
-* **Defining the marker:** its own `viewBox` and `markerWidth`/`markerHeight` describe its internal artwork and render size, while `refX`/`refY` decide which point of that artwork actually lands on the vertex — almost always the critical detail for anything shaped like an arrow.
-* **`orient`:** `auto` rotates a marker to match the line's direction of travel; `auto-start-reverse` additionally flips a `marker-start` usage 180° so one definition can serve both ends of a double-headed line.
-* **`markerUnits`:** the default `strokeWidth` scales the marker proportionally with the line's stroke width; `userSpaceOnUse` holds it at a fixed absolute size regardless.
-* **Real-world use:** flowchart arrows, axis ticks, and route waypoints all reduce to the same handful of attributes covered here — see [SVG Essentials: Mastering the Path Element](/post/svg/svg-essentials-mastering-the-path-element) for the `<path>` mechanics markers are most often attached to.
-* **Edge cases:** markers only apply to vertex-based shapes, their own box clips overflow by default, and their `id`s carry the same collision caveat as every other referenced-by-`id` SVG feature.
+* **Attachment points:** `marker-start`, `marker-mid`, and `marker-end` each target a different subset of a shape's vertices, and each can reference a different marker (or none) independently. On a closed shape, the closing segment ends back on the first point, so `marker-end` lands there too.
+* **Defining the marker:** its own `viewBox` and `markerWidth`/`markerHeight` describe its internal artwork and render size, while `refX`/`refY` decide which point of that artwork actually lands on the vertex. For arrows, a point slightly behind the tip hides the line's end, at the cost of a small overshoot you can subtract from the path.
+* **`orient`:** `auto` rotates a marker to match the line's direction of travel, using the bisector at interior vertices; `auto-start-reverse` additionally flips a `marker-start` usage 180° so one definition can serve both ends of a double-headed line.
+* **`markerUnits`:** the default `strokeWidth` scales the marker, and any stroke inside it, proportionally with the line's stroke width; `userSpaceOnUse` holds it at a fixed absolute size regardless.
+* **Colour:** marker contents inherit from the `<marker>`'s own ancestors, not from the line; `context-stroke` fixes that where it's supported, and one marker per colour works everywhere.
+* **Curves and CSS:** `marker-mid` only fires at segment joints, so subdivide a curve to add one; marker properties can be set from CSS, and any CSS rule beats the attribute.
+* **Rendering:** markers paint after fill and stroke, are left out of `getBBox()`, get clipped at the `viewBox` edge and at their own box, and follow an animated `d` automatically.
+* **Real-world use:** flowchart arrows, axis ticks, and route waypoints all reduce to the same handful of attributes covered here — see [SVG Essentials: Mastering the Path Element](/post/svg/svg-essentials-mastering-the-path-element) for the `<path>` mechanics markers are most often attached to. Describe what the arrows mean in text, too, since a marker's direction is visual only.
 
 Next time a diagram needs an arrow on every connector or a chart needs a dot on every point, reach for one `<marker>` definition instead of computing each shape's position by hand.
