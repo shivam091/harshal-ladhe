@@ -2,15 +2,15 @@ import { buildPostMetadata } from "@/utils/post-metadata";
 
 export const metadata = buildPostMetadata("svg-essentials-pattern-element");
 
-So far in this series, every fill has been a single flat color or a smooth gradient. SVG has a third option that's easy to overlook: `<pattern>`, the native mechanism for **tiling** a fill. You define a small repeatable tile once — any SVG content at all, from a single dot to a cluster of shapes, text, or even a nested `<image>` — and then reference that tile from any shape's `fill` (or `stroke`) attribute. The browser repeats the tile automatically to cover the entire filled area, the same way a CSS `background-image` repeats a raster tile, except the tile itself is real, inspectable SVG markup living in the DOM.
+So far in this series, every fill has been a single flat color or a smooth gradient. SVG has a third option that's easy to overlook: `<pattern>`, the native mechanism for **tiling** a fill. You define a small repeatable tile once — any SVG content at all, from a single dot to a cluster of shapes, text, or even a nested `<image>` — and then reference that tile from any shape's `fill` (or `stroke`) attribute. The browser repeats the tile automatically to cover the entire painted area, the same way a CSS `background-image` repeats a raster tile, except the tile itself is real, inspectable SVG markup living in the DOM.
 
-That last part is what makes `<pattern>` worth learning on its own rather than reaching for a background image every time. A dot grid, a stripe texture, or a crosshatch fill built from `<pattern>` needs no image asset, no extra HTTP request, and can recolor itself with `currentColor` or a CSS custom property exactly like the rest of your SVG. If you haven't yet worked through the [coordinate system and viewBox fundamentals](/post/svg/svg-essentials-mastering-basic-shapes), it's worth doing that first — everything below assumes you're comfortable with user units and the top-left origin.
+That last part is what makes `<pattern>` worth learning on its own rather than reaching for a background image every time. A dot grid, a stripe texture, or a crosshatch fill built from `<pattern>` needs no image asset and no extra HTTP request, and it can take its colors from `currentColor` or a CSS custom property — with one important caveat about *where* those values are inherited from, covered in [Recoloring Patterns](#recoloring-patterns-what-inherits-from-where). If you haven't yet worked through the [coordinate system and viewBox fundamentals](/post/svg/svg-essentials-mastering-basic-shapes), it's worth doing that first — everything below assumes you're comfortable with user units and the top-left origin. Patterns are also paint servers in exactly the way gradients are, so [SVG Essentials: linearGradient, radialGradient, and stop](/post/svg/svg-essentials-gradients) is a useful companion: most of the units and `href` vocabulary carries straight over.
 
 <RainbowDivider />
 
 ## The Core Anatomy
 
-A `<pattern>` element has three moving parts: an `id` to reference it by, a `width`/`height` describing the size of one repeatable tile, and arbitrary SVG content as its children defining what that tile looks like. Like gradients, patterns are typically declared inside `<defs>` so they render nothing on their own — they only take effect once something references them.
+A `<pattern>` element has three moving parts: an `id` to reference it by, a `width`/`height` describing the size of one repeatable tile, and arbitrary SVG content as its children defining what that tile looks like. Like gradients, patterns are typically declared inside `<defs>` (see [g, defs, symbol, and use](/post/svg/svg-essentials-g-defs-symbol-and-use)) so they render nothing on their own — they only take effect once something references them.
 
 <CodeBlock language="xml">
 {`
@@ -28,45 +28,79 @@ A `<pattern>` element has three moving parts: an `id` to reference it by, a `wid
 
 Read that top to bottom:
 
-* **`<pattern id="dots" width="20" height="20">`** declares a tile named `dots` that is 20 × 20 user units.
-* **`<circle cx="10" cy="10" r="3" />`** is the tile's content — a single dot centered in that 20 × 20 square. Any valid SVG markup is fair game here: multiple shapes, `<text>`, `<g>` groups, gradients, even a nested `<image>` for a raster texture.
+* **`<pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">`** declares a tile named `dots` that is 20 × 20 user units. It's "user units" *only because* `patternUnits="userSpaceOnUse"` is set — the default is different, and [the next section](#patternunits-objectboundingbox-vs-userspaceonuse) explains why you'll usually want to override it.
+* **`<circle cx="10" cy="10" r="3" />`** is the tile's content — a single dot centered in that 20 × 20 square. Any valid SVG markup is fair game here: multiple shapes, `<text>`, `<g>` groups, shapes filled with gradients or other patterns, even a nested `<image>` for a raster texture.
 * **`fill="url(#dots)"`** on the `<rect>` is the reference. The browser lays the 20 × 20 tile down repeatedly, left to right and top to bottom, until it has covered the rectangle's entire fill area — exactly the same `url(#id)` syntax you already know from `fill="url(#myGradient)"`.
 
+Anything a tile's content draws outside its own `width` × `height` box is clipped away. Keep that in mind; it's the root of the [seamless tiling](#seamless-tiling) problem later on.
+
 <Info title="Not just fill">
-  `<pattern>` works anywhere a paint value is accepted — `fill="url(#dots)"` is the common case, but `stroke="url(#dots)"` tiles the same pattern along a shape's outline instead.
+  `<pattern>` works anywhere a paint value is accepted — `fill="url(#dots)"` is the common case, but `stroke="url(#dots)"` tiles the same pattern along a shape's outline instead. See [Patterns on Strokes](#patterns-on-strokes) for the details that differ.
 </Info>
 
-Try adjusting the tile's own dimensions and the dot's radius below — notice how the *spacing* between dots is entirely a function of the tile's `width`/`height`, while the dot's size is independent of it (up to the point where dots start overlapping):
+<Info title="defs is a convention, not a requirement">
+  A `<pattern>` declared outside `<defs>` still works — SVG never renders a `<pattern>` in place, wherever it lives. Keeping non-painting definitions like patterns, gradients, masks, and clip paths inside `<defs>` is simply the convention that keeps a document's actual visible markup easy to scan.
+</Info>
+
+### Where Tiles Start
+
+Here's the detail that trips almost everyone up the first time: with `patternUnits="userSpaceOnUse"`, the tile grid is **not** anchored to the corner of the shape it fills. It's anchored at the pattern's own `x`/`y` — which default to `0` — in the user coordinate system. The browser conceptually lays an infinite grid of tiles across the whole canvas starting at `(x, y)`, and the filled shape just reveals whichever part of that grid it happens to cover.
+
+<PatternTileGridDiagram />
+
+A rect at `x="22" y="22"` filled with a 40-unit tile therefore starts 22 units *into* a tile, not at the start of one, and any motif that sits near the tile's top-left corner gets cut along the rect's edges. Setting the pattern's `x`/`y` to the shape's corner (or to any value that differs from it by a whole number of tiles) lines the grid up:
+
+<CodeBlock language="xml">
+{`
+  <pattern id="dots-aligned" x="22" y="22" width="40" height="40" patternUnits="userSpaceOnUse">
+    <circle cx="20" cy="20" r="8" fill="#6366f1" />
+  </pattern>
+
+  <rect x="22" y="22" width="190" height="130" fill="url(#dots-aligned)" />
+`}
+</CodeBlock>
+
+The flip side is a feature: because every shape using the same `userSpaceOnUse` pattern samples the *same* grid, adjacent shapes — neighboring chart bars, tiles of a floor plan — line up seamlessly with each other, as if cut from one continuous sheet.
+
+Try adjusting the tile's own dimensions and the dot's radius below — notice how the *spacing* between dots is entirely a function of the tile's `width`/`height`, while the dot's size is independent of it (up to the point where dots start overlapping). Then uncheck "Anchor tiles to the rect" to drop the pattern's `x`/`y` and watch the dashed first tile jump back to the `(0,0)` origin, 5 units outside the rect's corner:
 
 <InteractiveSvgPanel slug="pattern-dot-grid-demo" />
-
-<Warning title="Don't forget defs">
-  A `<pattern>` declared outside `<defs>` still works — SVG doesn't strictly require it — but keeping non-painting definitions like patterns, gradients, masks, and clip paths inside `<defs>` is the convention that keeps a document's actual visible markup easy to scan. Nothing inside `<pattern>` renders in place; it only exists to be referenced.
-</Warning>
 
 <RainbowDivider />
 
 ## `patternUnits`: objectBoundingBox vs. userSpaceOnUse
 
-The `patternUnits` attribute controls what a pattern's `width` and `height` actually mean, and it's the exact same distinction that shows up on `gradientUnits` for `<linearGradient>`/`<radialGradient>`: the two accepted values are `objectBoundingBox` (the default) and `userSpaceOnUse`.
+The `patternUnits` attribute controls what a pattern's `x`, `y`, `width`, and `height` actually mean, and it's the exact same distinction that shows up on `gradientUnits` for `<linearGradient>`/`<radialGradient>`: the two accepted values are `objectBoundingBox` (the default) and `userSpaceOnUse`.
+
+<PatternUnitsDiagram />
 
 ### `objectBoundingBox` (the default)
 
-Left unset, `patternUnits` defaults to `objectBoundingBox`. In that mode, `width` and `height` are **fractions of the filled shape's own bounding box** — `0` to `1`, read as 0% to 100% — rather than absolute lengths.
+Left unset, `patternUnits` defaults to `objectBoundingBox`. In that mode, `x`, `y`, `width`, and `height` are **fractions of the filled shape's own bounding box** — typically `0` to `1`, read as 0% to 100% — rather than absolute lengths. Because they're measured from the bounding box, this is also the one mode where tiles *do* start at the shape's top-left corner.
+
+There's a catch that makes the "obvious" fractional example silently render nothing: `patternContentUnits` — the units of the tile's *content* — defaults to `userSpaceOnUse`, not `objectBoundingBox`. A `<circle cx="0.1" cy="0.1" r="0.05">` inside a fractional tile is therefore a circle a twentieth of a *user unit* across: invisible. To describe the content in fractions too, you have to opt in explicitly:
 
 <CodeBlock language="xml">
 {`
-  <pattern id="dots-fraction" width="0.2" height="0.2">
+  <pattern
+    id="dots-fraction"
+    width="0.2"
+    height="0.2"
+    patternContentUnits="objectBoundingBox"
+  >
+    <!-- 0.1 = 10% of the filled shape's bounding box: the centre of a 20%-wide tile -->
     <circle cx="0.1" cy="0.1" r="0.05" fill="#6366f1" />
   </pattern>
 `}
 </CodeBlock>
 
-Here, `width="0.2"` means "one tile spans 20% of whatever shape this pattern fills." A 100-unit-wide rectangle gets a 20-unit tile — 5 tiles across. Resize that same rectangle to 500 units wide, and the tile grows to 100 units — still 5 tiles across, because the tile count, not the tile's absolute size, is what stays fixed. That's the opposite of what "a 20px dot grid" usually means in practice: you want the dots to stay a real, fixed 20px apart regardless of how big the shape being filled happens to be.
+Here, `width="0.2"` means "one tile spans 20% of whatever shape this pattern fills," and with `patternContentUnits="objectBoundingBox"` the circle's coordinates are fractions of that same bounding box. A 100-unit-wide rectangle gets a 20-unit tile — 5 tiles across — with a dot of radius 5 in each. Resize that same rectangle to 500 units wide, and the tile grows to 100 units and the dots grow with it — still 5 tiles across, because the tile count, not the tile's absolute size, is what stays fixed. On a non-square shape, the fractions resolve differently on each axis, so those circles become ellipses.
+
+That's the opposite of what "a 20px dot grid" usually means in practice: you want the dots to stay a real, fixed 20px apart regardless of how big the shape being filled happens to be.
 
 ### `userSpaceOnUse`
 
-Setting `patternUnits="userSpaceOnUse"` makes `width` and `height` absolute lengths in the current user coordinate system — the same units your `cx`, `x`, `r`, and everything else in the SVG already use.
+Setting `patternUnits="userSpaceOnUse"` makes `x`, `y`, `width`, and `height` absolute lengths in the user coordinate system of the element *referencing* the pattern — the same units its `cx`, `x`, `r`, and everything else already use.
 
 <CodeBlock language="xml">
 {`
@@ -76,7 +110,9 @@ Setting `patternUnits="userSpaceOnUse"` makes `width` and `height` absolute leng
 `}
 </CodeBlock>
 
-Now a tile is a real 20 × 20 units no matter what it's applied to. Fill a 100-unit-wide rectangle and you get 5 tiles across; fill a 500-unit-wide one and you get 25 — the tile itself never changes size, only how many of them fit.
+Now a tile is a real 20 × 20 units no matter what it's applied to. Fill a 100-unit-wide rectangle and you get 5 tiles across; fill a 500-unit-wide one and you get 25 — the tile itself never changes size, only how many of them fit. And since the default `patternContentUnits` is also user space, the content coordinates just work, measured from the tile's own top-left corner.
+
+"The user coordinate system of the referencing element" includes that element's own `transform`. Rotate or scale the filled shape and a `userSpaceOnUse` pattern rotates and scales right along with it.
 
 <Info title="Which one do you actually want?">
   For gradients, `objectBoundingBox` is usually the right default — a gradient stretching to fit whatever it's painted on tends to be exactly the effect you want. Patterns flip that intuition: a "20-unit dot grid" or a "4px stripe" is almost always meant to be a fixed, literal size, which is what `userSpaceOnUse` gives you. In practice, reach for `patternUnits="userSpaceOnUse"` by default and only fall back to `objectBoundingBox` when you deliberately want the tile count — not the tile size — to stay constant as the target shape resizes.
@@ -88,28 +124,89 @@ Every demo in this post uses `userSpaceOnUse` for exactly that reason — it's w
 
 ## `patternContentUnits`
 
-`patternUnits` decides what the tile's outer `width`/`height` mean. A separate, much less commonly needed attribute — `patternContentUnits` — decides what coordinates *inside* the tile mean, independently of that outer size.
+`patternUnits` decides what the tile's outer `x`/`y`/`width`/`height` mean. A separate attribute — `patternContentUnits` — decides what coordinates *inside* the tile mean.
 
-Its default is `userSpaceOnUse`, meaning the pattern's content (the `<circle>`, `<rect>`, or whatever else lives inside it) is drawn using ordinary user-space coordinates, same as anywhere else in the document. That's almost always what you want, and it's why none of the examples above have needed to mention `patternContentUnits` at all.
+Its default is `userSpaceOnUse`: the pattern's content (the `<circle>`, `<rect>`, or whatever else lives inside it) is drawn in ordinary user units, with its origin at the tile's own top-left corner. That's almost always what you want, and it's why most examples never mention `patternContentUnits` at all.
 
-Set `patternContentUnits="objectBoundingBox"` and the *content's own coordinates* become fractions of the pattern tile's bounding box instead — a way to describe the tile's internal geometry proportionally rather than in absolute units, independent of whatever `patternUnits` did to the tile's outer size.
+Set `patternContentUnits="objectBoundingBox"` and the content's coordinates become fractions of **the bounding box of the element being filled** — not of the tile. That distinction matters the moment you mix modes:
 
 <CodeBlock language="xml">
 {`
   <pattern
-    id="proportional-tile"
+    id="mixed-units"
     width="20"
     height="20"
     patternUnits="userSpaceOnUse"
     patternContentUnits="objectBoundingBox"
   >
-    <!-- 0.5, 0.5 here means "the center of this tile," not the coordinate (0.5, 0.5) -->
+    <!-- cx="0.5" is half of the FILLED SHAPE's width, not half of this 20-unit tile -->
     <circle cx="0.5" cy="0.5" r="0.1" fill="#6366f1" />
   </pattern>
 `}
 </CodeBlock>
 
-This combination — an absolute, `userSpaceOnUse` tile size paired with proportional, `objectBoundingBox` content — is the case where `patternContentUnits` actually earns its keep: it lets you author a tile's internal layout once, as fractions of "the tile," and then resize the tile itself (via `width`/`height`) without having to rewrite every coordinate inside it. Outside of that specific need, leaving `patternContentUnits` at its `userSpaceOnUse` default and just writing normal coordinates is simpler and reads more clearly.
+Fill a 100 × 100 rect with `mixed-units` and that circle's center resolves to 50 units in, with a radius of 10 — well outside a 20-unit tile, so it's clipped away. Fill a 20 × 20 rect and the same attributes resolve to 10 units in: dead center, purely by coincidence. The tile size is fixed in user space but the content scales with the shape, so the combination is fragile: it only looks right for one specific shape size.
+
+The combination that *is* coherent is the one from the previous section — `objectBoundingBox` for both `patternUnits` and `patternContentUnits` — where tile and content scale together with the shape. And if what you really want is "author the tile's internals once in my own convenient units, then resize the tile freely," that's a job for `viewBox`, not `patternContentUnits`.
+
+### `viewBox` and `preserveAspectRatio` on a Pattern
+
+A `<pattern>` accepts a `viewBox`, and it works exactly like the `viewBox` on an `<svg>` or `<symbol>`: it defines an internal coordinate system for the tile's content, which is then scaled to fit the tile's `width` × `height`.
+
+<CodeBlock language="xml">
+{`
+  <pattern
+    id="scaled-motif"
+    viewBox="0 0 10 10"
+    width="24"
+    height="24"
+    patternUnits="userSpaceOnUse"
+  >
+    <!-- Authored in a 10 x 10 box, displayed in a 24 x 24 tile -->
+    <path d="M5 1 L9 9 L1 9 Z" fill="#6366f1" />
+  </pattern>
+`}
+</CodeBlock>
+
+Change `width`/`height` to `12` and the triangle shrinks to half size with the tile — the content never has to be touched. When the tile's aspect ratio doesn't match the `viewBox`, `preserveAspectRatio` decides what happens, with the same values you'd use on an `<svg>`: the default `xMidYMid meet` scales uniformly and centers the content, leaving empty space inside the tile, while `none` stretches it to fill the tile exactly.
+
+<Info title="viewBox wins over patternContentUnits">
+  When a `<pattern>` has a `viewBox`, its `patternContentUnits` is ignored — the `viewBox` already defines what the content's coordinates mean. Pick one mechanism per pattern.
+</Info>
+
+<RainbowDivider />
+
+## Seamless Tiling
+
+Because a tile's content is clipped to the tile's box, any shape that crosses a tile edge gets cut off at that edge — and since every tile is identical, the cut-off part doesn't reappear from the neighboring tile unless you draw it there yourself.
+
+<SeamlessTileDiagram />
+
+The fix is mechanical: for every shape that crosses an edge, draw a copy shifted one full tile width (or height) in the opposite direction, so the part clipped off one side re-enters from the other. A shape crossing a corner needs copies at all four corners. The classic staggered polka-dot pattern is exactly this — one dot in the center, plus a dot on each corner that's shared, quarter by quarter, between four neighboring tiles:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 120 60" width="480" height="240">
+    <defs>
+      <pattern id="polka-offset" width="20" height="20" patternUnits="userSpaceOnUse">
+        <!-- Centre dot: entirely inside the tile -->
+        <circle cx="10" cy="10" r="3.5" fill="#6366f1" />
+        <!-- Corner dots: each is clipped to a quarter, and four neighbouring tiles rebuild it -->
+        <circle cx="0" cy="0" r="3.5" fill="#6366f1" />
+        <circle cx="20" cy="0" r="3.5" fill="#6366f1" />
+        <circle cx="0" cy="20" r="3.5" fill="#6366f1" />
+        <circle cx="20" cy="20" r="3.5" fill="#6366f1" />
+      </pattern>
+    </defs>
+
+    <rect x="0" y="0" width="120" height="60" fill="url(#polka-offset)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<Warning title="Hairline seams">
+  Even with perfectly matched edges, a pattern can show faint lines between tiles when the tile size doesn't land on whole device pixels — a fractional `width`, an odd zoom level, or a non-integer device pixel ratio. Each tile's edge gets antialiased on its own, and two half-covered pixels don't add up to a solid one. Three things usually help: keep tile sizes at whole numbers at the scale you actually render; let content that touches an edge **overhang** it slightly (a stripe drawn as `x="-1" width="12"` in a 10-unit tile — the overhang is clipped anyway, so it costs nothing); and for axis-aligned stripes and grids, try `shape-rendering="crispEdges"` on the tile content. How visible seams are varies between browsers and displays, so check your target browsers at more than one zoom level.
+</Warning>
 
 <RainbowDivider />
 
@@ -133,21 +230,166 @@ This is the cleanest way to build a diagonal stripe pattern: define the stripe a
 `}
 </CodeBlock>
 
-The `<rect>` inside never changes — it's a flat horizontal band the full width of the tile. `patternTransform="rotate(45)"` is doing all the visual work, spinning the repeating grid 45 degrees so the stripes read as diagonal. Compare that to trying to draw a diagonal band directly with a rotated `<rect>` or a hand-computed parallelogram `<polygon>` inside the tile — `patternTransform` keeps the tile's content simple and puts the "which way does this face" decision in exactly one place.
+The `<rect>` inside never changes — it's a flat horizontal band the full width of the tile. `patternTransform="rotate(45)"` is doing all the visual work, spinning the repeating grid 45 degrees so the stripes read as diagonal. Compare that to trying to draw a diagonal band directly with a rotated `<rect>` or a hand-computed parallelogram `<polygon>` inside the tile — which would also need the seamless-edge copies from the previous section — whereas `patternTransform` keeps the tile's content simple and puts the "which way does this face" decision in exactly one place.
 
-Because `patternTransform` operates on the grid rather than the content, the same tile definition can produce a vertical stripe, a 45-degree diagonal, or a criss-cross weave just by changing the transform — no need to redraw the stripe itself for each variant. Try that live:
+Because `patternTransform` operates on the grid rather than the content, the same one-stripe tile can produce horizontal, vertical, or any diagonal stripe just by changing the angle — no need to redraw the stripe itself for each variant. Try that live:
 
 <InteractiveSvgPanel slug="pattern-diagonal-stripes-demo" />
 
-<Info title="patternTransform vs. rotating the fill target">
-  Rotating a `<rect transform="rotate(45)">` spins the shape itself — its edges, its bounding box, everything. `patternTransform="rotate(45)"` on the *pattern* only ever spins the tile grid the fill is made of; the shape being filled stays exactly where it was. Reach for `patternTransform` whenever the shape's outline needs to stay put and only the texture inside it should tilt.
+### What a Transform Can't Do: Crosshatch
+
+A transform maps one set of parallel stripes onto another set of parallel stripes — it can change their angle, spacing, or thickness, but it can never add a second direction. A crosshatch needs two directions, so it needs one of two approaches: a tile that already contains **two bands** (a horizontal one and a vertical one — a grid — which a 45° `patternTransform` then turns into a diagonal crosshatch), or **two patterns layered** on two copies of the shape, each hatched a different way.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 80" width="500" height="200">
+    <defs>
+      <!-- Option 1: one tile, two bands, rotated together -->
+      <pattern id="crosshatch-two-band" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="2" fill="#10b981" />
+        <rect width="2" height="10" fill="#10b981" />
+      </pattern>
+
+      <!-- Option 2: two single-direction patterns, layered -->
+      <pattern id="crosshatch-layer-a" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+        <rect width="10" height="2" fill="#6366f1" />
+      </pattern>
+      <pattern id="crosshatch-layer-b" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(-30)">
+        <rect width="10" height="2" fill="#6366f1" />
+      </pattern>
+    </defs>
+
+    <rect x="10" y="10" width="80" height="60" fill="url(#crosshatch-two-band)" />
+
+    <rect x="110" y="10" width="80" height="60" fill="url(#crosshatch-layer-a)" />
+    <rect x="110" y="10" width="80" height="60" fill="url(#crosshatch-layer-b)" />
+  </svg>
+`}
+</SvgSnippet>
+
+The single-tile version is lighter (one pattern, one shape), but its two directions are always at 90° to each other. The layered version costs a second shape, but each layer can have its own angle, spacing, and color.
+
+### Rotation Origin and Transform Order
+
+`patternTransform` transforms the pattern's coordinate system, and that coordinate system's origin is the user-space `(0,0)` — not the shape's center. `rotate(30)` therefore swings the whole grid around the canvas's top-left corner, so the texture inside a shape far from the origin appears to slide as well as turn as the angle changes. `rotate()` accepts an optional pivot, `rotate(angle cx cy)`, to spin the grid around a point of your choosing instead:
+
+<PatternTransformDiagram />
+
+<CodeBlock language="xml">
+{`
+  <!-- Rotates the grid around the centre of a rect at x=40 y=40, 180 x 120 -->
+  <pattern
+    id="stripes-centred"
+    width="10"
+    height="10"
+    patternUnits="userSpaceOnUse"
+    patternTransform="rotate(30 130 100)"
+  >
+    <rect width="10" height="4" fill="#10b981" />
+  </pattern>
+`}
+</CodeBlock>
+
+The shape's outline is identical in both panels; only the grid moved. For a static texture the pivot rarely matters visually — the stripes are just as diagonal either way — but it matters a lot when the angle is animated, or when you want a specific stripe to pass through a specific point.
+
+When `patternTransform` lists several functions, they compose the same way they do in `transform`: the list reads left to right, but the **rightmost function is applied to the tile first**. Order changes the result whenever the functions don't commute:
+
+<CodeBlock language="xml">
+{`
+  <!-- Rotate the grid 45deg, then shift the rotated grid 5 units right in user space -->
+  <pattern id="order-a" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="translate(5 0) rotate(45)">
+    <rect width="10" height="4" fill="#10b981" />
+  </pattern>
+
+  <!-- Shift 5 units along the tile's own x-axis first, then rotate - the shift ends up diagonal -->
+  <pattern id="order-b" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45) translate(5 0)">
+    <rect width="10" height="4" fill="#10b981" />
+  </pattern>
+`}
+</CodeBlock>
+
+A uniform `scale()` combined with a `rotate()` around the origin commutes, so `rotate(45) scale(2)` and `scale(2) rotate(45)` look the same; translations and non-uniform scales are where the order starts to show.
+
+<Info title="patternTransform vs. transforming the fill target">
+  Rotating a `<rect transform="rotate(45)">` spins the shape itself — its edges, its bounding box, and (because the pattern lives in that shape's user space) the pattern along with it. `patternTransform="rotate(45)"` on the *pattern* only ever spins the tile grid the fill is made of; the shape being filled stays exactly where it was. Reach for `patternTransform` whenever the shape's outline needs to stay put and only the texture inside it should tilt.
 </Info>
+
+<RainbowDivider />
+
+## Patterns on Strokes
+
+`stroke="url(#id)"` paints a shape's outline with a pattern, but it doesn't make the pattern *follow* the outline. The tiles are still laid down in the same fixed grid as a fill would use; the stroke just reveals the part of that grid it covers. A diagonal stripe pattern on a rectangle's stroke therefore looks like a diagonal-striped frame, not stripes running around the corners.
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 80" width="500" height="200">
+    <defs>
+      <pattern id="stroke-stripes" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="8" height="4" fill="#f59e0b" />
+      </pattern>
+    </defs>
+
+    <rect x="15" y="15" width="70" height="50" rx="6" fill="none" stroke="url(#stroke-stripes)" stroke-width="10" />
+    <line x1="115" y1="40" x2="185" y2="40" stroke="url(#stroke-stripes) #f59e0b" stroke-width="10" stroke-linecap="round" />
+  </svg>
+`}
+</SvgSnippet>
+
+Two details worth knowing:
+
+* **Use `userSpaceOnUse` on strokes.** `objectBoundingBox` is measured against the shape's *geometry* bounding box, which doesn't include the stroke's width — and for a perfectly horizontal or vertical `<line>`, that box has zero height or width, so there's nothing for a fraction to be a fraction *of*. The pattern won't paint.
+* **Give the reference a fallback.** Any paint that uses `url()` can list a fallback color after it — `stroke="url(#stroke-stripes) #f59e0b"`, as on the line above. If the reference can't be used (a missing `id`, or the zero-size case above), the fallback color paints instead of nothing.
+
+For a texture that genuinely runs *along* a path — dashes, repeated glyphs, chevrons — look at `stroke-dasharray` or [markers](/post/svg/svg-essentials-marker-element) instead; a pattern can't bend.
+
+<RainbowDivider />
+
+## Nested Patterns, Gradients, and Images
+
+A pattern's content is ordinary SVG, so shapes inside a tile can themselves be filled with a gradient — or with *another* pattern:
+
+<CodeBlock language="xml">
+{`
+  <defs>
+    <linearGradient id="nested-sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1" />
+      <stop offset="1" stop-color="#10b981" />
+    </linearGradient>
+
+    <pattern id="nested-fine-dots" width="4" height="4" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="0.8" fill="#1e1b4b" />
+    </pattern>
+
+    <!-- A 20 x 20 checker: one gradient-filled square, one square filled with a finer pattern -->
+    <pattern id="nested-tile" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="10" height="10" fill="url(#nested-sheen)" />
+      <rect x="10" y="10" width="10" height="10" fill="url(#nested-fine-dots)" />
+    </pattern>
+  </defs>
+
+  <rect width="200" height="100" fill="url(#nested-tile)" />
+`}
+</CodeBlock>
+
+The inner references resolve against the inner shapes: `nested-sheen` uses its default `objectBoundingBox` units, so it stretches across each 10 × 10 square, and `nested-fine-dots` is tiled in the tile's own content coordinates. The one hard rule is no cycles — a pattern can't end up referencing itself, directly or through a chain, and a circular reference is treated as an error rather than rendered.
+
+For photographic or hand-drawn textures, put an `<image>` inside the tile, sized to the tile:
+
+<CodeBlock language="xml">
+{`
+  <pattern id="paper-texture" width="64" height="64" patternUnits="userSpaceOnUse">
+    <image href="/textures/paper.png" width="64" height="64" />
+  </pattern>
+`}
+</CodeBlock>
+
+That brings back the raster tradeoffs — a real HTTP request, and a fixed resolution that blurs if the pattern is scaled up. For a truly seamless result, the image itself also has to be made to tile. [SVG Essentials: image and foreignObject](/post/svg/svg-essentials-image-and-foreignobject) covers `<image>` sizing, `preserveAspectRatio`, and loading behavior in depth.
 
 <RainbowDivider />
 
 ## Patterns Referencing Patterns with `href`
 
-Just like `<linearGradient>` and `<radialGradient>` can inherit stops from another gradient via `href`, a `<pattern>` can inherit its tile content from another `<pattern>` via `href`, overriding only the attributes it explicitly sets — most usefully `patternTransform` or `patternUnits`/`width`/`height` — without repeating the tile's markup.
+Just like `<linearGradient>` and `<radialGradient>` can inherit stops from another gradient via `href`, a `<pattern>` can inherit from another `<pattern>` via `href` — both its attributes and its tile content — overriding only what it explicitly sets.
 
 <CodeBlock language="xml">
 {`
@@ -166,21 +408,81 @@ Just like `<linearGradient>` and `<radialGradient>` can inherit stops from anoth
 `}
 </CodeBlock>
 
-`stripes-diagonal` and `stripes-coarse` never redeclare the `<rect>` — they inherit it from `#stripes-base` and layer their own `patternTransform` on top. This is the pattern equivalent of a gradient palette built from one base definition and several `href`-linked variants: define the tile's *content* once, then produce as many scale/rotation/orientation variants as you need by referencing it and overriding just the transform or the sizing attributes.
+`stripes-diagonal` and `stripes-coarse` never redeclare the `<rect>`, the tile size, or the units — they inherit all of it from `#stripes-base` and layer their own `patternTransform` on top. Define the tile's content once, then produce as many scale/rotation variants as you need.
 
-<Info title="Inheritance, not duplication">
-  Anything an `href`-linked pattern doesn't explicitly set — content, `width`, `height`, `patternUnits`, `patternContentUnits` — falls through from the referenced pattern. Set only what actually differs between variants, the same discipline that keeps `href`-linked gradients maintainable.
+The inheritance rules are specific, and worth knowing precisely:
+
+* **Attributes** inherit individually. Any of `x`, `y`, `width`, `height`, `patternUnits`, `patternContentUnits`, `patternTransform`, `viewBox`, and `preserveAspectRatio` that the referencing pattern doesn't set falls through from the referenced one.
+* **Children** inherit all-or-nothing. The referenced pattern's content is used *only if the referencing pattern has no children of its own*. Add even one child to `stripes-diagonal` and it stops inheriting the `<rect>` entirely — children replace, they never merge.
+* **Chains** work. A pattern can `href` a pattern that itself `href`s another; each missing attribute or missing content resolves up the chain (as long as it never loops back on itself).
+
+<Info title="href vs. xlink:href">
+  Plain `href` is the SVG 2 form and is what current browsers expect. Older renderers and some design tools and SVG libraries only understand the SVG 1.1 `xlink:href` (which also needs `xmlns:xlink="http://www.w3.org/1999/xlink"` on the root). If your SVG has to pass through older tooling, test there, and consider writing both attributes.
+</Info>
+
+<RainbowDivider />
+
+## Recoloring Patterns: What Inherits From Where
+
+A pattern's content is real SVG, so it can use `currentColor` or `var(--my-color)` for its fill. The catch is *where* those values come from: **pattern content inherits from the `<pattern>` element's own position in the document tree** — its ancestors, like `<defs>` and the `<svg>` — **not from the shape that references it.** A `url(#id)` reference doesn't re-parent the tile under the shape it paints.
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 200 80" style="color: #6366f1">
+    <defs>
+      <pattern id="dots-current" width="10" height="10" patternUnits="userSpaceOnUse">
+        <circle cx="5" cy="5" r="2" fill="currentColor" />
+      </pattern>
+    </defs>
+
+    <!-- Both render indigo: currentColor resolves at the <pattern>, which inherits the <svg>'s color -->
+    <rect x="10" y="10" width="80" height="60" fill="url(#dots-current)" color="crimson" />
+    <rect x="110" y="10" width="80" height="60" fill="url(#dots-current)" color="teal" />
+  </svg>
+`}
+</CodeBlock>
+
+The `color` on each `<rect>` is simply ignored by the pattern. So what *does* work?
+
+* **Recolor the whole SVG from an ancestor.** Setting `color` or a custom property on the `<svg>` (or any ancestor of the `<pattern>`) does flow into the tile — which is exactly what theming needs. A dark-mode rule that changes `color` on the `<svg>` recolors every `currentColor` pattern inside it. For a named color, use a property rather than a presentation attribute: `<svg style="--dot-color: #6366f1">` with `<circle style="fill: var(--dot-color)">` in the tile.
+* **One pattern per color.** When two shapes in the same SVG genuinely need different colors, give them different patterns. In a component, that's a small loop that emits one `<pattern>` per series color, each with its own unique id.
+* **Put the color on the shape and the texture on top.** Fill the shape with its solid color as usual, then paint a second copy of the same geometry with a pattern made of a translucent white (or black) texture. The color comes from the shape, the texture from one shared pattern — so one pattern serves every color:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 160 80" width="480" height="240">
+    <defs>
+      <pattern id="texture-overlay" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="2" fill="white" fill-opacity="0.5" />
+      </pattern>
+    </defs>
+
+    <!-- Each bar: a solid color, then the same shared texture layered on top -->
+    <rect x="10" y="10" width="40" height="60" fill="#6366f1" />
+    <rect x="10" y="10" width="40" height="60" fill="url(#texture-overlay)" />
+
+    <rect x="60" y="10" width="40" height="60" fill="#f59e0b" />
+    <rect x="60" y="10" width="40" height="60" fill="url(#texture-overlay)" />
+
+    <rect x="110" y="10" width="40" height="60" fill="#10b981" />
+    <rect x="110" y="10" width="40" height="60" fill="url(#texture-overlay)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<Info title="What about context-fill?">
+  SVG 2 defines `context-fill` and `context-stroke` keywords that let a referenced graphic pick up the referencing element's paint — but they're specified for markers (and SVG glyphs in fonts), not for pattern content. Don't rely on them to recolor a `<pattern>`; use one of the approaches above.
 </Info>
 
 <RainbowDivider />
 
 ## A Practical Example: Textured Backgrounds and Data Viz
 
-Color alone is a fragile way to distinguish data series — it fails for colorblind readers, disappears entirely in grayscale print, and is the first thing to go when someone screenshots a chart into a black-and-white document. A hatched or striped `fill` gives a series a second, non-color channel to be recognized by, on top of whatever color it's also given.
+Color alone is a fragile way to distinguish data series — it's hard for readers with color vision deficiencies, disappears entirely in grayscale print, and is the first thing to go when someone screenshots a chart into a black-and-white document. A hatched or striped `fill` gives a series a second, non-color channel to be recognized by, on top of whatever color it's also given. The texture only means something, though, if the reader can map it back to a series — so the chart below pairs it with a legend whose swatches use the very same patterns.
 
 <SvgSnippet>
 {`
-  <svg viewBox="0 0 160 100" width="480" height="300">
+  <svg viewBox="0 0 160 120" width="480" height="360">
     <defs>
       <pattern id="hatch-a" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
         <rect width="6" height="3" fill="#6366f1" />
@@ -193,20 +495,32 @@ Color alone is a fragile way to distinguish data series — it fails for colorbl
     <!-- Baseline -->
     <line x1="10" y1="90" x2="150" y2="90" stroke="currentColor" stroke-width="1" opacity="0.4" />
 
-    <!-- Series A bars — hatched one direction -->
-    <rect x="20" y="40" width="18" height="50" fill="url(#hatch-a)" stroke="#4338ca" stroke-width="1" />
-    <rect x="50" y="25" width="18" height="65" fill="url(#hatch-a)" stroke="#4338ca" stroke-width="1" />
-    <rect x="80" y="55" width="18" height="35" fill="url(#hatch-a)" stroke="#4338ca" stroke-width="1" />
+    <!-- Group 1 -->
+    <rect x="20" y="40" width="16" height="50" fill="url(#hatch-a)" stroke="#4338ca" stroke-width="1" />
+    <rect x="38" y="15" width="16" height="75" fill="url(#hatch-b)" stroke="#b45309" stroke-width="1" />
 
-    <!-- Series B bars — hatched the opposite direction, distinguishable even in grayscale -->
-    <rect x="42" y="15" width="18" height="75" fill="url(#hatch-b)" stroke="#b45309" stroke-width="1" opacity="0.85" />
-    <rect x="72" y="50" width="18" height="40" fill="url(#hatch-b)" stroke="#b45309" stroke-width="1" opacity="0.85" />
-    <rect x="102" y="35" width="18" height="55" fill="url(#hatch-b)" stroke="#b45309" stroke-width="1" opacity="0.85" />
+    <!-- Group 2 -->
+    <rect x="64" y="25" width="16" height="65" fill="url(#hatch-a)" stroke="#4338ca" stroke-width="1" />
+    <rect x="82" y="50" width="16" height="40" fill="url(#hatch-b)" stroke="#b45309" stroke-width="1" />
+
+    <!-- Group 3 -->
+    <rect x="108" y="55" width="16" height="35" fill="url(#hatch-a)" stroke="#4338ca" stroke-width="1" />
+    <rect x="126" y="35" width="16" height="55" fill="url(#hatch-b)" stroke="#b45309" stroke-width="1" />
+
+    <!-- Legend: swatches use the same patterns as the bars they describe -->
+    <rect x="30" y="100" width="10" height="10" fill="url(#hatch-a)" stroke="#4338ca" stroke-width="1" />
+    <text x="44" y="108" font-size="7" fill="currentColor">Series A</text>
+    <rect x="90" y="100" width="10" height="10" fill="url(#hatch-b)" stroke="#b45309" stroke-width="1" />
+    <text x="104" y="108" font-size="7" fill="currentColor">Series B</text>
   </svg>
 `}
 </SvgSnippet>
 
-Both series are already colored differently (indigo vs. amber), but the `patternTransform="rotate(45)"` / `rotate(-45)` pair on `hatch-a` and `hatch-b` means the two series are still distinguishable by texture alone — a genuinely colorblind-accessible and print-safe chart, without touching the color choice at all. The same technique works for a subtle background texture behind a card or section: a low-contrast dot grid or faint diagonal weave fills a `<rect>` the same way a solid color would, just with more visual interest and zero image requests.
+Both series are already colored differently (indigo vs. amber), but the `patternTransform="rotate(45)"` / `rotate(-45)` pair on `hatch-a` and `hatch-b` means the two series stay distinguishable by texture direction too. Pattern plus legend is a real help for colorblind readers and grayscale print — it isn't a guarantee on its own; direct labels on the bars, sufficient contrast, and an accessible text alternative still matter (more in [Accessibility](#accessibility)). Because every bar shares one `userSpaceOnUse` grid, the hatching also lines up from bar to bar, which reads as calmer than each bar starting its stripes at a different phase.
+
+With more than two or three series, the [overlay approach](#recoloring-patterns-what-inherits-from-where) scales better: give each series its color as a solid fill and vary only the texture pattern layered over it — stripes, dots, crosshatch, none — so color and texture become two independent channels you can assign separately.
+
+The same technique works for a subtle background texture behind a card or section: a low-contrast dot grid or faint diagonal weave fills a `<rect>` the same way a solid color would, just with more visual interest and zero image requests.
 
 <RainbowDivider />
 
@@ -214,9 +528,10 @@ Both series are already colored differently (indigo vs. amber), but the `pattern
 
 `<pattern>` earns its place over a flat fill or a raster background image in a few recurring situations:
 
-* **Chart fills that must stay distinguishable without color.** Hatching or stripe direction is a second visual channel color-only encodings don't have — essential for accessible or print/grayscale-safe data visualization.
+* **Chart fills that must stay distinguishable without color.** Hatching or stripe direction is a second visual channel color-only encodings don't have — a strong aid for accessible or print/grayscale-friendly data visualization when paired with a legend.
 * **Decorative background textures with no image asset.** A dot grid, herringbone, or crosshatch behind a hero section or card is pure vector markup — no image request, no raster scaling artifacts, infinitely resizable.
-* **Any repeating motif that should recolor with the rest of your SVG.** Because a pattern's content is real SVG, it can use `currentColor` or `var(--my-css-variable)` for its fill/stroke, meaning a theme change or a CSS custom property update recolors the tile exactly the same way it recolors every other shape in the document — something a baked raster image or a data-URI can't do without regenerating the image itself.
+* **Repeating motifs that follow your theme.** Pattern content can use `currentColor` or `var(--my-css-variable)`, and a value set on the `<svg>` or another ancestor of the `<pattern>` flows into the tile — so a theme change recolors it along with everything else, something a baked raster image can't do. Just remember it's the pattern's ancestors that count, not the shape using it; per-shape colors need [one of the workarounds](#recoloring-patterns-what-inherits-from-where).
+* **Masks and clip effects with texture.** A pattern-filled shape inside a `<mask>` produces a textured reveal — halftone fades, striped cut-outs. [SVG Essentials: clipPath and mask](/post/svg/svg-essentials-clippath-and-mask) covers how masks read their content's luminance.
 
 <RainbowDivider />
 
@@ -224,21 +539,40 @@ Both series are already colored differently (indigo vs. amber), but the `pattern
 
 A few practical caveats worth knowing before shipping `<pattern>` into production:
 
-**ID collisions.** Every `<pattern>` needs a unique `id` within the document, and that `id` is exactly what `fill="url(#id)"` targets. If the same inline SVG markup — say, a reusable icon or chart component — gets rendered more than once on a page with a hardcoded pattern `id`, the second instance's pattern silently collides with the first's. This is the identical caveat that applies to gradients and clip paths: generate unique ids at render time (a component-scoped `useId()`, a counter, anything non-static) for any inline SVG that might appear more than once.
+**ID collisions.** Every `<pattern>` needs a unique `id` within the document, and that `id` is exactly what `fill="url(#id)"` targets. If the same inline SVG markup — say, a reusable icon or chart component — gets rendered more than once on a page with a hardcoded pattern `id`, the instances collide and every `url(#id)` resolves to whichever definition the browser finds first. This is the identical caveat that applies to gradients and clip paths: generate unique ids at render time (a component-scoped `useId()`, a counter, anything non-static) for any inline SVG that might appear more than once.
 
-**Tiny tiles are expensive at scale.** A pattern is tiled at the pixel level by the browser's rasterizer — a very small tile (say, a 2-unit dot grid) covering a very large filled area, especially under heavy zoom or on a high-DPI display, means the browser is repeating that tile an enormous number of times per frame. This rarely matters for a chart bar or a card background, but it's worth watching for a full-viewport texture or anything that scales dramatically (a zoomable canvas, a pinch-to-zoom diagram) — a coarser tile, or precomputing a simpler fill at extreme zoom levels, keeps rendering smooth.
+**What actually costs performance.** Browsers commonly render a pattern by rasterizing one tile and repeating that bitmap, so the *number* of tiles on screen is usually cheap. The costs that do show up are:
 
-<Warning title="Pattern vs. raster performance is not free either way">
-  A `<pattern>` isn't automatically cheaper than a raster background at every scale — very small, very complex tiles rasterized across a huge area can cost more than a single pre-rendered image would. The tradeoff is DOM integration and scalability, not an unconditional performance win.
-</Warning>
+* **Complex tile content.** Filters, many shapes, large embedded images, or nested patterns inside a tile make that one rasterization expensive.
+* **Re-rasterizing on scale.** Zooming, pinch-to-zoom, or animating a `transform: scale()` can force the tile to be re-rendered at each new resolution — noticeable on a large, zoomable canvas.
+* **Rotated and transformed patterns.** A `patternTransform` rotation means every repeated tile has to be resampled at an angle rather than copied pixel-for-pixel, which is more work and can soften fine detail.
+* **Animating the pattern itself.** Changing a pattern's attributes or content every frame invalidates the cached tile and every shape that uses it.
 
-**CSS `background-image` with a data-URI SVG is a different tool for a similar look.** You can absolutely build the same dot grid or stripe texture as a data-URI SVG in a CSS `background-image`, and for a purely decorative, non-interactive background that never needs to change color, that's often simpler — no `<defs>`, no `id` management, no risk of collision. Reach for a real `<pattern>` element instead specifically when:
+Exactly how each browser caches and repeats tiles is an implementation detail, so if a textured surface is large or animated, profile it in your target browsers rather than assuming.
 
-* The fill needs to respond to `currentColor` or a CSS custom property from the surrounding document — a data-URI is a static, opaque string baked at author time; a `<pattern>` is live DOM that inherits and recomputes like everything else.
-* The same tile needs to be reused across multiple, differently-shaped elements in the same document (several chart bars, a family of icons) — one `<pattern>` definition referenced by several `fill="url(#id)"` attributes, versus duplicating the equivalent data-URI string in every CSS rule.
+**Moiré at small scales.** A fine, regular pattern — 2-unit stripes, a tight dot grid — interferes with the display's pixel grid once it's scaled down toward a pixel or two per tile, producing moiré bands or shimmer, especially while it's being scaled or scrolled. Keep tiles comfortably larger than a few device pixels at the smallest size they'll ever render, and consider swapping a fine hatch for a coarser one (or a solid fill) in thumbnails and sparklines.
+
+**Seams at fractional sizes.** Covered in [Seamless Tiling](#seamless-tiling): whole-number tile sizes and slightly overhanging edge content avoid most hairline gaps.
+
+**CSS `background-image` with a data-URI SVG is a different tool for a similar look.** You can absolutely build the same dot grid or stripe texture as a data-URI SVG in a CSS `background-image`, and for a purely decorative background that never needs to change color, that's often simpler — no `<defs>`, no `id` management, no risk of collision. Reach for a real `<pattern>` element instead specifically when:
+
+* The fill needs to follow `currentColor` or a CSS custom property set on the surrounding SVG — a data-URI is a static string baked at author time and can't see the page's CSS; a `<pattern>` is live DOM that inherits from its ancestors like everything else.
+* The same tile needs to be reused across multiple, differently-shaped elements in the same SVG (several chart bars, a family of icons) — one `<pattern>` definition referenced by several `fill="url(#id)"` attributes, versus duplicating the equivalent data-URI string in every CSS rule.
+* The fill has to paint an SVG shape — a `<path>`, a chart bar, a stroke — rather than a rectangular HTML box.
 * The tile itself needs to be data-driven — generated or adjusted at runtime from JavaScript, the same way any other SVG element can be — which a baked data-URI string makes far more awkward.
 
 If none of those apply, a CSS background image is a perfectly reasonable, often simpler choice. If any of them do, `<pattern>` is doing something a data-URI structurally can't.
+
+<RainbowDivider />
+
+## Accessibility
+
+A pattern is paint, and paint carries no meaning to assistive technology — a screen reader announces nothing about stripes or dots. That shapes how patterns should be used:
+
+* **Never let texture be the only key.** In a chart, a hatch pattern is a *redundant* cue for sighted readers. The data itself needs a text path too: a legend with text labels, direct labels on the marks where they fit, and an accessible name and description for the chart as a whole — the `<title>`, `<desc>`, and ARIA techniques in [SVG Essentials: Metadata, Links, and Interactivity](/post/svg/svg-essentials-metadata-and-interactivity).
+* **Legend swatches should use the same pattern as the marks.** A legend showing a flat color for a hatched series forces readers to match on color alone, which defeats the purpose.
+* **Keep textures behind text quiet.** A busy, high-contrast texture behind a label or paragraph hurts legibility far more than its average color suggests: contrast has to hold against the darkest *and* lightest parts of the texture, not the blend. Keep background textures low-contrast, or put text on a solid backing panel over the texture.
+* **Mind motion.** An animated pattern — scrolling stripes, a shimmering dot grid — is motion like any other; respect `prefers-reduced-motion` by stopping or removing the animation.
 
 <RainbowDivider />
 
@@ -246,10 +580,13 @@ If none of those apply, a CSS background image is a perfectly reasonable, often 
 
 `<pattern>` rounds out SVG's paint model alongside solid fills and gradients — a genuine tiling mechanism, living in the DOM, with no image asset required:
 
-* **Core anatomy:** a `<pattern id="..." width="..." height="...">` living in `<defs>`, with arbitrary SVG content as its children, referenced from any shape via `fill="url(#id)"` (or `stroke="url(#id)"`).
-* **`patternUnits`:** the default `objectBoundingBox` makes `width`/`height` fractions of the filled shape, so the tile count stays fixed as the shape resizes; `userSpaceOnUse` — what you'll reach for most of the time — makes them absolute, so a tile stays a literal fixed size regardless of the shape it fills.
-* **`patternContentUnits`:** a separate, rarely-needed setting for the tile's *internal* content coordinates, useful mainly when you want an absolute tile size but proportional internal geometry.
-* **`patternTransform`:** rotates, skews, or scales the whole tile grid independently of the tile's own content — the cleanest way to build a diagonal stripe from a plain horizontal one.
-* **`href` inheritance:** a pattern can inherit another pattern's tile content and override just its transform or units, the same "define once, vary the presentation" model gradients use.
-* **Practical use:** hatched chart fills for colorblind- and print-safe data visualization, and decorative textures with zero image requests and full `currentColor`/CSS-variable support.
-* **Production caveats:** unique `id`s for repeated inline SVG, a coarser tile for anything that scales dramatically, and a real `<pattern>` — not a CSS data-URI — whenever the fill needs to respond to the surrounding document's colors or be reused across multiple shapes.
+* **Core anatomy:** a `<pattern id="..." width="..." height="...">` (conventionally in `<defs>`), with arbitrary SVG content as its children, referenced from any shape via `fill="url(#id)"` or `stroke="url(#id)"`. Content outside the tile is clipped.
+* **Where tiles start:** with `userSpaceOnUse`, the grid is anchored at the pattern's `x`/`y` in user space (default `(0,0)`), not at the shape's corner — set `x`/`y` to align them.
+* **`patternUnits`:** the default `objectBoundingBox` makes `x`/`y`/`width`/`height` fractions of the filled shape, so the tile count stays fixed as the shape resizes; `userSpaceOnUse` — what you'll reach for most of the time — makes them absolute, so a tile stays a literal fixed size.
+* **`patternContentUnits`:** defaults to `userSpaceOnUse`, which is why fractional content coordinates render nothing unless you opt in. `objectBoundingBox` content is measured against the *filled shape's* bounding box, not the tile. For "author once, resize freely," use a `viewBox` on the pattern instead.
+* **Seamless tiling:** duplicate any edge-crossing shape one tile over on the opposite edge (all four corners for a corner-crossing one), and keep tile sizes whole to avoid hairline seams.
+* **`patternTransform`:** rotates, skews, or scales the whole tile grid around the user-space origin (or a pivot via `rotate(a cx cy)`), with the rightmost function applied first. It can re-angle a stripe but never add a second direction — crosshatch needs a two-band tile or two layered patterns.
+* **Strokes and nesting:** patterns paint strokes in the same fixed grid (use `userSpaceOnUse` and a fallback color), and tile content can itself use gradients, other patterns, or `<image>`.
+* **`href` inheritance:** attributes fall through individually; children are inherited only when the referencing pattern has none of its own.
+* **Recoloring:** pattern content inherits from the `<pattern>`'s own ancestors, not the shape using it — recolor from the `<svg>`, emit one pattern per color, or layer a translucent texture over a solid fill.
+* **Production and accessibility:** unique `id`s for repeated inline SVG; watch complex tiles, re-rasterization on zoom, and rotated patterns rather than tile counts; avoid moiré-prone fine patterns at small sizes; and always pair a texture with a legend and real text alternatives.

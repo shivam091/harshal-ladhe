@@ -1548,20 +1548,25 @@ ${dots}
     controls: [
       { id: "tileWidth", label: "Tile width", type: "range", min: 8, max: 40, step: 1, defaultValue: 20 },
       { id: "tileHeight", label: "Tile height", type: "range", min: 8, max: 40, step: 1, defaultValue: 20 },
-      { id: "dotRadius", label: "Dot radius", type: "range", min: 0.5, max: (values) => Math.min(Number(values.tileWidth), Number(values.tileHeight)) / 2, step: 0.01, defaultValue: 3 }
+      { id: "dotRadius", label: "Dot radius", type: "range", min: 0.5, max: (values) => Math.min(Number(values.tileWidth), Number(values.tileHeight)) / 2, step: 0.01, defaultValue: 3 },
+      { id: "alignToShape", label: "Anchor tiles to the rect (x=5 y=5)", type: "checkbox", defaultValue: true }
     ],
+    // Unchecking alignToShape drops the pattern's x/y so tiles fall back to the user-space origin — the guide follows the real first tile, making the offset from the rect visible.
     render: (values) => {
       const tileWidth = Number(values.tileWidth);
       const tileHeight = Number(values.tileHeight);
       const dotRadius = Number(values.dotRadius);
+      const alignToShape = Boolean(values.alignToShape);
       const cx = tileWidth / 2;
       const cy = tileHeight / 2;
+      const origin = alignToShape ? 5 : 0;
+      const anchorAttributes = alignToShape ? ` x="5" y="5"` : "";
 
       return `
 <svg viewBox="0 0 100 100" width="240" height="240">
   <defs>
-    <!-- Tile: one repeatable unit, sized in real user units via patternUnits="userSpaceOnUse" — width/height stay a literal tile size regardless of the fill target's own size. -->
-    <pattern id="dot-grid-tile" patternUnits="userSpaceOnUse" width="${tileWidth}" height="${tileHeight}">
+    <!-- Tile: one repeatable unit in real user units (patternUnits="userSpaceOnUse"). x/y set where the first tile starts — without them, tiles start at the user-space origin (0,0), not at the rect's corner. -->
+    <pattern id="dot-grid-tile" patternUnits="userSpaceOnUse"${anchorAttributes} width="${tileWidth}" height="${tileHeight}">
       <circle cx="${cx}" cy="${cy}" r="${dotRadius}" fill="#6366f1" />
     </pattern>
   </defs>
@@ -1569,8 +1574,8 @@ ${dots}
   <!-- Shape: any fillable element references the tile by id through fill="url(#...)". -->
   <rect x="5" y="5" width="90" height="90" fill="url(#dot-grid-tile)" stroke="var(--color-border-default)" stroke-width="0.5" />
 
-  <!-- Guide: outlines exactly one tile so the repeating unit is visible against the full fill. -->
-  <rect x="5" y="5" width="${tileWidth}" height="${tileHeight}" fill="none" stroke="#4338ca" stroke-width="1" stroke-dasharray="2 2" />
+  <!-- Guide: outlines the first tile, wherever the pattern's x/y actually put it. -->
+  <rect x="${origin}" y="${origin}" width="${tileWidth}" height="${tileHeight}" fill="none" stroke="#4338ca" stroke-width="1" stroke-dasharray="2 2" />
 </svg>`;
     }
   },

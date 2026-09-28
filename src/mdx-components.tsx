@@ -50,7 +50,11 @@ import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
 import LuminanceAlphaDiagram from "@/components/mdx/LuminanceAlphaDiagram";
 import MaskRegionDiagram from "@/components/mdx/MaskRegionDiagram";
 import MiterLimitDiagram from "@/components/mdx/MiterLimitDiagram";
+import PatternTileGridDiagram from "@/components/mdx/PatternTileGridDiagram";
+import PatternTransformDiagram from "@/components/mdx/PatternTransformDiagram";
+import PatternUnitsDiagram from "@/components/mdx/PatternUnitsDiagram";
 import PolyClosingDiagram from "@/components/mdx/PolyClosingDiagram";
+import SeamlessTileDiagram from "@/components/mdx/SeamlessTileDiagram";
 import TextAnchorDiagram from "@/components/mdx/TextAnchorDiagram";
 import TextBaselineDiagram from "@/components/mdx/TextBaselineDiagram";
 import TextPathAnatomyDiagram from "@/components/mdx/TextPathAnatomyDiagram";
@@ -119,7 +123,11 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     LuminanceAlphaDiagram,
     MaskRegionDiagram,
     MiterLimitDiagram,
+    PatternTileGridDiagram,
+    PatternTransformDiagram,
+    PatternUnitsDiagram,
     PolyClosingDiagram,
+    SeamlessTileDiagram,
     TextAnchorDiagram,
     TextBaselineDiagram,
     TextPathAnatomyDiagram,

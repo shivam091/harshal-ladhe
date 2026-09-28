@@ -361,10 +361,11 @@ export const posts: Post[] = [
     slug: "svg-essentials-pattern-element",
     title: "SVG Essentials: The pattern Element",
     excerpt: "Tile fills natively with SVG's <pattern> element.",
-    description: "A complete guide to the SVG pattern element — tile anatomy, patternUnits and patternContentUnits, patternTransform, href-based pattern inheritance, hatched chart fills for accessible data viz, and production caveats like id collisions and tiny-tile performance.",
+    description: "A complete guide to the SVG pattern element — tile anatomy and where tiles start, patternUnits and patternContentUnits, viewBox on a pattern, seamless tiling, patternTransform pivots and order, patterns on strokes, nested patterns, href inheritance, recoloring limits, hatched chart fills with legends, and production caveats like id collisions, rendering cost, and moiré.",
     category: ["SVG"],
-    tags: ["svg", "pattern", "patternunits", "patterntransform", "graphics", "vector-graphics", "data-viz", "accessibility", "frontend-development", "web-design"],
+    tags: ["svg", "pattern", "patternunits", "patterncontentunits", "patterntransform", "seamless-tiling", "textures", "graphics", "vector-graphics", "data-viz", "accessibility", "frontend-development", "web-design"],
     changelog: [
+      { date: "2026-09-28", change: "Fixed patternContentUnits, crosshatch, currentColor-inheritance and performance claims; corrected the chart example and dot-grid demo alignment; added sections on tile origin, viewBox, seamless tiling, transform pivots, strokes, nested patterns, href details, moiré, and accessibility, plus four new diagrams" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },
