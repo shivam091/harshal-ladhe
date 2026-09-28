@@ -5,26 +5,34 @@ export const metadata = buildPostMetadata("polygon-vs-polyline");
 ## Introduction
 
 In [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes), we covered the six core SVG shapes and the coordinate system they all share.
-Two of those elements — `<polygon>` and `<polyline>` — deserve a closer look on their own: they take an identical `points` syntax and render it in two completely different ways.
+Two of those elements, `<polygon>` and `<polyline>`, deserve a closer look on their own: they take an identical `points` syntax and render it in two completely different ways.
 
-This post is a deep dive into these "point-based" shapes — from the shared `points` attribute, through the `fill-rule` logic that governs overlapping shapes, to the real-world use cases, accessibility considerations, and performance trade-offs that decide which one belongs in your next chart, icon, or route map.
+This post starts with a short recap and then goes well past the basics:
+
+- how fill rules actually decide what's "inside", with a ray-crossing walkthrough;
+- why a polyline that repeats its first point still isn't a polygon;
+- how `stroke-miterlimit` quietly bevels sharp star tips;
+- generating points with JavaScript, drawing sparklines, and putting markers on vertices;
+- animating a line drawing itself in, and morphing one shape into another;
+- the performance, accessibility and "time to switch to `<path>`" decisions that come up in real charts, icons and route maps.
 
 <RainbowDivider />
 
 ## Polygon vs Polyline at a Glance
 
-| Feature        | `<polyline>`                      | `<polygon>`                         |
-| -------------- | --------------------------------- | ----------------------------------- |
-| Shape type     | Open                              | Closed                              |
-| Final segment  | Not connected to the start        | Automatically connects to the start |
-| Fill behavior  | Often requires `fill="none"`      | Usually filled                      |
-| Best use cases | Charts, graphs, waveforms, routes | Geometric shapes, UI icons, stars   |
+| Feature          | `<polyline>`                                              | `<polygon>`                                  |
+| ---------------- | --------------------------------------------------------- | -------------------------------------------- |
+| Shape type       | Open                                                      | Closed                                       |
+| Final segment    | Not drawn; the stroke stops at the last point             | Drawn automatically back to the first point  |
+| Fill behavior    | Still filled by default (`fill` is black), so usually set `fill="none"` | Filled by default, which is usually what you want |
+| `stroke-linecap` | Visible at both loose ends                                | No loose ends (unless the stroke is dashed)  |
+| Best use cases   | Charts, sparklines, waveforms, routes                     | Geometric shapes, UI icons, stars, badges    |
 
-Neither shape supports curved segments.
+Neither element can draw a curve. For curves, arcs or holes, you need `<path>`; see [When to Switch to `<path>`](#when-to-switch-to-path) below.
 
 **Example Comparison**
 
-The two shapes below use the **exact same `points` string** — only the element differs. That one swap is the entire difference between an open path and a closed, filled shape.
+The two shapes below use the **exact same `points` string**. Only the element differs, and that one swap is the whole difference between an open line and a closed, filled shape.
 
 <SvgSnippet>
 {`
@@ -41,107 +49,83 @@ The two shapes below use the **exact same `points` string** — only the element
 `}
 </SvgSnippet>
 
-👉 Try this hands-on in the **Free-Form Points** panel of the [interactive playground](#interactive-example) below — toggle **Element** between `polygon` and `polyline` on the same point set.
+Under the hood, both elements work out their **fill** the same way. The browser treats the shape as closed, with an imaginary segment from the last point back to the first. What differs is the **stroke**: `<polygon>` actually strokes that closing segment and joins it neatly to the first one, while `<polyline>` leaves it unstroked. That's why a polyline without `fill="none"` still paints a solid region:
+
+<PolyClosingDiagram />
 
 <RainbowDivider />
 
-## Shared Foundation: The `points` Attribute
+## Quick Recap: `points`, `<polyline>`, and `<polygon>`
 
-Both `<polyline>` and `<polygon>` use the `points` attribute to define their vertices.
+If you've read [the basic shapes post](/post/svg/svg-essentials-mastering-basic-shapes#the-points-list-syntax), this section is a refresher. Otherwise, it's everything you need for the rest of this post.
 
-**Syntax:**
+**The `points` attribute.** Both elements take a list of X/Y pairs in user units (no `px`). Each pair is one vertex, and the vertices are connected in the order they're written. Commas and whitespace are interchangeable separators, so these three are equivalent. The first is the most readable:
 
-<CodeBlock language="html">
-{`<element points="x1,y1 x2,y2 x3,y3 ..." />`}
-</CodeBlock>
-
-- **Commas:** Used to separate X and Y.
-- **Spaces:** Used to separate individual points.
-- **No Units:** Values are unitless (relative to the `viewBox`).
-
-**Formatting Best Practices:**
-
-While SVG is highly flexible with white space, the **industry standard** (and most readable) convention is to use a comma between X
-and Y, and a space between individual points:
-
-- **Standard (Recommended):** `points="10,10 50,60 90,20"`
-- **Space-only:** `points="10 10 50 60 90 20"`
-- **Mixed:** `points="10 10, 50 60, 90 20"`
-
-Each pair **defines one vertex**, connected in the order they are written.
-
-<Info>
-  SVG coordinates exist relative to the `viewBox` grid and do not require units like `px`.
-</Info>
-
-<RainbowDivider />
-
-## `<polyline>` — The Open Connection
-
-`<polyline>` draws **multiple connected straight lines** but does **not close the shape** automatically.
-
-**Key Characteristics:**
-
-- **Open shape:** Last point is NOT connected to the first.
-- **Stroke-focused:** Best for paths, charts, and waveforms.
-
-**The "Phantom Fill" Trap**
-
-By default, SVG elements have a `fill="black"`. Even though a polyline is "open", the browser will attempt to fill the area between the start
-and end points.
-
-**Always set `fill="none"` on a polyline** unless you are intentionally creating a complex, semi-open shaded area.
-
-<CodeBlock language="html">
+<CodeBlock language="xml">
 {`
-  <polyline points="10,80 40,20 70,60 100,30" stroke="blue" />
-  <polyline points="10,80 40,20 70,60 100,30" stroke="blue" fill="none" />
+  <polyline points="10,10 50,60 90,20" />  <!-- recommended: comma inside a pair, space between pairs -->
+  <polyline points="10 10 50 60 90 20" />
+  <polyline points="10 10, 50 60, 90 20" />
 `}
 </CodeBlock>
 
-👉 Try this hands-on in the **Free-Form Points** panel of the [interactive playground](#interactive-example) below — switch **Element** to `polyline` and watch the phantom fill appear between the endpoints.
+**Malformed lists.** An **odd** number of values leaves a dangling coordinate with no partner. The spec treats that as an error. In practice, engines usually render the complete pairs and ignore the leftover number, but error handling has changed between spec versions, so treat an odd count as a bug to fix rather than behaviour to rely on. An **empty** list, or one with a single point, has no segment to draw and renders nothing.
 
-**Best For:**
+**`<polyline>`** connects the points and stops at the last one. Because `fill` defaults to black, always add `fill="none"` unless you really want the region shaded:
 
-- Line charts
-- Route maps
-- ECG / waveform visuals
-- Freehand drawings
-
-<RainbowDivider />
-
-## `<polygon>` — Closed Shapes
-
-A `<polygon>` defines a closed shape. The SVG engine automatically draws a line from the final point back to the
-starting point to "seal" the shape.
-
-**Key Characteristics:**
-
-- **Always Closed:** Even if you only provide three points, it will always form a complete enclosure.
-- **Area-focused:** Ideal for UI icons, geometric patterns, and map regions.
-
-**Example:**
-
-<CodeBlock language="html">
+<CodeBlock language="xml">
 {`
-  <polygon
-    points="50,10 90,80 10,80"
-    fill="lightblue"
-    stroke="navy"
-    stroke-width="2"
-  />
+  <polyline points="10,80 40,20 70,60 100,30" stroke="blue" />              <!-- phantom black fill -->
+  <polyline points="10,80 40,20 70,60 100,30" stroke="blue" fill="none" />  <!-- just the line -->
 `}
 </CodeBlock>
 
-**Best For:**
+**`<polygon>`** connects the points and then seals the shape with a segment from the last point back to the first:
 
-- Geometric UI elements (Hexagons, Stars)
-- Map regions
-- Data "Area" charts
+<CodeBlock language="xml">
+{`
+  <polygon points="50,10 90,80 10,80" fill="lightblue" stroke="navy" stroke-width="2" />
+`}
+</CodeBlock>
 
 <Info title="Not to be confused with CSS clip-path: polygon()">
-  CSS has its own, unrelated `polygon()` function used inside `clip-path` (e.g. `clip-path: polygon(50% 0%, 100% 100%, 0% 100%)`). It shares the name and the "list of points" idea, but it clips the visible region of *any* HTML or SVG element — it isn't an SVG element itself and has nothing to do with the `<polygon>` tag covered in this post.
+  CSS has its own, unrelated `polygon()` function used inside `clip-path` (e.g. `clip-path: polygon(50% 0%, 100% 100%, 0% 100%)`). It shares the name and the "list of points" idea, but it clips the visible region of *any* HTML or SVG element. It isn't an SVG element, and it has nothing to do with the `<polygon>` tag covered in this post. [SVG Essentials: clipPath and mask](/post/svg/svg-essentials-clippath-and-mask) covers SVG's own clipping.
 </Info>
+
+<RainbowDivider />
+
+## Explicit Closing: A Repeated Point Isn't a Polygon
+
+A common shortcut is to "close" a polyline by repeating its first point at the end. The outline *looks* closed, but it isn't the same as a `<polygon>`. The seam where the two ends meet is drawn as **two separate line ends**, not as a corner, so `stroke-linecap` applies there and `stroke-linejoin` doesn't.
+
+With the default `butt` caps and a thick stroke, that shows up as a notch at the starting corner:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 220 110" width="440" height="220">
+    <g>
+      <polyline points="20,20 80,20 80,80 20,80 20,20" fill="none" stroke="#f43f5e" stroke-width="12" />
+      <text x="50" y="105" font-size="8" text-anchor="middle" fill="currentColor">polyline, first point repeated</text>
+    </g>
+    <g transform="translate(110,0)">
+      <polygon points="20,20 80,20 80,80 20,80" fill="none" stroke="#10b981" stroke-width="12" />
+      <text x="50" y="105" font-size="8" text-anchor="middle" fill="currentColor">polygon</text>
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+Look at the top-left corner of the red square. The first segment's butt cap and the last segment's butt cap both stop flush at `20,20`, so the outer corner square is never painted. The polygon draws a real miter join there, just like its other three corners. `stroke-linecap="square"` happens to fill the gap at a 90° corner, but not at any other angle, so it's a coincidence rather than a fix.
+
+The seam affects more than caps:
+
+- **Dashes**: on the polyline, any dash that ends exactly at the seam gets a cap instead of a join. In *both* versions the dash pattern starts at the first point, so the seam can show a partial dash. You can hide it by making the total length a whole number of pattern repeats, which `pathLength` makes easy.
+- **Markers**: a polyline with a repeated point has a real `marker-end` vertex sitting on top of its `marker-start` vertex, so both markers are drawn in the same spot.
+- **Length**: both versions include the closing segment in `getTotalLength()` and `pathLength`, so a draw-on animation behaves the same either way.
+
+<Success title="Rule of thumb">
+  If the outline should be closed, use `<polygon>` (or a `<path>` ending in `Z`). Only repeat the first point on a polyline when you need its caps, for example a closed loop with deliberately rounded ends at the seam.
+</Success>
 
 <RainbowDivider />
 
@@ -149,69 +133,89 @@ starting point to "seal" the shape.
 
 Points are drawn in the **exact sequence** they appear in the string. Changing the order changes the shape's topology.
 
-For a simple triangle, the order of points doesn't change the silhouette. However, for shapes with 4+ points, the sequence is vital.
-If you "scramble" the points, you move from a clean square to a self-intersecting "hourglass" or "butterfly" shape.
+For a triangle, the order doesn't change the silhouette. Once there are 4 or more points, it does. Scramble the order and a clean square becomes a self-intersecting "hourglass" or "bow-tie":
 
-<CodeBlock language="html">
+<SvgSnippet>
 {`
-  <!-- Correct -->
-  <polygon points="10,10 90,10 90,90 10,90" />
-
-  <!-- Scrambled -->
-  <polygon points="10,10 90,90 90,10 10,90" />
+  <svg viewBox="0 0 220 125" width="440" height="250">
+    <g>
+      <polygon points="15,15 85,15 85,85 15,85" fill="#6366f1" fill-opacity="0.25" stroke="#4338ca" stroke-width="2" />
+      <text x="8" y="12" font-size="8" text-anchor="middle" fill="currentColor">1</text>
+      <text x="92" y="12" font-size="8" text-anchor="middle" fill="currentColor">2</text>
+      <text x="92" y="96" font-size="8" text-anchor="middle" fill="currentColor">3</text>
+      <text x="8" y="96" font-size="8" text-anchor="middle" fill="currentColor">4</text>
+      <text x="50" y="118" font-size="8" text-anchor="middle" fill="currentColor">15,15 85,15 85,85 15,85</text>
+    </g>
+    <g transform="translate(120,0)">
+      <polygon points="15,15 85,85 85,15 15,85" fill="#f43f5e" fill-opacity="0.25" stroke="#be123c" stroke-width="2" />
+      <text x="8" y="12" font-size="8" text-anchor="middle" fill="currentColor">1</text>
+      <text x="92" y="96" font-size="8" text-anchor="middle" fill="currentColor">2</text>
+      <text x="92" y="12" font-size="8" text-anchor="middle" fill="currentColor">3</text>
+      <text x="8" y="96" font-size="8" text-anchor="middle" fill="currentColor">4</text>
+      <text x="50" y="118" font-size="8" text-anchor="middle" fill="currentColor">15,15 85,85 85,15 15,85</text>
+    </g>
+  </svg>
 `}
-</CodeBlock>
+</SvgSnippet>
 
 Incorrect ordering can cause:
 
-- Self-intersections
-- Unexpected fills
-- Visual artifacts
+- Self-intersections, where edges cross each other
+- Unexpected fills, because overlapping regions are now decided by the [fill rule](#fill-rules-managing-overlap)
+- Visual artifacts, such as spiky miter joins at the new, very sharp corners
 
-👉 Try this hands-on in the **Free-Form Points** panel of the [interactive playground](#interactive-example) below — its four sliders default to this exact square; drag one out of order into the hourglass yourself.
+When you generate points from data or geometry, sort them deliberately: by angle around a centre for radial shapes, or by x for time series.
+
+<RainbowDivider />
+
+## Interactive Example
+
+Try both behaviours yourself before moving on.
+
+**Free-Form Points** has four independent point sliders that start as the square above. Drag them out of order into the self-intersecting hourglass. Then switch **Element** to `polyline` and watch the closing segment disappear. The demo sets `fill="none"` for the polyline, which is the fix for the phantom fill shown earlier.
+
+<InteractiveSvgPanel slug="polygon-vs-polyline-demo" />
+
+**Shape Presets** swaps the raw sliders for a **Preset** picker: square, hexagon or star. Switch **Element** between `polygon` and `polyline` on each to see the same open-vs-closed behaviour on a recognizable shape.
+
+<InteractiveSvgPanel slug="polygon-vs-polyline-shape-presets" />
 
 <RainbowDivider />
 
 ## Fill Rules: Managing Overlap
 
-When a shape overlaps itself — like a five-pointed star or a complex "figure-eight" polygon — SVG needs a mathematical logic to
-decide which areas are "inside" (filled) and which are "outside" (transparent).
+When a shape overlaps itself, like a five-pointed star or a figure-eight, SVG needs a rule to decide which regions are "inside" (filled) and which are "outside" (transparent). That rule is the `fill-rule` property, and both of its values use the same test:
 
-This is controlled by the `fill-rule` property.
+1. Pick a point you want to classify.
+2. Draw a ray from that point out to infinity, in any direction.
+3. Look at every edge of the shape that crosses the ray.
+
+The two rules differ only in how they score those crossings.
 
 ### `nonzero` (default)
 
-The `nonzero` rule determines the fill based on the **winding order** (the direction in which you drew the points).
+`nonzero` cares about the **direction** each edge was drawn in, which comes from the order of your `points`. Start a counter at zero. Each time an edge crosses the ray from left to right (as seen looking along the ray), add 1. Each time one crosses from right to left, subtract 1. The final count is the point's **winding number**. If it's anything other than zero, the point is inside.
 
-**How it works:** Imagine standing at a point inside the shape. The browser draws a ray in any direction to infinity. It then looks
-at every path segment that crosses this ray. If a segment is drawn clockwise, it adds 1; if counter-clockwise, it subtracts 1.
-
-**The Result:** If the final "winding count" is anything other than zero, the area is filled. In most star shapes, the center has a
-count higher than zero, so it remains solid.
+Only the direction matters, not the rule's orientation. Reverse every point and each +1 becomes −1, so a winding number of 2 becomes −2. That's still non-zero, and the fill doesn't change.
 
 ### `evenodd`
 
-The `evenodd` rule ignores the direction of the lines and focuses strictly on the number of path crossings.
+`evenodd` ignores direction completely and just **counts** crossings. An odd count means inside and the point is filled. An even count means outside and it's left empty.
 
-**How it works:** Again, imagine a ray drawn from a point to infinity. The browser simply counts how many times that ray crosses a line.
+### Walking Through the Star
 
-**The Result:** If the number of crossings is **odd**, the area is filled. If it is **even**, the area is left empty.
+Here's the same test applied to two points in a star drawn as a single `<polygon>`. Each small arrowhead shows the direction that edge was drawn in:
 
-**Visual Behavior:** This is why the center of a star becomes **hollow/transparent** — a ray starting from the very center crosses the
-star's edges an even number of times.
+<FillRuleRayDiagram />
 
-**Why This Matters**
+- **Point A**, in the central pentagon: its ray crosses two edges, and both run the same way. Under `nonzero` that's +1 +1 = 2, so the centre is filled. Under `evenodd` it's 2 crossings, an even number, so the centre is empty.
+- **Point B**, in one of the arms: its ray crosses a single edge. That's 1 under `nonzero` and odd under `evenodd`, so both rules fill the arms.
 
-Choosing the right rule is essential when building:
-
-- **Complex Icons:** Creating "holes" in shapes (like a donut or the letter 'O') without using masks.
-- **Geometric Patterns:** Controlling the transparency of overlapping triangles or hexagons.
-- **Data Viz:** Ensuring that self-intersecting line charts don't create accidental "solid blocks" of color.
+That's the whole difference. The rules only disagree about regions that edges enclose **more than once**. An arm is enclosed once, and the centre pentagon twice.
 
 ### Side-by-Side Comparison
 
-This diagram compares both SVG `fill-rule` values. A star shape using `nonzero` shows a **filled center**, while the same star
-using `evenodd` displays a **hollow center**.
+The same `points` string rendered with each rule:
 
 <SvgSnippet>
 {`
@@ -228,80 +232,316 @@ using `evenodd` displays a **hollow center**.
 `}
 </SvgSnippet>
 
-This comparison illustrates the impact of winding logic versus crossing logic. While the `points` attribute is identical for both
-shapes, the resulting visual is entirely different.
+The stroke is identical in both, because `fill-rule` only affects the fill.
 
-**Summary:** Use `nonzero` if you want a solid, "heavy" look for complex shapes. Use `evenodd` if you want a delicate, wireframe-style
-look with automatic cutouts in overlapping areas.
+### What a Single `<polygon>` Can't Do: Holes
 
-<RainbowDivider />
+It's tempting to reach for `evenodd` to punch a hole in a shape, like a donut, a picture frame or the letter "O". **A `<polygon>` can't do that.** It's always exactly one closed outline (one *subpath*). With one outline, the only regions a fill rule can ever hollow out are the ones created where the outline **crosses itself**, as in the star.
 
-## Refining the Look: Joins and Caps
+A real hole needs a second outline, and that means `<path>` with multiple subpaths. You can build it in either of two ways:
 
-Because polygons and polylines are built entirely from straight segments, the way each "elbow" is rendered has an outsized effect
-on how polished the final shape looks.
-
-- **`stroke-linejoin`:** Controls the corners. Use `round` for a friendly look, `bevel` for flat corners, or `miter` (the default)
-  for sharp spikes — shown left to right below.
-- **`stroke-linecap`:** Controls how exposed line ends are drawn — `butt`, `round`, or `square`. A closed `<polygon>`'s stroke is
-  one continuous loop with no exposed ends, so this attribute mostly matters for `<polyline>` — unless the polygon also uses
-  `stroke-dasharray`, which breaks the outline into dashes that each pick up their own end caps.
-- **`stroke-miterlimit`:** At very sharp angles, a `miter` join's spike can shoot far past the corner before the two edges meet.
-  This attribute caps how long that spike is allowed to get before the renderer falls back to `bevel` instead.
+- **`evenodd`**: draw the inner outline in any direction. Its region is enclosed twice, which is an even count, so it's empty.
+- **`nonzero`**: draw the inner outline in the **opposite direction** to the outer one. Its region's winding number is +1 −1 = 0, so it's empty.
 
 <SvgSnippet>
 {`
-  <svg viewBox="0 0 150 70" width="450" height="210">
+  <svg viewBox="0 0 220 110" width="440" height="220">
     <g>
-      <polygon points="10,45 25,10 40,45" fill="none" stroke="#0ea5e9" stroke-width="4" stroke-linejoin="miter" />
-      <text x="25" y="63" font-size="6" text-anchor="middle" fill="currentColor">miter</text>
+      <path d="M10,10 H90 V90 H10 Z M30,30 H70 V70 H30 Z" fill="#0ea5e9" fill-opacity="0.5" stroke="#0369a1" stroke-width="2" fill-rule="evenodd" />
+      <text x="50" y="105" font-size="8" text-anchor="middle" fill="currentColor">evenodd, same direction</text>
     </g>
-    <g transform="translate(50,0)">
-      <polygon points="10,45 25,10 40,45" fill="none" stroke="#0ea5e9" stroke-width="4" stroke-linejoin="round" />
-      <text x="25" y="63" font-size="6" text-anchor="middle" fill="currentColor">round</text>
-    </g>
-    <g transform="translate(100,0)">
-      <polygon points="10,45 25,10 40,45" fill="none" stroke="#0ea5e9" stroke-width="4" stroke-linejoin="bevel" />
-      <text x="25" y="63" font-size="6" text-anchor="middle" fill="currentColor">bevel</text>
+    <g transform="translate(120,0)">
+      <path d="M10,10 H90 V90 H10 Z M30,30 V70 H70 V30 Z" fill="#0ea5e9" fill-opacity="0.5" stroke="#0369a1" stroke-width="2" fill-rule="nonzero" />
+      <text x="50" y="105" font-size="8" text-anchor="middle" fill="currentColor">nonzero, inner reversed</text>
     </g>
   </svg>
 `}
 </SvgSnippet>
 
+<Info title="The keyhole hack">
+  You *can* fake a hole in a single polygon by cutting a zero-width "slit" from the outer edge to the inner one and tracing both outlines as one loop. It works, but anti-aliasing often leaves a faint hairline along the slit, and the stroke draws the slit too. Use a `<path>` instead. [Compound paths and `fill-rule`](/post/svg/svg-essentials-mastering-the-path-element) are covered in depth in the path post.
+</Info>
+
+### Why This Matters
+
+- **Stars and overlapping icons**: decide up front whether the doubly-enclosed centre should be solid (`nonzero`) or knocked out (`evenodd`), instead of leaving it to the default.
+- **Geometric patterns**: with `evenodd`, regions where a self-intersecting outline overlaps itself alternate between filled and empty.
+- **Data viz**: an area polygon whose data line crosses back over itself can create doubly-covered regions. Check which rule gives the result you intend.
+
+**Summary:** `nonzero` fills every region the outline winds around, so self-overlaps stay solid. `evenodd` drops the regions covered an even number of times and keeps everything else. It doesn't turn a shape into a wireframe; it only changes the overlaps.
+
 <RainbowDivider />
 
-## Accessibility Considerations
+## Corners and the Miter Limit
 
-`<polygon>` and `<polyline>` are ordinary DOM elements, so the same accessibility guidance from
-[SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes) applies here — but two
-patterns come up often enough with point-based shapes to call out on their own.
+Polygons and polylines are made entirely of straight segments, so their corners (the joins) and their loose ends (the caps) have an outsized effect on how polished they look. The basics are covered in [the basic shapes post](/post/svg/svg-essentials-mastering-basic-shapes#refining-the-stroke-look). In short:
 
-**Icons and badges built from `<polygon>`:** if the shape conveys meaning by itself (a hexagon "verified" badge, a star rating),
-give it a `<title>` and `role="img"`, the same way you would for any other meaningful SVG shape. If it's purely decorative — sitting
-next to a text label that already says the same thing — hide it with `aria-hidden="true"` instead.
+- **`stroke-linejoin`** shapes every corner: `miter` (the default) gives sharp points, `round` gives rounded ones and `bevel` cuts them off flat.
+- **`stroke-linecap`** shapes loose ends: `butt` (the default), `round` or `square`. On a polygon, it only matters when the stroke is dashed, since each dash then gets its own caps.
 
-**Charts built from `<polyline>`:** a line chart drawn purely from a `points` string carries no semantic information a screen reader
-can announce — it's just coordinates. Pair the visual with an accessible alternative, such as a visually-hidden data table or a
-summarizing `aria-label`, rather than relying on the shape alone to communicate the trend.
+The attribute that surprises people is the third one.
 
-<Warning title="Don't rely on color or shape alone">
-  If a chart uses `fill-rule` or overlapping shapes to distinguish data series, make sure that distinction doesn't depend on color
-  alone — pair it with labels, patterns, or a legend so the information still reads for colorblind users.
+### `stroke-miterlimit` in Depth
+
+A miter join extends the two outer edges of the stroke until they meet. The sharper the corner, the farther away they meet. At a nearly-closed corner the spike would shoot out an absurd distance, so the renderer measures it first:
+
+- The **miter length** is the distance from the inner corner of the join to the outer tip.
+- For a corner of angle θ, the ratio **miter length ÷ stroke-width = 1 / sin(θ / 2)**.
+- `stroke-miterlimit` sets the maximum allowed ratio. It **defaults to 4**, and values below 1 are invalid.
+- If a corner's ratio is over the limit, that one join is drawn as a **bevel** instead. The other corners keep their miters.
+
+With the default of 4, the cutoff is at θ = 2 · asin(1/4) ≈ **29°**. Any corner sharper than about 29° gets bevelled:
+
+<MiterLimitDiagram />
+
+That's why a star can come out looking "blunt" for no obvious reason. The regular five-pointed star from earlier has 36° tips (ratio ≈ 3.24), so its miters survive. Make the arms a little skinnier and the tips drop below 29°:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 220 110" width="440" height="220">
+    <g>
+      <polygon points="50,8 57.1,40.3 89.9,37 61.4,53.7 74.7,84 50,62 25.3,84 38.6,53.7 10.1,37 42.9,40.3" fill="#f59e0b" fill-opacity="0.25" stroke="#b45309" stroke-width="5" stroke-linejoin="miter" />
+      <text x="50" y="104" font-size="8" text-anchor="middle" fill="currentColor">miterlimit 4 (default)</text>
+    </g>
+    <g transform="translate(120,0)">
+      <polygon points="50,8 57.1,40.3 89.9,37 61.4,53.7 74.7,84 50,62 25.3,84 38.6,53.7 10.1,37 42.9,40.3" fill="#f59e0b" fill-opacity="0.25" stroke="#b45309" stroke-width="5" stroke-linejoin="miter" stroke-miterlimit="5" />
+      <text x="50" y="104" font-size="8" text-anchor="middle" fill="currentColor">miterlimit 5</text>
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+Each tip of this star is about 24.6°, which gives a ratio of about 4.69. With the default limit of 4 every tip is bevelled. Raising the limit to 5 lets the spikes through. The inner, concave corners are wide, so they're never affected.
+
+Try it below. Narrow the corner and watch the readout cross the limit, then raise `stroke-miterlimit` to bring the spike back:
+
+<InteractiveSvgPanel slug="polygon-vs-polyline-miterlimit" />
+
+<Warning title="Raising the limit has a cost">
+  A high `stroke-miterlimit` on a very sharp corner can produce spikes that poke well outside the shape's bounding box. They can get clipped by the `viewBox`, or they can overlap nearby content. If a shape's corners can get arbitrarily sharp, as with data-driven polylines, `stroke-linejoin="round"` is the safer choice. SVG 2 also defines `miter-clip` and `arcs` join values, but support for them is patchy, so test in your target browsers before relying on either.
 </Warning>
+
+<RainbowDivider />
+
+## Generating Points with JavaScript
+
+Hand-writing coordinates works for a triangle. For anything regular, or anything data-driven, generate them.
+
+### Regular Polygons and Stars
+
+Every vertex of a regular polygon sits on a circle, so it's just `cos` and `sin` at evenly spaced angles. A star is the same idea with twice as many vertices, alternating between an outer and an inner radius:
+
+<CodeBlock language="js">
+{`
+  // Returns a points string for a regular polygon (innerRadius omitted)
+  // or a star (innerRadius given) centred on cx, cy.
+  function polygonPoints(cx, cy, sides, radius, innerRadius) {
+    const count = innerRadius ? sides * 2 : sides;
+    const start = -Math.PI / 2; // first vertex at 12 o'clock (SVG's y-axis points down)
+
+    return Array.from({ length: count }, (_, i) => {
+      const r = innerRadius && i % 2 === 1 ? innerRadius : radius;
+      const angle = start + (i * 2 * Math.PI) / count;
+      const x = cx + r * Math.cos(angle);
+      const y = cy + r * Math.sin(angle);
+      return x.toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
+  }
+
+  polygonPoints(50, 50, 6, 40);      // hexagon
+  polygonPoints(50, 50, 5, 42, 18);  // five-pointed star
+`}
+</CodeBlock>
+
+Two details are worth copying:
+
+- **Start at −90°.** In SVG, angle 0 points right and angles increase **clockwise**, because y grows downward. Starting at −π/2 puts the first vertex at the top, so the shape stands upright.
+- **Round with `toFixed()`.** Floating-point output like `84.64101615137754` makes the markup longer without looking any different. One or two decimal places is plenty for a typical `viewBox`.
+
+Note that this star is drawn as its **outline** (10 vertices around the edge), not as a self-intersecting pentagram. It has no doubly-covered centre, so it looks the same under either fill rule.
+
+<InteractiveSvgPanel slug="polygon-vs-polyline-generated-points" />
+
+### Mapping Data to Points
+
+For a chart, each value needs to be mapped from data space into the `viewBox`. That takes a linear scale on each axis, and the y-axis needs flipping because SVG's y grows downward:
+
+<CodeBlock language="js">
+{`
+  // Maps an array of numbers onto a width × height viewBox, leaving pad units of breathing room.
+  function toPoints(data, width, height, pad = 2) {
+    const min = Math.min(...data);
+    const max = Math.max(...data);
+    const xStep = (width - pad * 2) / (data.length - 1);
+    const yScale = (height - pad * 2) / (max - min || 1); // || 1 guards a flat series
+
+    return data
+      .map((value, i) => {
+        const x = pad + i * xStep;
+        const y = height - pad - (value - min) * yScale; // flip: larger values sit higher
+        return x.toFixed(1) + "," + y.toFixed(1);
+      })
+      .join(" ");
+  }
+
+  document.querySelector("#trend").setAttribute("points", toPoints([12, 15, 11, 19, 17, 24, 22, 27], 100, 30));
+`}
+</CodeBlock>
+
+Charting libraries like D3 wrap exactly this in `scaleLinear()`, but for a single line, a dozen lines of code is all you need.
+
+### The Live `points` List: `SVGPointList`
+
+You don't have to rebuild the whole string to change one vertex. Every `<polyline>` and `<polygon>` exposes its vertices as a **live** `points` list, and changing an item redraws the shape:
+
+<CodeBlock language="js">
+{`
+  const line = document.querySelector("#trend");
+
+  line.points.numberOfItems;          // how many vertices
+  const first = line.points.getItem(0);
+  first.y = 5;                        // moves the first vertex, redraws immediately
+
+  // Append a new vertex
+  const svg = line.ownerSVGElement;
+  const point = svg.createSVGPoint();
+  point.x = 98;
+  point.y = 4;
+  line.points.appendItem(point);
+`}
+</CodeBlock>
+
+`insertItemBefore()`, `replaceItem()`, `removeItem()` and `clear()` round out the list API. `createSVGPoint()` is the most widely supported way to make a point object. SVG 2 lets list items be plain `DOMPoint`s, but test that in your target browsers before depending on it. When the *whole* dataset changes, setting the `points` attribute once is simpler, and usually cheaper, than dozens of individual list mutations.
+
+<RainbowDivider />
+
+## Sparklines: Tiny Charts That Stretch
+
+A sparkline is a word-sized line chart that sits inline with text or in a table cell, with no axes and no labels. It's the most natural job there is for `<polyline>`, and it shows off three attributes working together:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 30" width="240" height="48" preserveAspectRatio="none" role="img" aria-labelledby="sparkline-title">
+    <title id="sparkline-title">Weekly sign-ups, rising from 12 to 27 over eight weeks</title>
+    <polyline points="2,26.4 15.7,21.5 29.4,28 43.1,15 56.9,18.2 70.6,6.9 84.3,10.1 98,2" fill="none" stroke="#6366f1" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+    <line x1="98" y1="2" x2="98" y2="2" stroke="#6366f1" stroke-width="6" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+  </svg>
+`}
+</SvgSnippet>
+
+- **`viewBox="0 0 100 30"`** gives the data a fixed coordinate space. These points came straight from the `toPoints()` function above.
+- **`preserveAspectRatio="none"`** lets that space stretch to whatever box the sparkline is given, whether a narrow table cell or a full-width card, without letterboxing. The line is squashed or stretched, which is fine, because a sparkline shows shape, not exact values.
+- **`vector-effect="non-scaling-stroke"`** fixes the side effect. Without it, a non-uniform stretch distorts the stroke too, so the line gets thick on steep sections and thin on flat ones. With it, the stroke width is applied in screen pixels after the stretch, so the line is a consistent 2px everywhere. This is a **visual** fix, not a performance one.
+
+The last-point dot uses a small trick: it's a **zero-length `<line>` with a round cap**, which renders as a dot the width of the stroke. A `<circle>` would be squashed into an ellipse by the non-uniform stretch, but the cap is also `non-scaling-stroke`, so it stays round. If you'd rather not rely on that, position an HTML dot over the SVG instead.
+
+<Info title="Where the stroke width comes from">
+  With `non-scaling-stroke`, `stroke-width="2"` means 2 CSS pixels on screen, whatever the SVG's size. That's usually what you want for charts, where lines should stay the same weight as the chart grows. The same trick is useful anywhere a line-art icon or map is displayed at very different sizes.
+</Info>
+
+<RainbowDivider />
+
+## Markers on Vertices
+
+Charts often need a dot on every data point or an arrowhead at the end of a route. You don't need to compute those positions: `<polyline>` and `<polygon>` both support `marker-start`, `marker-mid` and `marker-end`, and the browser places a marker on each vertex for you:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 120 70" width="360" height="210">
+    <defs>
+      <marker id="pvp-marker-dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4">
+        <circle cx="5" cy="5" r="4" fill="#6366f1" />
+      </marker>
+      <marker id="pvp-marker-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+        <path d="M0,0 L10,5 L0,10 Z" fill="#6366f1" />
+      </marker>
+    </defs>
+    <polyline points="10,55 35,30 60,40 85,15 105,20" fill="none" stroke="#6366f1" stroke-width="2" stroke-linejoin="round" marker-start="url(#pvp-marker-dot)" marker-mid="url(#pvp-marker-dot)" marker-end="url(#pvp-marker-arrow)" />
+  </svg>
+`}
+</SvgSnippet>
+
+`marker-mid` lands on every interior vertex, so adding a data point to the `points` list adds its dot automatically. [SVG Essentials: The marker Element](/post/svg/svg-essentials-marker-element) covers how markers behave around a polygon's closing segment, along with `refX`/`refY`, `orient="auto-start-reverse"` and `markerUnits` in full.
+
+<RainbowDivider />
+
+## Draw-On Animation
+
+The "line drawing itself" effect works on `<polyline>` and `<polygon>` exactly as it does on `<path>`. Set `pathLength="1"` so the shape's length is normalised to 1. Then use a dash as long as the whole shape, and slide it into view with `stroke-dashoffset`:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 60">
+    <style>
+      .pvp-draw {
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+        animation: pvp-draw 2s ease-out forwards;
+      }
+
+      @keyframes pvp-draw {
+        to { stroke-dashoffset: 0; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .pvp-draw { animation: none; stroke-dashoffset: 0; }
+      }
+    </style>
+
+    <polyline class="pvp-draw" pathLength="1" points="5,50 25,20 45,35 65,10 95,25" fill="none" stroke="#10b981" stroke-width="3" stroke-linejoin="round" />
+  </svg>
+`}
+</CodeBlock>
+
+A few things to keep in mind:
+
+- On a **polygon**, the closing segment is part of the length, so the outline draws all the way back to its start.
+- `pathLength` is defined for all basic shapes in SVG 2. If an engine you support ignores it on a polyline, measure the real length with `element.getTotalLength()` and use that number for the dasharray and offset instead of `1`.
+- A shape that's still filled will show its full fill from the first frame. Draw-on is a stroke effect, so either use `fill="none"` or fade the fill in separately.
+
+The [path element post](/post/svg/svg-essentials-mastering-the-path-element) walks through the dash maths step by step, and [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes) covers triggering it on hover or scroll.
+
+<RainbowDivider />
+
+## Morphing Shapes: Animating `points`
+
+Unlike `<path>`'s `d`, which some browsers expose as a CSS property, **`points` is not a CSS property**. You can't put it in a `transition` or `@keyframes` rule. You have three options:
+
+- **SMIL** `<animate attributeName="points">`, declared right inside the shape. See [SVG Essentials: Native Animation with SMIL](/post/svg/svg-essentials-smil-animation).
+- **JavaScript**: interpolate each coordinate yourself in a `requestAnimationFrame` loop and write the result back.
+- **An animation library** (GSAP, anime.js and similar), which handles the interpolation for you.
+
+All three interpolate point by point, so both shapes need **the same number of points**. If the counts differ, the browser can't pair the vertices up, and SMIL falls back to a discrete jump from one shape to the other with no tween. To morph a triangle into a square, pad the triangle to four points by repeating a vertex:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 100 100">
+    <polygon points="50,10 90,90 10,90 10,90" fill="#f59e0b" fill-opacity="0.5" stroke="#b45309" stroke-width="2">
+      <animate
+        attributeName="points"
+        dur="2s"
+        repeatCount="indefinite"
+        values="50,10 90,90 10,90 10,90;
+                10,10 90,10 90,90 10,90;
+                50,10 90,90 10,90 10,90" />
+    </polygon>
+  </svg>
+`}
+</CodeBlock>
+
+Where you put the duplicate matters. Each vertex travels in a straight line to its partner, so match vertices that are close together, or the shape will twist through itself mid-morph.
 
 <RainbowDivider />
 
 ## Putting it into Practice
 
-This section puts the theory into action. Whether you're building a simple UI or a complex data dashboard, these examples show how to
-choose the right tool for the job.
+These examples show how to choose the right element for common jobs.
 
 ### Basic: Geometric Essentials
 
 #### 1. The Simplest Triangle (`<polygon>`)
 
-The most fundamental use of a polygon is the triangle. With just three points, SVG automatically connects the last vertex back
-to the first, creating a perfect enclosure.
+The most fundamental polygon is a triangle. With just three points, SVG connects the last vertex back to the first and encloses the shape.
 
 <SvgSnippet>
 {`
@@ -311,12 +551,11 @@ to the first, creating a perfect enclosure.
 `}
 </SvgSnippet>
 
-**Why it works:** By using `stroke-linejoin="round"`, we avoid the sharp, "stabbing" corners that can occur with narrow angles,
-giving the shape a more modern, friendly appearance.
+**Why it works:** `stroke-linejoin="round"` softens the corners, which gives the shape a more modern, friendly look. It also sidesteps the miter limit entirely.
 
 #### 2. Route Map Visualization (`<polyline>`)
 
-Unlike a polygon, a polyline is ideal for paths that shouldn't close. Here, we use it to visualize a travel route or a "connect-the-dots" path.
+A route shouldn't close back on itself, which makes it a natural polyline. Here it's drawn as a dashed "connect-the-dots" path.
 
 <SvgSnippet>
 {`
@@ -328,14 +567,13 @@ Unlike a polygon, a polyline is ideal for paths that shouldn't close. Here, we u
 `}
 </SvgSnippet>
 
-**Pro Tip:** We use `fill="none"` here to avoid the "Phantom Fill" effect. The `stroke-dasharray` attribute creates a professional
-dashed-line look often seen in map applications.
+**Pro Tip:** `fill="none"` avoids the phantom fill, and `stroke-dasharray` gives the dashed look common in map apps. The start and end circles could just as well be `marker-start` and `marker-end`.
 
 ### Advanced: Data & UI
 
 #### 1. The Star Shape (`evenodd` Rule)
 
-When a polygon self-intersects, like in a five-pointed star, the `fill-rule` determines if the center is "hollow" or "solid."
+When a polygon crosses itself, as this pentagram does, `fill-rule` decides whether the doubly-enclosed centre is hollow or solid.
 
 <SvgSnippet>
 {`
@@ -345,24 +583,28 @@ When a polygon self-intersects, like in a five-pointed star, the `fill-rule` det
 `}
 </SvgSnippet>
 
-**Why it matters:** Using `fill-rule="evenodd"` allows you to create complex geometry with "cutouts" without having to define multiple
-separate paths or masks.
+**Why it matters:** `evenodd` knocks out the self-overlapping centre with a single element. It works because the outline crosses itself. It can't add a separate hole to a shape that doesn't overlap itself; for that, see [holes](#what-a-single-polygon-cant-do-holes).
 
 #### 2. The Hybrid Area Chart
 
-In data visualization, we often combine both elements. A `polyline` draws the trend line, while a `polygon` creates the shaded area underneath.
+Data visualization often combines both elements. A `polyline` draws the trend line, and a `polygon` shades the area underneath. Here the area fades out using a vertical gradient:
 
 <SvgSnippet>
 {`
   <svg viewBox="0 0 100 100" width="280" height="180">
-    <polygon points="0,100 0,70 20,50 40,60 60,30 80,45 100,20 100,100" fill="#6366f1" fill-opacity="0.2" stroke="none" />
+    <defs>
+      <linearGradient id="pvp-area-fade" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#6366f1" stop-opacity="0.35" />
+        <stop offset="1" stop-color="#6366f1" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+    <polygon points="0,100 0,70 20,50 40,60 60,30 80,45 100,20 100,100" fill="url(#pvp-area-fade)" stroke="none" />
     <polyline points="0,70 20,50 40,60 60,30 80,45 100,20" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
   </svg>
 `}
 </SvgSnippet>
 
-**Strategy:** To make a polygon look like an area chart, you must include the "floor" coordinates (like `0,100` and `100,100`) in your `points`
-string so the fill sits flat against the bottom of the grid.
+**Strategy:** For the polygon to sit flat against the bottom, include the "floor" coordinates (`0,100` and `100,100`) in its `points`. Keep the stroke on a separate polyline. Otherwise, the polygon would also stroke its two vertical sides and the floor. [SVG Essentials: Gradients](/post/svg/svg-essentials-gradients) covers `linearGradient` in depth.
 
 #### 3. Geometric UI Hexagon
 
@@ -376,71 +618,128 @@ Polygons are the go-to for rigid UI elements like hex-grid buttons or achievemen
 `}
 </SvgSnippet>
 
-**Context:** This is significantly more performant than using a high resolution image for a simple shape, and it stays perfectly crisp regardless of the screen's pixel density or zoom level.
+**Context:** A handful of bytes of markup replaces an image file, and the shape stays crisp at any pixel density or zoom level. Set **Preset** to `hexagon` in the [Shape Presets playground](#interactive-example) above to try it, or generate one with `polygonPoints(50, 50, 6, 40)`.
 
-👉 Try this hands-on in the **Shape Presets** panel of the [interactive playground](#interactive-example) below — set **Preset** to `hexagon`.
+<RainbowDivider />
+
+## When to Switch to `<path>`
+
+`<polyline>` and `<polygon>` are shorthands for one specific kind of `<path>`: a single subpath of straight lines. Reach for [`<path>`](/post/svg/svg-essentials-mastering-the-path-element) as soon as you need any of these:
+
+- **Curves**: Bézier curves (`C`, `S`, `Q`, `T`), for smooth chart lines, organic shapes or rounded corners on only some vertices.
+- **Arcs** (`A`), for pie slices, gauges and rounded ends of a specific radius.
+- **Holes or multiple outlines**: several subpaths in one element, as in the donut above.
+- **Many disjoint lines in one element**: grid lines, tick marks or a set of separate routes as one DOM node, each starting with its own `M`.
+
+Converting is mechanical. A polyline's points become an `M` followed by `L` commands, and a polygon adds a closing `Z`:
+
+<CodeBlock language="xml">
+{`
+  <polyline points="10,80 40,20 70,60" />
+  <path d="M10,80 L40,20 L70,60" />
+
+  <polygon points="10,80 40,20 70,60" />
+  <path d="M10,80 L40,20 L70,60 Z" />
+`}
+</CodeBlock>
+
+The `Z` is what gives you the polygon's clean closing join. Ending a path with `L10,80` instead would recreate the [repeated-point seam](#explicit-closing-a-repeated-point-isnt-a-polygon). Going the other way, if a path is only `M`, `L`, `H`, `V` and at most one `Z`, a polyline or polygon is usually easier to read and to generate.
+
+<RainbowDivider />
+
+## Performance: Point Density
+
+A few dozen or a few hundred points cost nothing. Trouble starts with thousands of points, such as a high-resolution map outline or an "all-time" stock chart, especially when they're updated often. What actually helps:
+
+- **Draw fewer points.** A 600px-wide chart can't show more than a point or two per pixel column, so 10,000 raw samples are mostly invisible. Simplify the line first with the **Ramer–Douglas–Peucker** algorithm (for example, the [simplify.js](https://mourner.github.io/simplify-js/) library), or downsample to one min/max pair per pixel. This is by far the biggest win.
+- **Round your coordinates.** `toFixed(1)` or `toFixed(2)` shrinks the markup without any visible change.
+- **Transform instead of recomputing.** To pan or zoom a chart, put a `transform` on a parent `<g>` or change the `viewBox`, rather than rewriting every coordinate on every frame.
+- **Don't reset `points` every frame** unless the data really changed. Batch updates, and for a single moving vertex, use the live `points` list.
+- **Know when to leave SVG.** For tens of thousands of points, or for real-time streams redrawn many times a second, `<canvas>` is usually the better tool, because it paints pixels without keeping a DOM node per shape.
+
+<Info title="What SVGO does and doesn't do">
+  SVGO and similar optimizers shrink the **markup**: they round numeric precision, strip whitespace and metadata, and can convert shapes to `<path>`. They don't reduce the **number of vertices** in a line. For that, run a simplification step (RDP / simplify.js) on the data before it becomes markup.
+</Info>
+
+`vector-effect="non-scaling-stroke"` often shows up in performance advice, but it's a visual fix that keeps stroke width consistent under scaling. See [Sparklines](#sparklines-tiny-charts-that-stretch) for where it belongs.
+
+<RainbowDivider />
+
+## Accessibility Considerations
+
+`<polygon>` and `<polyline>` are ordinary DOM elements, so the general guidance from [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes#making-svgs-accessible) applies. Two patterns come up often enough with point-based shapes to call out on their own.
+
+**Icons and badges built from `<polygon>`:** if the shape conveys meaning on its own (a hexagon "verified" badge, a star rating), give it a `<title>` and `role="img"`. If it's purely decorative and sits next to a text label that already says the same thing, hide it with `aria-hidden="true"`.
+
+**Charts built from `<polyline>`:** a `points` string is just coordinates, so there's nothing in it a screen reader can announce. Give the chart a short name and a one-sentence summary of the trend, and make the exact values available as a real table:
+
+<CodeBlock language="html">
+{`
+  <figure>
+    <svg viewBox="0 0 100 30" role="img" aria-labelledby="signups-title signups-desc">
+      <title id="signups-title">Weekly sign-ups, weeks 1 to 8</title>
+      <desc id="signups-desc">Sign-ups more than doubled, from 12 in week 1 to 27 in week 8, with a dip in week 3.</desc>
+      <polyline points="2,26.4 15.7,21.5 29.4,28 43.1,15 56.9,18.2 70.6,6.9 84.3,10.1 98,2"
+                fill="none" stroke="currentColor" stroke-width="2" />
+    </svg>
+
+    <details>
+      <summary>Show the data</summary>
+      <table>
+        <thead><tr><th scope="col">Week</th><th scope="col">Sign-ups</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>12</td></tr>
+          <tr><td>2</td><td>15</td></tr>
+          <!-- … weeks 3–8 … -->
+        </tbody>
+      </table>
+    </details>
+  </figure>
+`}
+</CodeBlock>
+
+- `role="img"` plus `aria-labelledby` pointing at both the `<title>` and `<desc>` gives the graphic a name and a description. It also tells assistive tech to treat the SVG as one image, instead of walking its children.
+- The `<desc>` states the **takeaway**, not the coordinates. That's what a sighted reader gets from a glance.
+- The table carries the exact values for anyone who needs them, and it's useful to sighted users too. A visually-hidden table works as well, if you don't want a disclosure widget.
+
+For interactive charts with focusable data points, see [SVG Essentials: Metadata, Links, and Interactivity](/post/svg/svg-essentials-metadata-and-interactivity).
+
+<Warning title="Don't rely on color or shape alone">
+  If a chart uses `fill-rule` or overlapping shapes to distinguish data series, make sure that distinction doesn't depend on color alone. Pair it with labels, patterns or a legend so the information still reads for colorblind users.
+</Warning>
 
 <RainbowDivider />
 
 ## Best Practices
 
-1. **Always Define `fill` for Polylines** — Since the default is `fill="black"`, explicitly use `fill="none"` to avoid accidental shading.
-2. **Order of Points Matters** — Points are connected exactly in the order written. Incorrect ordering can produce unexpected shapes.
-3. **Use `stroke-linejoin` for Better Corners** — For charts and icons, use `stroke-linejoin="round"`. This produces cleaner visual results.
-4. **Use a Consistent Coordinate Grid** — Working with a predictable grid like: `viewBox="0 0 100 100"` makes positioning shapes easier.
-5. **Choose Your `fill-rule` Deliberately** — For self-intersecting shapes like stars, decide upfront whether you want a solid (`nonzero`) or cut-out (`evenodd`) look rather than leaving it to the default.
-6. **Give Meaningful Shapes a `<title>`** — Icons and badges built from `<polygon>` should carry a `<title>` (or `aria-hidden="true"` if purely decorative) so screen readers know what to do with them.
+1. **Always define `fill` for polylines.** The default is `fill="black"`, so set `fill="none"` explicitly to avoid accidental shading.
+2. **Close with `<polygon>`, not a repeated point.** A repeated first point leaves a capped seam instead of a join.
+3. **Order points deliberately.** They're connected exactly in the order written, so sort generated points by angle or by x.
+4. **Watch sharp corners.** Corners under about 29° are bevelled by the default `stroke-miterlimit="4"`. Raise the limit on purpose, or use `stroke-linejoin="round"` for data-driven shapes.
+5. **Choose your `fill-rule` deliberately.** For self-intersecting shapes, decide up front between a solid (`nonzero`) and a knocked-out (`evenodd`) centre. For real holes, switch to `<path>`.
+6. **Round generated coordinates** with `toFixed()`, and simplify dense data before rendering it.
+7. **Use a consistent coordinate grid.** A predictable grid like `viewBox="0 0 100 100"` makes positioning and generating points easier.
+8. **Give meaningful shapes a name.** Icons and badges need a `<title>` (or `aria-hidden="true"` if decorative), and charts need a summary plus the data.
 
 <RainbowDivider />
 
-## When to Use Which?
+## Where Should You Use This?
 
 **Use `<polyline>` when:**
 
-- Building line charts
-- Drawing routes or paths
-- Connecting points visually
-- Showing progress or trends
+- Building line charts and sparklines
+- Drawing routes, connectors or signal traces
+- Connecting data points, with markers on the vertices
+- Animating a line drawing itself in
 
 **Use `<polygon>` when:**
 
-- Creating geometric shapes
-- Drawing stars or icons
-- Filling closed areas
-- Designing UI illustrations
+- Creating geometric shapes, stars, hexagons and badges
+- Filling closed areas, like the area under a chart or map regions
+- Designing rigid UI illustrations
+- Morphing between shapes with matching point counts
 
-Both elements are limited to straight-line segments between points — neither can express a curve natively. If a shape needs curves,
-arcs, or a mix of straight and curved segments, `<polygon>` and `<polyline>` aren't the right tool for the job.
-
-<RainbowDivider />
-
-## Performance Tip: Point Density
-
-While SVGs are lightweight, a `<polyline>` with 10,000 points (e.g., a high-resolution map or a stock market "all-time" chart) can cause
-the browser to lag during window resizing or animations.
-
-This can be mitigated by:
-
-- Using `vector-effect="non-scaling-stroke"` so the line thickness stays consistent when the SVG scales.
-- Simplify coordinates using tools like **SVGO** or the **Ramer-Douglas-Peucker** algorithm before exporting data-heavy shapes.
-
-<RainbowDivider />
-
-## Interactive Example
-
-To truly grasp how coordinates and closing logic work, use the two playgrounds below — one for scrambling raw points, one for trying the
-same toggle on shapes you'd actually ship.
-
-**Free-Form Points** gives you four independent point sliders. Drag them out of order into a self-intersecting "hourglass" (the same
-failure mode from [Point Order](#point-order-why-sequence-is-strategy) above), then switch **Element** to `polyline` to watch the fill
-vanish and the closing segment disappear — the "Phantom Fill" trap from earlier, live.
-
-<InteractiveSvgPanel slug="polygon-vs-polyline-demo" />
-
-**Shape Presets** swaps the raw sliders for a **Preset** picker — square, hexagon, or star. Switch **Element** between `polygon` and
-`polyline` on each to see the same open-vs-closed behavior on a clean, recognizable shape instead of an arbitrary quadrilateral.
-
-<InteractiveSvgPanel slug="polygon-vs-polyline-shape-presets" />
+**Use `<path>` when** you need curves, arcs, holes or several outlines in one element. See [When to Switch to `<path>`](#when-to-switch-to-path).
 
 <RainbowDivider />
 
@@ -448,50 +747,51 @@ vanish and the closing segment disappear — the "Phantom Fill" trap from earlie
 
 ### Can a `<polyline>` be filled?
 
-Yes — by default it will be, whether you want it to or not. SVG's initial `fill` value is black, and a polyline is no exception,
-even though it's an "open" shape. Add `fill="none"` unless you're intentionally shading the area between the last and first points.
+Yes, and by default it will be, whether you want it to or not. SVG's initial `fill` value is black, and a polyline is no exception, even though it's an "open" shape. The fill covers the region enclosed by the line plus an imaginary chord from the last point back to the first. Add `fill="none"` unless you want that region shaded.
 
 ---
 
 ### Does `<polygon>` support `stroke-dasharray`?
 
-Yes. A dashed polygon still auto-closes; the dash pattern simply wraps continuously around the entire closed outline, including
-across the auto-generated closing segment between the last point and the first.
+Yes. A dashed polygon still closes itself, and the dash pattern runs continuously around the whole outline, including the auto-generated closing segment. Each dash gets its own `stroke-linecap`.
 
 ---
 
 ### Can I animate the `points` attribute?
 
-Yes, but only cleanly between values with the same number of points — the browser interpolates each point's coordinates individually
-rather than inserting or removing points mid-animation. Animating a triangle into a hexagon requires padding the triangle's `points`
-list up to six points first, so each side of the animation has a matching vertex to interpolate toward.
+Yes, but not with CSS. `points` isn't a CSS property. Use SMIL's `<animate attributeName="points">`, JavaScript or an animation library. Smooth interpolation only happens between lists with the **same number of points**. Mismatched counts jump from one shape to the other instead. See [Morphing Shapes](#morphing-shapes-animating-points).
 
 ---
 
 ### Why does `fill-rule` change the filled area but not the outline?
 
-Because `fill-rule` only governs the **fill** — it decides which enclosed regions count as "inside." The `stroke` is drawn along
-the same path regardless of which fill rule is active, so the outline never changes; only the shaded area does.
+Because `fill-rule` only governs the **fill**. It decides which enclosed regions count as "inside". The stroke follows the same edges whichever rule is active, so the outline never changes; only the shaded area does.
+
+---
+
+### Why are the tips of my star blunt?
+
+The tips are sharper than about 29°, so they exceed the default `stroke-miterlimit` of 4 and fall back to bevels. Raise `stroke-miterlimit`, or accept rounded tips with `stroke-linejoin="round"`. See [the miter limit](#stroke-miterlimit-in-depth).
 
 ---
 
 ### Can a `<polygon>` or `<polyline>` have curved segments?
 
-No — both elements only connect their points with straight lines. Curved segments require a different SVG drawing primitive
-built specifically for arcs and bézier curves.
+No. Both elements only connect their points with straight lines. For Bézier curves and arcs, use [`<path>`](/post/svg/svg-essentials-mastering-the-path-element).
 
 <RainbowDivider />
 
 ## Wrapping Up
 
-Although `<polygon>` and `<polyline>` share the exact same `points` syntax, the choice between them comes down to one question:
-does this shape need to close?
+`<polygon>` and `<polyline>` share the exact same `points` syntax, and most of the time the choice comes down to one question: does this shape need to close?
 
-- **Use `polyline`** for data visualizations, route maps, and anything that should stay open.
-- **Use `polygon`** for icons, badges, and geometric shapes that need a filled, closed outline.
-- **Watch your `fill-rule`** whenever points overlap — `nonzero` and `evenodd` can produce very different results from the exact
-  same `points` string.
+- **Use `polyline`** for data visualizations, sparklines, route maps and anything that should stay open. Remember `fill="none"`.
+- **Use `polygon`** for icons, badges and geometric shapes that need a sealed, cleanly-joined outline. Don't fake one by repeating the first point.
+- **Watch your `fill-rule`** whenever an outline crosses itself. `nonzero` counts direction and `evenodd` counts crossings, and they only disagree about regions enclosed more than once.
+- **Mind the miter limit** on sharp corners: past about 29°, the default of 4 turns spikes into bevels.
+- **Generate, don't hand-type**: a little `cos`/`sin` or a linear scale produces precise, rounded `points` for stars, polygons and charts.
+- **Graduate to `<path>`** for curves, arcs and holes.
 
 Both elements trace back to the six basic shapes covered in
-[SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes) — worth a revisit if the
-`points` syntax or coordinate system ever feels shaky.
+[SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes), which is worth a revisit if the
+`points` syntax or coordinate system ever feels shaky. From here, [SVG Essentials: Mastering the Path Element](/post/svg/svg-essentials-mastering-the-path-element) picks up where straight lines leave off.

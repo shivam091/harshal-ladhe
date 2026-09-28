@@ -240,10 +240,10 @@ export const posts: Post[] = [
   {
     slug: "polygon-vs-polyline",
     title: "SVG Polygon vs Polyline: Differences, Fill Rules, and Use Cases",
-    excerpt: "Master SVG polygons, polylines, and fill rules.",
-    description: "Learn the difference between SVG polygon and polyline: points syntax, fill-rule, accessibility, and real use cases like charts, icons, and UI shapes.",
+    excerpt: "Same points, open vs closed: fill rules by ray-crossing, the miter limit, sparklines, and when to switch to path.",
+    description: "SVG polygon vs polyline in depth: nonzero vs evenodd by ray-crossing, stroke-miterlimit, generated points, sparklines, markers, draw-on and morph animation, performance, and accessible charts.",
     category: ["SVG"],
-    tags: ["svg", "polygon", "polyline", "graphics", "vector-graphics", "shapes", "fill-rule", "web-design", "frontend-development", "icons", "accessibility"],
+    tags: ["svg", "polygon", "polyline", "shapes", "fill-rule", "stroke-miterlimit", "sparklines", "data-visualization", "svg-animation", "vector-graphics", "icons", "performance", "accessibility"],
     image: {
       path: "/assets/img/posts/svg/polygon-vs-polyline/cover.png",
       width: 1536,
@@ -253,6 +253,7 @@ export const posts: Post[] = [
     signoff: "Between the point-scrambling playground that turns a clean square into a self-intersecting hourglass mid-drag, the preset switcher for square, hexagon, and star, and lining up the nonzero-vs-evenodd star comparison so the hollow center actually reads as hollow, this post leaned on live demos to do work that formulas alone never quite pull off. Thanks for dragging every vertex and flipping every fill rule with me — go close off a shape that's entirely your own. ⬡",
     featured: true,
     changelog: [
+      { date: "2026-09-28", change: "Condensed basics into a recap; fixed nonzero/evenodd explanations and the hole claim; added closing-seam, miter-limit, generated-points, sparkline, marker, draw-on, morphing and switch-to-path sections, three new diagrams, and two new playgrounds; rewrote performance and accessibility guidance" },
       { date: "2026-08-25", change: "Initial publication" }
     ],
   },
