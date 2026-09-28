@@ -6,11 +6,44 @@ export const metadata = buildPostMetadata("svg-essentials-gradients");
 
 CSS has its own `linear-gradient()`/`radial-gradient()` functions for `background` — a genuinely different mechanism from what this post covers. SVG gradients are **elements**, defined once in [`<defs>`](/post/svg/svg-essentials-g-defs-symbol-and-use) and referenced by id (`fill="url(#myGradient)"`), not values written inline. That indirection is the whole point: one gradient definition can be reused across many shapes, reacts to being referenced by objects of different sizes, and can even be animated the same way any other element can.
 
-The same `<defs>`-and-reference pattern shows up again for [patterns](/post/svg/svg-essentials-pattern-element) — the sibling fill mechanism for tiling instead of blending.
+<Quote>
+  An SVG gradient isn't a color. It's a small, reusable paint program that every shape referencing it runs against its own geometry.
+</Quote>
+
+This post assumes you're comfortable with coordinates and `viewBox` from [SVG Essentials: Mastering Shapes, Coordinates, and Styling](/post/svg/svg-essentials-mastering-basic-shapes). It starts at the first `<stop>` and works up to the edge cases that bite in production: zero-height lines that paint nothing, gradients hidden inside `display: none` sprites, and stops that ignore the `color` you set on the shape.
+
+The same `<defs>`-and-reference pattern shows up again for [patterns](/post/svg/svg-essentials-pattern-element) — the sibling fill mechanism for tiling instead of blending — and for [clip paths and masks](/post/svg/svg-essentials-clippath-and-mask), where a gradient inside a `<mask>` becomes a soft fade-out.
 
 <RainbowDivider />
 
-## `<linearGradient>` and `<stop>`
+## How an SVG Gradient Works
+
+The spec calls gradients **paint servers**. They render nothing on their own; they only produce color when a shape asks for it through `fill` or `stroke`:
+
+<CodeBlock language="xml">
+{`
+  <svg viewBox="0 0 200 100">
+    <defs>
+      <linearGradient id="brand-gradient">
+        <stop offset="0" stop-color="#6366f1" />
+        <stop offset="1" stop-color="#f59e0b" />
+      </linearGradient>
+    </defs>
+
+    <rect x="10" y="10" width="180" height="80" fill="url(#brand-gradient)" />
+  </svg>
+`}
+</CodeBlock>
+
+Three facts about this model explain almost everything else in the post:
+
+* **The gradient is computed per shape.** By default, its coordinates are fractions of the *referencing* shape's bounding box, so one definition fits any shape.
+* **Ids are document-wide.** An inline SVG can reference a gradient defined in a *different* inline SVG on the same page. That's handy for a shared sprite, and it's also the root of the id-collision bug covered under [Production Considerations](#production-considerations-edge-cases).
+* **It's paint, not geometry.** A gradient can't change a shape's outline, only the color inside it (or along its stroke).
+
+<RainbowDivider />
+
+## `<linearGradient>` and the Gradient Vector
 
 <CodeBlock language="xml">
 {`
@@ -21,9 +54,128 @@ The same `<defs>`-and-reference pattern shows up again for [patterns](/post/svg/
 `}
 </CodeBlock>
 
-`x1`/`y1`/`x2`/`y2` define a **vector** — a direction and a length, not just an angle — and each child `<stop>` places a color at a point along it. Drag the vector's endpoints below and watch the gradient's direction follow:
+`x1`/`y1`/`x2`/`y2` define a **vector**: a line segment with both a direction and a length, not just an angle. Each child `<stop>` places a color at a point along that segment. The color stays constant along every line *perpendicular* to the vector, and whatever lies past either end is handled by [`spreadMethod`](#spreadmethod):
+
+<SvgGradientVectorDiagram />
+
+The defaults are `x1="0%" y1="0%" x2="100%" y2="0%"`, a left-to-right sweep across the shape's bounding box, so the attributes above are only spelled out for clarity. Drag the vector's endpoints below and watch the gradient's direction follow:
 
 <InteractiveSvgPanel slug="linear-gradient-vector-demo" />
+
+<Info title="A zero-length vector paints one flat color">
+  If `x1`/`y1` and `x2`/`y2` land on the same point, there's no direction to interpolate along. The spec says the whole area is painted with the **last** stop's color. It's a quick way to end up with an unexpectedly solid shape while you're animating the endpoints.
+</Info>
+
+<RainbowDivider />
+
+## `<stop>` in Depth
+
+A gradient is only as interesting as its stops. Each `<stop>` has three things to configure:
+
+* **`offset`**: where the stop sits along the vector. It takes either a number from `0` to `1` or a percentage from `0%` to `100%`; `offset="0.25"` and `offset="25%"` mean the same thing. Values outside that range are clamped into it.
+* **`stop-color`**: the color at that point. It accepts any CSS color, including `currentColor` and `var()` (see [the next section](#styling-stops-with-css)).
+* **`stop-opacity`**: the stop's alpha, from `0` to `1`. It's multiplied with any alpha already inside `stop-color`, and the result is multiplied again by the shape's `fill-opacity`/`opacity`.
+
+Two rules about offsets are worth knowing precisely, because they're what make hard edges possible:
+
+* **Offsets never go backwards.** If a stop's offset is *less* than an earlier stop's, it's raised to match that earlier offset. Stops are always processed in document order, never re-sorted.
+* **Two stops at the same offset create a hard edge.** The color jumps instantly from one to the other, with no blend. Pair hard stops and you get flat bands; add a short vector and `spreadMethod="repeat"` and you get stripes.
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 200 90" width="400" height="180">
+  <defs>
+    <!-- Hard stops: each color starts at exactly the offset where the previous one ends -->
+    <linearGradient id="stops-flag">
+      <stop offset="0" stop-color="#6366f1" />
+      <stop offset="0.333" stop-color="#6366f1" />
+      <stop offset="0.333" stop-color="#ec4899" />
+      <stop offset="0.667" stop-color="#ec4899" />
+      <stop offset="0.667" stop-color="#f59e0b" />
+      <stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+    <!-- stop-opacity: the same color fading to fully transparent -->
+    <linearGradient id="stops-fade">
+      <stop offset="0" stop-color="#6366f1" stop-opacity="1" />
+      <stop offset="1" stop-color="#6366f1" stop-opacity="0" />
+    </linearGradient>
+    <!-- Stripes: hard stops on a vector only 10% of the width, repeated -->
+    <linearGradient id="stops-stripes" x2="0.1" spreadMethod="repeat">
+      <stop offset="0.5" stop-color="#6366f1" />
+      <stop offset="0.5" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="200" height="25" fill="url(#stops-flag)" />
+  <rect x="0" y="32" width="200" height="25" fill="url(#stops-fade)" />
+  <rect x="0" y="64" width="200" height="25" fill="url(#stops-stripes)" />
+</svg>
+`}
+</SvgSnippet>
+
+The stripes gradient needs only two stops, both at `0.5`. Before the first stop the color pads out as indigo, and after the last it pads out as amber, so each 10% tile is half one color and half the other.
+
+<Info title="No stops, or just one">
+  A gradient with **no** `<stop>` children paints as if the fill were `none`, so the shape disappears. A gradient with exactly **one** stop paints that stop's color as a solid fill. Both are legal, and both usually mean a typo, like a stop that failed to render or an `href` pointing at the wrong id.
+</Info>
+
+<RainbowDivider />
+
+## Styling Stops with CSS
+
+`stop-color` and `stop-opacity` are **presentation attributes**: they're also real CSS properties. That means a stylesheet can set them, and any CSS rule beats the attribute form (presentation attributes carry the lowest priority in the cascade). This is the cleanest way to theme a gradient without touching its markup:
+
+<CodeBlock language="xml">
+{`
+  <svg class="logo" viewBox="0 0 100 100">
+    <defs>
+      <linearGradient id="logo-gradient">
+        <stop offset="0" class="logo-stop-start" />
+        <stop offset="1" class="logo-stop-end" />
+      </linearGradient>
+    </defs>
+    <circle cx="50" cy="50" r="45" fill="url(#logo-gradient)" />
+  </svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .logo-stop-start { stop-color: var(--brand-start, #6366f1); }
+  .logo-stop-end   { stop-color: var(--brand-end, #f59e0b); }
+
+  /* Dark mode: swap the custom properties, not the markup */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --brand-start: #a5b4fc;
+      --brand-end: #fcd34d;
+    }
+  }
+`}
+</CodeBlock>
+
+This only works for **inline** SVG. An SVG loaded through `<img>` or `background-image` is a separate document, and the host page's CSS and custom properties can't reach inside it.
+
+### `currentColor` Resolves Where the Gradient Lives
+
+`stop-color="currentColor"` is a great way to make one gradient follow the text color, with one catch that surprises almost everyone. A stop inherits properties from **its own ancestors** (the `<linearGradient>`, the `<defs>`, the `<svg>`), **not** from the shape that references it:
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 200 80" width="400" height="160" style="color: #6366f1">
+  <defs>
+    <linearGradient id="current-color-fade">
+      <stop offset="0" stop-color="currentColor" />
+      <stop offset="1" stop-color="currentColor" stop-opacity="0.1" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="95" height="80" fill="url(#current-color-fade)" />
+  <!-- color on the SHAPE is ignored: the stops resolve currentColor from the svg above them -->
+  <rect x="105" y="0" width="95" height="80" fill="url(#current-color-fade)" style="color: #f59e0b" />
+</svg>
+`}
+</SvgSnippet>
+
+Both rects render indigo. To get a different color per instance, set `color` on the element that *contains the gradient*, or define one gradient per theme. You can't make a single definition pick up each referencing shape's color.
 
 <RainbowDivider />
 
@@ -32,6 +184,8 @@ The same `<defs>`-and-reference pattern shows up again for [patterns](/post/svg/
 The default, `objectBoundingBox`, treats `x1`/`y1`/`x2`/`y2` as fractions (0 to 1) of whatever shape's own bounding box the gradient ends up painting — the same gradient definition automatically stretches to fit a tall rectangle, a wide one, or a circle, with zero changes.
 
 `userSpaceOnUse` switches to absolute coordinates in the SVG's own coordinate system instead — useful the moment a gradient needs to look like one continuous backdrop across *several* differently-positioned shapes, rather than restarting fresh inside each one:
+
+<GradientUnitsDiagram />
 
 <SvgSnippet>
 {`
@@ -54,6 +208,8 @@ The default, `objectBoundingBox`, treats `x1`/`y1`/`x2`/`y2` as fractions (0 to 
 `}
 </SvgSnippet>
 
+Percentages change meaning with the unit system. Under `objectBoundingBox`, `50%` is simply `0.5` of the box. Under `userSpaceOnUse`, a percentage resolves against the current **viewport** (the nearest `viewBox`), so `x2="100%"` means "the full width of the SVG canvas", not "the full width of this shape". With `userSpaceOnUse`, plain numbers in user units are usually clearer.
+
 <RainbowDivider />
 
 ## `<radialGradient>`
@@ -67,76 +223,373 @@ The default, `objectBoundingBox`, treats `x1`/`y1`/`x2`/`y2` as fractions (0 to 
 `}
 </CodeBlock>
 
-`cx`/`cy`/`r` define the outer circle; `fx`/`fy` (and, more rarely, `fr`) place the **focal point** — the "hot spot" the gradient radiates from. Letting the focal point sit off-center from the outer circle's own center is what turns a flat radial fade into something that reads as a lit sphere:
+A radial gradient interpolates between **two circles**:
+
+* **The end circle, `cx`/`cy`/`r`:** where the `100%` stop lands. Each defaults to `50%`, so the default gradient is centered in the bounding box and touches its edges.
+* **The focal (start) circle, `fx`/`fy`/`fr`:** where the `0%` stop begins. `fx`/`fy` place its center and default to `cx`/`cy`. **`fr` is its radius**, not a position. `fr` was added in SVG 2 and defaults to `0%`, which shrinks the focal circle to a single point.
+
+<RadialFocalDiagram />
+
+Letting the focal point sit off-center from the outer circle's own center is what turns a flat radial fade into something that reads as a lit sphere. Increasing `fr` gives the highlight a solid core before the fade begins:
 
 <InteractiveSvgPanel slug="radial-gradient-focal-demo" />
+
+<Warning title="fr is SVG 2 — test it">
+  `fr` came later than the rest of `<radialGradient>`, so older renderers and some design-tool exporters ignore it and treat the focal circle as a point. Where the look matters, check it in your target browsers. If you can't rely on it, a pair of equal-offset stops near `0%` is a portable way to fake a solid core.
+</Warning>
+
+### When the Focal Point Leaves the Circle
+
+Put `fx`/`fy` *outside* the end circle and the two versions of the spec disagree. **SVG 1.1** clamps the focal point back onto the circle's edge, so the highlight pins to the rim. **SVG 2** adopts the canvas model instead: the gradient is drawn as a **cone** swept between the two circles, and areas outside that cone are left unpainted. Browsers haven't always agreed on which behavior they ship, so keep the focal circle inside the end circle unless you've tested the result everywhere you care about.
+
+### Radial Gradients Stretch into Ellipses
+
+Under `objectBoundingBox`, `r="50%"` means 50% of the box's width horizontally *and* 50% of its height vertically. On any non-square shape, the "circle" becomes an ellipse. That's often what you want, but when it isn't, switch to `userSpaceOnUse` and give the radius in user units:
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 260 100" width="520" height="200">
+  <defs>
+    <!-- objectBoundingBox: r is 50% of the width AND 50% of the height, so a 2:1 box gets an ellipse -->
+    <radialGradient id="radial-ellipse-obb">
+      <stop offset="0" stop-color="#fef3c7" /><stop offset="1" stop-color="#b45309" />
+    </radialGradient>
+    <!-- userSpaceOnUse: r is one length in user units, so the gradient stays circular -->
+    <radialGradient id="radial-circle-uou" gradientUnits="userSpaceOnUse" cx="195" cy="50" r="60">
+      <stop offset="0" stop-color="#fef3c7" /><stop offset="1" stop-color="#b45309" />
+    </radialGradient>
+  </defs>
+  <rect x="5" y="20" width="120" height="60" fill="url(#radial-ellipse-obb)" />
+  <rect x="135" y="20" width="120" height="60" fill="url(#radial-circle-uou)" />
+</svg>
+`}
+</SvgSnippet>
 
 <RainbowDivider />
 
 ## `gradientTransform`
 
-A `transform`-style attribute applied to the gradient's *own* coordinate space, independent of the shape it paints — rotating a linear gradient 45° without recalculating `x1`/`y1`/`x2`/`y2` by hand:
+`gradientTransform` accepts the same list of transform functions as the `transform` attribute: `rotate()`, `scale()`, `translate()`, `skewX()`, `skewY()` and `matrix()`. It applies them to the gradient's *own* coordinate space, independently of the shape it paints. It's the easy way to rotate a gradient without recalculating `x1`/`y1`/`x2`/`y2` by hand, as long as you choose the pivot:
 
 <CodeBlock language="xml">
-{`<linearGradient id="diagonal" gradientTransform="rotate(45)"> ... </linearGradient>`}
+{`
+  <!-- Pivots on the bounding box's top-left corner (0, 0): the ramp slides toward that corner -->
+  <linearGradient id="diagonal-corner" gradientTransform="rotate(45)"> ... </linearGradient>
+
+  <!-- Pivots on the bounding box's center: the ramp stays centered in the shape -->
+  <linearGradient id="diagonal-center" gradientTransform="rotate(45 .5 .5)"> ... </linearGradient>
+`}
 </CodeBlock>
+
+A bare `rotate(45)` turns around the origin of the gradient's coordinate system. Under `objectBoundingBox`, that's the box's **top-left corner**, so the rotated vector covers only about 70% of the diagonal and the far corner is flat padding. `rotate(45 .5 .5)` pivots on the box's center, which is almost always what you meant:
+
+<GradientTransformDiagram />
+
+<Warning title="Under objectBoundingBox, the angle is only true on square boxes">
+  With `objectBoundingBox`, the transform runs in the box's **unit square** and is only then stretched to the real width and height. On a square shape, `rotate(45)` looks like 45°. On a 2:1 rectangle, the same transform is squashed to roughly 27° on screen, and the color bands are no longer perpendicular to the direction you rotated toward. If you need a true on-screen angle on a non-square shape, use `gradientUnits="userSpaceOnUse"` and rotate around the shape's actual center, as in `rotate(45 60 40)`.
+</Warning>
+
+Switch the shape and unit system below to see the distortion appear and disappear:
+
+<InteractiveSvgPanel slug="gradient-transform-demo" />
+
+`gradientTransform` isn't just for rotation. `scale(1 2)` on a radial gradient makes a vertical ellipse, and a `skewX()` shears the color bands. For a plain corner-to-corner diagonal, you don't need a transform at all: `x1="0" y1="0" x2="1" y2="1"` follows the box's diagonal exactly, whatever its aspect ratio.
 
 <RainbowDivider />
 
 ## `spreadMethod`
 
-Controls what happens *beyond* the defined 0%-100% stop range:
+`spreadMethod` controls what happens *beyond* the ends of the vector, before offset `0` and after offset `1`. It has three values:
 
-<CodeBlock language="xml">
+* **`pad` (the default):** the first and last stop colors continue flatly to the edges of the shape.
+* **`reflect`:** the stop sequence mirrors back and forth (start → end → start → end ...), giving smooth, seamless bands.
+* **`repeat`:** the stop sequence restarts from the beginning each time, giving a hard edge wherever the last color meets the first again.
+
+It only has anything to do when the vector is **shorter** than the shape. With the default full-width vector, all three look identical, which is why so many "my `spreadMethod` does nothing" questions come down to a missing `x2`:
+
+<SpreadMethodDiagram />
+
+<SvgSnippet>
 {`
-  <!-- pad (default): extends the end colors flatly past the vector's ends -->
-  <linearGradient id="g1" spreadMethod="pad">...</linearGradient>
-  <!-- reflect: mirrors the stop sequence back and forth -->
-  <linearGradient id="g2" spreadMethod="reflect">...</linearGradient>
-  <!-- repeat: tiles the stop sequence -->
-  <linearGradient id="g3" spreadMethod="repeat">...</linearGradient>
+<svg viewBox="0 0 200 100" width="400" height="200">
+  <defs>
+    <!-- Same vector, a quarter of the width (x2="0.25"), for all three -->
+    <linearGradient id="spread-pad" x2="0.25" spreadMethod="pad">
+      <stop offset="0" stop-color="#6366f1" /><stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+    <linearGradient id="spread-reflect" x2="0.25" spreadMethod="reflect">
+      <stop offset="0" stop-color="#6366f1" /><stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+    <linearGradient id="spread-repeat" x2="0.25" spreadMethod="repeat">
+      <stop offset="0" stop-color="#6366f1" /><stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="200" height="28" fill="url(#spread-pad)" />
+  <rect x="0" y="36" width="200" height="28" fill="url(#spread-reflect)" />
+  <rect x="0" y="72" width="200" height="28" fill="url(#spread-repeat)" />
+</svg>
 `}
-</CodeBlock>
+</SvgSnippet>
 
-`spreadMethod` only matters once the gradient's vector is shorter than the shape it's painting — `pad` freezes the edge colors, `reflect`/`repeat` turn a short gradient into a genuine striped pattern.
+`spreadMethod` works on radial gradients too. There, "beyond the vector" means outside the end circle, so a small `r` with `repeat` produces concentric rings, like ripples or a target.
 
 <RainbowDivider />
 
-## Reusing Stops with `href`
+## Reusing Gradients with `href`
+
+A gradient can point at another gradient with `href` and inherit from it, so you can build a "same colors, different geometry" variant without repeating the stop list:
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 300 100" width="600" height="200">
+  <defs>
+    <linearGradient id="href-base" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6366f1" />
+      <stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+    <!-- Inherits the stops and x1/y1; overrides only x2/y2 to run top-to-bottom -->
+    <linearGradient id="href-vertical" href="#href-base" x2="0" y2="1" />
+    <!-- A RADIAL gradient can inherit a LINEAR gradient's stops -->
+    <radialGradient id="href-radial" href="#href-base" />
+  </defs>
+  <rect x="5" y="10" width="90" height="80" rx="6" fill="url(#href-base)" />
+  <rect x="105" y="10" width="90" height="80" rx="6" fill="url(#href-vertical)" />
+  <rect x="205" y="10" width="90" height="80" rx="6" fill="url(#href-radial)" />
+</svg>
+`}
+</SvgSnippet>
+
+The inheritance rules are precise:
+
+* **Attributes are inherited one by one**, and only when the referencing gradient doesn't set them: `x1`/`y1`/`x2`/`y2` for linear gradients, `cx`/`cy`/`r`/`fx`/`fy`/`fr` for radial ones, plus `gradientUnits`, `gradientTransform` and `spreadMethod` for both. Anything you set locally wins.
+* **Stops are all-or-nothing.** A referencing gradient inherits the template's stops only if it has **no** `<stop>` children of its own. Add a single local stop and you lose every inherited one.
+* **Linear and radial can mix.** A `<radialGradient>` can reference a `<linearGradient>` (or the other way round). Only the shared attributes and the stops carry over; geometry that doesn't apply is ignored.
+* **Chains are allowed and cycles aren't.** A can reference B, which references C. A loop (A → B → A) is an error, and the reference is treated as invalid.
+
+<Info title="href vs. xlink:href">
+  SVG 2 uses plain `href`. SVG 1.1 used `xlink:href`, which requires `xmlns:xlink="http://www.w3.org/1999/xlink"` on the root. Modern browsers accept both, but older renderers, some design tools and some SVG libraries only understand `xlink:href`. If your SVG has to survive those, write `xlink:href` (or both).
+</Info>
+
+<RainbowDivider />
+
+## Gradients on Strokes and Text
+
+Anything that accepts `fill` or `stroke` can take a gradient, including `<text>` and a shape's outline:
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 300 100" width="600" height="200">
+  <defs>
+    <linearGradient id="text-stroke-sweep">
+      <stop offset="0" stop-color="#6366f1" />
+      <stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <!-- The text's bounding box covers the whole word, so one sweep runs across every glyph -->
+  <text x="10" y="62" font-size="36" font-weight="700" fill="url(#text-stroke-sweep)">Gradient</text>
+  <!-- A stroke uses the shape's geometry bbox, which does NOT include the stroke width -->
+  <circle cx="255" cy="50" r="28" fill="none" stroke="url(#text-stroke-sweep)" stroke-width="10" />
+</svg>
+`}
+</SvgSnippet>
+
+Two bounding-box details matter here:
+
+* **The bounding box ignores stroke width.** Under `objectBoundingBox`, `0` and `1` sit on the shape's *geometry*, so half of a thick stroke hangs outside the gradient's 0-to-1 range. With `pad`, that overhang is just the end colors. For thick strokes where the ends need to line up exactly, switch to `userSpaceOnUse` and measure to the stroke's outer edge.
+* **Text uses the whole `<text>` element's box.** The sweep runs once across the whole run of text rather than restarting per glyph. Change the text content and the gradient re-fits, which is a good reason to prefer SVG text over a static image of lettering. For more on text layout, see [SVG Essentials: Mastering Text](/post/svg/svg-essentials-mastering-text).
+
+<RainbowDivider />
+
+## Zero-Width or Zero-Height Bounding Boxes
+
+This is one of the most confusing gradient bugs, and it has a simple cause. A perfectly horizontal `<line>` (or a vertical one, or a flat `<path>`) has a bounding box with **zero height**. `objectBoundingBox` has nothing to scale against, so the spec says the gradient is ignored, and in practice the stroke typically renders **nothing at all**, even though the stroke is visibly thick:
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 200 60" width="400" height="120">
+  <defs>
+    <linearGradient id="line-obb">
+      <stop offset="0" stop-color="#6366f1" /><stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+    <linearGradient id="line-uou" gradientUnits="userSpaceOnUse" x1="20" y1="0" x2="180" y2="0">
+      <stop offset="0" stop-color="#6366f1" /><stop offset="1" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+  <!-- Zero-height bbox + objectBoundingBox: this line does not appear -->
+  <line x1="20" y1="18" x2="180" y2="18" stroke="url(#line-obb)" stroke-width="8" />
+  <!-- userSpaceOnUse doesn't depend on the bbox, so this one renders -->
+  <line x1="20" y1="42" x2="180" y2="42" stroke="url(#line-uou)" stroke-width="8" />
+</svg>
+`}
+</SvgSnippet>
+
+There are two fixes. Use `userSpaceOnUse` with coordinates that match the line, as above. Or, if you want to keep `objectBoundingBox`, nudge the geometry so the box isn't degenerate: end the line at `y2="18.01"`. Axis charts, dividers and progress bars drawn as lines hit this constantly.
+
+<RainbowDivider />
+
+## Fallback Paint
+
+`fill` and `stroke` accept a fallback color **after** the `url()`:
+
+<CodeBlock language="xml">
+{`<rect width="100" height="40" fill="url(#brand-gradient) #6366f1" />`}
+</CodeBlock>
+
+If `#brand-gradient` can't be resolved (the id doesn't exist, the gradient hasn't loaded, or it points at something that isn't a paint server), the shape paints solid `#6366f1` instead of the default for a broken reference, which is nothing. It costs a few characters and turns a silent disappearance into a graceful degradation. It's worth using on any gradient that comes from a shared sprite or another component. Don't rely on it to rescue the zero-size bounding-box case above; behavior there varies, so fix the geometry or the units instead.
+
+<RainbowDivider />
+
+## Animating Gradients
+
+Because gradients are elements, their attributes can be animated like any others. With SMIL (see [SVG Essentials: Native Animation with SMIL](/post/svg/svg-essentials-smil-animation)), you can animate a stop's `offset` or `stop-color`, the vector's `x1`/`y1`/`x2`/`y2`, or the whole `gradientTransform` with `<animateTransform>`:
+
+<SvgSnippet>
+{`
+<svg viewBox="0 0 200 60" width="400" height="120">
+  <defs>
+    <linearGradient id="shimmer-gradient">
+      <stop offset="0" stop-color="#6366f1" />
+      <!-- The highlight stop sweeps across and back by animating its offset -->
+      <stop offset="0.5" stop-color="#f9a8d4">
+        <animate attributeName="offset" values="0;1;0" dur="4s" repeatCount="indefinite" />
+      </stop>
+      <stop offset="1" stop-color="#6366f1" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="5" width="200" height="50" rx="8" fill="url(#shimmer-gradient)" />
+</svg>
+`}
+</SvgSnippet>
 
 <CodeBlock language="xml">
 {`
-  <linearGradient id="base-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-    <stop offset="0%" stop-color="#6366f1" />
-    <stop offset="100%" stop-color="#f59e0b" />
+  <!-- Spinning the gradient itself: animateTransform targets gradientTransform, not transform -->
+  <linearGradient id="spin-gradient" gradientTransform="rotate(0 .5 .5)">
+    <stop offset="0" stop-color="#6366f1" />
+    <stop offset="1" stop-color="#f59e0b" />
+    <animateTransform attributeName="gradientTransform" type="rotate"
+      from="0 .5 .5" to="360 .5 .5" dur="6s" repeatCount="indefinite" />
   </linearGradient>
-
-  <!-- Inherits base-gradient's <stop> children, overriding only the vector -->
-  <linearGradient id="vertical-variant" href="#base-gradient" x1="0%" y1="0%" x2="0%" y2="100%" />
 `}
 </CodeBlock>
 
-A gradient can inherit another gradient's `<stop>` list via `href`, overriding just its own geometry — a "same colors, different direction" variant without repeating the stop list.
+CSS can reach only the properties that are actually CSS properties: `stop-color` and `stop-opacity`. They transition and animate like any color, which is enough for hover states and theme changes:
+
+<CodeBlock language="css">
+{`
+  .button-stop {
+    stop-color: #6366f1;
+    transition: stop-color 300ms ease;
+  }
+
+  .button:hover .button-stop {
+    stop-color: #ec4899;
+  }
+`}
+</CodeBlock>
+
+`offset`, `x1`/`y2`, `r` and `gradientTransform` are plain attributes, not CSS properties, so CSS transitions can't touch them. Use SMIL, or animate them from JavaScript. A common alternative is to cross-fade two static gradients on stacked shapes by animating `opacity`, which is easy to control and cheap to render.
+
+<Warning title="Respect reduced motion">
+  SMIL doesn't look at `prefers-reduced-motion`. For an ambient shimmer or spinning gradient, drive the animation from CSS so a `@media (prefers-reduced-motion: reduce)` rule can switch it off. If you do use SMIL, remove the animation with a small script when the user has asked for less motion.
+</Warning>
+
+<RainbowDivider />
+
+## Color Interpolation
+
+SVG gradients interpolate between stops in **sRGB** by default. That's the same space CSS gradients used for years, and it's why a blue-to-yellow SVG gradient often passes through a muddy gray-green in the middle.
+
+SVG does define `color-interpolation="linearRGB"` for gradients, but browser support is poor, and many renderers ignore it entirely. Don't depend on it without testing.
+
+Modern CSS gradients can choose their interpolation space directly:
+
+<CodeBlock language="css">
+{`
+  /* CSS only: interpolate in OKLCH for a more even, vivid midpoint */
+  .banner {
+    background: linear-gradient(in oklch to right, #6366f1, #f59e0b);
+  }
+`}
+</CodeBlock>
+
+SVG has no equivalent. The portable workaround is to **add intermediate stops**: sample the gradient you want in OKLCH (a color tool or a few lines of script can compute them) and write those colors as extra `<stop>`s. Three to five extra stops are usually enough to hide the sRGB dip.
+
+<RainbowDivider />
+
+## What SVG Gradients Can't Do
+
+It helps to know where the element-based model stops, so you don't go hunting for attributes that don't exist:
+
+* **No conic (angular) gradient.** CSS has `conic-gradient()`, but SVG has no `<conicGradient>`. Workarounds are to approximate one with many thin wedge `<path>`s, each filled with a solid or linear gradient; to draw the conic gradient in HTML/CSS and embed it through [`<foreignObject>`](/post/svg/svg-essentials-image-and-foreignobject); or, for a pie or ring chart, to use `stroke-dasharray` segments instead.
+* **No mesh gradients.** `<meshgradient>` was drafted for SVG 2 but dropped before the spec was finalized, and browsers don't render it. Inkscape can author mesh gradients, but it has to export them with a JavaScript polyfill or a rasterized fallback for the web.
+* **No color hints.** CSS lets you move a blend's midpoint with a bare position between two colors, as in `linear-gradient(red, 20%, blue)`. SVG always blends linearly between neighboring stops, so you shape the curve by adding stops.
+* **No gradients on HTML.** An SVG gradient paints SVG shapes only. It can't be the `background` of a `<div>`. Wrap the content in an inline SVG, or use a CSS gradient.
+* **Noise and texture are someone else's job.** To add grain to a smooth gradient, add a [filter](/post/svg/svg-essentials-filters-fundamentals) (`feTurbulence`, covered in [Advanced Filter Primitives](/post/svg/svg-essentials-advanced-filter-primitives)), or tile a [pattern](/post/svg/svg-essentials-pattern-element) on top.
+
+<RainbowDivider />
+
+## SVG Gradients vs. CSS Gradients
+
+They look alike and solve overlapping problems, but they come from different specs and don't interoperate. A CSS gradient function can't reference an SVG `<linearGradient>`, and `fill` doesn't accept `linear-gradient()`. For the CSS side in depth, see [Mastering CSS Gradients](/post/css/mastering-css-gradients).
+
+| | SVG gradients | CSS gradients |
+| --- | --- | --- |
+| **Syntax** | Elements (`<linearGradient>`, `<radialGradient>`, `<stop>`) referenced with `url(#id)` | Functions written inline as a value: `linear-gradient(...)` |
+| **Reuse** | Define once and reference from any shape; variants through `href` | Repeat the value, or store it in a custom property |
+| **Painted onto** | SVG `fill` and `stroke`: shapes, paths, text | Any CSS image slot: `background`, `border-image`, `mask-image`, `list-style-image` |
+| **Units** | Fractions of the shape's bounding box, or user-space coordinates | The element's box (`background-origin`/`background-size`), in lengths and percentages |
+| **Direction** | A vector from `x1,y1` to `x2,y2`; rotate with `gradientTransform` | An angle (`0deg` = to top, clockwise) or a keyword such as `to right` |
+| **Radial shape** | End and focal circles (`cx`/`cy`/`r`, `fx`/`fy`/`fr`) | `circle` or `ellipse`, sized by keywords like `closest-side` |
+| **Past the ends** | `spreadMethod`: `pad`, `reflect`, `repeat` | Pads by default; `repeating-*-gradient()` repeats (no reflect) |
+| **Conic** | Not available | `conic-gradient()` |
+| **Interpolation space** | sRGB (`linearRGB` poorly supported) | sRGB by default; `in oklch`, `in oklab` and others in modern browsers |
+| **Animation** | SMIL on any attribute; CSS on `stop-color`/`stop-opacity` | Registered custom properties (`@property`) animating stop colors and positions |
+
+Choose SVG gradients when the gradient belongs *to a shape*: icons, illustrations, charts, text and strokes. Choose CSS gradients when it belongs *to a box*: page backgrounds, cards, buttons and overlays. On the web, a CSS gradient on a box is simpler; an SVG gradient on a shape is the only way to follow a non-rectangular outline.
+
+<RainbowDivider />
+
+## Accessibility
+
+* **Check contrast across the whole gradient, not just its average.** Text on a gradient, or gradient-filled text on a solid background, has to meet contrast at its *worst* point. Check the lightest and darkest stops against the other color. A text shadow or a semi-opaque backing shape can rescue a gradient that's too wide.
+* **Don't encode meaning in the gradient alone.** A chart that uses a color ramp to mean "low to high" needs a labelled legend or direct labels, since the ramp can be hard or impossible to read for color-blind users.
+* **Plan for forced-colors mode.** In Windows High Contrast and similar modes, browsers may override or flatten author colors, including SVG paint and stop colors, and behavior varies between engines. Provide a `@media (forced-colors: active)` rule that swaps essential gradients for a system color, such as `fill: CanvasText`, and test the result.
+* **Decorative gradients stay decorative.** A gradient doesn't change the accessible name or role of the SVG; label the graphic itself with `<title>`/`aria-label`. See [Metadata, Links, and Interactivity](/post/svg/svg-essentials-metadata-and-interactivity).
 
 <RainbowDivider />
 
 ## Where Should You Use This?
 
 - Data visualization fills that must exactly match a shape's bounding box regardless of its size (`objectBoundingBox`, the default)
-- A brand gradient reused consistently across an icon system, updated in one place
+- A brand gradient reused consistently across an icon system, updated in one place and themed through CSS custom properties on the stops
 - Gradients that need to align across multiple separately-positioned shapes as one continuous backdrop (`userSpaceOnUse`)
-- Any CSS gradient value currently copy-pasted across several rules that would benefit from a single, referenceable definition
+- Gradient-filled headings, logotypes and outlined strokes, which CSS `background` gradients can't paint along a shape's outline
+- Soft fade-outs and vignettes, by putting a gradient inside a [`<mask>`](/post/svg/svg-essentials-clippath-and-mask)
+- Illustrations with lighting: off-center radial focal points for spheres, buttons and glows
 
 <RainbowDivider />
 
 ## Production Considerations & Edge Cases
 
-* **`id` collisions are a real, common bug.** The same inline SVG markup repeated multiple times on one page (a repeated icon component, say) duplicates every `id` inside it — including gradient ids — and only the first one actually gets used by every reference. Generate unique ids per instance, or use a single shared `<defs>` block instead of repeating the gradient definition.
-* **`objectBoundingBox` is the default for a reason** — reach for `userSpaceOnUse` deliberately, when the alignment-across-shapes behavior is actually what's needed, not as a default choice.
+* **`id` collisions are a real, common bug.** The same inline SVG markup repeated multiple times on one page (a repeated icon component, say) duplicates every `id` inside it — including gradient ids — and only the first one actually gets used by every reference. Generate unique ids per instance, or use a single shared `<defs>` block instead of repeating the gradient definition. In React, `useId()` is the usual tool; in an SVG sprite, prefix every id with the icon's name.
+* **Don't hide your gradient sprite with `display: none`.** A common pattern keeps shared gradients in one hidden `<svg>` at the top of the page. If that SVG (or any ancestor) is `display: none`, several browsers have historically refused to use gradients inside it, so every reference silently falls back to its fallback paint or to nothing. Hide the sprite visually instead: `width="0" height="0"` plus `position: absolute`, with `aria-hidden="true"`.
+* **References across files are unreliable.** `fill="url(sprite.svg#brand)"` (a gradient in an external file) has patchy browser support for paint servers. Keep gradients in the same document that uses them.
+* **Watch for zero-size bounding boxes.** Horizontal and vertical lines with an `objectBoundingBox` gradient paint nothing. Use `userSpaceOnUse` for any gradient applied to lines.
+* **`objectBoundingBox` is the default for a reason** — reach for `userSpaceOnUse` deliberately, when the alignment-across-shapes behavior is actually what's needed, not as a default choice. Remember that its percentages resolve against the viewport, not the shape.
+* **Rotate around the center.** Write `rotate(angle .5 .5)` rather than a bare `rotate(angle)`, and remember that under `objectBoundingBox` the angle is only accurate on square shapes.
+* **Add a fallback color to shared gradients.** `fill="url(#g) #6366f1"` degrades gracefully when a reference breaks.
+* **Exporters add noise.** Design tools often emit `gradientTransform` matrices, `xlink:href` chains and per-shape duplicate gradients. An optimizer like SVGO can merge and simplify them, but check that it doesn't strip ids you reference from CSS or JavaScript.
 * **This is a different mechanism from CSS's `linear-gradient()`/`radial-gradient()` functions** — see [Mastering CSS Gradients](/post/css/mastering-css-gradients) for that side; the two don't interoperate directly (a CSS gradient function can't reference an SVG `<linearGradient>` element, and vice versa).
 
 <RainbowDivider />
 
 ## Wrapping Up
 
-SVG gradients trade the simplicity of a CSS gradient value for reusability — one `<linearGradient>`/`<radialGradient>` definition, referenced by every shape that needs it, updated in exactly one place. `gradientUnits`, `gradientTransform`, and `spreadMethod` are the three controls that make one definition adapt to different shapes, angles, and edge behaviors without ever touching the stop list itself.
+SVG gradients trade the simplicity of a CSS gradient value for reusability — one `<linearGradient>`/`<radialGradient>` definition, referenced by every shape that needs it, updated in exactly one place.
+
+* The **vector** (`x1`/`y1`/`x2`/`y2`) or the **two circles** (`cx`/`cy`/`r` and `fx`/`fy`/`fr`) set the gradient's geometry.
+* The **stops** set its colors. Equal offsets give hard edges, and CSS can theme them through `stop-color`.
+* `gradientUnits`, `gradientTransform`, `spreadMethod` and `href` are the four controls that let one definition adapt to different shapes, angles and edge behaviors without touching the stop list.
+
+Keep the handful of traps in mind: zero-height lines, `display: none` sprites, `currentColor` resolving where the gradient lives, and `rotate()` without a pivot. With those covered, SVG gradients are one of the most dependable tools in the format.

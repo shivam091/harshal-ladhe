@@ -1856,24 +1856,72 @@ ${dots}
     title: "Interactive Example - radialGradient Focal Point",
     controls: [
       { id: "fx", label: "fx (focal x)", type: "range", min: 20, max: 80, step: 1, defaultValue: 50 },
-      { id: "fy", label: "fy (focal y)", type: "range", min: 20, max: 80, step: 1, defaultValue: 50 }
+      { id: "fy", label: "fy (focal y)", type: "range", min: 20, max: 80, step: 1, defaultValue: 50 },
+      // fr is SVG 2's focal RADIUS — a slider makes it obvious it grows a circle rather than moving a point.
+      { id: "fr", label: "fr (focal radius, SVG 2)", type: "range", min: 0, max: 20, step: 1, defaultValue: 0 }
     ],
     render: (values) => {
       const fx = Number(values.fx);
       const fy = Number(values.fy);
+      const fr = Number(values.fr);
 
       return `
 <svg viewBox="0 0 100 100" width="240" height="240">
   <defs>
-    <!-- cx/cy/r is the outer circle; fx/fy is the "hot spot" — moving it off-center is what sells a 3D-sphere look. -->
-    <radialGradient id="focal-demo-gradient" cx="50%" cy="50%" r="45%" fx="${fx}%" fy="${fy}%">
+    <!-- cx/cy/r is the outer circle; fx/fy/fr is the focal circle the 0% stop starts from. -->
+    <radialGradient id="focal-demo-gradient" cx="50%" cy="50%" r="45%" fx="${fx}%" fy="${fy}%" fr="${fr}%">
       <stop offset="0%" stop-color="#fef3c7" />
       <stop offset="100%" stop-color="#b45309" />
     </radialGradient>
   </defs>
 
   <circle cx="50" cy="50" r="45" fill="url(#focal-demo-gradient)" />
+  <!-- Guide: the focal circle's outline (fr) and its center (fx, fy). -->
+  <circle cx="${fx}" cy="${fy}" r="${fr}" fill="none" stroke="#111" stroke-opacity="0.5" stroke-width="0.5" stroke-dasharray="1.5 1" />
   <circle cx="${fx}" cy="${fy}" r="1.5" fill="#111" opacity="0.5" />
+</svg>`;
+    }
+  },
+  {
+    slug: "gradient-transform-demo",
+    title: "Interactive Example - gradientTransform rotate()",
+    controls: [
+      { id: "angle", label: "rotate angle (deg)", type: "range", min: 0, max: 180, step: 5, defaultValue: 45 },
+      { id: "pivot", label: "Pivot", type: "select", options: ["none (origin)", "center"], defaultValue: "center" },
+      { id: "shape", label: "Shape", type: "select", options: ["square", "wide (2:1)"], defaultValue: "square" },
+      { id: "units", label: "gradientUnits", type: "select", options: ["objectBoundingBox", "userSpaceOnUse"], defaultValue: "objectBoundingBox" }
+    ],
+    render: (values) => {
+      const angle = Number(values.angle);
+      const centered = values.pivot === "center";
+      const wide = values.shape === "wide (2:1)";
+      const userSpace = values.units === "userSpaceOnUse";
+      // Both shapes share a top-left corner and height, so switching shape changes only the aspect ratio.
+      const rect = { x: 10, y: 10, width: wide ? 160 : 80, height: 80 };
+      const cx = rect.x + rect.width / 2;
+      const cy = rect.y + rect.height / 2;
+      // objectBoundingBox measures in fractions of the box; userSpaceOnUse in the SVG's own user units.
+      const vector = userSpace
+        ? `gradientUnits="userSpaceOnUse" x1="${rect.x}" y1="${rect.y}" x2="${rect.x + rect.width}" y2="${rect.y}"`
+        : `x1="0" y1="0" x2="1" y2="0"`;
+      // The pivot's coordinates are in the same units as the vector — .5 .5 in bbox units, the rect's center in user space.
+      const pivot = centered ? (userSpace ? ` ${cx} ${cy}` : " .5 .5") : "";
+      const pivotDot = centered ? { x: cx, y: cy } : { x: userSpace ? 0 : rect.x, y: userSpace ? 0 : rect.y };
+
+      return `
+<svg viewBox="0 0 180 100" width="360" height="200">
+  <defs>
+    <!-- gradientTransform rotates the gradient's own coordinate space, not the shape. -->
+    <linearGradient id="transform-demo-gradient" ${vector} gradientTransform="rotate(${angle}${pivot})">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="50%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+
+  <rect x="${rect.x}" y="${rect.y}" width="${rect.width}" height="${rect.height}" fill="url(#transform-demo-gradient)" />
+  <!-- Guide: the point the rotation pivots around. -->
+  <circle cx="${pivotDot.x}" cy="${pivotDot.y}" r="2.5" fill="#111" opacity="0.6" />
 </svg>`;
     }
   },

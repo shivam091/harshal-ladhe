@@ -398,10 +398,11 @@ export const posts: Post[] = [
     slug: "svg-essentials-gradients",
     title: "SVG Essentials: linearGradient, radialGradient, and stop",
     excerpt: "Reusable gradient definitions, not one-off inline values.",
-    description: "A complete guide to SVG's linearGradient and radialGradient elements — the x1/y1/x2/y2 gradient vector, objectBoundingBox vs. userSpaceOnUse, radial focal points, gradientTransform, spreadMethod, and href-based stop reuse, contrasted with CSS's gradient() functions.",
+    description: "A complete guide to SVG's linearGradient, radialGradient, and stop elements — the x1/y1/x2/y2 gradient vector, stop offsets and hard stops, theming stops with CSS, objectBoundingBox vs. userSpaceOnUse, focal circles (fx/fy/fr), gradientTransform pivots, spreadMethod, href inheritance, gradients on strokes and text, animation, color interpolation, and a side-by-side comparison with CSS gradients.",
     category: ["SVG"],
-    tags: ["svg", "gradients", "lineargradient", "radialgradient", "stop", "gradientunits", "vector-graphics", "frontend-development", "web-design"],
+    tags: ["svg", "gradients", "lineargradient", "radialgradient", "stop", "gradientunits", "gradienttransform", "spreadmethod", "svg-vs-css", "vector-graphics", "frontend-development", "web-design"],
     changelog: [
+      { date: "2026-09-28", change: "Expanded into a full guide: stop offsets and hard stops, CSS theming of stops, gradients on strokes and text, zero-size bounding boxes, fallback paint, focal radius, gradientTransform pivots, href inheritance rules, animation, color interpolation, SVG vs. CSS comparison, accessibility and production pitfalls, plus five new diagrams and a gradientTransform demo" },
       { date: "2026-09-09", change: "Initial publication" }
     ]
   },

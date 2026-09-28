@@ -47,6 +47,8 @@ import FilterPipelineDiagram from "@/components/mdx/FilterPipelineDiagram";
 import ClipUnitsDiagram from "@/components/mdx/ClipUnitsDiagram";
 import ClipVsMaskDiagram from "@/components/mdx/ClipVsMaskDiagram";
 import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
+import GradientTransformDiagram from "@/components/mdx/GradientTransformDiagram";
+import GradientUnitsDiagram from "@/components/mdx/GradientUnitsDiagram";
 import GroupTransformDiagram from "@/components/mdx/GroupTransformDiagram";
 import LuminanceAlphaDiagram from "@/components/mdx/LuminanceAlphaDiagram";
 import MarkerAnatomyDiagram from "@/components/mdx/MarkerAnatomyDiagram";
@@ -58,7 +60,10 @@ import PatternTileGridDiagram from "@/components/mdx/PatternTileGridDiagram";
 import PatternTransformDiagram from "@/components/mdx/PatternTransformDiagram";
 import PatternUnitsDiagram from "@/components/mdx/PatternUnitsDiagram";
 import PolyClosingDiagram from "@/components/mdx/PolyClosingDiagram";
+import RadialFocalDiagram from "@/components/mdx/RadialFocalDiagram";
 import SeamlessTileDiagram from "@/components/mdx/SeamlessTileDiagram";
+import SpreadMethodDiagram from "@/components/mdx/SpreadMethodDiagram";
+import SvgGradientVectorDiagram from "@/components/mdx/SvgGradientVectorDiagram";
 import SymbolViewBoxDiagram from "@/components/mdx/SymbolViewBoxDiagram";
 import TextAnchorDiagram from "@/components/mdx/TextAnchorDiagram";
 import TextBaselineDiagram from "@/components/mdx/TextBaselineDiagram";
@@ -126,6 +131,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ClipUnitsDiagram,
     ClipVsMaskDiagram,
     FillRuleRayDiagram,
+    GradientTransformDiagram,
+    GradientUnitsDiagram,
     GroupTransformDiagram,
     LuminanceAlphaDiagram,
     MarkerAnatomyDiagram,
@@ -137,7 +144,10 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PatternTransformDiagram,
     PatternUnitsDiagram,
     PolyClosingDiagram,
+    RadialFocalDiagram,
     SeamlessTileDiagram,
+    SpreadMethodDiagram,
+    SvgGradientVectorDiagram,
     SymbolViewBoxDiagram,
     TextAnchorDiagram,
     TextBaselineDiagram,
