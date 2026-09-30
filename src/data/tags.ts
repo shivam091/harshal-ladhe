@@ -795,4 +795,24 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Conditional Logic in CSS",
     description: "Ways to apply styles conditionally in CSS, from queries and custom properties to the new `if()` function."
   },
+  "css-reset": {
+    title: "CSS Resets Explained",
+    description: "What a modern CSS reset contains, why each rule exists, and how to tailor one to your own projects."
+  },
+  "box-sizing": {
+    title: "The CSS `box-sizing` Property",
+    description: "How `box-sizing` decides whether padding and borders count towards an element's width and height."
+  },
+  "interpolate-size": {
+    title: "Animating to `auto` with `interpolate-size`",
+    description: "Using `interpolate-size` to let CSS transitions animate to and from intrinsic sizes such as `height: auto`."
+  },
+  "text-wrap": {
+    title: "The CSS `text-wrap` Property",
+    description: "Using `text-wrap: balance` and `pretty` for tidier headings and paragraphs without manual line breaks."
+  },
+  "best-practices": {
+    title: "Front-End Best Practices",
+    description: "Established conventions and sensible defaults for writing robust, accessible, and maintainable front-end code."
+  },
 };

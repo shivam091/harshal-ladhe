@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "modern-css-reset",
+    title: "Modern CSS Reset — Before/After",
+    description: "Toggle a modern CSS reset on a sample page with a long heading, a long URL, a list, an oversized graphic, and a form field to see exactly what each rule changes against raw browser defaults.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-gradient-borders",
     title: "Gradient Border Playground",
     description: "Switch between linear and conic gradient borders, tune thickness, direction, and colors, and toggle animation — a background-position pan for linear, an @property spin for conic — with the generated CSS updating live.",
