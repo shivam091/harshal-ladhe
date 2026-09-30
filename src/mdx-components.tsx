@@ -63,6 +63,9 @@ import GlyphOverflowDiagram from "@/components/mdx/GlyphOverflowDiagram";
 import BorderBoxLayersDiagram from "@/components/mdx/BorderBoxLayersDiagram";
 import MaskBorderRingDiagram from "@/components/mdx/MaskBorderRingDiagram";
 import BorderTechniqueCompare from "@/components/mdx/BorderTechniqueCompare";
+import FillRuleRayDiagram from "@/components/mdx/FillRuleRayDiagram";
+import MiterLimitDiagram from "@/components/mdx/MiterLimitDiagram";
+import PolyClosingDiagram from "@/components/mdx/PolyClosingDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -140,6 +143,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     BorderBoxLayersDiagram,
     MaskBorderRingDiagram,
     BorderTechniqueCompare,
+    FillRuleRayDiagram,
+    MiterLimitDiagram,
+    PolyClosingDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
