@@ -233,6 +233,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-27", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "modern-css-reset",
+    title: "A Modern CSS Reset, Explained Rule by Rule",
+    excerpt: "A small, modern reset, and the reason behind every line.",
+    description: "A compact modern CSS reset, explained rule by rule: border-box sizing, margin removal, keyword animations with interpolate-size, readable line-height, block-level media, form controls that inherit your font, overflow-wrap and text-wrap for better line breaks, and an isolated stacking context — plus optional extras and the edge cases to watch for.",
+    category: ["CSS"],
+    tags: ["css", "css-reset", "box-sizing", "interpolate-size", "text-wrap", "modern-css", "best-practices", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/modern-css-reset/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A modern CSS reset tutorial cover showing a “Before” browser layout with default styles and an “After Reset” layout with clean, consistent styling, alongside CSS code and visual highlights for box sizing, margin removal, typography, media and form controls, transitions, and stacking contexts."
+    },
+    changelog: [
+      { date: "2026-09-30", change: "Initial publication." }
+    ]
   }
 ];
 
