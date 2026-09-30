@@ -343,6 +343,22 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Understanding SVG Fill Rules: nonzero vs. evenodd",
     description: "A technical breakdown of the fill-rule property, explaining how the 'nonzero' and 'evenodd' algorithms determine the interior area of complex, self-intersecting paths."
   },
+  "stroke-miterlimit": {
+    title: "SVG `stroke-miterlimit` and Sharp Corners",
+    description: "How `stroke-miterlimit` decides when a sharp miter join falls back to a bevel, and how to keep star tips and chart corners crisp without runaway spikes."
+  },
+  "sparklines": {
+    title: "Building Sparklines with SVG",
+    description: "Word-sized, axis-free line charts built from SVG polylines — mapping data to points, stretching with preserveAspectRatio, and keeping strokes even."
+  },
+  "data-visualization": {
+    title: "Data Visualization on the Web",
+    description: "Turning data into charts and graphics with SVG and code, from line and area charts to sparklines, with an eye on clarity, performance, and accessibility."
+  },
+  "svg-animation": {
+    title: "Animating SVG Shapes and Strokes",
+    description: "Techniques for bringing SVG to life — draw-on stroke effects, shape morphing, SMIL, and CSS or JavaScript-driven motion for icons and illustrations."
+  },
   "icons": {
     title: "Designing and Implementing Custom Web Icons",
     description: "Best practices for building, optimizing, and managing custom SVG icon systems that are accessible, performant, and easy to style."

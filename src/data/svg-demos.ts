@@ -1020,6 +1020,71 @@ export const svgDemos: SvgDemoMeta[] = [
     }
   },
   {
+    slug: "polygon-vs-polyline-generated-points",
+    title: "Generated Points",
+    controls: [
+      { id: "sides", label: "Points / sides", type: "range", min: 3, max: 12, step: 1, defaultValue: 5 },
+      { id: "shape", label: "Shape", type: "select", options: ["regular", "star"], defaultValue: "star" },
+      { id: "innerRatio", label: "Inner radius (star)", type: "range", min: 0.2, max: 0.9, step: 0.05, defaultValue: 0.45 },
+      { id: "rotation", label: "Rotation (deg)", type: "range", min: 0, max: 359, step: 1, defaultValue: 0 },
+      { id: "fill", label: "Fill", type: "color", defaultValue: "#6366f1" },
+      { id: "stroke", label: "Stroke", type: "color", defaultValue: "#4338ca" }
+    ],
+    // Mirrors the cos/sin generator from the post, so the points string shown in the code view is exactly what that function outputs.
+    render: (values) => {
+      const sides = Number(values.sides);
+      const isStar = values.shape === "star";
+      const count = isStar ? sides * 2 : sides;
+      const outer = 42;
+      const inner = outer * Number(values.innerRatio);
+      // Starting at -90° puts the first vertex at 12 o'clock, since SVG's y-axis points down.
+      const start = ((Number(values.rotation) - 90) * Math.PI) / 180;
+      const points = Array.from({ length: count }, (_, i) => {
+        const radius = isStar && i % 2 === 1 ? inner : outer;
+        const angle = start + (i * 2 * Math.PI) / count;
+        return `${(50 + radius * Math.cos(angle)).toFixed(1)},${(50 + radius * Math.sin(angle)).toFixed(1)}`;
+      }).join(" ");
+
+      return `
+<svg viewBox="0 0 100 100" width="240" height="240">
+  <!-- ${count} generated vertices around (50, 50), rounded to one decimal place. -->
+  <polygon points="${points}" fill="${values.fill}" fill-opacity="0.25" stroke="${values.stroke}" stroke-width="2" stroke-linejoin="round" />
+</svg>`;
+    }
+  },
+  {
+    slug: "polygon-vs-polyline-miterlimit",
+    title: "Miter Limit",
+    controls: [
+      { id: "angle", label: "Corner angle (deg)", type: "range", min: 5, max: 170, step: 1, defaultValue: 25 },
+      { id: "linejoin", label: "stroke-linejoin", type: "select", options: ["miter", "round", "bevel"], defaultValue: "miter" },
+      { id: "miterlimit", label: "stroke-miterlimit", type: "range", min: 1, max: 8, step: 0.5, defaultValue: 4 },
+      { id: "strokeWidth", label: "Stroke width", type: "range", min: 2, max: 10, step: 1, defaultValue: 8 },
+      { id: "stroke", label: "Stroke", type: "color", defaultValue: "#0ea5e9" }
+    ],
+    // Reports the miter ratio next to the corner, so the moment it crosses the limit (and the join flips to bevel) is visible.
+    render: (values) => {
+      const halfAngle = (Number(values.angle) * Math.PI) / 360;
+      const armLength = 50;
+      const leftX = (60 - armLength * Math.sin(halfAngle)).toFixed(1);
+      const rightX = (60 + armLength * Math.sin(halfAngle)).toFixed(1);
+      const endY = (62 + armLength * Math.cos(halfAngle)).toFixed(1);
+      const ratio = 1 / Math.sin(halfAngle);
+      const limit = Number(values.miterlimit);
+      const comparison = ratio <= limit ? "≤" : ">";
+      const outcome = values.linejoin !== "miter" ? `${values.linejoin} join` : ratio <= limit ? "miter" : "bevel";
+
+      return `
+<svg viewBox="0 0 120 120" width="240" height="240">
+  <!-- Readout: miter length ÷ stroke-width = 1 / sin(angle / 2) = ${ratio.toFixed(2)} -->
+  <text x="60" y="10" font-size="7" text-anchor="middle" fill="currentColor">ratio ${ratio.toFixed(2)} ${comparison} ${limit} → ${outcome}</text>
+
+  <!-- Corner: a two-segment polyline bending at (60, 62). -->
+  <polyline points="${leftX},${endY} 60,62 ${rightX},${endY}" fill="none" stroke="${values.stroke}" stroke-width="${values.strokeWidth}" stroke-linejoin="${values.linejoin}" stroke-miterlimit="${limit}" />
+</svg>`;
+    }
+  },
+  {
     slug: "stagger-demo",
     title: "Interactive Example - Staggered Dots",
     controls: [
