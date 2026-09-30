@@ -1,0 +1,319 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("modern-css-reset");
+
+## Introduction
+
+Every browser ships a **user-agent stylesheet**: the default styles it applies before a single line of your CSS
+runs. That is why an unstyled `<h1>` is big and bold, and why a `<ul>` has bullets and indentation. The trouble is
+that these defaults were written decades ago for plain documents, not app layouts, and a few of them actively work
+against modern CSS. Images overflow their containers, form controls ignore your font, and `width: 200px` quietly
+renders wider than 200px.
+
+A **CSS reset** is a small stylesheet you load first to fix those defaults once, so every rule you write afterward
+starts from a predictable baseline. A modern reset doesn't try to erase everything the browser does. It changes only
+the handful of defaults that cause real bugs, and leaves the sensible ones alone.
+
+This tutorial builds that reset up in nine rules. For each one you'll see what the browser does by default, what the
+rule changes, and why it's worth including. A live demo shows every rule at work, and a few optional extras at the
+end cover behavior that suits some projects but not all.
+
+<RainbowDivider />
+
+## The Reset
+
+<CodeBlock language="css">
+{`
+  /* 1. Size elements by their border edge, not their content edge */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  /* 2. Remove default margins (except <dialog>, which uses margin: auto to center itself) */
+  *:not(dialog) {
+    margin: 0;
+  }
+
+  /* 3. Allow transitions to and from keywords like auto */
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      interpolate-size: allow-keywords;
+    }
+  }
+
+  /* 4. Readable line spacing and crisper text on macOS */
+  body {
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* 5. Media behaves like a block and never overflows its container */
+  img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  /* 6. Form controls use your typography, not the operating system's */
+  input, button, textarea, select {
+    font: inherit;
+  }
+
+  /* 7. Long words and URLs wrap instead of overflowing */
+  p, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+  }
+
+  /* 8. Nicer line breaks for paragraphs and headings */
+  p {
+    text-wrap: pretty;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+
+  /* 9. Keep the app's z-index values inside its own stacking context */
+  #root, #__next {
+    isolation: isolate;
+  }
+`}
+</CodeBlock>
+
+Load it before any other stylesheet. Because later rules win the cascade, anything you write afterward overrides
+the reset. It only sets a starting point, never a limit.
+
+<RainbowDivider />
+
+## Try It Live
+
+The demo below starts with the browser's raw defaults. Apply the reset and watch the headings and list lose their
+default margins, the oversized graphic shrink to fit, the form controls pick up the surrounding font, the long URL
+wrap instead of overflowing, and the long heading balance its lines.
+
+<Sandbox slug="modern-css-reset" readOnly />
+
+<RainbowDivider />
+
+## Box Model and Margins
+
+<CodeBlock language="css">
+{`
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  *:not(dialog) {
+    margin: 0;
+  }
+`}
+</CodeBlock>
+
+By default, `width` and `height` size the **content box**, and padding and border are added on top. An element
+with `width: 200px`, `padding: 20px` and a `2px` border actually takes up 244px. With `box-sizing: border-box`,
+padding and border fit *inside* the declared width, so `width: 200px` means 200px. The `::before` and `::after`
+selectors matter because pseudo-elements don't match `*` on their own.
+
+Removing every default margin is deliberately blunt. Browsers give margins to headings, paragraphs, lists,
+`<figure>`, `<blockquote>`, `<dl>` and more, and the amounts vary. Starting from zero means every gap on the page
+is one you chose. `<dialog>` is the one exception: the browser centers a modal dialog with `margin: auto`, and
+resetting it would pin the dialog to the top-left corner.
+
+<Warning title="You now own vertical spacing">
+  With margins gone, nothing on the page has spacing until you add it. Plan to add a spacing scale or a flow rule
+  (for example, `.flow > * + * { margin-block-start: 1em; }`) soon after adopting the reset.
+</Warning>
+
+<RainbowDivider />
+
+## Animating to `auto`
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      interpolate-size: allow-keywords;
+    }
+  }
+`}
+</CodeBlock>
+
+CSS has never been able to transition between a length and a keyword. `height: 0` to `height: auto` simply jumps,
+which is why collapsible panels have traditionally needed JavaScript to measure their content. `interpolate-size:
+allow-keywords` lets the browser animate between lengths and keywords such as `auto`, `min-content` and
+`fit-content`. The property is inherited, so setting it on `html` turns it on for the whole page.
+
+It sits inside a `prefers-reduced-motion: no-preference` query so that readers who have asked their system for
+less motion don't get new height animations they never had before.
+
+- **Browser support is limited.** Only Chromium-based browsers support it so far.
+- **It degrades safely.** Browsers without support ignore the declaration, and `auto` changes stay instant as
+  they always were.
+
+<RainbowDivider />
+
+## Readable Text
+
+<CodeBlock language="css">
+{`
+  body {
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  p, h1, h2, h3, h4, h5, h6 {
+    overflow-wrap: break-word;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    text-wrap: balance;
+  }
+`}
+</CodeBlock>
+
+- **`line-height: 1.5`.** The default, `normal`, is usually around 1.2, which is cramped for body text. More space
+  between lines helps everyone read, and especially readers with dyslexia. WCAG's text-spacing guideline asks that
+  layouts survive a line height of 1.5, so using it by default also means your layout already handles it. Tighten it
+  yourself for large headings, where 1.5 looks loose.
+- **`-webkit-font-smoothing: antialiased`.** This only affects macOS. Browsers there still default to subpixel
+  antialiasing, which makes light text on dark backgrounds look heavy. macOS itself dropped subpixel rendering in
+  2018, so this brings browser text in line with the rest of the system.
+- **`overflow-wrap: break-word`.** A long unbroken string, such as a URL or a file path, normally
+  overflows its container because there's nowhere to break it. This lets the browser break inside the word, but
+  only when there's no other way to fit it, so ordinary text wraps exactly as before.
+- **`text-wrap: pretty` and `balance`.** `pretty` adjusts line breaks so a paragraph doesn't end with a single word
+  stranded on its last line. `balance` evens out the line lengths of a heading that wraps, so you don't get one long
+  line followed by a single word. Browsers that don't support either value just wrap text normally.
+
+<RainbowDivider />
+
+## Media and Form Controls
+
+<CodeBlock language="css">
+{`
+  img, picture, video, canvas, svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  input, button, textarea, select {
+    font: inherit;
+  }
+`}
+</CodeBlock>
+
+Images and other **replaced elements** are `inline` by default, so they sit on the text baseline like a large
+letter. That leaves a few pixels of unexplained space under every image, reserved for letter descenders.
+`display: block` removes that gap and makes media behave like any other layout box. `max-width: 100%` stops an image
+that's wider than its container from overflowing it. The image scales down to fit and never scales up past its
+natural size.
+
+Form controls are the one place browsers ignore your typography: `input`, `button`, `textarea` and `select` don't
+inherit `font` from their parents, so they render in the operating system's UI font. `font: inherit` makes them match
+the surrounding text. It also fixes a side effect on iOS, where Safari zooms the page when you focus an input with a
+font size below 16px. If your body text is at least 16px, the inherited size prevents that zoom.
+
+<RainbowDivider />
+
+## A Stacking Context for the App
+
+<CodeBlock language="css">
+{`
+  #root, #__next {
+    isolation: isolate;
+  }
+`}
+</CodeBlock>
+
+`isolation: isolate` creates a new **stacking context** on the app's root element without needing `position` or a
+`z-index` of its own. Every `z-index` inside your app is then compared only with the others inside it, so a
+`z-index: 9999` deep in a component can never jump above a modal or toast that is rendered outside the app root.
+
+`#root` is the mount point in Vite and Create React App, and `#__next` is the root in the Next.js Pages Router.
+Replace them with whatever element wraps your own app. The Next.js App Router, for example, has no wrapper with a
+fixed ID, so you would target your own layout's wrapper instead.
+
+<RainbowDivider />
+
+## Optional Additions
+
+These aren't part of the base reset, because they change behavior some projects don't want. Add them if they fit
+yours.
+
+<CodeBlock language="css">
+{`
+  /* Land in-page anchor jumps below a fixed header, not under it */
+  :target {
+    scroll-margin-block: 5ex;
+  }
+
+  /* Remove bullets only from lists marked as UI, keeping list semantics */
+  ul[role="list"], ol[role="list"] {
+    list-style: none;
+  }
+
+  /* Make motion opt-in for readers who asked their system for less of it */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+`}
+</CodeBlock>
+
+- **`:target` scroll margin.** Jumping to an in-page link like `#setup` puts the target flush against the top of
+  the viewport, often underneath a sticky header. `scroll-margin-block` leaves some room above it without changing
+  the element's layout.
+- **`role="list"` for unstyled lists.** Safari removes a list's semantics from screen readers when you set
+  `list-style: none`, as a heuristic for lists used purely for layout. Adding `role="list"` restores them. The base
+  reset leaves bullets alone, because the browser default suits most content; this rule only matters for lists you
+  explicitly mark as UI.
+- **A global reduced-motion override.** This shortens every animation and transition to almost nothing for readers
+  who prefer reduced motion. It's a strong safety net, but it's blunt: it also removes motion that communicates
+  state, such as a spinner, and its `!important` overrides every animation you write. Many teams prefer to decide per
+  component instead.
+
+<Info title="What about height: 100% on html and body?">
+  Older resets often set `height: 100%` on `html` and `body` so full-height layouts worked. Dynamic viewport units
+  handle that more reliably now, including on mobile browsers whose toolbars resize the viewport. See
+  [Dynamic Viewport Height Units](/tutorial/dynamic-viewport-height-units).
+</Info>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- As the very first stylesheet in a new project, before any component or design-system CSS
+- In component libraries and design systems that need one documented, predictable baseline
+- When migrating an older codebase, one rule at a time, so each change can be checked against the existing UI
+- In demos and prototypes, so "unstyled" looks the same in every browser you test in
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **A reset isn't Normalize.css.** Normalize keeps useful browser defaults and makes them consistent across
+  browsers. This reset removes margins entirely and expects you to build your own spacing. A project with a full
+  design system usually suits a reset, while one that wants to keep more of the browser's defaults suits Normalize.
+- **Images with `width` and `height` attributes can distort.** When `max-width: 100%` shrinks an image, its fixed
+  `height` attribute still applies, which squashes it. Add `height: auto` to images that set both attributes.
+- **Some media should be allowed to overflow.** An intentionally oversized, absolutely positioned decoration will be
+  shrunk by `max-width: 100%`. Give it `max-width: revert` or a larger explicit value.
+- **Load order matters.** The reset has to come before your other styles. If you use cascade layers, put it in the
+  lowest layer, for example `@layer reset, base, components;`, so every other layer overrides it however the files
+  are loaded.
+- **`text-wrap` has a cost.** `pretty` and `balance` do extra layout work. Browsers limit `balance` to a few lines,
+  and the cost is negligible for headings and normal paragraphs, but avoid applying either to very long blocks of
+  text.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A modern CSS reset is small on purpose. It fixes the handful of browser defaults that cause real layout bugs, and
+leaves everything else alone. Load it first, know why each line is there, and add the optional rules only when your
+project needs them.
