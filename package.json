@@ -28,7 +28,7 @@
     "@codemirror/view": "6.43.3",
     "@codesandbox/sandpack-client": "2.19.8",
     "@codesandbox/sandpack-react": "^2.20.0",
-    "@linaria/core": "^8.0.0",
+    "@linaria/core": "^8.2.0",
     "@linaria/react": "^8.0.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
