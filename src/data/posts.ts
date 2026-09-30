@@ -235,20 +235,21 @@ export const posts: Post[] = [
   {
     slug: "polygon-vs-polyline",
     title: "SVG Polygon vs Polyline: Differences, Fill Rules, and Use Cases",
-    excerpt: "Master SVG polygons, polylines, and fill rules.",
-    description: "Learn the difference between SVG polygon and polyline: points syntax, fill-rule, accessibility, and real use cases like charts, icons, and UI shapes.",
+    excerpt: "Same points, open or closed: fill rules, miters, sparklines.",
+    description: "The difference between SVG polygon and polyline: fill rules by ray-crossing, stroke-miterlimit, generated points, sparklines, animation and accessible charts.",
     category: ["SVG"],
-    tags: ["svg", "polygon", "polyline", "graphics", "vector-graphics", "shapes", "fill-rule", "web-design", "frontend-development", "icons", "accessibility"],
+    tags: ["svg", "polygon", "polyline", "shapes", "fill-rule", "stroke-miterlimit", "sparklines", "data-visualization", "svg-animation", "vector-graphics", "icons", "performance", "accessibility"],
     image: {
       path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/svg/polygon-vs-polyline/cover.png",
       width: 1536,
       height: 1024,
       type: "image/png",
-      alt: "Polygon vs Polyline comparison showing an open cyan polyline and a filled star-shaped polygon on a grid background, illustrating open versus closed SVG shapes."
+      alt: "Infographic comparing SVG <polyline> and <polygon>, showing open stroke-based lines versus closed filled shapes, with visual examples of points, fill rules, stars, routes, charts, and stroke-miterlimit. The title reads ‘Polygon vs Polyline — In Depth.’"
     },
     signoff: "Between the point-scrambling playground that turns a clean square into a self-intersecting hourglass mid-drag, the preset switcher for square, hexagon, and star, and lining up the nonzero-vs-evenodd star comparison so the hollow center actually reads as hollow, this post leaned on live demos to do work that formulas alone never quite pull off. Thanks for dragging every vertex and flipping every fill rule with me — go close off a shape that's entirely your own. ⬡",
     featured: true,
     changelog: [
+      { date: "2026-09-30", change: "Expanded with fill-rule, miter-limit, generated-points, sparkline, animation and switch-to-path sections, three diagrams and two playgrounds; corrected fill-rule and hole explanations" },
       { date: "2026-08-25", change: "Initial publication" }
     ],
   },
