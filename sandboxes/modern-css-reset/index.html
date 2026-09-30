@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern CSS Reset Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Modern CSS Reset</h1>
+        <p>Raw browser defaults below — apply the reset and watch spacing, media sizing, form typography, and text wrapping fall in line.</p>
+      </header>
+
+      <button id="toggle-btn" class="toggle-btn" type="button">Apply reset</button>
+
+      <div id="demo-content" class="demo-area">
+        <h2>This week's roundup of front-end links, notes, and small tools worth a look</h2>
+        <p>Default heading and paragraph margins, an oversized inline graphic, a bulleted list, and a form control that doesn't match the surrounding type.</p>
+        <p>Full changelog: https://example.com/releases/2026/front-end-roundup/changelog-with-a-very-long-unbroken-path</p>
+
+        <ul>
+          <li>Ship the changelog</li>
+          <li>Review open pull requests</li>
+          <li>Reply to the design feedback thread</li>
+        </ul>
+
+        <svg class="demo-media" width="600" height="160" viewBox="0 0 600 160" role="img" aria-label="Placeholder graphic, 600 by 160 pixels">
+          <rect width="600" height="160" fill="#818cf8" />
+          <text x="300" y="88" text-anchor="middle" font-size="26" fill="#0f1220" font-family="sans-serif">600 &#215; 160 graphic</text>
+        </svg>
+
+        <div class="demo-field">
+          <label for="demo-email">Email</label>
+          <input id="demo-email" type="email" placeholder="you@example.com" />
+          <button type="button">Subscribe</button>
+        </div>
+      </div>
+
+      <output id="status" class="readout" aria-live="polite">Reset: off — showing raw browser defaults.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

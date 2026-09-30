@@ -1,0 +1,80 @@
+/*
+  The shared playground shell sets box-sizing: border-box for its own chrome, so the demo is opted
+  back to the real browser defaults; otherwise the "before" state wouldn't show un-reset behavior.
+*/
+#demo-content,
+#demo-content *,
+#demo-content *::before,
+#demo-content *::after {
+  box-sizing: content-box;
+}
+
+/* Browser defaults for the text properties the reset changes, so the toggle shows a real before/after. */
+#demo-content {
+  display: flex;
+  flex-direction: column;
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--pg-text);
+  line-height: normal;
+  overflow-wrap: normal;
+}
+
+/* A visible edge so the graphic's overflow and later fit are easy to see. */
+#demo-content .demo-media {
+  display: inline;
+  border: 0.1875rem solid var(--pg-primary);
+}
+
+/* Keeps the label, input and button on one row so their fonts are easy to compare. */
+#demo-content .demo-field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-block-start: 1rem;
+}
+
+/* Enough padding that the controls read as controls in both states. */
+#demo-content .demo-field input,
+#demo-content .demo-field button {
+  padding: 0.375rem 0.5rem;
+}
+
+/* Reset applied: the same rules as the published reset, scoped to this demo so the shell stays unaffected. */
+
+#demo-content.reset-applied,
+#demo-content.reset-applied *,
+#demo-content.reset-applied *::before,
+#demo-content.reset-applied *::after {
+  box-sizing: border-box;
+}
+
+#demo-content.reset-applied *:not(dialog) {
+  margin: 0;
+}
+
+#demo-content.reset-applied {
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#demo-content.reset-applied :is(img, picture, video, canvas, svg) {
+  display: block;
+  max-width: 100%;
+}
+
+#demo-content.reset-applied :is(input, button, textarea, select) {
+  font: inherit;
+}
+
+#demo-content.reset-applied :is(p, h1, h2, h3, h4, h5, h6) {
+  overflow-wrap: break-word;
+}
+
+#demo-content.reset-applied p {
+  text-wrap: pretty;
+}
+
+#demo-content.reset-applied :is(h1, h2, h3, h4, h5, h6) {
+  text-wrap: balance;
+}
