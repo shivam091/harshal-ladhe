@@ -14,6 +14,29 @@
   animation: none;
 }
 
+// Theme swap (see ThemeContext): one page-wide cross-fade on the body's clock replaces a transition on every themed element.
+html[data-theme-swap]::view-transition-old(*),
+html[data-theme-swap]::view-transition-new(*) {
+  animation-duration: 350ms;
+  animation-timing-function: cubic-bezier(0.41, 0.1, 0.13, 1);
+}
+
+// Boxes don't move on a theme swap, so the header/content groups shouldn't morph either.
+html[data-theme-swap]::view-transition-group(*) {
+  animation: none;
+}
+
+/*
+  Per-element colour transitions would fade a second time inside the new snapshot, so the swap lands on final colours.
+  [data-sky] scenes are spared: their staggered layer timings run live inside the cross-fade and outlast it.
+*/
+html[data-theme-swap],
+html[data-theme-swap] :not([data-sky], [data-sky] *),
+html[data-theme-swap] :not([data-sky], [data-sky] *)::before,
+html[data-theme-swap] :not([data-sky], [data-sky] *)::after {
+  transition: none !important;
+}
+
 // Swap instantly for readers who asked for less motion.
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(page-content),

@@ -13,7 +13,7 @@ import {
 export default function SkyBannerTop({ inner = false }: SkyBannerTopProps): JSX.Element {
   return (
     <>
-      <SkyBannerTopContainer aria-hidden="true">
+      <SkyBannerTopContainer aria-hidden="true" data-sky>
         <CloudLayers
           data-banner={inner ? "sky-inner" : "sky-default"}
           role="presentation"

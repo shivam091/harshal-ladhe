@@ -6,7 +6,7 @@ import type { SkyVisualProps } from "@/components/SiteHeader/Drawer/Drawer.types
 export default function SkyVisual({ children }: SkyVisualProps): JSX.Element {
   return (
     <>
-      <Scene>
+      <Scene data-sky>
         {/* Cloud shape */}
         <Cloud
           viewBox="0 0 788 265"

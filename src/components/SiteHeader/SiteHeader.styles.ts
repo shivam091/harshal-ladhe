@@ -15,6 +15,15 @@ export const Header = styled.header`
   z-index: 1001;
   // Own snapshot layer so fading page content can't paint over the sticky header mid-navigation.
   view-transition-name: site-header;
+
+  /*
+    Rides in the page's snapshot on a theme swap instead: an isolated snapshot has nothing behind it
+    for backdrop-filter to blur, so the scrolled glass header flashed see-through mid-fade.
+  */
+  html[data-theme-swap] & {
+    view-transition-name: none;
+  }
+
   block-size: 5rem;
   padding: clamp(0.75rem, 1vw, 1rem);
   color: var(--color-fg-accent-muted);

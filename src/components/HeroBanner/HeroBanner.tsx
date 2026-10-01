@@ -33,7 +33,7 @@ export default function HeroBanner(): JSX.Element {
 
   return (
     <>
-      <HeroBannerContainer data-banner="hero" data-cloud-shapes aria-hidden="true">
+      <HeroBannerContainer data-banner="hero" data-cloud-shapes data-sky aria-hidden="true">
         <SkyLayerBack role="presentation">
           <SkySvg
             width="5120"

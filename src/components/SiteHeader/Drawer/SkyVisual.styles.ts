@@ -45,4 +45,9 @@ export const Ground = styled.svg`
 export const GroundFill = styled.path`
   fill: var(--color-bg-default);
   transition: fill 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
+
+  // Snaps with the drawer on a theme swap so no seam opens against the already-swapped panel.
+  html[data-theme-swap] & {
+    transition: none;
+  }
 `;

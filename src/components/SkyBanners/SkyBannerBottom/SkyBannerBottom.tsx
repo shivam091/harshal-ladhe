@@ -12,7 +12,7 @@ import {
 export default function SkyBannerBottom(): JSX.Element {
   return (
     <>
-      <SkyBannerBottomContainer aria-hidden="true">
+      <SkyBannerBottomContainer aria-hidden="true" data-sky>
         <CloudLayersTopOverlay
           width="1590"
           height="213"
