@@ -1,0 +1,117 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("git-bisect-run");
+
+## Introduction
+
+Something worked last month and doesn't today, and there are 300 commits in between. Reading them one by one isn't an option — but `git bisect` can find the culprit in about 8 steps, because it halves the search space every time.
+
+Plain `git bisect` still needs you to build, test, and type `good` or `bad` at each step. `git bisect run` hands those steps to a script, so Git can find the breaking commit while you get on with something else.
+
+<RainbowDivider />
+
+## The One-Liner
+
+<CodeBlock language="bash">
+{`
+  # Mark the range: current HEAD is broken, v1.4.0 was fine
+  git bisect start HEAD v1.4.0
+
+  # Let Git test each candidate commit for you
+  git bisect run npm test
+
+  # Back to where you started
+  git bisect reset
+`}
+</CodeBlock>
+
+When it finishes, Git prints the first bad commit, along with its message and changed files.
+
+<RainbowDivider />
+
+## A Reusable Check Script
+
+Real projects need dependencies installed and a build that may fail on some older commits. A small script handles that and tells Git what each result means:
+
+<CodeBlock language="bash">
+{`
+  #!/usr/bin/env sh
+  # Exit codes understood by 'git bisect run':
+  #   0        this commit is good
+  #   1–127    this commit is bad (except 125)
+  #   125      can't test this commit — skip it
+  #   128+     abort the whole bisect
+
+  # Dependencies change between commits; an install failure means "untestable", not "bad"
+  npm ci --silent >/dev/null 2>&1 || exit 125
+
+  # A commit that doesn't build can't tell us anything about the bug
+  npm run build >/dev/null 2>&1 || exit 125
+
+  # The actual question — keep it as narrow as possible
+  npx vitest run src/search.test.ts
+`}
+</CodeBlock>
+
+<CodeBlock language="bash">
+{`
+  # Keep the script outside the repository, so checking out old commits can't change or delete it
+  chmod +x ~/bisect-check.sh
+  git bisect start HEAD v1.4.0
+  git bisect run ~/bisect-check.sh
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `git bisect start <bad> <good>` records the range and checks out the commit halfway between.
+2. `git bisect run` executes your command on that commit and reads the exit code.
+3. Exit `0` marks it **good** and moves the search later; `1`–`127` (other than `125`) marks it **bad** and moves it earlier; `125` **skips** it and tries a neighbour.
+4. Each answer halves the remaining commits, so 1,000 commits take about 10 runs.
+5. When only one candidate is left, Git names it as the first bad commit and stops.
+
+<RainbowDivider />
+
+## Useful Variations
+
+<CodeBlock language="bash">
+{`
+  # Search only merge commits on main — "which PR broke it?" (Git 2.29+)
+  git bisect start --first-parent HEAD v1.4.0
+
+  # Not a bug, but a change? Use your own terms instead of good/bad
+  git bisect start --term-old=fast --term-new=slow HEAD v1.4.0
+  git bisect run ./is-it-slow.sh     # exit 0 = fast, 1 = slow
+
+  # Only consider commits that touched certain paths
+  git bisect start HEAD v1.4.0 -- src/search/
+
+  # Inspect or replay a session
+  git bisect log > bisect.txt
+  git bisect replay bisect.txt
+
+  # Inline checks work too — find when a string first appeared in a file
+  git bisect run sh -c '! grep -q "legacyApi" src/client.ts'
+`}
+</CodeBlock>
+
+<Info title="When skips get in the way">
+  If the commits right next to the culprit all exit `125`, Git can't tell them apart and reports *"The first bad commit could be any of: …"* followed by a short list. Narrow it down by hand from there, or fix the build step so fewer commits need skipping.
+</Info>
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Confirm both ends first.** Run your check on the known-good and known-bad commits before starting — if "good" fails too, the bisect will confidently blame the wrong commit. A typo in the command exits `127`, which also counts as "bad".
+- **Make the test deterministic.** A flaky test sends the search the wrong way. Retry inside the script, or test one narrow thing.
+- **Uncommitted work blocks checkouts.** Commit or stash first; `git bisect` checks out each candidate commit for you.
+- **Interrupted?** `git bisect reset` always returns you to the branch you started on, and `git bisect reset HEAD` stays on the current candidate instead.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`git bisect run` turns "something broke in the last few hundred commits" into an automated binary search — give it a good commit, a bad commit, and a script that exits `0` or `1`, and Git finds the exact change for you.

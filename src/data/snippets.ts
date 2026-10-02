@@ -278,6 +278,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-10-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-bisect-run",
+    title: "Automate Bug Hunting with `git bisect run`",
+    excerpt: "Let Git find the commit that broke things automatically.",
+    description: "Automate git bisect with git bisect run and a reusable check script — exit codes for good, bad, and skip, handling commits that don't build, first-parent and custom-term bisects, and how to avoid blaming the wrong commit.",
+    category: ["Git"],
+    tags: ["git", "git-bisect", "debugging", "regression", "testing", "automation", "cli"],
+    link: {
+      label: "Read the full post: Advanced Git: Rebasing, Internals, and Real-World Workflows",
+      href: "/post/git/advanced-git-techniques-and-workflows"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/git-bisect-run/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Terminal-styled illustration of git bisect run binary-searching a commit history to pinpoint the first bad commit."
+    },
+    changelog: [
+      { date: "2026-10-02", change: "Initial publication." }
+    ]
   }
 ];
 
