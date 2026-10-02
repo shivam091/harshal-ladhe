@@ -1,0 +1,245 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("sibling-index-count-functions");
+
+## Introduction
+
+A staggered list animation — each item starting a beat after the one before it — has always needed a workaround.
+Either you hand-write a rule per position (`:nth-child(1) { animation-delay: 0ms }`,
+`:nth-child(2) { animation-delay: 80ms }`, and so on), or a JavaScript loop sets a `--i` custom property on every
+element so CSS can read the index back.
+
+The new **tree-counting functions** remove both. **`sibling-index()`** gives an element its own position among its
+siblings, and **`sibling-count()`** gives the total number of siblings — both as plain numbers you can use directly
+inside `calc()`. One declaration, shared by every item, and each one still gets its own value.
+
+<Info title="New to staggered animation?">
+  A stagger offsets when each element in a group starts the same animation, so they ripple in one after another
+  instead of moving together. It's done with `animation-delay` (or `transition-delay`), and each element needs a
+  slightly larger delay than the one before it — which is exactly the number `sibling-index()` provides.
+</Info>
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .item {
+    animation: fade-in 420ms ease both;
+    animation-delay: calc((sibling-index() - 1) * 80ms);
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      translate: 0 0.5rem;
+    }
+  }
+`}
+</CodeBlock>
+
+How to read it:
+
+- **`sibling-index()` is 1-based**, matching `:nth-child()`. The first child returns `1`, the second `2`, and so on.
+- **Subtracting 1 starts the first item immediately.** Without it, even the first item waits 80ms before it
+  appears.
+- **`both` fill mode** keeps each item at its `from` state (invisible) while it waits for its delay, so nothing
+  flashes on screen before its turn.
+
+<RainbowDivider />
+
+## Fixed Total Duration with `sibling-count()`
+
+A fixed step of 80ms works well for a handful of items, but 30 items would take 2.4 seconds to finish. Dividing by
+`sibling-count()` spreads the stagger across a fixed window instead:
+
+<CodeBlock language="css">
+{`
+  .item {
+    /* However many items there are, the last one starts just before 600ms */
+    animation-delay: calc((sibling-index() - 1) / sibling-count() * 600ms);
+  }
+`}
+</CodeBlock>
+
+Three items and thirty items now both finish staggering in the same 600ms — the spacing between each one simply gets
+tighter as the list grows.
+
+<Info title="Making the last item start at exactly 600ms">
+  Dividing by `sibling-count()` means the last item starts slightly *before* 600ms. To land it exactly on 600ms,
+  divide by one less than the count, guarded with `max()` so a single-item list never divides by zero:
+  `calc((sibling-index() - 1) / max(sibling-count() - 1, 1) * 600ms)`.
+</Info>
+
+<RainbowDivider />
+
+## Try It Live
+
+Switch between **Fixed step** and **Fixed total**, then add or remove items. JavaScript only restarts the animation
+and adds or removes list items — every delay comes from the stylesheet, and the readout shows the rule currently in
+effect.
+
+If your browser doesn't support `sibling-index()` yet, every item fades in at the same time and the readout tells
+you so. That comes from the `0ms` fallback declared just before each rule — see
+[Always Pair It with a Fallback](#always-pair-it-with-a-fallback).
+
+<Sandbox slug="sibling-index-count-functions" readOnly />
+
+<RainbowDivider />
+
+## What This Replaces
+
+<CodeBlock language="js">
+{`
+  // The JavaScript loop this makes unnecessary...
+  document.querySelectorAll(".item").forEach((item, i) => {
+    item.style.setProperty("--i", i);
+  });
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* ...paired with CSS that reads the JS-set index back out */
+  .item {
+    animation-delay: calc(var(--i) * 80ms);
+  }
+
+  /* Or the pure-CSS alternative: one hand-written rule per position */
+  .item:nth-child(1) { animation-delay: 0ms; }
+  .item:nth-child(2) { animation-delay: 80ms; }
+  .item:nth-child(3) { animation-delay: 160ms; }
+  /* ...and so on, for as many items as you expect */
+`}
+</CodeBlock>
+
+Both patterns exist only because CSS had no way to know an element's own position. The JavaScript version also has
+to re-run whenever items are added, removed, or reordered. `sibling-index()` is recalculated by the browser
+automatically, like `:nth-child()`, so there's nothing to keep in sync.
+
+<RainbowDivider />
+
+## Beyond Animation
+
+Because both functions return plain numbers, they work anywhere `calc()` does — not just in delays:
+
+<CodeBlock language="css">
+{`
+  /* A rainbow of hues across any number of tags */
+  .tag {
+    background: oklch(0.7 0.15 calc(sibling-index() * 360deg / sibling-count()));
+  }
+
+  /* A hand of cards fanned out around the middle one */
+  .card {
+    rotate: calc((sibling-index() - (sibling-count() + 1) / 2) * 6deg);
+  }
+
+  /* Earlier items stacked on top of later ones */
+  .avatar {
+    z-index: calc(sibling-count() - sibling-index());
+  }
+
+  /* Reverse stagger: the last item animates first */
+  .item {
+    animation-delay: calc((sibling-count() - sibling-index()) * 80ms);
+  }
+
+  /* Equal-width segments, however many there are */
+  .segment {
+    inline-size: calc(100% / sibling-count());
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Always Pair It with a Fallback
+
+Support is still limited, so declare a plain value first and the `sibling-index()` version second:
+
+<CodeBlock language="css">
+{`
+  .item {
+    animation-delay: 0ms; /* Every browser reads this */
+    animation-delay: calc((sibling-index() - 1) * 80ms);
+  }
+`}
+</CodeBlock>
+
+Browsers that don't understand `sibling-index()` treat the second declaration as invalid and drop it while parsing,
+so the first one wins: every item animates at once. That's a perfectly reasonable, non-broken result — the content
+still appears, just without the ripple.
+
+If you need the stagger everywhere, keep the old custom-property approach as the fallback and upgrade only where
+the new functions are supported:
+
+<CodeBlock language="css">
+{`
+  .item {
+    /* --i set by JavaScript, for browsers without tree-counting functions */
+    animation-delay: calc(var(--i, 0) * 80ms);
+  }
+
+  @supports (z-index: sibling-index()) {
+    .item {
+      animation-delay: calc((sibling-index() - 1) * 80ms);
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Respect Reduced Motion
+
+A stagger multiplies motion across every item on screen, so switch it off for anyone who has asked their system to
+reduce motion:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) {
+    .item {
+      animation: none;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Staggered entrance animations — list items, grid cards, navigation links — currently wired through a
+  JavaScript-set `--i` custom property
+- Position-dependent styling that today reaches for a long `:nth-child()` chain, when the intent is really "do
+  something with this element's own index"
+- Any `calc()` that needs to know how many things there are (`sibling-count()`) without reading
+  `children.length` in JavaScript
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Check support before relying on it.** `sibling-index()` and `sibling-count()` shipped in Chrome and Edge 138.
+  Check current Firefox and Safari support on [Can I use](https://caniuse.com/?search=sibling-index) and treat
+  them as progressive enhancement until support is broad.
+* **They count every element sibling, not just matching ones.** There's no `of selector` filter like
+  `:nth-child(2 of .visible)`, and elements hidden with `display: none` still count. To get "index among the visible
+  ones", remove hidden items from the DOM rather than just hiding them. Text nodes and comments are never counted.
+* **Results update live.** Inserting, removing, or reordering a sibling shifts every later element's index
+  immediately, with no re-render needed — exactly like `:nth-child()`.
+* **Cap long lists.** In fixed-step mode, delays grow without limit. Wrap the calculation in `min()` so a long list
+  doesn't leave late items waiting: `animation-delay: min(calc((sibling-index() - 1) * 80ms), 1s)`.
+* **They're integers until you divide.** Both functions return integers, so they work in integer-only properties
+  like `z-index` and `order`. Dividing produces a fractional number, which is fine in `calc()` for lengths, angles,
+  and times.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`sibling-index()` and `sibling-count()` give CSS something it never had: an element's own position within its parent,
+usable directly in `calc()`. Subtract 1 to start the first item immediately, divide by `sibling-count()` for a
+fixed total duration, keep a plain fallback declared first — and delete the JavaScript loop that used to set `--i`.
