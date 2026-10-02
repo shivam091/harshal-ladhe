@@ -7,6 +7,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { AnimatePresence } from "motion/react";
 import IconCategories from "@/icons/IconCategories";
 import IconChevronDown from "@/icons/IconChevronDown";
+import { FileIcon, CodeBlockIcon, BulbIcon } from "@/components/Icon";
 import { useBoop } from "@/hooks/use-boop";
 import { formatDate } from "@/utils/date";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
@@ -56,6 +57,13 @@ const PANEL_VARIANTS = {
 const PANEL_TRANSITION = {
   height:  { duration: 0.3,  ease: [0.16, 1, 0.3, 1] as const },
   opacity: { duration: 0.24, ease: [0.16, 1, 0.3, 1] as const }
+};
+
+// Same icons as the archives so a format is recognisable at a glance wherever it's listed.
+const ENTRY_TYPE_ICONS: Record<TaxonomyEntryType, typeof FileIcon> = {
+  post: FileIcon,
+  snippet: CodeBlockIcon,
+  tutorial: BulbIcon
 };
 
 // Links out to the archive and reveals entries inline, so readers can skim without leaving the page.
@@ -121,23 +129,29 @@ function CategoryRow({ item }: { item: CategoryAccordionItem }): JSX.Element {
                 transition={PANEL_TRANSITION}
               >
                 <PostList>
-                  {item.entries.map((entry) => (
-                    <PostListItem key={`${entry.type}-${entry.slug}`}>
-                      <PostTitle
-                        as={Link}
-                        href={entry.pathname}
-                        title={entry.title}
-                        aria-label={`Read ${TAXONOMY_ENTRY_LABELS[entry.type].singular.toLowerCase()}: ${entry.title}`}
-                        dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(entry.title) }}
-                      />
-                      <DottedSeparator aria-hidden="true" />
-                      {entry.publishedAt && (
-                        <PostPublishedAt dateTime={entry.publishedAt}>
-                          {formatDate(entry.publishedAt)}
-                        </PostPublishedAt>
-                      )}
-                    </PostListItem>
-                  ))}
+                  {item.entries.map((entry) => {
+                    const EntryIcon = ENTRY_TYPE_ICONS[entry.type];
+
+                    return (
+                      <PostListItem key={`${entry.type}-${entry.slug}`}>
+                        {/* Decorative — the link's aria-label already names the content type. */}
+                        <EntryIcon className="entry-type-icon" size={16} aria-hidden />
+                        <PostTitle
+                          as={Link}
+                          href={entry.pathname}
+                          title={entry.title}
+                          aria-label={`Read ${TAXONOMY_ENTRY_LABELS[entry.type].singular.toLowerCase()}: ${entry.title}`}
+                          dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(entry.title) }}
+                        />
+                        <DottedSeparator aria-hidden="true" />
+                        {entry.publishedAt && (
+                          <PostPublishedAt dateTime={entry.publishedAt}>
+                            {formatDate(entry.publishedAt)}
+                          </PostPublishedAt>
+                        )}
+                      </PostListItem>
+                    );
+                  })}
                 </PostList>
               </AccordionBody>
             )}

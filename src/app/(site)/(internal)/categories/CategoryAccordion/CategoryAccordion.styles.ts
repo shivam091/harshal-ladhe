@@ -130,6 +130,13 @@ export const PostListItem = styled.li`
   padding: 0.75rem;
   margin-block-end: 0;
   border-block-end: 0.0625rem solid var(--color-border-muted);
+
+  // Centred rather than baseline-aligned, since an icon has no text baseline to sit on.
+  .entry-type-icon {
+    flex-shrink: 0;
+    align-self: center;
+    color: var(--color-fg-muted);
+  }
 `;
 
 // Post title link — truncates to a single line so long titles never wrap.
