@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>sibling-index() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Staggered List, Timed by sibling-index()</h1>
+        <p>Every item's <code>animation-delay</code> is worked out in the stylesheet from its own position. There are no inline styles and no JavaScript loop setting <code>--i</code>.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Staggered list preview">
+        <ul class="list" id="list" data-mode="step">
+          <li class="item">Item 1</li>
+          <li class="item">Item 2</li>
+          <li class="item">Item 3</li>
+          <li class="item">Item 4</li>
+          <li class="item">Item 5</li>
+          <li class="item">Item 6</li>
+        </ul>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>animation-delay</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Stagger mode">
+          <label class="segment"><input type="radio" name="mode" value="step" checked><span>Fixed step</span></label>
+          <label class="segment"><input type="radio" name="mode" value="total"><span>Fixed total</span></label>
+        </div>
+        <p class="tip"><strong>Fixed step</strong> adds 80ms per item, so longer lists take longer. <strong>Fixed total</strong> divides 600ms by <code>sibling-count()</code>, so every list finishes staggering in the same window.</p>
+      </fieldset>
+
+      <div class="actions">
+        <button type="button" class="toggle-btn" id="replay">Replay</button>
+        <button type="button" class="secondary-btn" id="add">Add item</button>
+        <button type="button" class="secondary-btn" id="remove">Remove item</button>
+      </div>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
