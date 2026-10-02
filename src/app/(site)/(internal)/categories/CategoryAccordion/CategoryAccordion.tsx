@@ -10,19 +10,24 @@ import IconChevronDown from "@/icons/IconChevronDown";
 import { useBoop } from "@/hooks/use-boop";
 import { formatDate } from "@/utils/date";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
-// One post as surfaced under a category — trimmed to what the accordion renders.
-interface CategoryAccordionPost {
+import { getEntryCountParts, TAXONOMY_ENTRY_LABELS } from "@/utils/taxonomy-entries";
+import type { TaxonomyEntryType } from "@/utils/taxonomy-entries";
+// One post, tutorial, or snippet as surfaced under a category — trimmed to what the accordion renders.
+interface CategoryAccordionEntry {
+  type: TaxonomyEntryType;
   slug: string;
   title: string;
+  // Resolved on the server, since a post's URL follows its first category rather than this one.
+  pathname: string;
   publishedAt: string | null;
 }
 
-// One category group: its display name, slug, post count, and its posts.
+// One category group: its display name, slug, entry count, and its entries.
 export interface CategoryAccordionItem {
   category: string;
   slug: string;
   count: number;
-  posts: CategoryAccordionPost[];
+  entries: CategoryAccordionEntry[];
 }
 import {
   AccordionList,
@@ -53,12 +58,7 @@ const PANEL_TRANSITION = {
   opacity: { duration: 0.24, ease: [0.16, 1, 0.3, 1] as const }
 };
 
-// Pluralise "post"/"posts" for a count.
-function postsLabel(count: number): string {
-  return `${count} post${count === 1 ? "" : "s"}`;
-}
-
-// Links out to the archive and reveals posts inline, so readers can skim without leaving the page.
+// Links out to the archive and reveals entries inline, so readers can skim without leaving the page.
 function CategoryRow({ item }: { item: CategoryAccordionItem }): JSX.Element {
   const [open, setOpen] = useState(false);
   const panelId = useId();
@@ -82,13 +82,13 @@ function CategoryRow({ item }: { item: CategoryAccordionItem }): JSX.Element {
               <CategoryLink
                 as={Link}
                 href={`/category/${item.slug}`}
-                aria-label={`View all posts in ${item.category}`}
+                aria-label={`View everything in ${item.category}`}
               >
                 {item.category}
               </CategoryLink>
             </AccordionTitle>
 
-            <PostCount aria-label={`${postsLabel(item.count)} in ${item.category} category`}>
+            <PostCount aria-label={`${getEntryCountParts(item.entries).join(", ")} in ${item.category} category`}>
               {item.count}
             </PostCount>
 
@@ -101,7 +101,7 @@ function CategoryRow({ item }: { item: CategoryAccordionItem }): JSX.Element {
               <AccordionToggle
                 type="button"
                 aria-controls={open ? panelId : undefined}
-                aria-label={`Toggle all posts of ${item.category}`}
+                aria-label={`Toggle everything in ${item.category}`}
                 onPointerEnter={triggerChevronBoop}
               >
                 <IconChevronDown direction={open ? "up" : "down"} isBooped={isChevronBooped} />
@@ -121,19 +121,19 @@ function CategoryRow({ item }: { item: CategoryAccordionItem }): JSX.Element {
                 transition={PANEL_TRANSITION}
               >
                 <PostList>
-                  {item.posts.map((post) => (
-                    <PostListItem key={post.slug}>
+                  {item.entries.map((entry) => (
+                    <PostListItem key={`${entry.type}-${entry.slug}`}>
                       <PostTitle
                         as={Link}
-                        href={`/post/${item.slug}/${post.slug}`}
-                        title={post.title}
-                        aria-label={`Read post: ${post.title}`}
-                        dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(post.title) }}
+                        href={entry.pathname}
+                        title={entry.title}
+                        aria-label={`Read ${TAXONOMY_ENTRY_LABELS[entry.type].singular.toLowerCase()}: ${entry.title}`}
+                        dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(entry.title) }}
                       />
                       <DottedSeparator aria-hidden="true" />
-                      {post.publishedAt && (
-                        <PostPublishedAt dateTime={post.publishedAt}>
-                          {formatDate(post.publishedAt)}
+                      {entry.publishedAt && (
+                        <PostPublishedAt dateTime={entry.publishedAt}>
+                          {formatDate(entry.publishedAt)}
                         </PostPublishedAt>
                       )}
                     </PostListItem>

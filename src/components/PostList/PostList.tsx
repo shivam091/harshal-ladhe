@@ -3,12 +3,13 @@ import Link from "next/link";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import Categories from "@/components/Categories";
 import SeriesBadge from "@/components/SeriesBadge";
-import { CalendarIcon, ClockIcon } from "@/components/Icon";
+import { CalendarIcon, ClockIcon, CodeBlockIcon, BulbIcon } from "@/components/Icon";
 import { PageMetaItem } from "@/components/PageMeta/PageMeta.styles";
 import { getSeriesForPost } from "@/data/series";
-import { getPostUrl } from "@/utils/post-url";
+import { getTaxonomyEntryUrl, TAXONOMY_ENTRY_LABELS } from "@/utils/taxonomy-entries";
 import { formatDate } from "@/utils/date";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
+import type { TaxonomyEntryType } from "@/utils/taxonomy-entries";
 import type { PostListProps } from "@/components/PostList/PostList.types";
 import {
   PostFeed,
@@ -21,8 +22,14 @@ import {
   PostCardFooter
 } from "@/components/PostList/PostList.styles";
 
+// Matches the archives' icons so a format reads the same wherever it's listed.
+const ENTRY_TYPE_ICONS: Record<Exclude<TaxonomyEntryType, "post">, typeof CodeBlockIcon> = {
+  snippet: CodeBlockIcon,
+  tutorial: BulbIcon
+};
+
 /*
-  One card per post so readers can scan titles, series and read times before choosing;
+  One card per entry so readers can scan titles, series and read times before choosing;
   dates come from git, so this list is server-only.
 */
 export default function PostList({ posts }: PostListProps): JSX.Element {
@@ -30,16 +37,19 @@ export default function PostList({ posts }: PostListProps): JSX.Element {
     <>
       <PostFeed>
         {posts.map((post, index) => {
-          const series = getSeriesForPost(post.slug);
+          const type = "type" in post ? post.type : "post";
+          // Slugs are only unique per content type, so series lookups stay with posts.
+          const series = type === "post" ? getSeriesForPost(post.slug) : null;
+          const EntryTypeIcon = type === "post" ? null : ENTRY_TYPE_ICONS[type];
 
           return (
             <PostPreview
-              key={post.slug}
+              key={`${type}-${post.slug}`}
               style={{ "--stagger": String(index) } as React.CSSProperties}
             >
               <PostCardHeader>
                 <PostCardTitle>
-                  <Link href={getPostUrl(post)} title={post.title}>
+                  <Link href={getTaxonomyEntryUrl({ ...post, type })} title={post.title}>
                     <span dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(post.title) }} />
                   </Link>
                 </PostCardTitle>
@@ -68,11 +78,21 @@ export default function PostList({ posts }: PostListProps): JSX.Element {
 
                 <Categories categories={post.category} />
 
-                <PageMetaItem className="page-read-time">
-                  <ClockIcon />
-                  <VisuallyHidden>Estimated reading time:</VisuallyHidden>
-                  <span>{post.readingMinutes} min read</span>
-                </PageMetaItem>
+                {"readingMinutes" in post && (
+                  <PageMetaItem className="page-read-time">
+                    <ClockIcon />
+                    <VisuallyHidden>Estimated reading time:</VisuallyHidden>
+                    <span>{post.readingMinutes} min read</span>
+                  </PageMetaItem>
+                )}
+
+                {EntryTypeIcon && (
+                  <PageMetaItem className="page-content-type">
+                    <EntryTypeIcon />
+                    <VisuallyHidden>Content type:</VisuallyHidden>
+                    <span>{TAXONOMY_ENTRY_LABELS[type].singular}</span>
+                  </PageMetaItem>
+                )}
               </PostCardFooter>
             </PostPreview>
           );

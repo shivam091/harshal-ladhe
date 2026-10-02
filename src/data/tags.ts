@@ -8,20 +8,20 @@ export interface TagMeta {
 
 /*
   Keyed by slug so casing variants share one entry. Unlisted slugs still get an archive with
-  fallback copy, and entries may exist ahead of the posts that use them.
+  fallback copy, and entries may exist ahead of the posts, tutorials, or snippets that use them.
 */
 export const tagMeta: Record<string, TagMeta> = {
   "2d-layouts": {
     title: "Exploring 2D Layouts for Web Design",
-    description: "Posts exploring two-dimensional layout techniques for the web, primarily using CSS Grid and Flexbox for complex and structured designs."
+    description: "Two-dimensional layout techniques for the web, primarily using CSS Grid and Flexbox for complex and structured designs."
   },
   "css-grid": {
-    title: "Comprehensive Guides to CSS Grid Layout",
-    description: "Comprehensive guides and advanced techniques for mastering CSS Grid Layout for building robust, two-dimensional web interfaces."
+    title: "Mastering CSS Grid Layout",
+    description: "Core concepts and advanced techniques for mastering CSS Grid Layout for building robust, two-dimensional web interfaces."
   },
   "grid": {
-    title: "All Posts on Grid Systems and Layouts",
-    description: "General articles and tutorials related to creating grid-based layouts on the web, often involving CSS Grid or Flexbox."
+    title: "Grid Systems and Layouts",
+    description: "Creating grid-based layouts on the web, often involving CSS Grid or Flexbox."
   },
   "layout": {
     title: "Modern Web Layout Techniques and Best Practices",
@@ -29,7 +29,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "fr-units": {
     title: "Understanding `fr` Units in CSS Grid",
-    description: "Explanations and usage examples of the 'fr' (fractional) unit in CSS Grid to efficiently distribute available space among grid tracks."
+    description: "How the 'fr' (fractional) unit works in CSS Grid to efficiently distribute available space among grid tracks."
   },
   "minmax": {
     title: "Mastering the `minmax()` Function in CSS",
@@ -37,11 +37,11 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "auto-fill": {
     title: "'auto-fill' in CSS Grid Explained",
-    description: "Deep dive into the 'auto-fill' keyword in CSS Grid, explaining how it works with 'grid-template-columns' to create dynamic and responsive grids."
+    description: "How the 'auto-fill' keyword in CSS Grid works with 'grid-template-columns' to create dynamic and responsive grids."
   },
   "auto-fit": {
     title: "'auto-fit' in CSS Grid Explained",
-    description: "Detailed explanations and examples of the 'auto-fit' keyword in CSS Grid for creating flexible and adaptive container layouts."
+    description: "How the 'auto-fit' keyword in CSS Grid works for creating flexible and adaptive container layouts."
   },
   "grid-alignment": {
     title: "Aligning Items in CSS Grid",
@@ -53,7 +53,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "container-queries": {
     title: "Exploring CSS Container Queries",
-    description: "Posts on using CSS Container Queries to style components based on the size of their parent container, not just the viewport."
+    description: "Using CSS Container Queries to style components based on the size of their parent container, not just the viewport."
   },
   "media-queries": {
     title: "Mastering CSS Media Queries",
@@ -64,8 +64,8 @@ export const tagMeta: Record<string, TagMeta> = {
     description: "Techniques and strategies for building responsive web designs that look and function well on all screen sizes and devices."
   },
   "beginner": {
-    title: "Guides for Beginner Web Developers",
-    description: "Guides and tutorials specifically tailored for web development beginners, covering foundational concepts in an easy-to-understand format."
+    title: "Web Development for Beginners",
+    description: "Posts, tutorials, and snippets tailored for web development beginners, covering foundational concepts in an easy-to-understand format."
   },
   "frontend": {
     title: "Frontend Engineering: HTML, CSS, JS, and SVG",
@@ -76,12 +76,12 @@ export const tagMeta: Record<string, TagMeta> = {
     description: "Principles and aesthetics of designing functional, accessible, and visually appealing user interfaces for the web."
   },
   "css": {
-    title: "All Articles Tagged CSS",
+    title: "All Content Tagged CSS",
     description: "All content tagged with CSS, covering topics from layout to styling, properties, and modern specifications."
   },
   "animation": {
-    title: "Comprehensive Guides to CSS and JavaScript Animations",
-    description: "Articles covering all aspects of web animation, from fundamental principles to advanced techniques using CSS, JavaScript, and various libraries."
+    title: "CSS and JavaScript Animations",
+    description: "All aspects of web animation, from fundamental principles to advanced techniques using CSS, JavaScript, and various libraries."
   },
   "transition": {
     title: "Mastering CSS Transitions for Smooth UI Effects",
@@ -97,15 +97,15 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "gpu-acceleration": {
     title: "Leveraging GPU Acceleration for Smoother Animations",
-    description: "Deep dive into moving animations to the GPU (Graphics Processing Unit) using properties like `transform` and `opacity` for silky-smooth rendering."
+    description: "Moving animations to the GPU (Graphics Processing Unit) using properties like `transform` and `opacity` for silky-smooth rendering."
   },
   "transform": {
     title: "Using the CSS `transform` Property for 2D and 3D Effects",
-    description: "Tutorials on the powerful CSS `transform` property to translate, rotate, scale, and skew elements for creative visual effects."
+    description: "Using the powerful CSS `transform` property to translate, rotate, scale, and skew elements for creative visual effects."
   },
   "opacity": {
     title: "Animating Opacity and Transparency Effects",
-    description: "Guides on using the `opacity` property, a simple, performant way to animate fading and visibility changes in UI elements."
+    description: "Using the `opacity` property, a simple, performant way to animate fading and visibility changes in UI elements."
   },
   "timing-function": {
     title: "Exploring CSS Animation Timing Functions (`ease`, `steps`, `cubic-bezier`)",
@@ -116,7 +116,7 @@ export const tagMeta: Record<string, TagMeta> = {
     description: "Focus on small, subtle animations and feedback loops that enhance user experience, usability, and delight in a web application."
   },
   "ui-design": {
-    title: "Articles on User Interface (UI) Design Principles",
+    title: "User Interface (UI) Design Principles",
     description: "Content covering the visual and interactive elements of interface design, from color, gradients, and borders to motion that communicates state and flow."
   },
   "keyframes": {
@@ -161,14 +161,14 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "motion-path": {
     title: "CSS Motion Path Techniques",
-    description: "Guides on animating elements along a defined path in space, covering `offset-path`, `offset-distance`, and `offset-rotate` for curved motion."
+    description: "Animating elements along a defined path in space, covering `offset-path`, `offset-distance`, and `offset-rotate` for curved motion."
   },
   "shape-morphing": {
     title: "Morphing SVG Shapes by Animating `d`",
     description: "Techniques for smoothly transforming one SVG path into another by animating the `d` attribute, and when that trade-off is worth its performance cost."
   },
   "git": {
-    title: "All Articles Tagged Git",
+    title: "All Content Tagged Git",
     description: "Everything tagged Git — staging, committing, branching, merging, rebasing, and the advanced commands that come up once a repo gets real."
   },
   "version-control": {
@@ -177,7 +177,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "github": {
     title: "Working with GitHub: Remotes, PRs, and Collaboration",
-    description: "Guides on collaborating through GitHub — remotes, pull requests, forks, and branch-protection workflows built on top of Git."
+    description: "Collaborating through GitHub — remotes, pull requests, forks, and branch-protection workflows built on top of Git."
   },
   "branching": {
     title: "Git Branching Strategies and Commands",
@@ -220,7 +220,7 @@ export const tagMeta: Record<string, TagMeta> = {
     description: "Git's object model, the .git directory, refs, and the plumbing commands that power everyday Git usage."
   },
   "advanced": {
-    title: "Advanced Guides for Experienced Developers",
+    title: "Advanced Topics for Experienced Developers",
     description: "Deeper dives past the fundamentals — for readers already comfortable with the basics and ready for edge cases and internals."
   },
   "svg": {
@@ -241,11 +241,11 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "web-motion": {
     title: "Web Motion Design and Implementation",
-    description: "Articles on designing and implementing purposeful motion across web interfaces, from micro-interactions to full-page effects."
+    description: "Designing and implementing purposeful motion across web interfaces, from micro-interactions to full-page effects."
   },
   "scroll-animation": {
     title: "Scroll-Driven Animation Techniques",
-    description: "Guides on tying animation progress to a user's scroll position instead of a fixed time-based duration."
+    description: "Tying animation progress to a user's scroll position instead of a fixed time-based duration."
   },
   "view-timeline": {
     title: "CSS `view()` Timelines Explained",
@@ -261,7 +261,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "web-graphics": {
     title: "Optimizing Graphics for Modern Web Performance",
-    description: "Technical guides on implementing and optimizing icons, illustrations, and data visualizations to keep web applications fast and visually stunning."
+    description: "Implementing and optimising icons, illustrations, and data visualizations to keep web applications fast and visually stunning."
   },
   "ui-development": {
     title: "Modern UI Development and Implementation",
@@ -269,7 +269,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "coordinate-system": {
     title: "Understanding the SVG Coordinate System",
-    description: "Deep dive into how SVG canvas coordinates work, mastering the X-axis, Y-axis, and the 'top-left (0,0)' rule of the browser."
+    description: "How SVG canvas coordinates work, mastering the X-axis, Y-axis, and the 'top-left (0,0)' rule of the browser."
   },
   "viewbox": {
     title: "Mastering the SVG viewBox and Scaling",
@@ -277,7 +277,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "path-data": {
     title: "Mastering SVG Path Data: The 'd' Attribute",
-    description: "Detailed guides on decoding and writing SVG path data, from basic LineTo commands to complex Bézier curves and elliptical arcs."
+    description: "Decoding and writing SVG path data, from basic LineTo commands to complex Bézier curves and elliptical arcs."
   },
   "vector": {
     title: "Working with Scalable Vector Graphics (SVG)",
@@ -285,7 +285,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "bezier-curves": {
     title: "Understanding Bézier Curves in Web Graphics",
-    description: "A technical deep dive into Quadratic and Cubic Bézier curves, explaining the math and logic behind smooth, organic vector paths and animations."
+    description: "Quadratic and Cubic Bézier curves, explaining the math and logic behind smooth, organic vector paths and animations."
   },
   "web-animation": {
     title: "High-Performance Web Animation and Motion",
@@ -300,12 +300,12 @@ export const tagMeta: Record<string, TagMeta> = {
     description: "A complete guide to JavaScript operators, including arithmetic, assignment, comparison, logical, and unary operators."
   },
   "es6": {
-    title: "Posts on Modern JavaScript (ES6 and Beyond)",
-    description: "Articles focusing on modern JavaScript features introduced in ECMAScript 2015 (ES6) and later versions, enhancing development efficiency."
+    title: "Modern JavaScript (ES6 and Beyond)",
+    description: "Modern JavaScript features introduced in ECMAScript 2015 (ES6) and later versions, enhancing development efficiency."
   },
   "cheatsheet": {
     title: "Web Development Cheatsheets and References",
-    description: "Quick reference guides and cheatsheets for essential web development concepts and syntax, designed for easy recall."
+    description: "Quick references and cheatsheets for essential web development concepts and syntax, designed for easy recall."
   },
   "optional-chaining": {
     title: "Optional Chaining (`?.`) in JavaScript",
@@ -333,7 +333,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "polyline": {
     title: "Creating Open Paths with SVG Polylines",
-    description: "Guides on using the <polyline> element for creating series of connected straight-line segments, perfect for open-ended shapes, sparklines, and technical drawings."
+    description: "Using the <polyline> element for creating series of connected straight-line segments, perfect for open-ended shapes, sparklines, and technical drawings."
   },
   "shapes": {
     title: "SVG Basic Shapes and Geometric Primitives",
@@ -368,24 +368,24 @@ export const tagMeta: Record<string, TagMeta> = {
     description: "Comprehensive resources on the intersection of HTML, CSS, JavaScript, and SVG to build high-performance, accessible user interfaces."
   },
   "accessibility": {
-    title: "Web Accessibility (a11y) Standards and Guides",
-    description: "Articles focused on web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
+    title: "Web Accessibility (a11y) Standards and Practices",
+    description: "Web accessibility (a11y) standards, ensuring websites are usable by everyone, regardless of disability or device."
   },
   "rtl": {
     title: "Right-to-Left (RTL) Layout Techniques",
-    description: "Posts on building interfaces that work correctly for right-to-left languages like Arabic and Hebrew, without duplicating stylesheets.",
+    description: "Building interfaces that work correctly for right-to-left languages like Arabic and Hebrew, without duplicating stylesheets.",
   },
   "logical-properties": {
     title: "CSS Logical Properties Explained",
-    description: "Guides to CSS Logical Properties — flow-relative alternatives to left/right/top/bottom that adapt across writing modes and directions.",
+    description: "CSS Logical Properties — flow-relative alternatives to left/right/top/bottom that adapt across writing modes and directions.",
   },
   "writing-modes": {
     title: "CSS Writing Modes",
-    description: "Articles covering the `writing-mode` property and how it reshapes the inline and block axes for vertical and horizontal scripts.",
+    description: "The `writing-mode` property and how it reshapes the inline and block axes for vertical and horizontal scripts.",
   },
   "i18n": {
     title: "i18n: Internationalization Techniques",
-    description: "Shorthand-tagged posts on internationalization — adapting layout, text, and styling for a global audience.",
+    description: "Content tagged with the i18n shorthand for internationalisation — adapting layout, text, and styling for a global audience.",
   },
   "devtools": {
     title: "Debugging with Browser DevTools",
@@ -441,7 +441,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "oklch": {
     title: "Perceptual Color with OKLCH in Modern CSS",
-    description: "A deep dive into the OKLCH color space for creating perceptually uniform, predictable, and high-gamut colors in modern browser environments."
+    description: "The OKLCH color space for creating perceptually uniform, predictable, and high-gamut colors in modern browser environments."
   },
   "scss": {
     title: "Streamlined Styling with SCSS and Preprocessors",
@@ -449,15 +449,15 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "mixins": {
     title: "Reusable Styles with Sass Mixins",
-    description: "Write once, include everywhere: guides on building reusable Sass @mixin blocks with named, defaulted arguments to keep repeated CSS patterns DRY and consistent."
+    description: "Write once, include everywhere: building reusable Sass @mixin blocks with named, defaulted arguments to keep repeated CSS patterns DRY and consistent."
   },
   "gradient-text": {
     title: "CSS Gradient Text Techniques",
-    description: "Guides on clipping gradients to typography with background-clip: text, from static headings to animated and stroke-outlined text effects."
+    description: "Clipping gradients to typography with background-clip: text, from static headings to animated and stroke-outlined text effects."
   },
   "background-clip": {
     title: "Mastering the CSS background-clip Property",
-    description: "Deep dives into background-clip: text and border-box/padding-box tricks for gradient text, gradient borders, and other clipped background effects."
+    description: "Using background-clip: text and border-box/padding-box tricks for gradient text, gradient borders, and other clipped background effects."
   },
   "text-effects": {
     title: "Creative CSS Text Effects",
@@ -465,11 +465,11 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "typography": {
     title: "Styling Web Typography with CSS",
-    description: "Articles on styling text on the web with CSS, from readable, accessible type to decorative treatments like gradient fills and outlined headings."
+    description: "Styling text on the web with CSS, from readable, accessible type to decorative treatments like gradient fills and outlined headings."
   },
   "css-custom-properties": {
     title: "CSS Custom Properties (Variables) and @property",
-    description: "Guides on theming and runtime styling with CSS custom properties, and on registering typed properties with @property so values like angles and colors can animate."
+    description: "Theming and runtime styling with CSS custom properties, and on registering typed properties with @property so values like angles and colors can animate."
   },
   "borders": {
     title: "Advanced CSS Border Styling",
@@ -481,7 +481,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "observer-pattern": {
     title: "The Observer Pattern in JavaScript",
-    description: "Articles on the Observer (Pub/Sub) design pattern, both as implemented by native browser APIs and as a custom pattern for decoupled state updates."
+    description: "The Observer (Pub/Sub) design pattern, both as implemented by native browser APIs and as a custom pattern for decoupled state updates."
   },
   "reactive-programming": {
     title: "Reactive Programming on the Web",
@@ -489,15 +489,15 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "event-listener": {
     title: "Event Listeners and DOM Events",
-    description: "Guides on addEventListener, event delegation, and handling user interactions and browser events efficiently."
+    description: "Using addEventListener, event delegation, and handling user interactions and browser events efficiently."
   },
   "mutation-observer": {
-    title: "MutationObserver Deep Dives",
-    description: "Articles on using MutationObserver to react to DOM structure and attribute changes without expensive polling."
+    title: "Working with MutationObserver",
+    description: "Using MutationObserver to react to DOM structure and attribute changes without expensive polling."
   },
   "intersection-observer": {
     title: "IntersectionObserver in Practice",
-    description: "Guides on using IntersectionObserver for lazy loading, scrollspy navigation, infinite scroll, and visibility-triggered animations."
+    description: "Using IntersectionObserver for lazy loading, scrollspy navigation, infinite scroll, and visibility-triggered animations."
   },
   "resize-observer": {
     title: "ResizeObserver for Container-Aware Components",
@@ -505,11 +505,11 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "dom": {
     title: "Working with the DOM",
-    description: "Articles on reading, updating, and reacting to changes in the Document Object Model from JavaScript."
+    description: "Reading, updating, and reacting to changes in the Document Object Model from JavaScript."
   },
   "core-web-vitals": {
     title: "Core Web Vitals and Performance Metrics",
-    description: "Guides on measuring and improving Core Web Vitals like Largest Contentful Paint and Cumulative Layout Shift using browser performance APIs."
+    description: "Measuring and improving Core Web Vitals like Largest Contentful Paint and Cumulative Layout Shift using browser performance APIs."
   },
   "lazy-loading": {
     title: "Lazy Loading Techniques",
@@ -517,7 +517,7 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "async-javascript": {
     title: "Asynchronous JavaScript Explained",
-    description: "Guides to writing non-blocking JavaScript using callbacks, promises, and async/await, along with the event loop concepts that tie them together."
+    description: "Writing non-blocking JavaScript using callbacks, promises, and async/await, along with the event loop concepts that tie them together."
   },
   "modern-js": {
     title: "Modern JavaScript Features and Patterns",
@@ -529,35 +529,35 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "callbacks": {
     title: "Callback Functions in JavaScript",
-    description: "Guides on the callback pattern in JavaScript — passing functions as arguments to run after an operation completes — and its trade-offs at scale."
+    description: "The callback pattern in JavaScript — passing functions as arguments to run after an operation completes — and its trade-offs at scale."
   },
   "promises": {
     title: "Mastering JavaScript Promises",
-    description: "Deep dives into the Promise API, its states and resolution rules, chaining, and the static utility methods like Promise.all and Promise.race."
+    description: "The Promise API, its states and resolution rules, chaining, and the static utility methods like Promise.all and Promise.race."
   },
   "async-await": {
     title: "Async/Await in Modern JavaScript",
-    description: "Tutorials on using async and await to write asynchronous JavaScript that reads like synchronous code, including error handling with try/catch."
+    description: "Using async and await to write asynchronous JavaScript that reads like synchronous code, including error handling with try/catch."
   },
   "event-loop": {
     title: "The JavaScript Event Loop Explained",
-    description: "Explanations of the JavaScript runtime model — the call stack, Web APIs, task queues, and the event loop that ties them together."
+    description: "The JavaScript runtime model — the call stack, Web APIs, task queues, and the event loop that ties them together."
   },
   "microtasks": {
     title: "Microtasks and the Priority Queue",
-    description: "Articles on the microtask queue that backs Promises and queueMicrotask, and how it's prioritized ahead of macrotasks like setTimeout."
+    description: "The microtask queue that backs Promises and queueMicrotask, and how it's prioritized ahead of macrotasks like setTimeout."
   },
   "css3": {
-    title: "All Posts on CSS3 Features",
-    description: "Articles covering CSS3 specifications and the modern features they introduced for styling and animating the web."
+    title: "CSS3 Features",
+    description: "CSS3 specifications and the modern features they introduced for styling and animating the web."
   },
   "css-animation": {
     title: "CSS Animation Techniques",
-    description: "Guides and tutorials focused specifically on animating elements with CSS, from timing functions to keyframe sequencing."
+    description: "Animating elements with CSS, from timing functions to keyframe sequencing."
   },
   "steps": {
     title: "The CSS `steps()` Timing Function",
-    description: "Deep dives into the `steps()` timing function for discrete, frame-based animation jumps instead of continuous easing."
+    description: "The `steps()` timing function for discrete, frame-based animation jumps instead of continuous easing."
   },
   "css-tricks": {
     title: "Handy CSS Tricks and Techniques",
@@ -565,11 +565,11 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "discrete-animation": {
     title: "Discrete (Stepped) Animation Techniques",
-    description: "Articles on animations that jump between fixed states rather than interpolating smoothly, such as those built with `steps()`."
+    description: "Animations that jump between fixed states rather than interpolating smoothly, such as those built with `steps()`."
   },
   "typewriter-effect": {
     title: "Building CSS Typewriter Effects",
-    description: "Tutorials on recreating the classic typewriter text-reveal effect using CSS animations and the `steps()` timing function."
+    description: "Recreating the classic typewriter text-reveal effect using CSS animations and the `steps()` timing function."
   },
   "sprite-animation": {
     title: "CSS Sprite Sheet Animation",
@@ -581,6 +581,254 @@ export const tagMeta: Record<string, TagMeta> = {
   },
   "ui-animation": {
     title: "UI Animation Design and Implementation",
-    description: "Articles on animating interface elements to communicate state, guide attention, and improve perceived responsiveness."
+    description: "Animating interface elements to communicate state, guide attention, and improve perceived responsiveness."
+  },
+  "objectfreeze": {
+    title: "Using `Object.freeze()` in JavaScript",
+    description: "How `Object.freeze()` locks an object's properties, where its shallow behaviour falls short, and how to freeze nested structures."
+  },
+  "deep-freeze": {
+    title: "Deep Freezing Objects in JavaScript",
+    description: "Recursive techniques for freezing every level of a JavaScript object so nested data can't be mutated by accident."
+  },
+  "immutability": {
+    title: "Immutability in JavaScript",
+    description: "Patterns for keeping data immutable in JavaScript — freezing objects, avoiding shared mutation, and making state changes predictable."
+  },
+  "secure-coding": {
+    title: "Secure Coding Practices",
+    description: "Defensive coding techniques that protect data and behaviour from accidental or malicious tampering."
+  },
+  "strict-mode": {
+    title: "JavaScript Strict Mode",
+    description: "How `\"use strict\"` changes JavaScript's behaviour, turning silent failures such as writes to frozen objects into thrown errors."
+  },
+  "closures": {
+    title: "Understanding JavaScript Closures",
+    description: "How closures capture their lexical scope, and how to use them for private state, factories, and encapsulated behaviour."
+  },
+  "encapsulation": {
+    title: "Encapsulation Techniques in JavaScript",
+    description: "Ways to hide internal state in JavaScript, from closure-based modules to native private class fields."
+  },
+  "design-patterns": {
+    title: "Software Design Patterns",
+    description: "Reusable solutions to recurring design problems, shown with practical JavaScript and front-end examples."
+  },
+  "functional-programming": {
+    title: "Functional Programming in JavaScript",
+    description: "Functional techniques in JavaScript — pure functions, closures, and composition — for writing predictable, testable code."
+  },
+  "private-state": {
+    title: "Managing Private State",
+    description: "Techniques for keeping internal state private so it can only change through a deliberate public interface."
+  },
+  "clean-code": {
+    title: "Writing Clean, Maintainable Code",
+    description: "Practices for writing readable, well-structured code that stays easy to change, test, and reason about."
+  },
+  "factory-pattern": {
+    title: "The Factory Pattern in JavaScript",
+    description: "Using factory functions to create objects with private state and shared behaviour, without classes or `new`."
+  },
+  "oop": {
+    title: "Object-Oriented Programming in JavaScript",
+    description: "Object-oriented techniques in JavaScript — classes, inheritance, and encapsulation — built on its prototype model."
+  },
+  "classes": {
+    title: "JavaScript Classes",
+    description: "Working with JavaScript classes, from constructors and methods to private fields and static members."
+  },
+  "react": {
+    title: "All Content Tagged React",
+    description: "React hooks, component patterns, and reusable logic for building interactive user interfaces."
+  },
+  "hooks": {
+    title: "React Hooks",
+    description: "Using and composing React hooks to manage state, effects, and browser events inside function components."
+  },
+  "custom-hooks": {
+    title: "Building Custom React Hooks",
+    description: "Building reusable custom React hooks that package stateful logic and browser APIs behind a small, clean interface."
+  },
+  "usepointerposition": {
+    title: "The `usePointerPosition` React Hook",
+    description: "A React hook that tracks pointer coordinates across mouse, touch, and pen input with a single Pointer Events listener."
+  },
+  "usemouseposition": {
+    title: "Tracking Mouse Position in React",
+    description: "Ways to track the cursor's position in React, including `useMousePosition` and its pointer-aware successor."
+  },
+  "pointer-events": {
+    title: "The Pointer Events API",
+    description: "Handling mouse, touch, and stylus input through one unified Pointer Events API instead of separate event families."
+  },
+  "typescript": {
+    title: "All Content Tagged TypeScript",
+    description: "TypeScript examples and patterns for adding static types to JavaScript, React components, and utility code."
+  },
+  "responsive-design": {
+    title: "Responsive Design Techniques",
+    description: "Building layouts, type, and spacing that adapt smoothly to every screen size, from small phones to wide desktops."
+  },
+  "holy-grail-layout": {
+    title: "The Holy Grail Layout",
+    description: "Building the classic header, footer, and three-column Holy Grail layout with modern CSS Grid."
+  },
+  "async-retry": {
+    title: "Retrying Async Operations",
+    description: "Retrying failed asynchronous operations in JavaScript with configurable attempts, delays, and backoff strategies."
+  },
+  "backoff": {
+    title: "Backoff Strategies for Retries",
+    description: "Spacing out retries with linear, exponential, and jittered backoff so failing services get time to recover."
+  },
+  "error-handling": {
+    title: "Error Handling in JavaScript",
+    description: "Catching, retrying, and reporting errors in JavaScript — especially in asynchronous, promise-based code."
+  },
+  "resilience": {
+    title: "Building Resilient Applications",
+    description: "Techniques that help applications survive network failures, flaky services, and transient errors gracefully."
+  },
+  "nodejs": {
+    title: "All Content Tagged Node.js",
+    description: "Node.js techniques and utilities for server-side JavaScript, from async workflows to resilient API calls."
+  },
+  "api-calls": {
+    title: "Making Reliable API Calls",
+    description: "Making network requests that cope with timeouts, failures, and rate limits without hammering the server."
+  },
+  "jitter": {
+    title: "Adding Jitter to Retries",
+    description: "Using randomised jitter to spread retry attempts out so clients don't all hit a recovering service at once."
+  },
+  "thundering-herd": {
+    title: "The Thundering Herd Problem",
+    description: "What causes the thundering herd problem and how backoff with jitter keeps synchronised clients from overwhelming a server."
+  },
+  "distributed-systems": {
+    title: "Distributed Systems Concepts",
+    description: "Concepts and patterns for building systems that stay reliable when many clients and services talk over the network."
+  },
+  "scalability": {
+    title: "Building for Scalability",
+    description: "Patterns that keep applications and services performing well as traffic and load grow."
+  },
+  "architecture": {
+    title: "Software Architecture",
+    description: "Structural decisions and patterns that shape how systems behave under load, failure, and change."
+  },
+  "reliability": {
+    title: "Reliability Engineering",
+    description: "Techniques for building software that keeps working through partial failures and unpredictable conditions."
+  },
+  "light-dark": {
+    title: "The CSS `light-dark()` Function",
+    description: "Using the CSS `light-dark()` function to declare light and dark colour values in a single line."
+  },
+  "color-scheme": {
+    title: "The CSS `color-scheme` Property",
+    description: "How `color-scheme` tells the browser which themes a page supports and unlocks theme-aware features like `light-dark()`."
+  },
+  "dark-mode": {
+    title: "Building Dark Mode on the Web",
+    description: "Approaches for adding dark mode to websites, from system-preference detection to theme-aware CSS colours."
+  },
+  "theming": {
+    title: "Theming Websites with CSS",
+    description: "Techniques for building switchable themes with custom properties, design tokens, and modern colour functions."
+  },
+  "design-tokens": {
+    title: "Working with Design Tokens",
+    description: "Using design tokens to keep colour, spacing, and typography consistent and easy to theme across a site."
+  },
+  "env": {
+    title: "The CSS `env()` Function",
+    description: "Reading browser-defined environment variables in CSS with `env()`, such as the safe-area insets around a device's notch."
+  },
+  "safe-area-inset": {
+    title: "Safe Area Insets in CSS",
+    description: "Using `safe-area-inset-*` values to keep content clear of notches, rounded corners, and home indicators."
+  },
+  "notch": {
+    title: "Designing Around the Notch",
+    description: "Keeping layouts usable on devices with notches, camera cut-outs, and rounded screen corners."
+  },
+  "viewport-fit": {
+    title: "The `viewport-fit` Meta Setting",
+    description: "How `viewport-fit=cover` extends a page edge to edge on notched devices, and how to pad content back into view."
+  },
+  "mobile-web": {
+    title: "Mobile Web Development",
+    description: "Techniques for building web pages that feel at home on phones, from viewport handling to device-specific quirks."
+  },
+  "clamp": {
+    title: "The CSS `clamp()` Function",
+    description: "Using `clamp()` to set values that scale fluidly between a minimum and a maximum, without media queries."
+  },
+  "min-max": {
+    title: "The CSS `min()` and `max()` Functions",
+    description: "Using `min()` and `max()` to let the browser choose the smaller or larger of several values at render time."
+  },
+  "css-functions": {
+    title: "CSS Functions",
+    description: "Modern CSS functions such as `clamp()`, `min()`, `max()`, and `if()` that compute values directly in the browser."
+  },
+  "css-2025": {
+    title: "Modern CSS Features of 2025",
+    description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."
+  },
+  "fluid-typography": {
+    title: "Fluid Typography with CSS",
+    description: "Scaling font sizes smoothly with the viewport or container using `clamp()` instead of fixed breakpoints."
+  },
+  "viewport-units": {
+    title: "CSS Viewport Units",
+    description: "Understanding viewport units — `vh`, `vw`, and the newer dynamic, small, large, and logical variants — and when to use each."
+  },
+  "dvh": {
+    title: "Dynamic Viewport Height (`dvh`)",
+    description: "Using `dvh`, `svh`, and `lvh` to size elements correctly as mobile browser toolbars appear and disappear."
+  },
+  "mobile": {
+    title: "Mobile-Friendly Web Techniques",
+    description: "CSS and layout techniques that account for mobile browser behaviour, small screens, and touch input."
+  },
+  "dvw": {
+    title: "Dynamic Viewport Width (`dvw`)",
+    description: "Using `dvw`, `svw`, and `lvw` for widths that respect the visible viewport, including full-bleed layouts."
+  },
+  "full-bleed": {
+    title: "Full-Bleed Layouts in CSS",
+    description: "Techniques for letting elements break out of a centred content column and span the full width of the viewport."
+  },
+  "if-function": {
+    title: "The CSS `if()` Function",
+    description: "Using the CSS `if()` function to choose property values inline based on media, support, or style queries."
+  },
+  "conditional-css": {
+    title: "Conditional Logic in CSS",
+    description: "Ways to apply styles conditionally in CSS, from queries and custom properties to the new `if()` function."
+  },
+  "css-reset": {
+    title: "CSS Resets Explained",
+    description: "What a modern CSS reset contains, why each rule exists, and how to tailor one to your own projects."
+  },
+  "box-sizing": {
+    title: "The CSS `box-sizing` Property",
+    description: "How `box-sizing` decides whether padding and borders count towards an element's width and height."
+  },
+  "interpolate-size": {
+    title: "Animating to `auto` with `interpolate-size`",
+    description: "Using `interpolate-size` to let CSS transitions animate to and from intrinsic sizes such as `height: auto`."
+  },
+  "text-wrap": {
+    title: "The CSS `text-wrap` Property",
+    description: "Using `text-wrap: balance` and `pretty` for tidier headings and paragraphs without manual line breaks."
+  },
+  "best-practices": {
+    title: "Front-End Best Practices",
+    description: "Established conventions and sensible defaults for writing robust, accessible, and maintainable front-end code."
   },
 };

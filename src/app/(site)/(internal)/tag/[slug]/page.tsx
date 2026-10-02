@@ -3,9 +3,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import PostsFeed from "@/components/PostsFeed";
-import { getAllTags, getPostsByTag, getTagBySlug, getTagMeta } from "@/lib/tags";
+import { getAllTags, getEntriesByTag, getTagBySlug, getTagMeta } from "@/lib/tags";
 import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
 import { inlineMarkdownToHtml } from "@/utils/markdown";
+import { getEntryCountParts } from "@/utils/taxonomy-entries";
 import {
   TagArchiveSection,
   TagArchiveKicker,
@@ -15,11 +16,6 @@ import {
 // Fully static: one page per tag, generated at build time; unknown slugs 404.
 export const dynamic = "force-static";
 export const dynamicParams = false;
-
-// Pluralise "post"/"posts" for a count.
-function postsLabel(count: number): string {
-  return `${count} post${count === 1 ? "" : "s"}`;
-}
 
 // One route per unique tag so every tag gets a static archive page.
 export function generateStaticParams(): { slug: string }[] {
@@ -65,7 +61,7 @@ export default async function TagPage({ params }: TagPageProps): Promise<JSX.Ele
   const tag = getTagBySlug(slug);
   if (!tag) notFound();
 
-  const posts = getPostsByTag(slug);
+  const entries = getEntriesByTag(slug);
   const { title, description } = getTagMeta(slug, tag);
 
   return (
@@ -75,14 +71,14 @@ export default async function TagPage({ params }: TagPageProps): Promise<JSX.Ele
       <TagDescription>{description}</TagDescription>
 
       <TagArchiveKicker>
-        {postsLabel(posts.length)}
+        {getEntryCountParts(entries).join(" · ")}
       </TagArchiveKicker>
 
       <VisuallyHidden as="h2" id="tag-posts-title">
-        Posts tagged {tag}
+        Content tagged {tag}
       </VisuallyHidden>
 
-      <PostsFeed posts={posts} />
+      <PostsFeed posts={entries} />
     </TagArchiveSection>
   );
 }

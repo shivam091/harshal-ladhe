@@ -5,7 +5,7 @@ import VisuallyHidden from "@/components/VisuallyHidden";
 import PostsFeed from "@/components/PostsFeed";
 import {
   getAllCategories,
-  getPostsByCategory,
+  getEntriesByCategory,
   getCategoryBySlug,
   getCategoryMeta
 } from "@/lib/categories";
@@ -14,6 +14,7 @@ interface CategoryPageProps {
   params: Promise<{ slug: string }>;
 }
 import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
+import { getEntryCountParts } from "@/utils/taxonomy-entries";
 import {
   CategoryArchiveSection,
   CategoryArchiveKicker,
@@ -23,11 +24,6 @@ import {
 // Fully static: one page per category, generated at build time; unknown slugs 404.
 export const dynamic = "force-static";
 export const dynamicParams = false;
-
-// Pluralise "post"/"posts" for a count.
-function postsLabel(count: number): string {
-  return `${count} post${count === 1 ? "" : "s"}`;
-}
 
 // One route per unique category so every category gets a static archive page.
 export function generateStaticParams(): { slug: string }[] {
@@ -69,7 +65,7 @@ export default async function CategoryPage({ params }: CategoryPageProps): Promi
   const category = getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const posts = getPostsByCategory(slug);
+  const entries = getEntriesByCategory(slug);
   const { title, description } = getCategoryMeta(slug, category);
 
   return (
@@ -80,14 +76,14 @@ export default async function CategoryPage({ params }: CategoryPageProps): Promi
         <CategoryDescription>{description}</CategoryDescription>
 
         <CategoryArchiveKicker>
-          {postsLabel(posts.length)}
+          {getEntryCountParts(entries).join(" · ")}
         </CategoryArchiveKicker>
 
         <VisuallyHidden as="h2" id="category-posts-title">
-          Posts in {category}
+          Content in {category}
         </VisuallyHidden>
 
-        <PostsFeed posts={posts} />
+        <PostsFeed posts={entries} />
       </CategoryArchiveSection>
     </>
   );

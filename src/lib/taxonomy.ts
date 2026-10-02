@@ -1,9 +1,14 @@
 /*
-  One aggregation shared by tags and categories so both archives count, sort, and date posts
-  the same way, while each keeps its own public types.
+  One aggregation shared by tags and categories so both archives count, sort, and date posts,
+  snippets, and tutorials the same way, while each keeps its own public types.
 */
 import { posts } from "@/data/posts";
+import { snippets } from "@/data/snippets";
+import { tutorials } from "@/data/tutorials";
 import { getSortedPosts, type DatedPost } from "@/lib/posts";
+import { getSortedSnippets, type DatedSnippet } from "@/lib/snippets";
+import { getSortedTutorials, type DatedTutorial } from "@/lib/tutorials";
+import { compareByDateDesc } from "@/lib/content-dates";
 import { slugify } from "@/utils/string";
 
 export interface TaxonomyTerm {
@@ -13,12 +18,30 @@ export interface TaxonomyTerm {
   lastModifiedAt: string | null;
 }
 
-// Alphabetical for scanning; the first-seen spelling wins, and lastModifiedAt tracks the newest contributing post.
-export function getAllTaxonomyTerms(getValues: (post: DatedPost) => string[]): TaxonomyTerm[] {
+// Discriminated by `type` so archive cards can link and label each entry without guessing.
+export type TaxonomyEntry =
+  | (DatedPost & { type: "post" })
+  | (DatedSnippet & { type: "snippet" })
+  | (DatedTutorial & { type: "tutorial" });
+
+// Every content type keeps its terms on the same two fields, so one picker fits them all.
+type TaxonomyValues = (entry: { category: string[]; tags: string[] }) => string[];
+
+// One newest-first timeline so a topic archive interleaves formats by date rather than grouping them.
+function getSortedTaxonomyEntries(): TaxonomyEntry[] {
+  return [
+    ...getSortedPosts().map((post) => ({ ...post, type: "post" as const })),
+    ...getSortedSnippets().map((snippet) => ({ ...snippet, type: "snippet" as const })),
+    ...getSortedTutorials().map((tutorial) => ({ ...tutorial, type: "tutorial" as const }))
+  ].sort(compareByDateDesc());
+}
+
+// Alphabetical for scanning; the first-seen spelling wins, and lastModifiedAt tracks the newest contributing entry.
+export function getAllTaxonomyTerms(getValues: TaxonomyValues): TaxonomyTerm[] {
   const map = new Map<string, TaxonomyTerm>();
 
-  for (const post of getSortedPosts()) {
-    for (const value of getValues(post)) {
+  for (const entry of getSortedTaxonomyEntries()) {
+    for (const value of getValues(entry)) {
       const slug = slugify(value);
       if (!slug) continue;
 
@@ -26,13 +49,13 @@ export function getAllTaxonomyTerms(getValues: (post: DatedPost) => string[]): T
       if (existing) {
         existing.count += 1;
         if (
-          post.lastModifiedAt &&
-          (!existing.lastModifiedAt || post.lastModifiedAt > existing.lastModifiedAt)
+          entry.lastModifiedAt &&
+          (!existing.lastModifiedAt || entry.lastModifiedAt > existing.lastModifiedAt)
         ) {
-          existing.lastModifiedAt = post.lastModifiedAt;
+          existing.lastModifiedAt = entry.lastModifiedAt;
         }
       } else {
-        map.set(slug, { name: value, slug, count: 1, lastModifiedAt: post.lastModifiedAt });
+        map.set(slug, { name: value, slug, count: 1, lastModifiedAt: entry.lastModifiedAt });
       }
     }
   }
@@ -40,21 +63,17 @@ export function getAllTaxonomyTerms(getValues: (post: DatedPost) => string[]): T
   return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// Posts whose `getValues(post)` contains a value matching the given slug, newest-first.
-export function getPostsByTaxonomyTerm(
-  getValues: (post: DatedPost) => string[],
-  slug: string
-): DatedPost[] {
-  return getSortedPosts().filter((post) => getValues(post).some((value) => slugify(value) === slug));
+// Entries whose `getValues(entry)` contains a value matching the given slug, newest-first.
+export function getEntriesByTaxonomyTerm(getValues: TaxonomyValues, slug: string): TaxonomyEntry[] {
+  return getSortedTaxonomyEntries().filter((entry) =>
+    getValues(entry).some((value) => slugify(value) === slug)
+  );
 }
 
-// Display name for a slug within `getValues`, or null when no post uses it (→ 404).
-export function getTaxonomyTermBySlug(
-  getValues: (post: (typeof posts)[number]) => string[],
-  slug: string
-): string | null {
-  for (const post of posts) {
-    const match = getValues(post).find((value) => slugify(value) === slug);
+// Display name for a slug within `getValues`, or null when nothing uses it (→ 404); skips git so metadata stays cheap.
+export function getTaxonomyTermBySlug(getValues: TaxonomyValues, slug: string): string | null {
+  for (const entry of [...posts, ...snippets, ...tutorials]) {
+    const match = getValues(entry).find((value) => slugify(value) === slug);
     if (match) return match;
   }
   return null;

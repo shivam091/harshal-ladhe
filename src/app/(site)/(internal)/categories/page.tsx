@@ -2,7 +2,8 @@ import type { JSX } from "react";
 import type {Metadata } from "next";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import CategoryAccordion from "@/app/(site)/(internal)/categories/CategoryAccordion";
-import { getAllCategories, getPostsByCategory } from "@/lib/categories";
+import { getAllCategories, getEntriesByCategory } from "@/lib/categories";
+import { getTaxonomyEntryUrl } from "@/utils/taxonomy-entries";
 import type { CategoryAccordionItem } from "@/app/(site)/(internal)/categories/CategoryAccordion/CategoryAccordion";
 import { CategoriesSection } from "@/app/(site)/(internal)/categories/categories.styles";
 
@@ -29,10 +30,12 @@ export default function CategoriesPage(): JSX.Element {
     category,
     slug,
     count,
-    posts: getPostsByCategory(slug).map((post) => ({
-      slug: post.slug,
-      title: post.title,
-      publishedAt: post.publishedAt
+    entries: getEntriesByCategory(slug).map((entry) => ({
+      type: entry.type,
+      slug: entry.slug,
+      title: entry.title,
+      pathname: getTaxonomyEntryUrl(entry),
+      publishedAt: entry.publishedAt
     }))
   }));
 
@@ -40,7 +43,7 @@ export default function CategoriesPage(): JSX.Element {
     <>
       <CategoriesSection aria-labelledby="categories-list-title">
         <VisuallyHidden as="h2" id="categories-list-title">
-          Browse posts by category
+          Browse posts, tutorials, and snippets by category
         </VisuallyHidden>
 
         <p>{metadata.description as string}</p>

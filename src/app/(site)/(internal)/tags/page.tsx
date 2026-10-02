@@ -11,22 +11,22 @@ import {
 
 export const metadata: Metadata = {
   title: "Tags",
-  description: "Discover posts by tags for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily.",
+  description: "Discover posts, tutorials, and snippets by tag for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily.",
   alternates: { canonical: "/tags" },
   openGraph: {
     title: "Tags",
-    description: "Discover posts by tags for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily.",
+    description: "Discover posts, tutorials, and snippets by tag for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily.",
     url: "/tags",
     type: "website"
   },
   twitter: {
     card: "summary",
     title: "Tags",
-    description: "Discover posts by tags for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily."
+    description: "Discover posts, tutorials, and snippets by tag for quick topic navigation. From front-end tricks to backend techniques, filter learning resources easily."
   }
 };
 
-// Post counts show at a glance which topics have the most writing.
+// Entry counts show at a glance which topics have the most writing.
 export default function TagsPage(): JSX.Element {
   const tags = getAllTags();
 
@@ -34,7 +34,7 @@ export default function TagsPage(): JSX.Element {
     <>
       <TagsSection aria-labelledby="tags-list-title">
         <VisuallyHidden as="h2" id="tags-list-title">
-          Browse posts by tags
+          Browse posts, tutorials, and snippets by tags
         </VisuallyHidden>
 
         <p>{metadata.description as string}</p>
@@ -46,7 +46,7 @@ export default function TagsPage(): JSX.Element {
                 href={`/tag/${slug}`}
                 className="tag-link"
                 rel="tag"
-                aria-label={`Tag: ${tag} (${count} post${count === 1 ? "" : "s"})`}
+                aria-label={`Tag: ${tag} (${count} entr${count === 1 ? "y" : "ies"})`}
               >
                 #{tag}
               </Link>
