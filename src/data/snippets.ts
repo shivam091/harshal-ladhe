@@ -102,6 +102,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-10-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-absorb",
+    title: "`git absorb`: Automatic Fixup Commits for Review Feedback",
+    excerpt: "Fold staged fixes into the right earlier commits automatically.",
+    description: "Use git absorb to turn staged review fixes into fixup! commits aimed at the exact commits they belong to, then autosquash them in one step — with the flags and config that make it part of an everyday Git workflow.",
+    category: ["Git"],
+    tags: ["git", "git-commands", "git-absorb", "fixup", "autosquash", "rebase", "code-review", "cli"],
+    link: {
+      label: "Read the full post: Advanced Git: Rebasing, Internals, and Real-World Workflows",
+      href: "/post/git/advanced-git-techniques-and-workflows"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/git-absorb/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Terminal-styled illustration of git absorb routing staged changes into fixup commits that target earlier commits on a Git branch."
+    },
+    changelog: [
+      { date: "2026-10-02", change: "Initial publication." }
+    ]
   }
 ];
 

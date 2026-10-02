@@ -1,0 +1,118 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("git-absorb");
+
+## Introduction
+
+You've got a tidy branch of five commits, then review feedback lands: a typo in commit two, a missing null check in commit four, a renamed variable that touches both. The manual fix is tedious — work out which commit each hunk belongs to, run `git commit --fixup=<sha>` for each one, then `git rebase -i --autosquash`.
+
+[`git absorb`](https://github.com/tummychow/git-absorb) automates the boring part. Stage your fixes, run one command, and it works out which commit last touched each changed line, creates a `fixup!` commit aimed at that commit, and can optionally autosquash them all in.
+
+<RainbowDivider />
+
+## Installation
+
+It's a single static binary, so any of these work:
+
+<CodeBlock language="bash">
+{`
+  # Package managers
+  brew install git-absorb          # macOS / Linuxbrew
+  sudo apt install git-absorb      # Recent Debian / Ubuntu releases
+  cargo install git-absorb         # Anywhere with a Rust toolchain
+
+  # Or drop the release binary on your PATH — Git picks up any git-<name> executable
+  install -m 755 git-absorb ~/.local/bin/
+
+  git absorb --version
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Workflow
+
+<CodeBlock language="bash">
+{`
+  # 1. Make your fixes anywhere in the working tree, then stage them
+  git add -p
+
+  # 2. Preview which commits each hunk would be absorbed into
+  git absorb --dry-run
+
+  # 3. Create the fixup! commits and squash them in, in one go
+  git absorb --and-rebase
+`}
+</CodeBlock>
+
+Prefer to review before squashing? Leave off `--and-rebase`, inspect the new `fixup!` commits with `git log`, then fold them in yourself:
+
+<CodeBlock language="bash">
+{`
+  git absorb
+  git log --oneline
+  git rebase -i --autosquash main
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. Reads the **staged** changes only — anything unstaged is left alone.
+2. For each hunk, walks back through recent commits on the branch to find the one that last touched those lines.
+3. Checks that the hunk **commutes** with every commit in between — if moving it earlier would change another commit's diff, it stays put rather than guessing.
+4. Writes a `fixup! <original subject>` commit per target, which `git rebase --autosquash` already knows how to fold in.
+5. Anything it can't confidently place stays staged, so you can commit it normally.
+
+<RainbowDivider />
+
+## Useful Flags
+
+<CodeBlock language="bash">
+{`
+  git absorb -n                   # Dry run: show what would happen, change nothing
+  git absorb -r                   # --and-rebase: autosquash straight away
+  git absorb -b main              # Only consider commits after main
+  git absorb --no-limit           # Search the whole branch history
+  git absorb -F                   # One fixup per target commit, not one per hunk
+  git absorb -s                   # squash! commits, so you can edit messages while rebasing
+  git absorb -w                   # Match against whole files, not just touched lines
+  git absorb --force-author       # Also target commits authored by someone else
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Handy Config
+
+<CodeBlock language="bash">
+{`
+  # Raise the default stack limit (10 commits) for longer branches
+  git config --global absorb.maxStack 50
+
+  # Always fold everything into one fixup per target commit
+  git config --global absorb.oneFixupPerCommit true
+
+  # Make plain 'git rebase -i' autosquash, so fixup! commits are always pre-arranged
+  git config --global rebase.autoSquash true
+
+  # Shell completions (bash shown; zsh, fish, and others are supported)
+  git absorb --gen-completions bash > ~/.local/share/bash-completion/completions/git-absorb
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Undo is one command.** `git absorb --and-rebase` is just a rebase, so `git reset --hard ORIG_HEAD` (or `git reflog`) takes you straight back.
+- **Only your commits by default.** It won't fix up a teammate's commit unless you pass `--force-author`.
+- **Stage selectively.** `git add -p` lets you hand it just the review fixes, leaving genuinely new work for a fresh commit.
+- **Dates move.** Autosquashing rewrites commits, which bumps their committer dates — github.com will show them as committed *now*. Run [`git fix-dates`](/snippet/git-fix-dates) afterwards to restore them before you force-push.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`git absorb` turns "apply review feedback to the right commits" from a manual hunt through `git log` into stage, absorb, done — keeping every commit on your branch clean and self-contained without the busywork.
