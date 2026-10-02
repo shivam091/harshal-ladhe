@@ -190,6 +190,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-10-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-config-defaults",
+    title: "Sensible Git Config Defaults for Modern Workflows",
+    excerpt: "Modern ~/.gitconfig defaults for pulls, pushes, rebases, and diffs.",
+    description: "A ready-to-paste ~/.gitconfig of modern Git defaults — rebasing pulls, automatic upstreams, self-pruning fetches, autosquash and autostash rebases, rerere, zdiff3 conflict markers, histogram diffs, and friendlier output — with what each setting changes.",
+    category: ["Git"],
+    tags: ["git", "gitconfig", "git-config", "rerere", "rebase", "zdiff3", "productivity", "cli"],
+    link: {
+      label: "Read the full post: Git Basics: A Beginner's Guide to Version Control",
+      href: "/post/git/git-basics-for-beginners"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/git-config-defaults/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Terminal-styled illustration of a ~/.gitconfig file with modern Git defaults for pulling, pushing, rebasing, conflicts, and diffs."
+    },
+    changelog: [
+      { date: "2026-10-02", change: "Initial publication." }
+    ]
   }
 ];
 

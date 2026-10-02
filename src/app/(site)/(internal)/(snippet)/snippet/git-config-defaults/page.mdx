@@ -1,0 +1,131 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("git-config-defaults");
+
+## Introduction
+
+Many of Git's defaults exist for backwards compatibility rather than because they're the best behaviour today. Pulls that create surprise merge commits, `git push` failing on every new branch, stale remote branches piling up, and conflict markers that hide what the original code looked like — all of these are one config line away from fixed.
+
+This snippet is a `~/.gitconfig` of sensible modern defaults, with a short explanation of what each setting changes.
+
+<RainbowDivider />
+
+## The Config
+
+<CodeBlock language="ini">
+{`
+  [init]
+    defaultBranch = main
+
+  [pull]
+    rebase = true
+
+  [push]
+    default = current
+    autoSetupRemote = true
+
+  [fetch]
+    prune = true
+    pruneTags = true
+
+  [rebase]
+    autoSquash = true
+    autoStash = true
+    updateRefs = true
+
+  [rerere]
+    enabled = true
+    autoUpdate = true
+
+  [merge]
+    conflictStyle = zdiff3
+
+  [diff]
+    algorithm = histogram
+    colorMoved = plain
+    mnemonicPrefix = true
+
+  [commit]
+    verbose = true
+
+  [branch]
+    sort = -committerdate
+
+  [tag]
+    sort = version:refname
+
+  [column]
+    ui = auto
+
+  [help]
+    autocorrect = prompt
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## What Each Setting Does
+
+**Branches, pulling, and pushing**
+
+- `init.defaultBranch = main` — new repositories start on `main` instead of `master`.
+- `pull.rebase = true` — `git pull` rebases your local commits on top of the remote instead of creating a merge commit every time.
+- `push.default = current` — `git push` pushes the current branch to a branch of the same name.
+- `push.autoSetupRemote = true` — the first push of a new branch sets its upstream automatically, so you never need `-u` again.
+- `fetch.prune` / `fetch.pruneTags` — remote branches and tags deleted on the server disappear locally on the next fetch.
+
+**Rebasing and conflicts**
+
+- `rebase.autoSquash = true` — `fixup!` and `squash!` commits are pre-arranged in every interactive rebase.
+- `rebase.autoStash = true` — uncommitted changes are stashed before a rebase and restored afterwards.
+- `rebase.updateRefs = true` — when you rebase a stack of branches built on each other, every branch in the stack moves along with it.
+- `rerere.enabled` / `rerere.autoUpdate` — Git **re**members how you **re**solved each conflict and **re**plays that resolution if the same conflict comes up again.
+- `merge.conflictStyle = zdiff3` — conflict markers also show the *original* code, between `|||||||` and `=======`, so you can see what each side actually changed.
+
+**Diffs and commits**
+
+- `diff.algorithm = histogram` — produces cleaner, more readable diffs than the default Myers algorithm, especially for moved or repeated lines.
+- `diff.colorMoved = plain` — lines that were moved, not changed, are coloured differently from real additions and deletions.
+- `diff.mnemonicPrefix = true` — diffs label sides as `i/` (index), `w/` (working tree), and `c/` (commit) instead of a generic `a/` and `b/`.
+- `commit.verbose = true` — the full diff appears in the commit message editor, so you can review what you're committing as you describe it.
+
+**Output**
+
+- `branch.sort = -committerdate` — `git branch` lists the most recently used branches first.
+- `tag.sort = version:refname` — tags sort as versions, so `v1.10` comes after `v1.9`.
+- `column.ui = auto` — long lists like `git branch` and `git tag` wrap into columns.
+- `help.autocorrect = prompt` — a typo like `git stauts` offers to run `git status` instead of just failing.
+
+<RainbowDivider />
+
+## Applying It Without Editing the File
+
+Every setting can also be written with `git config --global`:
+
+<CodeBlock language="bash">
+{`
+  git config --global pull.rebase true
+  git config --global push.autoSetupRemote true
+  git config --global fetch.prune true
+  git config --global rerere.enabled true
+  git config --global merge.conflictStyle zdiff3
+
+  # Check where a value comes from (system, global, or repository config)
+  git config --show-origin --get pull.rebase
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Check your version first.** Run `git --version`: `merge.conflictStyle = zdiff3` needs Git 2.35+ (use `diff3` on older versions), `push.autoSetupRemote` needs 2.37+, and `rebase.updateRefs` needs 2.38+. Older versions simply ignore settings they don't recognise.
+- **Repository config wins.** A setting in a repo's `.git/config` overrides your global one, which is useful for projects with different conventions.
+- **Prefer `pull.ff = only` if you never want a pull to rewrite anything** — it refuses to pull when histories have diverged, leaving the decision to you.
+- **Aliases next.** Combine this with a set of [Git aliases](/snippet/git-aliases) for the commands you type most.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A dozen lines of config turn Git's conservative defaults into a smoother daily workflow — cleaner pulls, automatic upstreams, self-pruning remotes, readable conflicts, and diffs that show what really changed.
