@@ -1,0 +1,52 @@
+.playground code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.item {
+  padding-block: 0.625rem;
+  padding-inline: 0.875rem;
+  font-size: 0.875rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  border-inline-start: 0.1875rem solid var(--pg-primary);
+}
+
+/*
+  The whole feature: each item's own position among its siblings, read directly inside calc().
+  The plain 0ms line first is the fallback: browsers without sibling-index() drop the declaration
+  after it as invalid, so every item simply animates at once.
+*/
+.list.run .item {
+  animation: fade-in 420ms ease both;
+  animation-delay: 0ms;
+  animation-delay: calc((sibling-index() - 1) * 80ms);
+}
+
+/* Spreads the same stagger across a fixed 600ms window, however many items there are. */
+.list.run[data-mode="total"] .item {
+  animation-delay: 0ms;
+  animation-delay: calc((sibling-index() - 1) / sibling-count() * 600ms);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    translate: 0 0.5rem;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
