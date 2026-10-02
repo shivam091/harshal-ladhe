@@ -256,6 +256,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-10-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-multiple-identities",
+    title: "Separate Work and Personal Git Identities with `includeIf`",
+    excerpt: "Automatically switch Git email and SSH keys per folder.",
+    description: "Use Git's includeIf to give every repository the right name, email, SSH key, and signing key automatically — based on its folder with gitdir, or its remote URL with hasconfig — so work and personal commits never get mixed up.",
+    category: ["Git"],
+    tags: ["git", "gitconfig", "includeIf", "ssh", "commit-signing", "git-config", "cli"],
+    link: {
+      label: "Read the full post: Git Basics: A Beginner's Guide to Version Control",
+      href: "/post/git/git-basics-for-beginners"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/git-multiple-identities/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Terminal-styled illustration of Git switching between a work and a personal identity, with separate emails and SSH keys chosen by folder."
+    },
+    changelog: [
+      { date: "2026-10-02", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,101 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("git-multiple-identities");
+
+## Introduction
+
+If you use the same laptop for work and personal projects, you've probably pushed a commit to your employer's repository signed with your personal email — or the other way round. Setting `user.email` by hand in every new clone works until the day you forget.
+
+Git's `includeIf` solves this permanently. It loads an extra config file only when a condition matches, so every repository under `~/work/` automatically gets your work email, SSH key, and signing key, while everything else keeps your personal defaults.
+
+<RainbowDivider />
+
+## The Global Config
+
+Your main `~/.gitconfig` holds the personal defaults, then conditionally pulls in the work overrides:
+
+<CodeBlock language="ini">
+{`
+  [user]
+    name = Your Name
+    email = you@personal.dev
+
+  # Any repository inside ~/work/ (the trailing slash matters)
+  [includeIf "gitdir:~/work/"]
+    path = ~/.gitconfig-work
+
+  # Any repository with a remote in your employer's GitHub organisation (Git 2.36+)
+  [includeIf "hasconfig:remote.*.url:git@github.com:acme/**"]
+    path = ~/.gitconfig-work
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Work Overrides
+
+`~/.gitconfig-work` contains only what differs. Anything it doesn't set falls through to the global config:
+
+<CodeBlock language="ini">
+{`
+  [user]
+    email = you@acme.com
+    signingKey = ~/.ssh/id_ed25519_work.pub
+
+  [core]
+    # Use the work SSH key, and only that key, for every fetch and push
+    sshCommand = ssh -i ~/.ssh/id_ed25519_work -o IdentitiesOnly=yes
+
+  [gpg]
+    format = ssh
+
+  [commit]
+    gpgSign = true
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Checking It Works
+
+<CodeBlock language="bash">
+{`
+  cd ~/work/some-repo
+  git config user.email                  # you@acme.com
+  git config --show-origin user.email    # shows which file the value came from
+
+  cd ~/projects/blog
+  git config user.email                  # you@personal.dev
+
+  # Confirm which GitHub account the SSH key authenticates as
+  ssh -i ~/.ssh/id_ed25519_work -o IdentitiesOnly=yes -T git@github.com
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Conditions You Can Use
+
+- **`gitdir:<path>`** — matches when the repository's `.git` directory is under `<path>`. A trailing `/` means "anything inside", `~` expands to your home directory, and `**` matches nested folders.
+- **`gitdir/i:<path>`** — the same, but case-insensitive. Useful on macOS and Windows, where `~/Work` and `~/work` are the same folder.
+- **`onbranch:<pattern>`** — matches when the current branch matches, for example `onbranch:release/**`.
+- **`hasconfig:remote.*.url:<pattern>`** — matches on any remote's URL, so a work repository is recognised even if you clone it outside `~/work/`. Needs Git 2.36 or later; older versions silently ignore it.
+
+<Warning title="Includes must come after the defaults">
+  Git applies config top to bottom, and the last value wins. Put each `includeIf` **below** the `[user]` section it overrides — if it comes first, your personal email will overwrite the work one.
+</Warning>
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Clones pick it up too.** A brand-new `git clone` into `~/work/` already uses the work SSH key, because Git evaluates `gitdir` against the repository it's creating.
+- **Remove manual overrides.** A `user.email` set inside a repository's own `.git/config` beats the global one. Run `git config --local --unset user.email` in old clones that have one.
+- **SSH host aliases are the alternative.** An `~/.ssh/config` entry like `Host github-work` with its own `IdentityFile` also works, but you have to rewrite every remote URL to use it. `core.sshCommand` needs no URL changes.
+- **Combine it with your other defaults.** It sits happily alongside [sensible config defaults](/snippet/git-config-defaults) and [aliases](/snippet/git-aliases) in the same `~/.gitconfig`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Two small config files and an `includeIf` give every repository the right name, email, SSH key, and signing key automatically, based on where it lives or where it's hosted — no more commits pushed under the wrong identity.
