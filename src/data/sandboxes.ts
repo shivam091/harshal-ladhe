@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "sibling-index-count-functions",
+    title: "Staggered Animation with sibling-index()",
+    description: "A list whose items fade in one after another, with every delay calculated in CSS by sibling-index() — switch between a fixed 80ms step and a fixed 600ms total via sibling-count(), add or remove items to see the stagger recalculate live, and check whether your browser supports the functions or is using the all-at-once fallback.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "modern-css-reset",
     title: "Modern CSS Reset — Before/After",
     description: "Toggle a modern CSS reset on a sample page with a long heading, a long URL, a list, an oversized graphic, and a form field to see exactly what each rule changes against raw browser defaults.",
