@@ -251,6 +251,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-30", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "sibling-index-count-functions",
+    title: "CSS-Only Staggered Animations with `sibling-index()` and `sibling-count()`",
+    excerpt: "Stagger animations from each element's own position, without JavaScript.",
+    description: "sibling-index() and sibling-count() give an element its own 1-based position and its sibling total directly inside calc() — replacing the JavaScript loop that sets a --i custom property, with fixed-step and fixed-total staggers, index-driven colours and rotations, fallbacks, and reduced-motion handling.",
+    category: ["CSS"],
+    tags: ["css", "sibling-index", "sibling-count", "tree-counting-functions", "staggered-animation", "animation-delay", "css-animation", "css-functions", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/sibling-index-count-functions/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS-only staggered animation concept showing a list of elements with progressively delayed motion, illustrating sibling-index() and sibling-count() for position-based animation timing without JavaScript."
+    },
+    changelog: [
+      { date: "2026-10-02", change: "Initial publication." }
+    ]
   }
 ];
 
