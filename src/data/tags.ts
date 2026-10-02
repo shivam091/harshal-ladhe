@@ -831,4 +831,20 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Front-End Best Practices",
     description: "Established conventions and sensible defaults for writing robust, accessible, and maintainable front-end code."
   },
+  "sibling-index": {
+    title: "The CSS `sibling-index()` Function",
+    description: "Using `sibling-index()` to read an element's own position among its siblings inside `calc()`, for staggered delays and index-driven styles without JavaScript."
+  },
+  "sibling-count": {
+    title: "The CSS `sibling-count()` Function",
+    description: "Using `sibling-count()` to read how many siblings an element has, for staggers, colours, and sizes that adapt to the length of a list."
+  },
+  "tree-counting-functions": {
+    title: "CSS Tree-Counting Functions",
+    description: "The `sibling-index()` and `sibling-count()` functions, which expose an element's position and sibling total to CSS calculations."
+  },
+  "staggered-animation": {
+    title: "Staggered Animations in CSS",
+    description: "Offsetting the start of each element's animation so a group ripples in one after another, from hand-written delays to `sibling-index()`."
+  },
 };
