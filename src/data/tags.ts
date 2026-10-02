@@ -583,6 +583,30 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "UI Animation Design and Implementation",
     description: "Animating interface elements to communicate state, guide attention, and improve perceived responsiveness."
   },
+  "z-index": {
+    title: "Understanding CSS z-index",
+    description: "How the CSS `z-index` property layers overlapping elements, why it sometimes has no effect, and how to manage it at scale."
+  },
+  "stacking-context": {
+    title: "CSS Stacking Contexts Explained",
+    description: "CSS stacking contexts — what creates them, how they group elements when painting, and how they cause and solve layering bugs."
+  },
+  "isolation": {
+    title: "The CSS `isolation` Property",
+    description: "Using `isolation: isolate` to create stacking contexts without side effects, contain `z-index`, and keep `mix-blend-mode` inside a group."
+  },
+  "positioning": {
+    title: "CSS Positioning Techniques",
+    description: "How `position: relative`, `absolute`, `fixed`, and `sticky` work, and how positioned elements interact with layout and layering."
+  },
+  "mix-blend-mode": {
+    title: "Blending with `mix-blend-mode`",
+    description: "Techniques for blending elements with what's beneath them using `mix-blend-mode`, and for keeping blends contained."
+  },
+  "debugging": {
+    title: "Debugging Front-End Code",
+    description: "Practical, step-by-step approaches and DevTools techniques for finding and fixing front-end bugs."
+  },
   "objectfreeze": {
     title: "Using `Object.freeze()` in JavaScript",
     description: "How `Object.freeze()` locks an object's properties, where its shallow behaviour falls short, and how to freeze nested structures."

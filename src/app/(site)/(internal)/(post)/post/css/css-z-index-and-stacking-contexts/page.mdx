@@ -1,0 +1,769 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-z-index-and-stacking-contexts");
+
+You add `z-index: 10` to a dropdown. It stays hidden. You try `100`, then `999`, then `9999`. Still hidden. Somewhere
+in the codebase, an element with a modest `z-index: 2` keeps painting on top of it, and no number seems big enough to
+win.
+
+This is one of the most common frustrations in CSS, and it has nothing to do with the size of the number. `z-index`
+follows a small set of rules that are rarely taught together: **which elements it applies to**, **the order the
+browser paints things in**, and — most importantly — **stacking contexts**, the invisible groups that decide who is
+allowed to compete with whom.
+
+<Quote>
+  `z-index` doesn't decide what's on top of the page. It decides what's on top within a group — and the groups are
+  where the bugs hide.
+</Quote>
+
+In this guide, we'll build that model from the ground up:
+
+- How the browser layers elements **without** any `z-index`
+- What `z-index` does, and why it sometimes does nothing at all
+- **Stacking contexts**: what they are, what creates them, and why `z-index: 9999` loses to `2`
+- How **negative `z-index`** really behaves
+- **`isolation: isolate`** — the cleanest way to create a stacking context on purpose
+- A scalable **`z-index` system** for production code, plus the **top layer**, which skips the whole fight
+- A repeatable way to **debug** any layering bug
+
+<Info title="Who this is for">
+  The first sections assume only basic CSS. If you already know the basics, skip ahead to
+  [Stacking Contexts](#stacking-contexts-the-key-to-everything) — that's where nearly every real-world bug lives.
+</Info>
+
+<RainbowDivider />
+
+## The Third Dimension of a Web Page
+
+A web page looks flat, but the browser treats it as a stack of layers along a **z-axis** that points out of the
+screen, towards you. When two elements overlap, the one painted **later** ends up **closer to you**, covering the one
+painted earlier.
+
+So every layering question is really a question about **painting order**: _in what order does the browser paint
+these elements?_ `z-index` is one input to that order — but not the only one, and not the first one.
+
+### Painting Order Without `z-index`
+
+Even with no `z-index` anywhere, the browser follows a fixed order. Two rules cover most everyday cases:
+
+1. **Later in the source paints on top.** Among similar elements, the one that comes later in the HTML covers the
+   one that comes earlier.
+2. **Positioned elements paint above non-positioned ones.** An element with `position` set to `relative`,
+   `absolute`, `fixed`, or `sticky` paints above ordinary in-flow content, no matter where it sits in the source.
+
+<CodeBlock language="html">
+{`
+  <div class="box one">One</div>
+  <div class="box two">Two</div>
+  <div class="box three">Three</div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .box {
+    margin-block-end: -2rem; /* pull each box up so they overlap */
+  }
+
+  .one,
+  .two {
+    position: relative;
+  }
+`}
+</CodeBlock>
+
+Boxes one and two are both positioned, so they follow source order: two covers one. Box three comes last in the
+source, yet it paints **below both** of them, because it isn't positioned.
+
+### The Full Painting Order
+
+Those two rules are shortcuts for the complete algorithm. Within a single group (we'll name these groups shortly),
+the browser paints in **seven layers**, from the back to the front:
+
+**Visual Illustration**
+
+<PaintingOrderDiagram />
+
+1. **The background and borders** of the element that owns the group
+2. **Positioned descendants with a negative `z-index`**, lowest value first
+3. **Block-level boxes** in normal flow (not positioned)
+4. **Floats** (not positioned)
+5. **Inline content** — text, inline images, and `inline-block` boxes
+6. **Positioned descendants with `z-index: auto` or `0`**, in source order — along with stacking contexts created by
+   properties such as `opacity` and `transform`
+7. **Positioned descendants with a positive `z-index`**, lowest value first
+
+Notice where `z-index` fits in: it only moves elements into layer 2 (negative values) or layer 7 (positive values).
+Everything else is decided by the element's type and its position in the source.
+
+The layers also explain a quirk you may have seen: when two ordinary blocks overlap, the **text** of the first block
+can show through the **background** of the second. Both backgrounds are painted in layer 3, before any text is painted
+in layer 5.
+
+<Success title="Mental model">
+  `z-index` doesn't place an element at an absolute height above the page. It moves the element into the bottom or
+  top band of its group, then sorts it within that band.
+</Success>
+
+<RainbowDivider />
+
+## `z-index` Basics
+
+### The Syntax
+
+<CodeBlock language="css">
+{`
+  .element {
+    position: relative; /* required — see below */
+    z-index: 1;
+  }
+`}
+</CodeBlock>
+
+`z-index` accepts two kinds of values:
+
+- **`auto`** (the default) — the element paints on its group's base level, and it does **not** start a new group.
+- **An integer** — positive, negative, or zero. Higher values paint closer to you. Units and decimals aren't allowed,
+  so `z-index: 1.5` and `z-index: 10px` are invalid and ignored.
+
+When two elements have the **same** `z-index`, the tie is broken by source order: the later element paints on top.
+
+### `z-index` Needs a Positioned Element
+
+This is the first rule that trips people up: **`z-index` has no effect on an element with `position: static`**, which
+is the default for every element.
+
+<CodeBlock language="css">
+{`
+  /* ❌ Ignored: the element isn't positioned */
+  .badge {
+    z-index: 10;
+  }
+
+  /* ✅ Works */
+  .badge {
+    position: relative;
+    z-index: 10;
+  }
+`}
+</CodeBlock>
+
+`position: relative` is the usual choice when you only need `z-index`, because it keeps the element exactly where it
+was in the layout.
+
+### The Exception: Flex and Grid Items
+
+There's one important exception. **Children of a flex or grid container respect `z-index` even when they're static.**
+
+<CodeBlock language="css">
+{`
+  .toolbar {
+    display: flex;
+  }
+
+  .toolbar .active-tab {
+    z-index: 1; /* works — no position needed */
+  }
+`}
+</CodeBlock>
+
+This is handy for overlapping cards in a grid or tabs in a flex row, but it also explains a confusing situation: the
+same `z-index` rule can "work" in one component and "fail" in another, simply because one parent uses
+`display: flex` and the other doesn't.
+
+### `z-index: auto` vs. `z-index: 0`
+
+On a positioned element, `auto` and `0` paint at the **same level** (layer 6 above). The difference is invisible
+until the element has children with their own `z-index`:
+
+- `z-index: auto` → the element's children compete **with the rest of the page**.
+- `z-index: 0` → the element creates a new group, and its children compete **only with each other**.
+
+That "new group" is a stacking context, and it's the key to everything that follows.
+
+<RainbowDivider />
+
+## Stacking Contexts: The Key to Everything
+
+A **stacking context** is a group of elements that the browser layers together, as one unit. Inside the group,
+`z-index` values sort the children. Outside the group, the **whole group** is placed as if it were a single element,
+using the `z-index` of the element that created it.
+
+The `<html>` element is the **root stacking context**, so every page has at least one. Many properties create more,
+nested inside it.
+
+### The Version-Number Mental Model
+
+The easiest way to reason about nested stacking contexts is to think of them as **version numbers**.
+
+Consider this page:
+
+<CodeBlock language="html">
+{`
+  <header class="site-header">…</header>
+
+  <main class="content">
+    <div class="modal">…</div>
+  </main>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+  }
+`}
+</CodeBlock>
+
+The modal has `z-index: 9999`, yet the sticky header paints on top of it. Here's why:
+
+- `.content` has `position: relative` and `z-index: 1`, so it **creates a stacking context**.
+- The modal lives inside `.content`, so its `9999` only ranks it **inside that context**. Its effective position is
+  `1.9999` — "version 1, patch 9999".
+- At the root, the browser compares only `.site-header` (`10`) and `.content` (`1`). Since `10 > 1`, the header paints
+  over all of `.content` — including the modal.
+
+**Visual Illustration**
+
+<StackingContextTreeDiagram />
+
+No value of the modal's `z-index` can fix this. `1.99999999` is still less than `10`.
+
+<Warning title="A child can never escape its parent's stacking context">
+  An element's `z-index` is only compared with its siblings in the same stacking context. To move it above something
+  outside that context, you have to change the **ancestor that created the context** — or move the element out of it
+  entirely.
+</Warning>
+
+### See It for Yourself
+
+The playground below is real HTML and CSS, so the browser decides what paints on top. It starts in the broken state:
+a tooltip with `z-index: 9999` hidden under Card B, which has `z-index: 2`.
+
+Try these, one at a time:
+
+1. Drag the tooltip's `z-index` as high as you like. Nothing changes — it's trapped inside Card A.
+2. Set Card B's `z-index` to `1` (or Card A's to `3`). Now Card A outranks Card B, and the tooltip comes along with it.
+3. Reset, then set Card A's `z-index` to `auto`. Card A no longer creates a stacking context, so the tooltip competes
+   directly with Card B — and `9999` wins.
+4. Keep Card A at `auto`, and pick a value from **Card A also has**. Each one quietly creates a stacking context, and
+   the tooltip is trapped again.
+
+<ZIndexPlayground />
+
+Step 4 is the one that catches experienced developers: **`opacity`, `transform`, `filter`, and `will-change` all
+create stacking contexts**, even when they don't visibly change anything. A fade-in effect or a "GPU acceleration"
+hack can break a dropdown's layering three components away.
+
+### What Creates a Stacking Context
+
+Here is the full list of the common triggers. Any one of them is enough.
+
+| Trigger                                                        | Example                                  |
+| -------------------------------------------------------------- | ---------------------------------------- |
+| The root element                                               | `<html>`                                 |
+| `position: relative` or `absolute` with a `z-index` other than `auto` | `position: relative; z-index: 0;`  |
+| `position: fixed` or `sticky` (always, with any `z-index`)     | `position: sticky; top: 0;`              |
+| A flex or grid item with a `z-index` other than `auto`         | `z-index: 1;` on a child of `display: flex` |
+| `opacity` less than `1`                                        | `opacity: 0.99;`                         |
+| `transform`, `translate`, `rotate`, `scale` other than `none`  | `transform: translateZ(0);`              |
+| `filter` or `backdrop-filter` other than `none`                | `filter: blur(0);`                       |
+| `perspective`, `clip-path`, or `mask` other than `none`        | `clip-path: inset(0);`                   |
+| `mix-blend-mode` other than `normal`                           | `mix-blend-mode: multiply;`              |
+| `isolation: isolate`                                           | `isolation: isolate;`                    |
+| `will-change` naming any property above                        | `will-change: transform;`                |
+| `contain` including `layout` or `paint` (or `strict`/`content`) | `contain: paint;`                       |
+| `container-type: size` or `inline-size`                        | `container-type: inline-size;`           |
+| Elements in the top layer, and their `::backdrop`              | `<dialog>` opened with `showModal()`     |
+
+Two entries deserve a special mention:
+
+- **`position: sticky` and `position: fixed` always create a stacking context.** A sticky header is therefore a
+  sealed group — any dropdown inside it can only be as high as the header itself.
+- **`container-type`** is new enough that many developers don't expect it here. Turning a card into a
+  [container query](/post/css/responsive-css-grid-layouts) container also seals its layering.
+
+<Info title="Stacking contexts are about painting, not layout">
+  Creating a stacking context doesn't move an element or change its size. It only changes how the element and its
+  descendants are grouped when the browser paints them. That's why these bugs are so hard to spot by looking at the
+  layout.
+</Info>
+
+<RainbowDivider />
+
+## Negative `z-index`
+
+A negative `z-index` places an element in layer 2 of its stacking context: **above the context's own background,
+but below everything else** in it, including normal text.
+
+The surprise is the phrase "its stacking context". If the element's parent doesn't create one, the negative element
+isn't ranked inside the parent at all — it falls back to the nearest ancestor that does, and slides **behind the
+parent's background**.
+
+<CodeBlock language="css">
+{`
+  .parent {
+    position: relative;
+    background: white;
+  }
+
+  .parent .decoration {
+    position: absolute;
+    z-index: -1; /* goes behind .parent's white background! */
+  }
+`}
+</CodeBlock>
+
+Switch the parent's setting below and watch where the red box goes:
+
+<NegativeZIndexDemo />
+
+With `z-index: auto`, the red box hides behind the parent and only peeks out where it extends past the parent's
+edge. Once the parent creates a stacking context — with `z-index: 0` or `isolation: isolate` — `z-index: -1` means
+"the bottom of **this parent's** stack", and the box lands exactly where decorative layers usually belong: above the
+parent's background, below its content.
+
+This pattern is the standard way to build decorative shapes, glows, and pseudo-element backgrounds:
+
+<CodeBlock language="css">
+{`
+  .card {
+    position: relative;
+    isolation: isolate; /* contain the negative layer */
+    background: var(--surface);
+  }
+
+  .card::before {
+    content: "";
+    position: absolute;
+    inset: -0.5rem;
+    z-index: -1;
+    background: linear-gradient(135deg, #ff6a00, #ee0979);
+    filter: blur(1rem);
+  }
+`}
+</CodeBlock>
+
+<Warning title="Opaque ancestors can swallow negative layers">
+  If no ancestor creates a stacking context, a negative `z-index` element is ranked against the root. It then paints
+  below every non-positioned box on the page, so an ancestor with an opaque background — a `<main>` or a wrapper
+  `<div>` — will hide it completely.
+</Warning>
+
+<RainbowDivider />
+
+## `isolation: isolate` — Stacking Contexts on Purpose
+
+In the last two sections, we kept needing to create a stacking context **without** changing anything else about an
+element. Developers have long done this with hacks, each with a side effect:
+
+| Hack                              | Side effect                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| `position: relative; z-index: 0;` | Becomes the containing block for absolutely positioned descendants          |
+| `transform: translateZ(0);`       | Traps `position: fixed` descendants; may promote a GPU layer and blur text  |
+| `opacity: 0.99;`                  | Slightly changes the element's appearance; confusing to future readers      |
+| `will-change: transform;`         | Reserves GPU memory; also traps `position: fixed` descendants               |
+
+`isolation` exists to do this one job cleanly:
+
+<CodeBlock language="css">
+{`
+  .component {
+    isolation: isolate;
+  }
+`}
+</CodeBlock>
+
+It accepts only two values: `auto` (the default) and `isolate`. With `isolate`, the element **creates a stacking
+context and does nothing else**. It doesn't need `position` or `z-index`, it doesn't change the containing block of
+any descendant, it doesn't promote a GPU layer, and it reads as exactly what it is: "this component's layering stays
+inside this component".
+
+It's also safe to use everywhere: Chrome, Firefox, and Safari have supported `isolation` for about a decade, and
+Edge has supported it since its move to Chromium.
+
+### Use Case 1: Self-Contained Components
+
+The most valuable use of `isolation` is making components **layering-safe**. Inside an isolated component, you can
+use small, local `z-index` values without worrying about the rest of the page:
+
+<CodeBlock language="css">
+{`
+  .product-card {
+    display: grid;
+    position: relative;
+    isolation: isolate;
+  }
+
+  .product-card__image   { z-index: 1; }
+  .product-card__overlay { position: absolute; inset: 0; z-index: 2; }
+  .product-card__badge   { position: absolute; top: 0.5rem; right: 0.5rem; z-index: 3; }
+`}
+</CodeBlock>
+
+That badge's `z-index: 3` will never fight a site-wide header or modal, because it's only compared with the image and
+overlay inside the same card. Your layering decisions become **local**, just like scoped styles. (The image is a grid
+item, which is why it doesn't need its own `position`.)
+
+<Success title="A good default">
+  Add `isolation: isolate` to the root of any component that uses `z-index` internally. It costs nothing and turns a
+  global problem into a local one.
+</Success>
+
+### Use Case 2: Containing `mix-blend-mode`
+
+`isolation` was originally designed for blending. An element with `mix-blend-mode` blends with **everything painted
+beneath it in its stacking context** — not just its siblings. If you want a group of elements to blend only with each
+other, isolate the group:
+
+<IsolationBlendDemo />
+
+With `isolation: auto`, each circle blends with the stripes behind the group, so its colours change from stripe to
+stripe. With `isolate`, the circles blend only with each other, and the finished group is laid over the stripes
+normally. The same applies to blended logos, image overlays, and text effects built with `mix-blend-mode`.
+
+### One Detail Worth Knowing
+
+An element that creates a stacking context through `isolation` (or `opacity`, `transform`, and the like) is painted
+in layer 6 — the same level as a positioned element with `z-index: 0`. In rare layouts where an isolated element
+overlaps **following** non-positioned siblings, for example via a negative margin, it will now paint on top of them.
+If that happens, give the sibling `position: relative` so the two are ordered by source order again.
+
+<RainbowDivider />
+
+## Escaping the Fight: The Top Layer
+
+Modern HTML has a separate layer that sits **above the entire document**, regardless of any `z-index` or stacking
+context: the **top layer**.
+
+Elements are placed in the top layer when you:
+
+- Open a `<dialog>` with `showModal()`
+- Show an element with the `popover` attribute
+- Make an element fullscreen with `requestFullscreen()`
+
+<CodeBlock language="html">
+{`
+  <button popovertarget="account-menu">Account</button>
+
+  <div id="account-menu" popover>
+    <a href="/profile">Profile</a>
+    <a href="/sign-out">Sign out</a>
+  </div>
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const dialog = document.querySelector("dialog");
+  dialog.showModal(); // rendered above everything, with a ::backdrop
+`}
+</CodeBlock>
+
+A top-layer element escapes every ancestor's stacking context — and `overflow: hidden` clipping, too. Within the top
+layer, elements stack in the order they were opened, so a popover opened from inside a modal dialog correctly appears
+above it. `z-index` has no effect on this order.
+
+<Success title="Prefer the platform for overlays">
+  For modals, menus, and popovers, the top layer is usually the right answer. It removes the need for a huge
+  `z-index` and for moving markup to the end of `<body>` (a "portal"), and it brings focus management and
+  `Esc`-to-close behaviour along with it.
+</Success>
+
+<RainbowDivider />
+
+## A `z-index` System for Production
+
+On a real project, the worst `z-index` problems aren't the stacking contexts — they're the **numbers**. One developer
+writes `999`, the next writes `9999` to beat it, and a year later nobody knows what `99999` is guarding against.
+
+The fix is the same as for colours and spacing: **a named scale**.
+
+### Global Layers with Custom Properties
+
+<CodeBlock language="css">
+{`
+  :root {
+    --z-below: -1;
+    --z-base: 0;
+    --z-raised: 1;
+    --z-dropdown: 100;
+    --z-sticky: 200;
+    --z-overlay: 300;
+    --z-modal: 400;
+    --z-toast: 500;
+    --z-tooltip: 600;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+  }
+
+  .toast-region {
+    position: fixed;
+    z-index: var(--z-toast);
+  }
+`}
+</CodeBlock>
+
+A few principles make the scale hold up:
+
+- **Leave gaps** (`100`, `200`, …) so a new layer can slot in between two existing ones without renumbering.
+- **Name layers by purpose**, not by value. `var(--z-modal)` tells the next developer why; `400` doesn't.
+- **Keep the global scale short.** It should only cover layers that compete across the whole page: sticky headers,
+  overlays, modals, toasts, and tooltips.
+- **Use local values inside isolated components.** A card's internal `z-index: 1/2/3` never needs a global token.
+
+### The Same Scale in SCSS
+
+If your project uses Sass, a map with a guard function catches typos at build time:
+
+<CodeBlock language="scss">
+{`
+  @use "sass:map";
+
+  $z-layers: (
+    "below": -1,
+    "base": 0,
+    "raised": 1,
+    "dropdown": 100,
+    "sticky": 200,
+    "overlay": 300,
+    "modal": 400,
+    "toast": 500,
+    "tooltip": 600
+  );
+
+  @function z($layer) {
+    @if not map.has-key($z-layers, $layer) {
+      @error "Unknown z-index layer '#{$layer}'.";
+    }
+
+    @return map.get($z-layers, $layer);
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: z("sticky");
+  }
+`}
+</CodeBlock>
+
+<Info title="Global layers only work at the same level">
+  A global scale only helps when the elements being compared share a stacking context — usually the root. A modal with
+  `var(--z-modal)` rendered inside a transformed wrapper is still trapped by that wrapper. That's why the scale works
+  best alongside the top layer (or a portal) for overlays.
+</Info>
+
+<RainbowDivider />
+
+## Debugging `z-index` Problems
+
+When an element refuses to appear on top, guessing bigger numbers wastes time. Work through these steps instead.
+
+### A Step-by-Step Checklist
+
+1. **Is the `z-index` applied at all?** In DevTools, check the element's **Computed** tab. If `position` is `static`
+   and the element isn't a flex or grid item, `z-index` is ignored.
+2. **Find the stacking contexts above it.** Walk up the element's ancestors and note every one that creates a
+   stacking context (see the table above, or use the snippet below).
+3. **Find the shared context.** Do the same for the element that's covering yours. The **closest stacking context the
+   two have in common** is where the real comparison happens.
+4. **Compare the representatives.** In that shared context, compare the two ancestors that represent each side — not
+   the elements themselves. That comparison is the one you need to change.
+5. **Rule out clipping.** If part of the element is cut off rather than covered, it's an `overflow` problem, not a
+   `z-index` problem. No `z-index` can paint outside an ancestor's `overflow: hidden` when that ancestor contains the
+   element's containing block.
+
+Then fix the cause at the right level:
+
+- Raise (or lower) the **ancestor** that represents the element in the shared context.
+- Remove an **accidental** stacking context, such as a leftover `transform` or `will-change`.
+- Move the element **out** of the trapping context — with the top layer or a portal.
+- Add `isolation: isolate` where a component's internal layering is leaking out.
+
+### A DevTools Helper
+
+Browsers don't list stacking contexts directly, so here's a small snippet that does. Paste it into the DevTools
+console, select the problem element in the **Elements** panel, then run `stackingContextsAbove($0)`:
+
+<CodeBlock language="js">
+{`
+  function stackingContextsAbove(element) {
+    const results = [];
+    const paintProps = ["transform", "translate", "rotate", "scale", "filter", "backdropFilter", "perspective", "clipPath", "maskImage"];
+
+    for (let node = element.parentElement; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      const parentDisplay = node.parentElement ? getComputedStyle(node.parentElement).display : "";
+      const isFlexOrGridItem = /flex|grid/.test(parentDisplay);
+      const reasons = [];
+
+      if (node === document.documentElement) reasons.push("root element");
+      if (style.zIndex !== "auto" && (style.position !== "static" || isFlexOrGridItem)) reasons.push(\`z-index: \${style.zIndex}\`);
+      if (style.position === "fixed" || style.position === "sticky") reasons.push(\`position: \${style.position}\`);
+      if (Number(style.opacity) < 1) reasons.push(\`opacity: \${style.opacity}\`);
+      for (const prop of paintProps) {
+        if (style[prop] && style[prop] !== "none") reasons.push(\`\${prop}: \${style[prop]}\`);
+      }
+      if (style.mixBlendMode !== "normal") reasons.push(\`mix-blend-mode: \${style.mixBlendMode}\`);
+      if (style.isolation === "isolate") reasons.push("isolation: isolate");
+      if (/transform|translate|rotate|scale|opacity|filter|perspective|clip-path|mask|isolation/.test(style.willChange)) reasons.push(\`will-change: \${style.willChange}\`);
+      if (/layout|paint|strict|content/.test(style.contain)) reasons.push(\`contain: \${style.contain}\`);
+      if (style.containerType === "size" || style.containerType === "inline-size") reasons.push(\`container-type: \${style.containerType}\`);
+
+      if (reasons.length > 0) results.push({ element: node, reasons: reasons.join(", ") });
+    }
+
+    console.table(results);
+    return results;
+  }
+`}
+</CodeBlock>
+
+The table lists every ancestor that seals your element's layering, nearest first, along with the property
+responsible. Most of the time, the culprit is near the top of the list.
+
+<Info title="Visual tools">
+  Microsoft Edge's **3D View** tool has a dedicated z-index mode that draws stacking contexts as layers you can
+  rotate. Chrome's **Layers** panel is also useful, but note that it shows GPU compositing layers, which don't map
+  one-to-one to stacking contexts.
+</Info>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. `z-index` on a Static Element
+
+`z-index` does nothing on an element with `position: static` unless it's a flex or grid item. Add
+`position: relative`.
+
+### 2. Raising the Child Instead of the Ancestor
+
+If an ancestor creates a stacking context, the child's `z-index` can't help. Find the ancestor that represents it in
+the shared context, and change that — or move the child out.
+
+### 3. An Animation That Leaves a Stacking Context Behind
+
+Entrance animations are a frequent source of accidental stacking contexts:
+
+<CodeBlock language="css">
+{`
+  @keyframes slide-in {
+    from { transform: translateY(1rem); }
+    to   { transform: translateY(0); }
+  }
+
+  .panel {
+    animation: slide-in 300ms ease-out both;
+  }
+`}
+</CodeBlock>
+
+Because of `both` (or `forwards`), the panel keeps `transform: translateY(0)` after the animation ends. That value
+isn't `none`, so the panel **remains a stacking context — and a containing block for fixed descendants — forever**.
+End the animation on `transform: none` instead, or drop the fill mode if the final state matches the element's
+normal styles.
+
+### 4. A `position: fixed` Modal Inside a Transformed Ancestor
+
+A `transform`, `filter`, `perspective`, or `will-change: transform` on an ancestor doesn't just trap the modal's
+`z-index` — it also becomes the containing block for `position: fixed`, so the "full-screen" modal is sized and
+positioned relative to that ancestor. Render modals with `<dialog>` or a portal at the end of `<body>`.
+
+### 5. Dropdowns Inside a Sticky Header
+
+`position: sticky` always creates a stacking context, so a dropdown inside a sticky header can never paint above
+something that outranks the header itself. Give the header a high enough layer (such as `var(--z-sticky)`), or render
+the menu in the top layer with `popover`.
+
+### 6. Treating Clipping as a Layering Problem
+
+If the element is cut off at an ancestor's edge, it's being clipped by `overflow`, not covered. Changing `z-index`
+won't help. Remove the `overflow` constraint, use `overflow: clip` with `overflow-clip-margin` where appropriate, or
+move the element into the top layer.
+
+### 7. The `z-index` Arms Race
+
+Values like `9999`, `99999`, and `2147483647` (the largest value browsers can store) are a sign that the real problem
+hasn't been found. Replace them with a named scale, and fix the stacking context that made them necessary.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why isn't my z-index working?">
+  Usually for one of three reasons: the element isn't positioned (and isn't a flex or grid item), an ancestor creates
+  a stacking context that traps it, or the element is being clipped by an ancestor's `overflow`. Check them in that
+  order.
+</Details>
+
+<Details summary="Does z-index work without position?">
+  Only on flex items and grid items. Everywhere else, the element needs a `position` other than `static`.
+</Details>
+
+<Details summary="What's the difference between z-index: auto and z-index: 0?">
+  Both paint at the same level. But on a positioned element, `z-index: 0` creates a stacking context, so its children
+  are only compared with each other. `z-index: auto` doesn't, so its children compete with the rest of the page.
+</Details>
+
+<Details summary="What is the maximum z-index?">
+  Browsers store `z-index` as a 32-bit integer, so the largest usable value is `2147483647`. If you need anything
+  close to it, the real problem is almost certainly a stacking context.
+</Details>
+
+<Details summary="When should I use isolation: isolate?">
+  Whenever you need a stacking context without side effects: on component roots that use `z-index` internally, on
+  parents of negative `z-index` decorations, and on groups whose `mix-blend-mode` should stay inside the group.
+</Details>
+
+<Details summary="Does isolation: isolate hurt performance?">
+  No meaningful cost. Unlike `will-change` or a 3D `transform`, it doesn't ask the browser to create a separate GPU
+  layer — it only changes how the element's descendants are grouped when painting.
+</Details>
+
+<Details summary="Can a child escape its parent's stacking context?">
+  Not with `z-index`. You can move it out of the parent in the DOM (a portal), or place it in the top layer with
+  `<dialog>`, `popover`, or the Fullscreen API.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+`z-index` is simple once you see the model behind it:
+
+- The browser paints in a **fixed order**; `z-index` only moves positioned elements (and flex or grid items) into the
+  bottom or top band of their group.
+- Those groups are **stacking contexts**. A child's `z-index` is only compared inside its own context, which is why
+  `9999` can lose to `2`.
+- **Many properties create stacking contexts** — including `opacity`, `transform`, `filter`, `will-change`, and
+  `position: sticky` — often by accident.
+- **`isolation: isolate`** creates one on purpose, with no side effects. Use it to make components layering-safe.
+- For overlays, prefer the **top layer**, and keep everything else on a small, **named `z-index` scale**.
+
+The next time an element refuses to come to the front, don't reach for another `9`. Find its stacking context — the
+answer is almost always one level up.
+
+If the playground's `opacity: 0.99` and `transform` triggers felt familiar, the
+**[CSS Transitions Guide](/post/animations/css-transitions-guide)** and
+**[CSS Keyframes Guide](/post/animations/css-keyframes-guide)** cover the animation side of those properties in
+depth.

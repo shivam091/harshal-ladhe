@@ -457,6 +457,19 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-28", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-z-index-and-stacking-contexts",
+    title: "Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs",
+    excerpt: "Layer confidently with z-index, stacking contexts, and isolation.",
+    description: "Learn how CSS z-index really works — painting order, stacking contexts, negative z-index, isolation: isolate, the top layer, a scalable z-index scale, and a step-by-step way to debug layering bugs.",
+    category: ["CSS"],
+    tags: ["css", "z-index", "stacking-context", "isolation", "positioning", "mix-blend-mode", "layout", "debugging", "modern-css", "frontend"],
+    toc: { maxLevel: 3 },
+    signoff: "Getting the playground's readout to agree with the browser in every combination — ties, z-index: 0 versus auto, an opacity of 0.99 that changes almost nothing on screen yet everything underneath — meant re-deriving the painting order more times than I'd like to admit. The negative z-index demo only started telling the truth once the parent stayed position: relative in every state, so the stacking context was the one thing changing. I hope the next time a 9999 refuses to budge, you go looking for its parent instead of adding another 9. Thanks for stacking up with me. 🥞",
+    changelog: [
+      { date: "2026-10-02", change: "Initial publication" }
+    ]
   }
 ];
 
