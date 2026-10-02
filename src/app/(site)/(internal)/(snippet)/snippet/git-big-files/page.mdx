@@ -1,0 +1,214 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("git-big-files");
+
+## Introduction
+
+A repository that takes minutes to clone almost always has the same story: someone once committed a video, a database dump, a `node_modules` tarball, or a build artefact. Deleting the file in a later commit doesn't help — Git keeps every version forever, so it's still downloaded by every clone.
+
+Before you can remove that weight, you need to find it. This snippet is a `git big-files` command that lists the largest file versions anywhere in history, along with the commit that introduced each one and whether it still exists today.
+
+<RainbowDivider />
+
+## The Script
+
+<CodeBlock language="bash">
+{`
+  #!/usr/bin/env bash
+  # List the largest files ever committed, so you can find what's bloating a
+  # repository before rewriting history to remove it.
+  #
+  # Usage: git big-files [-n COUNT] [<rev>...]    (see --help)
+  set -euo pipefail
+
+  usage() {
+    cat <<'EOF'
+  Usage: git big-files [options] [<rev>...]
+
+  List the largest file versions anywhere in history, with the commit that
+  introduced each one and whether it still exists at HEAD.
+
+  Options:
+    -n, --count N   How many files to show (default: 20)
+    -h, --help      Show this help
+
+    <rev>...        Only search these revisions (default: all refs)
+  EOF
+  }
+
+  die() {
+    printf 'git big-files: %s\\n' "$*" >&2
+    exit 1
+  }
+
+  human() {
+    awk -v b="$1" 'BEGIN {
+      split("B KiB MiB GiB TiB", unit, " ")
+      i = 1
+      while (b >= 1024 && i < 5) { b /= 1024; i++ }
+      printf (i == 1 ? "%d %s" : "%.1f %s"), b, unit[i]
+    }'
+  }
+
+  count=20
+  revs=()
+
+  while [ $# -gt 0 ]; do
+    case $1 in
+      -n | --count)
+        [ $# -ge 2 ] || die "$1 needs a number"
+        count=$2
+        shift
+        ;;
+      -h | --help) usage; exit 0 ;;
+      --) shift; revs+=("$@"); break ;;
+      -*) die "unknown option '$1' (see --help)" ;;
+      *) revs+=("$1") ;;
+    esac
+    shift
+  done
+
+  case $count in '' | *[!0-9]* | 0) die "count must be a positive whole number" ;; esac
+  git rev-parse --git-dir >/dev/null 2>&1 || die "not inside a Git repository"
+  [ \${#revs[@]} -gt 0 ] || revs=(--all)
+
+  # Every blob reachable from the given revisions, biggest first. awk (not
+  # head) trims the list, because head exiting early would SIGPIPE \`sort\` and
+  # trip pipefail.
+  results=$(
+    git rev-list --objects "\${revs[@]}" |
+      git cat-file --batch-check=$'%(objecttype)\\t%(objectname)\\t%(objectsize)\\t%(objectsize:disk)\\t%(rest)' |
+      awk -F'\\t' '$1 == "blob"' |
+      sort -t $'\\t' -k3,3nr |
+      awk -v n="$count" 'NR <= n'
+  )
+
+  if [ -z "$results" ]; then
+    echo "No files found."
+    exit 0
+  fi
+
+  printf '%-10s  %-10s  %-9s  %-9s  %s\\n' SIZE ON-DISK COMMIT AT-HEAD PATH
+  while IFS=$'\\t' read -r _ sha size disk path; do
+    # First commit (in history order) whose diff added this exact blob.
+    commit=$(git log "\${revs[@]}" --reverse --format=%h --find-object="$sha" | awk 'NR == 1')
+
+    current=$(git rev-parse --quiet --verify "HEAD:$path" 2>/dev/null || true)
+    if [ "$current" = "$sha" ]; then
+      status=yes
+    elif [ -n "$current" ]; then
+      status=older
+    else
+      status=deleted
+    fi
+
+    printf '%-10s  %-10s  %-9s  %-9s  %s\\n' "$(human "$size")" "$(human "$disk")" "\${commit:--}" "$status" "$path"
+  done <<<"$results"
+
+  echo
+  git count-objects -vH | awk -F': ' '
+    $1 == "size"      { loose = $2 }
+    $1 == "size-pack" { packed = $2 }
+    END { print "Repository size: " packed " packed + " loose " loose" }
+  '
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Installation
+
+<CodeBlock language="bash">
+{`
+  # Save the script above as ~/.local/bin/git-big-files, then:
+  chmod +x ~/.local/bin/git-big-files
+  git big-files --help
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Usage
+
+<CodeBlock language="bash">
+{`
+  git big-files              # Top 20 largest files across every branch and tag
+  git big-files -n 50        # Show more
+  git big-files main         # Only what's reachable from main
+  git big-files v2.0..main   # Only what was added since v2.0
+`}
+</CodeBlock>
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git big-files -n 4
+  SIZE        ON-DISK     COMMIT     AT-HEAD    PATH
+  488.3 KiB   488.5 KiB   9050863    yes        assets/intro video.mp4
+  293.0 KiB   293.1 KiB   0178954    older      assets/intro video.mp4
+  195.3 KiB   195.4 KiB   60408e9    deleted    backups/db.zip
+  3 B         18 B        0178954    yes        README.txt
+
+  Repository size: 978.98 KiB packed + 0 bytes loose
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Reading the Output
+
+- **SIZE** — the file's real, uncompressed size.
+- **ON-DISK** — what it actually costs in the repository after compression and delta packing. Text compresses well; images, video, and archives barely compress at all.
+- **COMMIT** — the first commit that added that exact version of the file.
+- **AT-HEAD**:
+  - `yes` — this exact version is in your current checkout.
+  - `older` — the path still exists, but this is an earlier version.
+  - `deleted` — the path no longer exists at all. These are pure history weight, and the best candidates for removal.
+
+<RainbowDivider />
+
+## How It Works
+
+1. `git rev-list --objects` walks every commit reachable from the given revisions and prints every object it contains, with a path for each file.
+2. `git cat-file --batch-check` looks up each object's type, size, and on-disk size in a single process instead of one Git call per object.
+3. Non-file objects (commits and trees) are filtered out, and the rest are sorted by size, largest first.
+4. For each of the top results, `git log --find-object` finds the commit that introduced that exact file version, and `git rev-parse HEAD:<path>` checks whether it's still current.
+
+<RainbowDivider />
+
+## Removing What You Find
+
+Once you know the culprits, rewrite history to remove them with [`git filter-repo`](https://github.com/newren/git-filter-repo) — the officially recommended replacement for `git filter-branch`:
+
+<CodeBlock language="bash">
+{`
+  # Work on a fresh clone — filter-repo refuses to run on one that isn't
+  git clone --mirror git@github.com:you/repo.git && cd repo.git
+
+  # Remove specific paths from every commit
+  git filter-repo --invert-paths --path backups/db.zip --path 'assets/intro video.mp4'
+
+  # Or remove every file version over a size threshold
+  git filter-repo --strip-blobs-bigger-than 10M
+
+  git push --force --mirror
+`}
+</CodeBlock>
+
+<Warning title="Rewriting history affects everyone">
+  Removing a file from history changes the hash of every commit after it was added. Every collaborator has to re-clone (or hard-reset every branch), and open pull requests need recreating. Coordinate first — and if the file was a leaked secret, **rotate the secret** too, because anyone who already cloned still has it.
+</Warning>
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Prevent it next time.** Track large binaries with [Git LFS](https://git-lfs.com/), and block oversized commits with a [pre-commit guard hook](/snippet/git-pre-commit-guard).
+- **Sizes repeat.** Each edited version of a binary is stored separately, so a 50 MB file changed ten times can cost 500 MB.
+- **Run `git gc` for accurate on-disk numbers** — freshly created, unpacked objects haven't been delta-compressed yet.
+- **The remote may differ.** GitHub keeps its own copy of the history; it only shrinks after you force-push the rewritten branches (and sometimes after GitHub Support runs garbage collection).
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`git big-files` turns "why is this repository so big?" into a short, ranked list of exact files and commits — the evidence you need before deciding whether to rewrite history.
