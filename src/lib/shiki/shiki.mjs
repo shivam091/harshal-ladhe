@@ -27,6 +27,7 @@ export const SUPPORTED_LANGS = [
   "ssh-config",
   "bat",
   "diff",
+  "ini",
 ];
 
 // Lets authors use familiar short fence tags without each needing its own grammar entry.
@@ -44,6 +45,7 @@ export const LANG_ALIASES = {
   ssh:   "ssh-config",
   batch: "bat",
   cmd:   "bat",
+  gitconfig: "ini",
 };
 
 // ─── Grammar loaders ───────────────────────────────────────────────────────
@@ -68,6 +70,7 @@ export const LANG_LOADERS = {
   "ssh-config": () => import("shiki/langs/ssh-config.mjs"),
   bat:          () => import("shiki/langs/bat.mjs"),
   diff:         () => import("shiki/langs/diff.mjs"),
+  ini:          () => import("shiki/langs/ini.mjs"),
 };
 
 // ─── Highlighter singleton ─────────────────────────────────────────────────
