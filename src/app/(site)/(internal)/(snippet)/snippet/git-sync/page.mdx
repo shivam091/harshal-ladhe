@@ -1,0 +1,189 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("git-sync");
+
+## Introduction
+
+Keeping a feature branch current usually takes four or five commands: stash your changes, switch to `main`, pull, switch back, rebase, pop the stash — and hope nothing conflicts along the way. Skip a step and you end up rebasing onto a stale `main`, or pulling into the wrong branch.
+
+This snippet wraps the whole routine in a single `git sync` command. It fetches, fast-forwards your local default branch without checking it out, rebases (or merges) the current branch onto it, and tells you exactly how to undo or push the result.
+
+<RainbowDivider />
+
+## The Script
+
+<CodeBlock language="bash">
+{`
+  #!/usr/bin/env bash
+  # Bring the current branch up to date in one step: fetch, fast-forward the
+  # default branch, then rebase (or merge) the current branch onto it.
+  #
+  # Usage: git sync [-m] [base]    (see --help)
+  set -euo pipefail
+
+  usage() {
+    cat <<'EOF'
+  Usage: git sync [options] [base]
+
+  Fetch the remote, fast-forward the local <base> branch, then rebase the current
+  branch onto it. <base> defaults to the remote's default branch.
+
+  Options:
+    -m, --merge    Merge <base> into the current branch instead of rebasing
+    -h, --help     Show this help
+  EOF
+  }
+
+  die() {
+    printf 'git sync: %s\\n' "$*" >&2
+    exit 1
+  }
+
+  mode=rebase
+  base=
+
+  while [ $# -gt 0 ]; do
+    case $1 in
+      -m | --merge) mode=merge ;;
+      -h | --help) usage; exit 0 ;;
+      -*) die "unknown option '$1' (see --help)" ;;
+      *)
+        [ -z "$base" ] || die "unexpected argument '$1' (see --help)"
+        base=$1
+        ;;
+    esac
+    shift
+  done
+
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a Git work tree"
+  branch=$(git symbolic-ref --quiet --short HEAD) || die "HEAD is detached; check out a branch first"
+
+  git_dir=$(git rev-parse --git-dir)
+  for marker in rebase-merge rebase-apply MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD BISECT_LOG; do
+    [ ! -e "$git_dir/$marker" ] || die "a rebase, merge, cherry-pick, revert or bisect is in progress; finish it first"
+  done
+
+  remote=$(git config --get "branch.$branch.remote" || echo origin)
+  git remote get-url "$remote" >/dev/null 2>&1 || die "no such remote '$remote'"
+  git fetch --prune --quiet "$remote" || die "fetch from '$remote' failed"
+
+  if [ -z "$base" ]; then
+    base=$(git symbolic-ref --quiet --short "refs/remotes/$remote/HEAD" 2>/dev/null || true)
+    base=\${base#"$remote"/}
+    [ -n "$base" ] || base=main
+  fi
+  upstream="refs/remotes/$remote/$base"
+  git rev-parse --quiet --verify "$upstream" >/dev/null || die "no such branch '$remote/$base'"
+
+  # Fast-forward the local base without checking it out. A non-fast-forward
+  # means local commits on base that aren't on the remote — never discard those.
+  if [ "$branch" = "$base" ]; then
+    git merge --ff-only --autostash --quiet "$upstream" ||
+      die "'$base' has diverged from '$remote/$base'; resolve it by hand"
+    echo "'$base' is up to date with '$remote/$base'."
+    exit 0
+  fi
+
+  if git rev-parse --quiet --verify "refs/heads/$base" >/dev/null; then
+    if git worktree list --porcelain | grep -qxF "branch refs/heads/$base"; then
+      # Moving a branch under another worktree would leave its files stale;
+      # rebasing onto the remote-tracking ref below is still correct.
+      echo "note: '$base' is checked out in another worktree; not updating it." >&2
+    elif git merge-base --is-ancestor "refs/heads/$base" "$upstream"; then
+      git update-ref "refs/heads/$base" "$upstream" "$(git rev-parse "refs/heads/$base")"
+    else
+      echo "warning: local '$base' has commits not on '$remote/$base'; leaving it alone." >&2
+    fi
+  fi
+
+  before=$(git rev-parse HEAD)
+  if [ "$mode" = merge ]; then
+    git merge --autostash --no-edit "$remote/$base" ||
+      die "merge stopped on conflicts; fix them and 'git commit', or 'git merge --abort'"
+  else
+    git rebase --autostash "$upstream" ||
+      die "rebase stopped on conflicts; fix them and 'git rebase --continue', or 'git rebase --abort'"
+  fi
+
+  if [ "$(git rev-parse HEAD)" = "$before" ]; then
+    echo "'$branch' is already up to date with '$remote/$base'."
+  else
+    echo "Synced '$branch' onto '$remote/$base'. Undo with: git reset --hard $before"
+    [ "$mode" = rebase ] && git rev-parse --quiet --verify "refs/remotes/$remote/$branch" >/dev/null &&
+      echo "History was rewritten — push with 'git push --force-with-lease' (or 'git fix-dates')."
+  fi
+  exit 0
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Installation
+
+<CodeBlock language="bash">
+{`
+  # Save the script above as ~/.local/bin/git-sync, then:
+  chmod +x ~/.local/bin/git-sync
+  git sync --help
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Usage
+
+<CodeBlock language="bash">
+{`
+  git sync            # Rebase the current branch onto the latest default branch
+  git sync --merge    # Merge it in instead, for shared branches you mustn't rewrite
+  git sync develop    # Sync against a branch other than the default
+`}
+</CodeBlock>
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git sync
+  Created autostash: 783582b
+  Successfully rebased and updated refs/heads/feat/search-index.
+  Applied autostash.
+  Synced 'feat/search-index' onto 'origin/main'. Undo with: git reset --hard 03432c8…
+  History was rewritten — push with 'git push --force-with-lease' (or 'git fix-dates').
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Preflight checks**: on a real branch, and no rebase, merge, or cherry-pick already half-finished.
+2. **Fetches with `--prune`**, so the remote-tracking refs are current and the default branch is read from `origin/HEAD`.
+3. **Fast-forwards the local default branch in place** with `git update-ref`, guarded by its old value — no checkout needed. If your local `main` has commits that aren't on the remote, or is checked out in another worktree, it's left alone with a note instead of being moved.
+4. **Rebases onto the remote-tracking ref** (`origin/main`), not the local branch, so the result is correct even if the local `main` couldn't be updated.
+5. **Autostashes** uncommitted changes around the rebase or merge and puts them back afterwards.
+6. **Stops cleanly on conflicts** with the exact next command to continue or abort, and prints an undo command on success.
+
+<RainbowDivider />
+
+## Rebase or Merge?
+
+- **Rebase (default)** keeps a linear history and is ideal for your own feature branches. It rewrites commits, so a branch that's already pushed needs a force-push — `git sync` reminds you when that's the case.
+- **`--merge`** never rewrites existing commits, so it's the right choice for a branch other people are also committing to.
+
+<Warning title="Rebasing moves committer dates">
+  Every rebased commit gets a fresh committer date, which is the date github.com displays. If you want the original dates to show, run [`git fix-dates`](/snippet/git-fix-dates) after syncing — it restores them and force-pushes safely in one go.
+</Warning>
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Turn on `rerere`.** With `git config --global rerere.enabled true`, Git remembers how you resolved a conflict and replays it the next time the same conflict appears — a big help when you sync often.
+- **Undo means undo.** The printed `git reset --hard <sha>` discards everything since the sync, so commit or stash new work first.
+- **Worktrees are safe.** If the default branch is checked out in another worktree, the script leaves it untouched — so that worktree's files never go stale — and still rebases onto `origin/main` correctly.
+- **Follow up with** [`git prune-branches`](/snippet/git-prune-branches) once your branches start landing.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`git sync` turns "update my branch with the latest `main`" into one command that never discards local commits on the base branch, protects uncommitted work, and always leaves you a clear way to continue, abort, or undo.
