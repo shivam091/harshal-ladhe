@@ -1,0 +1,181 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("git-pre-commit-guard");
+
+## Introduction
+
+Some mistakes are cheap to make and expensive to undo: a leftover `<<<<<<< HEAD` from a merge, a 200 MB video that will bloat every clone forever, or an API key that's compromised the moment it reaches GitHub. Code review catches some of them — after they're already in history.
+
+A **pre-commit hook** catches them earlier. Git runs it just before creating a commit, and a non-zero exit cancels the commit. This snippet is a dependency-free guard hook that checks only what you've staged and explains exactly what it found.
+
+<RainbowDivider />
+
+## The Hook
+
+<CodeBlock language="bash">
+{`
+  #!/usr/bin/env bash
+  # Block commits that contain merge conflict markers, oversized files, or
+  # things that look like secrets. Checks what's staged, not the working tree.
+  #
+  # Install: save as .git/hooks/pre-commit and \`chmod +x\` it.
+  # Bypass once: git commit --no-verify
+  set -euo pipefail
+
+  # Override per repo with: git config hooks.maxFileSize 10m
+  max_bytes=$(git config --type=int --get hooks.maxFileSize || echo 5242880)
+  allow_marker="git-guard: allow"
+  failed=false
+
+  report() {
+    printf '  %s\\n' "$*" >&2
+    failed=true
+  }
+
+  # The very first commit has no HEAD to diff against, so use the empty tree.
+  against=HEAD
+  git rev-parse --quiet --verify HEAD >/dev/null || against=$(git hash-object -t tree /dev/null)
+
+  # --- Whole-file checks: size and credential-looking filenames ---------------
+
+  while IFS= read -r -d '' path; do
+    # Submodules and other non-blob entries have no size to check.
+    size=$(git cat-file -s ":$path" 2>/dev/null) || continue
+    if [ "$size" -gt "$max_bytes" ]; then
+      report "$path: $((size / 1024)) KiB is over the $((max_bytes / 1024)) KiB limit (use Git LFS?)"
+    fi
+
+    case \${path##*/} in
+      .env.example | .env.sample | .env.template) ;;
+      .env | .env.* | *.pem | *.key | *.p12 | *.pfx | *.keystore | id_rsa | id_ecdsa | id_ed25519)
+        report "$path: looks like a credentials file"
+        ;;
+    esac
+  done < <(git diff --cached --name-only -z --diff-filter=ACMR "$against")
+
+  # --- Line checks: only lines this commit adds ------------------------------
+
+  # Patterns live in variables because [[ =~ ]] treats a quoted regex as a literal.
+  re_conflict='^(<<<<<<<|>>>>>>>)( |$)'
+  re_aws='AKIA[0-9A-Z]{16}'
+  re_private_key='-----BEGIN ([A-Z]+ )?PRIVATE KEY-----'
+  re_github='(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}|github_pat_[A-Za-z0-9_]{22,}'
+  re_slack='xox[abposr]-[A-Za-z0-9-]{10,}'
+  re_stripe='sk_live_[0-9A-Za-z]{24,}'
+
+  while IFS=$'\\t' read -r location text; do
+    case $text in *"$allow_marker"*) continue ;; esac
+
+    reason=
+    if [[ $text =~ $re_conflict ]]; then reason="merge conflict marker"
+    elif [[ $text =~ $re_aws ]]; then reason="AWS access key ID"
+    elif [[ $text =~ $re_private_key ]]; then reason="private key"
+    elif [[ $text =~ $re_github ]]; then reason="GitHub token"
+    elif [[ $text =~ $re_slack ]]; then reason="Slack token"
+    elif [[ $text =~ $re_stripe ]]; then reason="Stripe live secret key"
+    fi
+    [ -z "$reason" ] || report "$location: $reason"
+  done < <(
+    # Turn a zero-context diff into "path:line<TAB>added text" records.
+    # Git ends the "+++" header with a tab when the path contains spaces, and
+    # wraps unusual paths in quotes; both are stripped to get the bare path.
+    git -c core.quotePath=false diff --cached -U0 --no-color --no-ext-diff --diff-filter=ACMR "$against" |
+      awk '
+        /^\\+\\+\\+ / {
+          file = substr($0, 5)
+          sub(/\\t$/, "", file)
+          if (file ~ /^".*"$/) file = substr(file, 2, length(file) - 2)
+          sub(/^b\\//, "", file)
+          next
+        }
+        /^@@ /     { split($3, start, ","); line = substr(start[1], 2) + 0; next }
+        /^\\+/      { printf "%s:%d\\t%s\\n", file, line, substr($0, 2); line++ }
+      '
+  )
+
+  if $failed; then
+    cat >&2 <<EOF
+
+  pre-commit: commit blocked by the problems above.
+    Fix them, or add "$allow_marker" to a line that's a false positive.
+    To skip every check for one commit: git commit --no-verify
+  EOF
+    exit 1
+  fi
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Installation
+
+<CodeBlock language="bash">
+{`
+  # For one repository
+  cp pre-commit .git/hooks/pre-commit
+  chmod +x .git/hooks/pre-commit
+
+  # Optional: raise or lower the file size limit for this repository
+  git config hooks.maxFileSize 10m
+`}
+</CodeBlock>
+
+Hooks in `.git/hooks` aren't committed or shared. To share the hook with your team, commit it to a folder in the repository and point Git at it:
+
+<CodeBlock language="bash">
+{`
+  mkdir -p .githooks
+  cp pre-commit .githooks/pre-commit
+  chmod +x .githooks/pre-commit
+  git config core.hooksPath .githooks   # each person runs this once per clone
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## What It Blocks
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git commit -m "Add deploy config"
+    .env: looks like a credentials file
+    assets/demo.mov: 5859 KiB is over the 5120 KiB limit (use Git LFS?)
+    ci.yml:1: GitHub token
+    src/app.ts:42: merge conflict marker
+    deploy/config.py:3: AWS access key ID
+
+  pre-commit: commit blocked by the problems above.
+    Fix them, or add "git-guard: allow" to a line that's a false positive.
+    To skip every check for one commit: git commit --no-verify
+`}
+</CodeBlock>
+
+- **Merge conflict markers** — `<<<<<<<` or `>>>>>>>` at the start of a line. A bare `=======` is allowed on purpose, because it's also a valid Markdown heading underline.
+- **Oversized files** — anything over 5 MiB by default, configurable per repository with `hooks.maxFileSize`.
+- **Credentials files** — `.env`, `.env.local`, `*.pem`, `*.key`, `*.p12`, `id_rsa`, and similar. `.env.example`, `.env.sample`, and `.env.template` are allowed.
+- **Secrets in added lines** — AWS access key IDs, private key headers, GitHub tokens, Slack tokens, and Stripe live secret keys.
+
+<RainbowDivider />
+
+## How It Works
+
+1. Compares the **staging area** against `HEAD` (or against the empty tree for the very first commit), so unstaged edits never cause false alarms.
+2. For every added, copied, modified, or renamed file, it checks the staged size with `git cat-file -s` and the filename against known credential patterns.
+3. It turns `git diff --cached -U0` into `path:line` records for just the lines being **added**, so secrets that were already committed don't block every future commit.
+4. Each added line is matched against a short list of high-confidence secret patterns, and anything marked `git-guard: allow` is skipped.
+5. All problems are reported together, then the hook exits with `1` to cancel the commit.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Hook managers.** If the project already uses Husky, Lefthook, or `pre-commit`, call this script from that tool's pre-commit step instead of replacing it — setting `core.hooksPath` would silently disable their hooks.
+- **Patterns are deliberately narrow.** Each one matches a specific, well-known token format, so false positives stay rare. For broader scanning, add a dedicated tool like [gitleaks](https://github.com/gitleaks/gitleaks) in CI as well.
+- **A hook is a seatbelt, not a vault.** `--no-verify` skips it, and it only runs where it's installed. Turn on GitHub's push protection and secret scanning for a server-side safety net.
+- **If a secret does slip through,** rotate it first, then remove it from history — see [`git big-files`](/snippet/git-big-files) for rewriting with `git filter-repo`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A small pre-commit hook stops conflict markers, oversized files, and leaked keys before they reach history — where undoing them means rotating credentials and rewriting every collaborator's clone.
