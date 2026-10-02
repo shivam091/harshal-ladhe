@@ -12,9 +12,6 @@ export const BaseWrapper = styled.aside`
   border-radius: 0.1875rem 0.375rem 0.375rem 0.1875rem;
   font-size: 1rem;
   background-color: var(--aside-bg);
-  transition:
-    background-color 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    border-color 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
 
   & + & {
     margin-block-start: calc(2rem * -0.5);
@@ -93,5 +90,4 @@ export const LeftEdgeFiller = styled.div`
   background-color: var(--aside-accent);
   border-radius: 0 0 624.9375rem 624.9375rem;
   margin-block-start: -1px;
-  transition: background-color 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
 `;

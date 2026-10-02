@@ -74,12 +74,6 @@ export const CloudMidground = styled.path`
 // Matches the page background so the nearest clouds melt into the content below.
 export const CloudForeground = styled.path`
   fill: var(--color-bg-default);
-  transition: fill 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
-
-  // Snaps with the page on a theme swap so no seam opens against the already-swapped background.
-  html[data-theme-swap] & {
-    transition: none;
-  }
 `;
 
 // Fixed white rather than a theme token so stars stay bright against every sky gradient.

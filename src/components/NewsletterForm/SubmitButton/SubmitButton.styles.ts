@@ -17,9 +17,6 @@ export const SubmitBtn = styled.button`
   font-size: 0.875rem;
   cursor: pointer;
   flex-shrink: 0;
-  transition:
-    color 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    background 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
   overflow: hidden;
   overflow: clip;
   ${amberAccentCss}

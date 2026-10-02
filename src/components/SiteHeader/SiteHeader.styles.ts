@@ -38,9 +38,6 @@ export const Header = styled.header`
 
   background: hsl(from var(--color-bg-sky-from) h s l / var(--glass-opacity));
   backdrop-filter: blur(var(--blur-amount));
-  transition:
-    color 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-bg-sky-from calc(350ms + 500ms) cubic-bezier(0.41, 0.1, 0.13, 1);
   will-change: background, backdrop-filter, inset-block-start;
 
   @supports (animation-timeline: scroll()) {

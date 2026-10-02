@@ -40,9 +40,7 @@ export const AccordionHeader = styled.div`
   background-image: ${opaqueBgCss("var(--color-bg-accent-muted)")};
   cursor: default;
   border-block-end: 0.0625rem solid var(--color-border-transparent);
-  transition:
-    border-block-end-color 300ms cubic-bezier(0.25, 0.1, 0.25, 1),
-    --color-bg-accent-muted 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
+  transition: border-block-end-color 300ms cubic-bezier(0.25, 0.1, 0.25, 1);
 
   ${AccordionItem}[data-expanded] & {
     border-block-end-color: var(--color-border-accent-muted);

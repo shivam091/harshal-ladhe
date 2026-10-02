@@ -76,10 +76,6 @@ export const TimelineWrapper = styled.div`
     border-color: var(--color-border-accent-muted);
     margin-block-end: 1rem;
     ${hoverShadowLiftCss}
-    transition:
-      box-shadow 300ms cubic-bezier(0.25, 0.1, 0.25, 1),
-      border-color 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-      --color-bg-accent-muted 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
 
     @media ${BREAKPOINTS.mobile} {
       .timeline-left {

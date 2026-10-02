@@ -1,5 +1,4 @@
 // Page-level defaults every route inherits, so individual layouts don't repeat them.
-@use "@/styles/abstracts/mixins/transit-properties" as *;
 
 @layer base {
   html {
@@ -27,12 +26,5 @@
     position: relative;
     display: flex;
     flex-direction: column;
-
-    // Suppressed while <html> carries "no-transition" (initial load, before the
-    // anti-FOUC script settles the real theme) so the SSR→resolved-theme
-    // correction never animates; user-triggered theme toggles still do.
-    html:not(.no-transition) & {
-      @include transit-properties((background, color), $duration: 350ms, $easing: cubic-bezier(0.41, 0.1, 0.13, 1));
-    }
   }
 }

@@ -62,10 +62,4 @@ export const CloudShapesBottom = styled.svg`
 // Matches the page background so the clouds melt seamlessly into the content above.
 export const BottomBackgroundClouds = styled.path`
   fill: var(--color-bg-default);
-  transition: fill 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
-
-  // Snaps with the page on a theme swap so no seam opens against the already-swapped background.
-  html[data-theme-swap] & {
-    transition: none;
-  }
 `;

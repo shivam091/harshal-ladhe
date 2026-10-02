@@ -21,10 +21,6 @@ export const gradientTextCss = `
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
-  transition:
-    --color-fg-danger 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-fg-success 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-fg-attention 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
 `;
 
 // Underline shares the text gradient so the role reads as one highlighted phrase.

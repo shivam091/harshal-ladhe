@@ -7,9 +7,6 @@ export const FAQRoot = styled.aside`
   border-radius: 0.375rem;
   padding: 1rem;
   border: 1px solid var(--color-border-muted);
-  transition:
-    background-color 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    border-color 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
 `;
 
 // Slight letter-spacing gives the heading presence without a larger font size.

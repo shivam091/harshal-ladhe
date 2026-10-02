@@ -17,5 +17,4 @@ export const QuoteChar = styled.span`
   font-weight: bold;
   color: var(--aside-accent);
   user-select: none;
-  transition: color 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
 `;

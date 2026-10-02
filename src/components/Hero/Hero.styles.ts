@@ -43,11 +43,6 @@ export const HeroHeading = styled.h1`
   -webkit-text-fill-color: transparent;
   color: transparent;
   animation: hero-bg-slide 3s cubic-bezier(0, 0, 1, 1) infinite;
-  transition:
-    --color-fg-attention 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-fg-success 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-fg-danger 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-fg-accent 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
 
   // Travels the full oversized background so the gradient loops without a visible jump.
   @keyframes hero-bg-slide {

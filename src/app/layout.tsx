@@ -68,9 +68,8 @@ export const metadata: Metadata = {
  * render-blocking stylesheet is held until that stylesheet loads, which let the
  * SSR-default light theme paint first on slow connections.
  *
- * "no-transition" is dropped only after the correction so the theme transition
- * never plays on initial load. "system" is resolved before being written because
- * the CSS only understands concrete themes.
+ * "system" is resolved before being written because the CSS only understands
+ * concrete themes.
  */
 const ANTI_FOUC_SCRIPT = `(function() {
   var root = document.documentElement;
@@ -84,11 +83,6 @@ const ANTI_FOUC_SCRIPT = `(function() {
     }
     root.setAttribute("data-theme", resolved);
   } catch (e) {}
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() {
-      root.classList.remove("no-transition");
-    });
-  });
 })();`;
 
 const GA_ID = siteConfig.analytics.googleMeasurementId;
@@ -113,7 +107,6 @@ export default function RootLayout({
       <html
         lang={siteConfig.lang}
         data-theme="light"
-        className="no-transition"
         suppressHydrationWarning={true}
       >
         <head>

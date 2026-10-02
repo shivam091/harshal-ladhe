@@ -51,9 +51,6 @@ export const TutorialMeta = styled.div`
   padding: 0.5rem 1rem;
   background: var(--color-bg-cloud-300);
   border-radius: 0.1875rem;
-  transition:
-    background-color 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    color 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
   color: var(--color-fg-accent-muted);
 `;
 

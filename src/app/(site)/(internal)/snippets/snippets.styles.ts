@@ -22,9 +22,6 @@ export const SnippetsTable = styled.table`
   th {
     padding: 0.75rem 1rem;
     background: var(--color-bg-cloud-300);
-    transition:
-      background-color 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-      color 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
     color: var(--color-fg-accent-muted);
     font-size: 0.875rem;
     text-align: left;

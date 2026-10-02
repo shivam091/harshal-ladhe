@@ -13,11 +13,6 @@ export const FormBorder = styled.div`
       var(--color-bg-accent-emphasis) 25px 40px,
       var(--color-bg-default) 40px 50px
     ) border-box;
-  transition:
-    --color-bg-muted 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-bg-danger-emphasis 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-bg-accent-emphasis 350ms cubic-bezier(0.41, 0.1, 0.13, 1),
-    --color-bg-default 350ms cubic-bezier(0.41, 0.1, 0.13, 1);
 `;
 
 // Page-coloured fill separates the fields from the striped frame around them.
