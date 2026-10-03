@@ -80,6 +80,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-23", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "circular-reveal-theme-toggle",
+    title: "Circular Reveal Theme Toggle with View Transitions",
+    excerpt: "Reveal the new theme in a circle from the toggle.",
+    description: "Switch between light and dark themes with a circle that grows out of the toggle button, using document.startViewTransition() and a clip-path animation on ::view-transition-new(root), with an optional shrink-back, keyboard-friendly origin, and an instant fallback for reduced motion or unsupported browsers.",
+    category: ["CSS", "JavaScript"],
+    tags: ["css", "javascript", "view-transitions-api", "clip-path", "dark-mode", "theme-toggle", "animation", "prefers-reduced-motion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/circular-reveal-theme-toggle/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a page split between light and dark themes, with the dark theme expanding in a circle from a moon-shaped toggle button."
+    },
+    changelog: [
+      { date: "2026-10-03", change: "Initial publication." }
+    ]
   }
 ];
 

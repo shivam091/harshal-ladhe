@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "circular-reveal-theme-toggle",
+    title: "Circular Reveal Theme Toggle",
+    description: "A light/dark toggle that reveals the new theme in a circle growing out of the button you pressed, using document.startViewTransition() and a clip-path animation on ::view-transition-new(root) — with an optional shrink back into the button, slow motion, and a readout of the origin and end radius.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "sibling-index-count-functions",
     title: "Staggered Animation with sibling-index()",
     description: "A list whose items fade in one after another, with every delay calculated in CSS by sibling-index() — switch between a fixed 80ms step and a fixed 600ms total via sibling-count(), add or remove items to see the stagger recalculate live, and check whether your browser supports the functions or is using the all-at-once fallback.",

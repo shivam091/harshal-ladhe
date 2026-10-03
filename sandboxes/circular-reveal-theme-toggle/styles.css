@@ -1,0 +1,109 @@
+/* The shared chrome already reads every colour from --pg-* tokens, so redefining them is the whole light theme. */
+:root[data-theme="light"] {
+  --pg-bg: #eef0f8;
+  --pg-surface: #ffffff;
+  --pg-surface-muted: #f5f6fb;
+  --pg-border: #d9dcea;
+  --pg-text: #1b1e2e;
+  --pg-text-muted: #5b6080;
+  --pg-primary: #6366f1;
+  --pg-primary-dark: #4f46e5;
+  --pg-primary-soft: rgba(99, 102, 241, 0.25);
+  --pg-shadow: 0 1.25rem 2.8125rem -0.9375rem rgba(27, 30, 46, 0.18);
+  --pg-shadow-sm: 0 0.5rem 1.25rem -0.5rem rgba(27, 30, 46, 0.2);
+  color-scheme: light;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+/*
+  Turns off the default cross-fade so the clip-path animation from index.js is the only motion.
+  mix-blend-mode: normal stops the two snapshots blending while they overlap.
+*/
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* When shrinking, the old snapshot is the one being clipped, so it has to sit above the new one. */
+:root[data-reveal="shrink"]::view-transition-old(root) {
+  z-index: 1;
+}
+
+.playground code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+.header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.theme-toggle {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  padding: 0;
+  color: var(--pg-text);
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.theme-toggle:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.1875rem;
+}
+
+.theme-toggle--labelled {
+  inline-size: auto;
+  padding-inline: 1rem;
+  font: 600 0.875rem var(--pg-font);
+  border-radius: 999px;
+}
+
+/* One icon per theme, swapped by the pressed state so the icon can never disagree with the theme. */
+.theme-toggle[aria-pressed="true"] .icon-sun,
+.theme-toggle[aria-pressed="false"] .icon-moon {
+  display: none;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.75rem;
+}
+
+.card {
+  padding: 0.875rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  border-block-start: 0.1875rem solid var(--pg-primary);
+}
+
+.card h2 {
+  margin-block: 0 0.375rem;
+  font-size: 0.95rem;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--pg-text-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}

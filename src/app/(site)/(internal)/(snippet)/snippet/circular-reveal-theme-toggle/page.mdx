@@ -1,0 +1,136 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("circular-reveal-theme-toggle");
+
+## Introduction
+
+Switching themes is usually instant: one attribute changes, every colour updates, and the page flashes from light to dark. Cross-fading every element by hand is slow and fiddly. Animating the theme as a shape spreading across the page used to need a full-page overlay or a canvas.
+
+The **View Transitions API** makes this simple. The browser snapshots the page before and after the theme change, and you animate the "after" snapshot with a `clip-path` circle that starts at the toggle button and grows until it covers the viewport. The theme change itself stays a single attribute swap.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  async function toggleTheme(button) {
+    const root = document.documentElement;
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    const apply = () => {
+      root.dataset.theme = next;
+    };
+
+    // No support, or the reader asked for less motion: swap instantly.
+    if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      apply();
+      return;
+    }
+
+    // Start from the button's centre, not the click point, so keyboard presses work too.
+    const { left, top, width, height } = button.getBoundingClientRect();
+    const x = left + width / 2;
+    const y = top + height / 2;
+
+    // The circle must reach the farthest corner of the viewport.
+    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+
+    const transition = document.startViewTransition(apply);
+    await transition.ready;
+
+    root.animate(
+      { clipPath: [\`circle(0px at \${x}px \${y}px)\`, \`circle(\${radius}px at \${x}px \${y}px)\`] },
+      { duration: 500, easing: "ease-in-out", pseudoElement: "::view-transition-new(root)" }
+    );
+  }
+
+  document.querySelector(".theme-toggle").addEventListener("click", (event) => {
+    toggleTheme(event.currentTarget);
+  });
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* Drop the default cross-fade so the circle is the only motion. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `document.startViewTransition(apply)` takes a snapshot of the page, runs `apply` to change the theme, then takes a second snapshot. The two are shown as `::view-transition-old(root)` and `::view-transition-new(root)`, with the new one on top.
+2. The CSS rule turns off the browser's default cross-fade. Without it, the circle would also fade in, which looks muddy.
+3. `transition.ready` resolves once both snapshots exist and the pseudo-elements can be animated.
+4. `root.animate(..., { pseudoElement })` runs a Web Animations API animation on the **new** snapshot only, taking its `clip-path` from a zero-size circle to one large enough to cover the screen.
+5. The radius is the distance from the button to the **farthest** viewport corner. `Math.hypot` gives that diagonal, so the circle finishes exactly when the last corner is covered, wherever the button is.
+6. When the animation ends, the pseudo-elements are removed and the real page, already in the new theme, is shown.
+
+<RainbowDivider />
+
+## Try It Live
+
+Press the round toggle in the corner, then the one at the bottom. Each circle starts from the button you pressed. Tick **Shrink** to make switching back to light reverse the effect, and **Slow motion** to watch the clip path more closely.
+
+<Sandbox slug="circular-reveal-theme-toggle" readOnly />
+
+<RainbowDivider />
+
+## Shrinking Back into the Button
+
+To reverse the effect, animate the **old** snapshot from full size down to zero instead. The old snapshot sits underneath the new one by default, so lift it above while it shrinks:
+
+<CodeBlock language="css">
+{`
+  :root[data-reveal="shrink"]::view-transition-old(root) {
+    z-index: 1;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  root.dataset.reveal = "shrink";
+  const transition = document.startViewTransition(apply);
+  await transition.ready;
+
+  root.animate(
+    { clipPath: [\`circle(\${radius}px at \${x}px \${y}px)\`, \`circle(0px at \${x}px \${y}px)\`] },
+    { duration: 500, easing: "ease-in-out", pseudoElement: "::view-transition-old(root)" }
+  );
+
+  transition.finished.finally(() => delete root.dataset.reveal);
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Light/dark theme toggles** in a site header, where the reveal makes clear which control caused the change.
+- **Brand or accent colour switchers** that recolour the whole page at once.
+- **High-contrast or reading-mode toggles** that change many styles in one go.
+- **Any whole-page state swap** that is a single class or attribute change, such as a "focus mode" that hides the sidebar.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Reduced motion is your job:** the browser doesn't shorten view transitions for readers who prefer reduced motion. Check `prefers-reduced-motion` and call `apply()` directly, as shown above.
+- **Keep `apply` synchronous and quick:** the page is frozen on the old snapshot until the callback finishes. Store the theme in `localStorage` after the swap, not inside the callback, if storage could be slow or throw.
+- **Prefer the button's rectangle to `clientX`/`clientY`:** a keyboard press fires `click` with coordinates of `0, 0` in some browsers, so the circle would start in the top-left corner.
+- **Set `color-scheme` with the theme:** scrollbars and form controls are part of the snapshot, so they should change theme in the same step as everything else.
+- **One transition at a time:** starting a second view transition skips the first. If people can press the toggle quickly, that's fine. The page simply jumps to the latest theme.
+- **Browser support:** same-document view transitions work in all current major browsers. Older browsers take the fallback path and swap instantly, which is still correct.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Let `document.startViewTransition()` snapshot the theme change, switch off the default cross-fade, and animate `clip-path` on `::view-transition-new(root)` from a zero-size circle to the farthest corner. The theme change stays a single attribute swap, the circle starts from the toggle that was pressed, and unsupported or reduced-motion setups swap instantly instead.
