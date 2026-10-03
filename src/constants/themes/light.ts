@@ -106,6 +106,12 @@ export const LIGHT_COLORS_RAW: ColorMapRaw = {
   colorCodeSyntaxOutput:       [210, 9,   36],
   colorCodeSyntaxMeta:         [214, 12,  30],
 
+  // Keyboard keys — a near-white keycap with a darker bottom edge, so <kbd> reads as a raised key rather than inline code.
+  colorBgKbd:                  [210, 25,  98],
+  colorFgKbd:                  [222, 22,  15],
+  colorBorderKbd:              [210, 18,  82],
+  colorBorderKbdEdge:          [210, 16,  70],
+
   // Selection
   colorBgSelection:            [50,  100, 78],
   colorFgSelection:            [222, 22,  5],

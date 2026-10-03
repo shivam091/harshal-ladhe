@@ -106,6 +106,12 @@ export const SOFT_DARK_COLORS_RAW: ColorMapRaw = {
   colorCodeSyntaxOutput:       [211, 11,  51],
   colorCodeSyntaxMeta:         [211, 17,  70],
 
+  // Keyboard keys — same raised-keycap recipe as dark, eased toward this theme's lighter slate page.
+  colorBgKbd:                  [216, 16,  22],
+  colorFgKbd:                  [216, 19,  88],
+  colorBorderKbd:              [214, 12,  32],
+  colorBorderKbdEdge:          [215, 18,  11],
+
   // Selection
   colorBgSelection:            [220, 25,  24],
   colorFgSelection:            [216, 19,  85],

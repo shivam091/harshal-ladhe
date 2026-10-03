@@ -106,6 +106,12 @@ export const DARK_COLORS_RAW: ColorMapRaw = {
   colorCodeSyntaxOutput:       [211, 11,  56],
   colorCodeSyntaxMeta:         [211, 17,  75],
 
+  // Keyboard keys — lifted a step above the near-black page, with an edge darker than the page so the keycap still looks raised.
+  colorBgKbd:                  [213, 18,  14],
+  colorFgKbd:                  [210, 10,  88],
+  colorBorderKbd:              [213, 12,  28],
+  colorBorderKbdEdge:          [213, 16,  4],
+
   // Selection
   colorBgSelection:            [217, 24,  24],
   colorFgSelection:            [0,   0,   90],
