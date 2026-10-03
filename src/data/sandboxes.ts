@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-infinite-marquee",
+    title: "CSS Infinite Marquee",
+    description: "Two seamless, CSS-only marquees scrolling in opposite directions that pause on hover, on keyboard focus, or with a visible Pause checkbox via :has() — change the loop duration and toggle the mask-image edge fade, and check the still, scrollable fallback under reduced motion.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "hamburger-to-close-morph",
     title: "Hamburger to ✕ Morph",
     description: "A menu toggle whose three SVG bars slide to the centre and then rotate into a ✕, driven entirely by aria-expanded and two CSS transitions — slow the steps down to watch the fold, or switch to a single combined step to see why the two-stage order reads better.",

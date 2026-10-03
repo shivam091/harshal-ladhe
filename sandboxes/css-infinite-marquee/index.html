@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Infinite Marquee</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Infinite Marquee, CSS Only</h1>
+        <p>Hover over a row, tab into it, or tick <strong>Pause</strong> to stop it. The scrolling, the seamless loop, and the pausing are all CSS. The script below only changes the custom properties the options control.</p>
+      </header>
+
+      <section class="demo-area stage" aria-label="Marquee preview">
+        <div class="marquee" id="marquee-tags">
+          <label class="marquee__pause">
+            <input type="checkbox">
+            <span>Pause</span>
+          </label>
+          <div class="marquee__viewport">
+            <div class="marquee__track">
+              <ul class="marquee__group">
+                <li><a href="#">CSS</a></li>
+                <li><a href="#">SVG</a></li>
+                <li><a href="#">JavaScript</a></li>
+                <li><a href="#">React</a></li>
+                <li><a href="#">Animations</a></li>
+                <li><a href="#">Accessibility</a></li>
+                <li><a href="#">Layout</a></li>
+              </ul>
+              <ul class="marquee__group" aria-hidden="true" inert>
+                <li><a href="#">CSS</a></li>
+                <li><a href="#">SVG</a></li>
+                <li><a href="#">JavaScript</a></li>
+                <li><a href="#">React</a></li>
+                <li><a href="#">Animations</a></li>
+                <li><a href="#">Accessibility</a></li>
+                <li><a href="#">Layout</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="marquee marquee--reverse" id="marquee-quotes">
+          <label class="marquee__pause">
+            <input type="checkbox">
+            <span>Pause</span>
+          </label>
+          <div class="marquee__viewport">
+            <div class="marquee__track">
+              <ul class="marquee__group">
+                <li>“Fast and lightweight”</li>
+                <li>★★★★★</li>
+                <li>“No JavaScript needed”</li>
+                <li>★★★★★</li>
+                <li>“Pauses when I need it to”</li>
+                <li>★★★★★</li>
+              </ul>
+              <ul class="marquee__group" aria-hidden="true" inert>
+                <li>“Fast and lightweight”</li>
+                <li>★★★★★</li>
+                <li>“No JavaScript needed”</li>
+                <li>★★★★★</li>
+                <li>“Pauses when I need it to”</li>
+                <li>★★★★★</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Options</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="duration">Loop duration</label>
+            <select id="duration">
+              <option value="12s">12s (fast)</option>
+              <option value="24s" selected>24s</option>
+              <option value="48s">48s (slow)</option>
+            </select>
+          </div>
+        </div>
+        <label class="checkbox-field" for="fade-toggle">
+          <input type="checkbox" id="fade-toggle" checked>
+          <span>Fade the edges with <code>mask-image</code></span>
+        </label>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

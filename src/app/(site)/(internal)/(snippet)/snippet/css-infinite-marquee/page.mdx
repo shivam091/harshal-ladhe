@@ -1,0 +1,198 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-infinite-marquee");
+
+## Introduction
+
+A marquee (or ticker) is a row of logos, tags, or quotes that scrolls sideways forever. It's often built with JavaScript that measures widths and moves items from one end of the row to the other. That isn't needed. The loop can be done entirely in CSS by repeating the content once and sliding the row by **exactly half its width**.
+
+This snippet builds a seamless marquee that pauses on hover and on keyboard focus. It also has a visible Pause control made with `:has()`, and a still fallback for readers who prefer reduced motion.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="html">
+{`
+  <div class="marquee">
+    <div class="marquee__viewport">
+      <div class="marquee__track">
+        <ul class="marquee__group">
+          <li>CSS</li>
+          <li>SVG</li>
+          <li>JavaScript</li>
+          <li>React</li>
+        </ul>
+        <!-- The same items again, hidden from assistive tech and keyboard focus. -->
+        <ul class="marquee__group" aria-hidden="true" inert>
+          <li>CSS</li>
+          <li>SVG</li>
+          <li>JavaScript</li>
+          <li>React</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .marquee {
+    --gap: 1rem;
+    --duration: 24s;
+  }
+
+  .marquee__viewport {
+    overflow: hidden;
+  }
+
+  .marquee__track {
+    display: flex;
+    inline-size: max-content;
+    animation: marquee var(--duration) linear infinite;
+  }
+
+  .marquee__group {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--gap);
+    padding-inline-end: var(--gap); /* the gap that follows each copy */
+    margin: 0;
+    list-style: none;
+  }
+
+  @keyframes marquee {
+    to {
+      translate: -50% 0;
+    }
+  }
+
+  .marquee:hover .marquee__track,
+  .marquee:focus-within .marquee__track {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee__viewport {
+      overflow-x: auto;
+    }
+
+    .marquee__track {
+      animation: none;
+    }
+
+    .marquee__group[aria-hidden="true"] {
+      display: none;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The track holds **two identical copies** of the content side by side. `inline-size: max-content` lets it be as wide as both copies together, instead of shrinking to fit the viewport.
+2. The animation moves the track from `0` to `translate: -50%`. Half of the track is exactly one copy, so at the end of the loop the second copy is exactly where the first one started. When the animation restarts at `0`, nothing visibly jumps.
+3. Each copy has `padding-inline-end` equal to the gap. That gives both copies the same width **including** the space after them. Without it, the track would have one gap fewer than it needs, and `-50%` would stop half a gap short, which shows up as a small jerk on every loop.
+4. `linear` timing keeps the speed constant. Any easing would make the row slow down and speed up again at the loop point.
+5. `animation-play-state: paused` freezes the track wherever it is. It's applied on `:hover` and on `:focus-within`, so tabbing to a link in the row stops it too.
+6. The second copy has `aria-hidden="true"` and `inert`, so screen readers announce the items once and keyboard users don't tab through every link twice.
+
+<RainbowDivider />
+
+## Try It Live
+
+Hover over either row, or tab to a link in the top one, and it stops. The second row runs in reverse. Change the loop duration, and turn the edge fade off to see where items are clipped.
+
+<Sandbox slug="css-infinite-marquee" readOnly />
+
+<RainbowDivider />
+
+## Adding a Pause Control
+
+Hover doesn't exist on touch screens. For content that keeps moving, a visible way to pause it is also an accessibility requirement (WCAG 2.2.2, Pause, Stop, Hide). A checkbox and `:has()` give you one without any JavaScript:
+
+<CodeBlock language="html">
+{`
+  <div class="marquee">
+    <label class="marquee__pause">
+      <input type="checkbox">
+      <span>Pause</span>
+    </label>
+    <div class="marquee__viewport">…</div>
+  </div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .marquee {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .marquee__viewport {
+    flex: 1;
+    min-inline-size: 0;
+  }
+
+  .marquee:has(.marquee__pause input:checked) .marquee__track {
+    animation-play-state: paused;
+  }
+`}
+</CodeBlock>
+
+Put the control **outside** `.marquee__viewport`, so the viewport's clipping and edge fade never hide it, and **before** it in the markup, so keyboard users reach it before the moving links.
+
+<RainbowDivider />
+
+## Variations
+
+<CodeBlock language="css">
+{`
+  /* Scroll the other way. */
+  .marquee--reverse .marquee__track {
+    animation-direction: reverse;
+  }
+
+  /* Fade items in and out at the edges instead of cutting them off. */
+  .marquee__viewport {
+    mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  }
+
+  /* Slower on wide screens, where the same distance takes longer to read. */
+  @media (min-width: 64rem) {
+    .marquee {
+      --duration: 36s;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Logo walls** of clients, sponsors, or "as featured in" brands.
+- **Testimonial strips** with short quotes and ratings.
+- **Tag or category clouds** on blogs and portfolios.
+- **Announcement tickers** for sales, status updates, or event dates.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **One copy must be at least as wide as the viewport.** If it's narrower, an empty gap appears before the second copy arrives. Add more items, or repeat the content three or four times and slide by `-100% / copies` instead of `-50%`.
+- **Speed depends on content width.** The same `--duration` moves a long row faster than a short one, because it covers more distance in the same time. Tune the duration per marquee.
+- **`<marquee>` is not the answer.** The old HTML element is obsolete, can't be paused with CSS, and doesn't loop seamlessly.
+- **Keep it transform-only.** Animating `translate` lets the browser move the row without recalculating layout. Animating `margin` or `left` would make it relayout every frame.
+- **Don't put essential content in it.** A marquee is decoration. Anything people need to read or click should also be available somewhere that holds still.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Put two copies of the content in one track, give each copy its own trailing gap, and slide the track by `-50%` with `linear`, infinite timing. The loop is seamless with no JavaScript. Pause it on `:hover`, `:focus-within`, and a `:has()` checkbox; hide the duplicate with `aria-hidden` and `inert`; and show a still, scrollable row to readers who prefer reduced motion.

@@ -160,6 +160,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-10-03", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-infinite-marquee",
+    title: "Infinite Marquee in Pure CSS, Paused on Hover",
+    excerpt: "A seamless scrolling ticker with no JavaScript.",
+    description: "Build a seamless, infinitely scrolling marquee with CSS alone — a duplicated track sliding by -50%, pausing on hover, keyboard focus, or a :has()-powered Pause control, with edge fades, reverse rows, an inert duplicate, and a still fallback for reduced motion.",
+    link: {
+      label: "Read the full post: An Interactive Guide to CSS Keyframes",
+      href: "/post/animations/css-keyframes-guide"
+    },
+    category: ["CSS", "Animations"],
+    tags: ["css", "marquee", "ticker", "keyframes", "animation-play-state", "has-selector", "mask-image", "prefers-reduced-motion", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/css-infinite-marquee/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of two rows of tags and quotes scrolling endlessly in opposite directions, with a pause symbol over one row."
+    },
+    changelog: [
+      { date: "2026-10-03", change: "Initial publication." }
+    ]
   }
 ];
 
