@@ -1,0 +1,114 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-wave-divider");
+
+## Introduction
+
+A wavy edge between two page sections softens a layout that's otherwise all straight lines. It needs to span the **full width** of the page, from a phone to an ultra-wide monitor, while keeping a **fixed height**. A normal SVG can't do that, because it keeps its aspect ratio and gets taller as it gets wider.
+
+Setting `preserveAspectRatio="none"` stops the SVG keeping its aspect ratio. The path is drawn once in a wide viewBox, then stretched horizontally to fill whatever box CSS gives it, at whatever height you choose.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true" focusable="false"
+       style="display: block; width: 100%; height: 80px">
+    <path d="M0,0 V60 C150,110 350,110 600,60 C850,10 1050,10 1200,60 V0 Z" fill="#6366f1" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `viewBox="0 0 1200 120"` sets up a wide, short drawing area. The path is drawn in these units and doesn't need to know the real page width.
+2. The path starts at the top-left (`M0,0`), goes down the left edge (`V60`), draws two cubic Béziers (`C…`) that dip down and then rise across the full `1200` units, and returns along the top (`V0 Z`). The filled shape is the colour of the section **above**, hanging down into the section below.
+3. `preserveAspectRatio="none"` scales the x and y axes **independently**. `1200` units are stretched to `100%` of the width, and `120` units are scaled to `80px` of height.
+4. `display: block` removes the small gap that inline SVGs leave below them for text descenders, so the divider sits flush against the next section.
+5. `aria-hidden="true"` hides the shape from screen readers, since it's decoration. `focusable="false"` stops old versions of Internet Explorer and Edge tabbing to it.
+
+<RainbowDivider />
+
+## Without `preserveAspectRatio="none"`
+
+Here is the same SVG in the same `100% × 80px` box, with the attribute removed. The default value, `xMidYMid meet`, keeps the shape's proportions, so the wave shrinks to fit the `80px` height and leaves empty space on both sides:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 1200 120" aria-hidden="true" focusable="false"
+       style="display: block; width: 100%; height: 80px">
+    <path d="M0,0 V60 C150,110 350,110 600,60 C850,10 1050,10 1200,60 V0 Z" fill="#6366f1" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## Example Usage
+
+Use `fill="currentColor"` and set `color` in CSS, so the divider always matches the section above it, including in a dark theme:
+
+<CodeBlock language="html">
+{`
+  <section class="hero">…</section>
+
+  <svg class="wave-divider" viewBox="0 0 1200 120" preserveAspectRatio="none"
+       aria-hidden="true" focusable="false">
+    <path d="M0,0 V60 C150,110 350,110 600,60 C850,10 1050,10 1200,60 V0 Z" fill="currentColor" />
+  </svg>
+
+  <section class="features">…</section>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background: var(--hero-bg);
+  }
+
+  .wave-divider {
+    display: block;
+    inline-size: 100%;
+    /* Taller on wide screens, so the wave doesn't look flat. */
+    block-size: clamp(40px, 8vw, 120px);
+    color: var(--hero-bg);
+    /* Overlaps the hero by 1px to hide anti-aliasing seams. */
+    margin-block-start: -1px;
+  }
+
+  /* Upside down, for a wave that rises into the section above. */
+  .wave-divider--flipped {
+    scale: 1 -1;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Hero-to-content transitions** on landing pages.
+- **Footers** that start with a wave instead of a hard border.
+- **Alternating coloured sections**, flipping every other divider so the waves face each other.
+- **Card or banner edges**, using the same technique at a smaller size.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Strokes stretch too:** an outlined wave would get thick and thin strokes as it's stretched unevenly. Add `vector-effect="non-scaling-stroke"` to the path to keep the stroke width constant.
+- **Hairline seams:** at some zoom levels a thin line can appear between the divider and the section above it. The `-1px` margin above fixes that, or you can give the section and the divider the same background.
+- **Mirror instead of flip:** `scale: -1 1` reverses the wave left to right, which is useful for varying repeated dividers without drawing new paths.
+- **Change the shape in the path, not the CSS:** the viewBox is the drawing space. More curves, a steeper dip, or a sharp zigzag are all changes to the `d` attribute. The CSS stays the same.
+- **As a CSS background:** the same SVG can be used as a `mask-image` or `background-image` data URI with `background-size: 100% 100%`. That keeps markup clean, but `currentColor` doesn't work inside a data URI, so the colour must be hard-coded or applied through the mask.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Draw the wave once in a wide viewBox, add `preserveAspectRatio="none"`, and set the size in CSS. The path stretches to `100%` width at any height you choose. With `display: block`, `currentColor` for the fill, and a `-1px` overlap, it joins the sections cleanly in every theme and at every screen width.

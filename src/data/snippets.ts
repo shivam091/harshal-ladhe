@@ -138,6 +138,28 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-10-03", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-wave-divider",
+    title: "Full-Width Wavy SVG Section Divider",
+    excerpt: "A wave divider that stretches to any width.",
+    description: "Separate page sections with a wavy SVG path that stretches edge to edge at a fixed height, using preserveAspectRatio=\"none\" — plus colour matching with currentColor, flipping, seam fixes, and non-scaling strokes.",
+    link: {
+      label: "Read the full post: SVG Essentials: Mastering the Path Element",
+      href: "/post/svg/svg-essentials-mastering-the-path-element"
+    },
+    category: ["SVG", "CSS"],
+    tags: ["svg", "css", "section-divider", "preserveAspectRatio", "svg-path", "responsive-design", "viewBox"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-wave-divider/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of two page sections separated by a smooth wave that stretches across the full width of the screen."
+    },
+    changelog: [
+      { date: "2026-10-03", change: "Initial publication." }
+    ]
   }
 ];
 
