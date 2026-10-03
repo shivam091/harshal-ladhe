@@ -98,6 +98,24 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-10-03", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "hamburger-to-close-morph",
+    title: "Hamburger to ✕ Morph with SVG and CSS",
+    excerpt: "Fold three menu bars into a close icon.",
+    description: "Morph a three-line hamburger icon into a ✕ with SVG lines and the individual translate and rotate properties — a two-step fold driven by aria-expanded, reversed on close, with no JavaScript animation and a reduced-motion fallback.",
+    category: ["CSS", "SVG"],
+    tags: ["css", "svg", "hamburger-menu", "icon-animation", "transitions", "micro-interactions", "accessibility", "prefers-reduced-motion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/hamburger-to-close-morph/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a three-line hamburger menu icon folding step by step into a ✕ close icon."
+    },
+    changelog: [
+      { date: "2026-10-03", change: "Initial publication." }
+    ]
   }
 ];
 

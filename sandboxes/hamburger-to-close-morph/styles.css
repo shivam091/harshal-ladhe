@@ -1,0 +1,108 @@
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-block-size: 12rem;
+  padding-block: 2rem;
+}
+
+.menu-toggle {
+  /* One step of the morph; the full open or close takes two. */
+  --step: 150ms;
+  display: grid;
+  place-items: center;
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  padding: 0;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.menu-toggle:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.1875rem;
+}
+
+.menu-toggle svg {
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  /* Lets the rotated ends poke past the viewBox instead of being clipped. */
+  overflow: visible;
+}
+
+/*
+  Closing order: un-rotate first, then slide apart. The middle bar reappears only once the outer
+  bars have left it, so it's never visible behind the ✕.
+*/
+.bar {
+  transition:
+    rotate var(--step) ease,
+    translate var(--step) ease var(--step),
+    opacity 0s linear var(--step);
+}
+
+/* Each bar spins about its own centre, so the translate alone decides where the ✕ ends up. */
+.bar--top {
+  transform-origin: 12px 6px;
+}
+
+.bar--bottom {
+  transform-origin: 12px 18px;
+}
+
+/* Opening order is the reverse: slide to the centre first, then rotate. */
+.menu-toggle[aria-expanded="true"] .bar {
+  transition:
+    translate var(--step) ease,
+    rotate var(--step) ease var(--step),
+    opacity 0s linear var(--step);
+}
+
+.menu-toggle[aria-expanded="true"] .bar--top {
+  translate: 0 6px;
+  rotate: 45deg;
+}
+
+.menu-toggle[aria-expanded="true"] .bar--middle {
+  opacity: 0;
+}
+
+.menu-toggle[aria-expanded="true"] .bar--bottom {
+  translate: 0 -6px;
+  rotate: -45deg;
+}
+
+/* The comparison mode: one combined step, which tends to read as a wobble rather than a fold. */
+.menu-toggle.single-step .bar,
+.menu-toggle.single-step[aria-expanded="true"] .bar {
+  transition:
+    translate calc(var(--step) * 2) ease,
+    rotate calc(var(--step) * 2) ease,
+    opacity 0s linear var(--step);
+}
+
+/* The state change still matters to reduced-motion readers; only the movement is dropped. */
+@media (prefers-reduced-motion: reduce) {
+  .bar,
+  .menu-toggle[aria-expanded="true"] .bar {
+    transition: none;
+  }
+}
+
+.menu {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+}
+
+.menu[hidden] {
+  display: none;
+}
+
+.menu a {
+  color: var(--pg-primary);
+}

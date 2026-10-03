@@ -1,0 +1,143 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("hamburger-to-close-morph");
+
+## Introduction
+
+A menu button that swaps its hamburger icon for a ✕ works, but the swap is abrupt. Morphing one icon into the other shows that the same button that opened the menu will close it.
+
+The usual "rotate all three bars" version looks wobbly, because the bars spin about the wrong point while they're still moving. The version below folds in **two steps**, like this site's header: the outer bars slide to the centre first, then rotate into the ✕. It uses three SVG `<line>`s, the individual `translate` and `rotate` properties, and `aria-expanded` as the only state.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="html">
+{`
+  <button class="menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="menu">
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <line class="bar bar--top" x1="3" y1="6" x2="21" y2="6" />
+      <line class="bar bar--middle" x1="3" y1="12" x2="21" y2="12" />
+      <line class="bar bar--bottom" x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  </button>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .menu-toggle {
+    --step: 150ms;
+  }
+
+  .menu-toggle svg {
+    overflow: visible;
+  }
+
+  /* Closing: un-rotate first, then slide apart. */
+  .bar {
+    transition:
+      rotate var(--step) ease,
+      translate var(--step) ease var(--step),
+      opacity 0s linear var(--step);
+  }
+
+  /* Each outer bar rotates about its own centre. */
+  .bar--top    { transform-origin: 12px 6px; }
+  .bar--bottom { transform-origin: 12px 18px; }
+
+  /* Opening: slide to the centre first, then rotate. */
+  .menu-toggle[aria-expanded="true"] .bar {
+    transition:
+      translate var(--step) ease,
+      rotate var(--step) ease var(--step),
+      opacity 0s linear var(--step);
+  }
+
+  .menu-toggle[aria-expanded="true"] .bar--top {
+    translate: 0 6px;
+    rotate: 45deg;
+  }
+
+  .menu-toggle[aria-expanded="true"] .bar--middle {
+    opacity: 0;
+  }
+
+  .menu-toggle[aria-expanded="true"] .bar--bottom {
+    translate: 0 -6px;
+    rotate: -45deg;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bar,
+    .menu-toggle[aria-expanded="true"] .bar {
+      transition: none;
+    }
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const toggle = document.querySelector(".menu-toggle");
+  const menu = document.getElementById("menu");
+
+  toggle.addEventListener("click", () => {
+    const open = toggle.getAttribute("aria-expanded") !== "true";
+    toggle.setAttribute("aria-expanded", String(open));
+    menu.hidden = !open;
+  });
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The bars sit 6 units apart in a `24 × 24` viewBox, at `y = 6`, `12`, and `18`, so each outer bar is exactly `6px` from the centre.
+2. `transform-origin` puts each outer bar's pivot at its **own** midpoint (`12px 6px` and `12px 18px`). SVG elements measure `transform-origin` in viewBox units, so these numbers match the line coordinates.
+3. The individual `translate` and `rotate` properties are always applied in the same order: rotate about the origin, then translate. Each bar turns in place and then moves to the centre, wherever the animation is.
+4. Because they're separate properties, each can have its **own** `transition-delay`. When opening, `translate` runs first and `rotate` waits one step. When closing, the delays swap.
+5. The middle bar uses a `0s` opacity transition with a one-step delay. It disappears when the outer bars reach it and reappears only when they've moved away, so it's never seen behind the ✕.
+6. `aria-expanded` is both the styling hook and the accessible state, so the icon can't show "open" while screen readers hear "collapsed".
+
+<RainbowDivider />
+
+## Try It Live
+
+Click the button, or press <kbd>Tab</kbd> to reach it and press <kbd>Enter</kbd>. Turn on **Slow motion** to see the two steps, then try **Move and rotate at the same time** to see why the single-step version looks less tidy.
+
+<Sandbox slug="hamburger-to-close-morph" readOnly />
+
+<RainbowDivider />
+
+## How This Site's Header Does It
+
+The menu button in this site's header uses the same two-step idea, but with spring physics instead of CSS transitions. It animates the lines' `x1`/`y1`/`x2`/`y2` attributes with `react-spring` through four states: `closed → opening → open → closing`. During `opening` and `closing`, both outer lines are moved to `y = 12`, which is the "slide to the centre" step. The spring is **clamped** in those states so the bars stop exactly at the centre. At rest it isn't clamped, so a small hover "boop" can bounce naturally.
+
+If you don't need the hover bounce, the CSS version above produces the same fold with no animation library.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Mobile navigation toggles** that open a drawer or full-screen menu.
+- **Sidebar collapse buttons** in dashboards and admin panels.
+- **Any disclosure control** whose "close" action should clearly be the same button as "open", such as filter panels or chat widgets.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Label the button, hide the icon:** put `aria-label` on the `<button>` and `aria-hidden="true"` on the SVG. Don't change the label to "Close". `aria-expanded` already tells screen readers the state.
+- **Close on <kbd>Escape</kbd>:** a menu opened by this button should close on <kbd>Escape</kbd> and return focus to the button.
+- **`overflow: visible` on the SVG:** the rotated bars reach slightly beyond the viewBox. Without it, the ends of the ✕ can be clipped.
+- **Different icon sizes:** if you change the viewBox or bar spacing, update the `transform-origin` values and the `6px` translate to match. They're tied to the line coordinates.
+- **Browser support:** the individual `translate` and `rotate` properties work in every current browser. To support very old ones, rewrite each state as one `transform` value. You lose the separate delays, so the fold becomes a single step.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Three SVG lines, a pivot at each outer bar's own centre, and separate `translate` and `rotate` transitions with swapped delays give you a hamburger that folds into a ✕ and unfolds in reverse. Using `aria-expanded` as the only state keeps the icon, the menu, and assistive technology in sync.

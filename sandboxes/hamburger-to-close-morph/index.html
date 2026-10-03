@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hamburger to ✕ Morph</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Hamburger to ✕ Morph</h1>
+        <p>Three SVG lines and two CSS transitions. The outer bars slide to the middle first, then rotate into the ✕. Closing plays the same steps in reverse.</p>
+      </header>
+
+      <section class="demo-area stage" aria-label="Menu toggle preview">
+        <button type="button" class="menu-toggle" id="menu-toggle" aria-label="Menu" aria-expanded="false" aria-controls="menu">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <line class="bar bar--top" x1="3" y1="6" x2="21" y2="6" />
+            <line class="bar bar--middle" x1="3" y1="12" x2="21" y2="12" />
+            <line class="bar bar--bottom" x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+
+        <nav class="menu" id="menu" hidden>
+          <a href="#">Posts</a>
+          <a href="#">Tutorials</a>
+          <a href="#">Snippets</a>
+        </nav>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Options</legend>
+        <label class="checkbox-field" for="slow-toggle">
+          <input type="checkbox" id="slow-toggle">
+          <span>Slow motion (each step takes 600ms instead of 150ms)</span>
+        </label>
+        <label class="checkbox-field" for="single-toggle">
+          <input type="checkbox" id="single-toggle">
+          <span>Move and rotate at the same time instead of one after the other</span>
+        </label>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "hamburger-to-close-morph",
+    title: "Hamburger to ✕ Morph",
+    description: "A menu toggle whose three SVG bars slide to the centre and then rotate into a ✕, driven entirely by aria-expanded and two CSS transitions — slow the steps down to watch the fold, or switch to a single combined step to see why the two-stage order reads better.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "circular-reveal-theme-toggle",
     title: "Circular Reveal Theme Toggle",
     description: "A light/dark toggle that reveals the new theme in a circle growing out of the button you pressed, using document.startViewTransition() and a clip-path animation on ::view-transition-new(root) — with an optional shrink back into the button, slow motion, and a readout of the origin and end radius.",
