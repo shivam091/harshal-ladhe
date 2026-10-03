@@ -1,0 +1,365 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("animated-dialog");
+
+## Introduction
+
+The native `<dialog>` element gives you a lot for free: focus moves into it when it opens and back when it closes, <kbd>Escape</kbd> closes it, the page behind it can't be clicked, and it sits above everything else without any `z-index` battles. Animating it has always been the hard part. Opening is easy to fade in, but closing hides it instantly, because a closed dialog gets `display: none` and there's nothing left to animate.
+
+Three newer CSS features fix that:
+
+- **`@starting-style`** gives the dialog a style to animate **from** when it first appears.
+- **`transition-behavior: allow-discrete`** lets `display` wait until the closing animation has finished before it switches to `none`.
+- **The `overlay` property** keeps the dialog in the top layer while it animates out, so it doesn't drop behind the page halfway through.
+
+[An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) explains these ideas. This tutorial is the hands-on build: one modal dialog, from markup to a finished entry and exit animation, step by step.
+
+<Info title="What's the top layer?">
+  The top layer is a separate layer that the browser draws above the whole page, whatever the `z-index` or
+  `overflow` of the dialog's ancestors. A dialog opened with `showModal()` is placed in it, together with its
+  `::backdrop`. Popovers and fullscreen elements use it too.
+</Info>
+
+<RainbowDivider />
+
+## Step 1: The Markup
+
+<CodeBlock language="html">
+{`
+  <button type="button" id="open-btn">Open dialog</button>
+
+  <dialog class="dialog" id="dialog" aria-labelledby="dialog-title" closedby="any">
+    <form method="dialog">
+      <h2 id="dialog-title">Save your changes?</h2>
+      <p>Your edits will be lost if you leave without saving.</p>
+      <button value="cancel">Cancel</button>
+      <button value="save" autofocus>Save</button>
+    </form>
+  </dialog>
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const dialog = document.getElementById("dialog");
+
+  document.getElementById("open-btn").addEventListener("click", () => {
+    dialog.showModal();
+  });
+`}
+</CodeBlock>
+
+- **`showModal()`**, not `show()`, opens the dialog as a **modal**: in the top layer, with a `::backdrop`, and with the rest of the page made inert.
+- **`<form method="dialog">`** closes the dialog when either button submits it, with no JavaScript. The button's `value` becomes `dialog.returnValue`, so you can tell which one was pressed.
+- **`aria-labelledby`** gives the dialog its accessible name from the heading.
+- **`autofocus`** chooses which button gets focus when the dialog opens.
+- **`closedby="any"`** closes the dialog when someone clicks the backdrop (often called light dismiss). It's newer than the rest of this code, so Step 7 adds a fallback.
+
+<RainbowDivider />
+
+## Step 2: Base Styles
+
+Browsers give `<dialog>` a border, padding, and centring of their own. Keep the centring and replace the rest:
+
+<CodeBlock language="css">
+{`
+  .dialog {
+    inline-size: min(26rem, 100% - 2rem);
+    padding: 1.5rem;
+    border: 1px solid #2a2f45;
+    border-radius: 0.75rem;
+    background: #171a2b;
+    color: #e7e9f5;
+  }
+
+  .dialog::backdrop {
+    background-color: rgb(0 0 0 / 0.55);
+  }
+`}
+</CodeBlock>
+
+The dialog now opens and closes correctly, but instantly. Every step after this one adds motion without changing that behaviour.
+
+<RainbowDivider />
+
+## Step 3: Define the Closed and Open States
+
+A transition needs two states. Style the dialog in its **closed** state first, then override that for `[open]`. The browser adds the `open` attribute when the dialog opens and removes it when it closes.
+
+<CodeBlock language="css">
+{`
+  .dialog {
+    /* ...base styles from Step 2... */
+    opacity: 0;
+    scale: 0.95;
+    transition:
+      opacity 250ms ease-in,
+      scale 250ms ease-in;
+  }
+
+  .dialog[open] {
+    opacity: 1;
+    scale: 1;
+    transition-timing-function: ease-out;
+  }
+`}
+</CodeBlock>
+
+The closed style uses `ease-in` (slow start, quick finish), so the dialog leaves decisively. The open style switches to `ease-out` (quick start, slow finish), so it arrives quickly and settles gently. A transition uses the timing of the state it's moving **to**, so each direction gets its own curve.
+
+If you try this now, nothing animates in either direction. Steps 4 and 5 explain why.
+
+<RainbowDivider />
+
+## Step 4: Animate the Entry with `@starting-style`
+
+When `showModal()` runs, the dialog goes from `display: none` straight to being rendered. An element that wasn't rendered has no previous style, so the browser has nothing to transition from and simply shows the final `[open]` style.
+
+`@starting-style` provides that missing "before" style. It applies only on the dialog's **first** style update after it appears, and the browser transitions from it to the normal `[open]` style:
+
+<CodeBlock language="css">
+{`
+  @starting-style {
+    .dialog[open] {
+      opacity: 0;
+      scale: 0.95;
+    }
+  }
+`}
+</CodeBlock>
+
+The dialog now fades and scales in. Put this block **after** the `.dialog[open]` rule. `@starting-style` doesn't add any specificity, so if it came first, the `[open]` rule would override it and there would be no starting point again.
+
+<RainbowDivider />
+
+## Step 5: Animate the Exit with `allow-discrete`
+
+Closing removes `[open]`, so the browser's built-in `dialog:not([open]) { display: none; }` applies immediately. `display` is a **discrete** property: it has no values in between, and by default it changes at the very start of the transition. The dialog disappears before the fade-out can be seen.
+
+`transition-behavior: allow-discrete` lets a discrete property take part in a transition. For `display`, the browser keeps the element displayed for the whole transition and only switches to `none` at the end. Add `display` to the transition list with the `allow-discrete` keyword:
+
+<CodeBlock language="css">
+{`
+  .dialog {
+    transition:
+      opacity 250ms ease-in,
+      scale 250ms ease-in,
+      display 250ms allow-discrete;
+  }
+`}
+</CodeBlock>
+
+Give `display` the same duration as the fade, so it switches to `none` exactly when the dialog has finished fading out.
+
+<RainbowDivider />
+
+## Step 6: Keep It in the Top Layer with `overlay`
+
+There's one more thing that changes the moment a modal dialog closes: it's removed from the top layer. Even though `display` now waits, the dialog that's fading out is drawn **as part of the page** rather than above it. Depending on your layout, it can jump position, appear behind other content, or lose its backdrop partway through the animation.
+
+The `overlay` property tracks whether an element is in the top layer. You can't set it yourself, but you can transition it in the same way as `display`:
+
+<CodeBlock language="css">
+{`
+  .dialog {
+    transition:
+      opacity 250ms ease-in,
+      scale 250ms ease-in,
+      display 250ms allow-discrete,
+      overlay 250ms allow-discrete;
+  }
+`}
+</CodeBlock>
+
+Now the dialog stays in the top layer until the fade-out ends, then leaves it at the same moment it gets `display: none`.
+
+<Info title="Why both display and overlay?">
+  They control different things. `display` decides whether the dialog is rendered at all, and `overlay` decides
+  whether it's drawn above the page. Without `display`, the exit is instant. Without `overlay`, the exit plays but
+  not in the top layer. You need both for a clean exit.
+</Info>
+
+<RainbowDivider />
+
+## Step 7: Animate the Backdrop
+
+`::backdrop` exists only while its dialog is in the top layer, so it needs the same treatment: a closed state, an open state, a starting style, and the two discrete properties.
+
+<CodeBlock language="css">
+{`
+  .dialog::backdrop {
+    background-color: rgb(0 0 0 / 0);
+    transition:
+      background-color 250ms,
+      display 250ms allow-discrete,
+      overlay 250ms allow-discrete;
+  }
+
+  .dialog[open]::backdrop {
+    background-color: rgb(0 0 0 / 0.55);
+  }
+
+  @starting-style {
+    .dialog[open]::backdrop {
+      background-color: rgb(0 0 0 / 0);
+    }
+  }
+`}
+</CodeBlock>
+
+You can transition `backdrop-filter` the same way, for example from `blur(0)` to `blur(3px)`, so the page goes out of focus as the dialog arrives.
+
+For light dismiss in browsers that don't support `closedby` yet, close the dialog when a click lands on the dialog element itself. A click on the backdrop is reported with the dialog as its target, while a click on the dialog's content targets an element inside it:
+
+<CodeBlock language="js">
+{`
+  dialog.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close();
+  });
+`}
+</CodeBlock>
+
+This only works if the dialog's content fills the dialog box. If the dialog has padding, a click on the padding counts as a click on the dialog, so move the padding onto an inner element, as the `<form>` does in the live demo.
+
+<RainbowDivider />
+
+## Step 8: Respect Reduced Motion and Lock Scrolling
+
+Readers who have asked for reduced motion should still get a dialog that opens and closes, just without the movement. Setting the duration to `0s` keeps every rule above working:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) {
+    .dialog,
+    .dialog::backdrop {
+      transition-duration: 0s;
+    }
+  }
+`}
+</CodeBlock>
+
+A modal dialog makes the page behind it inert, but the page can still scroll under it. `:has()` locks scrolling while any dialog is open:
+
+<CodeBlock language="css">
+{`
+  html:has(.dialog[open]) {
+    overflow: hidden;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Try It Live
+
+Open the dialog, then close it with **Cancel**, **Save**, <kbd>Escape</kbd>, or a click on the backdrop. Then untick **`display … allow-discrete`** to see the instant close it prevents, or **`overlay … allow-discrete`** to see the dialog drop out of the top layer as soon as it starts to close. **Slow motion** makes both much easier to see.
+
+<Sandbox slug="animated-dialog" readOnly />
+
+<RainbowDivider />
+
+## The Complete CSS
+
+<CodeBlock language="css">
+{`
+  .dialog {
+    inline-size: min(26rem, 100% - 2rem);
+    padding: 0;
+    border: 1px solid #2a2f45;
+    border-radius: 0.75rem;
+    background: #171a2b;
+    color: #e7e9f5;
+    opacity: 0;
+    scale: 0.95;
+    transition:
+      opacity 250ms ease-in,
+      scale 250ms ease-in,
+      display 250ms allow-discrete,
+      overlay 250ms allow-discrete;
+  }
+
+  .dialog[open] {
+    opacity: 1;
+    scale: 1;
+    transition-timing-function: ease-out;
+  }
+
+  @starting-style {
+    .dialog[open] {
+      opacity: 0;
+      scale: 0.95;
+    }
+  }
+
+  .dialog::backdrop {
+    background-color: rgb(0 0 0 / 0);
+    transition:
+      background-color 250ms,
+      display 250ms allow-discrete,
+      overlay 250ms allow-discrete;
+  }
+
+  .dialog[open]::backdrop {
+    background-color: rgb(0 0 0 / 0.55);
+  }
+
+  @starting-style {
+    .dialog[open]::backdrop {
+      background-color: rgb(0 0 0 / 0);
+    }
+  }
+
+  /* Padding lives here, so a click on the dialog itself always means the backdrop. */
+  .dialog > form {
+    padding: 1.5rem;
+  }
+
+  html:has(.dialog[open]) {
+    overflow: hidden;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dialog,
+    .dialog::backdrop {
+      transition-duration: 0s;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- **Confirmation dialogs** such as "Save changes?" or "Delete this item?".
+- **Forms in a modal**, such as sign-in, newsletter sign-up, or a quick edit.
+- **Image lightboxes**, with a larger scale change for a "zoom in" feel.
+- **Side drawers**, using a `<dialog>` positioned at one edge and `translate` instead of `scale`.
+- **Popovers**, using the same `@starting-style`, `display`, and `overlay` pattern on `[popover]:popover-open`.
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Check support before relying on it.** `@starting-style` and `transition-behavior: allow-discrete` are
+  supported in all current major browsers. Support for transitioning `overlay` and for the `closedby` attribute
+  arrived later, so check [Can I use](https://caniuse.com/?search=overlay) for both. Where they're missing, the
+  dialog still opens and closes correctly; only the exit animation or light dismiss is affected.
+* **Don't use `transition: all`.** It does include `display` and `overlay` once you add `allow-discrete`, but it
+  also animates every other property you change, which makes the dialog harder to reason about. List the
+  properties you mean.
+* **Keep the exit short.** People closing a dialog want it gone. An exit that's the same length as the entry, or
+  shorter, feels more responsive than a long fade.
+* **Animate `opacity`, `scale`, and `translate`.** These can be handled by the compositor. Animating `width`,
+  `height`, or `top` makes the browser recalculate layout on every frame.
+* **`returnValue` is set before the exit animation.** The `close` event fires straight away, not after the
+  animation ends, so any code that reacts to the result runs while the dialog is still fading out. Listen for
+  `transitionend` on the dialog if something must wait for the animation.
+* **Non-modal dialogs don't need `overlay`.** A dialog opened with `show()` isn't in the top layer and has no
+  backdrop, so the `display` transition and `@starting-style` are enough.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A `<dialog>` animates in both directions once each of three gaps is filled. `@starting-style` gives the opening transition a starting point, `display … allow-discrete` keeps the dialog rendered until it has faded out, and `overlay … allow-discrete` keeps it in the top layer while it does. Give `::backdrop` the same treatment, list properties instead of using `all`, and set the duration to `0s` for reduced motion. The native dialog keeps handling focus, <kbd>Escape</kbd>, and the inert page behind it.

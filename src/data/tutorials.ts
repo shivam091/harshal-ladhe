@@ -269,6 +269,28 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "animated-dialog",
+    title: "Animating a <dialog> from Start to Finish with @starting-style, allow-discrete, and overlay",
+    excerpt: "Build a dialog that animates both opening and closing.",
+    description: "A hands-on build of a modal <dialog> that fades and scales in and out with CSS alone — @starting-style for the entry, display and overlay with transition-behavior: allow-discrete for the exit, a matching ::backdrop, light dismiss, scroll locking, and reduced-motion handling.",
+    link: {
+      label: "Read the full post: An Interactive Guide to CSS Transitions",
+      href: "/post/animations/css-transitions-guide"
+    },
+    category: ["CSS", "Animations"],
+    tags: ["css", "dialog", "starting-style", "allow-discrete", "transition-behavior", "overlay", "top-layer", "backdrop", "css-transitions", "accessibility", "prefers-reduced-motion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/animated-dialog/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a modal dialog fading and scaling into view over a blurred, dimmed backdrop, with CSS code for @starting-style and allow-discrete beside it."
+    },
+    changelog: [
+      { date: "2026-10-03", change: "Initial publication." }
+    ]
   }
 ];
 

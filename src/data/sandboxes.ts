@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "animated-dialog",
+    title: "Animated <dialog> with @starting-style",
+    description: "A modal <dialog> and its ::backdrop that fade and scale in from @starting-style and animate back out before hiding — untick display or overlay allow-discrete to see the instant close and the early drop out of the top layer each one prevents, slow it down, and close with a button, Escape, or a backdrop click.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-infinite-marquee",
     title: "CSS Infinite Marquee",
     description: "Two seamless, CSS-only marquees scrolling in opposite directions that pause on hover, on keyboard focus, or with a visible Pause checkbox via :has() — change the loop duration and toggle the mask-image edge fade, and check the still, scrollable fallback under reduced motion.",

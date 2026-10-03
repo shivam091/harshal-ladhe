@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animated Dialog</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Animated &lt;dialog&gt;</h1>
+        <p>Open the dialog, then close it with the button, <kbd>Escape</kbd>, or a click on the backdrop. Untick an option to see what each part of the transition is responsible for.</p>
+      </header>
+
+      <section class="demo-area stage" aria-label="Dialog preview">
+        <button type="button" class="toggle-btn" id="open-btn">Open dialog</button>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>transition on dialog and ::backdrop</legend>
+        <label class="checkbox-field" for="discrete-toggle">
+          <input type="checkbox" id="discrete-toggle" checked>
+          <span><code>display … allow-discrete</code> (without it, closing is instant)</span>
+        </label>
+        <label class="checkbox-field" for="overlay-toggle">
+          <input type="checkbox" id="overlay-toggle" checked>
+          <span><code>overlay … allow-discrete</code> (without it, the dialog leaves the top layer as soon as it starts closing)</span>
+        </label>
+        <label class="checkbox-field" for="slow-toggle">
+          <input type="checkbox" id="slow-toggle">
+          <span>Slow motion (1.2s instead of 250ms)</span>
+        </label>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <dialog class="dialog" id="dialog" aria-labelledby="dialog-title" closedby="any">
+      <form method="dialog" class="dialog__body">
+        <h2 id="dialog-title">Save your changes?</h2>
+        <p>This dialog fades and scales in from its <code>@starting-style</code>, and plays the reverse on the way out before it's hidden.</p>
+        <div class="dialog__actions">
+          <button type="submit" class="secondary-btn" value="cancel">Cancel</button>
+          <button type="submit" class="toggle-btn" value="save" autofocus>Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

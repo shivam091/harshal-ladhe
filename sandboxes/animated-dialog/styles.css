@@ -1,0 +1,142 @@
+:root {
+  --duration: 250ms;
+}
+
+.playground code,
+.dialog code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+kbd {
+  padding-block: 0.1em;
+  padding-inline: 0.4em;
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  border-block-end-width: 0.125rem;
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  min-block-size: 8rem;
+}
+
+/* Closed state, and the state the exit transition heads back to. */
+.dialog {
+  inline-size: min(26rem, 100% - 2rem);
+  padding: 0;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  box-shadow: var(--pg-shadow);
+  opacity: 0;
+  scale: 0.95;
+  /*
+    allow-discrete lets display and overlay wait until the fade has finished, so the dialog is still
+    rendered, and still in the top layer, while it animates out.
+  */
+  transition:
+    opacity var(--duration) ease-in,
+    scale var(--duration) ease-in,
+    display var(--duration) allow-discrete,
+    overlay var(--duration) allow-discrete;
+}
+
+.dialog[open] {
+  opacity: 1;
+  scale: 1;
+  transition-timing-function: ease-out;
+}
+
+/* A dialog that has just appeared has no previous style to transition from, so this supplies one. */
+@starting-style {
+  .dialog[open] {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+/* The backdrop leaves the top layer with its dialog, so it needs the same discrete properties to fade out. */
+.dialog::backdrop {
+  background-color: rgb(0 0 0 / 0);
+  backdrop-filter: blur(0);
+  transition:
+    background-color var(--duration),
+    backdrop-filter var(--duration),
+    display var(--duration) allow-discrete,
+    overlay var(--duration) allow-discrete;
+}
+
+.dialog[open]::backdrop {
+  background-color: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(3px);
+}
+
+@starting-style {
+  .dialog[open]::backdrop {
+    background-color: rgb(0 0 0 / 0);
+    backdrop-filter: blur(0);
+  }
+}
+
+/*
+  The sandbox's comparison modes: drop one discrete property to show what it was doing. The
+  behaviour is restated because a shorter list would repeat from the start and lose allow-discrete.
+*/
+.no-overlay .dialog,
+.no-overlay .dialog::backdrop {
+  transition-property: opacity, scale, background-color, backdrop-filter, display;
+  transition-behavior: allow-discrete;
+}
+
+.no-discrete .dialog,
+.no-discrete .dialog::backdrop {
+  transition-property: opacity, scale, background-color, backdrop-filter, overlay;
+  transition-behavior: allow-discrete;
+}
+
+.no-discrete.no-overlay .dialog,
+.no-discrete.no-overlay .dialog::backdrop {
+  transition-property: opacity, scale, background-color, backdrop-filter;
+}
+
+.dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.dialog__body h2 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.dialog__body p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--pg-text-muted);
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.625rem;
+  margin-block-start: 0.5rem;
+}
+
+/* The page behind a modal shouldn't scroll while the dialog is open. */
+html:has(.dialog[open]) {
+  overflow: hidden;
+}
+
+/* The dialog still opens and closes for reduced-motion readers; it just does so without moving. */
+@media (prefers-reduced-motion: reduce) {
+  .dialog,
+  .dialog::backdrop {
+    transition-duration: 0s;
+  }
+}
