@@ -111,9 +111,17 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Exploring CSS Animation Timing Functions (`ease`, `steps`, `cubic-bezier`)",
     description: "Understand how to control the speed curve of your animations using built-in keywords, `steps()`, and custom `cubic-bezier()` and `linear()` timing functions."
   },
+  "cubic-bezier": {
+    title: "Designing Custom Curves with `cubic-bezier()`",
+    description: "How the `cubic-bezier(x1, y1, x2, y2)` function works — control points, the time-vs-progress model, and hand-tuning your own easing curves.",
+  },
   "easing": {
     title: "Understanding CSS Easing Curves",
     description: "The shape behind every named timing function — why `ease-in`, `ease-out`, and `ease-in-out` feel so different, and how to pick the right one.",
+  },
+  "overshoot": {
+    title: "Overshoot and Anticipation Easing",
+    description: "Curves that travel past their target or wind up before they move — how to build them with `cubic-bezier()` and `linear()`, and when the extra motion is worth it.",
   },
   "motion-design": {
     title: "Motion Design for the Web",
