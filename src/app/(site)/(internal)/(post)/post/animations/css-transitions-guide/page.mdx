@@ -146,8 +146,9 @@ The `transition-timing-function` CSS property controls the **speed curve** of th
 | `ease-in` | Starts slow, speeds up at end. |
 | `ease-out` | Starts fast, slows down at end. |
 | `ease-in-out` | Slow start and end, fast middle. |
-| `steps(n, start/end)` | Jump-based transitions for discrete steps. |
+| `steps(n, start/end)` | Jump-based transitions for discrete steps. See [Choosing Your "Jump" Logic](/post/animations/css-step-timing-function#choosing-your-jump-logic-start-vs-end) for how the jump term and step count interact. |
 | `cubic-bezier(x1, y1, x2, y2)` | Custom curve for precise control. |
+| `linear(<stops>)` | A curve drawn through any number of points — for springs and multi-bounce settles a single `cubic-bezier()` can't express. See [An Interactive Guide to the CSS linear() Easing Function](/post/animations/css-linear-easing-function-guide). |
 
 Here's what those curves actually look like, plotted on a shared timeline:
 
@@ -177,7 +178,7 @@ You can specify multiple timing functions for multiple properties, maintaining t
 </CodeBlock>
 
 <Info title="Note on cubic-bezier">
-  This function gives you granular control over the curve, allowing you to simulate complex effects like a subtle spring or bounce (where the property briefly overshoots its final value) in your transitions.
+  This function gives you granular control over the curve, allowing you to simulate complex effects like a subtle spring or bounce (where the property briefly overshoots its final value) in your transitions. For a labeled graph and a live race for every keyword, see [An Interactive Guide to CSS Easing Functions](/post/animations/css-easing-functions-guide). For what the control points actually mean — and a playground for designing your own curve — see [An Interactive Guide to CSS cubic-bezier()](/post/animations/css-cubic-bezier-guide).
 </Info>
 
 For a deep dive into `steps()` specifically — its jump terms, and where discrete motion beats a smooth curve — see [Mastering CSS steps() for Discrete, Stepped Animations](/post/animations/css-step-timing-function).
