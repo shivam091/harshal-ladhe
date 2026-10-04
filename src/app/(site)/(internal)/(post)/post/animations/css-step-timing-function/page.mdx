@@ -82,7 +82,8 @@ That rounding is what removes every intermediate value:
 `steps()` doesn't make an animation "faster" or "slower." Every timing function takes the same duration — what changes is *how progress is mapped over that time*.
 
 - `linear` → Continuous interpolation at a constant rate.
-- `ease` / `cubic-bezier()` → Continuous interpolation that speeds up and slows down along a curve.
+- `ease` / `cubic-bezier()` → Continuous interpolation that speeds up and slows down along a curve. See [An Interactive Guide to CSS Easing Functions](/post/animations/css-easing-functions-guide) and [An Interactive Guide to CSS cubic-bezier()](/post/animations/css-cubic-bezier-guide).
+- `linear()` (the function, not the keyword) → Continuous interpolation through any number of points, for springs and multi-bounce settles. See [An Interactive Guide to the CSS linear() Easing Function](/post/animations/css-linear-easing-function-guide).
 - `steps()` → No interpolation at all. The value jumps instantly between discrete states.
 
 Even `linear` calculates and renders fractional values like `12.435px`. `steps()` never produces them.
@@ -570,7 +571,7 @@ If you swap an animation off and on from JavaScript to replay it, the browser ca
 
 **Avoid `steps()` when:**
 
-- You need organic, fluid motion (use `ease` or `cubic-bezier()` instead).
+- You need organic, fluid motion (use `ease` or [`cubic-bezier()`](/post/animations/css-cubic-bezier-guide) instead, or [`linear()`](/post/animations/css-linear-easing-function-guide) for springs and bounces).
 - The motion is large and fast — a low step count makes big jumps look choppy rather than intentional.
 
 ## Performance
