@@ -575,6 +575,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The CSS `steps()` Timing Function",
     description: "The `steps()` timing function for discrete, frame-based animation jumps instead of continuous easing."
   },
+  "linear-easing": {
+    title: "The CSS `linear()` Easing Function",
+    description: "Guides to the `linear()` timing function — piecewise-linear curves with an open-ended list of stops, for shapes a single `cubic-bezier()` can't express, like spring and bounce easing.",
+  },
   "css-tricks": {
     title: "Handy CSS Tricks and Techniques",
     description: "Practical, lesser-known CSS techniques and tricks for solving common styling and animation problems."
@@ -862,5 +866,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "staggered-animation": {
     title: "Staggered Animations in CSS",
     description: "Offsetting the start of each element's animation so a group ripples in one after another, from hand-written delays to `sibling-index()`."
+  },
+  "spring-animation": {
+    title: "Spring-Based Animation on the Web",
+    description: "Guides on spring-physics motion for the web — mass, stiffness, and damping-driven curves, and how to approximate them in CSS with `linear()`.",
+  },
+  "bounce-easing": {
+    title: "Bounce Easing Curves",
+    description: "Curves that overshoot and settle rather than ease smoothly to a stop — building bounce timing functions with `linear()` and `cubic-bezier()`.",
   },
 };
