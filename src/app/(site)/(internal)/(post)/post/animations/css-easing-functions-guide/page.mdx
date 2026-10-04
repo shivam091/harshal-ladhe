@@ -6,7 +6,7 @@ export const metadata = buildPostMetadata("css-easing-functions-guide");
 
 Picture two cars leaving a red light at the same time and arriving at the next light, 200 metres away, in exactly 20 seconds. If you filmed both and watched the footage side by side, would the two clips look identical? Not necessarily. One car might leap off the line and coast the rest of the way; the other might crawl at first and then floor it. Same distance, same total time, completely different *feel*.
 
-That feel is what a **timing function** controls. In [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide), `transition-timing-function` got a short table and a diagram — enough to know the property exists, not enough to actually understand it. This post is the deep dive into CSS's named timing functions: what a timing function really is, why `linear`, `ease`, `ease-in`, `ease-out`, and `ease-in-out` all look and feel so different, when to reach for each one, and how the two stepped keywords, `step-start` and `step-end`, break the pattern by jumping instead of easing. Every curve below comes with a labelled graph and a live demo, because a timing function is a *shape*, and shapes are much easier to feel than to read about. When none of the five fits, the follow-up, An Interactive Guide to CSS cubic-bezier(), shows how to design a curve of your own.
+That feel is what a **timing function** controls. In [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide), `transition-timing-function` got a short table and a diagram — enough to know the property exists, not enough to actually understand it. This post is the deep dive into CSS's named timing functions: what a timing function really is, why `linear`, `ease`, `ease-in`, `ease-out`, and `ease-in-out` all look and feel so different, when to reach for each one, and how the two stepped keywords, `step-start` and `step-end`, break the pattern by jumping instead of easing. Every curve below comes with a labelled graph and a live demo, because a timing function is a *shape*, and shapes are much easier to feel than to read about. When none of the five fits, the follow-up, [An Interactive Guide to CSS cubic-bezier()](/post/animations/css-cubic-bezier-guide), shows how to design a curve of your own.
 
 <Info title="Prerequisite">
   This post assumes you're already comfortable with the basics of `transition-property`, `transition-duration`, and `transition-delay`. If any of those feel shaky, [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide) covers them first.
@@ -21,7 +21,7 @@ Every CSS transition — and every keyframe animation — has to answer the same
 Plot it on a graph and it looks like this:
 
 - The **horizontal axis (time)** is how far through the transition's *duration* you are — always starting at 0 (the transition just started) and ending at 1 (the transition just finished). Time only ever moves forward, so this axis is always clamped to the 0–1 range.
-- The **vertical axis (progress)** is how far the *property* has moved from its starting value to its ending value — 0 means "still at the start," 1 means "fully at the end." Unlike time, progress is *not* clamped. It can dip below 0 or rise above 1, which is exactly what happens when a curve overshoots its target before settling. None of the five keywords do that, but custom curves can — the cubic-bezier() guide covers how.
+- The **vertical axis (progress)** is how far the *property* has moved from its starting value to its ending value — 0 means "still at the start," 1 means "fully at the end." Unlike time, progress is *not* clamped. It can dip below 0 or rise above 1, which is exactly what happens when a curve overshoots its target before settling. None of the five keywords do that, but custom curves can — the [cubic-bezier() guide](/post/animations/css-cubic-bezier-guide#beyond-the-defaults-supercharging-a-curve) covers how.
 
 A straight diagonal line from `(0, 0)` to `(1, 1)` means progress advances at exactly the same rate as time — the property moves at a constant speed for the entire duration. Any curve that bows away from that diagonal is where things get interesting: a curve that dips *below* the diagonal early on is moving slower than "constant speed" at that point, and a curve that rises *above* it is moving faster.
 
@@ -48,7 +48,7 @@ You only need two ideas to read the graphs below:
 `}
 </CodeBlock>
 
-Each graph below marks P1 and P2 as dots, each tied by a dashed line to the anchor it pulls on, and the coordinates quoted alongside are exactly what you'd type into `cubic-bezier()` to get that same curve. For how the control points work in depth — and how to place them yourself — see An Interactive Guide to CSS cubic-bezier().
+Each graph below marks P1 and P2 as dots, each tied by a dashed line to the anchor it pulls on, and the coordinates quoted alongside are exactly what you'd type into `cubic-bezier()` to get that same curve. For how the control points work in depth — and how to place them yourself — see [An Interactive Guide to CSS cubic-bezier()](/post/animations/css-cubic-bezier-guide).
 
 <RainbowDivider />
 
@@ -162,9 +162,9 @@ With five easing keywords to pick from — plus the stepped keywords, and custom
 | Is it a continuous loop with no "arrival" at all? | `linear` — constant speed suits perpetual motion. |
 | No strong opinion, just a small hover or fade? | `ease` — the default, and a genuinely good one. |
 | Should it change all at once, with no in-between values? | `step-start` or `step-end` — or `steps()` for several discrete jumps, such as frame-by-frame effects. |
-| Do you want it to feel tactile, springy, or celebratory? | An overshoot curve built with `cubic-bezier()` — sparingly. |
+| Do you want it to feel tactile, springy, or celebratory? | An [overshoot curve](/post/animations/css-cubic-bezier-guide#beyond-the-defaults-supercharging-a-curve) built with `cubic-bezier()` — sparingly. |
 | Does it need more than one bounce? | `linear()` — string together as many stops as the motion needs. |
-| None of the above feel quite right? | `cubic-bezier()` — design the exact curve you're picturing. |
+| None of the above feel quite right? | [`cubic-bezier()`](/post/animations/css-cubic-bezier-guide#designing-your-own-curve-with-cubic-bezier) — design the exact curve you're picturing. |
 
 Duration matters here too, not just shape: a curve's personality reads clearly at 200–400ms, but stretch even the punchiest overshoot curve out to 2 seconds and it starts to feel sluggish rather than energetic — the [Best Practices](/post/animations/css-transitions-guide#best-practices) section of the transitions guide covers picking a good duration in more depth.
 
@@ -215,5 +215,5 @@ A timing function is a curve, not a keyword — five specific curves, in the cas
 - `ease-out` for entrances, `ease-in` for exits, `ease-in-out` for in-place state changes, `linear` for continuous loops, `ease` when you have no strong opinion — as a starting default, not an absolute rule.
 - Duration and timing function are independent: duration stretches the curve, the timing function decides its shape.
 - `step-start` and `step-end` are the other two keywords: one instant jump instead of a curve. They're the one-step cases of `steps()`, a different model entirely that belongs to a different kind of animation.
-- When no keyword fits, `cubic-bezier()` lets you design your own curve, and `linear()` handles shapes with more than one bounce.
+- When no keyword fits, [`cubic-bezier()`](/post/animations/css-cubic-bezier-guide) lets you design your own curve, and `linear()` handles shapes with more than one bounce.
 - Respect `prefers-reduced-motion` for any non-essential motion, whichever curve drives it.

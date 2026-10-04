@@ -499,6 +499,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-10-04", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-cubic-bezier-guide",
+    title: "An Interactive Guide to CSS `cubic-bezier()`",
+    excerpt: "Drag two control points, design your own curve.",
+    description: "An interactive guide to CSS cubic-bezier(): what the four numbers control, how to build overshoot and anticipation curves, hand-tuned recipes, and a draggable curve playground.",
+    category: ["Animations"],
+    tags: ["css", "animation", "transition", "timing-function", "cubic-bezier", "easing", "css-animation", "microinteractions", "ui-design", "motion-design", "overshoot", "accessibility", "linear-easing", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-cubic-bezier-guide/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS cubic-bezier easing guide showing colorful timing-function curves, control-point graphs, and animated motion examples for linear, ease, ease-in, ease-out, and ease-in-out.",
+      caption: "Custom cubic-bezier() curves shaped by dragging their two control points."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "The draggable playground was the heart of this one — full keyboard control, a ghost-dot track, and a preview that respects reduced motion — alongside races for the supercharged, overshoot and recipe curves. Checking every number against the curve it describes, right down to how far a 1.25 control point really overshoots, took longer than writing any single section. Thanks for dragging and racing your way through it with me — now go and design a curve that's entirely yours. 🎛️",
+    changelog: [
+      { date: "2026-10-04", change: "Initial publication" }
+    ]
   }
 ];
 
