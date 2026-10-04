@@ -17,6 +17,7 @@ import RainbowDivider from "@/components/RainbowDivider";
 import IconStretchyGuy from "@/icons/IconStretchyGuy";
 import EasingCurveGraph from "@/components/EasingCurveGraph";
 import TimingFunctionRace from "@/components/TimingFunctionRace";
+import CubicBezierPlayground from "@/components/CubicBezierPlayground";
 import StepsEasingGraph from "@/components/StepsEasingGraph";
 import StepsEasingRace from "@/components/StepsEasingRace";
 import SvgSnippet from "@/components/SvgSnippet";
@@ -99,6 +100,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     IconStretchyGuy,
     EasingCurveGraph,
     TimingFunctionRace,
+    CubicBezierPlayground,
     StepsEasingGraph,
     StepsEasingRace,
     SvgSnippet,
