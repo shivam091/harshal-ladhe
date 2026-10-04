@@ -138,8 +138,12 @@ CSS's `linear()` easing function removes that ceiling entirely. Instead of two c
 
 The second line is an overshoot-and-settle curve — progress climbs past `1` and then settles back onto it. On its own that single overshoot is still within `cubic-bezier()`'s reach, but every stop is just one more corner: add a couple of smaller, alternating stops and the curve swings across `1` again and again, which no single `cubic-bezier()` call could ever produce, since a cubic curve can overshoot its target at most once. Add more stops and the shape gets smoother; add fewer and it gets more angular. That's also exactly what makes `linear()` the tool behind most "spring easing" you'll see on the web: sample enough points along a real spring's decay curve and `linear()` can trace it almost exactly, something no fixed four-number formula can do.
 
+<LinearEasingGraph presetKey="settle" />
+
+The dots mark each stop. The dashed lines are `y = 0` and `y = 1`. The three middle stops climb towards the `y = 1` line, the last of them pokes just above it, and the curve then settles back down onto it. Every extra stop added past that point is one more chance to change direction again, which is exactly where multi-bounce shapes come from — the `linear()` guide uses twelve stops to draw a ball that lands four times.
+
 <Info title="Going further with linear()">
-  This is only a taste. An Interactive Guide to the CSS linear() Easing Function covers the rest: how stops without a percentage space themselves out, spring, bounce and wind-up recipes with races, flat "pause" segments, and a playground where you drag, pin, add and remove stops yourself. `linear()` has worked in every major browser since December 2023; if you still support older ones, the post also shows a one-line `cubic-bezier()` fallback.
+  This is only a taste. [An Interactive Guide to the CSS linear() Easing Function](/post/animations/css-linear-easing-function-guide) covers the rest: how stops without a percentage space themselves out, spring, bounce and wind-up recipes with races, flat "pause" segments, and a playground where you drag, pin, add and remove stops yourself. `linear()` has worked in every major browser since December 2023; if you still support older ones, the post also shows a one-line `cubic-bezier()` fallback.
 </Info>
 
 <RainbowDivider />
@@ -166,7 +170,7 @@ Almost always because an *x* value — the first or third number — is outside 
 
 ### Can `cubic-bezier()` make something bounce more than once?
 
-No. A single cubic curve can overshoot its target at most once, and can wind up below `0` at most once — no choice of control points gets you a second bounce. For multi-bounce, spring or elastic motion, use `linear()`, or chain several keyframe segments together, each with its own curve.
+No. A single cubic curve can overshoot its target at most once, and can wind up below `0` at most once — no choice of control points gets you a second bounce. For multi-bounce, spring or elastic motion, use [`linear()`](/post/animations/css-linear-easing-function-guide), or chain several keyframe segments together, each with its own curve.
 
 ---
 

@@ -497,6 +497,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-10-04", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-linear-easing-function-guide",
+    title: "An Interactive Guide to the CSS `linear()` Easing Function",
+    excerpt: "Chain custom stops into springs, bounces, and elastics.",
+    description: "A deep, interactive guide to CSS's linear() easing function — comma-separated stops, percentage positions, and building spring and bounce curves cubic-bezier() can't express.",
+    category: ["Animations"],
+    tags: ["css", "animation", "css-animation", "timing-function", "easing", "linear-easing", "cubic-bezier", "spring-animation", "bounce-easing", "web-animation", "ui-design", "microinteractions", "accessibility", "advanced", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-linear-easing-function-guide/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS cubic-bezier easing guide showing colorful timing-function curves, control-point graphs, and animated motion examples for linear, ease, ease-in, ease-out, and ease-in-out."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Plotting straight lines sounds simple until every stop needs the browser's exact auto-spacing and clamping rules behind it. This one needed an open-ended playground — drag, pin, add, remove and type stops, with a live preview running the real linear() value — plus static graphs and races for every worked example, from the auto-spacing table to the ten-stop elastic settle and the flat-segment syntax. Getting the bounce, spring and wind-up presets to each feel distinct took more rounds of tuning than any curve on the cubic-bezier() side of the series. Thanks for tracing every stop with me — now go and chain together a curve of your own. 🌀",
+    changelog: [
+      { date: "2026-10-04", change: "Initial publication" }
+    ]
   }
 ];
 

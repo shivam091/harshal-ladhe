@@ -163,7 +163,7 @@ With five easing keywords to pick from — plus the stepped keywords, and custom
 | No strong opinion, just a small hover or fade? | `ease` — the default, and a genuinely good one. |
 | Should it change all at once, with no in-between values? | `step-start` or `step-end` — or `steps()` for several discrete jumps, such as frame-by-frame effects. |
 | Do you want it to feel tactile, springy, or celebratory? | An [overshoot curve](/post/animations/css-cubic-bezier-guide#beyond-the-defaults-supercharging-a-curve) built with `cubic-bezier()` — sparingly. |
-| Does it need more than one bounce? | `linear()` — string together as many stops as the motion needs. |
+| Does it need more than one bounce? | [`linear()`](/post/animations/css-linear-easing-function-guide) — string together as many stops as the motion needs. |
 | None of the above feel quite right? | [`cubic-bezier()`](/post/animations/css-cubic-bezier-guide#designing-your-own-curve-with-cubic-bezier) — design the exact curve you're picturing. |
 
 Duration matters here too, not just shape: a curve's personality reads clearly at 200–400ms, but stretch even the punchiest overshoot curve out to 2 seconds and it starts to feel sluggish rather than energetic — the [Best Practices](/post/animations/css-transitions-guide#best-practices) section of the transitions guide covers picking a good duration in more depth.
@@ -221,5 +221,5 @@ A timing function is a curve, not a keyword — five specific curves, in the cas
 - `ease-out` for entrances, `ease-in` for exits, `ease-in-out` for in-place state changes, `linear` for continuous loops, `ease` when you have no strong opinion — as a starting default, not an absolute rule.
 - Duration and timing function are independent: duration stretches the curve, the timing function decides its shape.
 - `step-start` and `step-end` are the other two keywords: one instant jump instead of a curve. They're the one-step cases of `steps()`, a different model entirely that belongs to a different kind of animation.
-- When no keyword fits, [`cubic-bezier()`](/post/animations/css-cubic-bezier-guide) lets you design your own curve, and `linear()` handles shapes with more than one bounce.
+- When no keyword fits, [`cubic-bezier()`](/post/animations/css-cubic-bezier-guide) lets you design your own curve, and [`linear()`](/post/animations/css-linear-easing-function-guide) handles shapes with more than one bounce.
 - Respect `prefers-reduced-motion` for any non-essential motion, whichever curve drives it.
