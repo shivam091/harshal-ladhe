@@ -187,6 +187,7 @@ The `animation-timing-function` CSS property controls the **speed curve** of the
 | `ease-in-out` | Slow start and end, fast middle. |
 | `steps(n, start/end)` | Jump-based animations for discrete steps. |
 | `cubic-bezier(x1, y1, x2, y2)` | Custom curve for precise control. |
+| `linear(<stops>)` | A curve drawn through any number of points — for springs and multi-bounce settles. |
 
 Here's what those curves actually look like, plotted on a shared timeline:
 
@@ -207,7 +208,7 @@ You can specify multiple timing functions for multiple animations, maintaining t
 </CodeBlock>
 
 <Info title="Note on cubic-bezier">
-  This function gives you granular control over the curve, allowing you to simulate complex effects like a subtle spring or bounce (where the property briefly overshoots its final value) in your animations.
+  This function gives you granular control over the curve, allowing you to simulate complex effects like a subtle spring or bounce (where the property briefly overshoots its final value) in your animations. For a labelled graph and a live race for every keyword, see [An Interactive Guide to CSS Easing Functions](/post/animations/css-easing-functions-guide). For what each control point actually does, see [An Interactive Guide to CSS cubic-bezier()](/post/animations/css-cubic-bezier-guide). For motion that needs more than one bounce, see [An Interactive Guide to the CSS linear() Easing Function](/post/animations/css-linear-easing-function-guide).
 </Info>
 
 For discrete, frame-by-frame motion instead of continuous easing — typewriters, sprite sheets, ticking clocks — see [Mastering CSS steps() for Discrete, Stepped Animations](/post/animations/css-step-timing-function).
