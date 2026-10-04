@@ -111,6 +111,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Exploring CSS Animation Timing Functions (`ease`, `steps`, `cubic-bezier`)",
     description: "Understand how to control the speed curve of your animations using built-in keywords, `steps()`, and custom `cubic-bezier()` and `linear()` timing functions."
   },
+  "easing": {
+    title: "Understanding CSS Easing Curves",
+    description: "The shape behind every named timing function — why `ease-in`, `ease-out`, and `ease-in-out` feel so different, and how to pick the right one."
+  },
+  "motion-design": {
+    title: "Motion Design for the Web",
+    description: "The design thinking behind interface motion — choosing curves, durations, and personality so movement explains what's happening instead of decorating it."
+  },
   "microinteractions": {
     title: "Designing and Implementing Effective Microinteractions",
     description: "Focus on small, subtle animations and feedback loops that enhance user experience, usability, and delight in a web application."
