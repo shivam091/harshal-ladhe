@@ -139,6 +139,8 @@ A single `<path>` has a bounding box that's already centered on the shape you ca
 
 This one groups eight rays and a center circle inside a single `<g class="sun-icon-rays">` — and it's exactly the symmetric case the `transform-box: fill-box` shortcut from [above](#the-transform-origin-trap) is built for. The rays radiate evenly around `(50, 50)`, so the group's bounding-box center happens to land right on the point you want it to spin around. Hovering the whole canvas rotates and grows that group with a single `transform`, entirely on `:hover`, entirely via `transition`.
 
+The `cubic-bezier(0.4, 0, 0.2, 1)` curve is what keeps that turn from feeling mechanical: it picks up speed briefly, then spends most of the duration easing gently into its resting angle. For what those four numbers actually control — and how to tune a curve like this one by hand — see [An Interactive Guide to CSS cubic-bezier()](/post/animations/css-cubic-bezier-guide).
+
 <RainbowDivider />
 
 ## Keyframes on SVG: The Radar Scanner
