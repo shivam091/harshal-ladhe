@@ -1,0 +1,194 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-cubic-bezier-guide");
+
+## Introduction
+
+CSS ships five easing keywords — `linear`, `ease`, `ease-in`, `ease-out`, and `ease-in-out` — and for a lot of everyday UI motion, one of them is exactly right. But sooner or later you'll want a curve none of them quite gives you: an entrance that decelerates harder than `ease-out`, a button that pops slightly past its target before settling, or a wind-up before a card flies away. That's where `cubic-bezier()` comes in.
+
+Here's the secret that makes it approachable: the five keywords aren't a separate mechanism at all. Each one can be written as a specific `cubic-bezier()` value; the keyword is just a friendly name for it. Once you understand the four numbers underneath, the keywords become presets and `cubic-bezier()` becomes the dial that lets you go anywhere between them — and well beyond. This post covers what those four numbers actually control, how far you can push them, a set of hand-tuned recipes, and a draggable playground for designing your own. It also covers the one shape `cubic-bezier()` can never draw, and what to use instead.
+
+<Info title="Prerequisite">
+  This post builds on the time-vs-progress model and the five keyword curves from [An Interactive Guide to CSS Easing Functions](/post/animations/css-easing-functions-guide). If a timing-function graph is still new to you, start there — every graph on this page reads the same way.
+</Info>
+
+<RainbowDivider />
+
+## What Is a Cubic Bezier Curve?
+
+A cubic bezier curve is built from four points:
+
+- **P0** and **P3** are fixed anchors at `(0, 0)` and `(1, 1)` — the start and end of every timing function, always. You never get to move these: every transition starts at 0% progress and ends at 100% progress, by definition.
+- **P1** and **P2** are the two *control points* you (or the keyword) get to place anywhere. Neither one sits on the curve itself — think of them as magnets. The curve is pulled towards each control point without ever quite touching it, more strongly near that end of the curve and less strongly further away.
+
+That's genuinely the whole idea. Drag P1 up and to the left, and the curve leaves the starting line at a steeper angle — progress accelerates quickly. Drag P2 down and to the right, and the curve approaches the finish line shallowly — progress decelerates gently before it gets there. Every curve on this page is just a particular choice of where to put those two magnets.
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  /* The keyword on the left is shorthand for the cubic-bezier() value on the right. */
+  transition-timing-function: ease-in-out;
+  transition-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+`}
+</CodeBlock>
+
+Each `cubic-bezier(x1, y1, x2, y2)` call packs in exactly those two control points: `(x1, y1)` is P1, `(x2, y2)` is P2. You'll see this pattern in every curve section below — the graph shows where the two points sit, and the numbers underneath are literally what you'd type into `cubic-bezier()` to get that exact curve.
+
+### The Keywords as Coordinates
+
+Written out as control points, the five keywords look like this:
+
+| Keyword | Equivalent `cubic-bezier()` | Where the pull is |
+| --- | --- | --- |
+| `linear` | `cubic-bezier(0, 0, 1, 1)` | Nowhere — both points sit on the diagonal, so it stays a straight line. |
+| `ease` | `cubic-bezier(0.25, 0.1, 0.25, 1)` | A soft start and a long, gentle ease out. The default. |
+| `ease-in` | `cubic-bezier(0.42, 0, 1, 1)` | Only at the start — P2 sits on the end anchor, so there's no deceleration. |
+| `ease-out` | `cubic-bezier(0, 0, 0.58, 1)` | Only at the end — P1 sits on the start anchor, so there's no acceleration. |
+| `ease-in-out` | `cubic-bezier(0.42, 0, 0.58, 1)` | Evenly at both ends, mirrored across the middle. |
+
+Notice that every keyword keeps both control points inside the `0`–`1` box. That's what keeps them conservative — and it's exactly the restriction you're free to ignore once you write your own values. For a labelled graph and a live race of each keyword, see [The Five Named Curves](/post/animations/css-easing-functions-guide#the-five-named-curves).
+
+<RainbowDivider />
+
+## Beyond the Defaults: Supercharging a Curve
+
+The five keywords are deliberately conservative — their control points stay inside the `0`–`1` box and never pull hard in any one direction, which keeps the acceleration and deceleration gentle. Nothing stops you from pushing a control point further, though, and doing so lets you dial the *intensity* of a curve's personality up considerably.
+
+<EasingCurveGraph name="ease-in-out-mega" />
+
+This is `cubic-bezier(0.645, 0.045, 0.355, 1)` — an `ease-in-out` shape with P1 pushed right (from `0.42` to `0.645`) and P2 pushed left (from `0.58` to `0.355`), both towards the centre. Compare it with the standard [`ease-in-out` graph](/post/animations/css-easing-functions-guide#ease-in-out): the flat stretches at either end last longer, so the middle has to be noticeably steeper to make up the time. Same basic personality as `ease-in-out`, turned up.
+
+<TimingFunctionRace names={["ease-in-out", "ease-in-out-mega", "ease-mega"]} initialName="ease-in-out-mega" />
+
+The race's picker also has `ease (supercharged)` — `cubic-bezier(0.44, 0.21, 0, 1)`, the same treatment applied to `ease`. With P2 dragged all the way to the left edge, it covers most of the track even sooner than `ease` and then spends longer braking into the finish.
+
+Control points don't have to stay within the `0`–`1` box on the *y*-axis, either. Push P2's *y* value past 1 and the curve briefly rises above full progress before settling back down — the property visibly overshoots its target and eases back, the same way a spring does when you let go of it too fast.
+
+<EasingCurveGraph name="overshoot" />
+
+That's `cubic-bezier(0.325, 0, 0.7, 1.25)` — P2 sits at `y = 1.25`, a full quarter past the finish line. Race it against the pack:
+
+<TimingFunctionRace names={["ease-out", "overshoot"]} initialName="overshoot" />
+
+Watch the marker on `overshoot`: it pushes past the finish line before settling back — a small, satisfying bounce rather than a hard stop. The overshoot itself peaks at only about 3%, not 25%, because the curve is pulled *towards* P2 without ever reaching it — a useful reminder that control points steer a curve rather than sit on it. Used sparingly, this kind of overshoot is a great way to make a button press or a card popping into view feel tactile and alive.
+
+<Success title="This site uses one">
+  You don't have to take overshoot curves purely on faith — the page-navigation loaders on this site spring into place on `cubic-bezier(0.34, 1.56, 0.64, 1)`. With P1 pushed all the way up to `y = 1.56`, that curve overshoots its target by roughly 10% before settling, for exactly this kind of "arrived, and it feels good" micro-interaction. Next time you click through to another post, watch the loader pop rather than just appear — that's a curve just like the one above doing the work.
+</Success>
+
+<Warning title="A little goes a long way">
+  Overshoot and bounce curves read as playful and energetic, but they also draw a disproportionate amount of attention and take noticeably longer to fully settle than a curve that stays within `0`–`1`. Reserve them for small, infrequent, deliberately delightful moments — a like button, a success confirmation — rather than routine UI chrome. Applied everywhere, the effect stops feeling special and starts feeling like everything is jiggling.
+</Warning>
+
+<RainbowDivider />
+
+## Designing Your Own Curve with `cubic-bezier()`
+
+Once the five keywords stop being enough, `cubic-bezier(x1, y1, x2, y2)` lets you place both control points anywhere you like. There's exactly one constraint worth internalising:
+
+<Warning title="x must stay within 0 and 1">
+  P1 and P2's *x* values (the first and third numbers) are clamped to the `0`–`1` range by the CSS spec — pass anything outside it and the whole declaration is invalid. This isn't an arbitrary restriction: time only ever moves forward, so the curve has to be a proper function of *x* (exactly one *y* for every *x*). Letting *x* wander outside `0`–`1`, or letting the curve fold back on itself, would mean asking "what's the progress at a moment in time that doesn't exist yet" — there'd be no sensible answer. The *y* values, by contrast, are unrestricted in either direction, which is exactly how overshoot curves like the one above get their bounce.
+</Warning>
+
+A handful of hand-tuned curves come up often enough to be worth having on hand:
+
+| Recipe | Value | Feel |
+| --- | --- | --- |
+| Anticipation | `cubic-bezier(0.36, 0, 0.66, -0.56)` | Dips *below* 0 before advancing — a small wind-up before the motion starts, like a coiled spring. |
+| Punchy overshoot | `cubic-bezier(0.68, -0.55, 0.265, 1.55)` | Overshoots on *both* ends — a snappy, energetic pop. |
+| Soft landing | `cubic-bezier(0.16, 1, 0.3, 1)` | An intensified `ease-out` — leaves at full speed, decelerates hard and stays smooth all the way to a gentle stop. |
+| Sharp exit | `cubic-bezier(0.7, 0, 0.84, 0)` | An intensified `ease-in` — barely moves at first, then accelerates hard right up to the cut. |
+
+<TimingFunctionRace names={["anticipation", "punchy-overshoot", "soft-landing", "sharp-exit"]} initialName="anticipation" />
+
+Race all four and the table's "Feel" column stops being abstract: `Anticipation` visibly backs up before it goes, `Punchy overshoot` does the same *and* sails past the finish, `Soft landing` covers most of the track almost instantly and then creeps home, and `Sharp exit` hardly leaves the line until the last moment.
+
+Rather than just reading numbers off a table, though, the fastest way to build an intuition for what P1 and P2 actually do is to move them yourself:
+
+<CubicBezierPlayground />
+
+Here's how to drive it:
+
+- **Drag either handle** — P1 is tied to the bottom-left corner by a dashed guide line, P2 to the top-right — and the curve reshapes as you go. Handles can only move between `0` and `1` horizontally (the rule from the warning above), but they're free to go above `1` or below `0`, so overshoot and anticipation curves are within reach.
+- **Use the keyboard** instead if you prefer: focus a handle, then use the arrow keys to nudge it, holding Shift for bigger steps.
+- **Read the faded dots on the track** below the graph. Each one marks where the box will be at an equal slice of time, so bunched-up dots mean slow motion and spread-out dots mean fast motion — the same spacing the race demos show.
+- **Press Play** to watch the box run the curve for real.
+- **Copy the `cubic-bezier(...)` readout** with the button beside it once the motion feels right — it's ready to paste straight into a stylesheet.
+
+<Info title="Your browser has one of these too">
+  The playground above isn't the only place to drag a curve by hand — Chrome, Firefox, and Safari DevTools all render the same kind of visual editor the moment you click the little curve icon next to any `cubic-bezier(...)` value in the Styles/Rules pane. It's a great way to tune a curve that's already live on a real element, in its real context, without leaving the page you're debugging.
+</Info>
+
+<RainbowDivider />
+
+## Beyond `cubic-bezier()`: The `linear()` Function
+
+Every curve on this page so far has been a cubic bezier, and that's not a stylistic choice — it's a hard ceiling. A cubic curve is a single polynomial, which means it can only bend one way before settling: one acceleration, one deceleration, at most one overshoot past the finish line. That covers an enormous amount of real UI motion, but not all of it. A ball that bounces twice before coming to rest, or a curve with a shape too irregular to describe with just two control points, is structurally out of reach for `cubic-bezier()` — not a matter of finding better numbers, but a limit of what one cubic curve can express.
+
+CSS's `linear()` easing function removes that ceiling entirely. Instead of two control points, it takes any number of progress stops and draws a straight line between each consecutive pair — a piecewise-linear trace of whatever shape you're picturing:
+
+<CodeBlock language="css" showCopyButton={false}>
+{`
+  /* Each number is a progress value; an optional percentage after it pins
+     that stop to an exact point in the duration. Stops without one are
+     spaced evenly across whatever room is left. */
+  transition-timing-function: linear(0, 0.5, 1);
+  transition-timing-function: linear(0, 0.63 25%, 0.9 45%, 1.04 65%, 1);
+`}
+</CodeBlock>
+
+The second line is an overshoot-and-settle curve — progress climbs past `1` and then settles back onto it. On its own that single overshoot is still within `cubic-bezier()`'s reach, but every stop is just one more corner: add a couple of smaller, alternating stops and the curve swings across `1` again and again, which no single `cubic-bezier()` call could ever produce, since a cubic curve can overshoot its target at most once. Add more stops and the shape gets smoother; add fewer and it gets more angular. That's also exactly what makes `linear()` the tool behind most "spring easing" you'll see on the web: sample enough points along a real spring's decay curve and `linear()` can trace it almost exactly, something no fixed four-number formula can do.
+
+<LinearEasingGraph presetKey="settle" />
+
+The dots mark each stop. The dashed lines are `y = 0` and `y = 1`. The three middle stops climb towards the `y = 1` line, the last of them pokes just above it, and the curve then settles back down onto it. Every extra stop added past that point is one more chance to change direction again, which is exactly where multi-bounce shapes come from — the `linear()` guide uses twelve stops to draw a ball that lands four times.
+
+<Info title="Going further with linear()">
+  This is only a taste. [An Interactive Guide to the CSS linear() Easing Function](/post/animations/css-linear-easing-function-guide) covers the rest: how stops without a percentage space themselves out, spring, bounce and wind-up recipes with races, flat "pause" segments, and a playground where you drag, pin, add and remove stops yourself. `linear()` has worked in every major browser since December 2023; if you still support older ones, the post also shows a one-line `cubic-bezier()` fallback.
+</Info>
+
+<RainbowDivider />
+
+## Accessibility and Performance
+
+A custom `cubic-bezier()` costs the browser no more than a keyword does — the keywords *are* `cubic-bezier()` values, so the browser solves exactly the same kind of curve either way. What makes motion cheap or expensive is the property being animated, not the curve: everything on this page is a `transform`-driven demo, and the [Why GPU-Accelerated Properties Are Cheap](/post/animations/css-transitions-guide#why-gpu-accelerated-properties-are-cheap) section of the transitions guide covers why that matters and which properties to prefer.
+
+Every race demo on this page, and the playground's preview, checks `prefers-reduced-motion` and disables its Play button when it's set, since the whole point of those demos is motion that some readers have explicitly asked not to see. Everything else stays fully usable either way — the static graphs, the ghost-dot trails, dragging the playground's handles, and copying its value — because nothing about *understanding* a curve's shape requires it to actually move.
+
+<Info title="Applying this to your own curves">
+  Custom curves deserve more care here than the keywords do: overshoot and anticipation curves in particular can read as excessive motion to someone with a vestibular disorder. Wrap them — like any non-essential motion — in `@media (prefers-reduced-motion: reduce)`, or swap them for a plain `ease-out` there. The [Accessibility: Respecting Motion Preferences](/post/animations/css-transitions-guide#accessibility-respecting-motion-preferences) section of the transitions guide has the full pattern.
+</Info>
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+### Why is my `cubic-bezier()` value being ignored?
+
+Almost always because an *x* value — the first or third number — is outside `0`–`1`. That makes the whole declaration invalid, so the browser drops it and falls back to whatever timing function applied before (usually the default, `ease`). Negative values and values above `1` are only allowed in the *y* positions. Your browser's DevTools will typically show the declaration struck through or flagged as invalid, which is the quickest way to confirm it.
+
+---
+
+### Can `cubic-bezier()` make something bounce more than once?
+
+No. A single cubic curve can overshoot its target at most once, and can wind up below `0` at most once — no choice of control points gets you a second bounce. For multi-bounce, spring or elastic motion, use [`linear()`](/post/animations/css-linear-easing-function-guide), or chain several keyframe segments together, each with its own curve.
+
+---
+
+### Where do values like `cubic-bezier(0.34, 1.56, 0.64, 1)` come from?
+
+Mostly from Robert Penner's classic easing equations — names like `easeOutBack` and `easeInOutCubic` that animation libraries have used for years. Collections such as easings.net list a `cubic-bezier()` approximation for each one, ready to paste into a stylesheet. The overshoot curve this site's loaders use is the usual `easeOutBack` value. Treat these collections as starting points, and tune the result in a playground until it suits your motion.
+
+<RainbowDivider />
+
+## Wrapping Up
+
+`cubic-bezier()` is not a separate, advanced corner of CSS. It's the mechanism under every timing function you've already been using. Two anchors are fixed, two control points are free, and the keywords are just five well-chosen placements of those points. Push the points further and you get more intense versions of the same personalities. Let a *y* value escape the `0`–`1` box and you get overshoot and anticipation. When even that isn't enough, `linear()` picks up where one cubic curve runs out.
+
+**Key takeaways:**
+
+- `cubic-bezier(x1, y1, x2, y2)` places two control points, P1 and P2; P0 and P3 are always fixed at `(0, 0)` and `(1, 1)`.
+- Control points act like magnets: they steer the curve without ever sitting on it, which is why a `y` of `1.25` produces only a small overshoot.
+- Every keyword is a specific `cubic-bezier()` value that stays inside the `0`–`1` box — custom values can go further.
+- *x* values must stay within `0`–`1` or the declaration is invalid; *y* values are unrestricted, which is where overshoot and anticipation come from.
+- A cubic curve can bend only so many times: one overshoot at most. `linear()` lifts that ceiling with an open-ended list of stops.
+- Reserve overshoot and anticipation curves for small, deliberate moments, and always respect `prefers-reduced-motion`.
