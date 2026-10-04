@@ -15,6 +15,8 @@ import Sandbox from "@/components/Sandbox";
 import LikeButtonDemo from "@/components/LikeButtonDemo";
 import RainbowDivider from "@/components/RainbowDivider";
 import IconStretchyGuy from "@/icons/IconStretchyGuy";
+import EasingCurveGraph from "@/components/EasingCurveGraph";
+import TimingFunctionRace from "@/components/TimingFunctionRace";
 import StepsEasingGraph from "@/components/StepsEasingGraph";
 import StepsEasingRace from "@/components/StepsEasingRace";
 import SvgSnippet from "@/components/SvgSnippet";
@@ -95,6 +97,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     LikeButtonDemo,
     RainbowDivider,
     IconStretchyGuy,
+    EasingCurveGraph,
+    TimingFunctionRace,
     StepsEasingGraph,
     StepsEasingRace,
     SvgSnippet,
