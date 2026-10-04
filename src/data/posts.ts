@@ -457,6 +457,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-09-28", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-easing-functions-guide",
+    title: "An Interactive Guide to CSS Easing Functions",
+    excerpt: "Feel how the five easing keywords shape motion.",
+    description: "A visual guide to CSS timing functions: how time maps to progress, why ease, linear, ease-in, ease-out and ease-in-out feel so different, and when to use each.",
+    category: ["Animations"],
+    tags: ["css", "animation", "transition", "timing-function", "easing", "css-animation", "microinteractions", "ui-design", "motion-design", "accessibility", "steps", "beginner", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-easing-functions-guide/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS easing functions guide cover showing five easing curves—linear, ease, ease-in, ease-out, and ease-in-out—with comparison graphs, CSS timing-function examples, and animated race tracks illustrating how each curve affects motion."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one turned into far more build than prose: a shared plotting engine, a labelled graph for each of the five keywords, and races that solve every curve frame by frame so the marker moves exactly as the browser would. Checking every number in the prose against the curve it describes took longer than writing any single section. Thanks for racing and comparing your way through it with me — now go and give every entrance, exit and state change the curve it deserves. 📈",
+    changelog: [
+      { date: "2026-10-04", change: "Initial publication" }
+    ]
   }
 ];
 
