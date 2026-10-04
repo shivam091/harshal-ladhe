@@ -147,6 +147,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
       { date: "2026-09-24", change: "Added cross-reference to post 'Mastering CSS steps() for Discrete, Stepped Animations'" },
       { date: "2026-09-13", change: "Added cross-reference to tutorial 'Hinting Layer Promotion with will-change'" },
       { date: "2026-08-08", change: "Initial publication" }
@@ -311,6 +312,7 @@ export const posts: Post[] = [
     signoff: "Getting the radar's sweep to pivot from the right point back in the basic shapes post turned out to be the easy part. This round added five more interactive panels, each wiring its own live code and controls to real `@keyframes` — and the trickiest bug wasn't in the animation at all, it was figuring out why an elliptical arc needs to end 0.1 units short of its own starting point just to keep the motion-path math from collapsing into nothing. Thanks for hovering the heart and sun, looping the radar, dragging the draw-on and stagger sliders, toggling the comet's curve-following on and off, and watching a circle round itself into a square with me — go animate something that used to just sit there. 🎯",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-10-04", change: "Added cross-reference to post 'An Interactive Guide to CSS cubic-bezier()'" },
       { date: "2026-09-24", change: 'Added cross reference to post "Mastering CSS steps() for Discrete, Stepped Animations" from the radar scanner case study' },
       { date: "2026-09-06", change: "Initial publication" }
     ]
@@ -393,6 +395,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Between the core keyframes playground and a second sandbox built just to make `animation-timeline` and `animation-range` tangible — complete with a live range slider and its own feature-detection fallback for browsers that don't support scroll-driven animations yet — this one ended up needing two full interactive builds instead of one. Getting the `animation-range` diagram to actually line up entry/contain/cover/exit against a scrolling element took more iteration than the rest of the post combined. Thanks for tweaking every duration, delay, and range slider with me — go give your loops, spinners, and scroll reveals some real personality. 🎬",
     changelog: [
+      { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
       { date: "2026-09-24", change: "Added cross-reference to post 'Mastering CSS steps() for Discrete, Stepped Animations'" },
       { date: "2026-09-13", change: "Added cross-reference to tutorial 'Hinting Layer Promotion with will-change'" },
       { date: "2026-09-13", change: "Initial publication" }
@@ -415,6 +418,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one needed six separate playgrounds instead of one — a typewriter, a ticking clock, a chunked progress bar, a sprite-sheet walk cycle, per-keyframe steps, and a jump-term sandbox — plus a small SVG curve-plotting engine built from scratch just to make every jump-term's staircase, the step-start/step-end shorthands, and a six-way race between them visible instead of theoretical. Chasing down the off-by-one frames, the blank sprite flash, and the readouts that had to agree with what each jump term actually renders took longer than writing any single section. Thanks for ticking through every one of them with me — go find the one motion in your UI that wants to jump instead of glide. 🎞️",
     changelog: [
+      { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
       { date: "2026-09-24", change: "Initial publication" },
     ],
   },
