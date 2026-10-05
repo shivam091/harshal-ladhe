@@ -143,5 +143,11 @@ export const goodies: Goodie[] = [
     description: "Circuit-board SVG-to-JSX converter — camelCases attributes, strips editor cruft, inlines <style> classes, swaps colours for currentColor and wires title/size/ref props, with a sanitised side-by-side preview and a transforms log.",
     icon: "svgToReact",
     href: "/goodies/svg-to-react"
+  },
+  {
+    name: "Meta / Open Graph Preview",
+    description: "Corkboard-styled share-preview pinboard — edit metadata or paste an existing <head>, compare pinned X, LinkedIn, Slack, Facebook, Discord, iMessage, and Google previews with per-card light/dark, audit lengths/image size/alt/absolute URLs, and export HTML/Next.js metadata/React <Head>.",
+    icon: "openGraph",
+    href: "/goodies/open-graph-preview"
   }
 ];

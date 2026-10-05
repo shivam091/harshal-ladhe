@@ -1067,6 +1067,26 @@ export const icons = {
       </>
     )
   },
+  openGraph: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="3" y="3" width="18" height="18" rx="2" />
+        <path d="M3 13 L21 13" />
+        <path d="M3 11 L8 7 L12 10.5 L15 8 L21 12" />
+        <circle cx="16.5" cy="6.5" r="1" fill="currentColor" stroke="none" />
+        <path d="M6 16.5 L15 16.5" />
+        <path d="M6 19 L11 19" />
+      </>
+    )
+  },
   penTool: {
     viewBox: "0 0 24 24",
     svgProps: {
