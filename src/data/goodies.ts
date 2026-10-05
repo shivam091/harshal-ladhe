@@ -137,5 +137,11 @@ export const goodies: Goodie[] = [
     description: "Dope-sheet @keyframes builder — click a frame-ruled exposure track to add keyframes, drag or arrow-key them into place, pin translate/rotate/scale/opacity/colour/radius per stop (unset properties interpolate across), scrub a live preview with onion skins, start from bounce/pulse/shake/heartbeat presets, and export to CSS/Tailwind/React.",
     icon: "keyframes",
     href: "/goodies/keyframes-animation-builder"
+  },
+  {
+    name: "SVG → React Component Converter",
+    description: "Circuit-board SVG-to-JSX converter — camelCases attributes, strips editor cruft, inlines <style> classes, swaps colours for currentColor and wires title/size/ref props, with a sanitised side-by-side preview and a transforms log.",
+    icon: "svgToReact",
+    href: "/goodies/svg-to-react"
   }
 ];

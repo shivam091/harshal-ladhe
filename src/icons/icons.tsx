@@ -1243,6 +1243,25 @@ export const icons = {
     )
   },
   // Two opposing curved arrows — a generic swap/exchange glyph, used here for ContrastControls' foreground/background swap action.
+  svgToReact: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <circle cx="5.5" cy="7" r="3" />
+        <path d="M2.5 20 L5.5 14.5 L8.5 20 Z" />
+        <path d="M14 8 L11 12 L14 16" />
+        <path d="M18 7 L16 17" />
+        <path d="M19.5 8 L22.5 12 L19.5 16" />
+      </>
+    )
+  },
   swap: {
     viewBox: "0 0 24 24",
     svgProps: {
