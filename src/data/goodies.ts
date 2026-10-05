@@ -131,5 +131,11 @@ export const goodies: Goodie[] = [
     description: "Tailor's-bench px ⇄ rem/em/vw/vh/cqi/%/pt converter with editable root/parent/viewport/container context, a true-scale measuring tape with a parallel ruler per unit, batch spacing-scale conversion, and CSS custom-property/Tailwind/Sass/JS export.",
     icon: "unitConverter",
     href: "/goodies/css-unit-converter"
+  },
+  {
+    name: "Keyframes Animation Builder",
+    description: "Dope-sheet @keyframes builder — click a frame-ruled exposure track to add keyframes, drag or arrow-key them into place, pin translate/rotate/scale/opacity/colour/radius per stop (unset properties interpolate across), scrub a live preview with onion skins, start from bounce/pulse/shake/heartbeat presets, and export to CSS/Tailwind/React.",
+    icon: "keyframes",
+    href: "/goodies/keyframes-animation-builder"
   }
 ];

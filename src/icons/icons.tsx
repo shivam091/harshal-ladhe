@@ -943,6 +943,26 @@ export const icons = {
       </>
     )
   },
+  keyframes: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M2 12 L22 12" />
+        <path d="M5 9 L8 12 L5 15 L2 12 Z" />
+        <path d="M12 9 L15 12 L12 15 L9 12 Z" />
+        <path d="M19 9 L22 12 L19 15 L16 12 Z" />
+        <path d="M15.5 4 L15.5 20" strokeWidth={1.5} />
+        <path d="M14 4 L17 4" />
+      </>
+    )
+  },
   keyboard: {
     viewBox: "0 0 24 24",
     children: (
