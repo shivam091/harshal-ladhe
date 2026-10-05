@@ -149,5 +149,11 @@ export const goodies: Goodie[] = [
     description: "Corkboard-styled share-preview pinboard — edit metadata or paste an existing <head>, compare pinned X, LinkedIn, Slack, Facebook, Discord, iMessage, and Google previews with per-card light/dark, audit lengths/image size/alt/absolute URLs, and export HTML/Next.js metadata/React <Head>.",
     icon: "openGraph",
     href: "/goodies/open-graph-preview"
+  },
+  {
+    name: "Event Loop Visualiser",
+    description: "Signal-box event loop visualiser — build a script from setTimeout, Promise.then, queueMicrotask, async/await, fakeFetch, and requestAnimationFrame blocks, then step, play, or scrub through the call stack, Web APIs, microtask/task queues, render step, and console with a per-step explanation, plus a predict-the-output mode.",
+    icon: "eventLoop",
+    href: "/goodies/event-loop-visualiser"
   }
 ];

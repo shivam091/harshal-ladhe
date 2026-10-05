@@ -623,6 +623,24 @@ export const icons = {
       </>
     )
   },
+  eventLoop: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M19.5 14.7 A8 8 0 1 1 18.9 8" />
+        <path d="M19.2 5 L18.9 8 L16.2 6.7" />
+        <rect x="8" y="9.5" width="8" height="4.5" rx="1" />
+        <path d="M10 16.5 L10 16.5 M14 16.5 L14 16.5" />
+      </>
+    )
+  },
   externalLink: {
     viewBox: "0 0 24 24",
     svgProps: {
