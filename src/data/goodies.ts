@@ -125,5 +125,11 @@ export const goodies: Goodie[] = [
     description: "Terminal-styled bidirectional JSON/TypeScript converter — generate nested, de-duplicated interfaces with optional-field inference from JSON, or a sample JSON payload from hand-typed TS interfaces.",
     icon: "jsonToTs",
     href: "/goodies/json-to-ts"
+  },
+  {
+    name: "CSS Unit Converter",
+    description: "Tailor's-bench px ⇄ rem/em/vw/vh/cqi/%/pt converter with editable root/parent/viewport/container context, a true-scale measuring tape with a parallel ruler per unit, batch spacing-scale conversion, and CSS custom-property/Tailwind/Sass/JS export.",
+    icon: "unitConverter",
+    href: "/goodies/css-unit-converter"
   }
 ];
