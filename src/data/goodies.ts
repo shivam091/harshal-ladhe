@@ -155,5 +155,11 @@ export const goodies: Goodie[] = [
     description: "Signal-box event loop visualiser — build a script from setTimeout, Promise.then, queueMicrotask, async/await, fakeFetch, and requestAnimationFrame blocks, then step, play, or scrub through the call stack, Web APIs, microtask/task queues, render step, and console with a per-step explanation, plus a predict-the-output mode.",
     icon: "eventLoop",
     href: "/goodies/event-loop-visualiser"
+  },
+  {
+    name: "Fragment Shader Playground",
+    description: "Arcade-cabinet mini Shadertoy in raw WebGL — a GLSL fragment shader editor beside a live CRT canvas with iTime/iResolution/iMouse uniforms, line-numbered compile errors, auto-generated sliders and colour pickers for `// @slider`/`// @color`-annotated uniforms, and PNG export.",
+    icon: "shader",
+    href: "/goodies/shader-playground"
   }
 ];
