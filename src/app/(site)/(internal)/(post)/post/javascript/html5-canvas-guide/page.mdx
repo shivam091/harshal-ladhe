@@ -1,0 +1,1043 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("html5-canvas-guide");
+
+When you first dive into web development, you'll hear a lot about HTML, CSS, and JavaScript. But there's a powerful tool
+built right into the browser that acts as a bridge between code and visual art: the **HTML5 Canvas**.
+
+The **Canvas API** lets you draw graphics directly on a webpage — from simple shapes to complex animations and games.
+It gives you pixel-level control, which makes it ideal for dynamic, performance-heavy visuals that would be slow or
+awkward to build out of DOM elements.
+
+<Quote>
+  Canvas is a bitmap you paint with JavaScript — it remembers the pixels, never the shapes.
+</Quote>
+
+Hold on to that sentence; almost every Canvas habit in this guide — clearing and redrawing every frame, doing your own
+hit-testing, tracking state in variables — follows directly from it.
+
+This post covers:
+
+- What Canvas is, how to set it up, and why its size works differently from other elements
+- The coordinate system, shapes, paths, arcs, text, colours, gradients, and images
+- Transformations and the `save()`/`restore()` state stack
+- Animation loops, frame-rate-independent motion, and mouse interaction
+- Canvas vs. SVG, and when to choose each
+- Advanced techniques: high-DPI displays, layering, WebGL, hand-rolled 3D, OffscreenCanvas, and pixel manipulation
+- Performance and accessibility best practices, plus a full API cheat sheet and an interactive playground
+
+## What is the Canvas API?
+
+The `<canvas>` element is like a **digital drawing board**. You can draw shapes, lines, and text on it, and even
+manipulate images pixel by pixel. Unlike SVG, which is vector-based, Canvas rasterises everything into pixels — which
+makes it ideal for games, animations, and real-time visual effects.
+
+Canvas uses **immediate-mode rendering**: once something is drawn, it doesn't exist as a separate object. There is no
+"circle" you can later select, move, or attach a click handler to — only the coloured pixels it left behind. To move
+the circle, you clear the canvas and draw it again somewhere else.
+
+<Info title="Immediate mode vs. retained mode">
+  The DOM and SVG are **retained-mode**: the browser keeps a tree of objects and redraws them for you whenever
+  something changes. Canvas is **immediate-mode**: you issue drawing commands, the browser turns them into pixels, and
+  forgets them. That trade-off is exactly why Canvas is fast with thousands of moving things — there's no tree to
+  maintain — and exactly why you have to manage redraws and interaction yourself.
+</Info>
+
+<RainbowDivider />
+
+## Setting Up the Canvas
+
+### The HTML
+
+<CodeBlock language="html">
+{`
+  <canvas id="myCanvas" width="400" height="300">
+    A bouncing ball animation. Your browser doesn't support the canvas element.
+  </canvas>
+`}
+</CodeBlock>
+
+Here:
+
+- `id` helps you target the canvas in JavaScript.
+- `width` and `height` define the size of the **drawing surface**, in canvas pixels.
+- Anything between the tags is **fallback content**: it's shown only if the browser can't render a canvas, and it's a
+  natural place for a short text description of what the canvas shows.
+
+### The Drawing Context
+
+To draw anything, you need JavaScript. First, grab the canvas and its **drawing context**:
+
+<CodeBlock language="js">
+{`
+  const canvas = document.getElementById("myCanvas");
+  const ctx = canvas.getContext("2d"); // 2D rendering context
+
+  if (!ctx) {
+    // Very old browsers (or a context type the browser doesn't support) return null
+    throw new Error("Canvas 2D context is not available");
+  }
+`}
+</CodeBlock>
+
+The `ctx` object provides every drawing method and property you'll use in the rest of this guide. The canvas element
+itself is just the frame; the context is the brush.
+
+### Canvas Size: Attributes vs. CSS
+
+This is the first thing that surprises almost everyone. A canvas has **two** sizes:
+
+- The **drawing-surface size**, set by the `width` and `height` attributes (or the `canvas.width`/`canvas.height`
+  properties). It defaults to **300 × 150** if you don't set it.
+- The **display size**, set by CSS. It defaults to the drawing-surface size.
+
+If the two don't match, the browser stretches the bitmap to fit — exactly like scaling up a small image — and
+everything you draw comes out blurry or distorted.
+
+<CodeBlock language="html">
+{`
+  <!-- ❌ 300 × 150 bitmap stretched to 600 × 400 on screen: blurry and squashed -->
+  <canvas style="width: 600px; height: 400px"></canvas>
+
+  <!-- ✅ The bitmap matches the display size -->
+  <canvas width="600" height="400"></canvas>
+`}
+</CodeBlock>
+
+<Warning title="Changing width or height clears the canvas">
+  Setting `canvas.width` or `canvas.height` — even to the same value it already has — wipes the bitmap and resets the
+  context's state (styles, transforms, everything). That's handy for a full reset, but it also means any resize
+  handler must redraw the scene afterwards.
+</Warning>
+
+<RainbowDivider />
+
+## The Canvas Coordinate System
+
+Before you start drawing, you need to know where your "pen" is on the board. Unlike a standard maths graph, where the
+origin (0, 0) sits in the centre or bottom-left, the Canvas coordinate system starts at the **top-left corner**.
+
+### How it Works
+
+- **The Origin (0, 0):** This is the top-left corner of your canvas.
+- **The X-axis:** Increases as you move to the right.
+- **The Y-axis:** Increases as you move **down**.
+
+This "inverted" Y-axis is often the biggest hurdle for new developers. If you want to move an object "up" on the
+screen, you actually have to subtract from its Y-coordinate.
+
+### Mapping a Point
+
+If your canvas is 500 by 300 pixels:
+
+- The top-right corner is (500, 0).
+- The bottom-left corner is (0, 300).
+- The bottom-right corner is (500, 300).
+- The exact centre is (250, 150).
+
+<CanvasCoordinateDiagram />
+
+### A Mental Anchor
+
+Most developers struggle with the Y-axis because we're taught Cartesian maths (where Y increases as you go up).
+Instead, think of the Canvas coordinate system like reading a book:
+
+- **The Origin (0, 0):** This is the top-left corner — the first word on the first page.
+- **The X-axis:** As you read across the line from left to right, X increases.
+- **The Y-axis:** As you move down to the next line of text, Y increases.
+
+### Comparison: Canvas vs. Traditional Maths
+
+| Feature      | Traditional Maths (Cartesian) | HTML5 Canvas (Screen)  |
+| ------------ | ----------------------------- | ---------------------- |
+| Origin (0,0) | Bottom-Left or Centre         | Top-Left Corner        |
+| X-axis       | Increases to the Right        | Increases to the Right |
+| Y-axis       | Increases Upwards             | Increases Downwards    |
+| Mental Model | Climbing a Mountain           | Reading a Book         |
+
+<Info title="Pro Tip">
+  If you ever find your shapes are "missing" or appearing off-screen, check your Y-coordinates. A large positive Y
+  value (e.g., `y = 500`) pushes an object **down**, not up!
+</Info>
+
+<RainbowDivider />
+
+## Canvas Drawing Fundamentals
+
+Now that the canvas context is ready, let's explore the core drawing capabilities provided by the Canvas API.
+
+### Drawing Rectangles
+
+Rectangles are the only shape with dedicated one-call methods:
+
+<CodeBlock language="js">
+{`
+  ctx.fillStyle = "skyblue";
+  ctx.fillRect(50, 50, 150, 100);   // filled
+  ctx.strokeRect(250, 50, 150, 100); // outline only
+  ctx.clearRect(60, 60, 40, 40);     // erase back to transparent
+`}
+</CodeBlock>
+
+`fillRect(x, y, width, height)` creates a filled rectangle starting at `(50, 50)` with a width of `150px` and a height
+of `100px`. Every other shape is built from a **path**.
+
+### Understanding Paths
+
+A path is a list of points and segments that you build up first, then render in one go with `stroke()` (outline) or
+`fill()` (solid). Most advanced Canvas drawings — custom illustrations, charts, game graphics — are built this way.
+
+Common path methods include:
+
+- `beginPath()` — start a fresh, empty path
+- `moveTo(x, y)` — lift the pen and move it without drawing
+- `lineTo(x, y)` — draw a straight segment to a point
+- `closePath()` — draw a segment back to the path's starting point
+- `stroke()` / `fill()` — render the path
+
+<CodeBlock language="js">
+{`
+  ctx.beginPath();
+  ctx.moveTo(50, 50);
+  ctx.lineTo(150, 100);
+  ctx.lineTo(50, 150);
+  ctx.closePath(); // back to (50, 50) — a triangle
+  ctx.stroke();
+`}
+</CodeBlock>
+
+<Warning title="Always start with beginPath()">
+  Without `beginPath()`, new segments are **added to the previous path**. The next `stroke()` or `fill()` then redraws
+  everything you've ever added — so shapes mysteriously change colour, get thicker, or slow the page down over time
+  inside an animation loop. Call `beginPath()` at the start of every new shape.
+</Warning>
+
+### Drawing Circles and Arcs
+
+<CodeBlock language="js">
+{`
+  ctx.beginPath();
+  ctx.arc(200, 150, 50, 0, Math.PI * 2); // x, y, radius, startAngle, endAngle
+  ctx.fillStyle = "orange";
+  ctx.fill();
+`}
+</CodeBlock>
+
+`arc()` draws circles, partial arcs, pie slices, and progress rings. Two details catch people out:
+
+- **Angles are in radians, not degrees.** A full circle is `Math.PI * 2` (360°), a half is `Math.PI` (180°). To
+  convert, use `degrees * (Math.PI / 180)`.
+- **0 points right, and angles grow clockwise** — because the Y-axis points down, the "positive" direction sweeps
+  towards the bottom of the circle first. Pass `true` as the sixth argument to draw anticlockwise instead.
+
+<CanvasArcDiagram />
+
+<CodeBlock language="js">
+{`
+  // A three-quarter progress ring that starts at 12 o'clock
+  const start = -Math.PI / 2;            // -90°: straight up
+  const end = start + Math.PI * 2 * 0.75; // 75% of the way round
+
+  ctx.beginPath();
+  ctx.arc(200, 150, 60, start, end);
+  ctx.lineWidth = 12;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#3498db";
+  ctx.stroke();
+`}
+</CodeBlock>
+
+For curves that aren't circular, use `quadraticCurveTo()` (one control point) or `bezierCurveTo()` (two control
+points), and `ellipse()` for ovals — all listed in the [cheat sheet](#canvas-api-cheat-sheet) below.
+
+### Drawing Text
+
+<CodeBlock language="js">
+{`
+  ctx.font = "20px Arial";
+  ctx.fillStyle = "black";
+  ctx.textAlign = "center";      // horizontal anchor: left | right | center | start | end
+  ctx.textBaseline = "middle";   // vertical anchor: top | middle | alphabetic | bottom ...
+  ctx.fillText("Hello Canvas!", 200, 250);
+
+  const { width } = ctx.measureText("Hello Canvas!"); // useful for centring or wrapping
+`}
+</CodeBlock>
+
+Canvas supports both filled (`fillText`) and outlined (`strokeText`) text. It doesn't wrap lines for you — if you need
+multi-line text, split it yourself using `measureText()` to work out where each line should break.
+
+### Working with Colours and Strokes
+
+- `fillStyle` → fill colour (any CSS colour, a gradient, or a pattern)
+- `strokeStyle` → outline colour
+- `lineWidth` → outline thickness
+- `globalAlpha` → transparency for everything drawn afterwards (0.0 to 1.0)
+
+<CodeBlock language="js">
+{`
+  ctx.strokeStyle = "red";
+  ctx.lineWidth = 4;
+  ctx.strokeRect(50, 200, 150, 100);
+`}
+</CodeBlock>
+
+These properties are **sticky**: once set, they apply to everything drawn afterwards until you change them again.
+
+<Details summary="Why do my 1px lines look blurry and 2px wide?">
+  A stroke is centred on its path. A 1px line drawn along `x = 50` covers half a pixel on each side — from 49.5 to
+  50.5 — so the browser anti-aliases it across two pixels at half intensity. Offset odd-width lines by half a pixel
+  (`ctx.moveTo(50.5, 0)`) and the stroke lands exactly on one pixel column, crisp and solid.
+</Details>
+
+### Gradients and Patterns
+
+`fillStyle` and `strokeStyle` also accept gradient and pattern objects:
+
+<CodeBlock language="js">
+{`
+  const gradient = ctx.createLinearGradient(50, 0, 250, 0); // x0, y0 → x1, y1
+  gradient.addColorStop(0, "#fb923c");
+  gradient.addColorStop(1, "#e11d48");
+
+  ctx.fillStyle = gradient;
+  ctx.fillRect(50, 50, 200, 100);
+`}
+</CodeBlock>
+
+Unlike CSS gradients, a Canvas gradient's coordinates are in **canvas space**, not relative to the shape you fill.
+Draw a rectangle somewhere other than between `x = 50` and `x = 250` above and it only catches a slice of the
+gradient — or none of it. `createRadialGradient()`, `createConicGradient()`, and `createPattern()` (which tiles an
+image) follow the same idea. For the colour theory behind good gradients, see
+[Mastering CSS Gradients](/post/css/mastering-css-gradients).
+
+### Drawing Images
+
+`drawImage()` paints an image, a video frame, or even another canvas onto your canvas. The image must have finished
+loading first, otherwise nothing is drawn:
+
+<CodeBlock language="js">
+{`
+  const img = new Image();
+  img.src = "/images/sprite-sheet.png";
+
+  img.decode().then(() => {
+    ctx.drawImage(img, 20, 20);                           // natural size
+    ctx.drawImage(img, 200, 20, 64, 64);                  // scaled to 64 × 64
+    ctx.drawImage(img, 0, 0, 32, 32, 300, 20, 64, 64);    // crop a 32 × 32 frame, draw it at 64 × 64
+  });
+`}
+</CodeBlock>
+
+The nine-argument form — source rectangle, then destination rectangle — is how sprite-sheet animation works: one image
+holds every frame, and you crop a different one each tick.
+
+<RainbowDivider />
+
+## Transformations and the State Stack
+
+So far, every shape has been positioned by passing coordinates directly. **Transformations** move the coordinate
+system itself instead: `translate()` shifts the origin, `rotate()` turns the axes, and `scale()` stretches them.
+Everything drawn afterwards is affected.
+
+The catch is that `rotate()` always pivots around the **current origin** — by default, the top-left corner of the
+canvas — not around the centre of the shape you're about to draw:
+
+<CanvasTransformDiagram />
+
+To spin a shape in place, move the origin to the shape's centre first, rotate, then draw the shape centred on that new
+origin:
+
+<CodeBlock language="js">
+{`
+  const cx = 200, cy = 150, size = 80;
+
+  ctx.save();                                       // remember the current state
+  ctx.translate(cx, cy);                            // move the origin to the square's centre
+  ctx.rotate(Math.PI / 6);                          // rotate 30° clockwise around it
+  ctx.fillRect(-size / 2, -size / 2, size, size);   // draw centred on the new origin
+  ctx.restore();                                    // undo translate + rotate
+`}
+</CodeBlock>
+
+`save()` pushes the current state — transform, `fillStyle`, `strokeStyle`, `lineWidth`, `font`, `globalAlpha`, clip
+region, and more — onto a stack, and `restore()` pops it back off. Wrapping each transformed shape in a
+`save()`/`restore()` pair keeps one shape's transform from leaking into the next.
+
+<Info title="Transforms accumulate">
+  Each `translate()`, `rotate()`, or `scale()` is applied **on top of** the current transform, not instead of it.
+  Two `rotate(Math.PI / 6)` calls add up to 60°. If you ever need to wipe the slate clean without a matching
+  `save()`, call `ctx.setTransform(1, 0, 0, 1, 0, 0)` (or `ctx.resetTransform()`) to return to the identity
+  transform.
+</Info>
+
+<RainbowDivider />
+
+## Creating Simple Animations
+
+Because Canvas forgets what it drew, animation is just a loop: **clear → update → draw → repeat**.
+
+**Example: a moving ball.**
+
+<CodeBlock language="js">
+{`
+  let x = 50;
+  let dx = 2;
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // clear canvas
+    ctx.beginPath();
+    ctx.arc(x, 150, 30, 0, Math.PI * 2);
+    ctx.fillStyle = "green";
+    ctx.fill();
+    x += dx;
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+`}
+</CodeBlock>
+
+Here's what happens:
+
+- Clear the canvas each frame.
+- Redraw the ball at its new position.
+- Use `requestAnimationFrame()` to schedule the next frame, in sync with the display's refresh rate.
+
+<Info title="Why requestAnimationFrame() and not setInterval()?">
+  `requestAnimationFrame()` runs your callback right before the browser paints, so each frame you draw is actually
+  shown — no tearing, no wasted work between paints. It also pauses automatically in background tabs, saving battery.
+  `setInterval()` knows nothing about the display and keeps firing whether anyone can see the result or not.
+</Info>
+
+### Example: A Bouncing Ball
+
+Here's a complete example with HTML, CSS, and JS — the ball reverses direction whenever it would cross an edge:
+
+<CodeBlock language="html">
+{`
+  <canvas id="myCanvas" width="500" height="300"></canvas>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  canvas {
+    background: #fff;
+    border: 2px solid #333;
+    border-radius: 6px;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const canvas = document.getElementById("myCanvas");
+  const ctx = canvas.getContext("2d");
+
+  let x = 100, y = 100;
+  let dx = 3, dy = 2;
+  const radius = 20;
+
+  function drawBall() {
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = "#3498db";
+    ctx.fill();
+  }
+
+  function update() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBall();
+
+    // Bounce: flip direction if the next step would push the ball past an edge
+    if (x + dx > canvas.width - radius || x + dx < radius) dx = -dx;
+    if (y + dy > canvas.height - radius || y + dy < radius) dy = -dy;
+
+    x += dx;
+    y += dy;
+
+    requestAnimationFrame(update);
+  }
+
+  update();
+`}
+</CodeBlock>
+
+### Frame-Rate-Independent Motion
+
+Both examples above move the ball a fixed number of pixels **per frame**. On a 60 Hz display that's fine, but on a
+120 Hz display `requestAnimationFrame()` fires twice as often — and the ball moves twice as fast. Production
+animations move by **speed × elapsed time** instead:
+
+<CodeBlock language="js">
+{`
+  let x = 50;
+  const speed = 120; // pixels per second, not per frame
+  let lastTime = performance.now();
+
+  function animate(now) {
+    // Seconds since the previous frame, capped so a long pause (e.g. a background tab) doesn't teleport the ball
+    const dt = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
+
+    x += speed * dt;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.beginPath();
+    ctx.arc(x, 150, 30, 0, Math.PI * 2);
+    ctx.fill();
+
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+`}
+</CodeBlock>
+
+`requestAnimationFrame()` passes the callback a high-resolution timestamp (`now`), so you never need `Date.now()`.
+Now the ball covers 120 pixels every second on every screen, however fast it refreshes.
+
+### Respecting Reduced Motion
+
+Some people set their operating system to reduce motion because large movement on screen makes them unwell. Canvas
+animations don't respect that automatically — you have to check for it:
+
+<CodeBlock language="js">
+{`
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  if (reduceMotion.matches) {
+    drawScene(); // draw a single, static frame instead of starting the loop
+  } else {
+    requestAnimationFrame(animate);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Handling Mouse and Touch Input
+
+Because there are no objects on a canvas, there's nothing to attach a click handler to except the canvas itself. Every
+interaction starts the same way: convert the pointer's position on the **page** into a position on the **canvas**.
+
+<CodeBlock language="js">
+{`
+  function getCanvasPoint(event) {
+    const rect = canvas.getBoundingClientRect();
+    return {
+      // Scale from CSS pixels on screen to canvas pixels, in case the canvas is displayed at a different size
+      x: (event.clientX - rect.left) * (canvas.width / rect.width),
+      y: (event.clientY - rect.top) * (canvas.height / rect.height),
+    };
+  }
+
+  // Pointer events cover mouse, touch, and pen with one listener
+  canvas.addEventListener("pointermove", (event) => {
+    const { x, y } = getCanvasPoint(event);
+    // ...move a particle, highlight a shape, draw a line
+  });
+`}
+</CodeBlock>
+
+<Info title="Using the high-DPI fix?">
+  If you've scaled the context with `ctx.scale(dpr, dpr)` (see [High-DPI displays](#handling-retinahigh-dpi-displays-the-blurry-canvas-fix)
+  below), you're already drawing in CSS pixels — use `event.clientX - rect.left` and `event.clientY - rect.top`
+  directly, without the scale factor.
+</Info>
+
+### Hit-Testing: "Did I Click That Shape?"
+
+To find out whether a point is inside a shape, either do the maths yourself (distance from a circle's centre less
+than its radius, a point inside a rectangle's bounds) or rebuild the shape's path and ask the context:
+
+<CodeBlock language="js">
+{`
+  canvas.addEventListener("click", (event) => {
+    const { x, y } = getCanvasPoint(event);
+
+    ctx.beginPath();
+    ctx.arc(200, 150, 50, 0, Math.PI * 2); // the same path you drew
+
+    if (ctx.isPointInPath(x, y)) {
+      console.log("Circle clicked!");
+    }
+  });
+`}
+</CodeBlock>
+
+For a handful of shapes, simple maths is faster and clearer. `isPointInPath()` earns its keep with irregular paths —
+polygons, curves, or text outlines — where the maths gets awkward.
+
+<RainbowDivider />
+
+## Canvas vs. SVG
+
+| Feature       | Canvas                                | SVG                                    |
+| ------------- | ------------------------------------- | -------------------------------------- |
+| Rendering     | Pixel-based (bitmap), immediate mode  | Vector (DOM-based), retained mode      |
+| Performance   | Great for thousands of moving objects | Slows down with very many elements     |
+| Interactivity | Manual hit-testing                    | Built-in DOM events per shape          |
+| Scalability   | Loses quality when scaled             | Infinite scalability                   |
+| Accessibility | Opaque to screen readers by default   | Elements can carry titles and labels   |
+| Styling       | JavaScript only                       | CSS, including hover and transitions   |
+
+<Info title="Use the right tool">
+  Use **Canvas** for games, particle effects, image processing, and real-time rendering with many moving parts. Use
+  **SVG** for logos, icons, diagrams, and UI that should stay sharp at any size and be styled or clicked shape by
+  shape. New to SVG? Start with [SVG Essentials](/post/svg/svg-essentials-mastering-basic-shapes).
+</Info>
+
+<RainbowDivider />
+
+## Advanced Canvas Techniques
+
+### Handling Retina/High-DPI Displays (The "Blurry Canvas" Fix)
+
+If you've ever noticed your Canvas drawings looking slightly fuzzy on a MacBook, an iPhone, or a 4K monitor, you've run
+into the **device pixel ratio (DPR)** issue.
+
+By default, the browser maps one canvas pixel to one CSS pixel. High-density screens, however, use 2 or 3 physical
+pixels to render a single CSS pixel — so each canvas pixel gets stretched across several physical ones and smeared.
+The fix is to give the canvas more pixels than its CSS size, then scale them back down:
+
+<CanvasDprDiagram />
+
+**The Solution:**
+
+- **Get the DPR:** Use `window.devicePixelRatio`.
+- **Scale the drawing surface up:** Multiply the `width` and `height` attributes by the DPR.
+- **Keep the CSS size the same:** Set `style.width` and `style.height` to the original size.
+- **Scale the context:** Use `ctx.scale(dpr, dpr)` so your drawing commands don't need to change.
+
+<CodeBlock language="js">
+{`
+  const canvas = document.getElementById("myCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // 1. Get the device pixel ratio
+  const dpr = window.devicePixelRatio || 1;
+
+  // 2. Set the internal resolution (the "drawing surface")
+  const width = 400;
+  const height = 300;
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+
+  // 3. Set the visual size (how it appears on the page)
+  canvas.style.width = \`\${width}px\`;
+  canvas.style.height = \`\${height}px\`;
+
+  // 4. Scale all drawing operations to match
+  ctx.scale(dpr, dpr);
+
+  // Now your drawings will be tack-sharp!
+  ctx.fillStyle = "#3498db";
+  ctx.fillRect(10, 10, 100, 100);
+`}
+</CodeBlock>
+
+Because setting `canvas.width` resets the context (including the scale), re-run steps 2–4 whenever the canvas is
+resized. The [Interactive Example](#interactive-example) further down this post uses exactly this technique to keep
+its particles crisp on every screen — worth a look at its source if you want to see the pattern applied to a moving
+scene instead of a static rectangle.
+
+### Layering Multiple Canvases
+
+If part of your scene rarely changes — a background, a grid, a game map — don't redraw it 60 times a second. Stack two
+canvases on top of each other, draw the static layer once, and only clear and redraw the layer that moves:
+
+<CodeBlock language="html">
+{`
+  <div class="stage">
+    <canvas id="background" width="500" height="300"></canvas>
+    <canvas id="foreground" width="500" height="300"></canvas>
+  </div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .stage {
+    position: relative;
+  }
+
+  .stage canvas {
+    position: absolute;
+    inset: 0;
+  }
+`}
+</CodeBlock>
+
+Transparent pixels on the top canvas let the bottom one show through, so the browser composites them for free.
+
+### Beyond 2D: The 3D Context
+
+While most beginners start with the `2d` context, Canvas is also the gateway to high-performance 3D graphics in the
+browser. To enter the 3D world, you switch the context from `2d` to `webgl2` (Web Graphics Library), which every
+modern browser supports — fall back to `webgl` only if you need to support very old devices:
+
+<CodeBlock language="js">
+{`
+  const gl = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+
+  if (!gl) {
+    console.error("WebGL not supported");
+  }
+`}
+</CodeBlock>
+
+#### Key Differences Between 2D and 3D Contexts
+
+- **2D Context:** Best for simple shapes, text, and 2D games. It uses a straightforward "painter's model": later
+  drawing covers earlier drawing.
+- **WebGL (3D):** Best for complex lighting, 3D models, and VR/AR. It runs on the GPU and is much lower-level — you
+  write small programs called **shaders** and feed them buffers of vertex data.
+
+Because raw WebGL is verbose, most projects use a library like **[Three.js](https://threejs.org/)** or
+**[Babylon.js](https://www.babylonjs.com/)**, which abstract away the maths, shaders, and rendering pipeline. A canvas
+can also hold a `webgpu` context — WebGL's newer, lower-level successor — though browser support is still more recent,
+so check it before you rely on it.
+
+<Info title="One context per canvas">
+  A canvas can only ever have one type of context. Once you've called `getContext("2d")`, asking the same canvas for
+  `"webgl2"` returns `null` — create a separate canvas for each.
+</Info>
+
+### Faking 3D on a 2D Context (No WebGL Needed)
+
+You don't need WebGL, or a library, to get *something* 3D on screen. For simple shapes — a cube, a pyramid, a handful
+of polygons — you can run the whole pipeline by hand on a plain `2d` context: rotate points in 3D space, project them
+down to 2D, then draw with the same `beginPath`/`lineTo`/`fill` methods you already know.
+
+**Step 1 — Represent points in 3D.** Instead of `{x, y}`, model every vertex as `{x, y, z}`.
+
+**Step 2 — Rotate around an axis.** Rotating a point around the X or Y axis is just a rotation matrix applied by hand
+with `Math.cos`/`Math.sin`:
+
+<CodeBlock language="js">
+{`
+  function rotateY(point, angle) {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return {
+      x: point.x * cos + point.z * sin,
+      y: point.y,
+      z: -point.x * sin + point.z * cos,
+    };
+  }
+`}
+</CodeBlock>
+
+**Step 3 — Project onto the screen.** Once a point is rotated, flatten it into a 2D screen position with a simple
+"weak perspective" projection — points shrink the further along `z` (away from the camera) they sit:
+
+<CodeBlock language="js">
+{`
+  function project(point, perspective) {
+    const scale = perspective / (perspective + point.z);
+    return {
+      x: centerX + point.x * scale,
+      y: centerY + point.y * scale,
+    };
+  }
+`}
+</CodeBlock>
+
+The smaller `perspective` is, the more dramatic the effect — edges close to the camera balloon in size relative to
+edges further away, the same way a wide-angle lens does.
+
+**Step 4 — Draw back-to-front (the painter's algorithm).** If you're filling in solid faces instead of just drawing
+edges, sort them by average depth and draw the farthest face first, nearest last, so closer faces correctly paint over
+farther ones:
+
+<CodeBlock language="js">
+{`
+  const facesByDepth = faces
+    .map((face) => ({ face, avgDepth: averageZ(face) }))
+    .sort((a, b) => b.avgDepth - a.avgDepth);
+
+  for (const { face } of facesByDepth) {
+    drawFace(face); // farthest first, nearest last
+  }
+`}
+</CodeBlock>
+
+**Step 5 — Fake lighting (optional).** For flat shading, take the cross product of two of a face's edges to get its
+normal vector, then take the dot product of that with a fixed "light direction". A face pointing towards the light
+renders brighter; one angled away renders darker — no real lighting engine required.
+
+<Info title="Wireframe vs. solid">
+  Skip steps 4 and 5 entirely for a wireframe look — just connect each rotated, projected vertex with `stroke()`'d
+  lines instead of filling faces. Faces and their fill order only matter once you want solid, shaded surfaces.
+</Info>
+
+**Try this:** Switch the [Interactive Example](#interactive-example) below to **3D Canvas** and drag the shape around
+with your mouse or a finger. Toggle **Wireframe only** off and on to compare the edges-only view from steps 2–3 against the
+depth-sorted, shaded faces from steps 4–5, and drag slowly to watch individual faces swap draw order as they rotate
+behind one another.
+
+### Pro Level: OffscreenCanvas
+
+For high-performance applications and complex games, the biggest bottleneck is the **main thread**. If your JavaScript
+is busy calculating complex physics, the browser can't respond to clicks or scrolls, causing "jank".
+
+**OffscreenCanvas** lets you move rendering into a **Web Worker**, so heavy drawing runs on a separate thread and your
+UI stays responsive however busy the scene gets.
+
+**main.js** — hand control of the canvas to a worker:
+
+<CodeBlock language="js">
+{`
+  const canvas = document.getElementById("myCanvas");
+
+  if ("transferControlToOffscreen" in canvas) {
+    const offscreen = canvas.transferControlToOffscreen();
+    const worker = new Worker("worker.js");
+
+    // The second argument transfers ownership instead of copying
+    worker.postMessage({ canvas: offscreen }, [offscreen]);
+  } else {
+    // Older browser: fall back to drawing on the main thread
+  }
+`}
+</CodeBlock>
+
+**worker.js** — draw exactly as you would on the main thread:
+
+<CodeBlock language="js">
+{`
+  onmessage = (event) => {
+    const canvas = event.data.canvas;
+    const ctx = canvas.getContext("2d");
+
+    function render() {
+      // Perform heavy drawing logic here
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#3498db";
+      ctx.fillRect(20, 20, 100, 100);
+      requestAnimationFrame(render);
+    }
+
+    render();
+  };
+`}
+</CodeBlock>
+
+<Warning title="Transfer is one-way">
+  After `transferControlToOffscreen()`, the main thread can no longer draw on that canvas, resize it through
+  `canvas.width`, or call `transferControlToOffscreen()` on it again. Workers also can't see the DOM — send them
+  resize events, pointer positions, and `devicePixelRatio` via `postMessage()`.
+</Warning>
+
+### Pixel Manipulation: The "Power User" Feature
+
+One thing SVG can't do easily is manipulate individual pixels. Using `getImageData()`, you can read the RGBA values of
+every pixel on your canvas, change them, and write them back with `putImageData()`. This is how browser-based photo
+editors build filters like greyscale:
+
+<CodeBlock language="js">
+{`
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const { data } = imageData; // flat array: [r, g, b, a, r, g, b, a, ...]
+
+  for (let i = 0; i < data.length; i += 4) {
+    // Weighted average: the eye is more sensitive to green than to red or blue
+    const luma = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    data[i] = luma;     // Red
+    data[i + 1] = luma; // Green
+    data[i + 2] = luma; // Blue
+    // data[i + 3] is alpha — left untouched
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+`}
+</CodeBlock>
+
+<Warning title="Cross-origin images taint the canvas">
+  If you draw an image from another domain without CORS permission, the canvas becomes **tainted** and
+  `getImageData()` (as well as `toDataURL()` and `toBlob()`) throws a `SecurityError`. Load the image with
+  `img.crossOrigin = "anonymous"` **and** make sure its server sends an `Access-Control-Allow-Origin` header.
+</Warning>
+
+If you read pixels back every frame, create the context with `canvas.getContext("2d", { willReadFrequently: true })` —
+it tells the browser to keep the bitmap in memory where reads are cheap, rather than on the GPU.
+
+<RainbowDivider />
+
+## Use Cases of Canvas
+
+Canvas shines in situations where **dynamic, pixel-level rendering** is needed:
+
+- 🎮 **Games:** 2D games, physics engines, sprite animations
+- 📊 **Data Visualisation:** charts, graphs, dashboards (Chart.js renders to Canvas)
+- 🌀 **Animations:** particle effects, loaders, interactive backgrounds
+- 🖼️ **Image Processing:** filters, cropping, blending, pixel editing
+- 🖊️ **Drawing Apps:** paintboards, signature pads, sketch tools
+- 📤 **Exporting Images:** generating thumbnails, social cards, or screenshots with `canvas.toBlob()`
+
+<RainbowDivider />
+
+## Best Practices and Guidelines
+
+### Performance
+
+- **Size with attributes, scale with CSS:** Set the drawing surface with `width`/`height` (multiplied by the DPR), and
+  use CSS only for the display size — never stretch a small bitmap with CSS alone.
+- **Use `requestAnimationFrame()`:** It syncs with the display and pauses in background tabs.
+- **Move by time, not by frame:** Multiply speeds by elapsed time so motion looks the same at 60 Hz and 120 Hz.
+- **Batch drawing:** Group shapes that share a style into one path and one `fill()`, and avoid changing `fillStyle`,
+  `font`, or `shadowBlur` more often than you need to — state changes aren't free.
+- **Save and restore:** Wrap transforms in `ctx.save()`/`ctx.restore()` so they don't leak into later drawing.
+- **Redraw only what changes:** Use layered canvases for static backgrounds, or clear just the region that moved.
+- **Cache complex shapes:** Draw an expensive shape once onto an offscreen canvas, then `drawImage()` that canvas each
+  frame instead of rebuilding the path.
+- **Stop when you're done:** Keep the ID from `requestAnimationFrame()` and call `cancelAnimationFrame()` when the
+  animation is no longer visible.
+
+### Accessibility
+
+- **Describe the canvas:** Add fallback content between the tags, or `role="img"` plus an `aria-label` for a static
+  graphic, so screen readers have something to announce.
+- **Provide real controls:** Canvas content is invisible to assistive technology — pair interactive canvases with
+  ordinary, keyboard-accessible buttons and inputs.
+- **Respect reduced motion:** Check `prefers-reduced-motion` and show a static frame instead of a looping animation.
+- **Mind contrast:** Colour choices on a canvas don't get any help from browser or OS high-contrast modes.
+
+<RainbowDivider />
+
+## Canvas API Cheat Sheet
+
+Use this quick reference for the methods you'll reach for in the vast majority of projects.
+
+### 1. Setup & State
+
+| Method                    | Description                                                  |
+| ------------------------- | ------------------------------------------------------------ |
+| `getContext('2d')`        | Returns the 2D drawing context.                              |
+| `getContext('webgl2')`    | Returns the WebGL 2 (3D) rendering context.                  |
+| `save()`                  | Pushes the current state (styles, transforms, clip) on a stack. |
+| `restore()`               | Pops the stack, returning to the last **saved** state.       |
+
+### 2. Drawing Shapes & Paths
+
+| Method                                          | Description                                          |
+| ----------------------------------------------- | ---------------------------------------------------- |
+| `fillRect(x, y, w, h)`                          | Draws a filled rectangle.                            |
+| `strokeRect(x, y, w, h)`                        | Draws a rectangle outline.                           |
+| `clearRect(x, y, w, h)`                         | Makes the area transparent (erases pixels).          |
+| `roundRect(x, y, w, h, radii)`                  | Adds a rounded rectangle to the current path.        |
+| `beginPath()`                                   | Starts a new path (crucial for separating shapes).   |
+| `moveTo(x, y)`                                  | Lifts the **pen** and moves it to a point.           |
+| `lineTo(x, y)`                                  | Draws a line from the current position to (x, y).    |
+| `arc(x, y, r, start, end, ccw?)`                | Draws a circular arc (angles in radians).            |
+| `arcTo(x1, y1, x2, y2, r)`                      | Draws a curved corner between two lines.             |
+| `ellipse(x, y, rx, ry, rotation, start, end)`   | Draws an elliptical arc.                             |
+| `quadraticCurveTo(cpx, cpy, x, y)`              | Draws a curve with one control point.                |
+| `bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y)`   | Draws a curve with two control points.               |
+| `closePath()`                                   | Connects the current point back to the path start.   |
+| `fill()`                                        | Fills the current path.                              |
+| `stroke()`                                      | Draws the outline of the current path.               |
+
+### 3. Styling, Gradients, & Text
+
+| Property / Method               | Description                                                  |
+| ------------------------------- | ------------------------------------------------------------ |
+| `fillStyle`                     | Sets the colour, gradient, or pattern for filling.           |
+| `strokeStyle`                   | Sets the colour, gradient, or pattern for outlines.          |
+| `lineWidth`                     | Sets the thickness of lines.                                 |
+| `lineCap`                       | Style of line ends: `'butt'`, `'round'`, or `'square'`.      |
+| `lineJoin`                      | Style of corners: `'bevel'`, `'round'`, or `'miter'`.        |
+| `setLineDash([dash, gap])`      | Creates dashed or dotted lines.                              |
+| `globalAlpha`                   | Sets transparency (0.0 to 1.0).                              |
+| `createLinearGradient()`        | Creates a linear gradient object for `fillStyle`.            |
+| `createRadialGradient()`        | Creates a radial (circular) gradient object.                 |
+| `createConicGradient(a, x, y)`  | Creates a gradient that sweeps around a point.               |
+| `createPattern(img, repeat)`    | Creates a repeating image pattern.                           |
+| `filter`                        | Applies CSS-like effects (e.g., `'blur(5px) grayscale(1)'`). |
+| `shadowBlur`                    | Adds a soft drop shadow to shapes.                           |
+| `shadowColor`                   | Sets the colour of the drop shadow.                          |
+| `fillText(text, x, y)`          | Renders solid text.                                          |
+| `strokeText(text, x, y)`        | Renders outlined text.                                       |
+| `font`                          | Sets the text style, using CSS `font` syntax.                |
+| `textAlign`                     | Sets the horizontal text anchor.                             |
+| `textBaseline`                  | Sets the vertical text anchor.                               |
+
+### 4. Transformation, Blending, & Masking
+
+| Method                         | Description                                                  |
+| ------------------------------ | ------------------------------------------------------------ |
+| `translate(x, y)`              | Moves the (0, 0) origin to a new location.                   |
+| `rotate(angle)`                | Rotates around the current origin (radians: π = 180°).       |
+| `scale(x, y)`                  | Stretches the axes (use -1 to flip).                         |
+| `setTransform(a, b, c, d, e, f)` | Replaces the current transform outright.                   |
+| `resetTransform()`             | Returns to the identity (untransformed) state.               |
+| `globalCompositeOperation`     | Sets the blending/masking mode (e.g., `'destination-out'`).  |
+| `clip()`                       | Turns the current path into a mask for future drawing.       |
+
+### 5. Images & Pixel Data
+
+| Method                         | Description                                                  |
+| ------------------------------ | ------------------------------------------------------------ |
+| `drawImage(img, x, y)`         | Draws an image, video frame, or another canvas.              |
+| `getImageData(x, y, w, h)`     | **Pixel power:** gets RGBA data for every pixel in a box.    |
+| `putImageData(data, x, y)`     | Paints pixel data back onto the canvas.                      |
+| `createImageData(w, h)`        | Creates a new, blank pixel array.                            |
+| `canvas.toBlob(callback)`      | Exports the canvas as an image file (PNG by default).        |
+
+### 6. Interaction & UI Utilities
+
+| Method                         | Description                                                  |
+| ------------------------------ | ------------------------------------------------------------ |
+| `measureText(text)`            | Returns metrics, including the rendered `width` of the text. |
+| `isPointInPath(x, y)`          | Checks whether a point is inside the current path.           |
+| `isPointInStroke(x, y)`        | Checks whether a point is on the current path's outline.     |
+
+### 7. 3D Context Essentials (WebGL)
+
+| Method                              | Description                                          |
+| ----------------------------------- | ---------------------------------------------------- |
+| `createShader(type)`                | Creates a vertex or fragment shader.                 |
+| `createProgram()`                   | Creates a program that links shaders together.       |
+| `createBuffer()`                    | Creates a buffer to store vertex data (coordinates). |
+| `bindBuffer(target, buffer)`        | Binds a buffer to a target for the GPU.              |
+| `drawArrays(mode, first, count)`    | Renders primitives from the bound buffer data.       |
+
+<RainbowDivider />
+
+## Interactive Example
+
+Theory is a great start, but the HTML5 Canvas is a medium meant for motion. This interactive playground demonstrates
+several concepts covered in this guide, including **dynamic particle systems, collision physics, real-time pointer
+interaction, and hand-rolled 3D projection** — all on a plain `2d` context, no WebGL required.
+
+**Try this:** Move your mouse — or drag a finger — over the particle canvas to see it react to your position, then flip the segmented
+control to **3D Canvas** and drag the shape to spin it — this second mode does its own rotation matrices and
+perspective projection in JavaScript, the manual maths underneath what a library like Three.js would otherwise hide
+from you.
+
+This demo combines:
+
+- Particle systems
+- Collision physics
+- Pointer events for mouse, touch, and pen
+- High-DPI rendering with `devicePixelRatio`
+- Manual 3D rotation and perspective projection on a 2D context
+
+<Sandbox slug="html5-canvas" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Canvas is like having a blank drawing board inside your browser. With a context, a coordinate system that grows
+downwards, and a loop that clears and redraws, you can build anything from a progress ring to a particle system to a
+spinning 3D shape.
+
+The ideas that matter most are the ones that follow from Canvas forgetting what it drew: size the drawing surface
+deliberately, start every shape with `beginPath()`, wrap transforms in `save()`/`restore()`, animate by elapsed time,
+and do your own hit-testing. Get those right, choose Canvas or SVG for the job in front of you, and the rest of the API
+is just more brushes.
