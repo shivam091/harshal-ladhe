@@ -153,6 +153,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-08-31", change: "Added an interactive timing-function curve diagram and playground cross-references" },
       { date: "2026-08-08", change: "Initial publication" }
     ]
@@ -213,6 +214,7 @@ export const posts: Post[] = [
     },
     signoff: "Between the six shape playgrounds, the presentation-attributes demo, and getting that radar sweep to pivot from exactly the right point, this ended up with more moving pieces than any SVG post so far — I hope tinkering with those sliders builds more intuition than the coordinate math alone ever could. Thanks for working through the whole toolkit with me. Go build something that scales without breaking a sweat. 🎯",
     changelog: [
+      { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-08-25", change: "Added cross reference to `<polygon>` vs. `<polyline>` post" },
       { date: "2026-08-21", change: "Initial publication" }
     ]
@@ -289,6 +291,7 @@ export const posts: Post[] = [
     },
     signoff: "The five diagrams gave me the most trouble up front—getting the off-center radial boundaries to line up with the actual math, and the conic sweep to read as clockwise-from-the-top at a glance—and turning the playground into three real tabs (gradient types plus repeating, a toggleable glass layer stack, and all three animated demos with a reduced-motion switch) took a lot more wiring than the original single-panel version. I hope dragging every one of those controls makes gradients click in a way reading about them never quite does. Thanks for gradient-ing along with me. 🌈",
     changelog: [
+      { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-09-04", change: "Initial publication" }
     ]
   },
@@ -302,6 +305,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Canvas rewards the habits that follow from it forgetting everything it draws — fresh paths, saved state, time-based motion — and the coordinate, arc, transform, and high-DPI diagrams are there to make those habits stick. I hope spinning that hand-rolled 3D cube in the playground shows just how far a plain 2D context can go. Thanks for drawing along with me — go paint something worth redrawing sixty times a second. 🎨",
     changelog: [
+      { date: "2026-10-07", change: "Added cross-reference to post 'An Interactive Guide to CSS Transitions'" },
       { date: "2026-09-01", change: "Initial publication" },
     ],
   },
@@ -315,6 +319,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Watching that renders-per-second counter climb in useState mode and drop to zero in useRef mode is the whole argument of this post in one number — I hope it makes the ref-driven loop feel obvious from here on. Thanks for keeping your pixels imperative and your components declarative with me — go build a canvas React never has to re-render for. ⚛️",
     changelog: [
+      { date: "2026-10-07", change: "Added cross-reference to post 'SVG Essentials: Mastering Shapes, Coordinates, and Styling'" },
       { date: "2026-09-03", change: "Initial publication" },
     ],
   }
