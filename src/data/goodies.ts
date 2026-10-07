@@ -173,5 +173,11 @@ export const goodies: Goodie[] = [
     description: "Darkroom-enlarger SVG viewBox explorer — drag and resize the viewBox as a masking easel over a negative on a light box, watch the viewport print update live on the baseboard, flip or auto-tour through every preserveAspectRatio alignment as fit with borders (meet) or crop to fill (slice), with letterbox/crop overlays, a scale/translate/matrix readout with a plain-English explanation, pasted-SVG support, and SVG/React/matrix export.",
     icon: "viewbox",
     href: "/goodies/viewbox-explorer"
+  },
+  {
+    name: "Shape → Path Converter",
+    description: "Exercise-book shape-to-path converter — turn <rect> (rounded corners included), <circle>, <ellipse>, <line>, <polyline> and <polygon> into an equivalent <path d> on squared paper, with draggable handles, red-pen numbered working for every command, hover-to-trace and step-through drawing, an overlay proving the two match, absolute/relative and precision options, and whole-SVG conversion.",
+    icon: "shapeToPath",
+    href: "/goodies/shape-to-path"
   }
 ];

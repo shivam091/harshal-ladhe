@@ -1234,6 +1234,25 @@ export const icons = {
       </>
     )
   },
+  shapeToPath: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="4" y="4" width="16" height="16" rx="4" strokeDasharray="3 3" />
+        <circle cx="4" cy="12" r="1.5" fill="currentColor" />
+        <circle cx="12" cy="4" r="1.5" fill="currentColor" />
+        <circle cx="20" cy="12" r="1.5" fill="currentColor" />
+        <circle cx="12" cy="20" r="1.5" fill="currentColor" />
+      </>
+    )
+  },
   shader: {
     viewBox: "0 0 24 24",
     svgProps: {
