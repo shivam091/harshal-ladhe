@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML5 Canvas Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Canvas Playground</h1>
+        <p>Switch between a 2D particle system and a hand-rolled 3D scene — both drawn on a plain <code>2d</code> canvas context, no WebGL or libraries involved.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Canvas mode" id="canvas-mode-switch">
+        <button class="tab tab--active" type="button" data-mode="2d" role="tab" aria-selected="true">2D Particles</button>
+        <button class="tab" type="button" data-mode="3d" role="tab" aria-selected="false">3D Canvas</button>
+      </div>
+
+      <div id="2d-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area" aria-label="Canvas particle preview">
+          <canvas id="scene" aria-label="Animated particle field reacting to your pointer"></canvas>
+          <output id="fps-readout" class="fps-readout" aria-live="off">60 fps</output>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>Particles</legend>
+          <div class="field">
+            <label for="count-input">Particle count</label>
+            <div class="range-row">
+              <span class="range-edge">10</span>
+              <div class="range-track">
+                <input type="range" id="count-input" min="10" max="200" step="5" value="80">
+                <output class="range-bubble" id="count-value" for="count-input">80</output>
+              </div>
+              <span class="range-edge">200</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="pointer-radius-input">Pointer influence radius</label>
+            <div class="range-row">
+              <span class="range-edge">40</span>
+              <div class="range-track">
+                <input type="range" id="pointer-radius-input" min="40" max="260" step="10" value="120">
+                <output class="range-bubble" id="pointer-radius-value" for="pointer-radius-input">120px</output>
+              </div>
+              <span class="range-edge">260</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Physics</legend>
+          <div class="fields-grid">
+            <label class="checkbox-field" for="collisions-toggle">
+              <input type="checkbox" id="collisions-toggle" checked>
+              <span>Particle-to-particle collisions</span>
+            </label>
+            <label class="checkbox-field" for="attract-toggle">
+              <input type="checkbox" id="attract-toggle">
+              <span>Attract instead of repel</span>
+            </label>
+          </div>
+          <p class="tip">Collisions are checked every frame with a simple circle-overlap test, then resolved by swapping velocity along the contact normal — the same approach a lot of 2D games use for cheap, believable bounces.</p>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Scene</legend>
+          <button type="button" id="reset-btn" class="toggle-btn">Reset particles</button>
+        </fieldset>
+      </div>
+
+      <div id="3d-demo" class="tab-panel">
+        <section class="demo-area" aria-label="3D shape preview">
+          <canvas id="scene-3d" aria-label="Rotating 3D shape, draggable with the pointer to spin it by hand"></canvas>
+          <output id="fps-readout-3d" class="fps-readout" aria-live="off">60 fps</output>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>Shape</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Shape" id="shape-switch">
+            <label class="segment">
+              <input type="radio" name="shape-type" value="cube" checked>
+              <span>Cube</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="shape-type" value="pyramid">
+              <span>Pyramid</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="shape-type" value="octahedron">
+              <span>Octahedron</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Rotation</legend>
+          <div class="field">
+            <label for="rotation-speed-input">Auto-rotate speed</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="rotation-speed-input" min="0" max="3" step="0.1" value="1">
+                <output class="range-bubble" id="rotation-speed-value" for="rotation-speed-input">1.0x</output>
+              </div>
+              <span class="range-edge">3</span>
+            </div>
+          </div>
+          <p class="tip">Drag anywhere on the canvas to spin the shape by hand — auto-rotate just keeps adding to whatever angle you leave it at, so the two never fight each other.</p>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Camera &amp; Style</legend>
+          <div class="field">
+            <label for="fov-input">Camera distance</label>
+            <div class="range-row">
+              <span class="range-edge">160</span>
+              <div class="range-track">
+                <input type="range" id="fov-input" min="160" max="900" step="10" value="280">
+                <output class="range-bubble" id="fov-value" for="fov-input">280</output>
+              </div>
+              <span class="range-edge">900</span>
+            </div>
+          </div>
+          <div class="fields-grid">
+            <label class="checkbox-field" for="wireframe-toggle">
+              <input type="checkbox" id="wireframe-toggle">
+              <span>Wireframe only</span>
+            </label>
+          </div>
+          <p class="tip">A closer camera distance exaggerates perspective — edges nearer to you grow noticeably larger than edges further away, the same way a wide-angle lens does.</p>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Scene</legend>
+          <button type="button" id="reset-3d-btn" class="toggle-btn">Reset rotation</button>
+        </fieldset>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
