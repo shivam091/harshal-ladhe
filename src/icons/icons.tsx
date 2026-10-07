@@ -1137,6 +1137,23 @@ export const icons = {
       </>
     )
   },
+  motionPath: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3 19 C 8 19, 7 11, 12 11 S 16 5, 20 5" strokeDasharray="1 3.5" />
+        <circle cx="3" cy="19" r="1.5" />
+        <path d="M16.5 3 L20.5 5 L18 8.5" />
+      </>
+    )
+  },
   penTool: {
     viewBox: "0 0 24 24",
     svgProps: {

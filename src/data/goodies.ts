@@ -185,5 +185,11 @@ export const goodies: Goodie[] = [
     description: "Stained-glass fill-rule visualiser — draw or paste a self-crossing SVG path, compare nonzero and evenodd side by side, split or overlaid, cast a ray to see every ±1 crossing, the winding number and the crossing count, tint regions with a winding map, reverse subpaths to open or close holes, and export SVG, CSS, clip-path and JSX.",
     icon: "fillRule",
     href: "/goodies/fill-rule-visualiser"
+  },
+  {
+    name: "Motion Path Builder",
+    description: "Model-railway motion path editor — lay track on a felt baseboard by pinning smooth or corner points (or paste a d string), send a loco, arrow, plane, car or emoji along it with real CSS offset-path, tune duration, direction, offset-rotate, offset-anchor, offset-distance and cubic-bezier easing on a train controller with a ghost trail and scrubber, and export CSS, SVG SMIL or React.",
+    icon: "motionPath",
+    href: "/goodies/motion-path-builder"
   }
 ];
