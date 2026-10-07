@@ -147,6 +147,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
       { date: "2026-09-24", change: "Added cross-reference to post 'Mastering CSS steps() for Discrete, Stepped Animations'" },
       { date: "2026-09-13", change: "Added cross-reference to tutorial 'Hinting Layer Promotion with will-change'" },
@@ -209,6 +210,7 @@ export const posts: Post[] = [
     },
     signoff: "Between the six shape playgrounds, the presentation-attributes demo, and getting that radar sweep to pivot from exactly the right point, this ended up with more moving pieces than any SVG post so far — I hope tinkering with those sliders builds more intuition than the coordinate math alone ever could. Thanks for working through the whole toolkit with me. Go build something that scales without breaking a sweat. 🎯",
     changelog: [
+      { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-08-25", change: "Added cross-reference to post 'SVG Polygon vs Polyline: Differences, Fill Rules, and Use Cases'" },
       { date: "2026-08-21", change: "Initial publication" }
     ]
@@ -290,6 +292,7 @@ export const posts: Post[] = [
     },
     signoff: "The five diagrams gave me the most trouble up front—getting the off-center radial boundaries to line up with the actual math, and the conic sweep to read as clockwise-from-the-top at a glance—and turning the playground into three real tabs (gradient types plus repeating, a toggleable glass layer stack, and all three animated demos with a reduced-motion switch) took a lot more wiring than the original single-panel version. I hope dragging every one of those controls makes gradients click in a way reading about them never quite does. Thanks for gradient-ing along with me. 🌈",
     changelog: [
+      { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-09-28", change: "Added cross-reference to post 'CSS Gradient Borders: Complete Guide with Techniques & Examples'" },
       { date: "2026-09-27", change: "Added cross-reference to post 'CSS Gradient Text Guide: Background-Clip, Animation & Advanced Tricks'" },
       { date: "2026-09-04", change: "Initial publication" }
