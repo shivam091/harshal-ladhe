@@ -521,6 +521,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-10-04", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "html5-canvas-guide",
+    title: "HTML5 Canvas Guide: Drawing, Animation, and Best Practices",
+    excerpt: "Draw, animate, and optimise graphics with the Canvas API.",
+    description: "Learn the HTML5 Canvas API from first shapes to advanced techniques — paths, transforms, animation, input, high-DPI, OffscreenCanvas, pixels, and 3D.",
+    category: ["JavaScript"],
+    tags: ["canvas", "html5", "javascript", "canvas-api", "animation", "graphics", "webgl", "performance", "accessibility", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/html5-canvas-guide/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "HTML5 Canvas illustration showcasing drawing, animation, shapes, transformations, pixel manipulation, interactivity, and 3D graphics."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one grew from a first `fillRect()` all the way to `OffscreenCanvas` workers, pixel manipulation, and a full cheat sheet, and the four diagrams carry the parts words kept fumbling — the y-axis running down, `arc()` angles turning clockwise, `rotate()` swinging around the origin until `translate()` moves it, and one canvas pixel smeared across a 2 × 2 block on a high-DPI screen. The playground took the most rounds: particles that collide by swapping velocity along the contact normal and answer mouse, touch, and pen alike, then a second mode that projects, depth-sorts, and flat-shades a cube, pyramid, and octahedron with nothing but maths on a plain 2D context. Thanks for drawing along with me — go paint something worth redrawing sixty times a second. 🎨",
+    changelog: [
+      { date: "2026-10-07", change: "Initial publication" }
+    ]
   }
 ];
 
