@@ -1154,6 +1154,24 @@ export const icons = {
       </>
     )
   },
+  penNib: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M14.5 3.5 L20.5 9.5 L13 17 L6 18 L7 11 Z" />
+        <path d="M6 18 L10.5 13.5" />
+        <circle cx="11.5" cy="12.5" r="1.25" />
+        <path d="M3 21 C 5 19.5, 7 21.5, 9 20 S 12 19.5, 13 21" />
+      </>
+    )
+  },
   penTool: {
     viewBox: "0 0 24 24",
     svgProps: {

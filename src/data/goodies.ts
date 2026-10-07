@@ -191,5 +191,11 @@ export const goodies: Goodie[] = [
     description: "Model-railway motion path editor — lay track on a felt baseboard by pinning smooth or corner points (or paste a d string), send a loco, arrow, plane, car or emoji along it with real CSS offset-path, tune duration, direction, offset-rotate, offset-anchor, offset-distance and cubic-bezier easing on a train controller with a ghost trail and scrubber, and export CSS, SVG SMIL or React.",
     icon: "motionPath",
     href: "/goodies/motion-path-builder"
+  },
+  {
+    name: "Line-Drawing / Signature Animator",
+    description: "Fountain-pen writing desk where any pasted SVG draws itself stroke by stroke on cream laid paper — document, spatial, longest-first or seeded-random order, constant-speed signature pacing, overlap/stagger/easing, outlined fills that ink in afterwards, an ink-blotter stroke ledger for reordering and per-stroke tweaks, and animated SVG, CSS, React or Web Animations API export.",
+    icon: "penNib",
+    href: "/goodies/line-drawing-animator"
   }
 ];
