@@ -161,5 +161,11 @@ export const goodies: Goodie[] = [
     description: "Arcade-cabinet mini Shadertoy in raw WebGL — a GLSL fragment shader editor beside a live CRT canvas with iTime/iResolution/iMouse uniforms, line-numbered compile errors, auto-generated sliders and colour pickers for `// @slider`/`// @color`-annotated uniforms, and PNG export.",
     icon: "shader",
     href: "/goodies/shader-playground"
+  },
+  {
+    name: "Icon Sprite Builder",
+    description: "Stamp-album SVG sprite builder — mount pasted, dropped or starter icons in perforated stamps, auto-slugged unique ids, internal gradient/clip/mask ids prefixed per symbol, optional currentColor, a sanitised live <use> preview with size and ink controls, and a first-day cover holding the sprite plus HTML/React/external-file <use> snippets and a byte count.",
+    icon: "iconSprite",
+    href: "/goodies/icon-sprite-builder"
   }
 ];
