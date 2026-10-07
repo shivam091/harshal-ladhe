@@ -179,5 +179,11 @@ export const goodies: Goodie[] = [
     description: "Exercise-book shape-to-path converter — turn <rect> (rounded corners included), <circle>, <ellipse>, <line>, <polyline> and <polygon> into an equivalent <path d> on squared paper, with draggable handles, red-pen numbered working for every command, hover-to-trace and step-through drawing, an overlay proving the two match, absolute/relative and precision options, and whole-SVG conversion.",
     icon: "shapeToPath",
     href: "/goodies/shape-to-path"
+  },
+  {
+    name: "Fill-Rule Visualiser",
+    description: "Stained-glass fill-rule visualiser — draw or paste a self-crossing SVG path, compare nonzero and evenodd side by side, split or overlaid, cast a ray to see every ±1 crossing, the winding number and the crossing count, tint regions with a winding map, reverse subpaths to open or close holes, and export SVG, CSS, clip-path and JSX.",
+    icon: "fillRule",
+    href: "/goodies/fill-rule-visualiser"
   }
 ];

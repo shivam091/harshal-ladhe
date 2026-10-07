@@ -775,6 +775,21 @@ export const icons = {
     a backdrop-filter's translucent panel actually is. Used by the Filter & Backdrop Generator goodie
     card.
   */
+  fillRule: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M12 3 L17.6 20.2 L3 9.6 L21 9.6 L6.4 20.2 Z" fill="currentColor" fillOpacity="0.35" fillRule="evenodd" />
+      </>
+    )
+  },
   frostedPanel: {
     viewBox: "0 0 24 24",
     children: (
