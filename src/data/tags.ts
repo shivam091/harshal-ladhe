@@ -875,4 +875,20 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Bounce Easing Curves",
     description: "Curves that overshoot and settle rather than ease smoothly to a stop — building bounce timing functions with `linear()` and `cubic-bezier()`."
   },
+  "html5": {
+    title: "HTML5 Elements and Browser APIs",
+    description: "Guides to HTML5 elements and the browser APIs behind them — from the <canvas> element and its drawing context to the modern features every frontend developer relies on."
+  },
+  "canvas": {
+    title: "Working with the HTML5 Canvas API",
+    description: "Guides on drawing, animating, and structuring code around the HTML5 <canvas> element, from plain JavaScript to framework integrations."
+  },
+  "canvas-api": {
+    title: "HTML5 Canvas API Reference and Techniques",
+    description: "Deep dives into specific HTML5 Canvas API methods and techniques — drawing, transforms, pixel manipulation, and performance."
+  },
+  "webgl": {
+    title: "WebGL and 3D Graphics on the Web",
+    description: "Posts touching WebGL and 3D rendering in the browser, from raw context calls to higher-level libraries like Three.js and react-three-fiber."
+  },
 };
