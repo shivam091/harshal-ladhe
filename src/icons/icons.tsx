@@ -1527,6 +1527,23 @@ export const icons = {
       </>
     )
   },
+  strokeLab: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3.5 4 L12.5 4 M3.5 14 L12.5 14" />
+        <rect x="5.5" y="4" width="5" height="10" />
+        <path d="M10.5 11.5 C 16 11.5, 20.5 13, 20.5 16.5 S 16 21, 11 20" strokeDasharray="2.5 2.5" />
+      </>
+    )
+  },
   svgOptimiser: {
     viewBox: "0 0 24 24",
     svgProps: {

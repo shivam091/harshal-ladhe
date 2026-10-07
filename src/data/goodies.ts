@@ -209,5 +209,11 @@ export const goodies: Goodie[] = [
     description: "Post-office parcel-counter SVG optimiser — weighs your SVG on a brass scale before and after fifteen hand-written SVGO-style passes (editor cruft, unused ids, defaults, groups, precision rounding, colour shortening, shapes to paths, shortest path data), with a postage stamp per pass showing the bytes it saved, a gzip estimate, sanitised before/after previews and a line diff.",
     icon: "svgOptimiser",
     href: "/goodies/svg-optimiser"
+  },
+  {
+    name: "Stroke Lab",
+    description: "Haberdashery-styled SVG stroke lab — every stroke property live on a zig-zag, star, spiral, curve, text or custom path, with a measuring-tape dasharray editor (odd lists doubled), marching ants, cap-extension and centreline overlays, a miterlimit seam gauge reading 1/sin(θ/2) per corner, linejoin fallbacks, paint-order and non-scaling-stroke demos, and a pathLength=\"1\" draw-on export to CSS/SVG/React.",
+    icon: "strokeLab",
+    href: "/goodies/stroke-lab"
   }
 ];
