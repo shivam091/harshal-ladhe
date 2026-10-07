@@ -203,5 +203,11 @@ export const goodies: Goodie[] = [
     description: "Alchemist's-workbench path morpher — paste two or more SVG paths (any commands, relative/absolute, arcs included) and it normalises them to cubics, pads subpaths, splits segments by length and auto-aligns start points/direction to minimise travel, with a compatibility report, flask-and-alembic preview with onion skins and matched points, a brass astrolabe scrubber, and CSS d: path()/SMIL/react-spring/matched-path export.",
     icon: "pathMorph",
     href: "/goodies/svg-path-morph"
+  },
+  {
+    name: "SVG Optimiser",
+    description: "Post-office parcel-counter SVG optimiser — weighs your SVG on a brass scale before and after fifteen hand-written SVGO-style passes (editor cruft, unused ids, defaults, groups, precision rounding, colour shortening, shapes to paths, shortest path data), with a postage stamp per pass showing the bytes it saved, a gzip estimate, sanitised before/after previews and a line diff.",
+    icon: "svgOptimiser",
+    href: "/goodies/svg-optimiser"
   }
 ];

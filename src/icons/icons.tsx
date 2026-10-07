@@ -1527,6 +1527,24 @@ export const icons = {
       </>
     )
   },
+  svgOptimiser: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="7" y="3" width="10" height="8" rx="1" />
+        <path d="M12 3 L12 11 M7 7 L17 7" />
+        <path d="M3 13 Q12 16 21 13" />
+        <path d="M12 14.5 L12 18 M8 21 L16 21 L14.5 18 L9.5 18 Z" />
+      </>
+    )
+  },
   trash: {
     viewBox: "0 0 24 24",
     svgProps: {
