@@ -1486,6 +1486,26 @@ export const icons = {
       </>
     )
   },
+  viewbox: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <path d="M3 7V3h4" />
+        <path d="M17 3h4v4" />
+        <path d="M21 17v4h-4" />
+        <path d="M7 21H3v-4" />
+        <rect x="7" y="8" width="10" height="8" rx="1" />
+        <circle cx="17" cy="16" r="1.5" fill="currentColor" />
+      </>
+    )
+  },
   twitter: {
     viewBox: "0 0 24 24",
     children: (

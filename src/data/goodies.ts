@@ -167,5 +167,11 @@ export const goodies: Goodie[] = [
     description: "Stamp-album SVG sprite builder — mount pasted, dropped or starter icons in perforated stamps, auto-slugged unique ids, internal gradient/clip/mask ids prefixed per symbol, optional currentColor, a sanitised live <use> preview with size and ink controls, and a first-day cover holding the sprite plus HTML/React/external-file <use> snippets and a byte count.",
     icon: "iconSprite",
     href: "/goodies/icon-sprite-builder"
+  },
+  {
+    name: "viewBox / preserveAspectRatio Explorer",
+    description: "Darkroom-enlarger SVG viewBox explorer — drag and resize the viewBox as a masking easel over a negative on a light box, watch the viewport print update live on the baseboard, flip or auto-tour through every preserveAspectRatio alignment as fit with borders (meet) or crop to fill (slice), with letterbox/crop overlays, a scale/translate/matrix readout with a plain-English explanation, pasted-SVG support, and SVG/React/matrix export.",
+    icon: "viewbox",
+    href: "/goodies/viewbox-explorer"
   }
 ];
