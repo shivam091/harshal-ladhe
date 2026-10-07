@@ -499,6 +499,9 @@ animations move by **speed × elapsed time** instead:
 `requestAnimationFrame()` passes the callback a high-resolution timestamp (`now`), so you never need `Date.now()`.
 Now the ball covers 120 pixels every second on every screen, however fast it refreshes.
 
+Building this loop inside a React component? [Canvas in React](/post/react/canvas-in-react#the-fix-a-ref-driven-loop) shows why
+per-frame values like `x` and `lastTime` belong in refs, not state.
+
 ### Respecting Reduced Motion
 
 Some people set their operating system to reduce motion because large movement on screen makes them unwell. Canvas
@@ -591,7 +594,8 @@ polygons, curves, or text outlines — where the maths gets awkward.
 <Info title="Use the right tool">
   Use **Canvas** for games, particle effects, image processing, and real-time rendering with many moving parts. Use
   **SVG** for logos, icons, diagrams, and UI that should stay sharp at any size and be styled or clicked shape by
-  shape. New to SVG? Start with [SVG Essentials](/post/svg/svg-essentials-mastering-basic-shapes).
+  shape. New to SVG? Start with [SVG Essentials](/post/svg/svg-essentials-mastering-basic-shapes). Building in React?
+  [Canvas in React](/post/react/canvas-in-react#canvas-vs-svg-the-react-specific-version) covers how SVG-as-JSX shifts the trade-off.
 </Info>
 
 <RainbowDivider />
@@ -836,6 +840,10 @@ UI stays responsive however busy the scene gets.
   `canvas.width`, or call `transferControlToOffscreen()` on it again. Workers also can't see the DOM — send them
   resize events, pointer positions, and `devicePixelRatio` via `postMessage()`.
 </Warning>
+
+That one-way transfer has a React-specific catch: Strict Mode runs effects twice against the same `<canvas>`, so the
+second transfer throws. [OffscreenCanvas and Web Workers in React](/post/react/canvas-in-react#offscreencanvas-and-web-workers-in-react)
+shows the fix.
 
 ### Pixel Manipulation: The "Power User" Feature
 

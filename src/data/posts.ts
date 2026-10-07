@@ -305,6 +305,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Canvas rewards the habits that follow from it forgetting everything it draws — fresh paths, saved state, time-based motion — and the coordinate, arc, transform, and high-DPI diagrams are there to make those habits stick. I hope spinning that hand-rolled 3D cube in the playground shows just how far a plain 2D context can go. Thanks for drawing along with me — go paint something worth redrawing sixty times a second. 🎨",
     changelog: [
+      { date: "2026-10-07", change: "Added cross-references to post 'Canvas in React: useRef, useEffect, and Animation Loops Done Right'" },
       { date: "2026-10-07", change: "Added cross-reference to post 'An Interactive Guide to CSS Transitions'" },
       { date: "2026-09-01", change: "Initial publication" },
     ],
