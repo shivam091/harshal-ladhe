@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "html5-canvas",
+    title: "HTML5 Canvas Playground",
+    description: "Dozens of particles react to your mouse or finger in real time, or switch to a hand-rolled 3D scene — drag to spin a cube, pyramid, or octahedron and tune perspective, rotation speed, and wireframe mode live.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "sibling-index-count-functions",
     title: "Staggered Animation with sibling-index()",
     description: "A list whose items fade in one after another, with every delay calculated in CSS by sibling-index() — switch between a fixed 80ms step and a fixed 600ms total via sibling-count(), add or remove items to see the stagger recalculate live, and check whether your browser supports the functions or is using the all-at-once fallback.",
