@@ -197,5 +197,11 @@ export const goodies: Goodie[] = [
     description: "Fountain-pen writing desk where any pasted SVG draws itself stroke by stroke on cream laid paper — document, spatial, longest-first or seeded-random order, constant-speed signature pacing, overlap/stagger/easing, outlined fills that ink in afterwards, an ink-blotter stroke ledger for reordering and per-stroke tweaks, and animated SVG, CSS, React or Web Animations API export.",
     icon: "penNib",
     href: "/goodies/line-drawing-animator"
+  },
+  {
+    name: "SVG Path Morph",
+    description: "Alchemist's-workbench path morpher — paste two or more SVG paths (any commands, relative/absolute, arcs included) and it normalises them to cubics, pads subpaths, splits segments by length and auto-aligns start points/direction to minimise travel, with a compatibility report, flask-and-alembic preview with onion skins and matched points, a brass astrolabe scrubber, and CSS d: path()/SMIL/react-spring/matched-path export.",
+    icon: "pathMorph",
+    href: "/goodies/svg-path-morph"
   }
 ];

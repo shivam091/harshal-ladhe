@@ -1172,6 +1172,23 @@ export const icons = {
       </>
     )
   },
+  pathMorph: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <rect x="2.5" y="8" width="7" height="7" rx="1" />
+        <path d="M18 7.5 L19.4 10.4 L22.5 10.8 L20.2 13 L20.8 16 L18 14.6 L15.2 16 L15.8 13 L13.5 10.8 L16.6 10.4 Z" />
+        <path d="M10.5 11.5 C 11.5 10, 12.5 10, 13.2 11" strokeDasharray="1 2" />
+      </>
+    )
+  },
   penTool: {
     viewBox: "0 0 24 24",
     svgProps: {
