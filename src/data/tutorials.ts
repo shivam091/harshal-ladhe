@@ -93,6 +93,7 @@ export const tutorials: Tutorial[] = [
       caption: "One colour declaration switching between light and dark themes automatically."
     },
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to tutorial 'Theming Native Controls with `accent-color`'" },
       { date: "2026-09-08", change: "Initial publication." }
     ]
   },
@@ -265,6 +266,7 @@ export const tutorials: Tutorial[] = [
       caption: "A page before and after a modern reset smooths out browser defaults."
     },
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to tutorial 'Theming Native Controls with `accent-color`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-30", change: "Initial publication." }
     ]
