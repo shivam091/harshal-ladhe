@@ -779,6 +779,18 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Building Dark Mode on the Web",
     description: "Approaches for adding dark mode to websites, from system-preference detection to theme-aware CSS colours."
   },
+  "accent-color": {
+    title: "Theming Controls with `accent-color`",
+    description: "Using the CSS `accent-color` property to give native checkboxes, radios, switches, sliders and progress bars a brand colour."
+  },
+  "forms": {
+    title: "Building HTML Forms",
+    description: "Accessible, well-styled HTML forms and the native controls inside them."
+  },
+  "native-controls": {
+    title: "Native Form Controls",
+    description: "Getting the most from the browser's own form controls instead of rebuilding them as custom widgets."
+  },
   "theming": {
     title: "Theming Websites with CSS",
     description: "Techniques for building switchable themes with custom properties, design tokens, and modern colour functions."
