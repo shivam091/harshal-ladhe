@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-z-index-stacking-contexts",
+    title: "z-index and Stacking Contexts Playground",
+    description: "Three tabs of real HTML and CSS: free a z-index: 9999 tooltip trapped inside its card, watch where a z-index: -1 decoration lands as its parent gains a stacking context, and keep mix-blend-mode inside a group with isolation: isolate — each with a readout explaining what the browser painted and the CSS for exactly that state.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "html5-canvas",
     title: "HTML5 Canvas Playground",
     description: "Dozens of particles react to your mouse or finger in real time, or switch to a hand-rolled 3D scene — drag to spin a cube, pyramid, or octahedron and tune perspective, rotation speed, and wireframe mode live.",

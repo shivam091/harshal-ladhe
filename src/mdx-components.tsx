@@ -79,6 +79,8 @@ import CanvasCoordinateDiagram from "@/components/mdx/CanvasCoordinateDiagram";
 import CanvasArcDiagram from "@/components/mdx/CanvasArcDiagram";
 import CanvasTransformDiagram from "@/components/mdx/CanvasTransformDiagram";
 import CanvasDprDiagram from "@/components/mdx/CanvasDprDiagram";
+import PaintingOrderDiagram from "@/components/mdx/PaintingOrderDiagram";
+import StackingContextTreeDiagram from "@/components/mdx/StackingContextTreeDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -194,6 +196,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     CanvasArcDiagram,
     CanvasTransformDiagram,
     CanvasDprDiagram,
+    PaintingOrderDiagram,
+    StackingContextTreeDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
