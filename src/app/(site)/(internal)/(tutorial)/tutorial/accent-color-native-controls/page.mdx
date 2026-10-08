@@ -1,0 +1,218 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("accent-color-native-controls");
+
+## Introduction
+
+Native checkboxes, radio buttons, range sliders and progress bars arrive in the operating system's default blue (or
+grey). For years, the only way to match them to a brand colour was to replace them entirely: hide the real input,
+build a styled `<div>` in its place, and then re-implement keyboard handling, focus states and accessibility
+semantics by hand.
+
+**`accent-color`** themes the native controls directly. One property, real `<input>` elements, and all of their
+native behaviour kept.
+
+<RainbowDivider />
+
+## The Property
+
+<CodeBlock language="css">
+{`
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"],
+  progress {
+    accent-color: #22c55e;
+  }
+`}
+</CodeBlock>
+
+`accent-color` tells the browser which colour to use for the "on" part of a control: the fill behind a checkmark,
+the selected radio dot, the filled part of a range track, the completed part of a progress bar. The browser still
+draws its own native shape and keeps its own interaction; only the accent changes.
+
+It takes a single value: any CSS colour, or `auto` — the initial value, which leaves the choice to the browser.
+
+<RainbowDivider />
+
+## Which Controls It Themes
+
+| Control                            | What takes the accent colour                          |
+| ---------------------------------- | ----------------------------------------------------- |
+| `<input type="checkbox">`          | The box fill when checked or indeterminate            |
+| `<input type="radio">`             | The selected dot and ring                             |
+| `<input type="checkbox" switch>`   | The "on" track, in browsers that draw a native switch |
+| `<input type="range">`             | The filled part of the track and the thumb            |
+| `<progress>`                       | The completed bar, including the indeterminate bar    |
+
+The specification names checkboxes, radio buttons, range sliders and progress bars. The switch is still a checkbox
+underneath, so it follows the same rule wherever a browser renders it as a switch.
+
+<RainbowDivider />
+
+## Set It Once, Inherit Everywhere
+
+<CodeBlock language="css">
+{`
+  :root {
+    accent-color: var(--brand);
+  }
+`}
+</CodeBlock>
+
+`accent-color` inherits, so setting it once on `:root` (or on any container) themes every native control inside it.
+There's no need to target `input[type="checkbox"]`, `input[type="radio"]` and the rest one by one.
+
+When one area should stand apart, override it there — the controls inside pick up the nearer value:
+
+<CodeBlock language="css">
+{`
+  :root {
+    accent-color: var(--brand);
+  }
+
+  /* Destructive settings get a warning colour instead of the brand */
+  .danger-zone {
+    accent-color: crimson;
+  }
+`}
+</CodeBlock>
+
+Because it's an ordinary colour value, it combines with everything else you already use for themes — a custom
+property, or [`light-dark()`](/tutorial/light-dark-color-scheme) for a separate light and dark accent:
+
+<CodeBlock language="css">
+{`
+  :root {
+    color-scheme: light dark;
+    accent-color: light-dark(#15803d, #4ade80);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Contrast Is Handled for You
+
+You only choose the accent. The browser chooses what sits on top of it: on a dark accent the checkmark is drawn
+light, and on a pale accent it's drawn dark, so the checked state stays readable whichever colour you pick. Chrome
+treats range sliders and progress bars the same way, drawing the unfilled part of the track light behind a dark
+accent and dark behind a pale one — so a pale accent can give you a dark track even on a light page.
+
+<Info title="Pair it with color-scheme on dark pages">
+  The unchecked checkbox and the empty radio ring aren't part of the accent — they follow `color-scheme`. On a dark
+  page, declare `color-scheme: dark` (or `light dark`) so they're drawn as dark shapes that suit the background,
+  rather than as bright white boxes.
+</Info>
+
+<RainbowDivider />
+
+## Try It Live
+
+The sandbox below puts every control `accent-color` themes side by side: the **browser default** in one column, the
+same markup inside a container with one `accent-color` declaration in the other. Pick a colour and watch the right
+column follow, while the left keeps the browser's own accent.
+
+- The **checkbox**, **radio button**, **range slider** and **progress** rows show the four controls the
+  specification lists.
+- The **indeterminate** checkbox and progress rows show that the "in between" states take the accent too.
+- The **switch** row tells you whether your browser draws a native switch or a plain checkbox.
+- The **Left alone** panel shows a control the property deliberately doesn't reach.
+
+<Sandbox slug="accent-color-native-controls" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## The In-Between States
+
+Both "busy" states pick up the accent with no extra CSS.
+
+<CodeBlock language="html">
+{`
+  <input type="checkbox" id="select-all" />
+
+  <!-- No value attribute: an animated, indeterminate bar -->
+  <progress aria-label="Uploading"></progress>
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  // There's no HTML attribute for this state; it can only be set from script.
+  document.getElementById("select-all").indeterminate = true;
+`}
+</CodeBlock>
+
+An indeterminate checkbox — the classic "some items selected" state of a *select all* box — fills with the accent
+and shows a dash instead of a tick. A `<progress>` element with no `value` becomes an indeterminate, animated bar,
+and the moving segment takes the accent as well.
+
+<RainbowDivider />
+
+## The Native Switch
+
+<CodeBlock language="html">
+{`
+  <label>
+    <input type="checkbox" switch checked />
+    Email notifications
+  </label>
+`}
+</CodeBlock>
+
+Adding the `switch` attribute to a checkbox asks the browser to draw it as an on/off switch, and browsers that draw
+one also colour its "on" track with `accent-color`. Browsers that don't recognise the attribute simply render an
+ordinary checkbox — still fully working and still accent-coloured — so it's safe to use today. The sandbox's switch
+row reports which of the two your browser is showing.
+
+<RainbowDivider />
+
+## What It Doesn't Change
+
+`accent-color` only affects the colour of the checked or filled part. It doesn't change:
+
+- The control's **size or shape**, which is still whatever the browser and operating system draw
+- The **unchecked checkbox and empty radio ring**, which follow `color-scheme` instead
+- **Label text**, since `accent-color` has no effect on a `<label>`'s colour
+- **`<meter>`**, which keeps its own good, average and poor colours because they carry meaning
+- **`<select>` menus, date pickers and colour pickers**, which are outside its scope
+
+For anything deeper — a completely custom checkbox shape, or a track with a gradient — you're back to either
+accepting the native look with just the accent themed, or building a full custom replacement. `accent-color` covers
+the middle ground: keep it native, just match the brand.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Forms where checkboxes and radio buttons need to match the brand, without rebuilding them as custom controls
+- Settings screens full of switches, sliders and progress indicators
+- Anywhere a custom-styled checkbox or radio replacement exists purely for colour, where native behaviour would be
+  the better choice
+- Quick brand-matching for admin dashboards and internal tools that don't justify a full design system
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+- **Contrast still matters.** The browser keeps the checkmark readable, but the accent itself has to stand out from
+  what's around it. WCAG asks for a contrast ratio of at least **3:1** between a control's state and its adjacent
+  colours (success criterion 1.4.11, non-text contrast), so check your accent against the page background.
+- **Forced colours mode overrides it.** When someone uses a forced colours mode such as Windows Contrast Themes, the
+  browser resets `accent-color` to `auto` and draws controls in their chosen system colours. That's the right
+  outcome — never rely on the accent alone to carry meaning.
+- **It really is the native control.** Screen readers, keyboard navigation and autofill all behave exactly as they
+  do for an unstyled input, because nothing about the element's semantics or behaviour has changed.
+- **Rendering differs a little between browsers and operating systems.** `accent-color` tells each browser what
+  colour to use, but the exact shape and animation of the checked state are still its own. That's a strength
+  (native, familiar, accessible) as much as a limit (you can't match a design comp pixel for pixel).
+- **Browser support is solid.** Every current evergreen browser supports it (Chrome and Edge 93+, Firefox 92+,
+  Safari 15.4+), so it's safe to adopt broadly. Older browsers just show their default accent.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`accent-color` is the answer to "I just need this checkbox to match the brand". Reach for it before reaching for a
+custom control, and save the heavier rebuild for designs that genuinely need a shape or interaction native controls
+can't provide.
