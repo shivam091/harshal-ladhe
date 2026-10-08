@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "accent-color-native-controls",
+    title: "Theming Native Controls with accent-color",
+    description: "Every native control accent-color themes — checkbox, indeterminate checkbox, radio, switch, range slider, and determinate and indeterminate progress — shown beside its browser default, re-themed live from one colour picker, plus a <meter> to show what the property leaves alone.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-z-index-stacking-contexts",
     title: "z-index and Stacking Contexts Playground",
     description: "Three tabs of real HTML and CSS: free a z-index: 9999 tooltip trapped inside its card, watch where a z-index: -1 decoration lands as its parent gains a stacking context, and keep mix-blend-mode inside a group with isolation: isolate — each with a readout explaining what the browser painted and the CSS for exactly that state.",
