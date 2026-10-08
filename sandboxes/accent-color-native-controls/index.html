@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>accent-color Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Theming Native Controls with accent-color</h1>
+        <p>Every control here is the browser's own element. The left column is the browser default; the right column is the same markup inside a container with one <code>accent-color</code> declaration.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Theme</legend>
+        <label class="picker-row" for="theme-picker">
+          Accent colour
+          <input type="color" id="theme-picker" value="#22c55e" />
+        </label>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Native controls, default and themed">
+        <div class="compare-grid">
+          <span class="column-heading" aria-hidden="true">Control</span>
+          <span class="column-heading" id="col-default" aria-hidden="true">Browser default</span>
+          <span class="column-heading" id="col-themed" aria-hidden="true">accent-color</span>
+
+          <span class="row-label" id="label-checkbox">Checkbox</span>
+          <span class="cell default"><input type="checkbox" checked aria-labelledby="label-checkbox col-default" /></span>
+          <span class="cell themed"><input type="checkbox" checked aria-labelledby="label-checkbox col-themed" /></span>
+
+          <span class="row-label" id="label-mixed">Checkbox, indeterminate</span>
+          <span class="cell default"><input type="checkbox" data-indeterminate aria-labelledby="label-mixed col-default" /></span>
+          <span class="cell themed"><input type="checkbox" data-indeterminate aria-labelledby="label-mixed col-themed" /></span>
+
+          <span class="row-label" id="label-radio">Radio button</span>
+          <span class="cell default"><input type="radio" name="default-plan" checked aria-labelledby="label-radio col-default" /></span>
+          <span class="cell themed"><input type="radio" name="themed-plan" checked aria-labelledby="label-radio col-themed" /></span>
+
+          <span class="row-label" id="label-switch">Switch <small id="switch-support"></small></span>
+          <span class="cell default"><input type="checkbox" switch checked aria-labelledby="label-switch col-default" /></span>
+          <span class="cell themed"><input type="checkbox" switch checked aria-labelledby="label-switch col-themed" /></span>
+
+          <span class="row-label" id="label-range">Range slider</span>
+          <span class="cell default"><input type="range" min="0" max="100" value="65" aria-labelledby="label-range col-default" /></span>
+          <span class="cell themed"><input type="range" min="0" max="100" value="65" aria-labelledby="label-range col-themed" /></span>
+
+          <span class="row-label" id="label-progress">Progress</span>
+          <span class="cell default"><progress value="70" max="100" aria-labelledby="label-progress col-default"></progress></span>
+          <span class="cell themed"><progress value="70" max="100" aria-labelledby="label-progress col-themed"></progress></span>
+
+          <span class="row-label" id="label-busy">Progress, indeterminate</span>
+          <span class="cell default"><progress aria-labelledby="label-busy col-default"></progress></span>
+          <span class="cell themed"><progress aria-labelledby="label-busy col-themed"></progress></span>
+        </div>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Left alone</legend>
+        <div class="compare-grid">
+          <span class="row-label" id="label-meter">Meter</span>
+          <span class="cell default"><meter value="0.7" aria-labelledby="label-meter col-default"></meter></span>
+          <span class="cell themed"><meter value="0.7" aria-labelledby="label-meter col-themed"></meter></span>
+        </div>
+        <p class="tip"><code>&lt;meter&gt;</code> keeps its own good/average/poor colours, since those carry meaning, so <code>accent-color</code> doesn't reach it.</p>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
