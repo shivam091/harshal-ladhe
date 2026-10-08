@@ -130,6 +130,7 @@ export const posts: Post[] = [
     pinned: true,
     featured: true,
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-19", change: "Added cross-reference to tutorial 'Dynamic Viewport Height Units'" },
       { date: "2026-08-15", change: "Added interactive auto-fit vs auto-fill and container query playground" },
       { date: "2026-07-05", change: "Initial publication" }
@@ -153,6 +154,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
       { date: "2026-09-24", change: "Added cross-reference to post 'Mastering CSS steps() for Discrete, Stepped Animations'" },
@@ -416,6 +418,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Between the core keyframes playground and a second sandbox built just to make `animation-timeline` and `animation-range` tangible — complete with a live range slider and its own feature-detection fallback for browsers that don't support scroll-driven animations yet — this one ended up needing two full interactive builds instead of one. Getting the `animation-range` diagram to actually line up entry/contain/cover/exit against a scrolling element took more iteration than the rest of the post combined. Thanks for tweaking every duration, delay, and range slider with me — go give your loops, spinners, and scroll reveals some real personality. 🎬",
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
       { date: "2026-09-24", change: "Added cross-reference to post 'Mastering CSS steps() for Discrete, Stepped Animations'" },
       { date: "2026-09-13", change: "Added cross-reference to tutorial 'Hinting Layer Promotion with will-change'" },
@@ -462,6 +465,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "The four-line recipe was the easy part — the real work was proving every variant actually renders the way the prose claims. The stroke, blend-mode, and video examples all had to be rebuilt after testing them in a real browser, and the playground's wrap-fix toggle only started doing anything once the gradient moved onto an inline span the flex layout couldn't blockify. I hope flipping that toggle, and watching the readout print the exact CSS behind each change, makes the whole clipping trick click. Thanks for reading all the way to the last gradient stop. 🌈",
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-27", change: "Initial publication" }
     ]
   },
@@ -483,6 +487,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Three techniques that look alike on a white page turned out to behave very differently once I put them over a striped background — which is how the see-through-center rule for picking mask over background-clip ended up at the heart of this post. Rebuilding the playground's conic animation around an @property angle, after the background-position version just zoomed into one flat hue, and reworking the mixin so every argument can be named, took more iterations than the rest of the post combined. I hope the side-by-side comparison saves you from guessing which one to reach for. Thanks for bordering on obsessive with me. 🖼️",
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-28", change: "Initial publication" }
     ]
   },
