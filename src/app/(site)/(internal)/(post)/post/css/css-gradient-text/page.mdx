@@ -317,6 +317,10 @@ Which mode to reach for depends on the backdrop:
 - **`luminosity`** keeps the gradient's brightness and takes its hue from the backdrop, so the text mostly loses
   the gradient's colors.
 
+`mix-blend-mode` blends with *everything* painted behind the element, right down to the page background. To limit
+the blend to the texture container, give that container `isolation: isolate`. The
+[Mastering CSS z-index](/post/css/css-z-index-and-stacking-contexts#use-case-2-containing-mix-blend-mode) post explains why that works.
+
 <Warning title="Use carefully">
   Blend modes depend heavily on the colors behind them, and the same text can look completely different on another
   background — always preview against the actual background you'll ship with, in both light and dark themes.

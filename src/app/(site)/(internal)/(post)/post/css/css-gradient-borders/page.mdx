@@ -212,6 +212,8 @@ Unlike `background-clip`, nothing is painted over the center, so **whatever is b
   The `::before` sits on top of the element's content. `pointer-events: none` stops it from blocking clicks, and
   the mask removes it from the center, so text stays visible — but if you give children their own `position`,
   check their stacking order too.
+  [Mastering CSS z-index](/post/css/css-z-index-and-stacking-contexts#z-index-needs-a-positioned-element) covers how positioning and `z-index` decide
+  what paints on top.
 </Warning>
 
 <RainbowDivider />
