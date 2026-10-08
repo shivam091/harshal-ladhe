@@ -544,6 +544,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-10-07", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-z-index-and-stacking-contexts",
+    title: "Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs",
+    excerpt: "Layer confidently with z-index, stacking contexts, and isolation.",
+    description: "Learn how CSS z-index really works — painting order, stacking contexts, negative z-index, isolation: isolate, the top layer, a scalable z-index scale, and a step-by-step way to debug layering bugs.",
+    category: ["CSS"],
+    tags: ["css", "z-index", "stacking-context", "isolation", "positioning", "mix-blend-mode", "layout", "debugging", "modern-css", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/css-z-index-and-stacking-contexts/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS z-index cover showing layered UI elements, stacking contexts, z-axis ordering, and z-index values."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one is built around three new pieces: an exploded view of the seven painting layers, a version-number tree showing why 9999 can lose to 10, and a three-tab sandbox that runs real HTML and CSS rather than pictures of them — the trapped tooltip, the negative z-index box, and the blend-mode circles — each with a readout explaining what the browser just painted. Getting the playground's readout to agree with the browser in every combination — ties, z-index: 0 versus auto, an opacity of 0.99 that changes almost nothing on screen yet everything underneath — meant re-deriving the painting order more times than I'd like to admit. I hope the next time a 9999 refuses to budge, you go looking for its parent instead of adding another 9. Thanks for stacking up with me. 🥞",
+    changelog: [
+      { date: "2026-10-08", change: "Initial publication" }
+    ]
   }
 ];
 
