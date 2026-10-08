@@ -1,0 +1,94 @@
+/*
+  Tells the browser this page is dark, so the unchecked parts of every native control (box, track,
+  radio ring) are drawn for a dark background. accent-color only colours the checked/filled parts.
+*/
+:root {
+  color-scheme: dark;
+  --theme-accent: #22c55e;
+}
+
+/* The single line doing all the theming — every native control in the right-hand column inherits it. */
+.themed {
+  accent-color: var(--theme-accent);
+}
+
+/* auto is the initial value, spelled out so the comparison column reads as deliberate. */
+.default {
+  accent-color: auto;
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--pg-text-muted);
+}
+
+.picker-row input[type="color"] {
+  inline-size: 2.75rem;
+  block-size: 2rem;
+  padding: 0;
+  border: 0.0625rem solid var(--pg-border);
+  background: none;
+  cursor: pointer;
+}
+
+/* Three columns so each control's default and themed versions sit side by side on the same row. */
+.compare-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.875rem 1rem;
+}
+
+.column-heading {
+  font-family: var(--pg-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
+}
+
+.row-label {
+  font-size: 0.875rem;
+}
+
+.row-label small {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--pg-text-muted);
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+}
+
+.cell input[type="checkbox"],
+.cell input[type="radio"] {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  margin: 0;
+  cursor: pointer;
+}
+
+.cell input[type="range"],
+.cell progress,
+.cell meter {
+  inline-size: 100%;
+}
+
+/* Keeps the shared .tip's spacing from the grid above it inside the same fieldset. */
+.control-group .tip {
+  margin-block-start: 1rem;
+}
+
+@media (max-width: 30rem) {
+  .compare-grid {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0.75rem;
+  }
+}
