@@ -230,6 +230,10 @@ font size below 16px. If your body text is at least 16px, the inherited size pre
 `z-index` of its own. Every `z-index` inside your app is then compared only with the others inside it, so a
 `z-index: 9999` deep in a component can never jump above a modal or toast that is rendered outside the app root.
 
+For why stacking contexts behave this way, and what else creates one by accident, see the
+[`isolation: isolate` section](/post/css/css-z-index-and-stacking-contexts#isolation-isolate-stacking-contexts-on-purpose) of my
+[Mastering CSS z-index](/post/css/css-z-index-and-stacking-contexts) post.
+
 `#root` is the mount point in Vite and Create React App, and `#__next` is the root in the Next.js Pages Router.
 Replace them with whatever element wraps your own app. The Next.js App Router, for example, has no wrapper with a
 fixed ID, so you would target your own layout's wrapper instead.

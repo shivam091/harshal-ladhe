@@ -234,7 +234,8 @@ reduce motion:
   doesn't leave late items waiting: `animation-delay: min(calc((sibling-index() - 1) * 80ms), 1s)`.
 * **They're integers until you divide.** Both functions return integers, so they work in integer-only properties
   like `z-index` and `order`. Dividing produces a fractional number, which is fine in `calc()` for lengths, angles,
-  and times.
+  and times. If you use one for `z-index`, remember that it only orders siblings within their shared
+  [stacking context](/post/css/css-z-index-and-stacking-contexts#stacking-contexts-the-key-to-everything).
 
 <RainbowDivider />
 
