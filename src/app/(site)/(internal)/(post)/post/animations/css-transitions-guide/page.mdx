@@ -378,6 +378,8 @@ Modern browsers optimize animations using the `will-change` property. It hints t
 
 Use sparingly — excessive `will-change` declarations force the browser to immediately allocate memory and GPU resources (*layer creation*), which can increase **memory usage** and reduce performance across the rest of the page. **Only apply `will-change` just before the transition is about to occur and remove it immediately after, if possible, to avoid continuous memory use.**
 
+`will-change` has a side effect beyond performance, too: naming a property such as `transform` or `opacity` creates a new stacking context, so the element's `z-index` layering changes as soon as the hint is applied. The [full list of stacking-context triggers](/post/css/css-z-index-and-stacking-contexts#what-creates-a-stacking-context) is in my Mastering CSS z-index post.
+
 <Info title="Alternative properties">
   Hardware acceleration has been around for a long time — longer than the `will-change` property, in fact!
 
