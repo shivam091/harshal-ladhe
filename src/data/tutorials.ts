@@ -288,6 +288,25 @@ export const tutorials: Tutorial[] = [
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "accent-color-native-controls",
+    title: "Theming Native Controls with `accent-color`",
+    excerpt: "Theme native checkboxes, radios and sliders with one property.",
+    description: "The accent-color property themes the checked and filled parts of native checkboxes, radio buttons, switches, range sliders and progress bars — including their indeterminate states — while keeping real browser controls with full native behaviour and accessibility, plus how it pairs with color-scheme and what it leaves alone.",
+    category: ["CSS"],
+    tags: ["css", "accent-color", "forms", "native-controls", "theming", "accessibility", "modern-css"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/accent-color-native-controls/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover for “Theming Native Controls with accent-color”, showing a green-accented checkbox, radio button, switch, range slider and progress bar beside a row of accent colour swatches.",
+      caption: "Native checkboxes, radios, sliders and progress bars recoloured with one property."
+    },
+    changelog: [
+      { date: "2026-10-08", change: "Initial publication." }
+    ]
   }
 ];
 
