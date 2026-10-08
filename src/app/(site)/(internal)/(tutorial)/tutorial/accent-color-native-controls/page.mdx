@@ -174,6 +174,8 @@ row reports which of the two your browser is showing.
 - The control's **size or shape**, which is still whatever the browser and operating system draw
 - The **unchecked checkbox and empty radio ring**, which follow `color-scheme` instead
 - **Label text**, since `accent-color` has no effect on a `<label>`'s colour
+- **Fonts** — form controls don't inherit your typography by default either; the
+  [modern CSS reset](/tutorial/modern-css-reset#media-and-form-controls) fixes that with `font: inherit`
 - **`<meter>`**, which keeps its own good, average and poor colours because they carry meaning
 - **`<select>` menus, date pickers and colour pickers**, which are outside its scope
 
