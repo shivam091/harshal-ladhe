@@ -225,6 +225,8 @@ Here's the HTML structure:
   Most modern browsers support container queries (except older Safari/Firefox versions). Always check compatibility if building for production.
 </Warning>
 
+One side effect of `container-type: inline-size`: it also makes the container a new stacking context, so a dropdown or tooltip inside a card can't rise above content outside it. My [Mastering CSS z-index](/post/css/css-z-index-and-stacking-contexts#what-creates-a-stacking-context) post covers this and the other properties that do the same.
+
 👉 Try this hands-on in the **@container** panel of the [interactive playground](#interactive-example) below — drag the container width past the breakpoint and watch the card reflow based on its own width, not the viewport's.
 
 <RainbowDivider />

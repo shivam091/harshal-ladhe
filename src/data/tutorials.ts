@@ -160,7 +160,10 @@ export const tutorials: Tutorial[] = [
       type: "image/png",
       alt: "A modern dark-themed illustration explaining CSS will-change, showing layer promotion with smooth animation, a CSS code example, performance tips, and a comparison between animation with and without will-change."
     },
-    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+    changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
+      { date: "2026-09-13", change: "Initial publication." }
+    ]
   },
   {
     slug: "dynamic-viewport-height-units",
@@ -249,6 +252,7 @@ export const tutorials: Tutorial[] = [
       alt: "A modern CSS reset tutorial cover showing a “Before” browser layout with default styles and an “After Reset” layout with clean, consistent styling, alongside CSS code and visual highlights for box sizing, margin removal, typography, media and form controls, transitions, and stacking contexts."
     },
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-30", change: "Initial publication." }
     ]
   },
@@ -267,6 +271,7 @@ export const tutorials: Tutorial[] = [
       alt: "CSS-only staggered animation concept showing a list of elements with progressively delayed motion, illustrating sibling-index() and sibling-count() for position-based animation timing without JavaScript."
     },
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-02", change: "Initial publication." }
     ]
   }
