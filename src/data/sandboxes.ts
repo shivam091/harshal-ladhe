@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-reading-flow",
+    title: "reading-flow Playground",
+    description: "Rearrange numbered cards with flex row-reverse, grid placement or the order property, pick a reading-flow value, then press Tab and watch a live focus trail show whether keyboard order follows the screen or the HTML.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-corner-shape",
     title: "corner-shape Playground",
     description: "Shape one bordered, shadowed card with every corner-shape keyword or a superellipse() value, change its border-radius and morph it on hover, then browse squircles, bevels, scoops and notches doing real UI jobs.",

@@ -839,6 +839,18 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Rounding Corners with `border-radius`",
     description: "Sizing element corners with `border-radius`, from simple rounding to the base that `corner-shape` builds on."
   },
+  "reading-flow": {
+    title: "Fixing Focus Order with `reading-flow`",
+    description: "Using `reading-flow` and `reading-order` to make keyboard focus follow the visual order of flex and grid layouts."
+  },
+  "keyboard-navigation": {
+    title: "Keyboard Navigation and Focus Order",
+    description: "Making interfaces fully usable from the keyboard, with a focus order that matches what's on screen."
+  },
+  "flexbox": {
+    title: "CSS Flexbox Layouts",
+    description: "One-dimensional layouts with Flexbox — direction, wrapping, alignment and ordering."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."

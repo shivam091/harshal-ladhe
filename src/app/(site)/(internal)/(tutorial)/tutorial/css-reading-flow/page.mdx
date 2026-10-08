@@ -1,0 +1,192 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-reading-flow");
+
+## Introduction
+
+Flexbox and Grid made it easy to show content in a different order from the HTML: `flex-direction: row-reverse`, a
+grid item placed with `grid-area`, or the `order` property. The page looks right — but press <kbd>Tab</kbd> and focus
+jumps around the screen, because keyboard navigation still follows the HTML. For a keyboard user, the second link
+they reach might be in the bottom corner; for anyone, it's disorientating.
+
+That gap has a name in WCAG: focus order should preserve meaning and operability (success criterion 2.4.3). Until
+now, the only fixes were to rewrite the HTML to match every layout, or to manage focus with JavaScript.
+
+**`reading-flow`** closes the gap from CSS. Set it on a flex or grid container, and the browser moves focus through
+the items in the order they appear on screen, not the order they appear in the source.
+
+<RainbowDivider />
+
+## The Problem in Four Lines
+
+<CodeBlock language="html">
+{`
+  <nav class="toolbar">
+    <a href="/one">One</a>
+    <a href="/two">Two</a>
+    <a href="/three">Three</a>
+  </nav>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .toolbar {
+    display: flex;
+    flex-direction: row-reverse;
+  }
+`}
+</CodeBlock>
+
+On screen the links read **Three, Two, One** from left to right. Press Tab and focus visits **One, Two, Three** —
+starting at the right-hand end and travelling backwards across what the user sees.
+
+<RainbowDivider />
+
+## The Fix
+
+<CodeBlock language="css">
+{`
+  .toolbar {
+    display: flex;
+    flex-direction: row-reverse;
+    reading-flow: flex-visual;
+  }
+`}
+</CodeBlock>
+
+Now Tab visits **Three, Two, One**, matching the screen. Nothing else changes: the HTML order stays the same, and so
+does the visual layout. Only the reading order — the sequence focus moves through — follows the layout.
+
+<RainbowDivider />
+
+## The Values
+
+`reading-flow` goes on the container, and its value says which order to follow.
+
+### For Flex Containers
+
+| Value         | Focus moves through items…                                                             |
+| ------------- | -------------------------------------------------------------------------------------- |
+| `normal`      | In HTML order — the default, and the old behaviour                                     |
+| `flex-visual` | In visual reading order: left to right in a left-to-right language, top to bottom      |
+| `flex-flow`   | In the direction of the flex flow, starting from main-start                            |
+
+The difference between the last two is subtle. With `row-reverse`, main-start is on the **right**, so `flex-flow`
+starts there and gives the same order as the HTML. `flex-visual` ignores the flow direction and reads the items as a
+person would, so it's usually the one you want.
+
+### For Grid Containers
+
+| Value          | Focus moves through items…                                                       |
+| -------------- | -------------------------------------------------------------------------------- |
+| `normal`       | In HTML order                                                                    |
+| `grid-rows`    | Row by row, following the visual grid                                            |
+| `grid-columns` | Column by column, following the visual grid                                      |
+| `grid-order`   | In the order given by the `order` property, ignoring where items were placed     |
+
+`grid-rows` and `grid-columns` follow where items actually landed, including items moved with `grid-area`,
+`grid-row`, `grid-column` or `grid-auto-flow: dense`. `grid-order` only looks at `order`, so a grid rearranged purely
+with placement properties keeps its HTML order under `grid-order`.
+
+<RainbowDivider />
+
+## Try It Live
+
+The cards in the sandbox are numbered by their position in the HTML. Choose a **Layout** to rearrange them visually,
+choose a **reading-flow** value, then click **Start here** and press <kbd>Tab</kbd>. The **focus trail** records
+where focus really goes, so you can compare it with what's on screen:
+
+- **Flex, row-reverse** shows `flex-visual` against `flex-flow`.
+- **Grid, placed items** scatters the cards with `grid-area` — try `grid-rows`, then `grid-columns`, then notice
+  `grid-order` changes nothing.
+- **Grid, order property** rearranges the cards with `order` instead, where `grid-order` now matches the screen.
+
+<Sandbox slug="css-reading-flow" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Moving One Item with `reading-order`
+
+Sometimes the layout is right but one item should be reached earlier or later — a "Skip" button that sits at the
+end visually but should be reached first, for example. `reading-order` adjusts a single item inside a reading flow:
+
+<CodeBlock language="css">
+{`
+  .cards {
+    display: grid;
+    reading-flow: grid-rows;
+  }
+
+  .cards .featured {
+    reading-order: -1; /* reached before everything else */
+  }
+`}
+</CodeBlock>
+
+Every item starts at `reading-order: 0`. Lower values are reached earlier and higher values later; items with the
+same value keep the order `reading-flow` gave them.
+
+<Warning title="reading-order needs a reading flow">
+  `reading-order` only takes effect inside a container whose `reading-flow` isn't `normal`. On its own, it's ignored.
+  For a plain block container, `reading-flow: source-order` turns the HTML order into a reading flow, so
+  `reading-order` can then adjust individual items within it.
+</Warning>
+
+<RainbowDivider />
+
+## Fix the Source First
+
+`reading-flow` isn't a licence to ignore source order. The HTML order is still what's read when CSS fails to load, by
+search engines, and by tools that don't apply layout. The best order is a sensible one in the HTML itself.
+
+Reach for `reading-flow` when the visual order *has* to differ from the source, especially when it differs **by
+breakpoint**. A grid that moves the sidebar above the content on mobile and beside it on desktop can't have one HTML
+order that matches both — but with `reading-flow: grid-rows`, the reading order follows whichever layout is showing.
+(For more on rearranging grids with areas, see
+[Mastering CSS Grid](/post/css/mastering-css-grid).)
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`reading-flow` and `reading-order` shipped in Chromium browsers (Chrome and Edge 137) in 2025. Other browsers don't
+support them yet at the time of writing.
+
+The fallback is the behaviour every browser had before: focus follows the HTML. That makes `reading-flow` a safe
+progressive enhancement — it can only make focus order better, never worse — but it also means a layout that's
+badly out of step with its HTML is still a problem everywhere else. Keep the source order reasonable, and treat
+`reading-flow` as the finishing touch rather than the fix.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Setting It on the Items
+
+`reading-flow` belongs on the **flex or grid container**. Set on the items themselves, it does nothing; only
+`reading-order` goes on items.
+
+### 2. Expecting `grid-order` to Follow Placement
+
+Items moved with `grid-area` or `grid-row`/`grid-column` aren't reordered by `grid-order` — it only reads the
+`order` property. Use `grid-rows` or `grid-columns` to follow placement.
+
+### 3. Confusing `flex-flow` with `flex-visual`
+
+With a reversed flex direction, `flex-flow` follows the reversed flow from main-start, which usually puts it back in
+HTML order. If focus should match what the user sees, use `flex-visual`.
+
+### 4. Forgetting to Test with a Keyboard
+
+The visual result of `reading-flow` is invisible — only focus changes. After adding it, put the mouse away and press
+Tab through the component, the same way the sandbox's focus trail does.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Flexbox and Grid let the visual order drift away from the HTML, and keyboard users paid the price. `reading-flow`
+puts focus back in step with the screen with one declaration on the container — `flex-visual` for flex,
+`grid-rows` or `grid-columns` for grid — and `reading-order` fine-tunes individual items. Keep the source order
+sensible, and let `reading-flow` cover the layouts where it can't be.

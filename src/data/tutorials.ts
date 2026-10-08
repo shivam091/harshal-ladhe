@@ -312,6 +312,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-reading-flow",
+    title: "Matching Tab Order to Layout with `reading-flow`",
+    excerpt: "Make Tab order follow your flex and grid layouts.",
+    description: "The reading-flow property makes keyboard focus follow the visual order of flex and grid layouts — flex-visual, flex-flow, grid-rows, grid-columns and grid-order — instead of the HTML, with reading-order to move single items, plus when to fix the source instead and how it falls back.",
+    category: ["CSS"],
+    tags: ["css", "reading-flow", "accessibility", "keyboard-navigation", "css-grid", "flexbox", "layout", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-reading-flow/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A grid of numbered cards rearranged visually, with a focus path that follows the on-screen order thanks to the CSS reading-flow property."
+    },
+    changelog: [
+      { date: "2026-10-08", change: "Initial publication." }
+    ]
   }
 ];
 
