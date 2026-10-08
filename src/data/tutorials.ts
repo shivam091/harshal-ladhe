@@ -168,7 +168,10 @@ export const tutorials: Tutorial[] = [
       alt: "A modern dark-themed illustration explaining CSS will-change, showing layer promotion with smooth animation, a CSS code example, performance tips, and a comparison between animation with and without will-change.",
       caption: "An element promoted to its own layer for smoother animation."
     },
-    changelog: [{ date: "2026-09-13", change: "Initial publication." }]
+    changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
+      { date: "2026-09-13", change: "Initial publication." }
+    ]
   },
   {
     slug: "dynamic-viewport-height-units",
@@ -262,6 +265,7 @@ export const tutorials: Tutorial[] = [
       caption: "A page before and after a modern reset smooths out browser defaults."
     },
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-30", change: "Initial publication." }
     ]
   },
@@ -281,6 +285,7 @@ export const tutorials: Tutorial[] = [
       caption: "List items animating in one after another, timed by their position alone."
     },
     changelog: [
+      { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-02", change: "Initial publication." }
     ]
   }
