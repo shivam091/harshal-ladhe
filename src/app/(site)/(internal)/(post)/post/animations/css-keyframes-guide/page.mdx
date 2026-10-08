@@ -359,6 +359,8 @@ The `animation-fill-mode` CSS property controls how styles are applied **before*
 
 This is useful when you want the final state to persist.
 
+One side effect to watch for: if that final keyframe leaves a `transform` (or an `opacity` below `1`) in place, the element stays a stacking context after the animation ends, which can quietly trap the `z-index` of everything inside it. [Mastering CSS z-index](/post/css/css-z-index-and-stacking-contexts#3-an-animation-that-leaves-a-stacking-context-behind) walks through this pitfall and its fix.
+
 You can specify multiple fill modes for multiple animations, maintaining the order defined in the `animation-name` property:
 
 <CodeBlock language="css">
