@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>z-index and Stacking Contexts Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>z-index and Stacking Contexts</h1>
+        <p>Real HTML and real CSS, so the browser decides what paints on top. Change the controls, then read why it happened and copy the CSS for exactly what you see.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Demo" id="demo-switch">
+        <button class="tab tab--active" type="button" data-mode="stacking" role="tab" aria-selected="true">Stacking contexts</button>
+        <button class="tab" type="button" data-mode="negative" role="tab" aria-selected="false">Negative z-index</button>
+        <button class="tab" type="button" data-mode="blend" role="tab" aria-selected="false">Isolation &amp; blending</button>
+      </div>
+
+      <!-- Stacking contexts: can the tooltip escape Card A? -->
+      <div id="stacking-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area" aria-label="Stacking context preview">
+          <div class="stage stage--plain" aria-hidden="true">
+            <div class="card card-a" id="card-a">
+              <strong>Card A</strong>
+              <code id="card-a-code">z-index: 1</code>
+              <div class="tooltip" id="tooltip">
+                Tooltip
+                <code id="tooltip-code">z-index: 9999</code>
+              </div>
+            </div>
+            <div class="card card-b" id="card-b">
+              <strong>Card B</strong>
+              <code id="card-b-code">z-index: 2</code>
+            </div>
+          </div>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>Controls</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="card-a-z">Card A z-index</label>
+              <select id="card-a-z">
+                <option value="auto">auto</option>
+                <option value="0">0</option>
+                <option value="1" selected>1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="card-a-trigger">Card A also has</label>
+              <select id="card-a-trigger">
+                <option value="none" selected>nothing</option>
+                <option value="opacity">opacity: 0.99</option>
+                <option value="transform">transform: translateZ(0)</option>
+                <option value="filter">filter: blur(0)</option>
+                <option value="will-change">will-change: transform</option>
+                <option value="isolation">isolation: isolate</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="tooltip-z">Tooltip z-index (inside Card A)</label>
+              <div class="range-row">
+                <span class="range-edge">0</span>
+                <div class="range-track">
+                  <input type="range" id="tooltip-z" min="0" max="9999" step="1" value="9999">
+                  <output class="range-bubble" id="tooltip-z-value" for="tooltip-z">9999</output>
+                </div>
+                <span class="range-edge">9999</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="card-b-z">Card B z-index</label>
+              <select id="card-b-z">
+                <option value="auto">auto</option>
+                <option value="0">0</option>
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <output class="readout verdict" id="stacking-verdict" aria-live="polite"></output>
+        <output class="readout" id="stacking-css"></output>
+      </div>
+
+      <!-- Negative z-index: where does z-index: -1 go? -->
+      <div id="negative-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Negative z-index preview">
+          <div class="stage stage--hatched" aria-hidden="true">
+            <div class="parent" id="parent" data-context="auto">
+              <strong>Parent</strong> — this text is in-flow content, so it always paints above a negative layer of the
+              same stacking context.
+              <div class="decoration">z-index: -1</div>
+            </div>
+            <div class="spacer"></div>
+          </div>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>Controls</legend>
+          <div class="field">
+            <label for="parent-context">Parent also has</label>
+            <select id="parent-context">
+              <option value="auto" selected>z-index: auto</option>
+              <option value="zero">z-index: 0</option>
+              <option value="isolate">isolation: isolate</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <output class="readout verdict" id="negative-verdict" aria-live="polite"></output>
+        <output class="readout" id="negative-css"></output>
+      </div>
+
+      <!-- Isolation and blending: keeping mix-blend-mode inside a group -->
+      <div id="blend-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Isolation and blending preview">
+          <div class="stage stage--bands" aria-hidden="true">
+            <div class="group" id="group">
+              <div class="circle circle--1"></div>
+              <div class="circle circle--2"></div>
+              <div class="circle circle--3"></div>
+            </div>
+          </div>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>Controls</legend>
+          <div class="fields-grid">
+            <div class="field">
+              <label for="group-isolation">Group isolation</label>
+              <select id="group-isolation">
+                <option value="auto" selected>auto</option>
+                <option value="isolate">isolate</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="blend-mode">Circles' mix-blend-mode</label>
+              <select id="blend-mode">
+                <option value="multiply" selected>multiply</option>
+                <option value="screen">screen</option>
+                <option value="difference">difference</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
+        <output class="readout verdict" id="blend-verdict" aria-live="polite"></output>
+        <output class="readout" id="blend-css"></output>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
