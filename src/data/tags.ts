@@ -851,6 +851,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS Flexbox Layouts",
     description: "One-dimensional layouts with Flexbox — direction, wrapping, alignment and ordering."
   },
+  "customizable-select": {
+    title: "Styling `<select>` with `appearance: base-select`",
+    description: "Opting the native `<select>` into a fully styleable mode with `appearance: base-select`, `::picker(select)` and `<selectedcontent>`, without losing its built-in behaviour."
+  },
+  "anchor-positioning": {
+    title: "CSS Anchor Positioning",
+    description: "Tethering popovers, pickers and tooltips to another element with anchor positioning and `position-area`, with no JavaScript measuring."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."

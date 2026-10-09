@@ -330,6 +330,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-customizable-select",
+    title: "Styling `<select>` with `appearance: base-select`",
+    excerpt: "Style a real select's dropdown, options and arrow.",
+    description: "appearance: base-select opts a native <select> into a fully styleable mode — rich HTML in options, <selectedcontent> in the closed button, and ::picker(select), ::picker-icon and ::checkmark for the dropdown, arrow and tick — while keeping its keyboard support, accessibility and form behaviour, with a plain select as the fallback.",
+    category: ["CSS"],
+    tags: ["css", "customizable-select", "forms", "anchor-positioning", "accessibility", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-customizable-select/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "An open select dropdown styled with appearance: base-select, each option showing a colour swatch, a name and a hex code, with a tick beside the selected one."
+    },
+    changelog: [
+      { date: "2026-10-09", change: "Initial publication." }
+    ]
   }
 ];
 

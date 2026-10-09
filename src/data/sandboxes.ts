@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-customizable-select",
+    title: "Customisable select Playground",
+    description: "A real <select> whose options hold colour swatches, styled with appearance: base-select, ::picker(select), ::picker-icon, ::checkmark and <selectedcontent>, with toggles to compare it against the classic select and to animate the picker open and closed.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-reading-flow",
     title: "reading-flow Playground",
     description: "Rearrange numbered cards with flex row-reverse, grid placement or the order property, pick a reading-flow value, then press Tab and watch a live focus trail show whether keyboard order follows the screen or the HTML.",
