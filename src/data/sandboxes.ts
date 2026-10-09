@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-text-box-trim",
+    title: "text-box Playground",
+    description: "Trim the space above and below text with text-box, choosing text-box-trim and the cap, ex, text and alphabetic edges, and watch a heading, a button, a badge and a heading beside an image snap to optical alignment, with outlines showing each trimmed box.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-scroll-state-queries",
     title: "scroll-state() Playground",
     description: "Three scroll boxes styled only by @container scroll-state() queries: a sticky header and action bar that change once stuck, a list whose \"more above\" and \"more below\" hints follow scrollable, and a carousel that highlights the snapped slide.",

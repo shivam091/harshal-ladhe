@@ -366,6 +366,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-09", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-text-box-trim",
+    title: "Optically Centred Text with `text-box`",
+    excerpt: "Trim text's hidden spacing for truly centred labels.",
+    description: "The text-box property trims the invisible space above the first line and below the last — text-box-trim chooses the side and text-box-edge trims to the cap height, x-height or baseline — so buttons look centred, headings align with images and margins mean what they say, now in every major browser.",
+    category: ["CSS"],
+    tags: ["css", "text-box", "typography", "ui-design", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-text-box-trim/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A button and a heading shown before and after text-box trimming, with guides marking the cap height and baseline the trimmed text now aligns to."
+    },
+    changelog: [
+      { date: "2026-10-09", change: "Initial publication." }
+    ]
   }
 ];
 

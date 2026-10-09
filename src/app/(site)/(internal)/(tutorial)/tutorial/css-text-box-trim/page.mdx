@@ -1,0 +1,191 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-text-box-trim");
+
+## Introduction
+
+Give a button equal padding on all four sides and its label still sits slightly low. Put a heading beside an image,
+align both to the top, and the heading starts a few pixels below the image. Designers fix these by eye with
+one-off nudges — `padding-top: 0.6875rem; padding-bottom: 0.8125rem` — that break as soon as the font, size or line
+height changes.
+
+The cause isn't your CSS. Every line of text sits in a **line box** taller than the letters themselves: there's
+room above the capitals for accents and tall glyphs, room below the baseline for descenders, and half of the
+`line-height` gap added to each side. That invisible space is unequal top and bottom, so text that's mathematically
+centred looks optically off.
+
+**`text-box`** removes it. It trims the space above the first line and below the last line of a block, down to edges
+you choose — such as the top of the capital letters and the baseline — so padding, alignment and spacing apply to
+the letters you can actually see.
+
+<RainbowDivider />
+
+## The One-Line Fix
+
+<CodeBlock language="css">
+{`
+  .button {
+    padding: 0.875rem;
+    text-box: trim-both cap alphabetic;
+  }
+`}
+</CodeBlock>
+
+This trims the space above the capital letters and below the baseline. The `0.875rem` of padding now sits between
+the button's edge and the letters on every side, and the label looks centred because it is.
+
+<RainbowDivider />
+
+## The Two Longhands
+
+`text-box` is a shorthand for two properties: **what to trim** and **where to trim to**.
+
+### `text-box-trim` — Which Side to Trim
+
+| Value        | Trims                                                         |
+| ------------ | ------------------------------------------------------------- |
+| `none`       | Nothing — the default                                         |
+| `trim-start` | The space above the **first** line                            |
+| `trim-end`   | The space below the **last** line                             |
+| `trim-both`  | Both                                                          |
+
+The "first" and "last" lines matter: trimming only removes the space at the very top and bottom of a block, never
+the spacing between lines inside it. A paragraph's `line-height` stays exactly as it was.
+
+### `text-box-edge` — Where to Trim To
+
+`text-box-edge` takes two keywords: the **over** edge for the top, then the **under** edge for the bottom.
+
+| Over edge | Trims the top down to…                                                    |
+| --------- | ------------------------------------------------------------------------- |
+| `text`    | The top of the font's ascent — removing only the `line-height` half-gap   |
+| `cap`     | The top of the capital letters                                            |
+| `ex`      | The top of the lowercase letters (the x-height)                           |
+
+| Under edge   | Trims the bottom up to…                                                |
+| ------------ | ---------------------------------------------------------------------- |
+| `text`       | The bottom of the font's descent — removing only the half-gap          |
+| `alphabetic` | The baseline, the line letters sit on                                  |
+
+For text that starts with capitals — headings, buttons, labels — `cap alphabetic` is the combination you'll use
+most. For all-lowercase text, `ex alphabetic` centres the x-height instead.
+
+<Info title="Ideographic edges">
+  For Chinese, Japanese and Korean text, `text-box-edge` also accepts `ideographic` and `ideographic-ink`, which trim
+  to the edges of the ideographic em box or the ink of the glyphs, instead of Latin capitals and baselines.
+</Info>
+
+### The Shorthand
+
+<CodeBlock language="css">
+{`
+  text-box: trim-both cap alphabetic;
+  /* is the same as */
+  text-box-trim: trim-both;
+  text-box-edge: cap alphabetic;
+`}
+</CodeBlock>
+
+Either part can be left out. `text-box: cap alphabetic` sets the edges and trims both sides, since trimming is the
+point of writing it; `text-box: trim-both` trims to the default edges, which remove only the `line-height` half-gap.
+`text-box: normal` turns trimming off.
+
+<RainbowDivider />
+
+## Try It Live
+
+The sandbox applies the same `text-box` value to a large heading, a button, a badge, and a heading beside an image.
+The dashed outlines show each element's box, so you can see the space being trimmed. Start on **none** to see the
+uneven gaps, then switch to **trim-both** with **cap** and **alphabetic**: the button and badge labels centre, and
+the top of "Mountain Trails" lines up with the top of the image. Try **ex** to see the box shrink to the lowercase
+letters, and notice that descenders like the "g" in "Hamburgefonts" hang below the trimmed box — trimming changes
+layout, not painting.
+
+<Sandbox slug="css-text-box-trim" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Where It Helps Most
+
+### Buttons, Badges and Tags
+
+Any small, padded label: equal padding finally looks equal. Trimming also makes the size of the component predictable
+from its padding and font size alone, which keeps a design system's buttons consistent across fonts.
+
+### Aligning Text with Images and Icons
+
+A heading beside a thumbnail, or a label beside an icon, can align its cap height with the top of the image using
+`align-items: start` alone — no negative margin tuned to one font.
+
+### Spacing to a Baseline Grid
+
+Without trimming, the gap between a heading and the paragraph below it is the margin **plus** invisible line-box
+space from both elements. With both trimmed, the margin is the visible gap between the bottom of the heading's
+letters and the top of the paragraph's capitals, so spacing tokens mean what they say:
+
+<CodeBlock language="css">
+{`
+  h1, h2, h3, p {
+    text-box: trim-both cap alphabetic;
+  }
+
+  h2 {
+    margin-block-end: 1rem; /* exactly 1rem between the visible letters */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`text-box` arrived in Safari 18.2 and Chromium browsers (Chrome and Edge 133) at the end of 2024 and start of 2025,
+and Firefox added it in version 154 in 2026, so it's now supported in every major browser engine.
+
+Browsers without support ignore the declaration, leaving the usual line-box spacing. That's the layout everyone had
+before — slightly uneven, but perfectly usable — so `text-box` works as a progressive enhancement. If an older
+browser in your support matrix needs a closer match, scope any compensating padding to browsers without it:
+
+<CodeBlock language="css">
+{`
+  @supports not (text-box: trim-both cap alphabetic) {
+    .button {
+      padding-block: 0.625rem 0.75rem;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Expecting Gaps Between Lines to Shrink
+
+`text-box` only trims above the first line and below the last. To tighten the space between lines inside a
+paragraph, change `line-height`.
+
+### 2. Forgetting That Descenders Still Paint
+
+Trimming to `alphabetic` removes the space below the baseline from **layout**, but letters like "g", "p" and "y"
+still draw below it. In a tight container with `overflow: hidden`, they'll be clipped; leave some padding below.
+
+### 3. Losing the Space You Relied On
+
+The line-box space that trimming removes was quietly acting as spacing. After adding `text-box` to existing
+components, check stacked headings and paragraphs — some margins will need to grow to keep the same visual rhythm.
+
+### 4. Trimming to `cap` on Lowercase Text
+
+`cap` trims to the height of capital letters, so a label that's all lowercase gets a visibly larger gap on top than
+on the bottom. Use `ex alphabetic` for lowercase text, or `cap` only where text starts with a capital.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Text never looked centred because CSS was centring the line box, not the letters. `text-box: trim-both cap
+alphabetic` trims the line box down to the capitals and the baseline, so padding, alignment and margins act on the
+visible text. With support in every major engine, it's ready to use — add it to buttons, labels and headings, then
+adjust the margins that the old invisible space used to provide. For scaling that text smoothly between screen sizes,
+see [Fluid Typography and Spacing with `clamp()`](/tutorial/fluid-typography-and-spacing).

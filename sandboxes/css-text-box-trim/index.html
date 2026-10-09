@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>text-box Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Optically Centred Text with text-box</h1>
+        <p>Every box below has equal padding on top and bottom, yet text without trimming sits visibly low. Trim the space above the capitals and below the baseline, and it lines up the way it looks like it should.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support <code>text-box</code> yet, so the text keeps its usual spacing whatever you choose — the fallback every visitor without support gets.</p>
+
+      <fieldset class="control-group">
+        <legend>text-box-trim</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="text-box-trim">
+          <label class="segment"><input type="radio" name="trim" value="none"><span>none</span></label>
+          <label class="segment"><input type="radio" name="trim" value="trim-start"><span>trim-start</span></label>
+          <label class="segment"><input type="radio" name="trim" value="trim-end"><span>trim-end</span></label>
+          <label class="segment"><input type="radio" name="trim" value="trim-both" checked><span>trim-both</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group" id="edge-group">
+        <legend>text-box-edge</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <span class="field-label" id="over-label">Over edge (top)</span>
+            <div class="segmented-control" role="radiogroup" aria-labelledby="over-label">
+              <label class="segment"><input type="radio" name="over" value="text"><span>text</span></label>
+              <label class="segment"><input type="radio" name="over" value="cap" checked><span>cap</span></label>
+              <label class="segment"><input type="radio" name="over" value="ex"><span>ex</span></label>
+            </div>
+          </div>
+          <div class="field">
+            <span class="field-label" id="under-label">Under edge (bottom)</span>
+            <div class="segmented-control" role="radiogroup" aria-labelledby="under-label">
+              <label class="segment"><input type="radio" name="under" value="text"><span>text</span></label>
+              <label class="segment"><input type="radio" name="under" value="alphabetic" checked><span>alphabetic</span></label>
+            </div>
+          </div>
+        </div>
+        <label class="checkbox-field">
+          <input type="checkbox" id="outline-toggle" checked>
+          Outline each text box
+        </label>
+      </fieldset>
+
+      <section class="demo-area specimens show-outlines" id="specimens" aria-label="Text box examples">
+        <div class="specimen">
+          <p class="specimen-caption">Heading</p>
+          <h2 class="trimmed display-heading">Hamburgefonts</h2>
+        </div>
+
+        <div class="specimen">
+          <p class="specimen-caption">Button and badge</p>
+          <div class="button-row">
+            <button type="button" class="demo-button trimmed">Get started</button>
+            <span class="badge trimmed">NEW</span>
+          </div>
+        </div>
+
+        <div class="specimen">
+          <p class="specimen-caption">Heading beside an image</p>
+          <div class="media">
+            <div class="media-image" aria-hidden="true"></div>
+            <div>
+              <h3 class="trimmed media-title">Mountain Trails</h3>
+              <p class="trimmed media-text">The top of the capitals lines up with the top of the image.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

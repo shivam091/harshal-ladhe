@@ -867,6 +867,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS Scroll Snap",
     description: "Building carousels and paged scrollers that settle on each item with `scroll-snap-type` and `scroll-snap-align`."
   },
+  "text-box": {
+    title: "Trimming Text with `text-box`",
+    description: "Using `text-box`, `text-box-trim` and `text-box-edge` to trim the space above and below text for optically centred buttons and aligned headings."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."
