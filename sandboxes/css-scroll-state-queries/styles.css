@@ -1,0 +1,241 @@
+/* Shown only when scroll-state() isn't supported, so styles that never change aren't mistaken for a bug. */
+.support-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+/* Each demo is its own scroll container, so stuck, scrollable and snapped are all relative to it. */
+.scroll-box {
+  block-size: 18rem;
+  padding: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.scroll-box:focus-visible,
+.carousel:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.125rem;
+}
+
+/* The playground's own gap already spaces these, so the shared top margin would double it. */
+.tip {
+  margin: 0;
+}
+
+/* stuck: a sticky header and footer that know when they're stuck */
+
+.sticky-header,
+.sticky-footer {
+  position: sticky;
+  z-index: 1;
+  container-type: scroll-state;
+}
+
+.sticky-header {
+  inset-block-start: 0;
+}
+
+.sticky-footer {
+  inset-block-end: 0;
+}
+
+/*
+  A query never styles its own container, so everything that changes lives on these inner
+  wrappers. The transitions make the switch read as the header settling, not snapping.
+*/
+.sticky-header-inner,
+.sticky-footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: 1.25rem;
+  padding-inline: 1.25rem;
+  background: var(--pg-surface-muted);
+  transition: padding 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.sticky-header-inner h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  transition: font-size 0.2s ease;
+}
+
+.sticky-footer-inner {
+  padding-block: 0.75rem;
+}
+
+.state-label {
+  font-family: var(--pg-mono);
+  font-size: 0.75rem;
+  color: var(--pg-text-muted);
+}
+
+.state-label--top::after,
+.state-label--bottom::after {
+  content: "stuck: none";
+}
+
+@container scroll-state(stuck: top) {
+  .sticky-header-inner {
+    padding-block: 0.625rem;
+    background: var(--pg-surface);
+    box-shadow: 0 0.75rem 1rem -0.75rem rgba(0, 0, 0, 0.8);
+  }
+
+  .sticky-header-inner h2 {
+    font-size: 1.05rem;
+  }
+
+  .state-label--top::after {
+    content: "stuck: top";
+    color: var(--pg-primary);
+  }
+}
+
+@container scroll-state(stuck: bottom) {
+  .sticky-footer-inner {
+    background: var(--pg-surface);
+    border-block-start: 0.0625rem solid var(--pg-border);
+    box-shadow: 0 -0.75rem 1rem -0.75rem rgba(0, 0, 0, 0.8);
+  }
+
+  .state-label--bottom::after {
+    content: "stuck: bottom";
+    color: var(--pg-primary);
+  }
+}
+
+.article {
+  padding-inline: 1.25rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--pg-text-muted);
+}
+
+.article code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+/* scrollable: hints that only appear while there's more to scroll to */
+
+.list-box {
+  container-type: scroll-state;
+}
+
+/*
+  Sticky so they stay pinned to the box's edges while the list scrolls, with a negative margin
+  so they float over the list instead of pushing it down.
+*/
+.edge {
+  position: sticky;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  block-size: 2.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--pg-text);
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* A solid pill, so the label stays readable over whichever list item is passing underneath. */
+.edge span {
+  padding-block: 0.125rem;
+  padding-inline: 0.625rem;
+  color: #fff;
+  background: var(--pg-primary-dark);
+}
+
+.edge--top {
+  inset-block-start: 0;
+  margin-block-end: -2.25rem;
+  background: linear-gradient(to bottom, var(--pg-surface-muted) 40%, transparent);
+  opacity: 0;
+}
+
+.edge--bottom {
+  inset-block-end: 0;
+  margin-block-start: -2.25rem;
+  background: linear-gradient(to top, var(--pg-surface-muted) 40%, transparent);
+}
+
+@container scroll-state(scrollable: top) {
+  .edge--top {
+    opacity: 1;
+  }
+}
+
+@container not scroll-state(scrollable: bottom) {
+  .edge--bottom {
+    opacity: 0;
+  }
+}
+
+.notification-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notification-list li {
+  padding-block: 0.75rem;
+  padding-inline: 1.25rem;
+  font-size: 0.9rem;
+  border-block-end: 0.0625rem solid var(--pg-border);
+}
+
+/* snapped: the slide that's snapped into place is the one that lights up */
+
+.carousel {
+  display: flex;
+  gap: 1rem;
+  padding-block: 1.5rem;
+  padding-inline: 25%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+}
+
+.slide {
+  flex: 0 0 50%;
+  scroll-snap-align: center;
+  container-type: scroll-state;
+}
+
+.slide-inner {
+  display: grid;
+  place-items: center;
+  gap: 0.25rem;
+  block-size: 11rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  opacity: 0.45;
+  scale: 0.85;
+  transition: scale 0.25s ease, opacity 0.25s ease, border-color 0.25s ease;
+}
+
+.slide-inner strong {
+  font-size: 2rem;
+}
+
+.slide-inner span {
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+@container scroll-state(snapped: x) {
+  .slide-inner {
+    opacity: 1;
+    scale: 1;
+    border-color: var(--pg-primary);
+  }
+}

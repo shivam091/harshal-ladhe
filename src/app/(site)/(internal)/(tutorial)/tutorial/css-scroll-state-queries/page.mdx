@@ -1,0 +1,233 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-scroll-state-queries");
+
+## Introduction
+
+`position: sticky` has one long-standing gap: the element can't tell when it's actually stuck. A header that should
+gain a shadow, shrink or show a logo once it pins to the top of the page has needed JavaScript — usually an
+`IntersectionObserver` watching an invisible sentinel element placed just above the header, toggling a class when
+the sentinel scrolls out of view.
+
+The browser always knew when the element was stuck; CSS just had no way to ask. **Scroll-state container queries**
+are that question. Mark the sticky element as a container, and `@container scroll-state(stuck: top)` matches
+exactly while it's pinned:
+
+<CodeBlock language="css">
+{`
+  .site-header {
+    position: sticky;
+    top: 0;
+    container-type: scroll-state;
+  }
+
+  @container scroll-state(stuck: top) {
+    .site-header-inner {
+      box-shadow: 0 0.5rem 1rem -0.5rem rgb(0 0 0 / 0.5);
+    }
+  }
+`}
+</CodeBlock>
+
+The same mechanism also answers two other questions about scrolling — **is there more to scroll to?** and **which
+item is snapped into place?** — all without a scroll listener.
+
+<RainbowDivider />
+
+## How It Works
+
+Scroll-state queries are container queries, so they follow the same two-step pattern as size queries:
+
+1. **Declare a container** with `container-type: scroll-state`.
+2. **Query it** with `@container scroll-state(...)`, and style the container's **descendants** inside the rule.
+
+The second step matters. As with every container query, the rules inside apply to elements *inside* the container,
+never to the container itself. A sticky header can't restyle its own box from its own query, so the visible styles
+go on an inner wrapper:
+
+<CodeBlock language="html">
+{`
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="/" class="logo">Logo</a>
+      <nav>…</nav>
+    </div>
+  </header>
+`}
+</CodeBlock>
+
+The outer `<header>` does the sticking and owns the container; the inner `<div>` gets the shadow, the padding and
+anything else that changes.
+
+<RainbowDivider />
+
+## The Three States
+
+### `stuck` — Is a Sticky Element Pinned?
+
+Set `container-type: scroll-state` on an element with `position: sticky`. `stuck` matches when it's currently
+pinned against an edge of its scroll container:
+
+| Value                                                 | Matches when the element is stuck to…            |
+| ----------------------------------------------------- | ------------------------------------------------ |
+| `top`, `right`, `bottom`, `left`                      | That physical edge                               |
+| `block-start`, `block-end`, `inline-start`, `inline-end` | That logical edge, following the writing mode |
+| `none`                                                | No edge — it's sitting in normal flow            |
+
+The edge must have an inset set for the element to stick there in the first place: `top: 0` for `stuck: top`,
+`bottom: 0` for `stuck: bottom`, and so on.
+
+### `scrollable` — Is There More to Scroll To?
+
+Set `container-type: scroll-state` on a **scroll container**. `scrollable` matches when the container can still be
+scrolled in a direction — when there's hidden content that way:
+
+<CodeBlock language="css">
+{`
+  .list {
+    overflow-y: auto;
+    container-type: scroll-state;
+  }
+
+  /* There's content above: the user has scrolled down */
+  @container scroll-state(scrollable: top) {
+    .back-to-top {
+      opacity: 1;
+    }
+  }
+
+  /* Nothing left below: the user has reached the end */
+  @container not scroll-state(scrollable: bottom) {
+    .more-below-hint {
+      opacity: 0;
+    }
+  }
+`}
+</CodeBlock>
+
+It accepts the same physical and logical edges as `stuck`, plus the axes `x`, `y`, `block` and `inline` (scrollable
+in either direction along that axis) and `none`.
+
+### `snapped` — Which Item Is Snapped?
+
+Set `container-type: scroll-state` on each **snap target** — the children with `scroll-snap-align` inside a
+container with `scroll-snap-type`. `snapped` matches on whichever target is currently snapped:
+
+<CodeBlock language="css">
+{`
+  .carousel {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .slide {
+    scroll-snap-align: center;
+    container-type: scroll-state;
+  }
+
+  @container scroll-state(snapped: x) {
+    .slide-inner {
+      scale: 1;
+      opacity: 1;
+    }
+  }
+`}
+</CodeBlock>
+
+The value names the snapping axis: `x`, `y`, `block`, `inline`, `both` or `none`. It's a CSS-only way to highlight
+the active slide, which previously needed `scrollsnapchange` events or an `IntersectionObserver`.
+
+<RainbowDivider />
+
+## Try It Live
+
+Each tab in the sandbox is its own scroll box. In **stuck**, scroll the article and watch the header compact and gain
+a shadow as it pins, while the label in its corner changes from `stuck: none` to `stuck: top` — that text comes from
+`content` inside the query, not from JavaScript. The **Publish** bar does the opposite at the bottom. In
+**scrollable**, the "More above" and "More below" hints come and go as you reach each end of the list. In
+**snapped**, the slide that snaps into the centre grows and lights up.
+
+<Sandbox slug="css-scroll-state-queries" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Combining and Naming Queries
+
+Scroll-state queries combine with `and`, `or` and `not`, like any other container query:
+
+<CodeBlock language="css">
+{`
+  @container scroll-state(stuck: top) and scroll-state(scrollable: bottom) {
+    /* pinned, and there's still more page below */
+  }
+`}
+</CodeBlock>
+
+When containers are nested — a sticky header inside a scrolling panel inside a page — give them names so a query
+targets the right one. `container-type` can also combine `scroll-state` with a size type, so one element can answer
+both kinds of query:
+
+<CodeBlock language="css">
+{`
+  .site-header {
+    position: sticky;
+    top: 0;
+    container-name: site-header;
+    container-type: scroll-state inline-size;
+  }
+
+  @container site-header scroll-state(stuck: top) {
+    .logo-full { display: none; }
+    .logo-mark { display: block; }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+Scroll-state queries shipped in Chromium browsers (Chrome and Edge 133) in 2025, with `stuck`, `scrollable` and
+`snapped`. Chromium has since added a fourth feature, `scrolled`, which matches the direction the user last
+scrolled — useful for a header that hides while scrolling down and returns while scrolling up. Firefox and Safari
+don't support scroll-state queries yet at the time of writing.
+
+A browser without support treats the query as never matching, so the rules inside it are simply skipped. That gives
+a natural fallback as long as the **default styles are the un-stuck, un-snapped look**: the header stays flat, the
+hints stay at their starting state, and every slide looks the same. Nothing breaks; the enhancement is just missing.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Styling the Container Itself
+
+`@container scroll-state(stuck: top) { .site-header { … } }` does nothing, because a query only styles the
+container's descendants. Add an inner wrapper and style that.
+
+### 2. Putting the Container on the Wrong Element
+
+Each state lives on a different element: `stuck` on the **sticky element**, `scrollable` on the **scroll
+container**, and `snapped` on each **snap target**. A `scrollable` query on a sticky header, or a `snapped` query on
+the carousel, never matches.
+
+### 3. Forgetting the Inset
+
+A sticky element without `top`, `bottom` or another inset never sticks, so `stuck` never matches. The query only
+reports on the edges the element can actually stick to.
+
+### 4. Reading `scrollable` Backwards
+
+`scrollable: top` means "can scroll **towards** the top" — there's content above, so the user has scrolled down. It
+doesn't mean "is at the top". To style the very top of a list, use `not scroll-state(scrollable: top)`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`container-type: scroll-state` lets CSS ask what the browser already knows about scrolling: whether a sticky element
+is `stuck`, whether a container is `scrollable` in a direction, and which item is `snapped`. Put the container on the
+right element, style its descendants inside `@container scroll-state()`, and make the un-stuck look the default — and
+a whole category of scroll listeners and sentinel elements becomes a few lines of CSS. To compare it with the
+JavaScript version — and for browsers that need it as a fallback — see the sticky header pattern in
+[Mastering JavaScript Observers](/post/javascript/mastering-js-observers).

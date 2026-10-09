@@ -859,6 +859,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS Anchor Positioning",
     description: "Tethering popovers, pickers and tooltips to another element with anchor positioning and `position-area`, with no JavaScript measuring."
   },
+  "scroll-state": {
+    title: "Scroll-State Container Queries",
+    description: "Styling elements from scroll state with `@container scroll-state()` — whether a sticky element is stuck, a container is scrollable or an item is snapped."
+  },
+  "scroll-snap": {
+    title: "CSS Scroll Snap",
+    description: "Building carousels and paged scrollers that settle on each item with `scroll-snap-type` and `scroll-snap-align`."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."

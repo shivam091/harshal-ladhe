@@ -348,6 +348,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-09", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-scroll-state-queries",
+    title: "Sticky Headers That Know They're Stuck with `scroll-state()`",
+    excerpt: "Style sticky, scrollable and snapped elements without JavaScript.",
+    description: "Scroll-state container queries let CSS react to scrolling — @container scroll-state(stuck: top) for sticky headers that change once pinned, scrollable for more-content hints and snapped for the active carousel slide — replacing scroll listeners and sentinel elements, with a natural fallback.",
+    category: ["CSS"],
+    tags: ["css", "scroll-state", "container-queries", "positioning", "scroll-snap", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-scroll-state-queries/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A scrolling page whose sticky header has compacted and gained a shadow once stuck, driven by a CSS scroll-state() container query."
+    },
+    changelog: [
+      { date: "2026-10-09", change: "Initial publication." }
+    ]
   }
 ];
 

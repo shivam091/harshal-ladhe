@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-scroll-state-queries",
+    title: "scroll-state() Playground",
+    description: "Three scroll boxes styled only by @container scroll-state() queries: a sticky header and action bar that change once stuck, a list whose \"more above\" and \"more below\" hints follow scrollable, and a carousel that highlights the snapped slide.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-customizable-select",
     title: "Customisable select Playground",
     description: "A real <select> whose options hold colour swatches, styled with appearance: base-select, ::picker(select), ::picker-icon, ::checkmark and <selectedcontent>, with toggles to compare it against the classic select and to animate the picker open and closed.",

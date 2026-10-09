@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scroll-state() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Styling Scroll State with scroll-state()</h1>
+        <p>Scroll each box. Every change you see — shadows, labels, hints, highlights — comes from an <code>@container scroll-state()</code> query. The JavaScript only switches tabs.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support <code>scroll-state()</code> queries yet, so the boxes scroll normally but never change style — the fallback every visitor without support gets.</p>
+
+      <div class="tabs" role="tablist" aria-label="Scroll state" id="demo-switch">
+        <button class="tab tab--active" type="button" data-mode="stuck" role="tab" aria-selected="true">stuck</button>
+        <button class="tab" type="button" data-mode="scrollable" role="tab" aria-selected="false">scrollable</button>
+        <button class="tab" type="button" data-mode="snapped" role="tab" aria-selected="false">snapped</button>
+      </div>
+
+      <div id="stuck-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area scroll-box" aria-label="Article with a sticky header and footer" tabindex="0">
+          <header class="sticky-header">
+            <div class="sticky-header-inner">
+              <h2>Release notes</h2>
+              <span class="state-label state-label--top"></span>
+            </div>
+          </header>
+          <div class="article">
+            <p>Scroll down. As soon as the header reaches the top of this box and stays there, the query <code>scroll-state(stuck: top)</code> matches and the header compacts and gains a shadow.</p>
+            <p>Before it's stuck, the header sits flat in the flow, looking like part of the page. That's the point: a shadow only makes sense once there's content sliding underneath.</p>
+            <p>The sticky element itself is the container. It can't style itself from its own query, so the visible styles go on an inner wrapper.</p>
+            <p>The action bar at the bottom works the other way round. It's stuck to the bottom edge until the end of the article scrolls into view, then it settles into place and loses its border.</p>
+            <p>No scroll listener, no IntersectionObserver and no sentinel elements are involved. The browser already knows when a sticky element is stuck; this query simply lets CSS ask.</p>
+            <p>Keep scrolling to reach the end of the article.</p>
+            <p>Nearly there.</p>
+            <p>This is the last paragraph. The action bar below is no longer stuck.</p>
+          </div>
+          <footer class="sticky-footer">
+            <div class="sticky-footer-inner">
+              <span class="state-label state-label--bottom"></span>
+              <button type="button" class="toggle-btn">Publish</button>
+            </div>
+          </footer>
+        </section>
+      </div>
+
+      <div id="scrollable-demo" class="tab-panel">
+        <section class="demo-area scroll-box list-box" aria-label="Notification list" tabindex="0">
+          <div class="edge edge--top" aria-hidden="true"><span>More above</span></div>
+          <ul class="notification-list">
+            <li>Ana commented on your pull request</li>
+            <li>Build #482 passed</li>
+            <li>Ravi starred your repository</li>
+            <li>New sign-in from Firefox on Linux</li>
+            <li>Build #481 failed</li>
+            <li>Mei mentioned you in an issue</li>
+            <li>Your invoice for October is ready</li>
+            <li>Deployment to production finished</li>
+            <li>Weekly digest: 12 new stars</li>
+            <li>Sam requested your review</li>
+            <li>Dependency update available</li>
+            <li>Welcome to the team!</li>
+          </ul>
+          <div class="edge edge--bottom" aria-hidden="true"><span>More below</span></div>
+        </section>
+      </div>
+
+      <div id="snapped-demo" class="tab-panel">
+        <section class="demo-area carousel" aria-label="Snap carousel" tabindex="0">
+          <div class="slide"><div class="slide-inner"><strong>01</strong><span>Plan</span></div></div>
+          <div class="slide"><div class="slide-inner"><strong>02</strong><span>Design</span></div></div>
+          <div class="slide"><div class="slide-inner"><strong>03</strong><span>Build</span></div></div>
+          <div class="slide"><div class="slide-inner"><strong>04</strong><span>Test</span></div></div>
+          <div class="slide"><div class="slide-inner"><strong>05</strong><span>Ship</span></div></div>
+        </section>
+      </div>
+
+      <p class="tip" id="tip"></p>
+      <output class="readout" id="readout"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
