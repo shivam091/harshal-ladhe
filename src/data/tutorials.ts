@@ -384,6 +384,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-09", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-typed-attr",
+    title: "HTML Attributes as Real CSS Values with Typed `attr()`",
+    excerpt: "Read HTML attributes as colours, lengths and numbers.",
+    description: "Typed attr() reads an HTML attribute as a real CSS value — type(<color>), type(<integer>), a unit like % or px, or raw-string — for any property on any element, not just text in content, with fallbacks for missing or invalid values, patterns for layout and view transitions, and when a custom property is the better choice.",
+    category: ["CSS"],
+    tags: ["css", "attr", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-typed-attr/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "HTML elements whose data attributes become a progress bar width, a tag colour, a grid's column count and a dial's angle through the CSS typed attr() function."
+    },
+    changelog: [
+      { date: "2026-10-09", change: "Initial publication." }
+    ]
   }
 ];
 

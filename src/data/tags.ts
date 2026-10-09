@@ -871,6 +871,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Trimming Text with `text-box`",
     description: "Using `text-box`, `text-box-trim` and `text-box-edge` to trim the space above and below text for optically centred buttons and aligned headings."
   },
+  "attr": {
+    title: "The CSS `attr()` Function",
+    description: "Reading HTML attributes in CSS with `attr()`, from classic text in `content` to typed values for any property."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."

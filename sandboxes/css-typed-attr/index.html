@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Typed attr() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>HTML Attributes as CSS Values with Typed attr()</h1>
+        <p>The controls only change HTML attributes. Typed <code>attr()</code> reads each one as a percentage, colour, integer or angle, and CSS does the rest — no inline styles, no custom properties set from JavaScript.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser only supports the classic <code>attr()</code> inside <code>content</code>, so every component falls back to its default styles. The percentage label still updates, because that part uses the classic form.</p>
+
+      <section class="demo-area components" aria-label="Attribute-driven components">
+        <div class="component">
+          <p class="component-caption"><code>attr(data-progress %)</code></p>
+          <div class="meter" id="meter" data-progress="65" role="img" aria-label="65% complete"></div>
+        </div>
+
+        <div class="component">
+          <p class="component-caption"><code>attr(data-colour type(&lt;color&gt;))</code></p>
+          <span class="tag" id="tag" data-colour="#2dd4bf">Design system</span>
+        </div>
+
+        <div class="component">
+          <p class="component-caption"><code>attr(data-columns type(&lt;integer&gt;))</code></p>
+          <ul class="gallery" id="gallery" data-columns="3">
+            <li>1</li><li>2</li><li>3</li><li>4</li><li>5</li><li>6</li>
+          </ul>
+        </div>
+
+        <div class="component">
+          <p class="component-caption"><code>attr(data-angle type(&lt;angle&gt;))</code></p>
+          <div class="dial" id="dial" data-angle="45deg" aria-hidden="true"><span class="dial-needle"></span></div>
+        </div>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Attributes</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="progress-input">data-progress</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="progress-input" min="0" max="100" step="1" value="65">
+                <output class="range-bubble" id="progress-value" for="progress-input">65</output>
+              </div>
+              <span class="range-edge">100</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="columns-input">data-columns</label>
+            <div class="range-row">
+              <span class="range-edge">1</span>
+              <div class="range-track">
+                <input type="range" id="columns-input" min="1" max="6" step="1" value="3">
+                <output class="range-bubble" id="columns-value" for="columns-input">3</output>
+              </div>
+              <span class="range-edge">6</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="angle-input">data-angle</label>
+            <div class="range-row">
+              <span class="range-edge">0deg</span>
+              <div class="range-track">
+                <input type="range" id="angle-input" min="0" max="360" step="5" value="45">
+                <output class="range-bubble" id="angle-value" for="angle-input">45deg</output>
+              </div>
+              <span class="range-edge">360deg</span>
+            </div>
+          </div>
+        </div>
+
+        <span class="field-label" id="colour-label">data-colour</span>
+        <div class="segmented-control" role="radiogroup" aria-labelledby="colour-label">
+          <label class="segment"><input type="radio" name="colour" value="#2dd4bf" checked><span>#2dd4bf</span></label>
+          <label class="segment"><input type="radio" name="colour" value="rebeccapurple"><span>rebeccapurple</span></label>
+          <label class="segment"><input type="radio" name="colour" value="oklch(0.75 0.15 60)"><span>oklch(…)</span></label>
+          <label class="segment"><input type="radio" name="colour" value="not-a-colour"><span>not-a-colour</span></label>
+        </div>
+        <p class="tip" id="colour-tip"></p>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

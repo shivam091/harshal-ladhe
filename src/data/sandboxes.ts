@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-typed-attr",
+    title: "Typed attr() Playground",
+    description: "A progress bar, colour tag, grid and dial styled entirely from their own HTML attributes with typed attr() — read as a percentage, <color>, <integer> and <angle> — where the controls only edit attributes and an invalid colour shows the fallback.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-text-box-trim",
     title: "text-box Playground",
     description: "Trim the space above and below text with text-box, choosing text-box-trim and the cap, ex, text and alphabetic edges, and watch a heading, a button, a badge and a heading beside an image snap to optical alignment, with outlines showing each trimmed box.",

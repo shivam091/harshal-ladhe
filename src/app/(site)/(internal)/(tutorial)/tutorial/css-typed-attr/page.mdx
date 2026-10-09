@@ -1,0 +1,265 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-typed-attr");
+
+## Introduction
+
+CSS has had `attr()` for decades, but only in one place. Inside the `content` property of a `::before` or `::after`
+pseudo-element, it reads an HTML attribute and inserts it as text — which is how
+[CSS-Only Tooltips with `attr()` and `content`](/snippet/css-attr-content-tooltips) turn a `data-tooltip` attribute
+into a tooltip with no JavaScript:
+
+<CodeBlock language="css">
+{`
+  .has-tooltip::after {
+    content: attr(data-tooltip);
+  }
+`}
+</CodeBlock>
+
+Anywhere else, `attr()` did nothing. `width: attr(data-width)` was invalid, because the classic function always
+returns a **string**, and a string isn't a width. So data that already lived in the HTML — a progress percentage, a
+column count, a brand colour from a CMS — had to be copied into inline styles or custom properties before CSS could
+use it.
+
+**Typed `attr()`** removes that limit. Tell it what type to read the attribute as, and it returns a real CSS value —
+a length, a colour, a number, an angle — usable in **any property, on any element**.
+
+<RainbowDivider />
+
+## Classic vs Typed
+
+<CodeBlock language="html">
+{`
+  <div class="meter" data-progress="65"></div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* Classic: a string, only useful as text */
+  .meter::after {
+    content: attr(data-progress) "%";
+  }
+
+  /* Typed: a real percentage, usable as a width */
+  .meter::before {
+    inline-size: attr(data-progress %, 0%);
+  }
+`}
+</CodeBlock>
+
+The attribute is the same `"65"` in both. The classic form inserts it as the characters "6" and "5"; the typed form,
+told to read it with the `%` unit, turns it into `65%` — a value `inline-size` understands.
+
+<RainbowDivider />
+
+## The Syntax
+
+<CodeBlock language="css">
+{`
+  attr(<attribute-name> <type>?, <fallback>?)
+`}
+</CodeBlock>
+
+The type is what's new. It can be one of three things:
+
+| Type                  | Reads the attribute as…                         | Example                                     |
+| --------------------- | ----------------------------------------------- | ------------------------------------------- |
+| `type(<syntax>)`      | Any CSS data type, parsed from its text          | `attr(data-colour type(<color>))`           |
+| A unit, like `px`, `%`, `deg` or `ms` | A bare number with that unit added | `attr(data-size px)` turns `"24"` into `24px` |
+| `raw-string`          | A string, exactly as written                     | `attr(data-label raw-string)`               |
+
+With no type at all, `attr()` behaves exactly as it always has and returns a string, so existing `content: attr(…)`
+code keeps working unchanged.
+
+### Data Types for `type()`
+
+`type()` accepts the same data types used to register custom properties with `@property`:
+
+| Data type                  | Attribute value examples           |
+| -------------------------- | ---------------------------------- |
+| `<color>`                  | `"#2dd4bf"`, `"rebeccapurple"`, `"oklch(0.75 0.15 60)"` |
+| `<length>`                 | `"2rem"`, `"24px"`                 |
+| `<percentage>`             | `"65%"`                            |
+| `<length-percentage>`      | `"2rem"` or `"50%"`                |
+| `<number>`, `<integer>`    | `"1.5"`, `"3"`                     |
+| `<angle>`                  | `"45deg"`, `"0.25turn"`            |
+| `<time>`                   | `"200ms"`, `"1.5s"`                |
+| `<custom-ident>`           | `"card-42"`                        |
+
+Alternatives can be combined with `|`, as in `type(<length> | auto)`.
+
+### Unit or `type()`?
+
+They differ in **where the unit lives**. With `type(<angle>)`, the attribute must include it: `data-angle="45deg"`.
+With the `deg` unit, the attribute is a bare number and CSS adds the unit: `data-angle="45"`. Use a unit when the
+HTML comes from somewhere that only deals in numbers, like a database or a range input's value.
+
+<RainbowDivider />
+
+## Fallbacks
+
+The second argument is used whenever the attribute is **missing**, or its value **doesn't parse** as the requested
+type:
+
+<CodeBlock language="css">
+{`
+  .tag {
+    --tag: attr(data-colour type(<color>), indigo);
+    color: var(--tag);
+    border: 1px solid var(--tag);
+  }
+`}
+</CodeBlock>
+
+`data-colour="teal"` gives a teal tag; `data-colour="not-a-colour"`, or no attribute at all, gives an indigo one.
+Without a fallback, an invalid or missing attribute makes the whole declaration invalid at computed-value time — the
+same as an undefined `var()` — and the property falls back to its inherited or initial value. Give every typed
+`attr()` a fallback unless that's what you want.
+
+<RainbowDivider />
+
+## Try It Live
+
+The four components in the sandbox are styled entirely from their own attributes: a progress bar from
+`data-progress` read as a percentage, a tag from `data-colour` read as a `<color>`, a grid from `data-columns` read as
+an `<integer>`, and a dial from `data-angle` read as an `<angle>`. The controls **only change HTML attributes** — the
+readout shows the current markup — and the CSS reacts. Choose **not-a-colour** to see the tag fall back to indigo.
+The percentage label on the bar is the classic `attr()` in `content`, working side by side with the typed one.
+
+<Sandbox slug="css-typed-attr" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Patterns Worth Knowing
+
+### Passing a Value Down to Children
+
+`attr()` reads the attribute of the element being styled — or, for a pseudo-element, the element it belongs to. To
+use an attribute on a **child**, read it on the parent into a custom property, and let the child inherit it:
+
+<CodeBlock language="css">
+{`
+  .dial {
+    --angle: attr(data-angle type(<angle>), 0deg);
+  }
+
+  .dial-needle {
+    rotate: var(--angle);
+  }
+`}
+</CodeBlock>
+
+The attribute is resolved on `.dial`, so the needle inherits the finished `45deg`, not the instruction to read an
+attribute it doesn't have.
+
+### Layout from Content Data
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(attr(data-columns type(<integer>), 2), 1fr);
+  }
+`}
+</CodeBlock>
+
+A CMS or component prop can set `data-columns="4"` on the markup, with no class per column count and no inline
+style.
+
+### Unique Names for View Transitions
+
+Every element in a view transition needs a unique `view-transition-name`. Most list items already have a unique
+`id`, and `<custom-ident>` turns it into a name:
+
+<CodeBlock language="css">
+{`
+  .card {
+    view-transition-name: attr(id type(<custom-ident>), none);
+  }
+`}
+</CodeBlock>
+
+One rule names every card, instead of one generated inline style per item.
+
+<RainbowDivider />
+
+## `attr()` or a Custom Property?
+
+The same progress bar can be written with an inline custom property, which every modern browser supports today:
+
+<CodeBlock language="html">
+{`
+  <div class="meter" style="--progress: 65%"></div>
+`}
+</CodeBlock>
+
+Both work. Reach for typed `attr()` when the value is **already in the HTML for another reason** — a `data-*`
+attribute read by JavaScript too, a `colspan`, a `value` — so it doesn't need repeating in a `style` attribute. It
+also keeps styling out of the markup entirely, which helps under a Content Security Policy that blocks inline styles.
+Reach for a custom property when the value only exists for styling, or when the component must work in every
+browser right now.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+Typed `attr()` shipped in Chromium browsers (Chrome and Edge 133) in 2025. Firefox and Safari don't support it yet
+at the time of writing; there, only the classic `content: attr(…)` form works.
+
+In a browser without support, a declaration using typed `attr()` is invalid and dropped, so the rule above it in the
+cascade wins. Declare a sensible default first, then the `attr()` version:
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(attr(data-columns type(<integer>), 3), 1fr);
+  }
+`}
+</CodeBlock>
+
+When a whole block of styles depends on it, test for support with `@supports`:
+
+<CodeBlock language="css">
+{`
+  @supports (width: attr(data-x type(<length>), 0px)) {
+    /* typed attr() styles */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Leaving Out the Type
+
+`inline-size: attr(data-progress)` is still a string, and still invalid outside `content`. Typed behaviour only
+starts when you name a type or a unit.
+
+### 2. Putting the Unit in the Wrong Place
+
+`data-angle="45"` with `type(<angle>)` fails, because `45` isn't an angle — and `data-angle="45deg"` with the `deg`
+unit fails, because `45deg` isn't a bare number. Match the attribute's format to the form of `attr()` you chose.
+
+### 3. Expecting It to Build URLs
+
+`background-image: url(attr(data-src))` doesn't work, and won't. Values from `attr()` can't be used to make URLs, so
+an attribute an attacker can control can't be turned into a network request by your CSS. Keep image URLs in `src`
+attributes or in your stylesheet.
+
+### 4. Reading an Attribute from the Wrong Element
+
+`attr()` only ever looks at the element being styled. A child can't read its parent's attribute directly; resolve it
+on the parent into a custom property, as in the dial pattern above.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Classic `attr()` could only print an attribute as text. Typed `attr()` — `attr(data-colour type(<color>), indigo)`,
+`attr(data-progress %, 0%)` — reads it as a real CSS value for any property on any element, with a fallback for
+missing or invalid values. Use it when the data already lives in your HTML, give it a fallback, declare a default
+before it for browsers without support, and keep using the classic form for text in `content`.
