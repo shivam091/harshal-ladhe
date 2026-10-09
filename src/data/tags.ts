@@ -875,6 +875,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The CSS `attr()` Function",
     description: "Reading HTML attributes in CSS with `attr()`, from classic text in `content` to typed values for any property."
   },
+  "relative-color-syntax": {
+    title: "CSS Relative Colour Syntax",
+    description: "Deriving new colours from an existing one with `oklch(from …)`, `rgb(from …)` and friends — tints, shades, transparency and hue shifts from a single token."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."

@@ -1,0 +1,92 @@
+/* Shown only when relative colours aren't supported, so a row of identical swatches isn't mistaken for a bug. */
+.support-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+/* Defaults so the stylesheet works before JavaScript sets the real values. */
+.playground {
+  --brand: #6366f1;
+  --step: 0.15;
+  --hue-shift: 30;
+  --alpha: 40%;
+}
+
+.playground-header code {
+  font-family: var(--pg-mono);
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.field input[type="color"] {
+  inline-size: 100%;
+  block-size: 2.25rem;
+  padding: 0.125rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  cursor: pointer;
+}
+
+.field-label {
+  display: block;
+  margin-block: 0.5rem;
+}
+
+/*
+  Each swatch only sets --bg. Its text colour is a relative colour too: black above a lightness
+  of 0.62 and white below it, so labels stay readable whatever the brand colour is. The explicit
+  "/ 1" matters: without it the text would copy the translucent swatch's alpha.
+*/
+.swatch {
+  display: flex;
+  align-items: flex-end;
+  min-block-size: 5rem;
+  padding: 0.5rem;
+  font-family: var(--pg-mono);
+  font-size: 0.75rem;
+  background: var(--bg);
+  color: oklch(from var(--bg) clamp(0, (0.62 - l) * 1000, 1) 0 0 / 1);
+  transition: background-color 0.2s ease;
+}
+
+.swatch--brand {
+  --bg: var(--brand);
+}
+
+/* oklch(): lightness is 0–1, chroma is roughly 0–0.4, hue is in degrees — all plain numbers. */
+[data-space="oklch"] .swatch--light { --bg: oklch(from var(--brand) calc(l + var(--step)) c h); }
+[data-space="oklch"] .swatch--dark { --bg: oklch(from var(--brand) calc(l - var(--step)) c h); }
+[data-space="oklch"] .swatch--muted { --bg: oklch(from var(--brand) l calc(c * 0.3) h); }
+[data-space="oklch"] .swatch--hue { --bg: oklch(from var(--brand) l c calc(h + var(--hue-shift))); }
+[data-space="oklch"] .swatch--complement { --bg: oklch(from var(--brand) l c calc(h + 180)); }
+[data-space="oklch"] .swatch--triad-1 { --bg: oklch(from var(--brand) l c calc(h + 120)); }
+[data-space="oklch"] .swatch--triad-2 { --bg: oklch(from var(--brand) l c calc(h + 240)); }
+[data-space="oklch"] .swatch--alpha { --bg: oklch(from var(--brand) l c h / var(--alpha)); }
+
+/* hsl(): saturation and lightness are 0–100, so the same step is scaled up by 100. */
+[data-space="hsl"] .swatch--light { --bg: hsl(from var(--brand) h s calc(l + var(--step) * 100)); }
+[data-space="hsl"] .swatch--dark { --bg: hsl(from var(--brand) h s calc(l - var(--step) * 100)); }
+[data-space="hsl"] .swatch--muted { --bg: hsl(from var(--brand) h calc(s * 0.3) l); }
+[data-space="hsl"] .swatch--hue { --bg: hsl(from var(--brand) calc(h + var(--hue-shift)) s l); }
+[data-space="hsl"] .swatch--complement { --bg: hsl(from var(--brand) calc(h + 180) s l); }
+[data-space="hsl"] .swatch--triad-1 { --bg: hsl(from var(--brand) calc(h + 120) s l); }
+[data-space="hsl"] .swatch--triad-2 { --bg: hsl(from var(--brand) calc(h + 240) s l); }
+[data-space="hsl"] .swatch--alpha { --bg: hsl(from var(--brand) h s l / var(--alpha)); }
+
+/*
+  A checkerboard behind the translucent swatch shows how much of it is see-through. It sits on a
+  wrapper so the swatch's own background-color stays the relative colour the readout reports.
+*/
+.swatch-backdrop {
+  display: grid;
+  background: repeating-conic-gradient(#3a3f5c 0% 25%, #23263a 0% 50%) 0 0 / 1rem 1rem;
+}

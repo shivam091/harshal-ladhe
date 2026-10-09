@@ -402,6 +402,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-09", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-relative-color-syntax",
+    title: "Building Colour Palettes with Relative Colour Syntax",
+    excerpt: "Derive tints, shades and transparency from one colour.",
+    description: "Relative colour syntax — oklch(from var(--brand) calc(l + 0.2) c h) — splits an existing colour into its channels so you can rebuild it with some changed, deriving tints, shades, translucent versions, muted states and rotated hues from a single token, with why oklch() beats hsl() for generated palettes and when color-mix() is the better fit.",
+    category: ["CSS"],
+    tags: ["css", "relative-color-syntax", "oklch", "theming", "design-tokens", "css-functions", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-relative-color-syntax/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "One indigo brand swatch fanning out into lighter, darker, muted, translucent and hue-rotated swatches, each labelled with the oklch(from …) relative colour that produces it."
+    },
+    changelog: [
+      { date: "2026-10-09", change: "Initial publication." }
+    ]
   }
 ];
 

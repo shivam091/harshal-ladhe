@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-relative-color-syntax",
+    title: "Relative Colour Syntax Playground",
+    description: "A palette of lighter, darker, muted, translucent, hue-rotated, complementary and triadic swatches all derived in CSS from one --brand colour, with lightness, hue and alpha controls and an oklch()/hsl() switch that shows why perceptual lightness matters.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-typed-attr",
     title: "Typed attr() Playground",
     description: "A progress bar, colour tag, grid and dial styled entirely from their own HTML attributes with typed attr() — read as a percentage, <color>, <integer> and <angle> — where the controls only edit attributes and an invalid colour shows the fallback.",
