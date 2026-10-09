@@ -891,6 +891,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Modern CSS Features of 2026",
     description: "CSS features arriving in browsers now or still experimental, from native masonry to randomness in pure CSS."
   },
+  "random": {
+    title: "The CSS `random()` Function",
+    description: "Generating random sizes, angles, colours and timings in pure CSS with `random()`, and falling back to JavaScript-generated custom properties."
+  },
   "fluid-typography": {
     title: "Fluid Typography with CSS",
     description: "Scaling font sizes smoothly with the viewport or container using `clamp()` instead of fixed breakpoints."

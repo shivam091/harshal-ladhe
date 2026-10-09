@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS random() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Confetti from Pure CSS random()</h1>
+        <p>Every piece below is identical HTML. Its position, size, rotation and colour come from <code>random()</code> in the stylesheet — JavaScript only adds pieces and switches modes.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support CSS <code>random()</code> yet, so the confetti uses the fallback pattern from the tutorial: JavaScript writes one random number per custom property, and CSS scales it. In Chromium you can turn on Experimental Web Platform features in chrome://flags to try the real thing.</p>
+
+      <section class="demo-area stage" id="stage" data-mode="auto" aria-hidden="true"></section>
+
+      <fieldset class="control-group">
+        <legend>Sharing</legend>
+
+        <div class="segmented-control" role="radiogroup" aria-label="Value sharing">
+          <label class="segment"><input type="radio" name="mode" value="auto" checked><span>auto</span></label>
+          <label class="segment"><input type="radio" name="mode" value="named"><span>--size key</span></label>
+          <label class="segment"><input type="radio" name="mode" value="fixed"><span>fixed 0.5</span></label>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="step-toggle">
+          Snap positions to a 10% grid with a step argument
+        </label>
+
+        <div class="button-row">
+          <button type="button" class="toggle-btn" id="add-button">Add 10 pieces</button>
+          <button type="button" class="secondary-btn" id="reset-button">Start over</button>
+        </div>
+        <p class="tip" id="tip"></p>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -456,6 +456,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-09", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-random-function",
+    title: "Randomness in Pure CSS with `random()`",
+    excerpt: "Add random sizes, angles and colours without JavaScript.",
+    description: "The CSS random() function picks a value in a range — random(-4deg, 4deg), oklch(0.78 0.15 random(0, 360)) — once per element and keeps it, with a step argument, named keys for sharing values, fixed for predictable tests, patterns for organic rotation and out-of-step animations, the syntax changes so far, and a JavaScript fallback while it's still experimental.",
+    category: ["CSS"],
+    tags: ["css", "random", "css-functions", "css-animation", "progressive-enhancement", "css-2026"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-random-function/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Confetti pieces of different sizes, angles and colours scattered across a dark stage, each styled by the same CSS rule using random()."
+    },
+    changelog: [
+      { date: "2026-10-09", change: "Initial publication." }
+    ]
   }
 ];
 

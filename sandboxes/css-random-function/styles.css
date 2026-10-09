@@ -1,0 +1,94 @@
+/* Shown only when random() isn't supported, so the JavaScript-driven fallback isn't mistaken for the feature. */
+.support-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+.playground-header code,
+.support-note code {
+  font-family: var(--pg-mono);
+}
+
+.segmented-control {
+  margin-block-end: 0.875rem;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 0.875rem;
+}
+
+.stage {
+  position: relative;
+  block-size: 16rem;
+  overflow: hidden;
+  padding: 0;
+}
+
+/*
+  Every value is picked once per piece and then kept, so restyling never re-rolls it — only a new
+  piece, or a page reload, gets new values.
+*/
+.piece {
+  position: absolute;
+  inset-inline-start: random(0%, 95%);
+  inset-block-start: random(0%, 90%);
+  inline-size: random(0.5rem, 1.75rem);
+  block-size: random(0.5rem, 1.75rem);
+  rotate: random(0deg, 90deg);
+  background: oklch(0.78 0.15 random(0, 360));
+}
+
+/* A shared key makes both sizes use one value, turning every rectangle into a square. */
+[data-mode="named"] .piece {
+  inline-size: random(--size, 0.5rem, 1.75rem);
+  block-size: random(--size, 0.5rem, 1.75rem);
+}
+
+/* fixed picks a set point in the range instead of a random one: 0.5 is always the middle. */
+[data-mode="fixed"] .piece {
+  inline-size: random(fixed 0.5, 0.5rem, 1.75rem);
+  block-size: random(fixed 0.5, 0.5rem, 1.75rem);
+}
+
+/* The optional fourth argument is a step, so positions snap to multiples of 10%. */
+[data-step="on"] .piece {
+  inset-inline-start: random(0%, 90%, 10%);
+  inset-block-start: random(0%, 90%, 10%);
+}
+
+/*
+  Fallback: JavaScript writes a 0–1 number per custom property once, and calc() scales it into
+  the same ranges. round() stands in for the step argument.
+*/
+@supports not (width: random(0px, 10px)) {
+  .piece {
+    inset-inline-start: calc(var(--r-x) * 95%);
+    inset-block-start: calc(var(--r-y) * 90%);
+    inline-size: calc(0.5rem + var(--r-w) * 1.25rem);
+    block-size: calc(0.5rem + var(--r-h) * 1.25rem);
+    rotate: calc(var(--r-turn) * 90deg);
+    background: oklch(0.78 0.15 calc(var(--r-hue) * 360));
+  }
+
+  [data-mode="named"] .piece {
+    inline-size: calc(0.5rem + var(--r-w) * 1.25rem);
+    block-size: calc(0.5rem + var(--r-w) * 1.25rem);
+  }
+
+  [data-mode="fixed"] .piece {
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+  }
+
+  [data-step="on"] .piece {
+    inset-inline-start: round(calc(var(--r-x) * 90%), 10%);
+    inset-block-start: round(calc(var(--r-y) * 90%), 10%);
+  }
+}

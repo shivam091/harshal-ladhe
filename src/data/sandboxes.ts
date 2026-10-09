@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-random-function",
+    title: "CSS random() Playground",
+    description: "Confetti pieces whose position, size, rotation and colour all come from random(), with independent, --size-keyed and fixed 0.5 sharing modes, a step that snaps them to a 10% grid, a measured report of what the browser shares, and a JavaScript fallback where random() isn't supported.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-grid-lanes-masonry",
     title: "Grid Lanes Masonry Playground",
     description: "Twelve numbered cards of different heights laid out with display: grid-lanes, a regular grid or multi-column layout for comparison, with lane-width and flow-tolerance controls, a spanning featured card and a multi-column fallback where grid-lanes isn't supported.",

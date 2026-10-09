@@ -1,0 +1,290 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-random-function");
+
+## Introduction
+
+Some designs look better with a little disorder: confetti scattered at different angles, a starfield where no two
+stars match, photos pinned to a board slightly askew, animations that don't all start in step. CSS has always been
+completely predictable, so every one of those needed JavaScript to generate random numbers and write them into
+inline styles — or a preprocessor like Sass, which picks its "random" values once at build time, so every visitor
+sees exactly the same result.
+
+**`random()`** brings randomness into CSS itself:
+
+<CodeBlock language="css">
+{`
+  .confetti {
+    rotate: random(0deg, 360deg);
+    inline-size: random(0.5rem, 1.5rem);
+    background: oklch(0.78 0.15 random(0, 360));
+  }
+`}
+</CodeBlock>
+
+Each piece of confetti gets its own rotation, size and hue, from one rule and no JavaScript.
+
+<Warning title="This is an early look">
+  `random()` is still experimental. At the time of writing it's only available in preview builds and behind flags,
+  and its syntax has already changed during development and may change again. Read this as a preview, and use the
+  fallback pattern later in the tutorial in production.
+</Warning>
+
+<RainbowDivider />
+
+## The Syntax
+
+<CodeBlock language="css">
+{`
+  random(<sharing>?, <min>, <max>, <step>?)
+`}
+</CodeBlock>
+
+At its simplest, `random()` takes a minimum and a maximum and returns a value somewhere between them, including both
+ends:
+
+<CodeBlock language="css">
+{`
+  rotate: random(-8deg, 8deg);
+  animation-delay: random(0s, 2s);
+  opacity: random(0.4, 1);
+`}
+</CodeBlock>
+
+The minimum and maximum must be the **same type** of value — two lengths, two angles, two times or two plain numbers
+— and the result is that type too. Different units of the same type are fine: `random(1rem, 40px)` returns a
+length. Plain numbers work wherever a number does, including inside colour functions:
+`oklch(0.78 0.15 random(0, 360))`.
+
+### Stepping
+
+An optional fourth argument rounds the result to a **step**, so it can only land on multiples of it:
+
+<CodeBlock language="css">
+{`
+  .tile {
+    /* Only 0%, 25%, 50%, 75% or 100% */
+    inset-inline-start: random(0%, 100%, 25%);
+  }
+`}
+</CodeBlock>
+
+Steps are counted from the minimum, so `random(10px, 50px, 20px)` can only return `10px`, `30px` or `50px`.
+
+<Info title="Older syntax: the by keyword">
+  Early drafts of the specification wrote the step with a `by` keyword — `random(0%, 100%, by 25%)`. Current
+  implementations take it as a plain fourth argument instead, as shown here.
+</Info>
+
+<RainbowDivider />
+
+## When Is the Value Chosen?
+
+The random value is picked when the browser first works out the element's styles, and then it's **kept**. Hovering
+the element, adding a class, or anything else that recalculates its styles doesn't re-roll it. A value only changes
+when the element is created again — a new element added by JavaScript gets new values — or when the page is
+reloaded.
+
+That's what makes `random()` usable for layout: a card tilted by `random(-3deg, 3deg)` doesn't jitter every time
+something changes on the page. It also means `random()` can't be used for something that should be different on
+every animation frame.
+
+<RainbowDivider />
+
+## Sharing Values
+
+By default, **every** `random()` is independent. Two elements with the same rule get different values, and two
+properties on the same element get different values too:
+
+<CodeBlock language="css">
+{`
+  .piece {
+    inline-size: random(0.5rem, 2rem);
+    block-size: random(0.5rem, 2rem); /* almost certainly a different value */
+  }
+`}
+</CodeBlock>
+
+The optional first argument changes how values are shared.
+
+### A Named Key
+
+Give two `random()` calls the same **dashed identifier** and the same range, and they produce the same value:
+
+<CodeBlock language="css">
+{`
+  .piece {
+    inline-size: random(--size, 0.5rem, 2rem);
+    block-size: random(--size, 0.5rem, 2rem); /* same as the width: a square */
+  }
+`}
+</CodeBlock>
+
+The width and height now match, so every piece is a square.
+
+Whether **different elements** using the same key also get the same value has changed between drafts and
+implementations. Recent specification drafts keep named values separate per element, with an `element-shared`
+keyword for sharing one value across all of them. The flagged Chromium implementation, on the other hand, already
+shares a named value across every element that uses it, and doesn't accept `element-shared` yet. The sandbox below
+measures what your browser does and tells you, rather than assuming.
+
+### `fixed`
+
+`fixed` followed by a number between `0` and `1` replaces the random number with that fixed value:
+
+<CodeBlock language="css">
+{`
+  .piece {
+    /* Always the midpoint: 1.25rem */
+    inline-size: random(fixed 0.5, 0.5rem, 2rem);
+  }
+`}
+</CodeBlock>
+
+`0` gives the minimum, `1` the maximum, and anything in between the matching point in the range. It's meant for
+tests and screenshots, where a design that changes on every load is hard to compare — set a custom property to
+`auto` normally and `fixed 0.5` in your test environment.
+
+<RainbowDivider />
+
+## Try It Live
+
+Every piece of confetti is identical HTML. Its position, size, rotation and colour all come from `random()` in the
+stylesheet. Switch the sharing mode to see independent values, a shared `--size` key turning every piece square, and
+`fixed 0.5` picking the middle of every size range. Turn on the **step** to snap the pieces to a 10% grid, and use
+**Add 10 pieces** to see that new elements get fresh values while existing ones keep theirs.
+
+In a browser without `random()`, the sandbox switches to the JavaScript fallback described below, and a note says so.
+
+<Sandbox slug="css-random-function" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Patterns Worth Knowing
+
+### Organic Rotation
+
+A grid of cards or photos looks more hand-made when each one is tilted slightly differently:
+
+<CodeBlock language="css">
+{`
+  .polaroid {
+    rotate: random(-4deg, 4deg);
+    transition: rotate 0.2s ease;
+  }
+
+  .polaroid:hover {
+    rotate: 0deg;
+  }
+`}
+</CodeBlock>
+
+Because the value is kept, the hover straightens the card and moving away restores the same tilt.
+
+### Out-of-Step Animations
+
+Twinkling stars or pulsing dots look mechanical when they all animate together. A random delay and duration breaks
+the rhythm:
+
+<CodeBlock language="css">
+{`
+  .star {
+    animation: twinkle random(1.5s, 3s) ease-in-out random(0s, 2s) infinite alternate;
+  }
+`}
+</CodeBlock>
+
+For delays that follow a deliberate order instead, see
+[CSS-Only Staggered Animations with `sibling-index()`](/tutorial/sibling-index-count-functions) — and combine the
+two for a stagger with a little variation: `animation-delay: calc(sibling-index() * 80ms + random(0ms, 40ms))`.
+
+### Random Colours That Still Match
+
+Randomising the hue in `oklch()` while keeping lightness and chroma fixed gives colours that are all different but
+equally bright, so they look like a set:
+
+<CodeBlock language="css">
+{`
+  .tag {
+    background: oklch(0.85 0.08 random(0, 360));
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+At the time of writing, `random()` isn't enabled by default in any stable browser. It was first implemented in
+Safari Technology Preview, and Chromium browsers support it with **Experimental Web Platform features** turned on in
+`chrome://flags`. Firefox doesn't support it yet.
+
+The established fallback is to generate the random numbers in JavaScript, **once per element**, and let CSS scale
+them. Write each as a number between `0` and `1` into a custom property:
+
+<CodeBlock language="javascript">
+{`
+  if (!CSS.supports("width", "random(0px, 10px)")) {
+    document.querySelectorAll(".piece").forEach((piece) => {
+      piece.style.setProperty("--r-turn", Math.random());
+      piece.style.setProperty("--r-size", Math.random());
+    });
+  }
+`}
+</CodeBlock>
+
+Then use `random()` where it's supported and the custom properties where it isn't:
+
+<CodeBlock language="css">
+{`
+  .piece {
+    rotate: random(0deg, 90deg);
+    inline-size: random(0.5rem, 2rem);
+  }
+
+  @supports not (width: random(0px, 10px)) {
+    .piece {
+      rotate: calc(var(--r-turn) * 90deg);
+      inline-size: calc(0.5rem + var(--r-size) * 1.5rem);
+    }
+  }
+`}
+</CodeBlock>
+
+The formula `min + random × (max - min)` turns a `0`–`1` number into any range, and `round()` stands in for the step
+argument: `round(calc(var(--r-x) * 100%), 25%)`. When `random()` is supported, the JavaScript does nothing and the
+custom properties are never read.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Mixing Value Types
+
+`random(0, 10px)` is invalid, because `0` is a number and `10px` is a length. Write `random(0px, 10px)`.
+
+### 2. Expecting a New Value on Every Change
+
+`random()` is picked once per element and kept. It won't re-roll on hover, on class changes or on each animation
+cycle. For a value that changes, use JavaScript, or animate between fixed keyframes.
+
+### 3. Assuming Named Keys Behave the Same Everywhere
+
+How a named key like `--size` is shared between elements has changed during development and differs between
+implementations. Don't build anything that depends on it until the feature ships in stable browsers.
+
+### 4. Randomising Things People Need to Find
+
+Random positions are fine for decoration, but a button or a menu item that moves on every visit is hard to find and
+remember. Keep `random()` to visual flourishes, and stop any random animation under
+`@media (prefers-reduced-motion: reduce)`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`random(min, max)` gives each element its own value in a range — `rotate: random(-4deg, 4deg)`,
+`oklch(0.78 0.15 random(0, 360))` — chosen once and kept until the element is recreated or the page reloads. A fourth
+argument adds a step, a named key shares a value between properties, and `fixed` makes the result predictable for
+testing. It's still experimental and its syntax is still settling, so ship it behind `@supports` with JavaScript
+generating `0`–`1` numbers into custom properties as the fallback.
