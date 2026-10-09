@@ -420,6 +420,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-09", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-anchor-positioning",
+    title: "Tooltips and Menus That Stay Attached with CSS Anchor Positioning",
+    excerpt: "Tether tooltips and menus to triggers without JavaScript.",
+    description: "CSS anchor positioning attaches one element to another with anchor-name, position-anchor and position-area — or anchor() for exact edges — then keeps it on screen with position-try-fallbacks, @position-try and position-try-order, with anchor-size(), anchor-scope, position-visibility, implicit popover anchors, the older syntax you may still see, and support fallbacks.",
+    category: ["CSS"],
+    tags: ["css", "anchor-positioning", "positioning", "ui-design", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-anchor-positioning/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A button with a tooltip above it and a dashed 3 × 3 grid of position-area cells around the button, with arrows showing the tooltip flipping below when it reaches the top edge."
+    },
+    changelog: [
+      { date: "2026-10-09", change: "Initial publication." }
+    ]
   }
 ];
 

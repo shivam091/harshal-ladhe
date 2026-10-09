@@ -1,0 +1,423 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-anchor-positioning");
+
+## Introduction
+
+Tooltips, dropdown menus, date pickers and "more options" menus all have the same requirement: one element has to
+sit next to another, and stay there. For years, CSS couldn't do that unless the two elements shared a parent you
+could position against. Everything else needed JavaScript — usually a library like Floating UI — that measured the
+trigger with `getBoundingClientRect()`, worked out coordinates, and recalculated them on every scroll and resize.
+
+**CSS anchor positioning** moves that work into the browser. You give one element a name, tell another element to
+attach to it, and say which side it should go on:
+
+<CodeBlock language="css">
+{`
+  .trigger {
+    anchor-name: --trigger;
+  }
+
+  .tooltip {
+    position: absolute;
+    position-anchor: --trigger;
+    position-area: top;
+  }
+`}
+</CodeBlock>
+
+The tooltip now sits above the trigger, centred on it, wherever the trigger is on the page. If the trigger moves —
+because of a scroll, a layout change or an animation — the tooltip moves with it.
+
+<RainbowDivider />
+
+## The Three Steps
+
+### 1. Name the Anchor
+
+<CodeBlock language="css">
+{`
+  .trigger {
+    anchor-name: --trigger;
+  }
+`}
+</CodeBlock>
+
+Anchor names are **dashed identifiers**, written like custom properties. Any element can be an anchor; it doesn't
+need to be positioned itself.
+
+### 2. Attach the Positioned Element
+
+<CodeBlock language="css">
+{`
+  .tooltip {
+    position: absolute; /* or fixed */
+    position-anchor: --trigger;
+  }
+`}
+</CodeBlock>
+
+Only absolutely or fixed-positioned elements can be anchored. `position-anchor` sets the **default anchor**, which
+is the one used by `position-area` and by any `anchor()` function that doesn't name an anchor itself.
+
+### 3. Place It
+
+There are two ways to say where the element goes, and they can be combined. `position-area` is the simple one, and
+it covers most real-world cases. The `anchor()` function gives you exact, edge-by-edge control.
+
+<RainbowDivider />
+
+## Placing with `position-area`
+
+`position-area` divides the space around the anchor into a **3 × 3 grid**, with the anchor in the centre cell, and
+places the element in one or more of those cells:
+
+<CodeBlock language="text">
+{`
+  ┌──────────────┬──────────────┬──────────────┐
+  │   top left   │  top center  │  top right   │
+  ├──────────────┼──────────────┼──────────────┤
+  │  center left │    ANCHOR    │ center right │
+  ├──────────────┼──────────────┼──────────────┤
+  │ bottom left  │ bottom center│ bottom right │
+  └──────────────┴──────────────┴──────────────┘
+`}
+</CodeBlock>
+
+| Value                | Places the element…                                                  |
+| -------------------- | -------------------------------------------------------------------- |
+| `top`                | Above the anchor, centred on it                                       |
+| `bottom`             | Below the anchor, centred on it                                       |
+| `left` / `right`     | Beside the anchor, centred vertically                                 |
+| `top left`           | In the top-left corner cell, diagonally off the anchor                |
+| `top span-right`     | Above, starting at the anchor's left edge and extending right — the classic dropdown position |
+| `bottom span-left`   | Below, ending at the anchor's right edge and extending left          |
+| `top span-all`       | Above, across all three columns (the same as `top`)                   |
+
+A single keyword like `top` means `top span-all`, and the element is centred on the anchor along the other axis.
+`span-*` keywords stretch the element across two cells, which is how you line up a menu with one edge of its
+button.
+
+Logical keywords work too — `block-start`, `inline-end`, `span-inline-end` and so on — so a menu can open towards
+the end of the line in both left-to-right and right-to-left layouts. For more on logical directions, see
+[CSS Logical Properties](/post/css/css-logical-properties).
+
+### Adding a Gap
+
+The cell starts exactly at the anchor's edge, so a tooltip placed with `position-area: top` touches its trigger. Use
+an ordinary `margin` to space it out:
+
+<CodeBlock language="css">
+{`
+  .tooltip {
+    position-area: top;
+    margin-block-end: 0.5rem;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Placing with `anchor()`
+
+For exact control, use the `anchor()` function in the inset properties (`top`, `right`, `bottom`, `left` and their
+logical versions). It returns the position of one of the anchor's edges:
+
+<CodeBlock language="css">
+{`
+  .tooltip {
+    position: absolute;
+    position-anchor: --trigger;
+
+    /* Put the tooltip's bottom edge at the anchor's top edge */
+    bottom: anchor(top);
+
+    /* Centre it horizontally on the anchor */
+    justify-self: anchor-center;
+  }
+`}
+</CodeBlock>
+
+`anchor()` accepts the side keywords `top`, `right`, `bottom`, `left`, `center`, their logical equivalents, or a
+percentage along the anchor — `anchor(25%)`. It can also name a different anchor than the default, which lets one
+element stretch between two anchors:
+
+<CodeBlock language="css">
+{`
+  .connector {
+    position: absolute;
+    left: anchor(--start right);
+    right: anchor(--end left);
+  }
+`}
+</CodeBlock>
+
+`anchor-center` is a value for `justify-self` and `align-self` that centres the element on the anchor, so you
+don't need the old `left: 50%; translate: -50%` trick.
+
+### Matching the Anchor's Size
+
+`anchor-size()` returns the anchor's width or height. A dropdown is often meant to be at least as wide as the button
+that opens it:
+
+<CodeBlock language="css">
+{`
+  .menu {
+    position-area: bottom span-right;
+    min-inline-size: anchor-size(width);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Staying on Screen with Fallbacks
+
+A tooltip above a button near the top of the window will be cut off. `position-try-fallbacks` gives the browser a
+list of alternative positions to try, **in order**, whenever the current one would overflow:
+
+<CodeBlock language="css">
+{`
+  .tooltip {
+    position-area: top;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  }
+`}
+</CodeBlock>
+
+| Fallback                  | What it does                                                 |
+| ------------------------- | ------------------------------------------------------------ |
+| `flip-block`              | Mirrors the position top-to-bottom: `top` becomes `bottom`   |
+| `flip-inline`             | Mirrors it left-to-right: `span-right` becomes `span-left`   |
+| `flip-start`              | Mirrors it diagonally, swapping the block and inline axes    |
+| `flip-block flip-inline`  | Both at once, for a diagonal flip                            |
+| A `position-area` value   | Tries that area instead, for example `bottom` or `right`     |
+
+The flips don't only swap `position-area`. They mirror margins and `anchor()` insets too, so the `0.5rem` gap moves
+to the other side with the tooltip.
+
+The browser checks the original position first. If it fits, it's used; if not, each fallback is tried in turn, and
+the first one that fits wins.
+
+### Custom Fallbacks with `@position-try`
+
+When a flip isn't enough — say the fallback needs a different gap or width — define your own:
+
+<CodeBlock language="css">
+{`
+  @position-try --compact-below {
+    position-area: bottom;
+    margin-block-start: 0.25rem;
+    max-inline-size: 10rem;
+  }
+
+  .tooltip {
+    position-area: top;
+    position-try-fallbacks: flip-block, --compact-below;
+  }
+`}
+</CodeBlock>
+
+Only positioning-related properties are allowed inside `@position-try`: insets, margins, sizes, self-alignment and
+`position-area`.
+
+### Choosing the Roomiest Fallback
+
+By default, the first fallback that fits is used. `position-try-order` changes that, so the browser picks whichever
+option gives the element the most space:
+
+<CodeBlock language="css">
+{`
+  .menu {
+    position-try-order: most-height;
+    position-try-fallbacks: flip-block;
+  }
+`}
+</CodeBlock>
+
+A long menu then opens downwards or upwards, whichever has more room. The `position-try` shorthand sets both
+properties: `position-try: most-height flip-block`.
+
+<RainbowDivider />
+
+## Try It Live
+
+Move the button around the stage with the sliders and watch the tooltip. The stage is the tooltip's containing
+block, so "overflowing" means leaving the stage. Set **position-try-fallbacks** to **none** and drag the button to
+an edge: the tooltip gets cut off. Switch back to **all flips** and it jumps to whichever side fits. The readout
+reports where the browser actually put the tooltip, which is how you can tell which fallback was chosen.
+
+<Sandbox slug="css-anchor-positioning" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Patterns Worth Knowing
+
+### Popovers Anchor Themselves
+
+A popover opened with `popovertarget` uses the button that opened it as its **implicit anchor**. You don't need
+`anchor-name` or `position-anchor` at all:
+
+<CodeBlock language="html">
+{`
+  <button popovertarget="menu">Options</button>
+  <div id="menu" popover>…</div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  #menu {
+    margin: 0;
+    position-area: bottom span-right;
+    position-try-fallbacks: flip-block;
+  }
+`}
+</CodeBlock>
+
+Resetting `margin` matters: the popover's default styles centre it in the window with `margin: auto`, which fights
+the anchored position. Popovers also sit in the **top layer**, above everything else, so they can't be clipped by
+an `overflow: hidden` parent or hidden behind another element's `z-index`. For why that matters, see
+[Mastering CSS z-index](/post/css/css-z-index-and-stacking-contexts).
+
+### Hiding When the Anchor Scrolls Away
+
+A tooltip attached to a button inside a scrolling panel follows the button as you scroll. When the button scrolls
+out of view, a tooltip left floating over unrelated content would be confusing, so by default the browser hides it.
+`position-visibility` controls that behaviour:
+
+| Value              | The anchored element is hidden…                                   |
+| ------------------ | ----------------------------------------------------------------- |
+| `anchors-visible`  | When its anchor is completely scrolled out of view (the default)  |
+| `no-overflow`      | When it overflows its containing block and no fallback fits       |
+| `always`           | Never — it stays visible wherever the anchor goes                 |
+
+<CodeBlock language="css">
+{`
+  .tooltip {
+    position-visibility: anchors-visible no-overflow;
+  }
+`}
+</CodeBlock>
+
+### One Name, Many Components
+
+Anchor names are global. With a list of cards that each have their own button and tooltip, every button would be
+called `--trigger`, and every tooltip would attach to the last one. `anchor-scope` limits a name to one part of the
+page:
+
+<CodeBlock language="css">
+{`
+  .card {
+    anchor-scope: --trigger;
+  }
+
+  .card-button {
+    anchor-name: --trigger;
+  }
+
+  .card-tooltip {
+    position-anchor: --trigger;
+    position-area: top;
+  }
+`}
+</CodeBlock>
+
+Each tooltip now finds the `--trigger` inside its own card. `anchor-scope: all` scopes every anchor name used inside
+the element.
+
+<RainbowDivider />
+
+## Older Syntax You May Still See
+
+The feature changed while it was being developed, and early articles and code samples use names that no longer
+work:
+
+| Old name                    | Current name               |
+| --------------------------- | -------------------------- |
+| `inset-area`                | `position-area`            |
+| `position-try-options`      | `position-try-fallbacks`   |
+| `anchor-default`            | `position-anchor`          |
+| `position-fallback` with `@position-fallback` and `@try` blocks | `position-try-fallbacks` with `@position-try` |
+
+Current browsers ignore the old names entirely, so update any code that still uses them.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+Anchor positioning works in Chrome and Edge 125 and later, Safari 26 and later, and recent versions of Firefox, which
+added it in 2026.
+
+For older browsers, put a basic position first and the anchored one inside `@supports`, so the tooltip still
+appears somewhere sensible:
+
+<CodeBlock language="css">
+{`
+  .tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+  }
+
+  @supports (anchor-name: --a) {
+    .tooltip {
+      bottom: auto;
+      left: auto;
+      position-anchor: --trigger;
+      position-area: top;
+      position-try-fallbacks: flip-block;
+    }
+  }
+`}
+</CodeBlock>
+
+The fallback here relies on the tooltip being inside a positioned parent, as tooltips were before anchor
+positioning. If you need exact placement everywhere, keep a JavaScript positioning library for the browsers that
+fail the `@supports` test.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Forgetting `position: absolute`
+
+`position-area` and `anchor()` only work on absolutely or fixed-positioned elements. On a static element they're
+ignored without any warning.
+
+### 2. Anchoring to an Element That Comes Later
+
+If the anchor and the anchored element are both absolutely positioned inside the same container, the anchor must
+come **first** in the HTML. Otherwise the browser hasn't laid it out yet when it places the tooltip, and the anchor
+isn't found.
+
+### 3. Leaving the Popover's Default Margin
+
+A popover with `margin: auto` from its default styles won't sit next to its anchor. Set `margin: 0`, then add back
+the gap you want on the side facing the anchor.
+
+### 4. Expecting Fallbacks to Use the Whole Window
+
+Overflow is checked against the anchored element's **containing block**. For an absolutely positioned tooltip inside
+a positioned card, that's the card — so the tooltip flips at the card's edges, not the window's. Use
+`position: fixed` or a popover to check against the window instead.
+
+### 5. Moving the Anchor with a Transform
+
+Browsers don't agree on whether `transform` or `translate` on the anchor moves the elements attached to it — some
+use the transformed position, others the untransformed layout box. If an anchor needs moving, use insets or
+margins, which every browser takes into account.
+
+### 6. Reusing One Anchor Name
+
+When several elements share an anchor name, an anchored element attaches to the last one in the document. Give each
+component its own scope with `anchor-scope`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Anchor positioning replaces JavaScript positioning libraries with three declarations: `anchor-name` on the trigger,
+`position-anchor` on the positioned element, and `position-area` to choose a side. Add `position-try-fallbacks:
+flip-block` so it flips instead of being cut off, use `anchor-size()` to match widths, `anchor-scope` for repeated
+components, and let popovers anchor themselves to the button that opens them.

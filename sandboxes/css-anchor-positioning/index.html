@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anchor Positioning Playground</title>
+  </head>
+  <body>
+    <main class="playground" id="playground">
+      <header class="playground-header">
+        <h1>A Tooltip That Follows Its Anchor</h1>
+        <p>Move the button around the stage with the sliders. The tooltip is placed with <code>position-area</code> and flips with <code>position-try-fallbacks</code> when it would overflow — no JavaScript measures anything.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support CSS anchor positioning, so the tooltip sits in the stage's top-left corner instead of next to the button.</p>
+
+      <section class="demo-area stage" id="stage" aria-label="Anchor positioning stage">
+        <button type="button" class="anchor-button" id="anchor-button" aria-describedby="tooltip">Anchor</button>
+        <div class="tooltip" id="tooltip" role="tooltip">Anchored tooltip</div>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Anchor position</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="x-input">Horizontal</label>
+            <div class="range-row">
+              <span class="range-edge">10%</span>
+              <div class="range-track">
+                <input type="range" id="x-input" min="10" max="90" step="1" value="50">
+                <output class="range-bubble" id="x-value" for="x-input">50%</output>
+              </div>
+              <span class="range-edge">90%</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="y-input">Vertical</label>
+            <div class="range-row">
+              <span class="range-edge">8%</span>
+              <div class="range-track">
+                <input type="range" id="y-input" min="8" max="92" step="1" value="50">
+                <output class="range-bubble" id="y-value" for="y-input">50%</output>
+              </div>
+              <span class="range-edge">92%</span>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Tooltip</legend>
+
+        <span class="field-label" id="area-label">position-area</span>
+        <div class="segmented-control" role="radiogroup" aria-labelledby="area-label">
+          <label class="segment"><input type="radio" name="area" value="top" checked><span>top</span></label>
+          <label class="segment"><input type="radio" name="area" value="bottom"><span>bottom</span></label>
+          <label class="segment"><input type="radio" name="area" value="left"><span>left</span></label>
+          <label class="segment"><input type="radio" name="area" value="right"><span>right</span></label>
+          <label class="segment"><input type="radio" name="area" value="top span-right"><span>top span-right</span></label>
+        </div>
+
+        <span class="field-label" id="fallbacks-label">position-try-fallbacks</span>
+        <div class="segmented-control" role="radiogroup" aria-labelledby="fallbacks-label">
+          <label class="segment"><input type="radio" name="fallbacks" value="none"><span>none</span></label>
+          <label class="segment"><input type="radio" name="fallbacks" value="flip-block"><span>flip-block</span></label>
+          <label class="segment"><input type="radio" name="fallbacks" value="flip-inline"><span>flip-inline</span></label>
+          <label class="segment"><input type="radio" name="fallbacks" value="flip-block, flip-inline, flip-block flip-inline" checked><span>all flips</span></label>
+        </div>
+        <p class="tip" id="tip"></p>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

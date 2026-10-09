@@ -1,0 +1,79 @@
+/* Shown only when anchor positioning isn't supported, so a tooltip stuck in a corner isn't mistaken for a bug. */
+.support-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+.playground-header code {
+  font-family: var(--pg-mono);
+}
+
+.field-label {
+  display: block;
+  margin-block: 0.5rem;
+}
+
+/*
+  The stage is the tooltip's containing block, so "overflowing" means leaving the stage. That's
+  what makes the fallbacks kick in long before the tooltip reaches the edge of the window.
+*/
+.stage {
+  --x: 50%;
+  --y: 50%;
+  position: relative;
+  block-size: 18rem;
+  overflow: hidden;
+  padding: 0;
+}
+
+/*
+  Step 1: name the element other elements can be anchored to. It's centred on (--x, --y) with
+  negative margins rather than translate, because browsers disagree on whether an anchor's
+  transforms move the elements attached to it.
+*/
+.anchor-button {
+  anchor-name: --trigger;
+  position: absolute;
+  inset-inline-start: var(--x);
+  inset-block-start: var(--y);
+  inline-size: 6rem;
+  block-size: 2.25rem;
+  margin-block-start: -1.125rem;
+  margin-inline-start: -3rem;
+  padding: 0;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  border: none;
+  box-shadow: var(--pg-shadow-sm);
+}
+
+/*
+  Step 2: attach the tooltip to that name and place it in one of the nine cells around the anchor.
+  Step 3: list fallbacks for the browser to try, in order, when that cell would overflow the stage.
+  Both values come from custom properties so the controls can switch them.
+*/
+.tooltip {
+  --area: top;
+  --fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  position: absolute;
+  position-anchor: --trigger;
+  position-area: var(--area);
+  position-try-fallbacks: var(--fallbacks);
+  margin: 0.5rem;
+  inline-size: max-content;
+  max-inline-size: 12rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--pg-text);
+  background: var(--pg-bg);
+  border: 0.0625rem solid var(--pg-primary);
+  box-shadow: var(--pg-shadow-sm);
+}

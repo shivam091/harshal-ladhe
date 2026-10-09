@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-anchor-positioning",
+    title: "Anchor Positioning Playground",
+    description: "A tooltip tethered to a button you move around a stage with sliders, placed with position-area and kept inside the stage by position-try-fallbacks, with a readout reporting which side the browser actually chose.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-relative-color-syntax",
     title: "Relative Colour Syntax Playground",
     description: "A palette of lighter, darker, muted, translucent, hue-rotated, complementary and triadic swatches all derived in CSS from one --brand colour, with lightness, hue and alpha controls and an oklch()/hsl() switch that shows why perceptual lightness matters.",
