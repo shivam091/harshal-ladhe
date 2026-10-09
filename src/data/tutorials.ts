@@ -438,6 +438,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-09", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-grid-lanes-masonry",
+    title: "Native Masonry Layouts with `display: grid-lanes`",
+    excerpt: "Build masonry layouts in CSS Grid, no JavaScript.",
+    description: "display: grid-lanes brings native masonry to CSS Grid — lanes defined by grid-template-columns or rows, each item dropped into the shortest lane — with flow-tolerance for a steadier order, spanning and pinning, the older grid-template-rows: masonry and display: masonry syntaxes it replaces, and an @supports pattern with a multi-column fallback while it's still experimental.",
+    category: ["CSS"],
+    tags: ["css", "css-grid", "masonry", "layout", "progressive-enhancement", "css-2026"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-grid-lanes-masonry/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Twelve numbered cards of different heights packed into four level columns, each card sitting in whichever column was shortest when it was placed."
+    },
+    changelog: [
+      { date: "2026-10-09", change: "Initial publication." }
+    ]
   }
 ];
 

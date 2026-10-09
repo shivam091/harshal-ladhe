@@ -883,6 +883,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."
   },
+  "masonry": {
+    title: "CSS Masonry Layouts",
+    description: "Packing items of different heights into level columns, from multi-column fallbacks to native masonry with `display: grid-lanes`."
+  },
+  "css-2026": {
+    title: "Modern CSS Features of 2026",
+    description: "CSS features arriving in browsers now or still experimental, from native masonry to randomness in pure CSS."
+  },
   "fluid-typography": {
     title: "Fluid Typography with CSS",
     description: "Scaling font sizes smoothly with the viewport or container using `clamp()` instead of fixed breakpoints."

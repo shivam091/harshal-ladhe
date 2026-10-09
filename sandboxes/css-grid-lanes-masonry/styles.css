@@ -1,0 +1,92 @@
+/* Shown only when grid-lanes isn't supported, so the multi-column stand-in isn't mistaken for the real thing. */
+.support-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+.support-note code,
+.checkbox-field code {
+  font-family: var(--pg-mono);
+}
+
+.segmented-control {
+  margin-block-end: 0.875rem;
+}
+
+.board {
+  --min: 8rem;
+  --tolerance: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  place-items: center;
+  block-size: var(--h);
+  font-family: var(--pg-mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--pg-text);
+  background: linear-gradient(160deg, var(--pg-surface), var(--pg-bg));
+  border: 0.0625rem solid var(--pg-border);
+}
+
+.card--featured {
+  border-color: var(--pg-primary);
+  background: linear-gradient(160deg, var(--pg-primary-soft), var(--pg-bg));
+}
+
+/*
+  Masonry: the template defines the lanes, and each card is placed into whichever lane is
+  shortest. Lanes within --tolerance of each other count as equal, so the earlier one wins.
+*/
+.board[data-layout="grid-lanes"] {
+  display: grid-lanes;
+  grid-template-columns: repeat(auto-fill, minmax(var(--min), 1fr));
+  gap: 0.5rem;
+  flow-tolerance: var(--tolerance);
+}
+
+/* A regular grid for comparison: rows line up, so short cards leave gaps beneath them. */
+.board[data-layout="grid"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--min), 1fr));
+  gap: 0.5rem;
+}
+
+/* Spanning works in both grid layouts; multi-column layout has no equivalent. */
+.board--span .card--featured {
+  grid-column: span 2;
+}
+
+/*
+  Multi-column layout packs tightly too, but fills each column top to bottom, so card order runs
+  down the page. It's also the stand-in for grid-lanes in browsers without support.
+*/
+.board[data-layout="columns"] {
+  columns: var(--min);
+  column-gap: 0.5rem;
+}
+
+.board[data-layout="columns"] .card {
+  break-inside: avoid;
+  margin-block-end: 0.5rem;
+}
+
+@supports not (display: grid-lanes) {
+  .board[data-layout="grid-lanes"] {
+    columns: var(--min);
+    column-gap: 0.5rem;
+  }
+
+  .board[data-layout="grid-lanes"] .card {
+    break-inside: avoid;
+    margin-block-end: 0.5rem;
+  }
+}

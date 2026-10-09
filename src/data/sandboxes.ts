@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-grid-lanes-masonry",
+    title: "Grid Lanes Masonry Playground",
+    description: "Twelve numbered cards of different heights laid out with display: grid-lanes, a regular grid or multi-column layout for comparison, with lane-width and flow-tolerance controls, a spanning featured card and a multi-column fallback where grid-lanes isn't supported.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-anchor-positioning",
     title: "Anchor Positioning Playground",
     description: "A tooltip tethered to a button you move around a stage with sliders, placed with position-area and kept inside the stage by position-try-fallbacks, with a readout reporting which side the browser actually chose.",

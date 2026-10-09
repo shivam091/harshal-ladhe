@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Grid Lanes Masonry Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Masonry with display: grid-lanes</h1>
+        <p>Twelve cards of different heights, numbered in HTML order. Compare how grid lanes, a regular grid and multi-column layout arrange them, and watch where each number lands.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support <code>display: grid-lanes</code> yet, so the grid lanes option falls back to multi-column layout. In Chromium you can turn on Experimental Web Platform features in chrome://flags to try it.</p>
+
+      <section class="demo-area" aria-label="Masonry demo">
+        <ol class="board" id="board" data-layout="grid-lanes">
+          <li class="card" style="--h: 7rem">1</li>
+          <li class="card" style="--h: 4rem">2</li>
+          <li class="card card--featured" style="--h: 5rem">3</li>
+          <li class="card" style="--h: 9rem">4</li>
+          <li class="card" style="--h: 5rem">5</li>
+          <li class="card" style="--h: 6rem">6</li>
+          <li class="card" style="--h: 4rem">7</li>
+          <li class="card" style="--h: 8rem">8</li>
+          <li class="card" style="--h: 5rem">9</li>
+          <li class="card" style="--h: 6.5rem">10</li>
+          <li class="card" style="--h: 4.5rem">11</li>
+          <li class="card" style="--h: 7rem">12</li>
+        </ol>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Layout</legend>
+
+        <div class="segmented-control" role="radiogroup" aria-label="Layout method">
+          <label class="segment"><input type="radio" name="layout" value="grid-lanes" checked><span>grid-lanes</span></label>
+          <label class="segment"><input type="radio" name="layout" value="grid"><span>grid</span></label>
+          <label class="segment"><input type="radio" name="layout" value="columns"><span>columns</span></label>
+        </div>
+
+        <div class="fields-grid">
+          <div class="field">
+            <label for="min-input">Minimum lane width</label>
+            <div class="range-row">
+              <span class="range-edge">6rem</span>
+              <div class="range-track">
+                <input type="range" id="min-input" min="6" max="14" step="0.5" value="8">
+                <output class="range-bubble" id="min-value" for="min-input">8rem</output>
+              </div>
+              <span class="range-edge">14rem</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="tolerance-input">flow-tolerance</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="tolerance-input" min="0" max="6" step="0.5" value="1">
+                <output class="range-bubble" id="tolerance-value" for="tolerance-input">1rem</output>
+              </div>
+              <span class="range-edge">6rem</span>
+            </div>
+          </div>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="span-toggle">
+          Card 3 spans two lanes with <code>grid-column: span 2</code>
+        </label>
+        <p class="tip" id="tip"></p>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

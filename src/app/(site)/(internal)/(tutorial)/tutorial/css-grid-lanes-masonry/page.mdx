@@ -1,0 +1,236 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-grid-lanes-masonry");
+
+## Introduction
+
+A **masonry** layout — the Pinterest look — arranges items of different heights in columns, with each new item
+dropped into whichever column is currently shortest. The columns stay roughly level and there are no gaps under
+short items.
+
+CSS has never quite managed it. A regular grid lines items up in rows, so every row is as tall as its tallest item
+and shorter items leave holes beneath them. Multi-column layout packs items tightly, but fills each column top to
+bottom first, so item 2 ends up under item 1 instead of beside it. Real masonry has needed a JavaScript library that
+measures every item and positions it absolutely.
+
+**`display: grid-lanes`** is CSS's native answer:
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    display: grid-lanes;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: 1rem;
+  }
+`}
+</CodeBlock>
+
+That's a complete masonry layout. It's part of CSS Grid, so the column definitions, `gap`, spanning and placement
+all work the way you already know from grid.
+
+<Warning title="This is an early look">
+  `display: grid-lanes` is still experimental. At the time of writing it's only available in preview builds and
+  behind flags, and details may still change before it ships. Use it with the fallback shown later, and check
+  current support before relying on it.
+</Warning>
+
+<RainbowDivider />
+
+## How Grid Lanes Work
+
+A grid-lanes container has tracks in **one direction only**. Those tracks are the **lanes**. In the other direction
+there are no tracks at all: items simply stack one after another inside their lane.
+
+<CodeBlock language="text">
+{`
+  grid-template-columns defines the lanes ──►
+
+  ┌───────┐ ┌───────┐ ┌───────┐
+  │   1   │ │   2   │ │   3   │   1, 2, 3 fill the first row of lanes
+  │       │ └───────┘ │       │
+  └───────┘ ┌───────┐ │       │   4 goes into lane 2, the shortest
+  ┌───────┐ │   4   │ └───────┘
+  │   5   │ │       │ ┌───────┐   5 into lane 1, 6 into lane 3 …
+  └───────┘ └───────┘ │   6   │
+                      └───────┘
+`}
+</CodeBlock>
+
+The placement rule is simple: each item, in HTML order, goes into **whichever lane ends highest** at that moment.
+That's the shortest-column-first rule masonry libraries use, done by the browser.
+
+### Columns or Rows
+
+Which template you set decides the direction:
+
+<CodeBlock language="css">
+{`
+  /* Column lanes: items stack downwards — the classic "waterfall" */
+  .waterfall {
+    display: grid-lanes;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Row lanes: items flow sideways — a "brick" layout */
+  .bricks {
+    display: grid-lanes;
+    grid-template-rows: repeat(3, 8rem);
+  }
+`}
+</CodeBlock>
+
+Define `grid-template-columns` for vertical masonry, or `grid-template-rows` for horizontal masonry. Everything grid
+offers for track sizing works for lanes, including `repeat()`, `auto-fill`, `minmax()` and `fr` units. For a
+refresher on those, see
+[Responsive CSS Grid Layouts](/post/css/responsive-css-grid-layouts).
+
+<RainbowDivider />
+
+## Keeping the Order Natural with `flow-tolerance`
+
+The shortest-lane rule has a side effect. If lane 1 ends at 300px and lane 2 at 299px, the next item goes into lane
+2 — a 1px difference nobody can see moves the item to a different column. Across a whole page those tiny decisions
+make the order jump around, which is confusing to read and especially to navigate with a keyboard.
+
+`flow-tolerance` tells the browser to treat lanes whose ends are within a certain distance of each other as **equally
+short**. Among those, it picks the first one in order:
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    display: grid-lanes;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    flow-tolerance: 2rem;
+  }
+`}
+</CodeBlock>
+
+With `2rem`, an item only skips ahead to a later lane when that lane is at least 2rem shorter. The default,
+`normal`, is a small tolerance roughly one line of text tall. Raise it to keep items in a more predictable,
+row-by-row order; set it to `0` for the tightest packing.
+
+<RainbowDivider />
+
+## Spanning and Placement
+
+Because grid lanes are grid tracks, items can span several lanes:
+
+<CodeBlock language="css">
+{`
+  .card--featured {
+    grid-column: span 2;
+  }
+`}
+</CodeBlock>
+
+A spanning item goes wherever the group of adjacent lanes it needs ends highest. Items can also be pinned to a lane
+— `grid-column: 1` keeps an item in the first column — and the others flow around it.
+
+You can't control the position along the stacking direction, though. There are no row tracks in a column-lanes
+container, so `grid-row` has nothing to refer to.
+
+<RainbowDivider />
+
+## Try It Live
+
+The board contains twelve cards of different heights, numbered in HTML order. Switch between **grid-lanes**, a
+regular **grid** and **columns** to compare the three approaches, and follow the numbers: grid leaves gaps, columns
+run the order down the page, and grid lanes pack tightly while keeping the order running across. Turn on the
+spanning card, change the lane width, and raise **flow-tolerance** to see items settle into a steadier order.
+
+If your browser doesn't support `grid-lanes`, that option shows the multi-column fallback instead — the same one
+recommended below — and a note says so.
+
+<Sandbox slug="css-grid-lanes-masonry" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Older Syntax You May Still See
+
+Masonry spent years being debated, and several syntaxes were tried along the way. Articles and demos from that
+period use code that doesn't match the final design:
+
+| Older syntax                                         | Where it came from                                         |
+| ---------------------------------------------------- | ---------------------------------------------------------- |
+| `display: grid; grid-template-rows: masonry;`        | Firefox's experimental implementation, behind a flag since 2020 |
+| `display: masonry;`                                  | An alternative proposal prototyped in Chromium in 2024     |
+| `item-tolerance`                                     | The earlier name of `flow-tolerance`                       |
+
+The CSS Working Group settled on `display: grid-lanes` in 2025, combining the grid-based approach with a dedicated
+display type. If you've seen `grid-template-rows: masonry` in an older tutorial, this is what replaces it.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+At the time of writing, `display: grid-lanes` is available in Safari Technology Preview, and in Chromium browsers
+with **Experimental Web Platform features** turned on in `chrome://flags`. It isn't yet enabled by default in any
+stable browser.
+
+An unsupported `display` value is simply ignored, so the safest pattern is to start from a layout that works
+everywhere and switch to grid lanes inside `@supports`:
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    columns: 12rem;
+    column-gap: 1rem;
+  }
+
+  .gallery > * {
+    break-inside: avoid;
+    margin-block-end: 1rem;
+  }
+
+  @supports (display: grid-lanes) {
+    .gallery {
+      display: grid-lanes;
+      grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+      gap: 1rem;
+    }
+
+    .gallery > * {
+      margin-block-end: 0;
+    }
+  }
+`}
+</CodeBlock>
+
+Multi-column layout is the closest fallback visually, and `break-inside: avoid` stops cards being split across
+columns. Its order runs down each column instead of across, so it suits galleries where order doesn't matter much.
+Where it does, use a regular grid as the fallback and accept the gaps.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Setting Rows While Columns Are Still Set
+
+A grid-lanes container only has lanes in one direction. If both `grid-template-columns` and `grid-template-rows` are
+set, the columns win and the rows are ignored. For horizontal masonry, leave `grid-template-columns` at its default
+of `none` — watch out for a shared grid class that sets it for you.
+
+### 2. Expecting `grid-row` to Work in Column Lanes
+
+Items stack in their lane in HTML order. There are no row lines to place them on, so `grid-row` is ignored in a
+column-lanes container, and `grid-column` is ignored in a row-lanes one.
+
+### 3. Assuming Visual Order Matches Tab Order
+
+Keyboard focus follows the HTML order, while the shortest-lane rule can place consecutive items far apart. A higher
+`flow-tolerance` keeps them closer to reading order. For more on visual order and focus, see
+[Matching Tab Order to Layout with `reading-flow`](/tutorial/css-reading-flow).
+
+### 4. Using It Without a Fallback
+
+Until grid lanes ships in stable browsers, a page that only declares `display: grid-lanes` falls back to ordinary
+block layout — every card on its own full-width row. Always pair it with the `@supports` pattern above.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`display: grid-lanes` brings native masonry to CSS Grid: define lanes with `grid-template-columns` (or rows), and
+each item drops into the shortest lane. Spanning, `gap` and track sizing work as in any grid, `flow-tolerance` keeps
+the order from jumping between nearly equal lanes, and `grid-template-rows: masonry` is the older syntax it
+replaces. It's still experimental, so ship it inside `@supports` with a multi-column fallback.
