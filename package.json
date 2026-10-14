@@ -32,7 +32,7 @@
     "@linaria/react": "^8.0.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
-    "@next/mdx": "^16.2.6",
+    "@next/mdx": "^16.4.0",
     "@radix-ui/react-collapsible": "^1.1.14",
     "@radix-ui/react-dialog": "^1.1.21",
     "@radix-ui/react-dropdown-menu": "^2.1.17",
