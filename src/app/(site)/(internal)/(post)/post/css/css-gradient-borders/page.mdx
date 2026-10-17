@@ -641,6 +641,9 @@ A quick rule of thumb:
 - **Rounded element on an image or translucent background?** Use `mask`.
 - **Square corners, or just one side?** Use `border-image`.
 
+Want corners that aren't round at all? `background-clip` paints into the element's own corners, so it also follows
+[`corner-shape`](/tutorial/css-corner-shape) — squircles, bevels and scoops included. `border-image` still ignores it.
+
 <RainbowDivider />
 
 ## Best Practices
