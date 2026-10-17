@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-corner-shape",
+    title: "corner-shape Playground",
+    description: "Shape one bordered, shadowed card with every corner-shape keyword or a superellipse() value, change its border-radius and morph it on hover, then browse squircles, bevels, scoops and notches doing real UI jobs.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "accent-color-native-controls",
     title: "Theming Native Controls with accent-color",
     description: "Every native control accent-color themes — checkbox, indeterminate checkbox, radio, switch, range slider, and determinate and indeterminate progress — shown beside its browser default, re-themed live from one colour picker, plus a <meter> to show what the property leaves alone.",
