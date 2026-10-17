@@ -1,0 +1,203 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-corner-shape");
+
+## Introduction
+
+For as long as CSS has had `border-radius`, a corner could be exactly one shape: a quarter of an ellipse. Anything
+else — the smooth "squircle" of an app icon, a bevelled sale tag, the scooped edge of a ticket stub — meant reaching
+for SVG, a `clip-path` polygon, or a stack of pseudo-elements. Each of those has a catch: `clip-path` cuts off your
+borders and shadows, and SVG has to be redrawn whenever the box changes size.
+
+**`corner-shape`** fixes this at the source. `border-radius` keeps deciding how *big* each corner is;
+`corner-shape` decides what *shape* fills that space. Because it changes the box itself, the border, background,
+`box-shadow` and `outline` all follow the new shape automatically.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .app-icon {
+    border-radius: 30%;
+    corner-shape: squircle;
+  }
+`}
+</CodeBlock>
+
+Two things to notice:
+
+- **`border-radius` is still required.** It sets the size of each corner. With a radius of `0` there's no corner
+  to shape, so `corner-shape` has nothing to do.
+- **Everything follows the shape.** Unlike `clip-path`, which only crops what's already drawn, the border, the
+  background, any `box-shadow` (including its spread and offset) and the `outline` are all drawn along the new
+  corners. That includes a
+  [gradient border built with `background-clip`](/post/css/css-gradient-borders#background-clip--the-most-practical-approach),
+  which takes on the shape for free.
+
+<RainbowDivider />
+
+## The Six Keywords
+
+| Keyword    | What the corner looks like                                         |
+| ---------- | ------------------------------------------------------------------ |
+| `round`    | The ordinary elliptical curve — the initial value                  |
+| `squircle` | A smoother, "continuous" curve, like an app icon                   |
+| `square`   | No curve at all: a sharp right angle, whatever the radius          |
+| `bevel`    | A straight diagonal cut across the corner                          |
+| `scoop`    | A concave curve that bites into the box, like a ticket stub        |
+| `notch`    | A square step cut into the corner                                  |
+
+Every keyword is a named point on one scale, the `superellipse()` function, which you can also use directly.
+
+<RainbowDivider />
+
+## Fine Control with `superellipse()`
+
+<CodeBlock language="css">
+{`
+  .card {
+    border-radius: 2rem;
+    corner-shape: superellipse(1.5);
+  }
+`}
+</CodeBlock>
+
+`superellipse()` takes one number that sets how far the corner bulges outward (positive) or bites inward
+(negative). The keywords map onto it like this:
+
+- `notch` is `superellipse(-infinity)`
+- `scoop` is `superellipse(-1)`
+- `bevel` is `superellipse(0)`, a straight line
+- `round` is `superellipse(1)`
+- `squircle` is `superellipse(2)`
+- `square` is `superellipse(infinity)`
+
+So `superellipse(1.5)` sits between an ordinary curve and a squircle, and `superellipse(-0.5)` gives a gentler scoop
+than the keyword does.
+
+<RainbowDivider />
+
+## Different Shapes per Corner
+
+<CodeBlock language="css">
+{`
+  .speech-bubble {
+    border-radius: 1.25rem;
+    /* top-left, top-right, bottom-right, bottom-left */
+    corner-shape: round round square round;
+  }
+`}
+</CodeBlock>
+
+Like `border-radius`, `corner-shape` takes one to four values, in the same clockwise order starting at the top-left.
+There are longhands too — physical ones such as `corner-top-left-shape`, and logical ones such as
+`corner-start-start-shape` that follow the writing direction, just as
+[logical properties](/post/css/css-logical-properties) do.
+
+Combining it with an uneven `border-radius` opens up more shapes. A radius on the right-hand corners only, bevelled,
+turns a plain button into an arrow:
+
+<CodeBlock language="css">
+{`
+  .next-button {
+    border-radius: 0 1.25rem 1.25rem 0;
+    corner-shape: bevel;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## It Animates
+
+`corner-shape` interpolates between values, so a transition morphs the corners smoothly rather than snapping:
+
+<CodeBlock language="css">
+{`
+  .card {
+    border-radius: 2rem;
+    corner-shape: scoop;
+    transition: corner-shape 0.6s ease;
+  }
+
+  .card:hover {
+    corner-shape: squircle;
+  }
+`}
+</CodeBlock>
+
+The browser animates the `superellipse()` value underneath, so even keyword-to-keyword transitions pass through
+every shape in between. Duration, easing and delay work exactly as they do for any other property — the
+[CSS transitions guide](/post/animations/css-transitions-guide) covers them in depth. As with any decorative motion,
+wrap the transition in a `prefers-reduced-motion: no-preference` query (or turn it off under `reduce`) for readers
+who've [asked for less of it](/post/animations/css-transitions-guide#accessibility-respecting-motion-preferences).
+
+<RainbowDivider />
+
+## Try It Live
+
+The **Explorer** tab shapes one card that has a border, a shadow and an outline, so you can see every layer follow
+the corners. Pick a keyword, choose **superellipse()** to drag the value from `-4` to `4`, change the
+`border-radius`, and turn on **Animate on hover** to watch it morph. The panel underneath shows the CSS for exactly
+what you see.
+
+The **Gallery** tab shows each keyword doing a real job — app icons, tags, ticket stubs, panels, speech bubbles and
+directional buttons — every one a single element with no SVG or `clip-path`.
+
+<Sandbox slug="css-corner-shape" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`corner-shape` shipped in Chromium browsers (Chrome and Edge 139) in 2025. Other browsers don't support it yet at the
+time of writing — and that's fine, because the fallback is automatic. A browser that doesn't understand
+`corner-shape` ignores it and draws the ordinary rounded corners from `border-radius`, so the design degrades to
+something perfectly usable.
+
+When a shape needs a different radius to look right, adjust it only where the shape will actually render:
+
+<CodeBlock language="css">
+{`
+  .ticket {
+    border-radius: 0.5rem;
+  }
+
+  @supports (corner-shape: scoop) {
+    .ticket {
+      border-radius: 1rem;
+      corner-shape: scoop;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Forgetting the Radius
+
+`corner-shape` on its own does nothing — the corner has no size until `border-radius` gives it one. If a shape
+doesn't appear, check the radius first.
+
+### 2. Content Running into Cut-Outs
+
+`corner-shape` reshapes the box, not its content. Concave shapes like `scoop` and `notch` cut into the padding area,
+so text placed near a corner can overlap the cut-out. Give those elements enough padding to keep content clear.
+
+### 3. Large Radii with Concave Shapes
+
+The bigger the radius, the deeper a `scoop` or `notch` bites. On a small element, a large radius can cut away most
+of the box — keep concave radii modest relative to the element's size.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`border-radius` sets the size of a corner; `corner-shape` sets its shape. Together they replace most of the SVG
+masks, `clip-path` polygons and pseudo-element tricks once needed for squircles, bevels, scoops and notches — and
+unlike those, the border, shadow and outline follow along, it animates, and browsers without support simply fall
+back to rounded corners.
