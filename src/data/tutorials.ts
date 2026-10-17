@@ -309,6 +309,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-corner-shape",
+    title: "Squircles, Bevels and Scoops with `corner-shape`",
+    excerpt: "Shape corners into squircles, bevels, scoops and notches.",
+    description: "The corner-shape property gives border-radius corners a shape — round, squircle, square, bevel, scoop, notch or any superellipse() — with borders, shadows and outlines that follow it, per-corner values, smooth animation, and an automatic rounded fallback in browsers without support.",
+    category: ["CSS"],
+    tags: ["css", "corner-shape", "border-radius", "shapes", "ui-design", "css-animation", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-corner-shape/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Vibrant CSS corner-shape tutorial cover showing a gradient squircle alongside colourful 3D examples of bevel, scoop, notch, round, and square corners, with a CSS code snippet and feature highlights on a blue-purple gradient background.",
+      caption: "Squircle, bevel, scoop and notch corners shaped with corner-shape."
+    },
+    changelog: [
+      { date: "2026-10-17", change: "Initial publication." }
+    ]
   }
 ];
 
