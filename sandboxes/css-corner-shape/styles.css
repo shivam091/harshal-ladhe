@@ -1,0 +1,148 @@
+/* Shown only when the browser can't draw corner shapes, so the demo never looks silently broken. */
+.support-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+.field[hidden] {
+  display: none;
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  min-block-size: 15rem;
+  padding: 1.5rem;
+}
+
+/*
+  --radius and --shape are the only things the controls change. The border, background, shadow and
+  outline are here on purpose: corner-shape reshapes every one of them, not just the fill.
+*/
+.shape-card {
+  --radius: 36px;
+  --shape: round;
+  display: grid;
+  gap: 0.25rem;
+  place-content: center;
+  inline-size: min(100%, 16rem);
+  block-size: 10rem;
+  padding: 1.5rem;
+  text-align: center;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), #c084fc);
+  border: 0.25rem solid #fbbf24;
+  border-radius: var(--radius);
+  box-shadow: 0 0 0 0.375rem rgba(52, 211, 153, 0.45), 0.5rem 0.75rem 0 rgba(0, 0, 0, 0.35);
+  outline: 0.125rem dashed #f472b6;
+  outline-offset: 0.75rem;
+  corner-shape: var(--shape);
+}
+
+.shape-card span {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+/* corner-shape interpolates, so a transition morphs the corners rather than snapping between shapes. */
+.shape-card[data-animate] {
+  corner-shape: scoop;
+  transition: corner-shape 0.6s ease;
+}
+
+.shape-card[data-animate]:hover {
+  corner-shape: var(--shape);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shape-card[data-animate] {
+    transition: none;
+  }
+}
+
+/* ---------- Gallery ---------- */
+
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.gallery figure {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.gallery figcaption {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--pg-text-muted);
+}
+
+.app-icon {
+  display: grid;
+  place-items: center;
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(160deg, #38bdf8, #6366f1);
+  border-radius: 30%;
+  corner-shape: squircle;
+}
+
+.tag-label {
+  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  color: #052e16;
+  background: #4ade80;
+  border-radius: 0.75rem;
+  corner-shape: bevel;
+}
+
+.ticket {
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  color: #451a03;
+  background: #fbbf24;
+  border-radius: 0.875rem;
+  corner-shape: scoop;
+}
+
+/* Padding keeps the text clear of the notches, since corner-shape reshapes the box but never moves its content. */
+.notched-panel {
+  padding: 1.25rem 1.75rem;
+  font-family: var(--pg-mono);
+  color: #67e8f9;
+  background: rgba(34, 211, 238, 0.12);
+  border: 0.125rem solid #22d3ee;
+  border-radius: 1rem;
+  corner-shape: notch;
+}
+
+.speech-bubble {
+  padding: 0.75rem 1.25rem;
+  color: #1e1b4b;
+  background: #c7d2fe;
+  border-radius: 1.25rem;
+  corner-shape: round round square round;
+}
+
+/* Only the right-hand corners have a radius, so only they are bevelled into an arrow point. */
+.cut-button {
+  padding: 0.625rem 1.75rem 0.625rem 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  background: #f43f5e;
+  border-radius: 0 1.25rem 1.25rem 0;
+  corner-shape: bevel;
+}
