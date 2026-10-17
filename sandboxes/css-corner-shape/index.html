@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>corner-shape Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Shaping Corners with corner-shape</h1>
+        <p><code>border-radius</code> sets how big each corner is; <code>corner-shape</code> sets what shape fills that space. The border, background, shadow and outline all follow it.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support <code>corner-shape</code> yet, so every corner falls back to an ordinary rounded <code>border-radius</code>.</p>
+
+      <div class="tabs" role="tablist" aria-label="Demo" id="demo-switch">
+        <button class="tab tab--active" type="button" data-mode="explorer" role="tab" aria-selected="true">Explorer</button>
+        <button class="tab" type="button" data-mode="gallery" role="tab" aria-selected="false">Gallery</button>
+      </div>
+
+      <div id="explorer-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area" aria-label="Shape preview">
+          <div class="stage">
+            <div class="shape-card" id="shape-card">
+              <strong>Card</strong>
+              <span>Hover me when "Animate on hover" is on</span>
+            </div>
+          </div>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>corner-shape</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Corner shape">
+            <label class="segment"><input type="radio" name="shape" value="round" checked><span>round</span></label>
+            <label class="segment"><input type="radio" name="shape" value="squircle"><span>squircle</span></label>
+            <label class="segment"><input type="radio" name="shape" value="square"><span>square</span></label>
+            <label class="segment"><input type="radio" name="shape" value="bevel"><span>bevel</span></label>
+            <label class="segment"><input type="radio" name="shape" value="scoop"><span>scoop</span></label>
+            <label class="segment"><input type="radio" name="shape" value="notch"><span>notch</span></label>
+            <label class="segment"><input type="radio" name="shape" value="superellipse"><span>superellipse()</span></label>
+          </div>
+
+          <div class="fields-grid">
+            <div class="field" id="curvature-field">
+              <label for="curvature-input">superellipse() value</label>
+              <div class="range-row">
+                <span class="range-edge">-4</span>
+                <div class="range-track">
+                  <input type="range" id="curvature-input" min="-4" max="4" step="0.1" value="1.5">
+                  <output class="range-bubble" id="curvature-value" for="curvature-input">1.5</output>
+                </div>
+                <span class="range-edge">4</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="radius-input">border-radius</label>
+              <div class="range-row">
+                <span class="range-edge">0px</span>
+                <div class="range-track">
+                  <input type="range" id="radius-input" min="0" max="60" step="1" value="36">
+                  <output class="range-bubble" id="radius-value" for="radius-input">36px</output>
+                </div>
+                <span class="range-edge">60px</span>
+              </div>
+            </div>
+          </div>
+
+          <label class="checkbox-field">
+            <input type="checkbox" id="animate-toggle">
+            Animate on hover (from <code>scoop</code> to the chosen shape)
+          </label>
+        </fieldset>
+
+        <output class="readout" id="readout" aria-live="polite"></output>
+      </div>
+
+      <div id="gallery-demo" class="tab-panel">
+        <section class="demo-area" aria-label="corner-shape keywords as real UI">
+          <div class="gallery">
+            <figure>
+              <div class="app-icon" aria-hidden="true">Aa</div>
+              <figcaption><code>squircle</code><br>App icons</figcaption>
+            </figure>
+            <figure>
+              <div class="tag-label">Sale</div>
+              <figcaption><code>bevel</code><br>Tags and labels</figcaption>
+            </figure>
+            <figure>
+              <div class="ticket">Admit one</div>
+              <figcaption><code>scoop</code><br>Ticket stubs</figcaption>
+            </figure>
+            <figure>
+              <div class="notched-panel">Panel</div>
+              <figcaption><code>notch</code><br>Sci-fi panels</figcaption>
+            </figure>
+            <figure>
+              <div class="speech-bubble">Hello!</div>
+              <figcaption><code>round round square round</code><br>Speech bubbles</figcaption>
+            </figure>
+            <figure>
+              <div class="cut-button">Next</div>
+              <figcaption><code>bevel</code>, right corners only<br>Directional buttons</figcaption>
+            </figure>
+          </div>
+        </section>
+        <p class="tip">Every shape here is one element with a <code>border-radius</code> and a <code>corner-shape</code> — no SVG, no <code>clip-path</code>, no pseudo-elements.</p>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
