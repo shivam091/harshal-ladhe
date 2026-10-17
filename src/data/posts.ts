@@ -265,6 +265,7 @@ export const posts: Post[] = [
     signoff: "From the point-scrambling playground that turns a clean square into a self-intersecting hourglass mid-drag and the square, hexagon, and star presets, to the ray diagram that finally shows why a star's centre winds twice, the miter-limit slider that snaps a spike into a bevel right at 29°, and the generated points behind a sparkline that stretches without its stroke going wonky, this post leaned on live demos to do work that formulas alone never quite pull off. Thanks for dragging every vertex, flipping every fill rule, and sharpening every corner with me — go close off a shape that's entirely your own. ⬡",
     featured: true,
     changelog: [
+      { date: "2026-10-17", change: "Added cross-reference to tutorial 'Squircles, Bevels and Scoops with `corner-shape`'" },
       { date: "2026-09-30", change: "Expanded with fill-rule, miter-limit, generated-points, sparkline, animation and switch-to-path sections, three diagrams and two playgrounds; corrected fill-rule and hole explanations" },
       { date: "2026-08-25", change: "Initial publication" }
     ],
@@ -286,6 +287,7 @@ export const posts: Post[] = [
     },
     signoff: "This one leaned harder on visuals than any post before it — four custom SVG diagrams built to keep the inline and block axes crossing the right way in every writing mode, plus the direction/writing-mode toggle above to prove it live. Chasing all sixty-some properties across sixteen categories down to their physical equivalents turned up a few surprises along the way — a couple of values that looked valid but aren't implemented anywhere, one that isn't even real syntax. I hope watching those arrows and toggles do their thing builds more intuition than the mapping tables alone ever could. Thanks for tracing every axis with me — go replace a `margin-left` with something that actually adapts. 🧭",
     changelog: [
+      { date: "2026-10-17", change: "Added cross-reference to tutorial 'Squircles, Bevels and Scoops with `corner-shape`'" },
       { date: "2026-09-19", change: "Added cross-reference to tutorial 'Dynamic Viewport Height Units'" },
       { date: "2026-08-30", change: "Initial publication" }
     ],
@@ -487,6 +489,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Three techniques that look alike on a white page turned out to behave very differently once I put them over a striped background — which is how the see-through-center rule for picking mask over background-clip ended up at the heart of this post. Rebuilding the playground's conic animation around an @property angle, after the background-position version just zoomed into one flat hue, and reworking the mixin so every argument can be named, took more iterations than the rest of the post combined. I hope the side-by-side comparison saves you from guessing which one to reach for. Thanks for bordering on obsessive with me. 🖼️",
     changelog: [
+      { date: "2026-10-17", change: "Added cross-reference to tutorial 'Squircles, Bevels and Scoops with `corner-shape`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-28", change: "Initial publication" }
     ]
