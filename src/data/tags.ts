@@ -831,6 +831,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS Functions",
     description: "Modern CSS functions such as `clamp()`, `min()`, `max()`, and `if()` that compute values directly in the browser."
   },
+  "corner-shape": {
+    title: "Shaping Corners with `corner-shape`",
+    description: "Using the CSS `corner-shape` property and `superellipse()` to turn rounded corners into squircles, bevels, scoops and notches."
+  },
+  "border-radius": {
+    title: "Rounding Corners with `border-radius`",
+    description: "Sizing element corners with `border-radius`, from simple rounding to the base that `corner-shape` builds on."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."
