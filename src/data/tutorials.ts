@@ -151,6 +151,7 @@ export const tutorials: Tutorial[] = [
       caption: "Type and spacing scaling smoothly from phone to tablet to desktop."
     },
     changelog: [
+      { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-10", change: "Initial publication." }
     ]
   },
@@ -247,6 +248,7 @@ export const tutorials: Tutorial[] = [
       caption: "A priority badge changing colour from a single if() value."
     },
     changelog: [
+      { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-27", change: "Initial publication." }
     ]
   },
