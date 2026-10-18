@@ -298,7 +298,7 @@ Two entries deserve a special mention:
 - **`position: sticky` and `position: fixed` always create a stacking context.** A sticky header is therefore a
   sealed group — any dropdown inside it can only be as high as the header itself.
 - **`container-type`** is new enough that many developers don't expect it here. Turning a card into a
-  [container query](/post/css/responsive-css-grid-layouts#beyond-media-queries-container-queries) container also seals its layering.
+  [container query](/post/css/container-queries-deep-dive#the-core-logic-containment-contexts) container also seals its layering.
 
 <Info title="Stacking contexts are about painting, not layout">
   Creating a stacking context doesn't move an element or change its size. It only changes how the element and its
