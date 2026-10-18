@@ -144,6 +144,7 @@ export const tutorials: Tutorial[] = [
       alt: "HD colorful infographic titled “Fluid Typography and Spacing with clamp()”, showing responsive mobile, tablet, and desktop layouts, a CSS clamp() code example, and visual explanations of fluid type, spacing, radii, container units, and accessibility."
     },
     changelog: [
+      { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-10", change: "Initial publication." }
     ]
   },
@@ -235,6 +236,7 @@ export const tutorials: Tutorial[] = [
       alt: "A priority badge changing color based on a custom property, driven entirely by an if(style(...)) conditional value in the stylesheet."
     },
     changelog: [
+      { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-27", change: "Initial publication." }
     ]
   },
