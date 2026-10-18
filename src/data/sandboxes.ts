@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "container-queries-deep-dive",
+    title: "Container Queries Playground",
+    description: "Drag a container past a breakpoint while its title scales in cqi, retarget a named @container query between two nested containers, and flip a --theme custom property to trigger a live style query.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-corner-shape",
     title: "corner-shape Playground",
     description: "Shape one bordered, shadowed card with every corner-shape keyword or a superellipse() value, change its border-radius and morph it on hover, then browse squircles, bevels, scoops and notches doing real UI jobs.",

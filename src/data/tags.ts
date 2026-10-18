@@ -55,6 +55,22 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Exploring CSS Container Queries",
     description: "Using CSS Container Queries to style components based on the size of their parent container, not just the viewport."
   },
+  "named-containers": {
+    title: "CSS Named Containers",
+    description: "Using container-name to target a specific ancestor in nested container query layouts, instead of the nearest one."
+  },
+  "container-units": {
+    title: "CSS Container Query Units",
+    description: "Sizing type and spacing with cqi, cqb, cqmin, and cqmax, so components scale with their own container rather than the viewport."
+  },
+  "style-queries": {
+    title: "CSS Container Style Queries",
+    description: "Using @container style() to switch a component's theme or variant from a custom property set on an ancestor."
+  },
+  "component-driven-design": {
+    title: "Component-Driven Design",
+    description: "Building self-contained UI components that adapt to wherever they're placed, from narrow sidebars to wide main columns."
+  },
   "media-queries": {
     title: "Mastering CSS Media Queries",
     description: "Mastering CSS Media Queries for creating responsive designs that adjust based on screen size, orientation, and other device characteristics."
