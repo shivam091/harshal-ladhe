@@ -572,6 +572,26 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-10-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "container-queries-deep-dive",
+    title: "CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries",
+    excerpt: "Make components respond to their container, not the viewport.",
+    description: "Go beyond basic @container: inline-size vs size containment, named containers, cqi/cqb/cqmin/cqmax units, and style queries, with diagrams and a live sandbox.",
+    category: ["CSS"],
+    tags: ["css", "container-queries", "media-queries", "responsive-design", "component-driven-design", "named-containers", "container-units", "style-queries", "css-custom-properties", "theming", "layout", "modern-css", "debugging", "progressive-enhancement", "browser-support"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/container-queries-deep-dive/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Colorful CSS Container Queries infographic illustrating named containers, container query units (cqi, cqb, cqmin, cqmax), size-based responsive card layouts, style queries for light and dark themes, container types, adaptive SVG icons, and an interactive breakpoint playground."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one is built around four diagrams and a three-tab sandbox: two containment panels that make the size-collapse pitfall impossible to miss, nested boxes where one arrow has to visibly skip past the nearer container, a single box showing cqmin and cqmax borrowing their values from cqi and cqb, and two identical cards that only a custom property tells apart. The named-container diagram took the most redrawing — an arrow that skips past a box can very easily look like one pointing at the wrong thing. The sandbox's middle tab is the one I'm proudest of: the same @container rule, the same 400px breakpoint, and a single radio button alone decides which box gets measured. Getting every tab's live CSS readout to match what the browser actually applies took more back-and-forth than I'd like to admit. I hope the next time a component looks wrong in a sidebar, you ask which box it's measuring before reaching for another media query. Thanks for containing yourself with me. 📦",
+    changelog: [
+      { date: "2026-10-18", change: "Initial publication" }
+    ]
   }
 ];
 
