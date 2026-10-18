@@ -78,6 +78,10 @@ import CanvasTransformDiagram from "@/components/mdx/CanvasTransformDiagram";
 import CanvasDprDiagram from "@/components/mdx/CanvasDprDiagram";
 import PaintingOrderDiagram from "@/components/mdx/PaintingOrderDiagram";
 import StackingContextTreeDiagram from "@/components/mdx/StackingContextTreeDiagram";
+import ContainerContainmentDiagram from "@/components/mdx/ContainerContainmentDiagram";
+import NamedContainerDiagram from "@/components/mdx/NamedContainerDiagram";
+import ContainerUnitsDiagram from "@/components/mdx/ContainerUnitsDiagram";
+import StyleQueryDiagram from "@/components/mdx/StyleQueryDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -170,6 +174,10 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     CanvasDprDiagram,
     PaintingOrderDiagram,
     StackingContextTreeDiagram,
+    ContainerContainmentDiagram,
+    NamedContainerDiagram,
+    ContainerUnitsDiagram,
+    StyleQueryDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
