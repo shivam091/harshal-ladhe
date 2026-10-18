@@ -167,6 +167,8 @@ Every step keeps the same *shape* — floor, `rem + vw`, ceiling — just with d
 
 This pairs directly with container queries: if a component already opts into `container-type: inline-size` so its *layout* can respond to its own box, its *type and spacing* can respond to that same box via `cqi`/`cqb` instead of the viewport. The sandbox above uses exactly this trick — the "simulated viewport" slider is really resizing a `container-type: inline-size` frame, since there's no way to actually resize the browser window from a page control.
 
+For the rest of the `cq*` family (`cqb`, `cqmin`, `cqmax`) and the containment rules that decide which ancestor they measure, see [Container Queries Deep Dive](/post/css/container-queries-deep-dive#container-query-units-the-cq-family).
+
 <RainbowDivider />
 
 ## Comparison with the Old Approaches
