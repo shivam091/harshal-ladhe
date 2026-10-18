@@ -135,7 +135,7 @@ export const tutorials: Tutorial[] = [
     excerpt: "One clamp() declaration scales type, padding, and gaps smoothly — no breakpoint ladder.",
     description: "clamp(min, preferred, max) — with a preferred value built from rem plus a viewport or container-relative unit — scales font-size, padding, and gaps continuously between a floor and ceiling instead of jumping at fixed breakpoints, replacing a media-query ladder with one line per property.",
     category: ["CSS"],
-    tags: ["css", "fluid-typography", "clamp", "responsive-design", "container-queries", "css-2025"],
+    tags: ["css", "fluid-typography", "clamp", "responsive-design", "container-queries", "container-units", "css-2025"],
     image: {
       path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/fluid-typography-and-spacing/cover.png",
       width: 1536,
@@ -144,6 +144,7 @@ export const tutorials: Tutorial[] = [
       alt: "HD colorful infographic titled “Fluid Typography and Spacing with clamp()”, showing responsive mobile, tablet, and desktop layouts, a CSS clamp() code example, and visual explanations of fluid type, spacing, radii, container units, and accessibility."
     },
     changelog: [
+      { date: "2026-10-18", change: "Added tag 'container-units'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-10", change: "Initial publication." }
     ]
@@ -227,7 +228,7 @@ export const tutorials: Tutorial[] = [
     excerpt: "Swap CSS values by media, supports, or style conditions.",
     description: "The if() function picks between several values inside one CSS declaration based on a media(), supports(), or style() condition — collapsing what used to require duplicating an entire rule under @media/@supports, or a JS class toggle, into one line, with a fallback for browsers that don't support it yet.",
     category: ["CSS"],
-    tags: ["css", "if-function", "conditional-css", "css-custom-properties", "css-functions", "media-queries", "progressive-enhancement", "browser-support", "css-2025"],
+    tags: ["css", "if-function", "conditional-css", "css-custom-properties", "css-functions", "media-queries", "progressive-enhancement", "browser-support", "css-2025", "style-queries"],
     image: {
       path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-if-conditional-values/cover.png",
       width: 1536,
@@ -236,6 +237,7 @@ export const tutorials: Tutorial[] = [
       alt: "A priority badge changing color based on a custom property, driven entirely by an if(style(...)) conditional value in the stylesheet."
     },
     changelog: [
+      { date: "2026-10-18", change: "Added tag 'style-queries'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-27", change: "Initial publication." }
     ]
