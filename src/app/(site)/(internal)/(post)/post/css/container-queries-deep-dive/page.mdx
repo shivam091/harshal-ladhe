@@ -1,0 +1,656 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("container-queries-deep-dive");
+
+For a decade, responsive design meant one thing: media queries tied to the viewport. That model works well for
+page-level decisions — a header, a nav, a global column count — but it quietly breaks down the moment a component
+gets reused somewhere its author didn't plan for. Drop a card designed for a wide main column into a narrow
+sidebar, and a viewport-based breakpoint has no way to know the difference. It fires (or doesn't) based on the
+*window*, while the actual problem is the *box the component happens to be sitting in*.
+
+**Container Queries (`@container`)** close that gap. They let an element respond to the size of a containing
+ancestor — or, with style queries, to a custom property set on one — instead of the viewport, which is what makes
+truly modular, drop-in-anywhere components possible.
+
+<Quote>
+  A media query asks how big the screen is. A container query asks how big the box is — and the box is what your
+  component actually lives in.
+</Quote>
+
+In this guide, we'll build up from a first working example to the parts that matter in a real design system:
+
+- A **complete first container query**, from markup to matching rule
+- The difference between **`inline-size` and `size` containment**, and the collapse pitfall each one has
+- How to **write the query itself**: range syntax, `and`/`or`/`not`, and which features you can test
+- **Named containers** and the `container` shorthand, for when a component needs to skip past its nearest ancestor
+- **Container query units** (`cqi`, `cqb`, `cqmin`, `cqmax`) for fluid, container-relative sizing
+- **`@container style()`** — querying a custom property instead of a dimension
+- A case study on simplifying **inline SVG icons** by container, plus an interactive playground
+- **Common pitfalls**, **debugging in DevTools**, best practices, browser support, and safe fallbacks
+
+<Info title="Who this is for">
+  The first two sections assume only basic CSS — if you've never written a container query, start at the
+  [Quick Refresher](#quick-refresher-your-first-container-query). If you already have, skip ahead to
+  [Named Containers](#advanced-technique-named-containers), where the material gets more advanced.
+</Info>
+
+<RainbowDivider />
+
+## Quick Refresher: Your First Container Query
+
+A container query needs three pieces: an element that **opts in** to being measured, a **child** inside it, and an
+`@container` rule describing how that child should change once the container crosses a size.
+
+<CodeBlock language="html">
+{`
+  <div class="card-wrapper">
+    <article class="card">
+      <img class="card__image" src="cover.jpg" alt="" />
+      <div class="card__body">
+        <h3>Card title</h3>
+        <p>Some supporting text.</p>
+      </div>
+    </article>
+  </div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* 1. Opt in: this element can now be measured by queries inside it */
+  .card-wrapper {
+    container-type: inline-size;
+  }
+
+  /* 2. Default: image stacked above the text, which suits narrow spaces */
+  .card {
+    display: grid;
+    gap: 1rem;
+  }
+
+  /* 3. Once .card-wrapper is at least 400px wide, put image and text side by side */
+  @container (min-width: 400px) {
+    .card {
+      grid-template-columns: 1fr 2fr;
+    }
+  }
+`}
+</CodeBlock>
+
+When the browser lays out `.card`, it looks up through its ancestors for the nearest one with a `container-type`,
+finds `.card-wrapper`, and checks that element's width against `min-width: 400px`. The viewport never enters into
+it: put the same markup in a 300px sidebar and a 900px main column on the same page, and each card picks its own
+layout.
+
+<Warning title="An element can't query itself">
+  The `@container` rule above styles `.card`, a **child** of the container — never `.card-wrapper` itself. A
+  container can't change its own styles based on its own size, because those styles could change the size being
+  measured. If you need a component to restyle its outer box, wrap it in one more element and make that the
+  container.
+</Warning>
+
+[Part 3 of the CSS Grid Fundamentals series](/post/css/responsive-css-grid-layouts#beyond-media-queries-container-queries)
+walks through this same pattern inside a grid of cards. Everything from here on builds on it.
+
+<RainbowDivider />
+
+## The Core Logic: Containment Contexts
+
+Before a child can ask "how big is my parent?", the parent has to explicitly opt in to being asked. Nothing is a
+query container by default — you declare one with `container-type`, and only *then* does `@container` inside it
+have anything to resolve against.
+
+<CodeBlock language="css">
+{`
+  .card-wrapper {
+    container-type: inline-size;
+  }
+`}
+</CodeBlock>
+
+There are two values worth knowing, and they watch different things:
+
+- **`inline-size`** *(the one you'll use almost every time)* — watches only the container's own inline dimension
+  (width, in a standard horizontal writing mode). Height stays completely free to grow with content, exactly like
+  it always has.
+- **`size`** — watches both the inline and block dimensions (width *and* height).
+
+<Warning title="size containment needs a definite height">
+  A container can only report a dimension it actually has. With `container-type: size`, the element is
+  **block-size contained** — its height can no longer be determined by its children's content, because that would
+  let a child's `@container` rule change the child's size, which could change the parent's height, which could
+  change what the `@container` rule matches — an infinite loop the spec sidesteps entirely by requiring you to set
+  an explicit height yourself. Skip that, and the container silently collapses to `0px` instead of erroring.
+</Warning>
+
+**Visual Illustration**
+
+The diagram below puts the two values side by side. The arrows mark the axes each one watches: `inline-size` on
+the left has a single horizontal arrow, so only its width is measured, while `size` on the right has arrows on both
+axes. The `size` panel's dashed outline is the warning above made visible — without a height you set yourself, that
+box has nothing to report and collapses.
+
+<ContainerContainmentDiagram />
+
+In practice, that warning is also the whole reason `inline-size` is the default reach for nearly every real
+component. A card, a sidebar widget, a product tile — none of them have a height you'd want to hard-code, so
+`inline-size` lets width-based rules do their job while leaving height exactly as flexible as plain CSS already
+makes it.
+
+`inline-size` has a smaller version of the same trap, though. Its width can no longer come from its content, so an
+element whose width normally *does* come from its content — a float, an `inline-block`, an absolutely positioned
+box, or a flex item that isn't set to grow — collapses to zero width once it becomes a container. Block-level
+elements and grid items that fill their track are unaffected, which is why the problem rarely shows up until a
+container lands somewhere it has to shrink-wrap. [Common Pitfalls](#common-pitfalls) covers the fix.
+
+<Details summary="So when is container-type: size ever the right call?">
+  When the height genuinely *is* fixed by the layout, not by content — a video player locked to a 16:9 box, a
+  dashboard tile inside a CSS Grid cell with an explicit row height, a fixed-size avatar frame. In those cases the
+  height isn't a mystery the browser has to solve; you already know it, so there's no containment loop to worry
+  about.
+</Details>
+
+One side effect of any `container-type` other than `normal`: it also makes the element a new stacking context, so a
+dropdown or tooltip inside a container can't rise above content outside it.
+[Mastering CSS z-index](/post/css/css-z-index-and-stacking-contexts#what-creates-a-stacking-context) explains why, and
+the other properties that do the same.
+
+<RainbowDivider />
+
+## Writing the Query: Conditions and Range Syntax
+
+So far every example has used `min-width`, but the condition inside `@container` accepts the same kind of size
+tests as a media query. The newer **range syntax** reads more naturally and avoids the off-by-one confusion of
+`min-`/`max-`:
+
+<CodeBlock language="css">
+{`
+  /* Range syntax — same meaning as (min-width: 400px) */
+  @container (width >= 400px) { ... }
+
+  /* Both ends in one condition */
+  @container (400px <= width < 700px) { ... }
+
+  /* Combine conditions with and / or / not */
+  @container (width >= 400px) and (orientation: landscape) { ... }
+  @container (width < 300px) or (height < 200px) { ... }
+  @container not (width >= 400px) { ... }
+`}
+</CodeBlock>
+
+The features you can test are all about the container's box:
+
+| Feature | Tests | Needs |
+|---|---|---|
+| `width`, `inline-size` | The container's width (inline size) | `inline-size` or `size` |
+| `height`, `block-size` | The container's height (block size) | `size` |
+| `aspect-ratio` | Width divided by height | `size` |
+| `orientation` | `portrait` or `landscape` | `size` |
+
+The **Needs** column is the part to remember: anything involving height only works on a `container-type: size`
+container, because an `inline-size` container doesn't measure its height at all. A `height` query against an
+`inline-size` container never matches.
+
+<Info title="em in a container condition isn't the em you expect">
+  In a media query, `em` always means the browser's default font size. In a container query condition, relative
+  units are resolved against the **container's own** computed values, so `(width >= 30em)` depends on the
+  container's `font-size`, and changes if that font size does. Use `px` or `rem` breakpoints when you want them to
+  stay put.
+</Info>
+
+<RainbowDivider />
+
+## Advanced Technique: Named Containers
+
+By default, `@container` resolves against the **nearest** ancestor that has a `container-type` set — full stop. That
+works right up until you have containers nested inside other containers, and a deeply nested component needs to
+respond to an *outer* box's width instead of the one immediately wrapping it.
+
+`container-name` solves this by giving a container an address you can query directly, skipping past anything
+nearer:
+
+<CodeBlock language="css">
+{`
+  .grandparent {
+    container-type: inline-size;
+    container-name: layout-grid;
+  }
+
+  .parent {
+    container-type: inline-size;
+    container-name: component-wrapper;
+  }
+
+  /* Specifically targets .grandparent, bypassing .parent even though it's nearer */
+  @container layout-grid (min-width: 800px) {
+    .child {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+`}
+</CodeBlock>
+
+**Visual Illustration**
+
+The diagram below shows those three elements nested inside each other, with two possible queries written on
+`.child`. The **dashed** arrow is a plain `@container (...)` with no name: it stops at the first container it finds,
+`.parent`. The **solid** arrow is `@container layout-grid (...)`: it passes straight over `.parent`, because that
+name doesn't match, and lands on `.grandparent`.
+
+<NamedContainerDiagram />
+
+This is the one concept in this post that's easy to nod along to and then get wrong the first time you actually
+need it, because the failure mode is silent: an `@container` rule with a name that doesn't match *any* ancestor
+container just never matches, with no warning in the console. If a rule you wrote seems to do nothing, check that
+the name in `@container <name> (...)` is spelled exactly like some ancestor's `container-name` — and that the
+ancestor in question actually has a `container-type` set at all, not just a name.
+
+<Success title="Named containers are additive, not exclusive">
+  Setting `container-name` doesn't stop the *unnamed* form of `@container` from resolving to that same element
+  when it's the nearest one. A container can be both "the nearest container" for one rule and "the specifically
+  named target" for another, at the same time — naming it doesn't remove it from the default lookup.
+</Success>
+
+This is exactly the pattern behind complex dashboards: a widget nested inside a column, inside a section, inside a
+top-level grid, where the widget occasionally needs to know about the grid's width specifically — not the column
+it happens to be sitting in that week.
+
+### The `container` Shorthand
+
+Most real code sets both properties in one declaration with the `container` shorthand — **name first, then a
+slash, then the type**:
+
+<CodeBlock language="css">
+{`
+  .grandparent {
+    container: layout-grid / inline-size;
+  }
+
+  /* An element can carry several names, and a query can use any of them */
+  .sidebar {
+    container: sidebar panel / inline-size;
+  }
+`}
+</CodeBlock>
+
+Leaving out the `/ inline-size` part sets `container-type` back to `normal`, which means the element has a name but
+is no longer a size container — so a named size query against it never matches. If you only want to add a name,
+set `container-name` on its own instead of using the shorthand.
+
+<RainbowDivider />
+
+## Container Query Units: the `cq*` Family
+
+Container units are the fluid-sizing counterpart to container queries themselves. They behave like `vw`/`vh`, but
+instead of measuring the viewport, they measure the nearest query container — which means a value written once in
+`cqi` stays proportional no matter where that component ends up living.
+
+| Unit | Measures |
+|---|---|
+| `cqi` | 1% of the container's **inline size** (width, in a standard writing mode) |
+| `cqb` | 1% of the container's **block size** (height) |
+| `cqmin` | Whichever of `cqi` / `cqb` is **smaller** |
+| `cqmax` | Whichever of `cqi` / `cqb` is **larger** |
+
+"Inline" and "block" here follow the container's writing mode, not the screen: in a `vertical-rl` container, `cqi`
+measures height. [CSS Logical Properties](/post/css/css-logical-properties#understanding-inline-vs-block-axes) covers
+how those two axes map onto width and height.
+
+**Visual Illustration**
+
+The diagram below measures one container box with both units. The arrow along the bottom is `100cqi`, the box's
+full width; the arrow up the right side is `100cqb`, its full height. Notice the box is drawn wider than it is tall
+— that's what decides the two derived units in the legend: `cqmin` picks the smaller axis, so here it equals `cqb`,
+and `cqmax` picks the larger, so here it equals `cqi`.
+
+<ContainerUnitsDiagram />
+
+`cqmin` and `cqmax` trip people up at first because they don't measure a dimension of their own — they're just a
+shorthand for "whichever axis is smaller/larger right now". Turn the box in the diagram into a tall, narrow one and
+the two would swap. Most of the time, the unit you actually reach for is `cqi`:
+
+<CodeBlock language="css">
+{`
+  .hero-banner__title {
+    /* Always 10% of THIS banner's own width, wherever it's placed */
+    font-size: 10cqi;
+  }
+`}
+</CodeBlock>
+
+<Info title="Why cqi beats a fixed px value here">
+  A `font-size` in `px` is identical whether the banner sits in a full-width hero or a 300px sidebar teaser — which
+  is exactly the viewport-only problem container queries exist to solve, just applied to typography instead of
+  layout. `10cqi` scales automatically with wherever the component actually ends up.
+</Info>
+
+A bare `10cqi` has no floor, no ceiling, and no `rem` term, so it ignores the reader's font-size and zoom settings.
+In production, wrap it in `clamp()` with a `rem` component, such as `clamp(1.5rem, 1rem + 6cqi, 3.5rem)`.
+[Fluid Typography and Spacing with `clamp()`](/tutorial/fluid-typography-and-spacing#advanced-scoping-fluid-values-to-a-container-not-the-viewport)
+walks through building that formula.
+
+<Warning title="cqi/cqb only resolve inside a query container">
+  These units read from the *nearest* container established by `container-type` — not the viewport, and not just
+  any ancestor. Use them on an element whose containing context never got a `container-type`, and the browser
+  falls back to treating the query container as the initial containing block (roughly, the viewport) — which
+  quietly defeats the entire point. Double-check the ancestor chain if a `cqi` value looks viewport-driven instead
+  of component-driven.
+</Warning>
+
+<RainbowDivider />
+
+## The Frontier: Style Queries
+
+Everything so far queries **size**. `@container style()` queries something different entirely: a **computed CSS
+custom property value** on the container, regardless of its dimensions.
+
+<CodeBlock language="css">
+{`
+  .card-wrapper {
+    --theme: dark;
+  }
+
+  /* Matches based on the VALUE of --theme, not the wrapper's size */
+  @container style(--theme: dark) {
+    .card {
+      background: #121212;
+      color: white;
+      border: 1px solid #333;
+    }
+  }
+`}
+</CodeBlock>
+
+Unlike a size query, a style query doesn't need `container-type` at all. Every element can already be queried
+for its styles, so an unnamed `style()` query simply checks the nearest ancestor — usually the card's parent.
+
+**Visual Illustration**
+
+The diagram below shows two cards that are exactly the same size. The only difference is the value of `--theme`
+set on each one's container: `light` on the left, `dark` on the right. The query at the top, `style(--theme: dark)`,
+matches only the right-hand card — size plays no part in the decision, only the custom property's value does.
+
+<StyleQueryDiagram />
+
+This turns a component's *aesthetic*, not just its layout, into something that adapts to context. A single card
+component can pick up a light or dark treatment purely from a `--theme` variable set somewhere above it — no theme
+class, no JavaScript, no prop threading through a component tree. Set the variable once at whatever level makes
+sense (a section, a whole page, a single card slot) and every style-query rule below it resolves independently.
+
+If you only need to switch a single value rather than a whole rule, the
+[`if()` function](/tutorial/css-if-conditional-values) uses the same `style()` test inside one declaration.
+
+<Info title="Style queries on custom properties are the well-supported slice">
+  Style queries against **custom properties** (`--theme: dark`, `--density: compact`, and so on) became Baseline in
+  May 2026, when Firefox 151 joined Chrome, Edge, and Safari. Querying *standard* CSS properties directly
+  (`style(color: red)`) is part of the same specification but isn't supported yet — reach for a custom property as
+  the thing you query, even when the underlying decision is really about a built-in property.
+</Info>
+
+<RainbowDivider />
+
+## Case Study: Simplifying Inline SVG Icons by Container
+
+Container queries aren't only for text and grid columns — they're just as useful wrapped around an inline SVG.
+The trick is the same one used everywhere else in this post: instead of asking "how big is the *screen*?", ask
+"how big is the box this icon actually got rendered into?"
+
+<CodeBlock language="css">
+{`
+  .icon-wrapper {
+    container-type: inline-size;
+  }
+
+  /* Below 50px, drop the fine detail entirely rather than let it turn to noise */
+  @container (max-width: 50px) {
+    .complex-logo .detailed-paths {
+      display: none;
+    }
+  }
+`}
+</CodeBlock>
+
+A logo icon dropped into a dense toolbar at 24px and the same icon used as a 200px hero mark are the same file,
+but they don't need the same amount of detail — past a certain size, fine paths just render as a blurry smudge
+instead of the extra polish they're meant to be. Wrapping the `<svg>` in a container lets the icon simplify *itself*
+below that threshold, on a 4K monitor exactly as reliably as on a phone, because the decision is about the icon's
+own rendered box, not the display it happens to be on.
+
+Note that `.icon-wrapper` needs a width from its surroundings — a fixed size, or a grid or flex track that sizes it
+— because, as an `inline-size` container, it can't take its width from the icon inside it.
+
+<Details summary="Why not just swap in a simpler SVG file at small sizes?">
+  You can, and for drastically different icon sets that's often the right call — but a single `@container` rule
+  avoids maintaining two files, keeps one source of truth for the artwork, and reacts instantly to layout changes
+  that a `srcset`-style swap can't (a sidebar being resized by the user, for instance, with no page reload in
+  between).
+</Details>
+
+<RainbowDivider />
+
+## Interactive Playground
+
+Reading about a breakpoint tied to a container instead of the viewport is one thing; feeling it is another. The
+playground below has three tabs: **Size Queries** drags a card's own container past a breakpoint while its title
+scales live in `cqi`; **Named Containers** keeps one fixed `@container` rule on a card but lets you retarget which
+of two nested, independently resizable containers it actually measures; and **Style Queries** flips a `--theme`
+custom property and watches `@container style(--theme: dark)` match or stop matching in real time.
+
+<Sandbox slug="container-queries-deep-dive" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Styling the Container Itself
+
+An `@container` rule can only style **descendants** of the container it measures. Writing
+`@container (width >= 400px) { .card-wrapper { ... } }` where `.card-wrapper` *is* the container does nothing. Move
+the styles to a child, or add a wrapper element and make that the container.
+
+### 2. A Container That Collapses to Zero Width
+
+`container-type: inline-size` stops an element taking its width from its content. On anything that normally
+shrink-wraps — a float, an `inline-block`, an absolutely positioned element, a flex item with `flex: none` — the
+container collapses to zero width and everything inside overflows or disappears. Give it a width from outside: set
+`inline-size: 100%` or a fixed width, let the flex item grow with `flex: 1`, or move `container-type` up to a parent
+that already fills its space.
+
+### 3. A `size` Container With No Height
+
+The same problem on the other axis: `container-type: size` without an explicit height collapses the container to
+`0px` tall. Use `inline-size` unless you genuinely know the height, and remember that `height`, `aspect-ratio`, and
+`orientation` queries only work on `size` containers.
+
+### 4. Forgetting That Padding Isn't Measured
+
+A container query measures the container's **content box** — its width *minus* padding and borders. A wrapper that
+takes up 400px on the page with `1rem` of padding on each side (as it does under `box-sizing: border-box`) is only
+`368px` wide as far as `@container (width >= 400px)` is concerned. You can see this in the playground's **Named Containers** tab: drag `.layout-grid` to exactly
+`400px` and the 400px rule still doesn't match, because the box's own padding and border take it under. Account
+for padding in the breakpoint, or move the padding onto a child.
+
+### 5. A Mistyped or Type-Less Container Name
+
+`@container layuot-grid (...)`, or a name on an element with no `container-type`, simply never matches — there's
+no error anywhere. Check the spelling against the ancestor's `container-name`, and check that the ancestor is a
+size container at all. The `container` shorthand without a `/ type` part causes the same problem (see
+[The `container` Shorthand](#the-container-shorthand)).
+
+### 6. Container Units With No Container
+
+`cqi` and friends used outside any `container-type` ancestor fall back to the small viewport, so a "component-sized"
+value quietly turns viewport-sized. If a `cq*` value looks like it's tracking the window, look for the missing
+container.
+
+<RainbowDivider />
+
+## Debugging Container Queries in DevTools
+
+Because a container query that doesn't match fails silently, DevTools is the quickest way to see *which* box a
+rule is measuring:
+
+1. **Find the containers.** In Chrome and Edge, the **Elements** panel shows a **`container`** badge next to every
+   element with a `container-type`. Clicking the badge highlights that element on the page along with the
+   descendants that query it.
+2. **Inspect the child, not the container.** Select the element your `@container` rule is supposed to style. In the
+   **Styles** pane, the rule appears under its `@container` condition, with a link to the container it resolved
+   against. Hovering that link highlights the container on the page — if it's not the box you expected, the
+   problem is the lookup, not the condition.
+3. **Check the size against the content box.** In the **Computed** tab of the container, compare the content-box
+   width (the inner rectangle of the box model diagram) with your breakpoint. This is where padding surprises
+   (pitfall 4) show up.
+4. **Check for a collapsed container.** A container showing a width or height of `0` in the box model is pitfall 2
+   or 3.
+
+Firefox's **Rules** view lists `@container` rules with their conditions in the same way, and hovering the
+condition highlights the container it matched against, so the same workflow applies there.
+
+<RainbowDivider />
+
+## Best Practices for Container Queries
+
+- **Reach for `inline-size` by default.** `size` containment has a real, easy-to-hit pitfall (the height-collapse
+  warning above) — only use it when the height is genuinely fixed by the surrounding layout, not by content.
+- **Put the container on a wrapper that already fills its space.** A block-level wrapper or a grid item that
+  stretches across its track never collapses, so it makes a safer container than the component's own root.
+- **Name containers as soon as you nest them.** The moment a second `container-type` shows up inside another one,
+  add `container-name` to both — it costs nothing today and saves a confusing "why didn't this match" moment
+  later.
+- **Prefer `cqi` for typography and spacing inside components** — wrapped in `clamp()` with a `rem` term. It keeps a
+  component visually consistent wherever it's dropped, the same benefit `fr` and `minmax()` bring to Grid tracks,
+  without breaking the reader's zoom.
+- **Use style queries for theme/variant switches, not one-off exceptions.** They shine when the same component
+  needs to react to a variable set by something else (a section theme, a density setting) — for a single
+  component's own internal state, a plain class or attribute selector is still simpler.
+- **Don't reach for a container query when a media query is actually correct.** Global chrome — the site header,
+  primary nav, overall page column count — genuinely depends on the viewport. Container queries solve the
+  *component reused in different-sized boxes* problem specifically; using them everywhere just trades one kind of
+  rigidity for a different one.
+
+<RainbowDivider />
+
+## Browser Support & Fallbacks
+
+Size-based container queries (`container-type`, `container-name`, and `@container`) and the `cq*` units have been
+Baseline since February 2023, so every current major browser supports them. `@container style()` against custom
+properties became Baseline in May 2026 with Firefox 151 — supported in every current browser, but recent enough
+that you may still want a fallback for visitors on older versions. Style queries against standard properties
+aren't supported yet.
+
+For an older browser or a progressively enhanced layout, wrap the enhancement in a feature query so unsupported
+browsers just get your fallback instead of a rule that silently never applies:
+
+<CodeBlock language="css">
+{`
+  /* Fallback: simple stacked layout, applies everywhere */
+  .card {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  /* Only registers container-type where @container itself is supported */
+  @supports (container-type: inline-size) {
+    .card-wrapper {
+      container-type: inline-size;
+    }
+
+    @container (min-width: 400px) {
+      .card {
+        grid-template-columns: 2fr 1fr;
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+For style queries, the safest fallback is to make the un-themed default look correct on its own. A browser that
+doesn't understand `@container style()` skips the whole block, so the card simply keeps its default theme.
+
+<RainbowDivider />
+
+## Quick Reference
+
+| Syntax | What it does |
+|---|---|
+| `container-type: inline-size` | Makes the element a container measured on its width — the usual choice |
+| `container-type: size` | Measures width **and** height; needs an explicit height |
+| `container-name: layout-grid` | Gives the container a name that queries can target directly |
+| `container: layout-grid / inline-size` | Shorthand for name and type together |
+| `@container (width >= 400px)` | Matches against the nearest size container |
+| `@container layout-grid (width >= 400px)` | Matches against the nearest ancestor named `layout-grid` |
+| `@container style(--theme: dark)` | Matches on a custom property's value, not a size |
+| `cqi` / `cqb` | 1% of the container's inline / block size |
+| `cqmin` / `cqmax` | The smaller / larger of `cqi` and `cqb` |
+| `@supports (container-type: inline-size)` | Feature-detects container query support for a fallback |
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Should I replace all my media queries with container queries?">
+  No. Media queries are still right for decisions that genuinely depend on the viewport — the site header, the main
+  navigation, the overall page column count — and for user preferences like `prefers-color-scheme` and
+  `prefers-reduced-motion`. Container queries are for components that get reused in boxes of different sizes.
+</Details>
+
+<Details summary="Can an element query its own size?">
+  No. An `@container` rule only styles the container's descendants, because letting an element restyle itself
+  based on its own size could change the size it's measuring. Wrap the element and make the wrapper the
+  container.
+</Details>
+
+<Details summary="Do container queries hurt performance?">
+  Not in any way you're likely to notice. The containment that `container-type` applies actually limits how far a
+  layout change can spread, and browsers only re-evaluate a query when its container's size changes. The real cost
+  is the layout constraint, not speed: a container can't be sized by its own content.
+</Details>
+
+<Details summary="Do container queries work with Flexbox and Grid?">
+  Yes — a flex or grid item can be a container, and the content inside it can use any layout. The one catch is
+  sizing: a flex item that doesn't grow can collapse to zero width once it becomes an `inline-size` container
+  (see [Common Pitfalls](#common-pitfalls)). Grid items that fill their track are the easiest containers to work
+  with.
+</Details>
+
+<Details summary="Why doesn't my height query match?">
+  Height, `aspect-ratio`, and `orientation` queries need `container-type: size`. An `inline-size` container
+  doesn't measure its height, so a height condition against it never matches.
+</Details>
+
+<Details summary="Can I use cqi without writing any @container rules?">
+  Yes. Container units only need an ancestor with a `container-type`; you don't have to write a query at all. That
+  makes `container-type: inline-size` plus `cqi` a handy way to get fluid, component-relative type and spacing on
+  its own.
+</Details>
+
+<RainbowDivider />
+
+## Conclusion
+
+Media queries answer "how big is the screen?" — a question that made perfect sense when we designed pages, and
+still does for genuinely global layout decisions. Container queries answer a different, more honest question for
+everything else: "how big is the box I'm actually sitting in?" Named containers extend that question past the
+nearest ancestor when a component needs to reach further; container units make sizing inside a component scale
+with it automatically; and style queries extend the whole idea from size to appearance.
+
+Put together, these four pieces are what turn a component from "works in the layout I originally tested it in"
+into something that genuinely doesn't care where it's dropped — a sidebar, a wide main column, a dense dashboard
+tile, or a hero banner, all from the same markup and the same CSS.
+
+<RainbowDivider />
+
+## What's Next: From Static Layout to Motion
+
+Container queries solve *what a component looks like* at a given size or theme. The next natural question is
+*how it gets there* — what happens in the moment a card actually crosses that breakpoint, rather than snapping
+instantly from one layout to the other.
+
+In an upcoming post for the **[Animations category](/category/animations)**, we'll explore:
+
+- **Transitioning layout-affecting properties** across a container query breakpoint, not just colour and opacity
+- **`@starting-style`** for animating an element the instant it's inserted into a newly-matched container
+- **Combining container queries with view transitions** for a genuinely fluid reflow
+
+_That deep dive is currently in the works — stay tuned to the Animations category for the update!_
