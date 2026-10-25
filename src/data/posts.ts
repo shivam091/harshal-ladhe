@@ -155,6 +155,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-10-25", change: "Added cross-reference to tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
@@ -468,6 +469,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "The four-line recipe was the easy part — the real work was proving every variant actually renders the way the prose claims. The stroke, blend-mode, and video examples all had to be rebuilt after testing them in a real browser, and the playground's wrap-fix toggle only started doing anything once the gradient moved onto an inline span the flex layout couldn't blockify. I hope flipping that toggle, and watching the readout print the exact CSS behind each change, makes the whole clipping trick click. Thanks for reading all the way to the last gradient stop. 🌈",
     changelog: [
+      { date: "2026-10-25", change: "Added cross-reference to tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-27", change: "Initial publication" }
     ]
@@ -597,6 +599,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around three new pieces: an exploded view of the seven painting layers, a version-number tree showing why 9999 can lose to 10, and a three-tab sandbox that runs real HTML and CSS rather than pictures of them — the trapped tooltip, the negative z-index box, and the blend-mode circles — each with a readout explaining what the browser just painted. Getting the playground's readout to agree with the browser in every combination — ties, z-index: 0 versus auto, an opacity of 0.99 that changes almost nothing on screen yet everything underneath — meant re-deriving the painting order more times than I'd like to admit. I hope the next time a 9999 refuses to budge, you go looking for its parent instead of adding another 9. Thanks for stacking up with me. 🥞",
     changelog: [
+      { date: "2026-10-25", change: "Added cross-reference to tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-10-08", change: "Initial publication" }
     ]
