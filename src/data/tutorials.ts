@@ -237,6 +237,7 @@ export const tutorials: Tutorial[] = [
       alt: "A priority badge changing color based on a custom property, driven entirely by an if(style(...)) conditional value in the stylesheet."
     },
     changelog: [
+      { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
       { date: "2026-10-18", change: "Added tag 'style-queries'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-27", change: "Initial publication." }
@@ -277,6 +278,7 @@ export const tutorials: Tutorial[] = [
       alt: "CSS-only staggered animation concept showing a list of elements with progressively delayed motion, illustrating sibling-index() and sibling-count() for position-based animation timing without JavaScript."
     },
     changelog: [
+      { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-02", change: "Initial publication." }
     ]

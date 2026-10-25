@@ -42,6 +42,11 @@ How to read it:
 Change `--priority` — from JavaScript, or from another CSS rule — and the background follows. There's no class
 list to keep in sync with the state.
 
+The state can even come straight from the markup. With
+[typed `attr()`](/tutorial/css-typed-attr#data-types-for-type), `--priority: attr(data-priority type(<custom-ident>), low);`
+reads `<div class="card" data-priority="high">` into the custom property that `style()` tests, with no inline style
+or JavaScript at all.
+
 <RainbowDivider />
 
 ## The Three Condition Types
