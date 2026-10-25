@@ -228,6 +228,10 @@ reduce motion:
 * **They count every element sibling, not just matching ones.** There's no `of selector` filter like
   `:nth-child(2 of .visible)`, and elements hidden with `display: none` still count. To get "index among the visible
   ones", remove hidden items from the DOM rather than just hiding them. Text nodes and comments are never counted.
+* **They only know DOM order.** When the stagger should follow something else — a priority, a rank, the order
+  results arrived in — put that number in an attribute and read it with
+  [typed `attr()`](/tutorial/css-typed-attr) instead:
+  `animation-delay: calc(attr(data-order type(<integer>), 0) * 80ms)`.
 * **Results update live.** Inserting, removing, or reordering a sibling shifts every later element's index
   immediately, with no re-render needed — exactly like `:nth-child()`.
 * **Cap long lists.** In fixed-step mode, delays grow without limit. Wrap the calculation in `min()` so a long list
