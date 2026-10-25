@@ -249,6 +249,7 @@ export const tutorials: Tutorial[] = [
       caption: "A priority badge changing colour from a single if() value."
     },
     changelog: [
+      { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
       { date: "2026-10-18", change: "Added tag 'style-queries'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-27", change: "Initial publication." }
@@ -291,6 +292,7 @@ export const tutorials: Tutorial[] = [
       caption: "List items animating in one after another, timed by their position alone."
     },
     changelog: [
+      { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-02", change: "Initial publication." }
     ]
