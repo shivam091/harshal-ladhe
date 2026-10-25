@@ -1,0 +1,369 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-attr-content-tooltips");
+
+## Introduction
+
+When an icon button needs a short hint, the usual options are a JavaScript tooltip library or the native `title`
+attribute. A library is a lot of code for one line of text, and `title` has well-known limits: you can't style it,
+it appears only after a delay the browser decides, it never shows on keyboard focus, and touch screens can't show it
+at all.
+
+For the common case — a short label on a button or icon — CSS can do the job on its own. **`content: attr()`** copies
+the value of an HTML attribute into a pseudo-element, and a little positioning turns that pseudo-element into a styled
+tooltip that appears on hover and on keyboard focus. The text lives in one place, the markup, and there's no
+JavaScript at all.
+
+<RainbowDivider />
+
+## How `attr()` and `content` Work Together
+
+`attr()` reads an attribute from the element being styled and returns its value as a string. Used inside the
+`content` property of a `::before` or `::after` pseudo-element, that string is rendered on the page as if it were
+text inside the element:
+
+<CodeBlock language="html">
+{`
+  <button class="icon-btn" data-tooltip="Save changes" aria-label="Save changes">💾</button>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .icon-btn::after {
+    content: attr(data-tooltip); /* renders "Save changes" */
+  }
+`}
+</CodeBlock>
+
+A custom `data-*` attribute is the natural place for the text: it's valid HTML, it has no built-in behaviour, and
+it doesn't show a second, native tooltip the way `title` would. Change the attribute and the rendered tooltip changes
+with it — the CSS never needs to know what the text says.
+
+<Info title="Beginner's mental model">
+  Think of `::after` as an invisible extra child that CSS adds as the last thing inside the element, and of
+  `content: attr(data-tooltip)` as the text that child holds. Everything else in this tutorial is ordinary CSS for
+  positioning, hiding and showing that child.
+</Info>
+
+<RainbowDivider />
+
+## Building the Tooltip
+
+<CodeBlock language="css">
+{`
+  .icon-btn {
+    position: relative; /* the tooltip is positioned against the button */
+  }
+
+  .icon-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 0.625rem);
+    left: 50%;
+    z-index: 1;
+    width: max-content;
+    max-width: 12rem;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    color: #fff;
+    background: #1d2137;
+    border-radius: 0.375rem;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(0.25rem);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+  }
+
+  .icon-btn:hover::after,
+  .icon-btn:focus-visible::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+`}
+</CodeBlock>
+
+Each group of declarations has a job:
+
+- **`position: relative` on the button** makes it the containing block, so the absolutely positioned `::after` is
+  placed relative to the button rather than the page.
+- **`bottom: calc(100% + 0.625rem)`** lifts the tooltip clear of the button's top edge, and **`left: 50%`** with
+  **`translateX(-50%)`** centres it horizontally, whatever the length of the text.
+- **`width: max-content` with a `max-width`** lets the tooltip size itself to its text. Without it, the tooltip
+  would be squeezed into the width of a small icon button and wrap after every word; the `max-width` makes long text
+  wrap onto a second line instead of running across the page.
+- **`opacity: 0` and `pointer-events: none`** hide it. The pointer setting matters because a transparent element is
+  still there: without it, the invisible tooltip would catch hovers and clicks meant for whatever sits underneath.
+- **The `transition`** fades the tooltip in while it slides up a few pixels, which reads as "appearing from the
+  button" rather than flashing on.
+
+<RainbowDivider />
+
+## Adding an Arrow
+
+The element has a second pseudo-element to spare. A `::before` with no content and a border that's transparent on
+three sides draws a small triangle that points from the tooltip back to the button:
+
+<CodeBlock language="css">
+{`
+  .icon-btn::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 0.125rem);
+    left: 50%;
+    z-index: 1;
+    border: 0.25rem solid transparent;
+    border-top-color: #1d2137; /* the only visible side: a downward-pointing triangle */
+    opacity: 0;
+    transform: translateX(-50%);
+    transition: opacity 0.12s ease;
+  }
+
+  .icon-btn:hover::before,
+  .icon-btn:focus-visible::before {
+    opacity: 1;
+  }
+`}
+</CodeBlock>
+
+The arrow's `bottom` offset is the tooltip's offset minus the arrow's full height of two `0.25rem` borders
+(`0.625rem - 0.5rem`), so the flat edge of the triangle sits flush against the tooltip.
+
+<RainbowDivider />
+
+## Showing It on Keyboard Focus
+
+Look again at the selector that reveals the tooltip:
+
+<CodeBlock language="css">
+{`
+  .icon-btn:hover::after,
+  .icon-btn:focus-visible::after {
+    opacity: 1;
+  }
+`}
+</CodeBlock>
+
+`:hover` on its own serves only mouse and trackpad users. Adding **`:focus-visible`** shows the same tooltip when
+someone reaches the button with the Tab key, so keyboard users get the hint too.
+
+`:focus-visible` is a better choice here than `:focus`. Browsers match `:focus-visible` when focus should be shown —
+typically after keyboard navigation — but not after a mouse click. With `:focus`, clicking a button would leave its
+tooltip stuck open until the user clicked somewhere else.
+
+<RainbowDivider />
+
+## Flipping It Below the Element
+
+A tooltip near the top of the page has no room above it. Placement is just a matter of which edge you offset from,
+so an attribute on a parent can switch every tooltip inside it to the other side:
+
+<CodeBlock language="css">
+{`
+  .toolbar[data-tooltip-position="bottom"] .icon-btn::after {
+    top: calc(100% + 0.625rem);
+    bottom: auto;
+  }
+
+  .toolbar[data-tooltip-position="bottom"] .icon-btn::before {
+    top: calc(100% + 0.125rem);
+    bottom: auto;
+    border-top-color: transparent;
+    border-bottom-color: #1d2137; /* now the arrow points up */
+  }
+`}
+</CodeBlock>
+
+This is a choice you make in the markup. CSS alone can't measure whether a tooltip would overflow the viewport and
+flip it automatically — see [No collision detection](#4-no-collision-detection) below.
+
+<RainbowDivider />
+
+## Try It Live
+
+Hover over any button in the toolbar, or Tab to it. **Tooltip text** switches the source between
+`data-tooltip` and `aria-label` (the next section explains the difference), **Tooltip position** flips every tooltip
+above or below its button, and **Clip with `overflow: hidden`** shows what happens when a parent cuts the tooltip
+off. The panel underneath shows the CSS behind the current settings.
+
+<Sandbox slug="css-attr-content-tooltips" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## One Attribute Instead of Two
+
+Icon-only buttons need an accessible name, so the examples above carry the same text twice: once in `data-tooltip`
+for the eye, once in `aria-label` for assistive technology. When the tooltip *is* the button's label, you can
+remove the duplicate and read the label directly:
+
+<CodeBlock language="html">
+{`
+  <button class="icon-btn" aria-label="Save changes">💾</button>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .icon-btn[aria-label]::after {
+    content: attr(aria-label);
+  }
+`}
+</CodeBlock>
+
+Now the visible tooltip and the accessible name can never drift apart, which also satisfies the WCAG guideline that a
+control's visible label should match its accessible name.
+
+Keep `data-tooltip` for tooltips that add something *beyond* the name, such as a keyboard shortcut:
+
+<CodeBlock language="html">
+{`
+  <button class="icon-btn" aria-label="Save changes" data-tooltip="Save changes (Ctrl+S)">💾</button>
+`}
+</CodeBlock>
+
+Screen reader users won't hear that extra text, though, because `aria-label` replaces the button's content
+(generated content included) when the accessible name is worked out. If the extra information matters, put it in an
+element the button references with `aria-describedby` as well.
+
+The opposite applies to a button with visible text and no `aria-label`. Its accessible name is computed from its
+content, and generated content counts, so `<button data-tooltip="Ctrl+S">Save</button>` is announced as "Save
+Ctrl+S". Give the tooltip empty alternative text to keep it out of the name — the same fix the
+[layered gradient text](/post/css/css-gradient-text#adding-a-shadow) technique uses for its duplicated heading:
+
+<CodeBlock language="css">
+{`
+  .text-btn::after {
+    content: attr(data-tooltip); /* fallback for browsers without alt text support */
+    content: attr(data-tooltip) / "";
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Respecting Reduced Motion
+
+The slide is decorative, so drop it for readers who've
+[asked for less motion](/post/animations/css-transitions-guide#accessibility-respecting-motion-preferences). The
+tooltip still fades in, which is gentle enough that it's usually kept:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) {
+    .icon-btn::after {
+      transform: translateX(-50%);
+      transition: opacity 0.12s ease;
+    }
+
+    .icon-btn:hover::after,
+    .icon-btn:focus-visible::after {
+      transform: translateX(-50%);
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Accessibility: What a CSS Tooltip Can't Do
+
+A CSS-only tooltip is a visual hint. It isn't the ARIA tooltip pattern, and it's worth knowing exactly where it falls
+short before you rely on it:
+
+- **Screen readers don't announce it as a tooltip.** There's no `role="tooltip"` and no `aria-describedby`
+  relationship, and nothing tells assistive technology that text appeared on hover. The accessible name has to come
+  from somewhere else — `aria-label` here.
+- **It can't be dismissed with Esc.** WCAG 1.4.13 (Content on Hover or Focus) expects content that appears
+  on hover or focus to be dismissible without moving the pointer or focus. A short tooltip that doesn't cover
+  anything else is exempt from that part of the rule; one that can hide other content isn't, and handling
+  Esc needs JavaScript.
+- **You can't hover the tooltip itself.** The same criterion expects users to be able to move the pointer onto the
+  revealed content — someone using screen magnification may need to pan across it. With `pointer-events: none`
+  and a gap between button and tooltip, moving onto it hides it.
+- **Touch screens have no hover.** Mobile browsers may emulate `:hover` for a moment after a tap, but not reliably,
+  and a tap usually doesn't trigger `:focus-visible`. Never put information *only* in the tooltip.
+
+<Warning title="Use it for labels, not for essential information">
+  If a tooltip carries something the user needs to complete a task — an error, a warning, instructions — show that
+  text on the page, or build a real tooltip with JavaScript or the Popover API.
+</Warning>
+
+<RainbowDivider />
+
+## Browser Support
+
+The `content: attr()` technique works in every browser in use today; it has been part of CSS since CSS 2.1.
+
+What doesn't work everywhere is the newer, **typed `attr()`**, which can return a number, a length or a colour and
+be used in any property, not just `content` — for example `width: attr(data-size type(<length>))`. It's supported
+in Chromium browsers (Chrome and Edge 133 and later) but not yet in Firefox or Safari at the time of writing. The
+tooltip technique doesn't depend on it: reading a string into `content` is the original form of `attr()`.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Pseudo-Elements on Images and Inputs
+
+`<img>`, `<input>` and other replaced or void elements don't render `::before` or `::after`, so a `data-tooltip`
+on them does nothing. Put the attribute on a wrapping element, or on the button or link around the image.
+
+### 2. Clipped by `overflow: hidden`
+
+The tooltip is part of the button, so any ancestor with `overflow: hidden` (or `auto`, or `scroll`) clips it at that
+ancestor's edge. Toolbars inside scrolling panels and cards with rounded, clipped corners are the usual culprits —
+try the **Clip with `overflow: hidden`** option in the playground to see it happen.
+
+### 3. Hidden Behind Neighbouring Content
+
+`z-index: 1` lifts the tooltip above the button's siblings, but only within the
+[stacking context](/post/css/css-z-index-and-stacking-contexts#stacking-contexts-the-key-to-everything) the button
+belongs to. If a parent has its own stacking context — from a `transform`, an `opacity` below 1, or an explicit
+`z-index` — no `z-index` on the tooltip can raise it above content outside that parent.
+
+### 4. No Collision Detection
+
+A CSS-only tooltip always appears where you put it. Near the edge of the viewport it can be cut off, and nothing will
+move it back into view. [CSS anchor positioning](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_anchor_positioning)
+and its `position-try` fallbacks solve this in supporting browsers; a JavaScript positioning library solves it
+everywhere.
+
+### 5. Flicker Across a Toolbar
+
+Sweeping the pointer along a row of buttons flashes every tooltip on the way. A short delay on the *showing*
+transition only — not the hiding one — fixes it, and gives the tooltip the intentional feel of a native one:
+
+<CodeBlock language="css">
+{`
+  .icon-btn:hover::after {
+    transition-delay: 0.3s;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## When to Use This, and When Not To
+
+**A CSS-only tooltip works well for:**
+
+- Icon-only buttons in toolbars, editors and compact action rows, where the tooltip repeats the accessible name
+- Places where `title` isn't good enough but a tooltip library would be more code than the feature deserves
+- Prototypes and internal tools that need a quick, consistent hint
+
+**Reach for something else when:**
+
+- The tooltip holds information a user can't do without
+- It needs interactive content, such as a link or a button
+- It has to stay within the viewport automatically, or escape a clipping parent — the Popover API places content in
+  the [top layer](/post/css/css-z-index-and-stacking-contexts#escaping-the-fight-the-top-layer), above every
+  stacking context and outside every `overflow` clip
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`content: attr(data-tooltip)` on a `::after`, positioned against its element and revealed on `:hover` and
+`:focus-visible`, gives you a styled tooltip with no JavaScript and the text written once, in the markup. Read from
+`aria-label` when the tooltip is the label, respect reduced motion, and treat it as a visual hint — the moment a
+tooltip carries information someone genuinely needs, build a real one.
