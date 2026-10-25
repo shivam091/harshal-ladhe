@@ -295,9 +295,10 @@ short before you rely on it:
 The `content: attr()` technique works in every browser in use today; it has been part of CSS since CSS 2.1.
 
 What doesn't work everywhere is the newer, **typed `attr()`**, which can return a number, a length or a colour and
-be used in any property, not just `content` — for example `width: attr(data-size type(<length>))`. It's supported
-in Chromium browsers (Chrome and Edge 133 and later) but not yet in Firefox or Safari at the time of writing. The
-tooltip technique doesn't depend on it: reading a string into `content` is the original form of `attr()`.
+be used in any property, not just `content` — for example `width: attr(data-size type(<length>))`. It's supported in
+Chromium browsers (Chrome and Edge 133 and later) but not yet in Firefox or Safari at the time of writing, and
+[HTML Attributes as Real CSS Values with Typed `attr()`](/tutorial/css-typed-attr) covers it in depth. The tooltip
+technique doesn't depend on it: reading a string into `content` is the original form of `attr()`.
 
 <RainbowDivider />
 
