@@ -951,4 +951,28 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "WebGL and 3D Graphics on the Web",
     description: "Posts touching WebGL and 3D rendering in the browser, from raw context calls to higher-level libraries like Three.js and react-three-fiber.",
   },
+  "tooltips": {
+    title: "Building Tooltips on the Web",
+    description: "Building tooltips that work for everyone — CSS-only hints, positioning and placement, and the accessibility rules for content shown on hover or focus."
+  },
+  "attr": {
+    title: "The CSS `attr()` Function",
+    description: "Reading HTML attribute values in CSS with `attr()`, from strings in generated content to the newer typed form that works in any property."
+  },
+  "pseudo-elements": {
+    title: "CSS Pseudo-Elements",
+    description: "Using `::before`, `::after` and other pseudo-elements to add decorative and generated content without extra markup."
+  },
+  "data-attributes": {
+    title: "HTML Data Attributes",
+    description: "Storing custom values on elements with `data-*` attributes and putting them to work from CSS and JavaScript."
+  },
+  "focus-visible": {
+    title: "Keyboard Focus with `:focus-visible`",
+    description: "Showing focus styles and focus-triggered content to keyboard users with `:focus-visible`, without distracting mouse users."
+  },
+  "ui-components": {
+    title: "Building UI Components",
+    description: "Practical techniques for building common interface components — buttons, toolbars, tooltips and more — with semantic HTML and modern CSS."
+  },
 };

@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-attr-content-tooltips",
+    title: "attr() Tooltips Playground",
+    description: "Hover over or Tab to any icon button: its tooltip text comes from an HTML attribute via content: attr(). Switch the source between data-tooltip and aria-label, flip tooltips above or below, and see how overflow: hidden clips them.",
+    template: "vanilla",
+    entry: "/index.html",
+  },
+  {
     slug: "container-queries-deep-dive",
     title: "Container Queries Playground",
     description: "Drag a container past a breakpoint while its title scales in cqi, retarget a named @container query between two nested containers, and flip a --theme custom property to trigger a live style query.",
