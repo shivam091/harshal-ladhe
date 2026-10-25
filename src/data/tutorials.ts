@@ -316,6 +316,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-17", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-attr-content-tooltips",
+    title: "CSS-Only Tooltips with `attr()` and `content`",
+    excerpt: "Styled, keyboard-friendly tooltips from one HTML attribute — no JavaScript.",
+    description: "Build CSS-only tooltips that read their text from an HTML attribute with content: attr() — positioned with a ::after pseudo-element, given an arrow, revealed on hover and keyboard focus, flipped below the element and kept gentle under reduced motion — plus the accessibility limits and pitfalls to know before shipping one.",
+    category: ["CSS"],
+    tags: ["css", "tooltips", "attr", "pseudo-elements", "data-attributes", "focus-visible", "accessibility", "ui-components"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-attr-content-tooltips/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS-only tooltips using attr() and content, featuring a styled “Save changes” tooltip, HTML and CSS code examples, and keyboard-friendly accessibility highlights on a vibrant gradient background."
+    },
+    changelog: [
+      { date: "2026-10-25", change: "Initial publication." }
+    ]
   }
 ];
 
