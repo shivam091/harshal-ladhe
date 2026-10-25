@@ -334,6 +334,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-typed-attr",
+    title: "HTML Attributes as Real CSS Values with Typed `attr()`",
+    excerpt: "Read HTML attributes as CSS colours, lengths and numbers.",
+    description: "Typed attr() reads an HTML attribute as a real CSS value — type(<color>), type(<integer>), a unit like % or px, or raw-string — for any property on any element, not just text in content. Covers fallbacks for missing or invalid values, patterns for layout, transitions and view transitions, safe fallbacks in browsers without support, and when a custom property is the better choice.",
+    category: ["CSS"],
+    tags: ["css", "attr", "css-functions", "data-attributes", "custom-properties", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-typed-attr/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A vibrant gradient cover illustrating typed CSS attr(), showing HTML attributes transforming into real CSS values such as colours, lengths, and numbers, with code snippets and colourful UI elements on a dark background."
+    },
+    changelog: [
+      { date: "2026-10-25", change: "Initial publication." }
+    ]
   }
 ];
 
