@@ -269,7 +269,9 @@ Open it and try these, one at a time:
 
 Step 4 is the one that catches experienced developers: **`opacity`, `transform`, `filter`, and `will-change` all
 create stacking contexts**, even when they don't visibly change anything. A fade-in effect or a "GPU acceleration"
-hack can break a dropdown's layering three components away.
+hack can break a dropdown's layering three components away. Tooltips drawn with a pseudo-element, like the ones in
+[CSS-Only Tooltips with `attr()` and `content`](/tutorial/css-attr-content-tooltips), are especially exposed: the
+tooltip is part of its button, so a stacking context on any ancestor of that button caps how high it can go.
 
 ### What Creates a Stacking Context
 

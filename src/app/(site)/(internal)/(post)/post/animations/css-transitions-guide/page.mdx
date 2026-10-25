@@ -202,6 +202,12 @@ The `transition-delay` CSS property defines **how long to wait before the transi
 
 This is useful for staggering multiple transitions.
 
+A transition always uses the `transition-*` values of the state it's moving **to**. So a delay declared only in the
+`:hover` rule holds back the change on the way in, while leaving the element without that delay on the way out — a
+hover effect that waits a moment before appearing but disappears immediately. That's how
+[CSS-only tooltips](/tutorial/css-attr-content-tooltips#5-flicker-across-a-toolbar) avoid flashing on every button
+the pointer sweeps across.
+
 You can specify multiple delays for multiple properties, maintaining the order defined in the `transition-property` property:
 
 <CodeBlock language="css">
