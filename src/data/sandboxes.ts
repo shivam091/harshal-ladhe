@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-typed-attr",
+    title: "Typed attr() Playground",
+    description: "A progress bar, colour tag, grid and dial styled entirely from their own HTML attributes with typed attr() — read as a percentage, <color>, <integer> and <angle> — where the controls only edit attributes and an invalid colour shows the fallback.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-attr-content-tooltips",
     title: "attr() Tooltips Playground",
     description: "Hover over or Tab to any icon button: its tooltip text comes from an HTML attribute via content: attr(). Switch the source between data-tooltip and aria-label, flip tooltips above or below, and see how overflow: hidden clips them.",

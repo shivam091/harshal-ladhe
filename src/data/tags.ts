@@ -855,6 +855,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Rounding Corners with `border-radius`",
     description: "Sizing element corners with `border-radius`, from simple rounding to the base that `corner-shape` builds on."
   },
+  "attr": {
+    title: "The CSS `attr()` Function",
+    description: "Reading HTML attributes in CSS with `attr()`, from classic text in `content` to typed values for any property."
+  },
+  "custom-properties": {
+    title: "CSS Custom Properties",
+    description: "Using CSS custom properties (variables) to share, inherit and compute values across a stylesheet, from simple tokens to values read from HTML attributes."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."
@@ -954,10 +962,6 @@ export const tagMeta: Record<string, TagMeta> = {
   "tooltips": {
     title: "Building Tooltips on the Web",
     description: "Building tooltips that work for everyone — CSS-only hints, positioning and placement, and the accessibility rules for content shown on hover or focus."
-  },
-  "attr": {
-    title: "The CSS `attr()` Function",
-    description: "Reading HTML attribute values in CSS with `attr()`, from strings in generated content to the newer typed form that works in any property."
   },
   "pseudo-elements": {
     title: "CSS Pseudo-Elements",
