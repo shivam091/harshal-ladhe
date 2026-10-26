@@ -370,6 +370,7 @@ export const tutorials: Tutorial[] = [
       caption: "HTML attributes turning into real CSS colours, lengths and numbers."
     },
     changelog: [
+      { date: "2026-10-26", change: "Added cross-reference to tutorial 'Animate and Type-Check CSS Variables with `@property`'" },
       { date: "2026-10-25", change: "Initial publication." }
     ]
   },
