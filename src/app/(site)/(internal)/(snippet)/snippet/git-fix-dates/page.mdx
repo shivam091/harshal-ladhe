@@ -1,0 +1,275 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("git-fix-dates");
+
+## Introduction
+
+Every Git commit carries **two** timestamps: the **author date** (when the change was first written) and the **committer date** (when that commit object was last created). Most of the time they're identical — until you rebase, amend, cherry-pick, or squash. Each of those rewrites the commit, so its committer date jumps to *now* while the author date stays put.
+
+That's why the same history can look different depending on where you view it. GitHub Desktop and `git log` show the author date, but github.com's commit list shows the committer date — so a week of work rebased this morning suddenly looks like it all happened at 9 a.m. today.
+
+This snippet is a small `git fix-dates` command that resets every commit's committer date back to its author date, then safely force-pushes the result.
+
+<RainbowDivider />
+
+## The Script
+
+<CodeBlock language="bash">
+{`
+  #!/usr/bin/env bash
+  # Make every commit's committer date equal its author date, then force-push,
+  # so github.com shows the same dates as GitHub Desktop.
+  #
+  # Usage: git fix-dates [-n] [-y] [--no-push] [remote]    (see -h)
+  set -euo pipefail
+
+  usage() {
+    cat <<'EOF'
+  Usage: git fix-dates [options] [remote]
+
+  Rewrite the current branch so every commit's committer date equals its author
+  date, then force-push it. <remote> defaults to the branch's upstream, else origin.
+
+  Options:
+    -n, --dry-run   Report mismatched commits and exit; change nothing
+    -y, --yes       Skip the confirmation prompt (required when not on a TTY)
+        --no-push   Rewrite locally but don't push
+    -h, --help      Show this help
+  EOF
+  }
+
+  die() {
+    printf 'git fix-dates: %s\\n' "$*" >&2
+    exit 1
+  }
+
+  # Ask "<question>? [y/N]" unless --yes was given; anything but yes aborts.
+  confirm() {
+    $assume_yes && return
+    [ -t 0 ] || die "refusing to continue non-interactively without --yes"
+    read -r -p "$1? [y/N] " reply
+    case $reply in [yY] | [yY][eE][sS]) ;; *) die "aborted" ;; esac
+    confirmed=true
+  }
+
+  dry_run=false
+  assume_yes=false
+  confirmed=false
+  push=true
+  remote=
+
+  while [ $# -gt 0 ]; do
+    case $1 in
+      -n | --dry-run) dry_run=true ;;
+      -y | --yes) assume_yes=true ;;
+      --no-push) push=false ;;
+      -h | --help) usage; exit 0 ;;
+      -*) die "unknown option '$1' (see -h)" ;;
+      *)
+        [ -z "$remote" ] || die "unexpected argument '$1' (see -h)"
+        remote=$1
+        ;;
+    esac
+    shift
+  done
+
+  # --- Preflight: refuse anything that would make a rewrite unsafe ------------
+
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a Git work tree"
+  branch=$(git symbolic-ref --quiet --short HEAD) || die "HEAD is detached; check out a branch first"
+
+  git_dir=$(git rev-parse --git-dir)
+  for marker in rebase-merge rebase-apply MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD BISECT_LOG; do
+    [ ! -e "$git_dir/$marker" ] || die "a rebase, merge, cherry-pick, revert or bisect is in progress; finish it first"
+  done
+
+  remote=\${remote:-$(git config --get "branch.$branch.remote" || echo origin)}
+  if $push && ! $dry_run; then
+    git remote get-url "$remote" >/dev/null 2>&1 || die "no such remote '$remote'"
+  fi
+
+  # --- Find mismatched commits ------------------------------------------------
+
+  # Topological order guarantees \`first\` has no mismatched ancestor, so
+  # rewriting \`first^..branch\` covers every mismatch on the branch.
+  read -r count first < <(
+    git log --topo-order --reverse --format='%H %at %ct' "$branch" |
+      awk '$2 != $3 { n++; if (!f) f = $1 } END { print n + 0, f }'
+  )
+
+  if [ "$count" -eq 0 ]; then
+    echo "All commit dates on '$branch' already match."
+  else
+    echo "$count commit(s) on '$branch' have mismatched dates (oldest: $(git log -1 --format='%h %s' "$first"))."
+    $dry_run && exit 0
+
+    # filter-branch checks out the result, so uncommitted work would be at risk.
+    git diff-files --quiet --ignore-submodules && git diff-index --cached --quiet --ignore-submodules HEAD ||
+      die "working tree has uncommitted changes; commit or stash them first"
+
+    action="Rewrite history of '$branch'"
+    $push && action="$action and force-push to '$remote'"
+    confirm "$action"
+
+    old_head=$(git rev-parse HEAD)
+    range=$branch
+    parent=$(git rev-parse --quiet --verify "$first^") && range="$parent..$branch"
+
+    # Unlike \`git rebase\`, this copies trees verbatim, so merges survive,
+    # nothing can conflict, and the original committer name/email are kept.
+    # The date is set only for commit-tree: an exported one (--env-filter) would
+    # also backdate the branch's reflog entry and trip --force-if-includes.
+    FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force \\
+      --commit-filter 'GIT_COMMITTER_DATE=$GIT_AUTHOR_DATE git commit-tree "$@"' \\
+      -- "$range" >/dev/null
+    git update-ref -d "refs/original/refs/heads/$branch"
+
+    echo "Rewritten. Undo with: git reset --hard $old_head"
+  fi
+
+  $dry_run && exit 0
+  $push || exit 0
+
+  # --- Push -------------------------------------------------------------------
+
+  # Lease against the remote-tracking ref without fetching first — a fetch would
+  # refresh it and let the force-push silently discard someone else's commits.
+  # --force-if-includes also refuses if that ref holds commits you never had
+  # locally (fetched but not pulled). It only works without an explicit <expect>.
+  # Nothing rewritten (e.g. after --no-push) means nothing confirmed yet, so ask.
+  tracking="refs/remotes/$remote/$branch"
+  if lease=$(git rev-parse --quiet --verify "$tracking"); then
+    if [ "$(git rev-parse HEAD)" = "$lease" ]; then
+      echo "'$remote/$branch' is already up to date."
+    else
+      $confirmed || confirm "Force-push '$branch' to '$remote'"
+      git push --force-with-lease="refs/heads/$branch" --force-if-includes \\
+        "$remote" "refs/heads/$branch:refs/heads/$branch" ||
+        die "push rejected; '$remote/$branch' has commits your branch doesn't — fetch, integrate them, then retry"
+    fi
+  else
+    # Never seen this branch on the remote: a plain push fails if it exists there.
+    $confirmed || confirm "Push '$branch' to '$remote'"
+    git push --set-upstream "$remote" "refs/heads/$branch:refs/heads/$branch"
+  fi
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Installation
+
+Git treats any executable named `git-<name>` on your `PATH` as a subcommand, so saving the file as `git-fix-dates` is all it takes for `git fix-dates` to work. It needs Git 2.30 or newer for `--force-if-includes` (check with `git --version`):
+
+<CodeBlock language="bash">
+{`
+  mkdir -p ~/.local/bin
+  # Save the script above as ~/.local/bin/git-fix-dates, then:
+  chmod +x ~/.local/bin/git-fix-dates
+
+  # Make sure ~/.local/bin is on your PATH (add this to ~/.bashrc or ~/.zshrc)
+  export PATH="$HOME/.local/bin:$PATH"
+
+  git fix-dates -h
+`}
+</CodeBlock>
+
+Use `-h` rather than `--help` here: Git turns `git <command> --help` into a man-page lookup, so `git fix-dates --help` never reaches the script.
+
+<RainbowDivider />
+
+## Usage
+
+<CodeBlock language="bash">
+{`
+  git fix-dates -n            # Dry run: report mismatches, change nothing
+  git fix-dates               # Rewrite (after a y/N prompt) and force-push to the upstream remote
+  git fix-dates -y            # Skip the prompt — for scripts or when you're sure
+  git fix-dates --no-push     # Rewrite locally only; push later yourself
+  git fix-dates fork          # Push to a remote other than the branch's upstream
+`}
+</CodeBlock>
+
+A typical session after an interactive rebase to tidy up a few commits on `main`:
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git fix-dates
+  3 commit(s) on 'main' have mismatched dates (oldest: e467a53 Add search index).
+  Rewrite history of 'main' and force-push to 'origin'? [y/N] y
+  Rewritten. Undo with: git reset --hard fdf480a7e3066897d9ce5004dd3012f621ac317a
+  To github.com:you/repo.git
+   + fdf480a...671d9cf main -> main (forced update)
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Parses options** and rejects anything it doesn't recognise, instead of mistaking a typo for a remote name.
+2. **Runs preflight checks**: inside a work tree, on a real branch (not a detached `HEAD`), and with no rebase, merge, cherry-pick, revert, or bisect half-finished.
+3. **Finds the oldest mismatched commit** by comparing `%at` (author timestamp) with `%ct` (committer timestamp) in `--topo-order`, so every mismatch is guaranteed to be at or after that commit.
+4. **Rewrites only from that commit onwards** with `git filter-branch --commit-filter`, copying `GIT_AUTHOR_DATE` into `GIT_COMMITTER_DATE`. Commits before it keep their original hashes.
+5. **Pushes with a lease, without fetching first** — `--force-with-lease` checks the remote still matches your remote-tracking ref, and `--force-if-includes` checks that ref's commits were once part of your local branch. Together they refuse the push if anyone else has pushed since your last fetch, *or* if you fetched their work but never pulled it in.
+
+<RainbowDivider />
+
+## Why Not Just `git rebase --committer-date-is-author-date`?
+
+That flag does the same date fix, and it's tempting to wrap it in a one-liner. The script deliberately avoids it:
+
+- **Merges get flattened.** A plain rebase linearises history and drops merge commits. `--rebase-merges` keeps them, but re-creates each merge — and can hit the same conflicts again.
+- **Conflicts can resurface.** Replaying commits re-applies each patch, so old conflicts you already resolved can come back.
+- **You become the committer.** Rebase stamps your name and email as committer on every commit; `filter-branch` keeps the originals.
+
+A `filter-branch` that only changes commit metadata never touches trees — each new commit points at exactly the same snapshot as before, so nothing can conflict and merges stay intact. Git's documentation does discourage `filter-branch` in favour of `git filter-repo`, but its pitfalls are around rewriting file contents; a date-only filter sidesteps them, and it ships with Git, so there's nothing extra to install.
+
+<Warning title="Don't fetch before a force-push">
+  A common version of this script runs `git fetch` right before `git push --force-with-lease`. That refreshes the remote-tracking ref, so the lease ends up comparing the remote against *itself* and always passes — silently discarding anything a teammate pushed. Leaving the ref as you last saw it, and adding `--force-if-includes`, is what makes the lease actually protect you. Note that `--force-if-includes` is silently ignored if you give the lease an explicit SHA (`--force-with-lease=<ref>:<sha>`).
+</Warning>
+
+<RainbowDivider />
+
+## Related Commands
+
+A few one-liners that pair well with `git fix-dates`:
+
+<CodeBlock language="bash">
+{`
+  # Show both dates side by side to spot drift
+  git log --format='%h  author %ad  committer %cd  %s' --date=format:'%Y-%m-%d %H:%M'
+
+  # List only the commits whose dates differ
+  git log --format='%h %at %ct %s' | awk '$2 != $3'
+
+  # Fix dates while rebasing in the first place (linear history only)
+  git rebase --committer-date-is-author-date main
+
+  # Amend without moving the author date forward (default), or deliberately reset it to now
+  git commit --amend --no-edit
+  git commit --amend --no-edit --reset-author
+
+  # Recover if a rewrite went wrong — the reflog remembers every previous HEAD
+  git reflog -10
+  git reset --hard HEAD@{1}
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Hashes change.** Rewriting a commit's date changes its hash and the hash of everything after it. Anyone else with the branch checked out needs to `git fetch && git reset --hard origin/<branch>` (after saving their own work).
+- **Signatures are dropped.** GPG/SSH-signed commits lose their signatures when rewritten, and re-signing them stamps a fresh committer date — so skip branches whose signatures you need to keep.
+- **Timezones follow the author.** The committer timezone is copied along with the date, so it ends up matching the author's.
+- **Tags don't move.** Tags pointing at rewritten commits keep pointing at the old ones. Re-tag if they matter.
+- **Clean tree required.** `filter-branch` checks out the result, so the script refuses to run with uncommitted changes rather than risk them. Commit or `git stash` first.
+- **Prefer personal branches.** Force-pushing a shared branch disrupts everyone on it — the lease stops you from losing their commits, but not from rewriting history under them.
+- **Use `--no-push` to review.** Rewrite locally, inspect with `git log`, then run `git fix-dates` again once you're happy — with nothing left to rewrite, it asks before force-pushing.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Rebasing and amending quietly move a commit's committer date, and github.com displays that date. `git fix-dates` puts it back to the author date without flattening merges, re-triggering conflicts, or force-pushing over someone else's work — and it always tells you how to undo the rewrite.
