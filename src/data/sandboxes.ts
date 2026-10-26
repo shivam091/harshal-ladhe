@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "typed-custom-properties-at-property",
+    title: "@property Playground",
+    description: "Three demos of registered custom properties: a conic-gradient ring that sweeps round beside an unregistered one that jumps, a progress ring and counter driven by one animated <integer>, and a registered <color> falling back to its initial value on input that breaks an unregistered property.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-typed-attr",
     title: "Typed attr() Playground",
     description: "A progress bar, colour tag, grid and dial styled entirely from their own HTML attributes with typed attr() — read as a percentage, <color>, <integer> and <angle> — where the controls only edit attributes and an invalid colour shows the fallback.",
