@@ -75,7 +75,8 @@ code keeps working unchanged.
 
 ### Data Types for `type()`
 
-`type()` accepts the same data types used to register custom properties with `@property`:
+`type()` accepts the same data types used to
+[register custom properties with `@property`](/tutorial/typed-custom-properties-at-property#syntax):
 
 | Data type                  | Attribute value examples           |
 | -------------------------- | ---------------------------------- |
@@ -316,7 +317,8 @@ so that it has a type and an initial value:
 </CodeBlock>
 
 A registered `<color>` property can't hold the text of an unsupported function, so browsers without typed `attr()`
-throw that value away and use `indigo`, the `initial-value`.
+throw that value away and use `indigo`, the `initial-value`. For everything else registration changes, see
+[Animate and Type-Check CSS Variables with `@property`](/tutorial/typed-custom-properties-at-property).
 
 <RainbowDivider />
 
