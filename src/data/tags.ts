@@ -879,6 +879,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The CSS `attr()` Function",
     description: "Reading HTML attributes in CSS with `attr()`, from classic text in `content` to typed values for any property."
   },
+  "at-property": {
+    title: "The CSS `@property` Rule",
+    description: "Registering custom properties with `@property` to give them a type, an inheritance rule and an initial value, so they can animate and be type-checked."
+  },
+  "houdini": {
+    title: "CSS Houdini",
+    description: "The CSS Houdini APIs that expose parts of the browser's styling engine, from registering typed custom properties to custom paint and layout."
+  },
   "custom-properties": {
     title: "CSS Custom Properties",
     description: "Using CSS custom properties (variables) to share, inherit and compute values across a stylesheet, from simple tokens to values read from HTML attributes."
