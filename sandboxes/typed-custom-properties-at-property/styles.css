@@ -1,0 +1,156 @@
+/*
+  Registration is global to the document, so the typed and untyped halves of each demo need different property
+  names — one registered, one left alone — to show both behaviours side by side.
+*/
+@property --ring-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --progress {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --typed-accent {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #818cf8;
+}
+
+.stage {
+  display: grid;
+  place-items: center;
+  min-block-size: 13rem;
+}
+
+.rings,
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  padding-block: 1rem;
+}
+
+figure {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+figcaption {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--pg-text-muted);
+}
+
+figcaption code {
+  font-family: var(--pg-mono);
+  color: var(--pg-text);
+}
+
+.toggle-btn {
+  align-self: flex-start;
+}
+
+/* Animate: identical rings and transitions — the only difference is whether the angle was registered. */
+.ring {
+  inline-size: 7rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  -webkit-mask: radial-gradient(circle, transparent 52%, #000 53%);
+  mask: radial-gradient(circle, transparent 52%, #000 53%);
+}
+
+.ring--typed {
+  --ring-angle: 0deg;
+  background: conic-gradient(from var(--ring-angle), var(--pg-primary-dark), #c084fc, #34d399, var(--pg-primary-dark));
+  transition: --ring-angle 0.9s ease;
+}
+
+.ring--plain {
+  --plain-angle: 0deg;
+  background: conic-gradient(from var(--plain-angle), var(--pg-primary-dark), #c084fc, #34d399, var(--pg-primary-dark));
+  transition: --plain-angle 0.9s ease;
+}
+
+.rings[data-spun] .ring--typed {
+  --ring-angle: 300deg;
+}
+
+.rings[data-spun] .ring--plain {
+  --plain-angle: 300deg;
+}
+
+/* Count: one registered <integer> drives both the conic fill and the counter, so they can never disagree. */
+.progress-ring {
+  --progress: 0;
+  --fill: var(--pg-primary);
+  --track: var(--pg-surface);
+  counter-reset: progress var(--progress);
+  display: grid;
+  place-items: center;
+  inline-size: 9rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(var(--fill) calc(var(--progress) * 1%), var(--track) 0);
+  transition: --progress 0.8s ease-out;
+}
+
+/* An inner disc turns the filled circle into a ring and gives the number somewhere to sit. */
+.progress-ring::after {
+  content: counter(progress) "%";
+  display: grid;
+  place-items: center;
+  inline-size: 74%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  font-family: var(--pg-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--pg-text);
+  background: var(--pg-surface-muted);
+}
+
+/*
+  Type-check: both swatches start from tomato, then each data-value rule assigns the same value to both. A value
+  that isn't a <color> still wins the cascade, but the registered property computes to its initial-value instead;
+  the unregistered one keeps the text and breaks the background that reads it.
+*/
+.swatch {
+  inline-size: 7rem;
+  aspect-ratio: 1;
+  border: 0.0625rem dashed var(--pg-border);
+}
+
+.swatch--typed {
+  --typed-accent: tomato;
+  background: var(--typed-accent);
+  transition: --typed-accent 0.5s ease;
+}
+
+.swatch--plain {
+  --plain-accent: tomato;
+  background: var(--plain-accent);
+}
+
+.swatches[data-value="#34d399"] .swatch--typed { --typed-accent: #34d399; }
+.swatches[data-value="#34d399"] .swatch--plain { --plain-accent: #34d399; }
+
+.swatches[data-value="12px"] .swatch--typed { --typed-accent: 12px; }
+.swatches[data-value="12px"] .swatch--plain { --plain-accent: 12px; }
+
+.swatches[data-value="banana"] .swatch--typed { --typed-accent: banana; }
+.swatches[data-value="banana"] .swatch--plain { --plain-accent: banana; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ring--typed,
+  .progress-ring,
+  .swatch--typed {
+    transition-duration: 0.01s;
+  }
+}

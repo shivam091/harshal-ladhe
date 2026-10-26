@@ -354,6 +354,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-25", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "typed-custom-properties-at-property",
+    title: "Animate and Type-Check CSS Variables with `@property`",
+    excerpt: "Give CSS custom properties real types so they animate.",
+    description: "Register CSS custom properties (CSS variables) with @property — a syntax, an inherits rule and an initial value — so they animate in transitions and keyframes, fall back safely on invalid values and always have a default. Covers rotating gradients, counting numbers and per-axis motion, CSS.registerProperty(), performance, browser fallbacks and common pitfalls.",
+    category: ["CSS"],
+    tags: ["css", "at-property", "custom-properties", "css-animation", "transition", "keyframes", "gradients", "houdini", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/typed-custom-properties-at-property/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS @property tutorial cover featuring animated gradient rings, typed custom property code, syntax examples, and smooth animation highlights."
+    },
+    changelog: [
+      { date: "2026-10-26", change: "Initial publication." }
+    ]
   }
 ];
 

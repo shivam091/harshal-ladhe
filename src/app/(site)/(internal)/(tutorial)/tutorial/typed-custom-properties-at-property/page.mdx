@@ -1,0 +1,287 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("typed-custom-properties-at-property");
+
+## Introduction
+
+To the browser, an ordinary custom property is just text. `--angle: 45deg` *looks* like an angle, but CSS only finds
+out what it means when a `var()` drops it into a real property. So it can't animate, it accepts anything
+(`--angle: banana` is valid), and it always inherits with no default.
+
+**`@property`** registers a custom property with a type, an inheritance rule and an initial value, so the browser
+treats it like a built-in property: it can animate it, type-check it and fall back to a known value.
+
+<RainbowDivider />
+
+## Why Custom Properties Don't Animate
+
+<CodeBlock language="css">
+{`
+  .ring {
+    --angle: 0deg;
+    background: conic-gradient(from var(--angle), #6366f1, #c084fc, #6366f1);
+    transition: --angle 0.7s ease;
+  }
+
+  .ring:hover {
+    --angle: 300deg;
+  }
+`}
+</CodeBlock>
+
+This looks as if it should rotate the gradient, but it jumps. To animate a value, the browser has to calculate the
+steps in between, and it can only do that for a type it knows. An unregistered custom property has no type, so a
+transition changes it instantly, and `@keyframes` flip it halfway, like
+[discrete properties](/post/animations/css-transitions-guide#pitfall-2-you-cant-transition-display-or-visibility-discrete-properties)
+such as `display`.
+
+<RainbowDivider />
+
+## Registering a Property
+
+<CodeBlock language="css">
+{`
+  @property --angle {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
+  }
+`}
+</CodeBlock>
+
+Add this rule and the `.ring` above rotates smoothly, with no other change. `@property` is an at-rule, like `@media`,
+so it sits at the top level of a stylesheet and applies to the whole document.
+
+| Descriptor      | What it sets                                                | Required?                     |
+| --------------- | ----------------------------------------------------------- | ----------------------------- |
+| `syntax`        | The type of value the property accepts                      | Yes                           |
+| `inherits`      | Whether children receive the value                          | Yes                           |
+| `initial-value` | The value used when nothing sets it                         | Yes, unless `syntax` is `"*"` |
+
+If a required descriptor is missing or invalid, **the whole rule is silently ignored** and the property stays
+unregistered — the first thing to check when a registration seems to do nothing.
+
+### `syntax`
+
+| Syntax                                   | Example values                    | Animates?   |
+| ---------------------------------------- | --------------------------------- | ----------- |
+| `"<length>"`, `"<length-percentage>"`    | `12px`, `2rem`, `50%`             | Yes         |
+| `"<number>"`, `"<integer>"`              | `0.5`, `3`                        | Yes         |
+| `"<angle>"`                              | `45deg`, `0.25turn`               | Yes         |
+| `"<time>"`                               | `200ms`, `1.5s`                   | Yes         |
+| `"<color>"`                              | `#6366f1`, `oklch(0.7 0.15 280)`  | Yes         |
+| `"<transform-list>"`                     | `rotate(45deg) scale(1.2)`        | Yes         |
+| `"<custom-ident>"`, `"<image>"`          | `compact`, gradients              | No          |
+
+Types combine: `"<length> | auto"` for alternatives, `"small | large"` for keywords, `"<length>+"` for a
+space-separated list and `"<color>#"` for a comma-separated one. `"*"` accepts anything and never animates.
+
+### `inherits` and `initial-value`
+
+Unregistered custom properties always inherit. `inherits: false` keeps a value that belongs to one component — a
+rotation angle, some internal state — from leaking into everything inside it.
+
+`initial-value` must be **computationally independent**: it must mean the same thing on every element. `10px` and
+`#6366f1` are fine; `2em` and `var(--other)` aren't, and either one invalidates the rule.
+
+<RainbowDivider />
+
+## Try It Live
+
+**Animate** rotates two identical rings, only one of them registered. **Count** drives a progress ring and its number
+from one registered `<integer>`. **Type-check** gives the same value to a registered `<color>` and an unregistered
+property.
+
+<Sandbox slug="typed-custom-properties-at-property" readOnly />
+
+<RainbowDivider />
+
+## What Else Registration Changes
+
+### Invalid Values Fall Back
+
+A value that doesn't match the `syntax` still wins the cascade, but it's **invalid at computed-value time**, so the
+property falls back to its inherited value or `initial-value`:
+
+<CodeBlock language="css">
+{`
+  @property --accent {
+    syntax: "<color>";
+    inherits: false;
+    initial-value: #6366f1;
+  }
+
+  .card {
+    --accent: tomato;
+    color: var(--accent);
+  }
+
+  .card.is-broken {
+    --accent: 12px;
+  } /* not a <color>: --accent becomes #6366f1, not tomato */
+`}
+</CodeBlock>
+
+Unregistered, `--accent` would store `12px` and break `color: var(--accent)` instead. Registered, every `var()` that
+reads it always gets a colour. This is also how registration gives
+[typed `attr()`](/tutorial/css-typed-attr#the-custom-property-trap) a clean fallback in unsupporting browsers.
+
+### Values Are Computed Where They're Set
+
+An unregistered property passes its text down unchanged. A registered one is computed first, so with
+`--gap: 1em` on a 20px parent, children inherit `20px`, not `1em` resolved against their own font size.
+
+<RainbowDivider />
+
+## Patterns Worth Knowing
+
+### Animating Gradients
+
+Gradients can't be transitioned, but registered `<angle>` and `<color>` properties *inside* them can — the technique
+behind [rotating conic borders](/post/css/css-gradient-borders#rotating-conic-borders-with-property) and
+[animated gradient text](/post/css/css-gradient-text#animating-colors-and-angles-with-property).
+
+### Counting Numbers
+
+An `<integer>` animates in whole steps, and `counter()` can print it:
+
+<CodeBlock language="css">
+{`
+  @property --value {
+    syntax: "<integer>";
+    inherits: false;
+    initial-value: 0;
+  }
+
+  .stat {
+    counter-reset: stat var(--value);
+    transition: --value 1.5s ease-out;
+  }
+
+  .stat::after {
+    content: counter(stat) "%";
+  }
+
+  .stat.is-visible {
+    --value: 72;
+  }
+`}
+</CodeBlock>
+
+Generated content isn't reliably read by screen readers, so keep the final value in real text or an `aria-label`.
+
+### Separate Timing for Each Axis
+
+Two registered lengths split one `translate` into parts with their own timing — here a linear horizontal motion and
+an eased vertical one trace an arc:
+
+<CodeBlock language="css">
+{`
+  @property --x {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  @property --y {
+    syntax: "<length>";
+    inherits: false;
+    initial-value: 0px;
+  }
+
+  .ball {
+    translate: var(--x) var(--y);
+    animation:
+      move-x 2s linear infinite alternate,
+      move-y 1s ease-in-out infinite alternate;
+  }
+
+  @keyframes move-x {
+    to {
+      --x: 16rem;
+    }
+  }
+  @keyframes move-y {
+    to {
+      --y: -6rem;
+    }
+  }
+`}
+</CodeBlock>
+
+Stop infinite animations like this inside `@media (prefers-reduced-motion: reduce)`.
+
+<RainbowDivider />
+
+## Registering from JavaScript
+
+<CodeBlock language="js">
+{`
+  CSS.registerProperty({
+    name: "--angle",
+    syntax: "<angle>",
+    inherits: false,
+    initialValue: "0deg"
+  });
+`}
+</CodeBlock>
+
+It does the same job as `@property`. Prefer the CSS rule; use this when the name is only known at run time. Calling it
+twice with the same name throws an `InvalidModificationError`, so guard code that may run more than once.
+
+<RainbowDivider />
+
+## Performance
+
+Unlike `transform` or `opacity`, an animated custom property recalculates styles, and repaints gradients, on the main
+thread every frame — [not on the GPU](/post/animations/css-transitions-guide#why-gpu-accelerated-properties-are-cheap).
+That's negligible for a button, but can show across dozens of large elements. Prefer `inherits: false`, which limits
+the work to one element, and use `translate` directly unless you need per-axis timing.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`@property` has been Baseline since July 2024: Chrome and Edge 85, Safari 16.4 and Firefox 128. Older browsers
+ignore the rule, so the property behaves as if it were unregistered. Make that acceptable rather than broken:
+
+- **Set a starting value** on the element or `:root`, not only as `initial-value`.
+- **Add a `var()` fallback** where a missing value would break the declaration: `var(--angle, 0deg)`.
+- **Let animations degrade to a jump** — a gradient that changes instantly is fine in an old browser.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Name Collisions
+
+Registration is global, so the last valid rule for a name wins. Namespace component properties: `--ring-angle`,
+`--stat-value`.
+
+### 2. Expecting `inherits: false` Values to Reach Children
+
+Children get the `initial-value`, not their parent's value. Use `inherits: true` or set the property on the child.
+
+### 3. Registering Inside Shadow DOM
+
+Browsers don't consistently apply `@property` rules inside a shadow root. Register from a document stylesheet or with
+`CSS.registerProperty()` instead.
+
+<RainbowDivider />
+
+## When to Use This
+
+**Register a custom property** when it drives an animation, when it should only ever hold one type (a colour token,
+for example), or when it's component state that shouldn't inherit.
+
+**Leave it unregistered** when it only passes a list or shorthand through to `var()`, or must resolve `em` or `%`
+against each element that reads it.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+An ordinary custom property is text: it can't animate, it accepts anything, and it always inherits. `@property`
+gives it a `syntax`, an `inherits` rule and an `initial-value`, so the browser can animate it and fall back safely
+when a value is wrong. Register the properties that animate or must stay one type, namespace their names, and keep a
+`var()` fallback for browsers that ignore the rule.
