@@ -352,6 +352,7 @@ export const tutorials: Tutorial[] = [
       alt: "A vibrant gradient cover illustrating typed CSS attr(), showing HTML attributes transforming into real CSS values such as colours, lengths, and numbers, with code snippets and colourful UI elements on a dark background."
     },
     changelog: [
+      { date: "2026-10-26", change: "Added cross-reference to tutorial 'Animate and Type-Check CSS Variables with `@property`'" },
       { date: "2026-10-25", change: "Initial publication." }
     ]
   },
