@@ -251,6 +251,26 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "How Git Works Under the Hood",
     description: "Git's object model, the .git directory, refs, and the plumbing commands that power everyday Git usage."
   },
+  "git-commands": {
+    title: "Custom Git Commands and Aliases",
+    description: "Extending Git with your own subcommands — `git-<name>` scripts on your PATH and aliases that wrap multi-step workflows into one command."
+  },
+  "commit-dates": {
+    title: "Git Commit Dates: Author vs. Committer",
+    description: "How Git's author and committer dates differ, why rebases and amends move them apart, and how to inspect or restore them."
+  },
+  "force-with-lease": {
+    title: "Safe Force-Pushing with `--force-with-lease`",
+    description: "Force-pushing rewritten history without overwriting a teammate's work, using `--force-with-lease` and `--force-if-includes`."
+  },
+  "filter-branch": {
+    title: "Rewriting Git History with `filter-branch`",
+    description: "Using git filter-branch to rewrite commits in bulk — metadata filters, ref ranges, and when `git filter-repo` is the better tool."
+  },
+  "bash": {
+    title: "Bash Scripting",
+    description: "Writing robust Bash scripts — strict mode, argument parsing, safe prompts, and small command-line tools for everyday workflows."
+  },
   "advanced": {
     title: "Advanced Topics for Experienced Developers",
     description: "Deeper dives past the fundamentals — for readers already comfortable with the basics and ready for edge cases and internals."

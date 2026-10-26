@@ -84,6 +84,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-09-23", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-fix-dates",
+    title: "`git fix-dates`: Fix GitHub Commit Dates After a Rebase",
+    excerpt: "Reset committer dates to author dates, then safely force-push.",
+    description: "A git fix-dates command that resets committer dates to author dates after a rebase or amend, keeps merges intact, and force-pushes safely.",
+    category: ["Git"],
+    tags: ["git", "git-commands", "rebase", "commit-dates", "force-with-lease", "filter-branch", "bash", "cli"],
+    link: {
+      label: "Read the full post: Advanced Git: Rebasing, Internals, and Real-World Workflows",
+      href: "/post/git/advanced-git-techniques-and-workflows"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/git-fix-dates/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Git fix-dates cover showing how to align GitHub commit dates after a rebase, with before-and-after comparisons, safe force-pushing, and preserved merge history.",
+      caption: "Commit dates realigned after a rebase, before and after."
+    },
+    changelog: [
+      { date: "2026-10-26", change: "Initial publication." }
+    ]
   }
 ];
 
