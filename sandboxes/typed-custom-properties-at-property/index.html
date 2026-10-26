@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@property Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Typed Custom Properties with @property</h1>
+        <p>Registering a custom property gives it a type, so the browser can animate it, reject values that don't fit, and fall back to a known initial value.</p>
+      </header>
+
+      <div class="tabs" role="tablist" aria-label="Demo" id="demo-switch">
+        <button class="tab tab--active" type="button" data-mode="animate" role="tab" aria-selected="true">Animate</button>
+        <button class="tab" type="button" data-mode="count" role="tab" aria-selected="false">Count</button>
+        <button class="tab" type="button" data-mode="validate" role="tab" aria-selected="false">Type-check</button>
+      </div>
+
+      <div id="animate-demo" class="tab-panel tab-panel--active">
+        <section class="demo-area" aria-label="Typed and untyped rings">
+          <div class="rings" id="rings">
+            <figure>
+              <div class="ring ring--typed" aria-hidden="true"></div>
+              <figcaption><code>@property --ring-angle</code><br>registered <code>&lt;angle&gt;</code></figcaption>
+            </figure>
+            <figure>
+              <div class="ring ring--plain" aria-hidden="true"></div>
+              <figcaption><code>--plain-angle</code><br>unregistered</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <button class="toggle-btn" type="button" id="spin-btn">Rotate both to 300deg</button>
+        <output class="readout" id="animate-readout" aria-live="polite"></output>
+      </div>
+
+      <div id="count-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Progress ring driven by one registered integer">
+          <div class="stage">
+            <div class="progress-ring" id="progress-ring" role="img" aria-label="65% complete"></div>
+          </div>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>--progress</legend>
+          <div class="field">
+            <label for="progress-input">Target value</label>
+            <div class="range-row">
+              <span class="range-edge">0</span>
+              <div class="range-track">
+                <input type="range" id="progress-input" min="0" max="100" step="1" value="65">
+                <output class="range-bubble" id="progress-value" for="progress-input">65</output>
+              </div>
+              <span class="range-edge">100</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <output class="readout" id="count-readout" aria-live="polite"></output>
+      </div>
+
+      <div id="validate-demo" class="tab-panel">
+        <section class="demo-area" aria-label="Registered and unregistered colour swatches">
+          <div class="swatches" id="swatches" data-value="tomato">
+            <figure>
+              <div class="swatch swatch--typed" aria-hidden="true"></div>
+              <figcaption><code>@property --typed-accent</code><br>registered <code>&lt;color&gt;</code></figcaption>
+            </figure>
+            <figure>
+              <div class="swatch swatch--plain" aria-hidden="true"></div>
+              <figcaption><code>--plain-accent</code><br>unregistered</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <fieldset class="control-group">
+          <legend>Assign a value</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Value assigned to both properties">
+            <label class="segment"><input type="radio" name="accent" value="tomato" checked><span>tomato</span></label>
+            <label class="segment"><input type="radio" name="accent" value="#34d399"><span>#34d399</span></label>
+            <label class="segment"><input type="radio" name="accent" value="12px"><span>12px</span></label>
+            <label class="segment"><input type="radio" name="accent" value="banana"><span>banana</span></label>
+          </div>
+          <p class="tip" id="validate-tip"></p>
+        </fieldset>
+
+        <output class="readout" id="validate-readout" aria-live="polite"></output>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
