@@ -195,6 +195,7 @@ export const posts: Post[] = [
     signoff: "This half is the one that turns Git from \"a tool I follow instructions for\" into something you can actually reason about — I hope the internals section in particular makes the rest of it click. Thanks for sticking with the series through to the end. 🚀",
     pinned: true,
     changelog: [
+      { date: "2026-10-26", change: "Added cross-reference to snippet '`git fix-dates`: Fix GitHub Commit Dates After a Rebase'" },
       { date: "2026-08-15", change: "Initial publication" }
     ]
   },

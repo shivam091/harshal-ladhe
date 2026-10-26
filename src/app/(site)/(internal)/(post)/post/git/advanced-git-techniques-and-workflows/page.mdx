@@ -148,6 +148,8 @@ Beyond interactive rebase, a few more tools exist specifically for cleaning up h
   Git's own documentation now recommends the third-party `git filter-repo` tool over the built-in `git filter-branch` for history-wide rewrites (removing a file from every commit, splitting a repo, etc.) — it's dramatically faster and much harder to misuse. `filter-branch` is still bundled with Git for compatibility, but new work should reach for `filter-repo`.
 </Warning>
 
+Its pitfalls are around rewriting file contents, though. A rewrite that only touches commit metadata — like resetting each commit's committer date to its author date after a rebase, which [`git fix-dates`](/snippet/git-fix-dates) does — never changes a tree, so the bundled `filter-branch` is still a reasonable fit there.
+
 <RainbowDivider />
 
 ## Submodules & Subtrees
@@ -329,6 +331,8 @@ These end up in `~/.gitconfig` and can also be edited directly:
     lg = log --oneline --graph --all
 `}
 </CodeBlock>
+
+When a workflow outgrows a one-line alias, write a script instead: any executable named `git-<name>` on your `PATH` runs as `git <name>`. [`git fix-dates`](/snippet/git-fix-dates) is one example — a Bash script that restores commit dates after a rebase and force-pushes with a lease.
 
 <RainbowDivider />
 
