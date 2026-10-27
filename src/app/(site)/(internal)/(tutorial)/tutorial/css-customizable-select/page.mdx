@@ -1,0 +1,312 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-customizable-select");
+
+## Introduction
+
+For as long as the web has had forms, `<select>` has been the control nobody could style. You could change the closed
+box a little — its border, background and font — but the moment it opened, the list of options was drawn by the
+operating system, in the operating system's font, with no room for an icon, a colour swatch or a second line of text.
+
+So teams rebuilt it. A `<div>` with a click handler, a hidden list, a pile of ARIA attributes and keyboard handling
+that almost never matched the real thing: type-ahead, <kbd>Home</kbd> and <kbd>End</kbd>, closing on <kbd>Esc</kbd>,
+form submission, screen reader announcements and mobile behaviour all had to be recreated by hand.
+
+**`appearance: base-select`** removes the reason to rebuild it. It opts a real `<select>` into a new, fully styleable
+mode: the closed button, the dropdown, the arrow, the options and the checkmark all become ordinary boxes you can
+style — and the options can hold real HTML. Everything the browser already got right stays exactly as it was.
+
+<RainbowDivider />
+
+## The Opt-in
+
+<CodeBlock language="css">
+{`
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+`}
+</CodeBlock>
+
+Two selectors, because there are two parts to opt in. `select` is the closed box you click; `::picker(select)` is the
+dropdown that opens from it. Each can be opted in on its own, but you'll almost always want both.
+
+With that one rule, the select drops its operating-system look for a plain, unopinionated base style — a bordered
+box, a list of options and a small arrow — that's ready to be styled like any other element.
+
+<RainbowDivider />
+
+## Rich Content in Options
+
+In a customisable select, an `<option>` can contain more than text. Images, icons and extra `<span>`s are kept and
+rendered:
+
+<CodeBlock language="html">
+{`
+  <select>
+    <option value="indigo">
+      <span class="swatch" style="--swatch: #818cf8"></span>
+      Indigo <small>#818cf8</small>
+    </option>
+    <option value="teal">
+      <span class="swatch" style="--swatch: #2dd4bf"></span>
+      Teal <small>#2dd4bf</small>
+    </option>
+  </select>
+`}
+</CodeBlock>
+
+This needed a change to the HTML parser as well as to CSS. Until now, the parser threw away any tags inside an
+`<option>` and kept only the text. Browsers that support customisable select now keep those elements in the DOM.
+
+Two rules keep it sensible. Content inside an option is for display: **no interactive elements** such as links,
+buttons or inputs. And the option's **text** still matters most, because it's what screen readers announce, what
+type-ahead matches against, and what older browsers show on their own.
+
+<RainbowDivider />
+
+## The Anatomy
+
+Every part of a customisable select can be targeted:
+
+| Selector                      | What it styles                                                        |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `select`                      | The closed box you click — the select's button                        |
+| `select > button`             | An optional custom button, replacing the default contents of the box  |
+| `selectedcontent`             | A live copy of the selected option, shown inside that button          |
+| `::picker-icon`               | The arrow in the closed box                                           |
+| `::picker(select)`            | The dropdown that holds the options                                   |
+| `option`                      | Each option row                                                       |
+| `option::checkmark`           | The tick shown beside the selected option                             |
+| `select:open`                 | The select while its picker is open                                   |
+| `option:checked`              | The currently selected option                                         |
+
+A typical set of styles touches most of them:
+
+<CodeBlock language="css">
+{`
+  select::picker-icon {
+    transition: rotate 0.2s ease;
+  }
+
+  select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  ::picker(select) {
+    padding: 0.25rem;
+    border: 1px solid #2a2f45;
+    box-shadow: 0 1rem 2rem -1rem rgb(0 0 0 / 0.6);
+  }
+
+  option {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  option:checked {
+    background: rgb(129 140 248 / 0.3);
+  }
+
+  option::checkmark {
+    order: 1; /* move the tick to the end of the row */
+    margin-inline-start: auto;
+  }
+`}
+</CodeBlock>
+
+Options are ordinary boxes, so `display: flex` lays out the swatch, label and checkmark in a row, and `order` moves
+the checkmark to the end without touching the HTML.
+
+<RainbowDivider />
+
+## Showing the Selected Option with `<selectedcontent>`
+
+By default, the closed select shows the selected option's text. To show the swatch or icon as well, give the select
+a `<button>` as its first child, with a `<selectedcontent>` element inside:
+
+<CodeBlock language="html">
+{`
+  <select>
+    <button>
+      <selectedcontent></selectedcontent>
+    </button>
+    <option value="indigo">…</option>
+    <option value="teal">…</option>
+  </select>
+`}
+</CodeBlock>
+
+Whenever the selection changes, the browser copies the chosen option's content into `<selectedcontent>`. Because
+it's a copy, it can be styled differently from the option it came from — showing the swatch and name but hiding the
+hex code, for example:
+
+<CodeBlock language="css">
+{`
+  selectedcontent {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  selectedcontent small {
+    display: none;
+  }
+`}
+</CodeBlock>
+
+<Info title="The button isn't a second control">
+  The `<button>` inside the select doesn't create a separate focus stop or a separate click target. It just replaces
+  what's drawn inside the closed select. Clicking it, or focusing the select and pressing <kbd>Space</kbd>, opens the
+  picker exactly as before.
+</Info>
+
+<RainbowDivider />
+
+## Positioning and Animating the Picker
+
+The picker is drawn in the **top layer** — the same layer as popovers and modal dialogs — so it's never clipped by
+an `overflow: hidden` parent and never needs a `z-index`. It's placed with **anchor positioning**, tied to the select:
+by default it opens below, at least as wide as the select, and flips above when there isn't room underneath.
+
+Since it's anchor-positioned, `position-area` can move it. To open the picker to the right of the select, for
+example:
+
+<CodeBlock language="css">
+{`
+  ::picker(select) {
+    position-area: span-bottom right;
+  }
+`}
+</CodeBlock>
+
+Opening and closing can be animated with the same technique used for popovers and dialogs. Transition `display` and
+`overlay` with `allow-discrete`, so the picker stays visible until its fade-out ends, and use `@starting-style` to
+give the fade-in a starting point:
+
+<CodeBlock language="css">
+{`
+  ::picker(select) {
+    transition:
+      opacity 0.2s ease,
+      translate 0.2s ease,
+      display 0.2s allow-discrete,
+      overlay 0.2s allow-discrete;
+  }
+
+  select:not(:open)::picker(select) {
+    opacity: 0;
+    translate: 0 -0.5rem;
+  }
+
+  @starting-style {
+    select:open::picker(select) {
+      opacity: 0;
+      translate: 0 -0.5rem;
+    }
+  }
+`}
+</CodeBlock>
+
+For visitors who've asked their system for reduced motion, keep the fade but drop the slide and the spinning arrow.
+The picker still clearly opens and closes, just without movement:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: reduce) {
+    select::picker-icon {
+      transition: none;
+    }
+
+    select:not(:open)::picker(select) {
+      translate: none;
+    }
+
+    @starting-style {
+      select:open::picker(select) {
+        translate: none;
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Try It Live
+
+The sandbox has one `<select>` whose options hold a colour swatch, a name and a hex code. Open it with the mouse,
+then try it from the keyboard: <kbd>Tab</kbd> to it, press <kbd>Space</kbd>, use the arrow keys, type a letter to
+jump to an option, and press <kbd>Esc</kbd> to close. Untick **`appearance: base-select`** to see the same markup
+as a classic select, and untick **Animate** to compare the picker with and without its transition. The accent
+preview beside the select takes on whichever colour you choose, and the readout shows the selected value and the
+CSS behind the current state.
+
+<Sandbox slug="css-customizable-select" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## What Stays the Same
+
+`base-select` changes how the select looks, not how it behaves. It's still a real `<select>`, so:
+
+- Its **value** is submitted with the form, and `select.value` and the `change` event work as before
+- **Keyboard support** is built in: arrow keys, type-ahead, <kbd>Home</kbd>, <kbd>End</kbd>, <kbd>Enter</kbd> and
+  <kbd>Esc</kbd>
+- **Screen readers** announce it as a combobox with a list of options, using each option's text
+- **`<label for>`**, `required`, `disabled` and `:invalid` all behave as they always have
+- **Light dismiss** works: clicking outside the picker closes it
+
+That's the real gain over a hand-built dropdown. You only write CSS; the behaviour you'd otherwise have to rebuild
+is already there and already correct.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+Customisable select shipped in Chromium browsers (Chrome and Edge 135) in 2025. Firefox and Safari are working on it
+but haven't shipped it at the time of writing.
+
+The fallback is built in. A browser that doesn't recognise `base-select` ignores the declaration and draws an
+ordinary select. Its parser drops the swatch `<span>`s and the extra `<button>`, and each option shows its text. The
+control still works perfectly; it just looks like a regular select.
+
+That's why the option's text should be able to stand on its own. "Indigo" is a complete label without its swatch;
+an option containing nothing but an icon would be blank in every browser without support.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Opting In Only the Select
+
+`appearance: base-select` on `select` alone customises the closed box, but the picker keeps its native look. Put it
+on `::picker(select)` as well for a fully custom dropdown.
+
+### 2. Options with No Text
+
+An option that only contains an image or icon has no accessible name, nothing for type-ahead to match and nothing
+to show in a fallback. Always include text, and hide it visually only if the design truly needs it.
+
+### 3. Putting Interactive Content in Options
+
+Links, buttons and inputs inside an `<option>` aren't allowed — the option itself is the interactive element. Keep
+option content to images, icons and text.
+
+### 4. Reaching for a Custom Dropdown Anyway
+
+If a design calls for a searchable list, multiple tags or free-text entry, that's a different control — a combobox —
+and `<select>` isn't the right base for it. But for "pick one from a list", which is most dropdowns, a customisable
+`<select>` now covers the designs that used to justify a rebuild.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`appearance: base-select` on `select` and `::picker(select)` turns the least styleable form control into one of the
+most: options with real HTML, a `<selectedcontent>` copy in the closed box, and pseudo-elements for the picker,
+arrow and checkmark. It keeps the native select's keyboard support, accessibility and form behaviour, and falls back
+to a working plain select everywhere else. For brand-coloured checkboxes, radios and sliders to sit beside it, see
+[Theming Native Controls with `accent-color`](/tutorial/accent-color-native-controls).
