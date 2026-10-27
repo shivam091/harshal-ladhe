@@ -313,6 +313,7 @@ export const tutorials: Tutorial[] = [
       caption: "Native checkboxes, radios, sliders and progress bars recoloured with one property."
     },
     changelog: [
+      { date: "2026-10-27", change: "Added cross-reference to tutorial 'Styling a `<select>` Dropdown with CSS `appearance: base-select`'" },
       { date: "2026-10-08", change: "Initial publication." }
     ]
   },
