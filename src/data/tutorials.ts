@@ -298,6 +298,7 @@ export const tutorials: Tutorial[] = [
       alt: "Cover for “Theming Native Controls with accent-color”, showing a green-accented checkbox, radio button, switch, range slider and progress bar beside a row of accent colour swatches."
     },
     changelog: [
+      { date: "2026-10-27", change: "Added cross-reference to tutorial 'Styling a `<select>` Dropdown with CSS `appearance: base-select`'" },
       { date: "2026-10-08", change: "Initial publication." }
     ]
   },
@@ -389,6 +390,7 @@ export const tutorials: Tutorial[] = [
       alt: "CSS customizable select tutorial cover featuring a styled dropdown with color swatches, CSS and HTML code examples, keyboard accessibility, and vibrant green, yellow, and orange gradients."
     },
     changelog: [
+      { date: "2026-10-27", change: "Added cross-references to posts 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs' and 'An Interactive Guide to CSS Transitions'" },
       { date: "2026-10-27", change: "Initial publication." }
     ]
   }

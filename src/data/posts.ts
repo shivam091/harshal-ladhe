@@ -574,6 +574,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around three new pieces: an exploded view of the seven painting layers, a version-number tree showing why 9999 can lose to 10, and a three-tab sandbox that runs real HTML and CSS rather than pictures of them — the trapped tooltip, the negative z-index box, and the blend-mode circles — each with a readout explaining what the browser just painted. Getting the playground's readout to agree with the browser in every combination — ties, z-index: 0 versus auto, an opacity of 0.99 that changes almost nothing on screen yet everything underneath — meant re-deriving the painting order more times than I'd like to admit. I hope the next time a 9999 refuses to budge, you go looking for its parent instead of adding another 9. Thanks for stacking up with me. 🥞",
     changelog: [
+      { date: "2026-10-27", change: "Added cross-reference to tutorial 'Styling a `<select>` Dropdown with CSS `appearance: base-select`'" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-10-08", change: "Initial publication" }
