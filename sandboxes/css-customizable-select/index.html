@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Customisable select Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Styling a Real select with appearance: base-select</h1>
+        <p>One native <code>&lt;select&gt;</code> with colour swatches in its options. Open it with the mouse or the keyboard, then switch <code>base-select</code> off to compare it with the select browsers have drawn until now. The badge beside it shows the chosen colour as an accent.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support <code>appearance: base-select</code> yet, so you'll see a regular select with plain-text options — the fallback every visitor without support gets.</p>
+
+      <fieldset class="control-group">
+        <legend>Options</legend>
+        <label class="checkbox-field">
+          <input type="checkbox" id="custom-toggle" checked>
+          <code>appearance: base-select</code> on the select and its picker
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" id="animate-toggle" checked>
+          Animate the picker open and closed
+        </label>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Customisable select">
+        <div class="stage">
+          <label class="select-label" for="colour-select">Accent colour</label>
+          <select class="colour-select is-custom is-animated" id="colour-select">
+            <button type="button"><selectedcontent></selectedcontent></button>
+            <option value="indigo" selected><span class="swatch" style="--swatch: #818cf8"></span><span class="option-text">Indigo <small>#818cf8</small></span></option>
+            <option value="teal"><span class="swatch" style="--swatch: #2dd4bf"></span><span class="option-text">Teal <small>#2dd4bf</small></span></option>
+            <option value="amber"><span class="swatch" style="--swatch: #fbbf24"></span><span class="option-text">Amber <small>#fbbf24</small></span></option>
+            <option value="rose"><span class="swatch" style="--swatch: #fb7185"></span><span class="option-text">Rose <small>#fb7185</small></span></option>
+            <option value="lime"><span class="swatch" style="--swatch: #a3e635"></span><span class="option-text">Lime <small>#a3e635</small></span></option>
+          </select>
+
+          <span class="accent-preview" id="accent-preview">Accent preview</span>
+        </div>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
