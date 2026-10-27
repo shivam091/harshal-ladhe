@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-customizable-select",
+    title: "Customisable select Playground",
+    description: "A real <select> whose options hold colour swatches, styled with appearance: base-select, ::picker(select), ::picker-icon, ::checkmark and <selectedcontent>, with toggles to compare it against the classic select and to animate the picker open and closed.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "typed-custom-properties-at-property",
     title: "@property Playground",
     description: "Three demos of registered custom properties: a conic-gradient ring that sweeps round beside an unregistered one that jumps, a progress ring and counter driven by one animated <integer>, and a registered <color> falling back to its initial value on input that breaks an unregistered property.",
