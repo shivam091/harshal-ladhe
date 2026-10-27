@@ -167,7 +167,8 @@ hex code, for example:
 
 ## Positioning and Animating the Picker
 
-The picker is drawn in the **top layer** — the same layer as popovers and modal dialogs — so it's never clipped by
+The picker is drawn in the [**top layer**](/post/css/css-z-index-and-stacking-contexts#escaping-the-fight-the-top-layer)
+— the same layer as popovers and modal dialogs — so it's never clipped by
 an `overflow: hidden` parent and never needs a `z-index`. It's placed with **anchor positioning**, tied to the select:
 by default it opens below, at least as wide as the select, and flips above when there isn't room underneath.
 
@@ -184,7 +185,8 @@ example:
 
 Opening and closing can be animated with the same technique used for popovers and dialogs. Transition `display` and
 `overlay` with `allow-discrete`, so the picker stays visible until its fade-out ends, and use `@starting-style` to
-give the fade-in a starting point:
+give the fade-in a starting point (see
+[why `display` needs `allow-discrete`](/post/animations/css-transitions-guide#pitfall-2-you-cant-transition-display-or-visibility-discrete-properties)):
 
 <CodeBlock language="css">
 {`
@@ -244,7 +246,7 @@ as a classic select, and untick **Animate** to compare the picker with and witho
 preview beside the select takes on whichever colour you choose, and the readout shows the selected value and the
 CSS behind the current state.
 
-<Sandbox slug="css-customizable-select" defaultLayout="vertical" />
+<Sandbox slug="css-customizable-select" readOnly />
 
 <RainbowDivider />
 
