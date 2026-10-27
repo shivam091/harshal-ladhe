@@ -1,0 +1,188 @@
+/* Shown only when base-select isn't supported, so plain-text options aren't mistaken for a bug. */
+.support-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+/* The playground draws its own dark controls, so the browser's native picker should match them. */
+:root {
+  color-scheme: dark;
+}
+
+.demo-area {
+  overflow: visible;
+}
+
+.stage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  padding: 0.5rem;
+}
+
+.select-label {
+  flex-basis: 100%;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--pg-text-muted);
+}
+
+.colour-select {
+  inline-size: 14rem;
+}
+
+/*
+  The opt-in. Both the select and its picker need it: the select's own box and the dropdown
+  are styled independently, so either one can stay native while the other is customised.
+*/
+.colour-select.is-custom,
+.colour-select.is-custom::picker(select) {
+  appearance: base-select;
+}
+
+/* Undoes the shared playground's arrow image, since base-select draws its own ::picker-icon. */
+.colour-select.is-custom {
+  display: flex;
+  align-items: center;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  background-image: none;
+}
+
+/* selectedcontent is a live copy of the chosen option, so it lays out the same swatch and label. */
+.colour-select.is-custom selectedcontent {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+/* The hex code helps when choosing, but the closed select only needs the name. */
+.colour-select.is-custom selectedcontent small {
+  display: none;
+}
+
+.colour-select.is-custom::picker-icon {
+  color: var(--pg-text-muted);
+  transition: rotate 0.2s ease;
+}
+
+.colour-select.is-custom:open::picker-icon {
+  rotate: 180deg;
+}
+
+/*
+  The picker is rendered in the top layer and anchored to the select, so it's never clipped by an
+  overflow: hidden ancestor and needs no z-index.
+*/
+.colour-select.is-custom::picker(select) {
+  margin-block: 0.375rem;
+  padding: 0.25rem;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  box-shadow: var(--pg-shadow);
+}
+
+.colour-select.is-custom option {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding-block: 0.5rem;
+  padding-inline: 0.625rem;
+  font-size: 0.92rem;
+}
+
+.colour-select.is-custom option:hover,
+.colour-select.is-custom option:focus-visible {
+  background: var(--pg-surface-muted);
+  outline: none;
+}
+
+.colour-select.is-custom option:checked {
+  background: var(--pg-primary-soft);
+}
+
+/* Moved to the end of the row, where a tick reads more naturally than before the swatch. */
+.colour-select.is-custom option::checkmark {
+  order: 1;
+  margin-inline-start: auto;
+  color: var(--pg-primary);
+}
+
+.swatch {
+  flex: 0 0 auto;
+  inline-size: 1rem;
+  block-size: 1rem;
+  background: var(--swatch);
+  border-radius: 50%;
+}
+
+.option-text small {
+  margin-inline-start: 0.25rem;
+  font-family: var(--pg-mono);
+  font-size: 0.75rem;
+  color: var(--pg-text-muted);
+}
+
+/*
+  display and overlay transition discretely so the picker stays rendered (and in the top layer)
+  until the fade-out finishes; @starting-style gives the fade-in somewhere to start from.
+*/
+.colour-select.is-animated::picker(select) {
+  transition:
+    opacity 0.2s ease,
+    translate 0.2s ease,
+    display 0.2s allow-discrete,
+    overlay 0.2s allow-discrete;
+}
+
+.colour-select.is-animated:not(:open)::picker(select) {
+  opacity: 0;
+  translate: 0 -0.5rem;
+}
+
+@starting-style {
+  .colour-select.is-animated:open::picker(select) {
+    opacity: 0;
+    translate: 0 -0.5rem;
+  }
+}
+
+/* A static badge rather than a button, so it shows the chosen colour without looking like it does something. */
+.accent-preview {
+  --accent: #818cf8;
+  padding-block: 0.625rem;
+  padding-inline: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0f1220;
+  background: var(--accent);
+  transition: background-color 0.2s ease;
+}
+
+/* Keeps a short fade so opening still reads as a change, but drops the slide and the arrow spin. */
+@media (prefers-reduced-motion: reduce) {
+  .colour-select.is-custom::picker-icon {
+    transition: none;
+  }
+
+  .colour-select.is-animated:not(:open)::picker(select) {
+    translate: none;
+  }
+
+  @starting-style {
+    .colour-select.is-animated:open::picker(select) {
+      translate: none;
+    }
+  }
+}
+
+.checkbox-field:has(input:disabled) {
+  opacity: 0.5;
+  cursor: default;
+}
