@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "colored-text-overflow-ellipsis",
+    title: "Coloured Ellipsis Playground",
+    description: "Colour a native text-overflow ellipsis separately from its text, resize the cards to see which titles truncate, clamp them to two lines, and see a flex item without min-inline-size: 0 refuse to shrink.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-customizable-select",
     title: "Customisable select Playground",
     description: "A real <select> whose options hold colour swatches, styled with appearance: base-select, ::picker(select), ::picker-icon, ::checkmark and <selectedcontent>, with toggles to compare it against the classic select and to animate the picker open and closed.",

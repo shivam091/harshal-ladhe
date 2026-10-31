@@ -1,0 +1,84 @@
+.cards {
+  --card-width: 18rem;
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A flex row, as most cards are, so the title sits inside a flex item that has to be allowed to shrink. */
+.card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  inline-size: var(--card-width);
+  max-inline-size: 100%;
+  padding-block: 0.875rem;
+  padding-inline: 1rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+}
+
+/*
+  A flex item's minimum width defaults to its content's width, which for a no-wrap title is the whole line;
+  min-inline-size: 0 lets it shrink so the title inside it can overflow and truncate.
+*/
+.card-body {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* Back to the flex default of min-inline-size: auto, so the body grows to its full title and pushes the badge out. */
+.cards.is-unshrinkable .card-body {
+  min-inline-size: auto;
+}
+
+/*
+  The truncating block container. The ellipsis is drawn with this element's styles, so its color is the
+  dots' colour, and the font the text and the dots share is set here rather than on the span.
+*/
+.card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--pg-text);
+}
+
+/* The text's own colour. It must stay inline, or the heading has no line of text left to truncate. */
+.card-title > span {
+  color: var(--pg-text);
+}
+
+.cards.is-accent .card-title {
+  color: var(--pg-primary);
+}
+
+/* text-overflow only handles one line; line-clamp ends the last visible line with the same, container-styled ellipsis. */
+.cards.is-clamped .card-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+}
+
+.card-meta {
+  margin-block: 0.25rem 0;
+  margin-inline: 0;
+  font-size: 0.8rem;
+  color: var(--pg-text-muted);
+}
+
+.card-badge {
+  flex: 0 0 auto;
+  padding-block: 0.125rem;
+  padding-inline: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+}

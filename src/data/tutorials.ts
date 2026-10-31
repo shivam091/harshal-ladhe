@@ -412,6 +412,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-27", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "colored-text-overflow-ellipsis",
+    title: "Colouring a CSS `text-overflow` Ellipsis Separately from Its Text",
+    excerpt: "Give truncated text's ellipsis a colour of its own.",
+    description: "Change the colour of a CSS text-overflow: ellipsis without faking it — the dots take their styles from the truncating container, so an inline span can colour the text separately. Covers the truncation basics, flex and grid items, multi-line line-clamp, detecting truncation in JavaScript, accessibility and common pitfalls.",
+    category: ["CSS"],
+    tags: ["css", "text-overflow", "text-truncation", "line-clamp", "typography", "flexbox", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/colored-text-overflow-ellipsis/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Colourful CSS tutorial cover showing how to style text-overflow ellipses separately from text, with code examples, orange ellipsis dots, and vibrant gradient backgrounds.",
+      caption: "A truncated line whose ellipsis is coloured apart from its text."
+    },
+    changelog: [
+      { date: "2026-10-31", change: "Initial publication." }
+    ]
   }
 ];
 
