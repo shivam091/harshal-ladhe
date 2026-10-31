@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cascade Layers Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Specificity War Playground</h1>
+        <p>Four real CSS rules of very different specificity all target the same paragraph's <code>color</code>. Assign each one to a declared layer (or leave it unlayered), reorder the layers, toggle <code>!important</code> per rule — a real <code>&lt;style&gt;</code> tag is rewritten on every change, so a real browser decides the winner, not a simulation.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Declared Layer Order (lowest → highest priority)</legend>
+        <ol id="layer-order-list" class="layer-order-list" aria-label="Declared layer order, lowest priority first"></ol>
+        <p class="tip">Layers declared later win, for normal (non-important) rules. Move a layer down to raise its priority — every rule currently assigned to it inherits the new priority instantly.</p>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Competing Rules</legend>
+        <div id="rules-table" class="rules-table">
+          <div class="rule-row" data-rule="a">
+            <div class="rule-meta">
+              <span class="rule-swatch" data-rule="a" aria-hidden="true"></span>
+              <code class="rule-selector">.util-text</code>
+              <span class="rule-specificity">specificity 0-1-0</span>
+            </div>
+            <div class="rule-controls">
+              <div class="field">
+                <label for="layer-select-a">Layer</label>
+                <select id="layer-select-a" class="layer-select" data-rule="a"></select>
+              </div>
+              <label class="checkbox-field important-field" for="important-a">
+                <input type="checkbox" id="important-a" class="important-toggle" data-rule="a">
+                <span><code>!important</code></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="rule-row" data-rule="b">
+            <div class="rule-meta">
+              <span class="rule-swatch" data-rule="b" aria-hidden="true"></span>
+              <code class="rule-selector">.card .body-text</code>
+              <span class="rule-specificity">specificity 0-2-0</span>
+            </div>
+            <div class="rule-controls">
+              <div class="field">
+                <label for="layer-select-b">Layer</label>
+                <select id="layer-select-b" class="layer-select" data-rule="b"></select>
+              </div>
+              <label class="checkbox-field important-field" for="important-b">
+                <input type="checkbox" id="important-b" class="important-toggle" data-rule="b">
+                <span><code>!important</code></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="rule-row" data-rule="c">
+            <div class="rule-meta">
+              <span class="rule-swatch" data-rule="c" aria-hidden="true"></span>
+              <code class="rule-selector">#panel .body-text</code>
+              <span class="rule-specificity">specificity 1-1-0</span>
+            </div>
+            <div class="rule-controls">
+              <div class="field">
+                <label for="layer-select-c">Layer</label>
+                <select id="layer-select-c" class="layer-select" data-rule="c"></select>
+              </div>
+              <label class="checkbox-field important-field" for="important-c">
+                <input type="checkbox" id="important-c" class="important-toggle" data-rule="c">
+                <span><code>!important</code></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="rule-row" data-rule="d">
+            <div class="rule-meta">
+              <span class="rule-swatch" data-rule="d" aria-hidden="true"></span>
+              <code class="rule-selector">#panel .body-text.featured</code>
+              <span class="rule-specificity">specificity 1-2-0</span>
+            </div>
+            <div class="rule-controls">
+              <div class="field">
+                <label for="layer-select-d">Layer</label>
+                <select id="layer-select-d" class="layer-select" data-rule="d"></select>
+              </div>
+              <label class="checkbox-field important-field" for="important-d">
+                <input type="checkbox" id="important-d" class="important-toggle" data-rule="d">
+                <span><code>!important</code></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <p class="tip">All four selectors above match the exact same paragraph in the preview — <code>#panel</code> and <code>.card</code> are real ancestor elements, so this is a genuine specificity conflict, not a mocked one.</p>
+
+        <button type="button" id="reset-btn" class="toggle-btn">Reset to default</button>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Specificity war preview">
+        <div id="panel">
+          <div class="card">
+            <p id="target-el" class="util-text body-text featured">The quick brown fox jumps over the lazy dog.</p>
+          </div>
+        </div>
+      </section>
+
+      <output id="war-output" class="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
