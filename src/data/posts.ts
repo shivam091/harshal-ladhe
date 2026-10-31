@@ -627,6 +627,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-10-18", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-cascade-layers",
+    title: "CSS Cascade Layers (`@layer`): End Specificity Wars in Large Codebases",
+    excerpt: "Control CSS priority with layer order, not specificity.",
+    description: "Learn how CSS cascade layers (@layer) set priority by layer order instead of specificity — unlayered styles, the !important reversal, revert-layer, layering third-party CSS, the full cascade sort order, migrating a large codebase and putting utility classes last.",
+    category: ["CSS"],
+    tags: ["css", "cascade-layers", "specificity", "css-architecture", "modern-css", "advanced", "debugging", "browser-support", "progressive-enhancement", "scss", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/css-cascade-layers/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon infographic illustrating CSS cascade layers, showing layer priority, specificity, unlayered styles, !important reversal, revert-layer, and the utilities-last approach.",
+      caption: "Cascade layers ordered by priority, with utilities placed last to win."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one is built around three diagrams — a one-class utility beating an ID selector through layer order alone, the same two rules swapping places the moment both turn !important, and an eight-rung ladder that puts @layer exactly where the cascade consults it — and a playground that rewrites a real <style> tag on every change, so four rules of rising specificity genuinely fight it out in your own browser. Getting its readout to name the criterion that actually decided each result — layer order, specificity, the !important reversal, or unlayered styles winning outright — took more edge-case testing than I'd like to admit. I hope the next time a utility class refuses to apply, you reach for a layer instead of another !important. Thanks for picking a side in the specificity war with me. 🗂️",
+    changelog: [
+      { date: "2026-10-31", change: "Initial publication" }
+    ]
   }
 ];
 
