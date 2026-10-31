@@ -130,6 +130,7 @@ export const posts: Post[] = [
     pinned: true,
     featured: true,
     changelog: [
+      { date: "2026-10-31", change: "Added cross-reference to tutorial 'Colouring a CSS `text-overflow` Ellipsis Separately from Its Text'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-19", change: "Added cross-reference to tutorial 'Dynamic Viewport Height Units'" },
