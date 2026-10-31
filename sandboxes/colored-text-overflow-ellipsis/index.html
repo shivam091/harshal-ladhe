@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coloured Ellipsis Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Colouring the text-overflow Ellipsis</h1>
+        <p>The ellipsis takes its colour from the box that truncates, not from the text inside it. Each title below sets the dots' colour on the heading and the text's colour on a span inside it. Narrow the cards to see which titles truncate, then untick <code>min-inline-size: 0</code> to see the flex item around a title refuse to shrink.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Ellipsis colour</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Ellipsis colour">
+          <label class="segment"><input type="radio" name="colour" value="text" checked><span>Same as text</span></label>
+          <label class="segment"><input type="radio" name="colour" value="accent"><span>Accent</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Lines</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Lines">
+          <label class="segment"><input type="radio" name="lines" value="1" checked><span>1 line (text-overflow)</span></label>
+          <label class="segment"><input type="radio" name="lines" value="2"><span>2 lines (line-clamp)</span></label>
+        </div>
+
+        <div class="field">
+          <label for="width-input">Card width</label>
+          <div class="range-row">
+            <span class="range-edge">10rem</span>
+            <div class="range-track">
+              <input type="range" id="width-input" min="10" max="30" step="1" value="18">
+              <output class="range-bubble" id="width-value" for="width-input">18rem</output>
+            </div>
+            <span class="range-edge">30rem</span>
+          </div>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="shrink-toggle" checked>
+          <code>min-inline-size: 0</code> on the card body (a flex item)
+        </label>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Truncated card titles">
+        <ul class="cards" id="cards">
+          <li class="card">
+            <div class="card-body">
+              <h2 class="card-title"><span>Building an Accessible Date Picker Without a Single Dependency</span></h2>
+              <p class="card-meta">12 min read</p>
+            </div>
+            <span class="card-badge">Tutorial</span>
+          </li>
+          <li class="card">
+            <div class="card-body">
+              <h2 class="card-title"><span>Container Queries in Practice</span></h2>
+              <p class="card-meta">7 min read</p>
+            </div>
+            <span class="card-badge">Post</span>
+          </li>
+          <li class="card">
+            <div class="card-body">
+              <h2 class="card-title"><span>CSS Grid</span></h2>
+              <p class="card-meta">2 min read</p>
+            </div>
+            <span class="card-badge">Snippet</span>
+          </li>
+        </ul>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
