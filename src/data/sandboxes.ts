@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-cascade-layers",
+    title: "Cascade Layers Specificity War",
+    description: "Assign four real CSS rules of different specificity to declared layers, reorder the layers, and toggle !important per rule — a live stylesheet lets a real browser decide the winner while a readout explains exactly why.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "colored-text-overflow-ellipsis",
     title: "Coloured Ellipsis Playground",
     description: "Colour a native text-overflow ellipsis separately from its text, resize the cards to see which titles truncate, clamp them to two lines, and see a flex item without min-inline-size: 0 refuse to shrink.",
