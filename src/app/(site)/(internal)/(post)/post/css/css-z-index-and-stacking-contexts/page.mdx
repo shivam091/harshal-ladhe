@@ -773,7 +773,8 @@ hasn't been found. Replace them with a named scale, and fix the stacking context
 <Details summary="Do cascade layers (@layer) affect z-index or stacking?">
   No. Despite the name, `@layer` only decides which **rules win** when they conflict — it's part of the cascade, not
   the painting order. Putting a rule in a later layer can change _which_ `z-index` value an element ends up with, but
-  once that value is computed, the element stacks exactly as if no layers existed.
+  once that value is computed, the element stacks exactly as if no layers existed. For how layers decide which rule
+  wins, see [CSS Cascade Layers (`@layer`)](/post/css/css-cascade-layers).
 </Details>
 
 <Details summary="Can a child escape its parent's stacking context?">
