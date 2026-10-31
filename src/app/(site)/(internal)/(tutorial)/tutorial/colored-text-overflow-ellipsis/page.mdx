@@ -1,0 +1,367 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("colored-text-overflow-ellipsis");
+
+## Introduction
+
+`text-overflow: ellipsis` is how a long title, file name or table cell shows that it's been cut short: the text stops
+and three dots — "…" — take the place of what didn't fit. It's one of the most common lines of CSS on the web, and
+most of the time nobody thinks about what colour those dots are.
+
+Then a design asks for something slightly different. The title is dark grey, but the dots should be the brand's accent
+colour, so they read as a "there's more here" hint rather than part of the text. Or the title is a link, and the dots
+come out in the wrong colour without anyone asking them to.
+
+There's no `::ellipsis` pseudo-element and no `ellipsis-color` property, so it can look as if the dots are out of
+reach. They aren't. The ellipsis takes its colour from one specific element, and once you know which one, colouring it
+separately from the text is a two-line change — no extra markup, no JavaScript and no fake dots.
+
+<RainbowDivider />
+
+## The Three Rules Every Ellipsis Needs
+
+Before colouring an ellipsis, it helps to know exactly what makes one appear. `text-overflow` does nothing on its own;
+it only decides what to show when text overflows a box. Three other conditions have to be true first:
+
+<CodeBlock language="css">
+{`
+  .title {
+    inline-size: 16rem;      /* 1. the box has a limited width */
+    white-space: nowrap;     /* 2. the text stays on one line */
+    overflow: hidden;        /* 3. whatever doesn't fit is clipped */
+    text-overflow: ellipsis; /* ...and the clipped edge shows "…" */
+  }
+`}
+</CodeBlock>
+
+1. **A limited width.** A fixed `inline-size`, a `max-inline-size`, or a parent that constrains it. Without one, the box
+   just grows to fit the text and nothing ever overflows.
+2. **No wrapping.** By default, text wraps onto a new line instead of overflowing. `white-space: nowrap` keeps it on
+   one line so it has to run past the edge.
+3. **Clipping.** `overflow` must be something other than `visible` — usually `hidden`, or `clip`. Visible overflow
+   isn't cut off, so there's nothing for an ellipsis to mark.
+
+If any of the three is missing, `text-overflow: ellipsis` is silently ignored. That's the first thing to check whenever
+an ellipsis doesn't show up.
+
+<RainbowDivider />
+
+## Why the Dots Ignore Your Text Colour
+
+Card titles are rarely a bare line of text. More often the text sits inside an inline element — a `<span>`, an `<a>` or
+a `<strong>` — inside the box that does the clipping:
+
+<CodeBlock language="html">
+{`
+  <h3 class="title">
+    <a href="/posts/long-post">A post title far too long to fit on one line</a>
+  </h3>
+`}
+</CodeBlock>
+
+Give the link its own colour, truncate the heading, and the dots won't match the link. They match the heading.
+
+That's by design. The CSS specification says the ellipsis is styled according to the **block container** — the
+element that has `text-overflow` on it — not the inline element whose text happens to be cut off. The browser draws the
+"…" as if it were a piece of text belonging directly to that container, so it uses the container's `color`, `font`
+and other text styles.
+
+<Info title="Block container, not inline text">
+  In the example above, the `<h3>` is the block container and the `<a>` is inline content inside it. Every character
+  of the title belongs to the link, but the ellipsis belongs to the heading.
+</Info>
+
+<RainbowDivider />
+
+## Colouring the Ellipsis
+
+That rule is exactly what makes a separate colour possible. Set the ellipsis colour on the container, then set the
+text colour on an inline element inside it:
+
+<CodeBlock language="html">
+{`
+  <h3 class="title">
+    <span class="title-text">A card title far too long to fit on one line</span>
+  </h3>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .title {
+    inline-size: 16rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #f97316; /* the ellipsis colour */
+  }
+
+  .title-text {
+    color: #1f2937; /* the text colour */
+  }
+`}
+</CodeBlock>
+
+Every character of the title is inside `.title-text`, so it's drawn in dark grey. The only thing left that belongs to
+`.title` itself is the ellipsis, so the ellipsis is drawn in orange.
+
+This is still the browser's own, native ellipsis. It appears only when the text actually overflows, disappears when it
+fits, sits on the correct side in right-to-left languages, and is never selected or copied with the text. All you've
+changed is its colour.
+
+### Custom Properties Make It Reusable
+
+To use the same pattern across a design system, expose both colours as custom properties with sensible defaults:
+
+<CodeBlock language="css">
+{`
+  .truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--ellipsis-colour, currentColor);
+  }
+
+  .truncate > span {
+    color: var(--text-colour, inherit);
+  }
+
+  /* Opt in where a design needs it */
+  .card-title {
+    --ellipsis-colour: var(--brand-accent);
+  }
+`}
+</CodeBlock>
+
+Unless a component sets `--ellipsis-colour`, the dots and the text inherit the same colour, so the default looks like
+an ordinary ellipsis.
+
+<RainbowDivider />
+
+## It's Not Just the Colour
+
+Because the ellipsis takes **all** of its text styles from the container, the same rule applies to `font-weight`,
+`font-size`, `font-family` and `letter-spacing`. If the inner span is bold and the container isn't, the title is bold
+but the dots are thin:
+
+<CodeBlock language="css">
+{`
+  /* ❌ Bold title, thin dots */
+  .title-text {
+    font-weight: 700;
+  }
+
+  /* ✅ Bold title, bold dots */
+  .title {
+    font-weight: 700;
+  }
+`}
+</CodeBlock>
+
+The rule of thumb: put everything the text and the dots should **share** — font, size, weight — on the container, and
+put only what should **differ** — usually just `color` — on the inner element.
+
+<RainbowDivider />
+
+## Truncating Inside Flex and Grid Layouts
+
+Truncation breaks most often inside flexbox and grid, and there are two separate reasons.
+
+**`text-overflow` has to go on the item, not the layout.** A flex or grid container isn't a block container — it lays
+out boxes, not lines of text — so `text-overflow` on it has no effect. Put the truncation rules on the item that holds
+the text.
+
+**A wrapper around the title won't shrink below its content.** A card usually puts the title inside a wrapper — a
+`.card-body` holding the title and a line of meta text — and makes *that wrapper* the flex item. By default, a flex
+item's minimum width is the width of its content, which for a no-wrap title is the whole line. The wrapper grows to
+fit, the title inside it never runs out of room, and no ellipsis appears. `min-inline-size: 0` on the wrapper lets it
+shrink:
+
+<CodeBlock language="html">
+{`
+  <article class="card">
+    <div class="card-body">
+      <h3 class="title"><span>A card title far too long to fit on one line</span></h3>
+      <p>12 min read</p>
+    </div>
+    <span class="badge">Tutorial</span>
+  </article>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .card-body {
+    flex: 1;
+    min-inline-size: 0; /* allow shrinking below the title's width */
+  }
+
+  .title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #f97316;
+  }
+
+  .title > span {
+    color: #1f2937;
+  }
+`}
+</CodeBlock>
+
+When the truncating element is *itself* the flex item, it doesn't need this: a flex item with `overflow: hidden`
+already has a minimum width of 0. The trap is always a wrapper with ordinary, visible overflow between the flex
+container and the text.
+
+In a grid, the same applies to tracks: use a track size that can shrink, such as `minmax(0, 1fr)`, rather than plain
+`1fr`, which has a content-sized minimum (see
+[`minmax()` overflowing anyway](/post/css/responsive-css-grid-layouts#common-pitfalls-with-responsive-grids)).
+
+<RainbowDivider />
+
+## Multi-line Truncation with `line-clamp`
+
+`text-overflow` only works on a single line. To show two or three lines and end the last one with an ellipsis, use
+`-webkit-line-clamp`:
+
+<CodeBlock language="css">
+{`
+  .excerpt {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    color: #f97316; /* the ellipsis colour */
+  }
+
+  .excerpt > span {
+    color: #1f2937; /* the text colour */
+  }
+`}
+</CodeBlock>
+
+Despite the `-webkit-` prefix, this works in every current browser, and it remains the dependable way to clamp lines
+today. The unprefixed `line-clamp` property is part of the CSS Overflow specification, but support for it is still
+patchy, so use the prefixed version.
+
+The ellipsis is still drawn by the clamped box, so the same colouring technique works here too: the box sets the dots'
+colour, and the inline span sets the text's.
+
+<RainbowDivider />
+
+## Try It Live
+
+The sandbox shows three cards, each a flex row with a body — a title of a different length and a reading time — and
+a badge beside it. Drag
+**Card width** to see each title truncate and recover — the dots appear only on the titles that actually overflow.
+Switch **Ellipsis colour** between **Same as text** and **Accent** to compare the ordinary ellipsis with a coloured one,
+and switch **Lines** to clamp the titles to two lines instead of one. Untick **`min-inline-size: 0`** to see the flex
+pitfall: the card bodies stop shrinking, the ellipsis disappears and the badges are pushed out of the cards. The readout
+shows the CSS behind the current state and how many titles are truncated, worked out with the JavaScript check
+described in the next section. Hover over a truncated title to see its full text.
+
+<Sandbox slug="colored-text-overflow-ellipsis" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Detecting Truncation with JavaScript
+
+CSS doesn't tell you whether an ellipsis is showing, but the element's sizes do. If its content is wider than its
+visible box, it's been truncated:
+
+<CodeBlock language="js">
+{`
+  function isTruncated(element) {
+    return element.scrollWidth > element.clientWidth;
+  }
+`}
+</CodeBlock>
+
+For `line-clamp`, compare `scrollHeight` with `clientHeight` instead, since the extra content overflows downwards.
+
+This is useful for showing the full text only when it's hidden — a `title` attribute or a tooltip on truncated
+titles, and nothing on titles that fit. Because truncation depends on the available width, re-run the check when the
+element is resized, with a `ResizeObserver`.
+
+<RainbowDivider />
+
+## Accessibility
+
+**The full text is still there.** Truncation is purely visual. Screen readers read the whole title, search engines
+index it, and copying it copies all of it. That's a real advantage over shortening the string itself on the server.
+
+**Sighted users lose the end of the text.** Anyone who can see the page but can't hover — touch-screen and keyboard
+users — has no way to read a truncated title, and a `title` attribute doesn't help them, since it only appears on
+mouse hover. Where the hidden part matters, link to a page that shows it in full, or reveal it on focus with a
+tooltip like the one in [CSS-Only Tooltips with `attr()` and `content`](/tutorial/css-attr-content-tooltips). Attach
+the tooltip to a wrapper rather than the title itself, since the title's `overflow: hidden` would
+[clip a tooltip drawn inside it](/tutorial/css-attr-content-tooltips#2-clipped-by-overflow-hidden).
+
+**Keep the dots visible.** If the ellipsis is the only sign that something has been cut off, an accent colour that
+barely stands out from the background hides that sign. Aim for at least a 3:1 contrast ratio between the dots and the
+background behind them.
+
+<RainbowDivider />
+
+## Browser Support
+
+`text-overflow: ellipsis` has worked in every browser for well over a decade. Colouring the ellipsis through its
+container isn't a newer feature — it's simply how the specification defines the ellipsis, and Chrome, Edge, Firefox
+and Safari all draw it with the container's styles.
+
+`-webkit-line-clamp` works in all current browsers. A few related features have narrower support:
+
+| Feature                                         | Support                            |
+| ----------------------------------------------- | ---------------------------------- |
+| `text-overflow: ellipsis`                       | All browsers                       |
+| Ellipsis styled by its container                | All browsers                       |
+| `-webkit-line-clamp`                            | All current browsers               |
+| `text-overflow: "<string>"` (custom)            | Firefox only                       |
+| Two values (`text-overflow: ellipsis ellipsis`) | Firefox only                       |
+| Unprefixed `line-clamp`                         | Limited — use the prefixed version |
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Putting `text-overflow` on the Flex Container
+
+`display: flex` on the element with `text-overflow` turns it into a flex container rather than a block container, and
+the ellipsis never appears. Truncate the item that holds the text, not its flex or grid parent.
+
+### 2. Forgetting `min-inline-size: 0`
+
+A flex item that wraps the title, without `min-inline-size: 0`, grows to the full width of the title and pushes its
+siblings out of the way instead of letting the title truncate. If a flex layout overflows its container rather than
+showing an ellipsis, look for a wrapper between the flex container and the text — it almost always needs
+`min-inline-size: 0`.
+
+### 3. Making the Inner Element a Block
+
+The technique relies on the text being **inline** content of the truncating container. Give the inner span
+`display: block` or `inline-block` and it becomes a box of its own: the container no longer has a line of text to
+truncate, so the ellipsis disappears and the title is simply cut off mid-letter. Keep the inner element inline.
+
+### 4. Faking the Dots with an Overlay
+
+A common workaround is to clip the text and absolutely position a `<span>…</span>` over its end, with a background
+that hides the cut-off characters. It looks right in a screenshot, but the fake dots are there whether or not the text
+overflows, so short titles end in "…" too. Its background has to match whatever is behind it, which breaks on
+gradients, images and theme changes, and it has to be repositioned for right-to-left text. The native ellipsis, styled
+through its container, has none of these problems.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+The ellipsis from `text-overflow` is styled by the block container that truncates, not by the text it cuts off. Put
+the ellipsis colour — along with the font both should share — on the container, wrap the text in an inline element
+with its own colour, and the dots can be any colour you like while staying the browser's real, native ellipsis. The
+same approach works for multi-line `-webkit-line-clamp`. In flex and grid layouts, remember to truncate the item
+rather than the container, and to give any wrapper around the text `min-inline-size: 0`.
