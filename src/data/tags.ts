@@ -1031,4 +1031,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS Flexbox Layout",
     description: "Laying out items in a row or column with Flexbox — sizing, alignment, wrapping, and the `min-inline-size: 0` fix for items that won't shrink."
   },
+  "cascade-layers": {
+    title: "CSS Cascade Layers (@layer) Explained",
+    description: "Guides to CSS cascade layers — controlling priority by declared layer order instead of specificity, for taming large-codebase specificity conflicts."
+  },
+  "specificity": {
+    title: "CSS Specificity Explained",
+    description: "How CSS specificity is calculated and how it interacts with layer order, source order, and !important in the cascade."
+  },
+  "css-architecture": {
+    title: "CSS Architecture for Large Codebases",
+    description: "Structuring CSS at scale — reset/base/component/utility layering schemes, naming conventions, and taming third-party styles."
+  }
 };
