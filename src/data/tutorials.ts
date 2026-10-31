@@ -352,6 +352,7 @@ export const tutorials: Tutorial[] = [
       caption: "A tooltip whose text is read straight from an HTML attribute."
     },
     changelog: [
+      { date: "2026-10-31", change: "Added cross-reference to tutorial 'Colouring a CSS `text-overflow` Ellipsis Separately from Its Text'" },
       { date: "2026-10-25", change: "Initial publication." }
     ]
   },
