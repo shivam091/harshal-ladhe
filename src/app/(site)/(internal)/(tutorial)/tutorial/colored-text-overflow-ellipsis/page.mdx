@@ -220,7 +220,8 @@ already has a minimum width of 0. The trap is always a wrapper with ordinary, vi
 container and the text.
 
 In a grid, the same applies to tracks: use a track size that can shrink, such as `minmax(0, 1fr)`, rather than plain
-`1fr`, which has a content-sized minimum.
+`1fr`, which has a content-sized minimum (see
+[`minmax()` overflowing anyway](/post/css/responsive-css-grid-layouts#common-pitfalls-with-responsive-grids)).
 
 <RainbowDivider />
 
@@ -298,7 +299,9 @@ index it, and copying it copies all of it. That's a real advantage over shorteni
 **Sighted users lose the end of the text.** Anyone who can see the page but can't hover — touch-screen and keyboard
 users — has no way to read a truncated title, and a `title` attribute doesn't help them, since it only appears on
 mouse hover. Where the hidden part matters, link to a page that shows it in full, or reveal it on focus with a
-tooltip like the one in [CSS-Only Tooltips with `attr()` and `content`](/tutorial/css-attr-content-tooltips).
+tooltip like the one in [CSS-Only Tooltips with `attr()` and `content`](/tutorial/css-attr-content-tooltips). Attach
+the tooltip to a wrapper rather than the title itself, since the title's `overflow: hidden` would
+[clip a tooltip drawn inside it](/tutorial/css-attr-content-tooltips#2-clipped-by-overflow-hidden).
 
 **Keep the dots visible.** If the ellipsis is the only sign that something has been cut off, an accent colour that
 barely stands out from the background hides that sign. Aim for at least a 3:1 contrast ratio between the dots and the

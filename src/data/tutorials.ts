@@ -335,6 +335,7 @@ export const tutorials: Tutorial[] = [
       alt: "CSS-only tooltips using attr() and content, featuring a styled “Save changes” tooltip, HTML and CSS code examples, and keyboard-friendly accessibility highlights on a vibrant gradient background."
     },
     changelog: [
+      { date: "2026-10-31", change: "Added cross-reference to tutorial 'Colouring a CSS `text-overflow` Ellipsis Separately from Its Text'" },
       { date: "2026-10-25", change: "Initial publication." }
     ]
   },
@@ -409,6 +410,7 @@ export const tutorials: Tutorial[] = [
       alt: "Colourful CSS tutorial cover showing how to style text-overflow ellipses separately from text, with code examples, orange ellipsis dots, and vibrant gradient backgrounds."
     },
     changelog: [
+      { date: "2026-10-31", change: "Added cross-references to post 'Responsive CSS Grid Layouts: `fr` Units, `minmax()`, `auto-fill`, and `auto-fit` Explained' and tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
       { date: "2026-10-31", change: "Initial publication." }
     ]
   }
