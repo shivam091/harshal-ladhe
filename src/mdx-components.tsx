@@ -85,6 +85,9 @@ import ContainerContainmentDiagram from "@/components/mdx/ContainerContainmentDi
 import NamedContainerDiagram from "@/components/mdx/NamedContainerDiagram";
 import ContainerUnitsDiagram from "@/components/mdx/ContainerUnitsDiagram";
 import StyleQueryDiagram from "@/components/mdx/StyleQueryDiagram";
+import LayerSpecificityDiagram from "@/components/mdx/LayerSpecificityDiagram";
+import LayerImportantReversalDiagram from "@/components/mdx/LayerImportantReversalDiagram";
+import CascadeSortOrderDiagram from "@/components/mdx/CascadeSortOrderDiagram";
 
 function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
@@ -206,6 +209,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     NamedContainerDiagram,
     ContainerUnitsDiagram,
     StyleQueryDiagram,
+    LayerSpecificityDiagram,
+    LayerImportantReversalDiagram,
+    CascadeSortOrderDiagram,
     /*
       Demoted to h2 because page layouts already render their own <h1>; mapping h1
       straight through would duplicate it the moment an .mdx file starts with `# `.
