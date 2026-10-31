@@ -1015,4 +1015,20 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Building UI Components",
     description: "Practical techniques for building common interface components — buttons, toolbars, tooltips and more — with semantic HTML and modern CSS."
   },
+  "text-overflow": {
+    title: "The CSS `text-overflow` Property",
+    description: "Using `text-overflow: ellipsis` to mark clipped text, what it needs to work, and how to style the ellipsis it draws."
+  },
+  "text-truncation": {
+    title: "Truncating Text with CSS",
+    description: "Shortening long titles, names and paragraphs with an ellipsis on one line or several, without losing the full text for readers or search engines."
+  },
+  "line-clamp": {
+    title: "Multi-line Truncation with `line-clamp`",
+    description: "Clamping text to a set number of lines with `-webkit-line-clamp`, ending the last visible line with an ellipsis."
+  },
+  "flexbox": {
+    title: "CSS Flexbox Layout",
+    description: "Laying out items in a row or column with Flexbox — sizing, alignment, wrapping, and the `min-inline-size: 0` fix for items that won't shrink."
+  },
 };
