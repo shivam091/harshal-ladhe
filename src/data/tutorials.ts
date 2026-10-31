@@ -258,6 +258,7 @@ export const tutorials: Tutorial[] = [
       alt: "A modern CSS reset tutorial cover showing a “Before” browser layout with default styles and an “After Reset” layout with clean, consistent styling, alongside CSS code and visual highlights for box sizing, margin removal, typography, media and form controls, transitions, and stacking contexts."
     },
     changelog: [
+      { date: "2026-10-31", change: "Added cross-reference to post 'CSS Cascade Layers (`@layer`): End Specificity Wars in Large Codebases'" },
       { date: "2026-10-08", change: "Added cross-reference to tutorial 'Theming Native Controls with `accent-color`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-30", change: "Initial publication." }

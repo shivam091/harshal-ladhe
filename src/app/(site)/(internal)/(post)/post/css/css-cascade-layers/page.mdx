@@ -320,7 +320,9 @@ Same selectors, same specificity, same layer order.
 
 The reversal is deliberate. `!important` exists so that a lower-priority source can protect a declaration from being
 overridden — the same reason a user's `!important` style beats an author's. A reset or base layer can mark the few
-things that must never change, and later layers can't override them by accident.
+things that must never change, and later layers can't override them by accident. A
+[global reduced-motion override](/tutorial/modern-css-reset#optional-additions) is a good example: in the `reset`
+layer, its `!important` durations still beat every animation declared in a later layer.
 
 <Warning title="Treat the reversal as an emergency exit, not a design tool">
   It's tempting to put your "real" overrides in the first layer and mark them `!important` so they always win. Don't:
@@ -429,7 +431,8 @@ library with utility classes:
 `}
 </CodeBlock>
 
-- **`reset`** — a reset or normalise stylesheet, often `@import`ed straight into the layer
+- **`reset`** — a reset or normalise stylesheet, often `@import`ed straight into the layer; see
+  [A Modern CSS Reset, Explained Rule by Rule](/tutorial/modern-css-reset) for one worth starting from
 - **`vendor`** — third-party CSS you don't control
 - **`base`** — bare element defaults (`body`, `a`, headings, form controls), with no classes
 - **`components`** — your design system's or component library's classes

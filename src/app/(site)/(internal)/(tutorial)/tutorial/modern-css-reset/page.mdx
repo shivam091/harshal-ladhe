@@ -311,9 +311,10 @@ yours.
   `height` attribute still applies, which squashes it. Add `height: auto` to images that set both attributes.
 - **Some media should be allowed to overflow.** An intentionally oversized, absolutely positioned decoration will be
   shrunk by `max-width: 100%`. Give it `max-width: revert` or a larger explicit value.
-- **Load order matters.** The reset has to come before your other styles. If you use cascade layers, put it in the
-  lowest layer, for example `@layer reset, base, components;`, so every other layer overrides it however the files
-  are loaded.
+- **Load order matters.** The reset has to come before your other styles. If you use
+  [cascade layers](/post/css/css-cascade-layers), put it in the lowest layer, for example
+  `@layer reset, base, components;`, so every other layer overrides it however the files are loaded. One exception:
+  `!important` reverses layer order, so the reduced-motion override above still beats every later layer.
 - **`text-wrap` has a cost.** `pretty` and `balance` do extra layout work. Browsers limit `balance` to a few lines,
   and the cost is negligible for headings and normal paragraphs, but avoid applying either to very long blocks of
   text.
