@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "field-sizing-content-textarea",
+    title: "Auto-Growing Textareas with field-sizing: content",
+    description: "Type past the edge of either box — the left one grows with its content via field-sizing: content alone; the right one is a plain textarea, for comparison.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "native-css-masonry-layout",
     title: "Native CSS Masonry with grid-template-rows: masonry",
     description: "Nine variable-height tiles — toggle between grid-template-rows: masonry (packed into the shortest column) and a plain grid fallback to see exactly what the one property buys you.",
