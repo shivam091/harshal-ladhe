@@ -1,0 +1,78 @@
+/* Only shown where field-sizing isn't supported. */
+.support-tip {
+  margin: 0;
+}
+
+@supports (field-sizing: content) {
+  .support-tip {
+    display: none;
+  }
+}
+
+.playground-header code,
+.tip code,
+.field label code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+/*
+  .field's own bottom margin would sit inside the dashed demo area. The column flex layout stretches each textarea to
+  the column's width, which matters here: a content-sized textarea with no set width would also shrink sideways to its
+  longest line.
+*/
+.demo-area .field {
+  margin-block-end: 0;
+}
+
+textarea {
+  --pad: 0.625rem;
+  padding: var(--pad);
+  font: inherit;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  resize: none;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: var(--pg-primary);
+  box-shadow: 0 0 0 0.1875rem var(--pg-primary-soft);
+}
+
+/*
+  The feature itself. rows="3" no longer sets a size once field-sizing is content, so the limits below do that job.
+  With border-box sizing, lh counts lines of text but the box also holds padding and border, so they're added on.
+*/
+.auto-size {
+  field-sizing: content;
+}
+
+.has-min textarea.auto-size {
+  min-block-size: calc(3lh + 2 * var(--pad) + 0.125rem);
+}
+
+.has-max textarea.auto-size {
+  max-block-size: calc(8lh + 2 * var(--pad) + 0.125rem);
+}
+
+.is-resizable textarea {
+  resize: vertical;
+}
+
+@media (max-width: 30rem) {
+  .pair {
+    grid-template-columns: 1fr;
+  }
+}

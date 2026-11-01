@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>field-sizing Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Auto-Growing Textareas with field-sizing</h1>
+        <p>Both textareas have <code>rows="3"</code>. Type past the edge of each: the left one uses <code>field-sizing: content</code> and grows, the right one keeps its fixed size and scrolls. Untick the limits to see the textarea follow its text alone, and turn on <code>resize</code> to see a manual drag stop the growth.</p>
+      </header>
+
+      <p class="tip support-tip">Your browser doesn't support <code>field-sizing</code>, so the left textarea keeps its fixed size, just like the right one. It's supported in Chrome and Edge 123, Safari 26.2 and Firefox 152 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Limits</legend>
+        <label class="checkbox-field">
+          <input type="checkbox" id="min-toggle" checked>
+          <code>min-block-size: 3lh</code>
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" id="max-toggle" checked>
+          <code>max-block-size: 8lh</code>
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" id="resize-toggle">
+          <code>resize: vertical</code> (untick to clear a dragged size)
+        </label>
+      </fieldset>
+
+      <section class="demo-area" id="demo" aria-label="Auto-growing and fixed textareas">
+        <div class="pair">
+          <div class="field">
+            <label for="auto-textarea"><code>field-sizing: content</code></label>
+            <textarea id="auto-textarea" class="auto-size" rows="3">Keep typing. This box grows with its content and shrinks again when you delete it.</textarea>
+          </div>
+
+          <div class="field">
+            <label for="fixed-textarea">Default (<code>rows="3"</code>)</label>
+            <textarea id="fixed-textarea" rows="3">Keep typing. This box keeps its size and scrolls instead.</textarea>
+          </div>
+        </div>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

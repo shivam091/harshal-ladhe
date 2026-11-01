@@ -1,0 +1,227 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("field-sizing-content-textarea");
+
+## Introduction
+
+An auto-growing textarea gets taller as you type, instead of scrolling inside a fixed box. Comment boxes, chat inputs
+and message fields all want one, and until recently every one of them needed JavaScript: listen for `input`, measure
+`scrollHeight`, and set the height to match.
+
+**`field-sizing: content`** does it in CSS. It tells a textarea to size itself to its text, the way most elements
+already size to their content, so it grows as you type and shrinks when you delete. Like [`accent-color`](/tutorial/accent-color-native-controls), it improves the browser's own
+controls instead of replacing them with custom widgets.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  textarea {
+    field-sizing: content;
+  }
+`}
+</CodeBlock>
+
+The textarea is now exactly as tall as its text. It grows as you type and shrinks again when you delete. In practice
+you'll almost always add a minimum and a maximum as well, covered in [Setting Limits](#setting-limits).
+
+The property has two values. `fixed` is the default: the textarea keeps the size the browser gives it, such as the
+height from `rows`. `content` makes it size to its text instead.
+
+<RainbowDivider />
+
+## The JavaScript It Replaces
+
+<CodeBlock language="js">
+{`
+  // What auto-growing textareas have shipped until now
+  textarea.addEventListener("input", () => {
+    textarea.style.height = "auto"; // let it shrink first
+    textarea.style.height = \`\${textarea.scrollHeight}px\`;
+  });
+`}
+</CodeBlock>
+
+It's only two lines, but each has a cost:
+
+- **A forced layout on every keystroke.** Reading `scrollHeight` straight after changing `height` makes the browser
+  recalculate the layout immediately, every time a key is pressed.
+- **The page can jump.** Setting `height: auto` briefly collapses a tall textarea. Inside a scrolled page or panel,
+  that can shift the scroll position while someone is typing.
+- **It ignores the border.** `scrollHeight` covers the content and padding but not the border, so with
+  `box-sizing: border-box` the box ends up slightly too short unless you add the border widths back.
+- **It only runs on `input`.** Text set from code, such as a saved draft or a form reset, doesn't fire the event, so
+  the box stays the wrong size until you call the function yourself.
+
+`field-sizing: content` has none of these problems. The browser sizes the control during normal layout, the same way
+it sizes a paragraph, so there's nothing to measure and nothing to keep in sync.
+
+<RainbowDivider />
+
+## Setting Limits
+
+Content sizing has no minimum or maximum of its own. An empty textarea is about one line tall, and a pasted page of
+text makes it as tall as the page. Set both limits with `min-block-size` and `max-block-size`:
+
+<CodeBlock language="css">
+{`
+  textarea {
+    field-sizing: content;
+    min-block-size: 3lh;  /* at least three lines */
+    max-block-size: 12lh; /* then it scrolls */
+  }
+`}
+</CodeBlock>
+
+The `lh` unit is the element's line height, so `3lh` means "three lines of text", whatever the font size. Past the
+maximum, the textarea stops growing and scrolls inside, just as an ordinary one does.
+
+### `rows` and `cols` Stop Working
+
+With `field-sizing: content`, the `rows` and `cols` attributes no longer affect the size at all. They don't set a
+starting size or a limit. `<textarea rows="3">` collapses to one line when it's empty, so use `min-block-size` for the
+starting height instead.
+
+### Padding and Border with `lh`
+
+With `box-sizing: border-box`, which most [CSS resets](/tutorial/modern-css-reset#box-model-and-margins) set,
+`min-block-size` includes the padding and border. `3lh` then leaves a little less than three lines for the text. If the exact number of lines matters, add the padding and
+border back:
+
+<CodeBlock language="css">
+{`
+  textarea {
+    padding: 0.625rem;
+    border: 1px solid;
+    min-block-size: calc(3lh + 2 * 0.625rem + 2px);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Placeholder Text
+
+An empty textarea sizes to its placeholder. A long placeholder therefore makes the box tall before anyone has typed,
+and it shrinks as soon as they start. Keep placeholders short, or let `min-block-size` set the empty size.
+
+<RainbowDivider />
+
+## Try It Live
+
+Both textareas have `rows="3"`. Type past the edge of each: the left one uses `field-sizing: content` and grows, while
+the right one is a plain textarea that keeps its size and scrolls. Untick **`min-block-size`** to see `rows` ignored,
+and untick **`max-block-size`** to let the box grow without limit. Turn on **`resize: vertical`**, drag the handle,
+then keep typing to see the dragged height stop the growth. The readout shows how many lines tall each textarea is,
+and whether it's scrolling.
+
+<Sandbox slug="field-sizing-content-textarea" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Relationship to `resize`
+
+<CodeBlock language="css">
+{`
+  textarea {
+    field-sizing: content;
+    resize: none; /* keep the size in the browser's hands */
+  }
+`}
+</CodeBlock>
+
+`resize` adds a handle that lets someone drag the box to a new size. Dragging sets an explicit `height` on the
+element, and an explicit size always beats content sizing. After a drag, the textarea stops growing and shrinking in
+that direction and keeps the height it was dragged to.
+
+So the two don't combine well. If the box should always follow its content, use `resize: none`. If people need to
+make it larger by hand, keep `resize: vertical` and accept that a drag fixes its height from then on.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`field-sizing` became Baseline in June 2026, when Firefox 152 shipped it. It's supported in Chrome and Edge 123,
+Safari 26.2 and Firefox 152. Older browsers ignore the property, and the textarea keeps its usual fixed size and
+scrolls. That's exactly what the field did before, so adding it is safe.
+
+If auto-growth matters in older browsers too, keep the old script as a fallback and run it only where the property
+isn't supported:
+
+<CodeBlock language="js">
+{`
+  if (!CSS.supports("field-sizing", "content")) {
+    for (const textarea of document.querySelectorAll("textarea")) {
+      const fit = () => {
+        textarea.style.height = "auto";
+        textarea.style.height = \`\${textarea.scrollHeight}px\`;
+      };
+      textarea.addEventListener("input", fit);
+      fit();
+    }
+  }
+`}
+</CodeBlock>
+
+In CSS, `@supports (field-sizing: content)` does the same job, for styles that only make sense when the textarea
+grows.
+
+<RainbowDivider />
+
+## Accessibility
+
+**Keep the rest of the form reachable.** Without a maximum, a long message pushes the submit button below the fold,
+which is especially awkward on a phone with the on-screen keyboard open. A `max-block-size` keeps the button in view.
+
+**Keep the empty box inviting.** A one-line textarea looks like a single-line input, so people may not realise they
+can write more. A `min-block-size` of two or three lines signals a longer answer and gives a larger target to tap.
+
+**Nothing to announce.** Screen readers don't report a field's size, so growing and shrinking doesn't need an ARIA
+attribute or a live region.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Expecting `rows` to Set a Starting Size
+
+`rows` and `cols` are ignored once a control is content-sized. Use `min-block-size: 3lh` for the starting height.
+
+### 2. Leaving Out a Maximum
+
+A pasted wall of text makes the textarea as tall as the text, pushing everything after it down the page. Always pair
+`field-sizing: content` with `max-block-size`.
+
+### 3. A Fixed Height Somewhere Else
+
+`height`, `block-size` or an inline style set by an old auto-grow script all override content sizing. Remove the old
+script, or guard it as shown in [Browser Support and Fallbacks](#browser-support-and-fallbacks), when you add the
+property.
+
+### 4. A Textarea That Shrinks Sideways
+
+Content sizing applies in both directions. A textarea that isn't stretched by its container, such as one inside a
+flex row or an inline layout, also narrows to its longest line. Give it a width, such as `inline-size: 100%`, if it
+should fill its container.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Comment, message and chat boxes, where the field should start small and grow with what's typed
+- Any textarea currently wired to a `scrollHeight` listener just to grow: remove the listener and add a maximum
+- Feedback, bio and description fields in forms, where answers range from one line to several paragraphs
+
+**Leave it out** where the layout depends on the textarea having a fixed size, such as a code editor or a form whose
+fields must line up in a grid.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`field-sizing: content` lets a textarea size to its text, replacing the `scrollHeight` script that auto-growing
+textareas have needed for years. Pair it with `min-block-size` and `max-block-size` in `lh` units, since `rows` no
+longer sets a size, and use `resize: none` if the box should always follow its text. It's Baseline, and older browsers
+simply keep the fixed size they had before.
