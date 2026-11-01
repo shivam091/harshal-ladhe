@@ -887,6 +887,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS Houdini",
     description: "The CSS Houdini APIs that expose parts of the browser's styling engine, from registering typed custom properties to custom paint and layout."
   },
+  "at-function": {
+    title: "CSS Custom Functions with `@function`",
+    description: "Defining reusable, typed CSS functions with `@function` that return values, read custom properties and re-evaluate live in the browser."
+  },
   "custom-properties": {
     title: "CSS Custom Properties",
     description: "Using CSS custom properties (variables) to share, inherit and compute values across a stylesheet, from simple tokens to values read from HTML attributes."
