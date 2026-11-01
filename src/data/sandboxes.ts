@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "native-css-carousel-scroll-markers",
+    title: "CSS-Only Carousel Dots & Nav with ::scroll-marker",
+    description: "A scroll-snap strip whose pagination dots and prev/next arrows are generated entirely by ::scroll-marker and ::scroll-button() — no JS tracking the active slide.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "field-sizing-content-textarea",
     title: "Auto-Growing Textareas with field-sizing: content",
     description: "Type past the edge of either box — the left one grows with its content via field-sizing: content alone; the right one is a plain textarea, for comparison.",

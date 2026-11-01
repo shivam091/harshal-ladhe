@@ -1,0 +1,92 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("native-css-carousel-scroll-markers");
+
+## Introduction
+
+A carousel with pagination dots and prev/next arrows is one of the most-shipped, most-reimplemented UI patterns on the web — and until now, entirely a JS job: track the active index, render a dot per slide, wire click handlers to scroll. **`::scroll-marker`** and **`::scroll-button()`** generate both directly from a scroll-snap container CSS already understands, with the active dot tracked automatically.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .carousel {
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-marker-group: after;
+  }
+
+  .slide { scroll-snap-align: center; }
+  .slide::scroll-marker { content: ""; /* one dot per slide */ }
+`}
+</CodeBlock>
+
+`scroll-marker-group: after` tells the carousel to generate a strip of markers (positioned after its content) with one `::scroll-marker` per scroll-snap child that opts in — no loop rendering a `<button>` per slide.
+
+<RainbowDivider />
+
+## The Active Dot, Automatically
+
+<CodeBlock language="css">
+{`
+  .slide::scroll-marker {
+    background: gray;
+  }
+
+  /* Styled automatically for whichever slide is currently snapped into view */
+  .slide::scroll-marker:target-current {
+    background: white;
+  }
+`}
+</CodeBlock>
+
+`:target-current` is what used to require an `IntersectionObserver` (or a scroll-position calculation) purely to answer "which slide is the user looking at right now" — the browser already knows, because it owns the scroll-snap machinery.
+
+<RainbowDivider />
+
+## Try It Live
+
+Scroll (or drag) the strip. On a browser that supports this yet, prev/next arrows and a dot per slide appear below it — click a dot, or the arrows, exactly like a JS carousel. Where it isn't supported, this degrades to a plain scroll-snap row: still fully scrollable by touch/drag/keyboard, just without the generated controls.
+
+<Sandbox slug="native-css-carousel-scroll-markers" readOnly />
+
+<RainbowDivider />
+
+## Prev/Next Buttons, Generated From the Container
+
+<CodeBlock language="css">
+{`
+  .carousel::scroll-button(left) { content: "‹"; }
+  .carousel::scroll-button(right) { content: "›"; }
+
+  /* Disabled automatically at either end — no manual boundary check */
+  .carousel::scroll-button(left):disabled { opacity: 0.3; }
+`}
+</CodeBlock>
+
+`::scroll-button(*)` generates a button that scrolls its container one snap-point in that direction on click, and is automatically `:disabled` when there's nowhere further to scroll — the boundary-checking logic every hand-rolled carousel's "next" button needs, for free.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Image/testimonial/product carousels currently built with a JS library (Swiper, Splide, embla) purely for scroll-snap + dots + arrows, with no additional behavior (autoplay, infinite loop) the library adds on top
+- Tab-like horizontally scrolling strips (category chips, a filter bar) that want a "which one is active" indicator without an `IntersectionObserver`
+- Any scroll-snap container where the missing piece was only ever "generate the pagination UI," not custom interaction logic
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Support is extremely early** — this is very much a "watch for it" feature today, not a JS-carousel replacement to ship on; the sandbox's `CSS.supports("scroll-marker-group", "after")` check is the honest way to confirm before relying on it.
+* **The scroll-snap foundation underneath (`scroll-snap-type`, `scroll-snap-align`) is NOT new** and is widely supported today — build on that now, and `::scroll-marker`/`::scroll-button()` layer on top later without restructuring anything.
+* **No built-in autoplay, infinite/looping scroll, or multi-slide-per-view logic** — this replaces the dots-and-arrows chrome specifically, not every feature a JS carousel library bundles.
+* **Marker/button content and layout are fully styleable** (as the demo's dots and circular arrow buttons show) — this isn't a fixed native widget with browser chrome, it's generated boxes you style like anything else.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`::scroll-marker` and `::scroll-button()` turn the "dots and arrows" half of a carousel — active-state tracking included — into CSS generated from a scroll-snap container the platform already understood. It's early, but it's aimed squarely at deleting a JS dependency that exists in an enormous number of sites for exactly this, and nothing more.
