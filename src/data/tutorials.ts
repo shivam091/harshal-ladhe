@@ -612,6 +612,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "import-attributes-json",
+    title: "Importing JSON as a Module with Import Attributes",
+    excerpt: "Standard `with { type: \"json\" }` syntax, replacing bundler-specific JSON import magic.",
+    description: "Import attributes make importing a JSON file standard ES module syntax — with { type: \"json\" } tells the loader explicitly how to interpret the file, portable across bundlers and runtimes instead of relying on bundler-specific resolution.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es-modules", "import-attributes", "json", "esnext", "modules"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/import-attributes-json/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A config.json file imported directly as an ES module using the with type json import attribute, its parsed values rendered on the page."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

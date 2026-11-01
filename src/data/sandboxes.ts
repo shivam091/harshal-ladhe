@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "import-attributes-json",
+    title: "Importing JSON as a Module with Import Attributes",
+    description: "config.json is imported directly with `with { type: \"json\" }` and rendered below — a real ES module import, not a fetch() call or bundler-specific magic.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "uint8array-base64-native",
     title: "Native Base64 with Uint8Array",
     description: "Encode text containing accents/emoji both ways — btoa() throws on anything outside Latin1, while Uint8Array.prototype.toBase64() (paired with TextEncoder) handles it correctly.",
