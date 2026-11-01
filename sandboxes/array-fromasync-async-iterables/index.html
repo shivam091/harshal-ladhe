@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Array.fromAsync() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Collecting a paginated API</h1>
+        <p>An async generator yields one "page" at a time, 300ms apart. <code>Array.fromAsync()</code> collects every page into a real array — open the console to watch it happen.</p>
+      </header>
+
+      <button type="button" id="load">Load all pages</button>
+
+      <ul class="results" id="results"></ul>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -522,6 +522,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "array-fromasync-async-iterables",
+    title: "Array.fromAsync() for Async Iterables",
+    excerpt: "Collects an async generator's yielded values into a real array in one call.",
+    description: "Array.fromAsync() awaits an entire async iterable — a generator, a paginated fetch loop, a ReadableStream — and collects it into a real array, replacing the manual for-await-of loop pushing into an accumulator.",
+    category: ["JavaScript"],
+    tags: ["javascript", "async-await", "generators", "iterables", "esnext", "arrays"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/array-fromasync-async-iterables/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "An async generator yielding paginated results one at a time, collected into a single array by Array.fromAsync()."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

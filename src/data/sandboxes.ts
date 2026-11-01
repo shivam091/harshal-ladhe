@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "array-fromasync-async-iterables",
+    title: "Array.fromAsync() for Async Iterables",
+    description: "An async generator yields paginated results 300ms apart — Array.fromAsync() collects the whole sequence into one real array with a single await.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "interpolate-size-auto-animations",
     title: "Animating Height to auto with interpolate-size",
     description: "An accordion whose panels transition height directly between 0 and auto — no scrollHeight measurement, no grid-template-rows trick.",
