@@ -823,6 +823,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Building HTML Forms",
     description: "Accessible, well-styled HTML forms and the native controls inside them."
   },
+  "field-sizing": {
+    title: "CSS `field-sizing` Property",
+    description: "Letting textareas, inputs and selects size to their content with `field-sizing: content`, instead of measuring them with JavaScript."
+  },
   "native-controls": {
     title: "Native Form Controls",
     description: "Getting the most from the browser's own form controls instead of rebuilding them as custom widgets."
