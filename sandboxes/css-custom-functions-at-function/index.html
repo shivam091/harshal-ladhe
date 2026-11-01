@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@function Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>One Spacing Scale, One @function</h1>
+        <p>Every padding, gap and margin in the cards below comes from a single <code>--space(n)</code> function, which multiplies <code>n</code> by <code>--unit</code>. Drag the slider to change <code>--unit</code> on the root, then tick the checkbox to override it on the second card only.</p>
+      </header>
+
+      <p class="tip support-tip">Your browser doesn't support <code>@function</code> yet, so the cards are using their fixed fallback spacing and the controls have no effect. Try Chrome or Edge 139 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Spacing scale</legend>
+
+        <div class="field">
+          <label for="unit-input"><code>--unit</code> on <code>:root</code></label>
+          <div class="range-row">
+            <span class="range-edge">0.125rem</span>
+            <div class="range-track">
+              <input type="range" id="unit-input" min="0.125" max="0.5" step="0.0625" value="0.25">
+              <output class="range-bubble" id="unit-value" for="unit-input">0.25rem</output>
+            </div>
+            <span class="range-edge">0.5rem</span>
+          </div>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="compact-toggle">
+          <code>--unit: 0.125rem</code> on the second card only
+        </label>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Cards spaced by --space()">
+        <article class="card">
+          <h2>Card title</h2>
+          <p>padding: <code>--space(4)</code></p>
+          <ul class="chips">
+            <li class="chip">Design</li>
+            <li class="chip">Tokens</li>
+            <li class="chip">CSS</li>
+          </ul>
+          <p class="card-note">Chips: gap <code>--space(2)</code>, margin <code>--space(3)</code></p>
+        </article>
+
+        <article class="card" id="second-card">
+          <h2>Another card</h2>
+          <p>Separated from the card above by <code>--space(6)</code>.</p>
+          <ul class="chips">
+            <li class="chip">Spacing</li>
+            <li class="chip">Scale</li>
+          </ul>
+        </article>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

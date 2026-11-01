@@ -433,6 +433,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-10-31", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-custom-functions-at-function",
+    title: "CSS Custom Functions with `@function`: Reusable Logic Without Sass",
+    excerpt: "Native, reusable CSS functions with parameters — no Sass needed.",
+    description: "Define native CSS custom functions with @function: typed parameters, defaults, fallbacks for older browsers, how they differ from Sass, and when to use them.",
+    category: ["CSS"],
+    tags: ["css", "at-function", "css-functions", "custom-properties", "scss", "design-tokens", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-custom-functions-at-function/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Multiple card components sharing one --space() @function-defined spacing scale, all updating together as a base-unit slider is dragged.",
+      caption: "Cards sharing one spacing scale defined with a CSS @function."
+    },
+    changelog: [
+      { date: "2026-11-01", change: "Initial publication." }
+    ]
   }
 ];
 
