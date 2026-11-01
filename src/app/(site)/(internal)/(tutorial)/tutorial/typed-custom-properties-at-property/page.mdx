@@ -277,6 +277,9 @@ for example), or when it's component state that shouldn't inherit.
 **Leave it unregistered** when it only passes a list or shorthand through to `var()`, or must resolve `em` or `%`
 against each element that reads it.
 
+**Reach for [`@function`](/tutorial/css-custom-functions-at-function) instead** when what you want to reuse is a calculation rather than a stored value. Its
+parameters and return value are typed with the same syntax as `@property`.
+
 <RainbowDivider />
 
 ## Key Takeaway
