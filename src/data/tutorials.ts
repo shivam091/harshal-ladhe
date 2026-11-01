@@ -486,6 +486,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "shape-function-clip-path",
+    title: "Path-Based clip-path with the shape() Function",
+    excerpt: "SVG-style path commands as real CSS syntax — calc() and custom properties work inside.",
+    description: "The shape() function brings SVG-style path drawing commands (line to, curve to, arc to) into real CSS function syntax, letting calc() and custom properties drive individual coordinates — something path()'s static SVG path-data string can never do.",
+    category: ["CSS"],
+    tags: ["css", "clip-path", "shape-function", "svg", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/shape-function-clip-path/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A speech bubble shape with a movable tail, its clip-path drawn using the shape() function with a calc()-driven coordinate."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

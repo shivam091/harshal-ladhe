@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "shape-function-clip-path",
+    title: "Path-Based clip-path with shape()",
+    description: "A speech bubble whose tail slides along a slider — its position comes from calc(var(--tail) ...) written directly inside a shape() clip-path, which path()'s SVG-string syntax can't do.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "native-css-carousel-scroll-markers",
     title: "CSS-Only Carousel Dots & Nav with ::scroll-marker",
     description: "A scroll-snap strip whose pagination dots and prev/next arrows are generated entirely by ::scroll-marker and ::scroll-button() — no JS tracking the active slide.",

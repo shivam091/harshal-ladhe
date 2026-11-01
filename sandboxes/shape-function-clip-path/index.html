@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>shape() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>A speech bubble with a movable tail</h1>
+        <p>Drag the slider. The tail's position comes from <code>calc(var(--tail) ...)</code> written directly inside a <code>clip-path: shape(...)</code> — <code>path()</code>'s SVG-string syntax can't take a CSS variable at all.</p>
+      </header>
+
+      <label class="tail-control">
+        Tail position: <output id="tail-output">50%</output>
+        <input type="range" id="tail" min="15" max="85" value="50" step="1" />
+      </label>
+
+      <div class="bubble" id="bubble">
+        <p>This whole outline — including the tail — is one <code>shape()</code> clip-path.</p>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
