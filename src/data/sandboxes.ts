@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-custom-functions-at-function",
+    title: "One Spacing Scale, One @function",
+    description: "Every padding, gap and margin comes from one --space() function. Drag the slider to change --unit on the root, or override it on one card to see each call read --unit from the element it's used on.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-cascade-layers",
     title: "Cascade Layers Specificity War",
     description: "Assign four real CSS rules of different specificity to declared layers, reorder the layers, and toggle !important per rule — a live stylesheet lets a real browser decide the winner while a readout explains exactly why.",
