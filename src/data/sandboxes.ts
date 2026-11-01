@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "field-sizing-content-textarea",
+    title: "Auto-Growing Textareas with field-sizing",
+    description: "Type past the edge of two textareas to compare field-sizing: content with a fixed size, and toggle the min and max limits and resize to see how each changes the growth.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-custom-functions-at-function",
     title: "One Spacing Scale, One @function",
     description: "Every padding, gap and margin comes from one --space() function. Drag the slider to change --unit on the root, or override it on one card to see each call read --unit from the element it's used on.",
