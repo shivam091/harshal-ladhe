@@ -576,6 +576,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "immutable-array-methods",
+    title: "toSorted, toReversed, toSpliced, and with() — Immutable Array Updates",
+    excerpt: "Every mutating array method now has a non-mutating twin that returns a new array.",
+    description: "toSorted(), toReversed(), toSpliced(), and with() are non-mutating counterparts to sort(), reverse(), splice(), and index assignment — returning a new array instead of mutating in place, replacing the spread-into-a-copy-first pattern immutable state (React, Redux) has always needed.",
+    category: ["JavaScript"],
+    tags: ["javascript", "arrays", "immutability", "react", "esnext", "state-management"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/immutable-array-methods/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "An original array left unchanged after several non-mutating method calls, each producing a new array shown side by side."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

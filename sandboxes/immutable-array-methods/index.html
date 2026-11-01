@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Immutable Array Methods Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>The original array never changes</h1>
+        <p>Each button below produces a brand-new array. Check the console — <code>original</code> stays byte-for-byte identical after every single click.</p>
+      </header>
+
+      <div class="controls">
+        <button type="button" data-op="sort">toSorted()</button>
+        <button type="button" data-op="reverse">toReversed()</button>
+        <button type="button" data-op="with">with(1, …)</button>
+        <button type="button" data-op="splice">toSpliced(0, 1)</button>
+        <button type="button" data-op="reset">reset</button>
+      </div>
+
+      <div class="columns">
+        <div>
+          <p class="col-label">original (unchanged)</p>
+          <ol class="list" id="original"></ol>
+        </div>
+        <div>
+          <p class="col-label">result of last click</p>
+          <ol class="list" id="result"></ol>
+        </div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

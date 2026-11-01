@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "immutable-array-methods",
+    title: "toSorted/toReversed/toSpliced/with() — Immutable Array Updates",
+    description: "Click any operation — the original array column never changes; every new method returns a fresh array instead of mutating in place.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "set-methods-union-intersection",
     title: "Native Set union/intersection/difference",
     description: "Compare two role sets with native Set methods — union, intersection, difference, symmetricDifference, and isSubsetOf, no array conversion.",

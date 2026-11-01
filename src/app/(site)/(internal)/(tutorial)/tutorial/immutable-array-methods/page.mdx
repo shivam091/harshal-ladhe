@@ -1,0 +1,87 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("immutable-array-methods");
+
+## Introduction
+
+`.sort()`, `.reverse()`, `.splice()`, and index assignment (`arr[i] = x`) all mutate the array in place — which is exactly what breaks reference-equality checks in React, Vue, and any state manager that decides "did this change?" by comparing object identity. The usual workaround is spreading into a copy first (`[...arr].sort()`). **`toSorted()`, `toReversed()`, `toSpliced()`, and `with()`** are the same operations, built to return a new array instead of mutating.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  const scores = [42, 17, 8, 23];
+
+  const sorted = scores.toSorted((a, b) => a - b); // [8, 17, 23, 42]
+  const updated = scores.with(1, 99);              // [42, 99, 8, 23]
+
+  scores; // still [42, 17, 8, 23] — completely untouched by either call
+`}
+</CodeBlock>
+
+Same arguments as their mutating counterparts (`toSorted` takes the same compare function `.sort()` does) — only the return contract changes: a new array, original left alone.
+
+<RainbowDivider />
+
+## The Spread-First Workaround This Replaces
+
+<CodeBlock language="js">
+{`
+  // Before: copy first, THEN use the mutating method on the copy
+  const sorted = [...scores].sort((a, b) => a - b);
+  const updated = [...scores]; updated[1] = 99;
+
+  // toSpliced() specifically replaces this awkward one:
+  const withoutFirst = [...scores.slice(0, 0), ...scores.slice(1)];
+  // vs.
+  const withoutFirst2 = scores.toSpliced(0, 1);
+`}
+</CodeBlock>
+
+The spread-first pattern works, but it's an extra step at every call site, easy to forget under a code-review's worth of pressure — one missed spread and a "pure" reducer or computed property silently starts mutating shared state.
+
+<RainbowDivider />
+
+## Try It Live
+
+Four buttons, one array. Click any of them and watch both columns — the left ("original") never changes, no matter which operation runs; the right shows exactly what each new method returned. The console logs both side by side per click.
+
+<Sandbox slug="immutable-array-methods" readOnly />
+
+<RainbowDivider />
+
+## `with()` vs. Index Assignment
+
+<CodeBlock language="js">
+{`
+  scores[1] = 99;           // mutates scores in place, returns 99 (not the array)
+  const next = scores.with(1, 99); // returns a NEW array; scores is untouched
+`}
+</CodeBlock>
+
+`with()` is the one with no prior non-mutating equivalent at all — replacing a single index used to mean either direct mutation or a manual `.map((v, i) => i === 1 ? 99 : v)`, which reads far less directly than what it's doing.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- React/Redux/Zustand state updates — any reducer or setter that needs a new array reference for change detection to fire, currently reaching for `[...arr]` before a mutating call
+- Derived/computed values in Vue or Svelte stores where mutating a source array in place breaks reactivity tracking
+- Any function that receives an array as a parameter and shouldn't have side effects on the caller's copy — replacing a defensive `[...arr]` clone-then-mutate with a direct non-mutating call
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Still O(n) — a new array is genuinely allocated** every call, same cost the spread-first pattern already had; this isn't a performance win, it's a correctness/ergonomics one.
+* **`with()` throws a `RangeError` on an out-of-bounds index** rather than silently growing the array the way `arr[10] = x` on a length-4 array would — a stricter, arguably safer default worth knowing about if porting existing index-assignment code.
+* **Well-supported in current engines** — safe to reach for directly in new code; only worth polyfilling/avoiding for code that must run on genuinely old runtimes.
+* **`toSpliced()` takes the exact same arguments as `.splice()`** (start, deleteCount, ...items) — the only difference is the return value and the fact the original is left alone.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`toSorted()`, `toReversed()`, `toSpliced()`, and `with()` give every common mutating array operation a non-mutating twin, deleting the "spread into a copy, then mutate the copy" two-step that immutable-state code (React, Redux, and friends) has needed since arrays first got these methods. Same logic, new array out, original never touched.
