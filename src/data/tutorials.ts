@@ -594,6 +594,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "uint8array-base64-native",
+    title: "Native Base64 Encoding with Uint8Array",
+    excerpt: "Uint8Array.fromBase64/toBase64 fix btoa()'s original sin: it never understood real bytes.",
+    description: "btoa()/atob() only accept Latin1 'binary strings' and throw on Unicode text. Uint8Array.prototype.toBase64()/fromBase64() operate on real bytes, working correctly for any text via TextEncoder/TextDecoder, no unescape/encodeURIComponent hack required.",
+    category: ["JavaScript"],
+    tags: ["javascript", "base64", "uint8array", "text-encoder", "binary-data", "esnext"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/uint8array-base64-native/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Side-by-side comparison of btoa() throwing on unicode text versus Uint8Array.prototype.toBase64() encoding it correctly."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

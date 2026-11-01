@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "uint8array-base64-native",
+    title: "Native Base64 with Uint8Array",
+    description: "Encode text containing accents/emoji both ways — btoa() throws on anything outside Latin1, while Uint8Array.prototype.toBase64() (paired with TextEncoder) handles it correctly.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "immutable-array-methods",
     title: "toSorted/toReversed/toSpliced/with() — Immutable Array Updates",
     description: "Click any operation — the original array column never changes; every new method returns a fresh array instead of mutating in place.",

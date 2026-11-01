@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Uint8Array base64 Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>btoa() vs. native base64</h1>
+        <p><code>btoa()</code> only accepts "binary strings" — one byte per char code. Try encoding text with non-Latin1 characters both ways.</p>
+      </header>
+
+      <label class="field">
+        Text to encode
+        <input type="text" id="input" value="café ☕ — unicode test" />
+      </label>
+
+      <button type="button" id="encode">Encode both ways</button>
+
+      <div class="result" id="btoa-result"></div>
+      <div class="result" id="native-result"></div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
