@@ -398,6 +398,9 @@ parameters, and every place you `@include` it drops in the fully-expanded CSS fo
 get to write `@include gradient(linear, to right, ...)` everywhere instead of retyping the same `@supports` block and
 `linear-gradient(...) in oklch` boilerplate on every single class.
 
+CSS now has a native [`@function`](/tutorial/css-custom-functions-at-function) for reusable *values*, but it can't output whole declarations or `@supports`
+blocks the way a mixin does, so Sass is still the right tool for this one.
+
 ### Unified SCSS Gradient Mixin
 
 This mixin supports **linear, radial, and conic gradients**, includes a **fallback for older browsers**, and automatically upgrades
