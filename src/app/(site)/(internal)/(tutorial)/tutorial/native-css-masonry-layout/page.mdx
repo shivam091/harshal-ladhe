@@ -1,0 +1,84 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("native-css-masonry-layout");
+
+## Introduction
+
+Masonry layout — variable-height items packed tightly into columns, no gaps under the short ones, the classic Pinterest look — has never had a native CSS answer. Every real implementation has been a JS library measuring elements and absolutely positioning them, or a `column-count` hack that reflows content in the wrong reading order. **`grid-template-rows: masonry`** makes it one line, inside Grid you're already using.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: masonry;
+    gap: 0.625rem;
+  }
+`}
+</CodeBlock>
+
+Columns still behave like ordinary Grid columns — `grid-template-columns` sizes them exactly as before. Rows stop being a fixed track list; each item is placed into whichever column is currently shortest, packing tightly instead of aligning to shared row lines.
+
+<RainbowDivider />
+
+## Why `column-count` Was Never a Real Fix
+
+<CodeBlock language="css">
+{`
+  /* The old fallback — reads DOWN each column before moving to the next */
+  .gallery {
+    column-count: 3;
+    column-gap: 0.625rem;
+  }
+`}
+</CodeBlock>
+
+Multi-column layout packs tightly too, but it fills column 1 completely before starting column 2 — item 2 in your markup can end up visually far from item 1, breaking reading and tab order alike. Masonry grid places items left-to-right in source order, same as ordinary grid, just letting row height vary per column.
+
+<RainbowDivider />
+
+## Try It Live
+
+Nine tiles, one row-height custom property each. Toggle between `grid-template-rows: masonry` (packed into the shortest column) and a plain grid fallback (every row stretched to its tallest item) to see exactly what the one line buys you.
+
+<Sandbox slug="native-css-masonry-layout" readOnly />
+
+<RainbowDivider />
+
+## Relationship to JS Masonry Libraries
+
+<CodeBlock language="js">
+{`
+  // The library approach: measure every item, then position absolutely
+  const grid = new Masonry(".gallery", { itemSelector: ".tile", columnWidth: 200 });
+`}
+</CodeBlock>
+
+A JS library has to wait for images/fonts to load, measure real rendered heights, then reposition everything — a visible reflow on every load and every resize. `grid-template-rows: masonry` is laid out by the browser's own layout engine in the same pass as everything else, with no measure-then-reposition step and no JS bundle.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Photo/image galleries where items have genuinely different aspect ratios and a fixed-row grid leaves visible gaps
+- Card layouts (blog previews, product tiles) with variable content length, where you currently reach for a `column-count` hack or a masonry JS library
+- Any grid where "pack tightly" matters more than "align to a shared row baseline" — dashboards of variable-height widgets, pin boards, mood boards
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Browser support is still rolling out** — ship a plain-grid or `column-count` fallback (as in the toggle above) for browsers that don't yet recognize the `masonry` keyword; an unsupported keyword falls back to the initial `grid-template-rows` value, not a crash.
+* **Items still respect `grid-column`/explicit placement** — you can pin specific items to specific columns exactly like ordinary grid; masonry only changes how ROW position is decided, not column assignment rules.
+* **Accessibility/reading order matches source order per column-fill pass**, not the visual left-to-right-then-down order `column-count` produces — this is the main accessibility win over multi-column, worth calling out explicitly if you're migrating from it.
+* **Gap and alignment properties (`gap`, `align-content`) work exactly as in ordinary grid** — nothing masonry-specific to relearn there.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`grid-template-rows: masonry` gives Grid the one layout mode it never had — tight packing around variable item heights, in source order, with no measure-then-reposition JS pass. For galleries and card grids, it replaces a JS masonry library (or a reading-order-breaking `column-count` hack) with a single Grid property.

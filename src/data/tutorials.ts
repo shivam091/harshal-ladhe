@@ -432,6 +432,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "native-css-masonry-layout",
+    title: "Native CSS Masonry with grid-template-rows: masonry",
+    excerpt: "Pinterest-style packed columns, one Grid property, no JS measuring pass.",
+    description: "grid-template-rows: masonry packs variable-height grid items tightly into whichever column is currently shortest, in source order — replacing a JS masonry library's measure-then-reposition pass or a column-count hack that breaks reading order.",
+    category: ["CSS"],
+    tags: ["css", "grid", "masonry", "layout", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/native-css-masonry-layout/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A gallery of variable-height tiles packed tightly into three columns using grid-template-rows: masonry, compared against a plain grid layout with gaps."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

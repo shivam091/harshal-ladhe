@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "native-css-masonry-layout",
+    title: "Native CSS Masonry with grid-template-rows: masonry",
+    description: "Nine variable-height tiles — toggle between grid-template-rows: masonry (packed into the shortest column) and a plain grid fallback to see exactly what the one property buys you.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-custom-functions-at-function",
     title: "Reusable CSS Logic with @function",
     description: "Every gap/padding/margin on the page is produced by one @function, --space(n) — drag the slider to change its base unit and watch every caller update together.",
