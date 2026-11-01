@@ -132,6 +132,7 @@ export const tutorials: Tutorial[] = [
       caption: "Values bounded by min(), max() and clamp(), with no media queries needed."
     },
     changelog: [
+      { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-09-10", change: "Initial publication." }
     ]
   },
@@ -151,6 +152,7 @@ export const tutorials: Tutorial[] = [
       caption: "Type and spacing scaling smoothly from phone to tablet to desktop."
     },
     changelog: [
+      { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-18", change: "Added tag 'container-units'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
       { date: "2026-09-10", change: "Initial publication." }
@@ -249,6 +251,7 @@ export const tutorials: Tutorial[] = [
       caption: "A priority badge changing colour from a single if() value."
     },
     changelog: [
+      { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
       { date: "2026-10-18", change: "Added tag 'style-queries'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
@@ -393,6 +396,7 @@ export const tutorials: Tutorial[] = [
       caption: "Gradient rings animating smoothly through typed custom properties."
     },
     changelog: [
+      { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-26", change: "Initial publication." }
     ]
   },
