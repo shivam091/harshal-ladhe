@@ -1,0 +1,320 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-custom-functions-at-function");
+
+## Introduction
+
+Reusable value logic in CSS has always meant a preprocessor. Write `calc(var(--n) * 0.25rem)` often enough and you
+move it into a Sass `@function`, which is compiled away before the browser ever sees it.
+
+**`@function`** brings that into the platform. You define a named function once in a stylesheet, give it parameters,
+and call it from any property value. There's no build step, and unlike a Sass function it stays live in the browser:
+it reads custom properties from the element that calls it and re-evaluates whenever they change.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  @function --space(--n) {
+    result: calc(var(--n) * 0.25rem);
+  }
+
+  .card {
+    padding: --space(4); /* 1rem */
+    gap: --space(2);     /* 0.5rem */
+  }
+`}
+</CodeBlock>
+
+A custom function's name starts with `--`, like a custom property, and so do its parameters. Inside the body, a
+parameter is read with `var()`, exactly as if it were a custom property. The function is called like any built-in CSS
+function, using its own name.
+
+<RainbowDivider />
+
+## Anatomy of `@function`
+
+### `result`
+
+`result` is the value the function returns. It's a descriptor, not a `return` statement: it doesn't stop the function
+early, and if the body sets `result` more than once, the last valid one wins, just as the last declaration wins in a
+rule.
+
+### Typed Parameters and `returns`
+
+Parameters accept any value by default, so `--space(4px)` is accepted at the call site and only goes wrong later,
+inside the `calc()`. Give a parameter a type, and the function a return type, to catch that at the call:
+
+<CodeBlock language="css">
+{`
+  @function --space(--n <number>) returns <length> {
+    result: calc(var(--n) * 0.25rem);
+  }
+
+  .card {
+    padding: --space(4);   /* 1rem */
+    padding: --space(4px); /* not a <number>: the call is invalid */
+  }
+`}
+</CodeBlock>
+
+Types use the same syntax as [`@property`](/tutorial/typed-custom-properties-at-property): `<number>`, `<length>`,
+`<color>` and so on. To accept more than one, wrap them in `type()`, as in `type(<length> | <percentage>)`.
+
+Typed parameters shipped at the same time as `@function` itself, so any browser that supports custom functions
+supports types too. Use them by default.
+
+### Default Values
+
+A parameter can have a default, written after a colon. A caller that leaves it out gets the default:
+
+<CodeBlock language="css">
+{`
+  @function --space(--n <number>: 1) returns <length> {
+    result: calc(var(--n) * 0.25rem);
+  }
+
+  .chip {
+    padding: --space();  /* 0.25rem */
+  }
+`}
+</CodeBlock>
+
+### Multiple Arguments
+
+Separate parameters and arguments with commas:
+
+<CodeBlock language="css">
+{`
+  @function --fluid(--min <length>, --max <length>) returns <length> {
+    result: clamp(var(--min), 2vw + 0.5rem, var(--max));
+  }
+
+  h2 {
+    font-size: --fluid(1.25rem, 2rem);
+  }
+`}
+</CodeBlock>
+
+If a single argument contains a comma of its own, such as a font stack or a list of shadows, wrap it in curly braces so
+it isn't split into two arguments: `--shadow({0 1px 2px black, 0 4px 8px black})`.
+
+### Local Variables
+
+Custom properties declared inside the body are local to the function. They're a good way to name intermediate steps
+instead of nesting one long `calc()`:
+
+<CodeBlock language="css">
+{`
+  @function --fluid(--min <length>, --max <length>) returns <length> {
+    --preferred: calc(var(--min) + 2vw);
+    result: clamp(var(--min), var(--preferred), var(--max));
+  }
+`}
+</CodeBlock>
+
+A local variable never leaks into the element that called the function. It also hides any custom property of the same
+name on that element while the function runs.
+
+<RainbowDivider />
+
+## Functions See the Caller's Custom Properties
+
+A function body can read custom properties that aren't parameters. When it does, it reads them from the element the
+function was called on:
+
+<CodeBlock language="css">
+{`
+  @function --space(--n <number>: 1) returns <length> {
+    result: calc(var(--n) * var(--unit, 0.25rem));
+  }
+
+  :root    { --unit: 0.25rem; }
+  .compact { --unit: 0.125rem; }
+`}
+</CodeBlock>
+
+`--space(4)` is `1rem` in most of the page, but `0.5rem` inside `.compact`, because every call looks up `--unit` where
+it's made. Change `--unit` from JavaScript, a media query or a hover state, and every call that reads it updates.
+
+That's the real difference from a preprocessor. A Sass function turns `space(4)` into `1rem` once, at build time.
+`@function` keeps the formula, so the same call can produce different values on different elements and at different
+moments.
+
+<RainbowDivider />
+
+## Conditional Logic Inside a Function
+
+The body of a function can contain `@media` and `@supports` blocks. Because the last valid `result` wins, a
+conditional block placed after the default overrides it when its condition matches:
+
+<CodeBlock language="css">
+{`
+  @function --gutter() returns <length> {
+    result: 1rem;
+
+    @media (width >= 48rem) {
+      result: 2rem;
+    }
+  }
+
+  .layout {
+    padding-inline: --gutter();
+  }
+`}
+</CodeBlock>
+
+Every caller now gets the right gutter for the viewport, and the breakpoint lives in one place instead of in a media
+query beside every rule that uses it. For a choice inside a single value, the body can also use the
+[`if()` function](/tutorial/css-if-conditional-values).
+
+<RainbowDivider />
+
+## Try It Live
+
+Every padding, gap and margin in the two cards comes from the same `--space()` function. Drag the slider to change
+`--unit` on the root, and every call updates together, with no rebuild. Tick the checkbox to set a smaller `--unit` on
+the second card only: its spacing shrinks while the first card's stays put, because each call reads `--unit` from the
+card it's used on. The readout shows the padding and gap each card actually computed to.
+
+<Sandbox slug="css-custom-functions-at-function" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Relationship to Sass Functions
+
+<CodeBlock language="scss">
+{`
+  // Sass: resolved once, at build time, into a fixed value
+  @function space($n) {
+    @return $n * 0.25rem;
+  }
+
+  .card {
+    padding: space(4); // compiles to padding: 1rem
+  }
+`}
+</CodeBlock>
+
+A Sass function runs before the browser is involved, and only its result ships. A CSS `@function` ships the logic
+itself, so it can read custom properties, react to media conditions and re-evaluate live, none of which a compiled
+value can do. Sass is still useful for things CSS can't do yet, such as loops and generating whole rules.
+
+`@function` is the counterpart of a Sass **function**, not a Sass **mixin**. It returns one value for one property; it
+can't output a block of declarations. A CSS `@mixin` rule, applied with `@apply`, is planned in the same specification
+but hasn't shipped in any browser yet.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`@function` shipped in Chrome and Edge 139 in August 2025. Firefox and Safari haven't shipped it, so it isn't Baseline
+yet. Treat it as progressive enhancement, and give every call a fallback.
+
+The simplest fallback is a fixed value declared just before the call:
+
+<CodeBlock language="css">
+{`
+  .card {
+    padding: 1rem;         /* browsers without @function */
+    padding: --space(4);   /* browsers with it */
+  }
+`}
+</CodeBlock>
+
+This works because of when each browser checks the declaration:
+
+- **Without `@function` support**, `--space(4)` isn't valid syntax for `padding`, so the second declaration is dropped
+  when the stylesheet is parsed, and the first one applies.
+- **With support**, a custom function call is accepted at parse time, just as `var()` is, so the second declaration
+  replaces the first. If the call later fails, the property becomes invalid at computed-value time and falls back to
+  its inherited or initial value, not to `1rem`.
+
+To switch whole blocks of styles, test for the syntax in a feature query. Only browsers that support custom functions
+accept a call in a declaration, so this works even before `--space` is defined:
+
+<CodeBlock language="css">
+{`
+  @supports (padding: --space(1)) {
+    /* styles that rely on @function */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Using a Parameter Without `var()`
+
+`result: calc(--n * 0.25rem)` doesn't work. A parameter is read like a custom property, so it always needs `var()`:
+`calc(var(--n) * 0.25rem)`.
+
+### 2. Passing a Unit to a `<number>` Parameter
+
+`--space(4px)` and `--space(1rem)` are invalid when `--n` is typed as `<number>`. Pass the step count and let the
+function add the unit. Leave the parameter untyped and the same mistake surfaces later as a broken `calc()`, which is
+much harder to trace.
+
+### 3. Expecting a Fallback Value After a Failed Call
+
+A browser that supports `@function` never falls back to the declaration before a failed call. A typo in the function
+name or an invalid argument makes the property invalid at computed-value time, so it resets to its inherited or initial
+value. When spacing suddenly disappears, check the Computed panel in DevTools to see what the property resolved to.
+
+### 4. Defining the Same Function Twice
+
+Function names share one namespace across the document's stylesheets, and if two `@function` rules share a name, the one that comes last in the cascade wins. That
+includes [cascade layer](/post/css/css-cascade-layers) order, so a `--space` defined in a later layer silently replaces
+your design system's. Namespace shared functions, such as `--ds-space()`.
+
+### 5. Calling a Function Where Values Aren't Allowed
+
+A custom function works anywhere `var()` does: in property values, including custom property values. It doesn't work
+in selectors, in media query conditions or in other at-rule preludes.
+
+### 6. Recursion
+
+A function can call other functions, but not itself, directly or through a chain. A cycle makes every function in it
+invalid. Keep the call graph shallow, too: a deep chain of functions is as hard to trace as a deep chain of Sass
+imports, and there's no compiled output to search through.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A spacing, type or radius scale currently written as a Sass function: one live CSS definition replaces it, and
+  components can re-scale it by setting a custom property
+- Small calculations repeated across many components, such as a fluid size built on
+  [`clamp()`](/tutorial/min-max-clamp-functions) or a rounded step, where a preprocessor function exists only to avoid
+  repeating one expression
+- Any value that has to react to a custom property changing at runtime, such as a theme, a density setting or a
+  container's state
+
+**Leave it out** when the value is used in only one place, where a plain `calc()` is clearer, or when the project has
+to look identical in Firefox and Safari today without a fallback.
+
+<RainbowDivider />
+
+## Production Considerations
+
+* **Fallbacks are part of every call** — until Firefox and Safari ship `@function`, every call needs a fixed value
+  before it, or the whole block behind an `@supports` test.
+* **Type every parameter and return value** — it costs a few words, and a wrong argument then fails at the call
+  instead of deep inside a `calc()`, where it's much harder to trace.
+* **It doesn't replace `@property`** — `@function` computes a value from its inputs; `@property` gives a custom
+  property a type so it can animate. They work together: a function can read a registered custom property.
+* **Keep functions small and pure** — a function that reads a lot of custom properties from its caller is hard to
+  reason about. Pass values in as parameters wherever you can, and keep the custom properties it reads to documented
+  tokens such as `--unit`.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`@function` moves reusable value logic from a preprocessor into the browser. Name the calculation once, type its
+parameters and return value, and call it anywhere a value is allowed. Because it reads custom properties from each
+element that calls it, one definition can adapt per component and change at runtime, which a compiled Sass value never
+could. Until Firefox and Safari support it, put a fixed fallback before every call.
