@@ -1,0 +1,88 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("set-methods-union-intersection");
+
+## Introduction
+
+Comparing two `Set`s — what's in both, what's only in one, whether one fully contains the other — has always meant spreading them into arrays and reaching for `.filter()`/`.includes()`, throwing away the very thing that made a `Set` worth using (O(1) membership checks) in the process. **Native set-algebra methods** — `union`, `intersection`, `difference`, `symmetricDifference`, `isSubsetOf`, `isSupersetOf`, `isDisjointFrom` — do the comparison directly, as `Set`s in, `Set` (or boolean) out.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  const yourRoles = new Set(["editor", "reviewer", "billing"]);
+  const required = new Set(["editor", "admin"]);
+
+  yourRoles.intersection(required); // Set(1) {"editor"} — roles you have that are required
+  yourRoles.union(required);        // Set(4) {"editor","reviewer","billing","admin"}
+  yourRoles.difference(required);   // Set(2) {"reviewer","billing"} — yours, not required
+`}
+</CodeBlock>
+
+Each method returns a brand-new `Set` — the originals are never mutated, same immutability guarantee `Set` has always had for its other methods.
+
+<RainbowDivider />
+
+## The Array Detour This Replaces
+
+<CodeBlock language="js">
+{`
+  // Intersection, the old way — round-trips through an array and rebuilds a Set
+  const intersection = new Set(
+    [...yourRoles].filter((role) => required.has(role))
+  );
+`}
+</CodeBlock>
+
+That works, but every set operation needed its own hand-written array pipeline, each one a slightly different combination of spread/filter/has — easy to get subtly wrong (union vs. symmetric difference are one negation apart) and each one throwing away `Set`'s O(1) lookup in the middle of the computation.
+
+<RainbowDivider />
+
+## Try It Live
+
+Two role sets, five buttons. Every result is computed by a single native `Set` method call — check the console for the exact call each button makes.
+
+<Sandbox slug="set-methods-union-intersection" readOnly />
+
+<RainbowDivider />
+
+## The Full Method List
+
+<CodeBlock language="js">
+{`
+  a.union(b);              // everything in either
+  a.intersection(b);       // only what's in both
+  a.difference(b);         // in a, but not b
+  a.symmetricDifference(b);// in exactly one of the two
+  a.isSubsetOf(b);         // every element of a is in b
+  a.isSupersetOf(b);       // every element of b is in a
+  a.isDisjointFrom(b);     // no overlap at all
+`}
+</CodeBlock>
+
+Seven methods covering the standard set-algebra operations — the same ones a math class or a Venn diagram would name, now spelled the same way in code.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Permission/role checks (`required.isSubsetOf(userRoles)`) — replacing an `.every()`/`.includes()` combination
+- Diffing two collections of unique IDs (which are new, which were removed, which are unchanged) — `added = next.difference(prev)`, `removed = prev.difference(next)`, `kept = prev.intersection(next)`
+- Tag/category filtering UIs comparing a selected-filters set against each item's own tag set
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **The argument doesn't have to be a `Set`** — these methods accept anything "set-like" (has a `size` property and a `has()` method), so a `Map`'s keys or a custom collection can often be passed directly without first wrapping it in `new Set(...)`.
+* **Comparison is by value for primitives, by reference for objects** — same as `Set` has always worked; two different object instances with identical-looking contents are never treated as equal by these methods.
+* **Well-supported in current engines** — safe to reach for directly rather than falling back to the array-filter pattern "just in case."
+* **Still returns a `Set`, not an array** — spread (`[...result]`) or `Array.from(result)` when you specifically need array methods (`.map()`, `.sort()`) on the output.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Native `Set` methods replace a family of hand-written spread-filter-rebuild patterns — one per set operation, each a chance to get the logic subtly wrong — with direct, correctly-named calls: `union`, `intersection`, `difference`, and friends, doing exactly what their names say without leaving `Set` at all.

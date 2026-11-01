@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Set Methods Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Comparing two permission sets</h1>
+        <p>Pick an operation — every result comes from a native <code>Set.prototype</code> method, no array conversion.</p>
+      </header>
+
+      <div class="sets">
+        <div class="set-block">
+          <p class="set-label">Your roles</p>
+          <div class="chips" id="set-a"></div>
+        </div>
+        <div class="set-block">
+          <p class="set-label">Required for this page</p>
+          <div class="chips" id="set-b"></div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button type="button" data-op="union">union</button>
+        <button type="button" data-op="intersection">intersection</button>
+        <button type="button" data-op="difference">difference</button>
+        <button type="button" data-op="symmetricDifference">symmetricDifference</button>
+        <button type="button" data-op="isSubsetOf">isSubsetOf</button>
+      </div>
+
+      <div class="result" id="result">Pick an operation above.</div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

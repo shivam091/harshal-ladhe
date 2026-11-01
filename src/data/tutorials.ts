@@ -558,6 +558,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "set-methods-union-intersection",
+    title: "Native Set union, intersection, and difference",
+    excerpt: "Set algebra methods replace the spread-filter-rebuild pattern for comparing two Sets.",
+    description: "Set.prototype.union/intersection/difference/symmetricDifference/isSubsetOf/isSupersetOf/isDisjointFrom compute standard set operations directly, replacing the array-spread-and-filter pattern that's been the only way to compare two Sets until now.",
+    category: ["JavaScript"],
+    tags: ["javascript", "set", "data-structures", "esnext", "algorithms"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/set-methods-union-intersection/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Two role permission sets compared with native Set methods — union, intersection, and difference results shown for each."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

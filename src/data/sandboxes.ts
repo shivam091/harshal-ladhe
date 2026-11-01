@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "set-methods-union-intersection",
+    title: "Native Set union/intersection/difference",
+    description: "Compare two role sets with native Set methods — union, intersection, difference, symmetricDifference, and isSubsetOf, no array conversion.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "promise-try-uniform-error-handling",
     title: "Promise.try() — Uniform Sync/Async Error Handling",
     description: "A function that sometimes throws synchronously and sometimes returns a rejected promise, routed through Promise.try() so one .catch() handles both failure paths.",

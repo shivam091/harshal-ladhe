@@ -1,0 +1,95 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 26rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 60%);
+}
+
+.playground-header code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.sets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.set-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: hsl(210, 12%, 65%);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.chip {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+  border-radius: 999px;
+  background: hsl(213, 20%, 16%);
+  border: 1px solid hsl(213, 12%, 28%);
+  color: hsl(210, 12%, 78%);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.controls button {
+  padding: 0.4375rem 0.625rem;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 10%, 90%);
+  background: hsl(213, 20%, 14%);
+  border: 1px solid hsl(213, 12%, 26%);
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.result {
+  padding: 0.75rem;
+  min-height: 1.5rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.8125rem;
+  color: hsl(207, 90%, 75%);
+  background: hsl(213, 22%, 9%);
+  border: 1px solid hsl(213, 12%, 26%);
+  border-radius: 0.375rem;
+}
