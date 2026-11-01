@@ -504,6 +504,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "interpolate-size-auto-animations",
+    title: "Animating Height to auto with interpolate-size",
+    excerpt: "The one CSS line that makes height:auto genuinely animatable — no JS measuring.",
+    description: "interpolate-size: allow-keywords makes height/width transitions to and from auto (and min-content/max-content/fit-content) directly animatable, replacing the grid-template-rows 0fr-to-1fr trick and scrollHeight-measuring JS every accordion has needed until now.",
+    category: ["CSS"],
+    tags: ["css", "animations", "transitions", "accordion", "layout", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/interpolate-size-auto-animations/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "An accordion panel smoothly animating its height between 0 and its natural auto content height."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

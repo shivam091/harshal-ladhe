@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "interpolate-size-auto-animations",
+    title: "Animating Height to auto with interpolate-size",
+    description: "An accordion whose panels transition height directly between 0 and auto — no scrollHeight measurement, no grid-template-rows trick.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "shape-function-clip-path",
     title: "Path-Based clip-path with shape()",
     description: "A speech bubble whose tail slides along a slider — its position comes from calc(var(--tail) ...) written directly inside a shape() clip-path, which path()'s SVG-string syntax can't do.",

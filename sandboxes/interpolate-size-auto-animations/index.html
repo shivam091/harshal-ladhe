@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>interpolate-size Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Accordion — animates to auto, no JS measuring</h1>
+        <p>Every panel's <code>height</code> transitions between <code>0</code> and <code>auto</code> directly — no <code>scrollHeight</code> read, no grid-rows hack.</p>
+      </header>
+
+      <div class="accordion">
+        <div class="item">
+          <button type="button" class="trigger" aria-expanded="true" data-target="panel-1">What changed?</button>
+          <div class="panel open" id="panel-1">
+            <p class="panel-body">`interpolate-size: allow-keywords` lets `height`/`width` transition to and from `auto`, `min-content`, and `fit-content` directly — values that were never animatable before this.</p>
+          </div>
+        </div>
+
+        <div class="item">
+          <button type="button" class="trigger" aria-expanded="false" data-target="panel-2">What did this replace?</button>
+          <div class="panel" id="panel-2">
+            <p class="panel-body">A JS `scrollHeight` measurement, a `max-height: 9999px` guess, or a `grid-template-rows: 0fr → 1fr` trick — every prior workaround for animating to a size CSS couldn't otherwise compute in advance.</p>
+          </div>
+        </div>
+
+        <div class="item">
+          <button type="button" class="trigger" aria-expanded="false" data-target="panel-3">Does content length matter?</button>
+          <div class="panel" id="panel-3">
+            <p class="panel-body">No — unlike the `max-height` guess trick, the transition always targets the content's REAL height, however long it is, with no risk of a longer answer getting clipped or a short one animating for too long.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

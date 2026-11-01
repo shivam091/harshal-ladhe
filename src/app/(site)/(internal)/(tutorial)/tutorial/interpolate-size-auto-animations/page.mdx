@@ -1,0 +1,91 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("interpolate-size-auto-animations");
+
+## Introduction
+
+Animating a panel's height to `auto` — its natural, content-determined height — has never worked directly: `transition: height` needs two numeric endpoints to interpolate between, and `auto` isn't a number CSS can compute in advance. Every accordion, collapsible, and expandable card has shipped some workaround for this specific gap. **`interpolate-size: allow-keywords`** closes it: `auto` becomes a real animatable value.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  html {
+    interpolate-size: allow-keywords;
+  }
+
+  .panel {
+    height: 0;
+    overflow: hidden;
+    transition: height 320ms ease;
+  }
+  .panel.open {
+    height: auto;
+  }
+`}
+</CodeBlock>
+
+One document-level opt-in, then `height`/`block-size` transitions to/from `auto` (and `min-content`/`max-content`/`fit-content`) exactly like any other value — the browser computes the natural height first, then interpolates toward it.
+
+<RainbowDivider />
+
+## The Workarounds This Replaces
+
+<CodeBlock language="css">
+{`
+  /* The grid-rows trick — the most common CSS-only workaround until now */
+  .panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 320ms; }
+  .panel.open { grid-template-rows: 1fr; }
+  .panel > * { overflow: hidden; } /* extra wrapper required for the trick to work */
+`}
+</CodeBlock>
+
+The `grid-template-rows: 0fr → 1fr` trick works, but needs an extra wrapper element and only applies to grid children — it's a clever exploit of how `fr` units resolve, not a direct answer to "animate to auto." The alternative, a JS `scrollHeight` measurement setting an explicit pixel height, works but re-triggers layout on every open and needs re-measuring if content changes.
+
+<RainbowDivider />
+
+## Try It Live
+
+Click a question — each panel's `height` transitions straight from `0` to `auto`, with no measurement step and no extra wrapper element, however long that panel's actual content turns out to be.
+
+<Sandbox slug="interpolate-size-auto-animations" readOnly />
+
+<RainbowDivider />
+
+## How the Interpolation Actually Works
+
+<CodeBlock language="css">
+{`
+  /* Roughly what the browser does under the hood once allow-keywords is set */
+  .panel {
+    height: calc-size(auto, size); /* resolves auto to a real, animatable length */
+  }
+`}
+</CodeBlock>
+
+`interpolate-size: allow-keywords` is effectively sugar for wrapping keyword values in `calc-size()`, which resolves a keyword like `auto` to its real computed length so the animation engine has an actual number to tween toward — `calc-size()` is available directly for cases needing more control than the blanket keyword opt-in gives.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Accordions, collapsible FAQ panels, and expandable cards — replacing the `grid-template-rows` trick or a `scrollHeight`-measuring JS toggle
+- Any width/height transition currently faked with a large fixed `max-height` guess (which either clips long content or animates too slowly for short content)
+- Toast/notification stacks and dropdown menus that grow/shrink to fit dynamically changing content
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Set on `:root`/`html`, it applies document-wide** — scope it to a specific subtree with a class selector instead if you want the behavior opt-in per component rather than global.
+* **Still fairly new** — an unsupported browser simply keeps the old behavior (an instant snap between `0` and `auto`, no animation), which is a safe, non-broken fallback rather than an error.
+- **Doesn't make EVERY keyword animatable in every property** — this specifically covers sizing keywords (`auto`, `min-content`, `max-content`, `fit-content`) on sizing properties (`width`, `height`, and their logical equivalents), not an arbitrary keyword-to-keyword transition elsewhere.
+* **Content that changes size while a panel is already open** still triggers a fresh transition on next toggle based on the NEW natural height — there's no need to manually invalidate a cached measurement the way a JS `scrollHeight` approach would require.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`interpolate-size: allow-keywords` makes `auto` (and its sibling sizing keywords) genuinely animatable, closing the one gap that forced every accordion/collapsible into a `grid-template-rows` trick or a JS measurement step. One document-level line replaces a pattern that's been reimplemented, slightly differently, in nearly every CSS framework and component library.
