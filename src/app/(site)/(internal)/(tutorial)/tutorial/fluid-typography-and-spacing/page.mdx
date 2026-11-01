@@ -144,6 +144,8 @@ Once one heading uses `clamp()`, the same shape of declaration extends to a whol
 
 Every step keeps the same *shape* — floor, `rem + vw`, ceiling — just with different numbers. A smaller viewport spread between floor and ceiling on `--fluid-body` than on `--fluid-h1` is intentional: body text should barely move, while a hero heading is allowed a much wider range, so the visual hierarchy between them holds at every width instead of only at the breakpoints you happened to test.
 
+Because every step repeats the same formula, it's a good candidate for a [custom `@function`](/tutorial/css-custom-functions-at-function): define the shape once, and pass each step only its floor and ceiling. Until Firefox and Safari support custom functions, keep a plain `clamp()` fallback before each call.
+
 <RainbowDivider />
 
 ## Advanced: Scoping Fluid Values to a Container, Not the Viewport
