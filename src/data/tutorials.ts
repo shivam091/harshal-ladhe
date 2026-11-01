@@ -414,6 +414,24 @@ export const tutorials: Tutorial[] = [
       { date: "2026-10-31", change: "Added cross-references to post 'Responsive CSS Grid Layouts: `fr` Units, `minmax()`, `auto-fill`, and `auto-fit` Explained' and tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
       { date: "2026-10-31", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-custom-functions-at-function",
+    title: "Reusable CSS Logic with @function",
+    excerpt: "A real, live CSS function — reusable logic without a Sass mixin or a build step.",
+    description: "@function defines a reusable, parameterized CSS function directly in a stylesheet — the same DRY win a Sass @function/mixin gives, minus the build step, and able to re-evaluate live against runtime custom property changes a compiled Sass value never could.",
+    category: ["CSS"],
+    tags: ["css", "at-function", "custom-properties", "sass", "css-2025", "design-systems"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-custom-functions-at-function/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Multiple card components sharing one --space() @function-defined spacing scale, all updating together as a base-unit slider is dragged."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

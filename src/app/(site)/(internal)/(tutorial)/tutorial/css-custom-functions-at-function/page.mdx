@@ -1,0 +1,90 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-custom-functions-at-function");
+
+## Introduction
+
+Reusable logic in CSS has always meant reaching for a preprocessor — a Sass `@mixin` or `@function`, compiled away before the browser ever sees it. **`@function`** brings that directly into the platform: define a named function once, call it from any declaration, with real parameters — no build step, and (unlike a Sass function) it stays live in the browser, re-evaluating whenever the values it depends on change.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  @function --space(--n) {
+    result: calc(var(--n) * 0.25rem);
+  }
+
+  .card {
+    padding: --space(4);   /* 1rem */
+    gap: --space(2);       /* 0.5rem */
+  }
+`}
+</CodeBlock>
+
+`--n` is just a parameter name — inside the function body it's read with `var()`, same as any custom property. The function itself is called like any other CSS function, using its own `--`-prefixed name.
+
+<RainbowDivider />
+
+## Parameters Aren't Fixed at Definition Time
+
+<CodeBlock language="css">
+{`
+  @function --space(--n) {
+    result: calc(var(--n) * var(--unit, 0.25rem));
+  }
+
+  :root { --unit: 0.25rem; }
+  .compact { --unit: 0.1875rem; }
+`}
+</CodeBlock>
+
+Because the function body itself reads `var(--unit, ...)`, every caller re-resolves against whatever `--unit` is in scope where it's *called* — a function isn't a fixed compile-time substitution the way a Sass mixin is, it's live CSS.
+
+<RainbowDivider />
+
+## Try It Live
+
+Every gap, padding, and margin below is produced by the exact same `--space(n)` function — drag the slider to change `--unit` at the root, and every caller updates together, live, with no rebuild.
+
+<Sandbox slug="css-custom-functions-at-function" readOnly />
+
+<RainbowDivider />
+
+## Relationship to Sass Functions/Mixins
+
+<CodeBlock language="scss">
+{`
+  // Sass: resolved once, at build time, into a fixed value
+  @function space($n) {
+    @return $n * 0.25rem;
+  }
+  .card { padding: space(4); } // compiles to padding: 1rem
+`}
+</CodeBlock>
+
+A Sass function is a text-substitution step that happens before the browser exists; the *result* ships, not the function. `@function` ships the logic itself — it can read custom properties, respond to `if()`/media conditions inside its own body, and re-evaluate live, which nothing that compiles away ever could.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- A design-system-wide scale (spacing, type size, radii) currently duplicated across a Sass function AND its compiled output — collapse it to one live definition
+- Small derived calculations (a contrast-safe shade, a fluid size, a rounded step) reused across many components, where a preprocessor function currently exists only to avoid repeating one `calc()` expression
+- Any reusable value logic that needs to react to a runtime custom property change — something a compile-time Sass function structurally cannot do
+
+<RainbowDivider />
+
+## Production Considerations & Edge Cases
+
+* **Still a recent addition** — shipped in Chromium first; check current support before relying on it as the only implementation of anything visually load-bearing.
+* **Parameters have no enforced type by default** — passing the wrong kind of value (a string where a length is expected) fails silently in the eventual `calc()`/property, not at the call site; the full spec supports typed parameters (`--n <number>`) for exactly this, worth adopting once support is solid.
+* **A function's `result` can itself call other `@function`s** — composition works, but keep the call graph shallow; a deeply nested chain becomes as hard to trace as an equivalent Sass import chain, just without a compiled-output file to grep.
+* **This doesn't replace `@property`** — `@function` computes a value from inputs; `@property` gives a custom property its own animatable type. They compose (a function can read a typed custom property) but solve different problems.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`@function` moves reusable CSS logic from "resolved once at build time by a preprocessor" to "live in the browser, re-evaluated whenever its inputs change" — the same DRY win a Sass function gives you, minus the build step, plus the ability to react to runtime state a compiled value never could.

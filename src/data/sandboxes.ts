@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-custom-functions-at-function",
+    title: "Reusable CSS Logic with @function",
+    description: "Every gap/padding/margin on the page is produced by one @function, --space(n) — drag the slider to change its base unit and watch every caller update together.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-cascade-layers",
     title: "Cascade Layers Specificity War",
     description: "Assign four real CSS rules of different specificity to declared layers, reorder the layers, and toggle !important per rule — a live stylesheet lets a real browser decide the winner while a readout explains exactly why.",
