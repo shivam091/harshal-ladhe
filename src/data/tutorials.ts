@@ -456,6 +456,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-01", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "field-sizing-content-textarea",
+    title: "Auto-Growing Textareas with CSS `field-sizing: content`",
+    excerpt: "Auto-grow textareas with one line of CSS, no JavaScript.",
+    description: "Make a textarea grow and shrink with its text using CSS field-sizing: content: no scrollHeight JavaScript, plus size limits, fallbacks and browser support.",
+    category: ["CSS"],
+    tags: ["css", "field-sizing", "forms", "native-controls", "progressive-enhancement", "accessibility", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/field-sizing-content-textarea/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for auto-growing textareas with CSS field-sizing: content, comparing a growing and a fixed textarea.",
+      caption: "A textarea growing with its content beside a fixed-height one."
+    },
+    changelog: [
+      { date: "2026-11-01", change: "Initial publication." }
+    ]
   }
 ];
 
