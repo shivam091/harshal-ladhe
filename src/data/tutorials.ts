@@ -540,6 +540,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "promise-try-uniform-error-handling",
+    title: "Promise.try() for Uniform Sync/Async Error Handling",
+    excerpt: "Catches a synchronous throw and an async rejection in the exact same .catch().",
+    description: "A function that's usually async can still throw synchronously before returning a promise, which plain .then()/.catch() chaining won't catch. Promise.try() wraps the call so both a synchronous throw and an asynchronous rejection land in the same .catch(), without an async IIFE wrapper.",
+    category: ["JavaScript"],
+    tags: ["javascript", "promises", "error-handling", "async-await", "esnext"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/promise-try-uniform-error-handling/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A validate() function that throws synchronously in one case and returns a rejected promise in another, both caught by the same Promise.try().catch() chain."
+    },
+    changelog: [
+      { date: "2026-09-02", change: "Initial publication." }
+    ]
   }
 ];
 

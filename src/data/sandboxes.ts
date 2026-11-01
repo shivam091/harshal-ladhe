@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "promise-try-uniform-error-handling",
+    title: "Promise.try() — Uniform Sync/Async Error Handling",
+    description: "A function that sometimes throws synchronously and sometimes returns a rejected promise, routed through Promise.try() so one .catch() handles both failure paths.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "array-fromasync-async-iterables",
     title: "Array.fromAsync() for Async Iterables",
     description: "An async generator yields paginated results 300ms apart — Array.fromAsync() collects the whole sequence into one real array with a single await.",
