@@ -25,6 +25,7 @@ export const tutorials: Tutorial[] = [
       caption: "The classic header, footer, two sidebars and centre column, built with Grid."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-19", change: "Added cross-reference to tutorial 'Dynamic Viewport Height Units'" },
       { date: "2026-07-27", change: "Initial publication" }
     ]
@@ -49,6 +50,7 @@ export const tutorials: Tutorial[] = [
       href: "/post/javascript/mastering-async-javascript"
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-12", change: "Added cross-reference to post 'Mastering Asynchronous JavaScript: Callbacks, Promises, and Async/Await'" },
       { date: "2026-08-05", change: "Initial publication with Options Object and Max Delay support." }
     ]
@@ -73,6 +75,7 @@ export const tutorials: Tutorial[] = [
       href: "/post/javascript/mastering-async-javascript"
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-12", change: "Added cross-reference to post 'Mastering Asynchronous JavaScript: Callbacks, Promises, and Async/Await'" },
       { date: "2026-08-05", change: "Initial publication with Full Jitter implementation." }
     ]
@@ -93,6 +96,7 @@ export const tutorials: Tutorial[] = [
       caption: "One colour declaration switching between light and dark themes automatically."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-08", change: "Added cross-reference to tutorial 'Theming Native Controls with `accent-color`'" },
       { date: "2026-09-08", change: "Initial publication." }
     ]
@@ -113,6 +117,7 @@ export const tutorials: Tutorial[] = [
       caption: "Content padded clear of a phone's notch and home indicator."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-10", change: "Initial publication." }
     ]
   },
@@ -132,6 +137,7 @@ export const tutorials: Tutorial[] = [
       caption: "Values bounded by min(), max() and clamp(), with no media queries needed."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-09-10", change: "Initial publication." }
     ]
@@ -152,6 +158,7 @@ export const tutorials: Tutorial[] = [
       caption: "Type and spacing scaling smoothly from phone to tablet to desktop."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-18", change: "Added tag 'container-units'" },
       { date: "2026-10-18", change: "Added cross-reference to post 'CSS Container Queries Deep Dive: Named Containers, `cqi` Units, and Style Queries'" },
@@ -174,6 +181,7 @@ export const tutorials: Tutorial[] = [
       caption: "An element promoted to its own layer for smoother animation."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-13", change: "Initial publication." }
     ]
@@ -194,6 +202,7 @@ export const tutorials: Tutorial[] = [
       caption: "Small, large and dynamic viewport heights as mobile browser bars show and hide."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-19", change: "Initial publication." }
     ]
   },
@@ -213,6 +222,7 @@ export const tutorials: Tutorial[] = [
       caption: "Small, large and dynamic viewport widths behind a full-bleed section."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-19", change: "Initial publication." }
     ]
   },
@@ -232,6 +242,7 @@ export const tutorials: Tutorial[] = [
       caption: "vi and vb units following the inline and block axes across writing modes."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-19", change: "Initial publication." }
     ]
   },
@@ -251,6 +262,7 @@ export const tutorials: Tutorial[] = [
       caption: "A priority badge changing colour from a single if() value."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
       { date: "2026-10-18", change: "Added tag 'style-queries'" },
@@ -274,6 +286,7 @@ export const tutorials: Tutorial[] = [
       caption: "A page before and after a modern reset smooths out browser defaults."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'Auto-Growing Textareas with CSS `field-sizing: content`'" },
       { date: "2026-10-31", change: "Added cross-reference to post 'CSS Cascade Layers (`@layer`): End Specificity Wars in Large Codebases'" },
       { date: "2026-10-08", change: "Added cross-reference to tutorial 'Theming Native Controls with `accent-color`'" },
@@ -297,6 +310,7 @@ export const tutorials: Tutorial[] = [
       caption: "List items animating in one after another, timed by their position alone."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-02", change: "Initial publication." }
@@ -318,6 +332,7 @@ export const tutorials: Tutorial[] = [
       caption: "Native checkboxes, radios, sliders and progress bars recoloured with one property."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'Auto-Growing Textareas with CSS `field-sizing: content`'" },
       { date: "2026-10-27", change: "Added cross-reference to tutorial 'Styling a `<select>` Dropdown with CSS `appearance: base-select`'" },
       { date: "2026-10-08", change: "Initial publication." }
@@ -339,6 +354,7 @@ export const tutorials: Tutorial[] = [
       caption: "Squircle, bevel, scoop and notch corners shaped with corner-shape."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-17", change: "Initial publication." }
     ]
   },
@@ -358,6 +374,7 @@ export const tutorials: Tutorial[] = [
       caption: "A tooltip whose text is read straight from an HTML attribute."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-31", change: "Added cross-reference to tutorial 'Colouring a CSS `text-overflow` Ellipsis Separately from Its Text'" },
       { date: "2026-10-25", change: "Initial publication." }
     ]
@@ -378,6 +395,7 @@ export const tutorials: Tutorial[] = [
       caption: "HTML attributes turning into real CSS colours, lengths and numbers."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-26", change: "Added cross-reference to tutorial 'Animate and Type-Check CSS Variables with `@property`'" },
       { date: "2026-10-25", change: "Initial publication." }
     ]
@@ -398,6 +416,7 @@ export const tutorials: Tutorial[] = [
       caption: "Gradient rings animating smoothly through typed custom properties."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-26", change: "Initial publication." }
     ]
@@ -418,6 +437,7 @@ export const tutorials: Tutorial[] = [
       caption: "A fully styled select dropdown with colour swatches, still keyboard accessible."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-27", change: "Initial publication." }
     ]
   },
@@ -437,6 +457,7 @@ export const tutorials: Tutorial[] = [
       caption: "A truncated line whose ellipsis is coloured apart from its text."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-31", change: "Initial publication." }
     ]
   },
@@ -456,6 +477,7 @@ export const tutorials: Tutorial[] = [
       caption: "Cards sharing one spacing scale defined with a CSS @function."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Initial publication." }
     ]
   },
@@ -475,6 +497,7 @@ export const tutorials: Tutorial[] = [
       caption: "A textarea growing with its content beside a fixed-height one."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Initial publication." }
     ]
   }

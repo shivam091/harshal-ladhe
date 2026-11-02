@@ -119,6 +119,34 @@ This is exactly how a "force dark mode for this one widget" or a manual light/da
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Can I use light-dark() for values other than colours?">
+  Not reliably. `light-dark()` accepts colours, so it works in `color`, `background-color`, `border-color`, `fill` and
+  similar properties, but not for lengths, images or `display`. For anything else, keep using a
+  `prefers-color-scheme` media query.
+</Details>
+
+<Details summary="Can I put custom properties inside light-dark()?">
+  Yes. `light-dark(var(--brand-light), var(--brand-dark))` works, and so does storing the whole call in a custom
+  property, such as `--surface: light-dark(white, #1a1a1a)`. Each element resolves it against its own `color-scheme`,
+  so a scoped override still picks the right branch.
+</Details>
+
+<Details summary="How do I build a theme toggle that remembers the choice?">
+  Save the choice in `localStorage` and set `color-scheme` to `light` or `dark` on the root element when the page
+  loads, ideally in a small inline script so there's no flash of the wrong theme. Every `light-dark()` value follows
+  automatically, and removing the override returns the page to the system preference.
+</Details>
+
+<Details summary="Does matchMedia know about a color-scheme override?">
+  No. `matchMedia("(prefers-color-scheme: dark)")` reports the user's system or browser preference, not the
+  `color-scheme` you've set on an element. If your JavaScript needs the active theme, read it from wherever your
+  toggle stores it rather than from the media query.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `light-dark()` turns "every themed color needs a light value and a dark value maintained in two places" into "every themed color needs a light value and a dark value in the same declaration." Reach for it any time dark mode support means duplicating color rules across a media query.

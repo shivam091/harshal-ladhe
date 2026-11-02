@@ -1035,6 +1035,40 @@ This demo combines:
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="How do I save a canvas as an image file?">
+  Call `canvas.toBlob((blob) => { ... }, "image/png")`, turn the blob into a URL with `URL.createObjectURL(blob)`, and
+  point a temporary `<a download="drawing.png">` at it. `toDataURL()` does the same job synchronously, but it builds a
+  large base64 string, so `toBlob()` is the better choice for anything bigger than a thumbnail.
+</Details>
+
+<Details summary="How do I make a canvas resize with its container?">
+  Watch the canvas with a `ResizeObserver`, and in its callback set `canvas.width` and `canvas.height` from the new
+  display size multiplied by `devicePixelRatio`, then redraw. Resizing clears the bitmap, so the redraw isn't
+  optional. The [JavaScript Observers guide](/post/javascript/mastering-js-observers) covers `ResizeObserver` in depth.
+</Details>
+
+<Details summary="Is there a maximum canvas size?">
+  Yes, and it varies by browser and device. Desktop browsers typically cap each side at around 32,767 pixels and also
+  limit the total area, while mobile browsers set much lower memory limits. Going over the limit doesn't throw an
+  error — you usually just get a blank canvas — so tile very large drawings across several canvases instead.
+</Details>
+
+<Details summary="Can I use CSS custom properties for canvas colours?">
+  Not directly, because canvas drawing never goes through CSS. Read the value yourself with
+  `getComputedStyle(canvas).getPropertyValue("--accent")` and pass it to `fillStyle` or `strokeStyle`. Since the
+  canvas won't update itself, redraw whenever the theme changes.
+</Details>
+
+<Details summary="Can I use the Canvas API in Node.js?">
+  Not out of the box — Node.js has no DOM and no built-in canvas. Packages such as `canvas` (node-canvas) and
+  `@napi-rs/canvas` implement the same 2D API on the server, which is handy for generating social cards or
+  thumbnails. In the browser, `OffscreenCanvas` is the way to draw off the main thread.
+</Details>
+
+<RainbowDivider />
+
 ## Wrapping Up
 
 Canvas is like having a blank drawing board inside your browser. With a context, a coordinate system that grows

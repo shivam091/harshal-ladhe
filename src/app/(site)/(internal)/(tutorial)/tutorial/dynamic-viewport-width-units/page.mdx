@@ -99,6 +99,26 @@ Treat `overflow-x: hidden` here as insurance for a full-bleed layout, not a subs
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="What's the difference between width: 100vw and width: 100%?">
+  `100%` is the width of the element's containing block, so it never overflows its parent. `100vw` is the width of the whole viewport, including the vertical scrollbar, whatever the element sits inside — which is why it can break out of a column, and why it can cause horizontal overflow.
+</Details>
+
+<Details summary="Can I make a full-bleed layout without viewport units?">
+  Yes, with CSS Grid. Give the page three columns, such as `grid-template-columns: 1fr min(65ch, 100%) 1fr`, place normal content in the middle one, and let full-bleed elements span all three with `grid-column: 1 / -1`. Nothing is measured against the viewport, so the scrollbar can't cause overflow.
+</Details>
+
+<Details summary="Does overflow-x: hidden break position: sticky?">
+  It can. `hidden` turns the element into a scroll container, so a sticky descendant sticks to it instead of to the page. `overflow-x: clip` hides the overflow in the same way without creating a scroll container, so sticky elements keep working.
+</Details>
+
+<Details summary="Does the full-bleed breakout work in right-to-left layouts?">
+  Yes. `margin-inline` applies the same negative margin to both sides, and the breakout is symmetrical, so it lines up whichever way the text runs.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `dvw`, `svw`, and `lvw` exist for symmetry with the height-axis units that made `dvh` genuinely useful — but on the width axis, there's currently no browser chrome that dynamically consumes horizontal space, so all four values almost always agree. The width unit that actually earns its place in production CSS is `100vw`/`100dvw` paired with `margin-inline: calc(50% - 50dvw)`, for breaking a full-bleed section out of an otherwise centered layout — a different problem entirely from the one `dvh` solves on [the height axis](/tutorial/dynamic-viewport-height-units).

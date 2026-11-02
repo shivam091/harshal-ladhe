@@ -195,6 +195,36 @@ of the box — keep concave radii modest relative to the element's size.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Is squircle the same as Apple's continuous corners?">
+  Close, but not identical. Apple's continuous corners use a curve of their own, while `squircle` is
+  `superellipse(2)`. At icon sizes the difference is hard to spot; if you're matching a specific design, try nearby
+  `superellipse()` values until it lines up.
+</Details>
+
+<Details summary="Why does my squircle look the same as round?">
+  The difference shows mostly at larger radii. With a small `border-radius` the corner is only a few pixels across
+  and both curves look alike, so give squircles a generous radius — around 25–30% on an icon-sized box.
+</Details>
+
+<Details summary="Does overflow: hidden clip content to the new shape?">
+  Yes. Overflow clipping follows the shaped corners just as it follows ordinary rounded ones, so an image or a
+  background element inside a `scoop` or `bevel` box is clipped along the same edge as the border.
+</Details>
+
+<Details summary="Can I give an image squircle corners?">
+  Yes. Set `border-radius` and `corner-shape` on the `<img>` itself, with no wrapper needed. Browsers without
+  support show the image with ordinary rounded corners instead.
+</Details>
+
+<Details summary="How do I use corner-shape with Tailwind CSS?">
+  If your Tailwind version has no `corner-shape` utilities, use an arbitrary property alongside a rounded utility:
+  `rounded-3xl [corner-shape:squircle]`. It compiles to exactly the declaration you'd write by hand.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `border-radius` sets the size of a corner; `corner-shape` sets its shape. Together they replace most of the SVG

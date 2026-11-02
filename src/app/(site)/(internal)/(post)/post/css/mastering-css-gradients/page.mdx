@@ -695,6 +695,40 @@ liquid-flow, border-beam, and loading-sweep techniques live, with a duration sli
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Why does my gradient show visible bands?">
+  Screens have a limited number of steps between two similar colours, so a subtle gradient stretched across a large
+  area turns into visible stripes. Interpolating `in oklch` helps, as do slightly more contrasting stops or a faint
+  noise texture layered on top to break the bands up.
+</Details>
+
+<Details summary="Why does my body gradient repeat instead of filling the page?">
+  A background on `body` is painted across the whole canvas, but it's sized against the root element — and on a
+  short page, that's shorter than the viewport, so the gradient tiles. Give `html` a `min-height: 100%`, or add
+  `background-repeat: no-repeat` with a solid `background-color` underneath.
+</Details>
+
+<Details summary="Does fading to transparent make a gradient grey?">
+  Not in modern browsers. `transparent` is technically transparent black, but gradients are interpolated with
+  premultiplied alpha, so a fade from a colour to `transparent` stays that colour as it fades. Writing the same colour
+  with zero alpha, such as `rgb(225 29 72 / 0)`, makes the intent explicit.
+</Details>
+
+<Details summary="Can I use a gradient on text or a border?">
+  Yes, though not through `color` or `border-color`, since those only accept flat colours. Text needs
+  `background-clip: text`, covered in the [CSS Gradient Text Guide](/post/css/css-gradient-text), and borders need
+  `border-image` or a layered background, covered in [CSS Gradient Borders](/post/css/css-gradient-borders).
+</Details>
+
+<Details summary="Are CSS gradients bad for performance?">
+  A static gradient is cheap: the browser paints it once, like any other background image, without a network
+  request. The cost only appears when it has to be repainted every frame, which is why the animated demos above move
+  a fixed gradient around rather than changing its colours.
+</Details>
+
+<RainbowDivider />
+
 ## Conclusion
 
 Gradients are more than decoration—they bridge flat design and depth when used thoughtfully. By mastering linear, radial, conic,
