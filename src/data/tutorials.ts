@@ -521,6 +521,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "native-css-carousel-scroll-markers",
+    title: "Pure CSS Carousels with `::scroll-marker` and `::scroll-button()`",
+    excerpt: "Build carousel dots and arrows with pure CSS.",
+    description: "Build CSS-only carousel dots and prev/next arrows with ::scroll-marker, ::scroll-button() and :target-current: no JavaScript, plus accessibility and fallbacks.",
+    category: ["CSS"],
+    tags: ["css", "carousel", "scroll-snap", "scroll-marker", "pseudo-elements", "ui-components", "accessibility", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/native-css-carousel-scroll-markers/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "CSS carousel with sunset mountain slides, navigation arrows, indicator dots, and code for ::scroll-marker and ::scroll-button()",
+      caption: "A carousel with arrows and indicator dots, built without JavaScript."
+    },
+    changelog: [
+      { date: "2026-11-02", change: "Initial publication." }
+    ]
   }
 ];
 
