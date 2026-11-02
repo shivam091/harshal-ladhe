@@ -907,6 +907,18 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS Anchor Positioning",
     description: "Tethering popovers, pickers and tooltips to another element with anchor positioning and `position-area`, with no JavaScript measuring."
   },
+  "carousel": {
+    title: "Building Carousels",
+    description: "Building carousels and sliders with scroll snap and generated CSS controls, keeping them accessible and light on JavaScript."
+  },
+  "scroll-snap": {
+    title: "CSS Scroll Snap",
+    description: "Making scroll containers come to rest on chosen items with `scroll-snap-type` and `scroll-snap-align`, the foundation of CSS carousels."
+  },
+  "scroll-marker": {
+    title: "CSS `::scroll-marker` and `::scroll-button()`",
+    description: "Generating a carousel's pagination dots and previous and next buttons in CSS, with the current slide tracked by `:target-current`."
+  },
   "css-2025": {
     title: "Modern CSS Features of 2025",
     description: "Recently supported CSS features and units worth adopting now, from dynamic viewport units to conditional values."

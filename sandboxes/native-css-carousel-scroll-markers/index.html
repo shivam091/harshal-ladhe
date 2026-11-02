@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS Carousel Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Carousel Dots and Arrows in Pure CSS</h1>
+        <p>The dots come from <code>::scroll-marker</code> and the arrows from <code>::scroll-button()</code>. The browser highlights the current dot with <code>:target-current</code> and disables an arrow at either end. Scroll the strip, click a dot or an arrow, or Tab to the dots and use the arrow keys.</p>
+      </header>
+
+      <p class="tip support-tip">Your browser doesn't support <code>::scroll-marker</code> or <code>::scroll-button()</code>, so this is a plain scroll-snap row with a scrollbar. Both are supported in Chrome and Edge 135 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Markers</legend>
+        <div class="field">
+          <span class="field-label" id="group-label">scroll-marker-group</span>
+          <div class="segmented-control" role="radiogroup" aria-labelledby="group-label">
+            <label class="segment"><input type="radio" name="group" value="after" checked><span>after</span></label>
+            <label class="segment"><input type="radio" name="group" value="before"><span>before</span></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label" id="style-label">Marker style</span>
+          <div class="segmented-control" role="radiogroup" aria-labelledby="style-label">
+            <label class="segment"><input type="radio" name="style" value="dots" checked><span>dots</span></label>
+            <label class="segment"><input type="radio" name="style" value="numbers"><span>numbers</span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <section class="demo-area">
+        <ul class="carousel" id="carousel" aria-label="Colour swatches">
+          <li class="slide" data-index="1" data-label="Sky" style="--bg: #60a5fa">Sky</li>
+          <li class="slide" data-index="2" data-label="Lilac" style="--bg: #c084fc">Lilac</li>
+          <li class="slide" data-index="3" data-label="Mint" style="--bg: #34d399">Mint</li>
+          <li class="slide" data-index="4" data-label="Amber" style="--bg: #fbbf24">Amber</li>
+          <li class="slide" data-index="5" data-label="Coral" style="--bg: #f87171">Coral</li>
+        </ul>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
