@@ -69,6 +69,26 @@ Without `viewport-fit=cover`, Safari/Chrome on a notched device simply letterbox
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Why is my content cut off in landscape but not in portrait?">
+  In landscape the notch sits on one side of the screen, so it's `safe-area-inset-left` or `-right` that becomes non-zero, not `-top`. Pad the inline edges of full-width content too, for example with `padding-inline: max(env(safe-area-inset-left, 0px), 1rem)`.
+</Details>
+
+<Details summary="What other variables does env() provide?">
+  Besides the four safe-area insets, Chromium browsers define `keyboard-inset-*` for the on-screen keyboard (when the VirtualKeyboard API is opted into) and `titlebar-area-*` for installed apps using Window Controls Overlay. The safe-area insets are the ones supported everywhere.
+</Details>
+
+<Details summary="Can I read the safe-area insets from JavaScript?">
+  Not directly. Copy one into a custom property, such as `:root { --inset-top: env(safe-area-inset-top, 0px); }`, then read it with `getComputedStyle(document.documentElement).getPropertyValue("--inset-top")`.
+</Details>
+
+<Details summary="Do I still need the old constant() syntax?">
+  No. `constant()` was only used by iOS 11.0, and Safari switched to `env()` in iOS 11.2. Any device still running a version that needs it is long out of support.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `env()` turns "pad around this one device's notch" into "pad around whatever hardware cutout this device happens to have" — one rule, a safe fallback, and a `viewport-fit=cover` meta tag away from working everywhere.

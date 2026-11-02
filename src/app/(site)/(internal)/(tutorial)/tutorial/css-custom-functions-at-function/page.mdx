@@ -312,6 +312,32 @@ to look identical in Firefox and Safari today without a fallback.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="How is @function different from a custom property that holds a calc()?">
+  A custom property such as `--space-4: calc(4 * 0.25rem)` stores one finished value, so a scale needs one property
+  per step. A function takes arguments, so a single `--space()` definition covers every step, and each call can pass a
+  different one.
+</Details>
+
+<Details summary="Can JavaScript call a CSS custom function?">
+  No. There's no API to run a CSS function from a script. JavaScript can change the custom properties a function
+  reads, and `getComputedStyle()` returns the value each call resolved to.
+</Details>
+
+<Details summary="Can a property that uses a custom function be transitioned?">
+  Yes. Transitions work on a property's computed value, and a function call resolves to an ordinary value such as
+  `1rem`. If a custom property the function reads changes, the computed value changes and a `transition` on that
+  property runs as usual.
+</Details>
+
+<Details summary="Do custom functions slow down the page?">
+  Not in any way you'd normally notice. A call is resolved at computed-value time, much like `var()`, and only for the
+  elements that use it. Very deep chains of functions calling functions are harder to read long before they're slow.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `@function` moves reusable value logic from a preprocessor into the browser. Name the calculation once, type its

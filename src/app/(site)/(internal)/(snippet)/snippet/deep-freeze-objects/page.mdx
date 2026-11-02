@@ -107,6 +107,33 @@ This ensures **all levels of the object tree are immutable**, preventing acciden
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="What's the difference between Object.freeze and const?">
+  `const` stops a variable from being reassigned, but the object it points to can still be changed. `Object.freeze()`
+  works the other way round: it locks the object's properties, whatever kind of variable holds it. Use both when you
+  want neither the binding nor the value to change.
+</Details>
+
+<Details summary="Does deepFreeze handle circular references?">
+  No. An object that refers back to itself, directly or through a nested object, makes `deepFreeze` recurse forever
+  and throw a `RangeError` once the call stack runs out. If your data can contain cycles, track the objects you've
+  already visited in a `WeakSet` and skip them.
+</Details>
+
+<Details summary="Can a frozen object be unfrozen?">
+  No. Freezing is permanent for the lifetime of that object. To get an editable version, make a copy — a spread
+  (`{ ...obj }`) for a shallow one, or `structuredClone(obj)` for a deep one — and change the copy instead.
+</Details>
+
+<Details summary="Does deepFreeze work on a Map, Set or Date?">
+  Only partly. Freezing them stops new properties being added, but their contents live in internal slots rather than
+  properties, so `map.set()`, `set.add()` and `date.setFullYear()` still work. Plain objects and arrays are the
+  structures `deepFreeze` fully protects.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 The `deepFreeze(obj)` utility ensures your objects are truly immutable at all levels, providing safer, more predictable JavaScript applications and robust state management without the risks associated with modifying `Object.prototype`.

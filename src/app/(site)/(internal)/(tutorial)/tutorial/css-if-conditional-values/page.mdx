@@ -246,6 +246,33 @@ fit.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Is CSS if() the same as @if in Sass?">
+  No. Sass's `@if` runs once at build time on Sass variables, and only its result reaches the browser. CSS `if()` is
+  evaluated by the browser for every element, and it re-evaluates whenever a custom property, media condition or
+  feature check it depends on changes.
+</Details>
+
+<Details summary="Can I nest one if() inside another?">
+  Yes. A branch's value can be another `if()`, just as it can be a `calc()`. If you find yourself nesting more than
+  one level, combining conditions with `and` or moving the logic into a [custom function](/tutorial/css-custom-functions-at-function)
+  is usually easier to read.
+</Details>
+
+<Details summary="Can I transition between the values of an if()?">
+  Yes. `if()` resolves to an ordinary computed value, so when the matching branch changes, a `transition` on that
+  property runs just as it would after a class change.
+</Details>
+
+<Details summary="Why does my style() condition never match?">
+  The most common cause is the value not matching exactly as written. `--priority: "high"` is a quoted string, so it
+  doesn't match `style(--priority: high)`. Check the custom property's value in DevTools, and make sure it's set on the
+  element being styled or one of its ancestors.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `if()` fills the one gap the conditional at-rules never covered: a single value, inside a declaration you're

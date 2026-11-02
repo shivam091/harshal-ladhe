@@ -238,6 +238,26 @@ Two jitter-specific things worth deciding upfront:
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="What is decorrelated jitter?">
+  A third variant, where each delay is a random value between the base delay and three times the previous delay, capped at `maxDelay`. Because every wait depends on the last one rather than on the attempt number, retries spread out well while delays still tend to grow.
+</Details>
+
+<Details summary="Which errors should be retried?">
+  Only transient ones: network failures, timeouts, `429 Too Many Requests` and `5xx` server errors. A `400`, `401`, `403` or `404` will fail the same way every time, so retrying it only adds load and delays the real error.
+</Details>
+
+<Details summary="Should I respect a Retry-After header?">
+  Yes. When a server sends `Retry-After` with a `429` or `503`, it's telling you exactly when it can take the request again. Wait at least that long instead of the computed delay, and only fall back to jittered backoff when the header is missing.
+</Details>
+
+<Details summary="Does jitter make each retry slower?">
+  No, on average it makes them sooner. Full Jitter waits a random time up to the backoff ceiling, so the average wait is about half the plain backoff delay. What it changes is that clients stop retrying at the same moment, which is what lets the server recover.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 For production-scale applications, always favor **Jitter**. It transforms a fragile retry loop into a robust recovery mechanism that respects the health of your entire system architecture.

@@ -25,6 +25,7 @@ export const snippets: Snippet[] = [
       caption: "Freezing a JavaScript object and every object nested inside it."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-07-12", change: "Initial publication" }
     ]
   },
@@ -44,6 +45,7 @@ export const snippets: Snippet[] = [
       caption: "Private state kept safely inside a closure, out of outside reach."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-07-12", change: "Initial publication." }
     ]
   },
@@ -63,6 +65,7 @@ export const snippets: Snippet[] = [
       caption: "A class locking its internals away behind private # fields."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-07-12", change: "Initial publication." }
     ]
   },
@@ -82,6 +85,7 @@ export const snippets: Snippet[] = [
       caption: "Cursor and touch coordinates tracked across mouse, touch and pen input."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-23", change: "Initial publication." }
     ]
   },
@@ -105,6 +109,7 @@ export const snippets: Snippet[] = [
       caption: "Commit dates realigned after a rebase, before and after."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-26", change: "Initial publication." }
     ]
   }

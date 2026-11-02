@@ -243,6 +243,33 @@ reduce motion:
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="What's the difference between sibling-index() and :nth-child()?">
+  `:nth-child()` is a selector: it decides _which_ elements a rule applies to. `sibling-index()` is a value: it
+  gives every matched element its own number to calculate with. Both count the same way, starting at 1, but only
+  `sibling-index()` can feed a position into `calc()`.
+</Details>
+
+<Details summary="Can CSS counters do the same thing?">
+  No. `counter()` produces a string that can only be shown through the `content` property, so it can't be used in
+  `calc()` or in properties such as `animation-delay`. Counters are for numbering things on screen, while the
+  tree-counting functions are for styling with those numbers.
+</Details>
+
+<Details summary="Does it work with transition-delay as well as animation-delay?">
+  Yes. Any property that accepts a time can use it, so a hover menu can reveal its links one after another with
+  `transition-delay: calc((sibling-index() - 1) * 40ms)`. The same reduced-motion advice applies to transitions.
+</Details>
+
+<Details summary="Is sibling-index() bad for performance?">
+  Not for normal lists. The browser already tracks sibling positions for selectors like `:nth-child()`, and it
+  updates these values the same way when the DOM changes. Any cost comes from the animations themselves, not from
+  working out the index.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `sibling-index()` and `sibling-count()` give CSS something it never had: an element's own position within its parent,
