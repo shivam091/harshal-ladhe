@@ -270,6 +270,26 @@ A few one-liners that pair well with `git fix-dates`:
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Does git fix-dates work on Windows?">
+  Yes, in Git Bash, which ships with Git for Windows and includes the `bash` and `awk` the script needs. Save it as
+  `git-fix-dates` in a folder on Git Bash's `PATH`, such as `~/bin`, and run it from there.
+</Details>
+
+<Details summary="Can I make the author date match the committer date instead?">
+  You can, but after a rebase the committer date is the time of the rebase, so you'd lose the record of when the work
+  was actually done. If that's what you want, `git rebase --reset-author-date` does it while rebasing.
+</Details>
+
+<Details summary="What happens to other branches that contain the rewritten commits?">
+  They keep pointing at the old commits, because only the current branch is rewritten. Rebase them onto the new
+  history — for example with `git rebase --onto` — or Git will treat the old and new versions as different commits
+  and show them twice.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 Rebasing and amending quietly move a commit's committer date, and github.com displays that date. `git fix-dates` puts it back to the author date without flattening merges, re-triggering conflicts, or force-pushing over someone else's work — and it always tells you how to undo the rewrite.

@@ -76,6 +76,26 @@ This is the opposite of how container query units (`cqi`/`cqb`) behave — those
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Do vi and vb change in right-to-left languages?">
+  No. `direction: rtl` reverses which way text runs along a line, but the line is still horizontal, so `vi` still measures the viewport's width and `vb` its height. Only a vertical `writing-mode` on the root swaps them.
+</Details>
+
+<Details summary="Are there logical versions of vmin and vmax?">
+  There's no need for them. `vmin` and `vmax` already pick the smaller or larger of the two viewport dimensions, whichever axis that happens to be, so they give the same result in every writing mode.
+</Details>
+
+<Details summary="Can I use vi for fluid font sizes?">
+  Yes, in exactly the way `vw` is used, and it stays correct if the root's writing mode ever changes. Wrap it in `clamp()` with a `rem` component, as in [Fluid Typography and Spacing](/tutorial/fluid-typography-and-spacing), so the text still responds to the reader's zoom and font-size settings.
+</Details>
+
+<Details summary="Do vi and vb work inside calc() and clamp()?">
+  Yes. They're ordinary lengths, so they combine with `rem`, `%`, `env()` and other units in any maths function, just as `vw` and `vh` do.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `vw` and `vh` describe the screen; `vi` and `vb` describe the document's own flow — and only agree with `vw`/`vh` by coincidence, in whichever writing mode happens to make horizontal "inline" and vertical "block." For anything meant to keep working correctly if the writing mode ever changes — a design system, an RTL or vertical-script layout — `vi`/`vb` are the versions of [dvh/svh/lvh](/tutorial/dynamic-viewport-height-units) and [dvw/svw/lvw](/tutorial/dynamic-viewport-width-units) that don't assume a direction at all.

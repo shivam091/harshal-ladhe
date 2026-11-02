@@ -215,6 +215,36 @@ the middle ground: keep it native, just match the brand.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Can I style the range slider thumb separately from the track?">
+  Not with `accent-color`, which colours both with one value. A differently coloured thumb needs
+  `appearance: none` on the input and the `::-webkit-slider-thumb` and `::-moz-range-thumb` pseudo-elements — at
+  which point you're styling the whole slider yourself.
+</Details>
+
+<Details summary="Does accent-color work on a checkbox with appearance: none?">
+  No. With `appearance: none` the browser stops drawing the native control, so there's no accent left for the
+  property to colour. Custom-drawn controls have to style every state themselves.
+</Details>
+
+<Details summary="Can accent-color follow the text colour?">
+  Yes. It accepts any colour, including `currentColor`, so `accent-color: currentColor` makes each control match the
+  text around it — handy inside labels or components that already change colour by state.
+</Details>
+
+<Details summary="How do I go back to the browser's default accent?">
+  Set `accent-color: auto` on the control or its container. Because the property inherits, that resets everything
+  inside it while the rest of the page keeps your brand colour.
+</Details>
+
+<Details summary="Does Tailwind CSS support accent-color?">
+  Yes. Tailwind's `accent-*` utilities set it, so `accent-pink-500` on a form or on `<body>` themes every control
+  inside, exactly like the `:root` example above.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `accent-color` is the answer to "I just need this checkbox to match the brand". Reach for it before reaching for a

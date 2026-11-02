@@ -219,6 +219,30 @@ fields must line up in a grid.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Does field-sizing work on inputs and selects too?">
+  Yes. A text `<input>` with `field-sizing: content` grows sideways as you type, and a `<select>` sizes to its
+  selected option instead of its longest one. Give inputs a `min-inline-size` so an empty field doesn't shrink to
+  almost nothing.
+</Details>
+
+<Details summary="Can I animate the textarea as it grows?">
+  Not with a plain `transition`. The height comes from content sizing during layout, not from a declared value
+  changing, so there's no start and end value to transition between. The growth happens instantly, one line at a time.
+</Details>
+
+<Details summary="Do I need field-sizing for a contenteditable element?">
+  No. An element with `contenteditable` is an ordinary box, so it already grows with its content. `field-sizing` exists
+  for form controls, which have a fixed default size.
+</Details>
+
+<Details summary="Is the lh unit safe to use with it?">
+  Yes. Every browser that supports `field-sizing` also supports `lh`, so the limits work wherever the growth does.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `field-sizing: content` lets a textarea size to its text, replacing the `scrollHeight` script that auto-growing

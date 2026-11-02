@@ -360,6 +360,31 @@ the sandbox's bar has `role="img"` and an `aria-label` that's updated alongside 
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Can a user-controlled attribute inject CSS through attr()?">
+  No. The attribute is parsed only as the type you asked for, so it can't add declarations or break out of the
+  value. Anything that doesn't parse as that type uses the fallback, and `attr()` values can never be turned into
+  URLs.
+</Details>
+
+<Details summary="Can I use typed attr() in a media query?">
+  No. Like `var()`, `attr()` only works in property values. It can't be used in selectors, in `@media` conditions or
+  in other at-rule preludes.
+</Details>
+
+<Details summary="Can I place grid items from an attribute?">
+  Yes. Read the attribute as a `<custom-ident>`, as in `grid-area: attr(data-area type(<custom-ident>), auto)`, and
+  each item is placed in the named area its markup asks for.
+</Details>
+
+<Details summary="Is changing an attribute slower than changing a class?">
+  Not in any way you'd notice. Both make the browser recalculate styles for the element, and typed `attr()` only adds
+  parsing one short attribute value during that recalculation.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 Classic `attr()` could only print an attribute as text. Typed `attr()` — `attr(data-colour type(<color>), indigo)`,
