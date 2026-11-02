@@ -500,6 +500,25 @@ export const tutorials: Tutorial[] = [
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "interpolate-size-auto-animations",
+    title: "Animating `height: auto` in CSS with `interpolate-size`",
+    excerpt: "Animate height to auto in pure CSS, no JavaScript.",
+    description: "Animate height: auto in CSS with interpolate-size and calc-size(): smooth accordions and details panels without JavaScript, plus fallbacks and reduced motion.",
+    category: ["Animations"],
+    tags: ["css", "interpolate-size", "transition", "css-animation", "ui-components", "accessibility", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/interpolate-size-auto-animations/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for animating height auto in CSS with interpolate-size, showing a 3D accordion opening and a snap versus smooth chart.",
+      caption: "An accordion opening smoothly to its natural height, rather than snapping."
+    },
+    changelog: [
+      { date: "2026-11-02", change: "Initial publication." }
+    ]
   }
 ];
 
