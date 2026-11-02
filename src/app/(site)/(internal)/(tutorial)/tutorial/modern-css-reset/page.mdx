@@ -322,6 +322,34 @@ yours.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Why doesn't the reset remove padding as well as margins?">
+  Default padding causes far fewer bugs than default margins, and the main place it appears, on lists, gives the
+  bullets room to sit in. Zeroing padding everywhere would push those bullets outside their container. Remove padding
+  per component when you actually need to.
+</Details>
+
+<Details summary="Should box-sizing use the inherit pattern instead?">
+  The older `html { box-sizing: border-box; } *, *::before, *::after { box-sizing: inherit; }` pattern lets a
+  third-party widget switch its whole subtree back to `content-box` with one rule. Few projects need that today, so
+  setting `border-box` directly is simpler. Use the inherit version if you embed widgets that rely on `content-box`.
+</Details>
+
+<Details summary="Does a CSS reset hurt accessibility?">
+  Not this one. It leaves focus outlines, list semantics and font sizes alone, and its line height actually helps
+  readability. Resets become a problem when they remove `outline` on focus or set a fixed `font-size` in `px` on
+  `html`, which overrides the reader's own text-size setting.
+</Details>
+
+<Details summary="Do I need this reset if I use Tailwind CSS?">
+  No. Tailwind includes its own reset, called Preflight, which covers most of the same ground. Loading both mostly
+  duplicates rules, so adopt the extras from here that Preflight doesn't include, such as `interpolate-size` or
+  `text-wrap`, rather than the whole reset.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 A modern CSS reset is small on purpose. It fixes the handful of browser defaults that cause real layout bugs, and

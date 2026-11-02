@@ -614,6 +614,37 @@ rules shown live below the preview.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="How do I leave a cell empty in grid-template-areas?">
+  Use a full stop (`.`) in place of an area name — for example `"header header ."`. A run of several dots with no
+  spaces, such as `...`, still counts as one empty cell, which can help keep the columns lined up in your source.
+</Details>
+
+<Details summary="Why is my grid-template-areas declaration being ignored?">
+  The whole value is invalid, so the browser drops it. Every row string needs the same number of cells, and every
+  named area has to form a single rectangle — an L-shape or an area split into two separate pieces isn't allowed.
+</Details>
+
+<Details summary="Can grid items overlap?">
+  Yes. Place two items on the same lines or area and they stack in the same cells, with the later one in the DOM
+  painting on top. Grid items accept `z-index` without needing `position`, so you can change that order directly — see
+  [Mastering CSS z-index](/post/css/css-z-index-and-stacking-contexts) for how it interacts with stacking contexts.
+</Details>
+
+<Details summary="How do I fill the gaps left by spanning items?">
+  Add `grid-auto-flow: dense`. Auto-placement then back-fills earlier holes with later items that fit. Because that
+  changes the visual order without changing the DOM order, keep it for layouts like image galleries, where reading
+  order doesn't matter.
+</Details>
+
+<Details summary="Can I use a named area's edges as grid lines?">
+  Yes. Every named area automatically creates lines called `name-start` and `name-end` on both axes, so an area
+  called `main` lets another item use `grid-column: main-start / main-end` without defining any line names yourself.
+</Details>
+
+<RainbowDivider />
+
 ## Conclusion
 
 You've now mastered the core tools that bring **power, readability, and precision** to CSS Grid layouts:

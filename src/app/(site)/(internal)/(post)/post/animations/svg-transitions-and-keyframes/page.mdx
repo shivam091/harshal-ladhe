@@ -538,6 +538,41 @@ Notice the draw-on line doesn't just get `animation: none` — it also gets `str
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Do CSS animations work in an SVG loaded with an img tag?">
+  Yes, as long as the `<style>` block lives inside the SVG file itself — the animation plays just as it would inline.
+  What you lose is everything that crosses the boundary: your page's stylesheet can't reach the shapes inside, and
+  the image doesn't respond to `:hover` on individual elements. Inline the SVG when it needs to react to the page.
+</Details>
+
+<Details summary="Should I use SMIL or CSS to animate SVG?">
+  CSS for almost everything. It shares one syntax with the rest of your styles, and it respects
+  `prefers-reduced-motion` with a single media query. SMIL (`<animate>`) is still supported in modern browsers and is
+  worth knowing for the few things CSS can't touch, such as animating `viewBox`.
+</Details>
+
+<Details summary="Why can't I style shapes inside a use element?">
+  `<use>` renders a copy of the referenced content in a closed shadow tree, so selectors in your stylesheet can't
+  target the copied shapes individually. Inherited properties such as `fill` and `stroke`, and custom properties,
+  still flow in from the `<use>` element itself — set `fill: currentColor` or `var(--accent)` on the original shapes
+  and vary them from outside.
+</Details>
+
+<Details summary="How do I make a self-drawing line draw from the other end?">
+  The draw follows the direction the path was written in. Either reverse the order of the path's points, or animate
+  `stroke-dashoffset` from `-100` to `0` instead of from `100` to `0` (with `pathLength="100"`), which reveals the
+  stroke from its end backwards.
+</Details>
+
+<Details summary="How do I pause an SVG animation?">
+  The same way as on HTML: set `animation-play-state: paused` on the animated element — for example on hover, or
+  from a class toggled by JavaScript. The element freezes on its current frame and resumes from there when the value
+  goes back to `running`.
+</Details>
+
+<RainbowDivider />
+
 ## Wrapping Up
 
 Every animation on this page is built from the same six shapes and the same `fill`/`stroke` attributes covered in the basic shapes post — the only new ingredients are `transition`, `@keyframes`, and a handful of properties that behave a little differently on SVG:

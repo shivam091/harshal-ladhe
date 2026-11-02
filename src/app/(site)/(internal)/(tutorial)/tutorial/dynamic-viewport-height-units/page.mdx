@@ -126,6 +126,26 @@ The choice between `dvh` and `svh` is really "should this element be allowed to 
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Should I use height or min-height with 100dvh?">
+  Usually `min-height`. `height: 100dvh` clips or overflows when the content is taller than the screen, while `min-height: 100dvh` fills the screen and still lets the section grow with its content.
+</Details>
+
+<Details summary="Does dvh shrink when the on-screen keyboard opens?">
+  Not by default in current mobile browsers. The keyboard resizes only the visual viewport, which viewport units don't track. To make the layout viewport (and `dvh` with it) shrink too, add `interactive-widget=resizes-content` to the viewport `<meta>` tag, where it's supported.
+</Details>
+
+<Details summary="Is vh deprecated now?">
+  No. `vh` is still valid and widely used, and on mobile it behaves like `lvh`. It's simply the wrong choice for anything that has to fit the visible screen while the browser's UI is showing.
+</Details>
+
+<Details summary="What do viewport units measure inside an iframe?">
+  The iframe's own viewport, not the browser window. `100dvh` inside an iframe is the iframe's height, so an embedded page sized with it fills its frame rather than the screen.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `100vh` was never wrong, exactly — it was just answering "how tall is the viewport at its largest," which mobile browsers made a poor default for "how tall is the screen right now." `dvh` answers the question most `100vh` usages actually meant to ask; `svh`/`lvh` stay useful whenever a layout specifically needs one of the two fixed endpoints instead of the live value.
