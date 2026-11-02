@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>interpolate-size Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>An Animated &lt;details&gt; Accordion</h1>
+        <p>Each panel is a <code>&lt;details name="faq"&gt;</code>, so only one opens at a time and there's no JavaScript behind it. Its <code>::details-content</code> animates <code>block-size</code> between <code>0</code> and <code>auto</code>. Untick <code>interpolate-size</code> to see the same panels snap instead.</p>
+      </header>
+
+      <p class="tip support-tip">Your browser doesn't support <code>interpolate-size</code> or <code>::details-content</code>, so the panels open and close instantly. Both are supported in Chrome and Edge 131 or later.</p>
+      <p class="tip motion-tip">Reduced motion is turned on in your system settings, so <code>interpolate-size</code> stays off and the panels snap open and closed. That's the behaviour this pattern is meant to give.</p>
+
+      <fieldset class="control-group">
+        <legend>Transition</legend>
+        <div class="field">
+          <label for="duration-input">Duration</label>
+          <div class="range-row">
+            <span class="range-edge">100ms</span>
+            <div class="range-track">
+              <input type="range" id="duration-input" min="100" max="1500" step="50" value="400">
+              <output class="range-bubble" id="duration-value" for="duration-input">400ms</output>
+            </div>
+            <span class="range-edge">1500ms</span>
+          </div>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="keywords-toggle" checked>
+          <code>interpolate-size: allow-keywords</code>
+        </label>
+      </fieldset>
+
+      <section class="demo-area accordion" id="accordion" aria-label="Frequently asked questions">
+        <details name="faq" open>
+          <summary>What changed?</summary>
+          <div class="panel-body">
+            <p><code>interpolate-size: allow-keywords</code> lets <code>height</code> and <code>block-size</code> transition to and from <code>auto</code>. Before it, a change to <code>auto</code> always happened instantly.</p>
+          </div>
+        </details>
+
+        <details name="faq">
+          <summary>What did this replace?</summary>
+          <div class="panel-body">
+            <p>A script that measured <code>scrollHeight</code>, a <code>max-height: 9999px</code> guess, or the <code>grid-template-rows: 0fr</code> to <code>1fr</code> trick.</p>
+          </div>
+        </details>
+
+        <details name="faq">
+          <summary>Does the length of the answer matter?</summary>
+          <div class="panel-body">
+            <p>No. The transition always ends at the content's real height, so a long answer is never cut off and a short one doesn't take too long to open.</p>
+            <p>This answer has a second paragraph to show it. However much text a panel holds, it animates over the same duration.</p>
+          </div>
+        </details>
+
+        <details name="faq">
+          <summary>Can screen readers reach a closed panel?</summary>
+          <div class="panel-body">
+            <p>No. A closed <code>&lt;details&gt;</code> hides its content from screen readers and the keyboard, unlike a <code>div</code> collapsed to <code>height: 0</code>.</p>
+          </div>
+        </details>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
