@@ -286,6 +286,7 @@ export const tutorials: Tutorial[] = [
       caption: "A page before and after a modern reset smooths out browser defaults."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added cross-reference to tutorial 'Animating `height: auto` in CSS with `interpolate-size`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'Auto-Growing Textareas with CSS `field-sizing: content`'" },
       { date: "2026-10-31", change: "Added cross-reference to post 'CSS Cascade Layers (`@layer`): End Specificity Wars in Large Codebases'" },
@@ -416,6 +417,7 @@ export const tutorials: Tutorial[] = [
       caption: "Gradient rings animating smoothly through typed custom properties."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added cross-reference to tutorial 'Animating `height: auto` in CSS with `interpolate-size`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-26", change: "Initial publication." }

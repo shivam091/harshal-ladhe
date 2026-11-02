@@ -139,7 +139,9 @@ resetting it would pin the dialog to the top-left corner.
 CSS has never been able to transition between a length and a keyword. `height: 0` to `height: auto` simply jumps,
 which is why collapsible panels have traditionally needed JavaScript to measure their content. `interpolate-size:
 allow-keywords` lets the browser animate between lengths and keywords such as `auto`, `min-content` and
-`fit-content`. The property is inherited, so setting it on `html` turns it on for the whole page.
+`fit-content`. The property is inherited, so setting it on `html` turns it on for the whole page. For accordions,
+animated `<details>` panels and the `calc-size()` function, see
+[Animating `height: auto` in CSS with `interpolate-size`](/tutorial/interpolate-size-auto-animations).
 
 It sits inside a `prefers-reduced-motion: no-preference` query so that readers who have asked their system for
 less motion don't get new height animations they never had before.
