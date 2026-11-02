@@ -1,0 +1,114 @@
+/* Only shown where the animation can't run at all. */
+.support-tip,
+.motion-tip {
+  margin: 0;
+}
+
+@supports (interpolate-size: allow-keywords) and selector(::details-content) {
+  .support-tip {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-tip {
+    display: none;
+  }
+}
+
+.playground-header code,
+.tip code,
+.accordion code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+/*
+  The opt-in, in the same reduced-motion query as the CSS reset. It's inherited, so setting it on the accordion covers
+  every panel inside. The checkbox removes .animate-keywords to show the snap.
+*/
+@media (prefers-reduced-motion: no-preference) {
+  .accordion.animate-keywords {
+    interpolate-size: allow-keywords;
+  }
+}
+
+.accordion {
+  --duration: 400ms;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+details {
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+}
+
+summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding-block: 0.75rem;
+  padding-inline: 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  font-family: var(--pg-mono);
+  color: var(--pg-primary);
+  transition: rotate var(--duration) ease;
+}
+
+details[open] summary::after {
+  rotate: 45deg;
+}
+
+summary:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: -0.125rem;
+}
+
+/*
+  The feature itself. block-size goes between 0 and auto, and content-visibility (with allow-discrete) keeps the
+  content visible until the closing animation ends. Once closed, it's hidden from screen readers and the keyboard.
+*/
+details::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  transition:
+    block-size var(--duration) ease,
+    content-visibility var(--duration) allow-discrete;
+}
+
+details[open]::details-content {
+  block-size: auto;
+}
+
+/* Padding lives on this inner element. On ::details-content it would stay visible as a strip when the panel is closed. */
+.panel-body {
+  padding-block: 0 0.875rem;
+  padding-inline: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--pg-text-muted);
+}
+
+.panel-body p {
+  margin: 0;
+}
+
+.panel-body p + p {
+  margin-block-start: 0.625rem;
+}
