@@ -141,6 +141,9 @@ This observer is used to detect when an element enters or leaves the viewport an
 - Triggering animations when elements are visible
 - Infinite scrolling implementations
 
+Tracking the current slide of a scroll-snap carousel no longer needs an observer: CSS can highlight its dot with
+`:target-current`, as shown in [Pure CSS Carousels with `::scroll-marker` and `::scroll-button()`](/tutorial/native-css-carousel-scroll-markers).
+
 **Best Practices:**
 
 - Use `rootMargin` to preload elements before they appear in viewport.
