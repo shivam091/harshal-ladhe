@@ -1,0 +1,374 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("native-css-carousel-scroll-markers");
+
+## Introduction
+
+Carousels are everywhere: product galleries, testimonials, image sliders and onboarding steps. CSS has been able to
+build the scrolling part for years with scroll snap. The dots underneath and the previous and next arrows were always
+JavaScript's job, though. A script rendered one dot per slide, worked out which slide was showing, and scrolled the
+row when someone clicked.
+
+**`::scroll-marker`** and **`::scroll-button()`** move that job into CSS. The browser generates a dot for each slide
+and an arrow for each direction, keeps track of the current slide, and disables an arrow when there's nowhere left to
+go. This tutorial starts with the scroll-snap row everything builds on, then adds the dots, the arrows, accessibility
+and fallbacks for browsers without support.
+
+<RainbowDivider />
+
+## Basic Usage
+
+Start with a row that snaps. `scroll-snap-type` on the container turns snapping on, and `scroll-snap-align` on each
+slide says where it should come to rest:
+
+<CodeBlock language="css">
+{`
+  .carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .slide {
+    flex: 0 0 100%;
+    scroll-snap-align: center;
+  }
+`}
+</CodeBlock>
+
+This part is not new. Scroll snap works in every modern browser, and the
+[logical properties guide](/post/css/css-logical-properties#scroll-snap) covers it in more detail. Now add the dots:
+
+<CodeBlock language="css">
+{`
+  .carousel {
+    scroll-marker-group: after;
+  }
+
+  .slide::scroll-marker {
+    content: "";
+    inline-size: 0.625rem;
+    block-size: 0.625rem;
+    border-radius: 50%;
+    background: gray;
+  }
+`}
+</CodeBlock>
+
+`scroll-marker-group: after` tells the carousel to generate a group of markers after itself. Every slide with a
+`::scroll-marker` that has `content` adds one marker to that group. Clicking a marker scrolls its slide into view.
+There's no loop rendering a `<button>` per slide and no click handler.
+
+The size matters. `content: ""` creates an empty box, and an empty box with no size is invisible.
+
+<RainbowDivider />
+
+## How the Pieces Fit Together
+
+Three new pseudo-elements do the work, and each comes from a different element:
+
+* **`::scroll-marker-group`** is generated on the scroll container. It holds the markers and sits just before or just
+  after the container, depending on `scroll-marker-group: before` or `after`.
+* **`::scroll-marker`** is generated on each slide, but it's displayed inside the group, not inside the slide.
+* **`::scroll-button()`** is generated on the scroll container, once for each direction you give it `content`.
+
+None of them exists in the HTML. They're boxes the browser creates, and you style them like `::before` and `::after`.
+The group is an ordinary box, so give it a layout:
+
+<CodeBlock language="css">
+{`
+  .carousel::scroll-marker-group {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    block-size: 0.625rem; /* the marker size; see Common Pitfalls */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Highlighting the Current Slide
+
+<CodeBlock language="css">
+{`
+  .slide::scroll-marker:target-current {
+    background: royalblue;
+  }
+`}
+</CodeBlock>
+
+`:target-current` matches the marker whose slide is in view right now. The browser updates it as you scroll, click a
+marker or press an arrow. Without it, a script would need an `IntersectionObserver` or a scroll position calculation
+just to answer "which slide is showing?". The browser already knows, because it runs the scroll snapping.
+
+<RainbowDivider />
+
+## Previous and Next Buttons
+
+<CodeBlock language="css">
+{`
+  .carousel::scroll-button(left) {
+    content: "‹" / "Previous slide";
+  }
+
+  .carousel::scroll-button(right) {
+    content: "›" / "Next slide";
+  }
+
+  /* Disabled automatically at either end */
+  .carousel::scroll-button(*):disabled {
+    opacity: 0.35;
+  }
+`}
+</CodeBlock>
+
+Each `::scroll-button()` becomes a real button that scrolls the carousel in its direction by about one visible width.
+Scroll snapping then settles it on the next slide. The directions are `left`, `right`, `up` and `down`, or the logical
+`inline-start`, `inline-end`, `block-start` and `block-end`, which follow the writing direction in right-to-left pages.
+`*` selects all of them at once.
+
+A button is `:disabled` when there's nowhere further to scroll, so the boundary check every hand-built "next" button
+needs is done for you. The text after the `/` is the button's accessible name. Without it, a screen reader announces
+the character itself, such as "‹".
+
+### Placing the Buttons
+
+The buttons are generated next to the carousel, not inside it, so they don't land anywhere useful on their own. In a
+flex or grid parent each one becomes a separate item, and they stack. Position them yourself. Anchor positioning keeps
+them centred on the carousel's edges without a wrapper element:
+
+<CodeBlock language="css">
+{`
+  .carousel {
+    anchor-name: --carousel;
+  }
+
+  .carousel::scroll-button(*) {
+    position: absolute;
+    position-anchor: --carousel;
+    top: anchor(center);
+    translate: 0 -50%;
+  }
+
+  .carousel::scroll-button(left) {
+    left: calc(anchor(left) + 0.5rem);
+  }
+
+  .carousel::scroll-button(right) {
+    right: calc(anchor(right) + 0.5rem);
+  }
+`}
+</CodeBlock>
+
+The [customisable `<select>` tutorial](/tutorial/css-customizable-select#positioning-and-animating-the-picker) covers
+anchor positioning in more depth. Every browser that supports scroll buttons also supports anchor positioning.
+
+<RainbowDivider />
+
+## Try It Live
+
+The carousel below has five slides and no JavaScript driving it. Scroll the strip, click a marker or an arrow, or press
+Tab to reach the markers and move between them with the arrow keys. Switch **`scroll-marker-group`** between `after`
+and `before` to move the markers, and **Marker style** between dots and numbers to see that markers can hold content.
+The readout shows which slide the carousel has snapped to.
+
+In a browser without support, the demo is a plain scroll-snap row with a scrollbar. It still scrolls by touch, trackpad
+and keyboard.
+
+<Sandbox slug="native-css-carousel-scroll-markers" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Accessibility
+
+The generated controls come with real semantics, which hand-built dots often get wrong:
+
+* **The markers form a tab list.** Chrome exposes the group as a `tablist` and each marker as a `tab`, with the current
+  one marked as selected. Tab moves focus into the group, and the arrow keys move between markers, as they do in any
+  tab list.
+* **The buttons are buttons.** They're focusable, activated with Enter or Space, and announced as unavailable when
+  disabled.
+* **Give everything a name.** An empty dot has no text to announce, so add alt text after a `/` in `content`, as shown
+  below.
+* **Respect reduced motion.** Markers and buttons scroll the carousel using its own `scroll-behavior`. Put
+  `scroll-behavior: smooth` inside a `prefers-reduced-motion: no-preference` query, so people who've turned motion off
+  get an instant jump. See [Respecting Motion Preferences](/post/animations/css-transitions-guide#accessibility-respecting-motion-preferences)
+  for why this matters.
+* **Label the carousel itself.** An `aria-label` on the scroll container, such as "Product photos", tells screen reader
+  users what the slides are before they start moving through them.
+
+Reading the alt text from an attribute keeps the names in your HTML, next to the slides they describe:
+
+<CodeBlock language="css">
+{`
+  .slide::scroll-marker {
+    content: "" / attr(data-label);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Pages of Several Items with `::column`
+
+A carousel often shows several cards per page, with one dot per page rather than per card. Multi-column layout can do
+this. Set `columns` and a fixed height on the carousel, and the items flow into columns that are each one carousel
+wide. When one column is full, the next items start a new one. Each `::column` can then snap and generate a marker:
+
+<CodeBlock language="css">
+{`
+  .carousel {
+    columns: 1;
+    block-size: 20rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-marker-group: after;
+  }
+
+  .carousel::column {
+    scroll-snap-align: center;
+  }
+
+  .carousel::column::scroll-marker {
+    content: "";
+  }
+`}
+</CodeBlock>
+
+However many items fit in a column, that page gets one marker. Add `break-inside: avoid` to the items so none is
+split across two pages. Resize the carousel and the number of pages, and markers, changes with it.
+
+<RainbowDivider />
+
+## Knowing the Current Slide in JavaScript
+
+The dots and arrows need no script, but other parts of a page sometimes do need to know the current slide, for example
+to show a caption or send analytics. The `scrollsnapchange` event fires when a scroll settles on a new snap target, so
+there's still nothing to measure:
+
+<CodeBlock language="js">
+{`
+  carousel.addEventListener("scrollsnapchange", (event) => {
+    caption.textContent = event.snapTargetInline.dataset.label;
+  });
+`}
+</CodeBlock>
+
+The demo's readout uses exactly this.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`::scroll-marker`, `::scroll-marker-group`, `::scroll-button()`, `:target-current` and `::column` arrived together in
+Chrome and Edge 135, in April 2025. Firefox and Safari don't support them yet, so check
+[MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/::scroll-marker) for the latest status.
+
+Without support, the pseudo-elements simply aren't generated. The carousel is still a working scroll-snap row, so
+treat the dots and arrows as progressive enhancement. Two details make that fallback good rather than merely usable:
+
+<CodeBlock language="css">
+{`
+  /* Hide the scrollbar only once markers and arrows replace it */
+  @supports (scroll-marker-group: after) {
+    .carousel {
+      scrollbar-width: none;
+    }
+  }
+
+  /* Keep existing JavaScript dots only where CSS can't generate them */
+  @supports (scroll-marker-group: after) {
+    .js-carousel-dots {
+      display: none;
+    }
+  }
+`}
+</CodeBlock>
+
+The same check works in JavaScript as `CSS.supports("scroll-marker-group", "after")`, which lets you skip loading a
+carousel script in browsers that don't need it.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Markers with No Size
+
+`content: ""` creates an empty box. Without an `inline-size` and `block-size`, it's zero by zero pixels, and the
+markers seem not to work at all.
+
+### 2. Forgetting `content`
+
+Like `::before`, a marker or scroll button is only generated when it has `content`. Styling `::scroll-button(right)`
+without `content` produces nothing.
+
+### 3. Unpositioned Buttons
+
+The buttons are siblings of the carousel. Left alone in a flex column they stack on top of each other, between the
+carousel and whatever comes next. Position them, as shown above, or wrap the carousel in a container that lays them
+out.
+
+### 4. A Marker Group That Doesn't Grow
+
+In current versions of Chrome, the group doesn't always grow to fit its markers. Its height comes out as zero and the
+markers spill over the slides or the content after them. Give the group a `block-size` that matches the marker size.
+A custom property set on the carousel keeps the two in step, since both pseudo-elements inherit it.
+
+### 5. Hiding the Scrollbar Everywhere
+
+`scrollbar-width: none` on its own removes the only sign that the row scrolls in browsers without markers. Hide it
+inside `@supports`, as in the fallback above.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Image, testimonial and product carousels that use a JavaScript library (Swiper, Splide, Embla) only for snapping,
+  dots and arrows
+- Horizontally scrolling strips, such as category chips or a filter bar, that want a "which one is showing" indicator
+- Paged card rows, with `::column` giving one marker per page
+- Any scroll-snap container where the missing piece was only ever the pagination controls
+
+For full-width slides on mobile, [Dynamic Viewport Width Units](/tutorial/dynamic-viewport-width-units) explains when
+`100dvw` is worth using over `100%`.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Can this replace a carousel library completely?">
+  For many carousels, yes. If a library is only there for snapping, dots and arrows, CSS now covers all three. Features
+  such as autoplay, infinite looping and swipe-to-dismiss aren't part of it, so a carousel that needs those still needs
+  some JavaScript.
+</Details>
+
+<Details summary="Can markers show text or thumbnails instead of dots?">
+  Yes. A marker is a generated box, so `content` can be text, a number from an attribute, or an image with `url()`.
+  The demo's numbers style reads each slide's number from a `data-index` attribute.
+</Details>
+
+<Details summary="Does it work for vertical carousels?">
+  Yes. Use `scroll-snap-type: y mandatory` and the `up` and `down` (or `block-start` and `block-end`) scroll buttons.
+  The markers work the same way on either axis.
+</Details>
+
+<Details summary="Can I put the markers somewhere other than next to the carousel?">
+  Only before or after it with `scroll-marker-group`, though you can position the group like any box. For markers
+  elsewhere on the page, the newer `scroll-target-group` property lets ordinary `<a href="#slide-2">` links act as
+  markers, with `:target-current` applied to the link for the slide in view.
+</Details>
+
+<Details summary="Do I need JavaScript to know which slide is active?">
+  Not for styling, since `:target-current` handles that. If other parts of the page need it, listen for the
+  `scrollsnapchange` event rather than measuring scroll positions.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`::scroll-marker` and `::scroll-button()` let CSS generate a carousel's dots and arrows from a scroll-snap row, with
+the current slide and the disabled ends tracked by the browser. Give markers a size and alt text, position the buttons
+yourself, and use `::column` for pages of several items. Browsers without support keep a plain scroll-snap row, so
+you can add the controls today as progressive enhancement and delete the script that used to draw them.
