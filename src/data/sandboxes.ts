@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "interpolate-size-auto-animations",
+    title: "An Animated <details> Accordion with interpolate-size",
+    description: "An exclusive <details name=\"faq\"> accordion whose ::details-content animates block-size between 0 and auto, with no JavaScript. Toggle interpolate-size to compare snapping with animating.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "field-sizing-content-textarea",
     title: "Auto-Growing Textareas with field-sizing",
     description: "Type past the edge of two textareas to compare field-sizing: content with a fixed size, and toggle the min and max limits and resize to see how each changes the growth.",
