@@ -222,6 +222,7 @@ export const tutorials: Tutorial[] = [
       caption: "Small, large and dynamic viewport widths behind a full-bleed section."
     },
     changelog: [
+      { date: "2026-11-02", change: "Added cross-reference to tutorial 'Pure CSS Carousels with `::scroll-marker` and `::scroll-button()`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-19", change: "Initial publication." }
     ]
