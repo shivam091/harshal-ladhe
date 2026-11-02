@@ -84,7 +84,7 @@ Treat `overflow-x: hidden` here as insurance for a full-bleed layout, not a subs
 ## Where Should You Use This?
 
 - Full-bleed images, dividers, or color-block sections breaking out of an otherwise centered, max-width article or card layout
-- Edge-to-edge horizontal scroll-snap carousels on mobile, where each slide should be exactly one viewport wide
+- Edge-to-edge horizontal scroll-snap carousels on mobile, where each slide should be exactly one viewport wide (add the dots and arrows in CSS with [`::scroll-marker` and `::scroll-button()`](/tutorial/native-css-carousel-scroll-markers))
 - Anywhere you'd already reach for `dvh` on the height axis, for consistency — even though `dvw` rarely does anything `vw` wasn't already doing
 - Not worth an audit the way `100vh` is: there's no common bug today where `100vw` behaves wrong *because of dynamic browser chrome* specifically
 
