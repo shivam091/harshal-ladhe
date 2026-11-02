@@ -572,6 +572,41 @@ Reading about timing functions is one thing, but feeling them is another. Use th
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Why doesn't my transition run when the page first loads?">
+  A transition needs a previous value to animate from, and on first render there isn't one, so the element simply
+  appears in its final state. Declare the starting values in an `@starting-style` block, or toggle a class after the
+  first frame, to give the browser that "before" state.
+</Details>
+
+<Details summary="Why does transitionend fire more than once?">
+  It fires once for every property that finishes transitioning, and it bubbles, so transitions on child elements
+  reach your listener too. Check `event.propertyName` and `event.target` inside the handler to react only to the one
+  you care about.
+</Details>
+
+<Details summary="What happens if a transition is interrupted halfway?">
+  The browser starts a new transition from the element's current, in-between value rather than snapping back to an
+  end point. When the change reverses an unfinished transition, the return trip is also shortened in proportion to how
+  far the first one got, so a quick hover-out doesn't take the full duration.
+</Details>
+
+<Details summary="Can I transition height to auto?">
+  Not with a plain transition — `auto` isn't a length the browser can interpolate to, so the change happens instantly.
+  The long-standing workarounds are animating `max-height` or a grid track from `0fr` to `1fr`. Newer browsers also
+  support `interpolate-size: allow-keywords` and `calc-size()`, which make `auto` animatable directly.
+</Details>
+
+<Details summary="Can I transition a background gradient?">
+  No. Gradients are images, and the browser can't interpolate between two images, so the swap is instant. Fade a
+  second gradient in on a pseudo-element with `opacity`, or register the colour stops as
+  [typed custom properties with `@property`](/tutorial/typed-custom-properties-at-property) and transition those
+  instead.
+</Details>
+
+<RainbowDivider />
+
 ## Conclusion
 
 CSS transitions are a lightweight, intuitive way to animate **state changes**. By using them correctly, particularly by leveraging **GPU-accelerated properties** like `transform` and `opacity`, you can ensure your UI motion is smooth, responsive, and performant. Understanding all `transition-*` properties, the nuances of timing functions, and strategically using `will-change` provides the control you need. Master them, and you'll build a strong foundation for crafting delightful micro-interactions and tackling more advanced CSS animations.

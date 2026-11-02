@@ -946,6 +946,38 @@ Use sequential execution **only** when one task depends on another.
 4. **Beware of Microtask Starvation:** Because microtasks (Promises) have VIP priority, a recursive function that constantly adds new microtasks can "starve" the event loop, preventing the UI from rendering or macrotasks (like `setTimeout`) from ever firing.
 5. **Keep the Main Thread Clear:** Offload heavy CPU-bound computation (like image processing or complex math) to **Web Workers**. Asynchronous code handles *waiting* well, but it doesn't help with *heavy lifting* on a single thread.
 
+## Frequently Asked Questions
+
+<Details summary="Does async/await make my code run in parallel?">
+  No. It lets several operations _wait_ at the same time, but your JavaScript still runs on one thread, one piece at
+  a time. A long synchronous loop inside an async function blocks everything else just as it would anywhere else —
+  for real parallelism on CPU-heavy work, use a Web Worker.
+</Details>
+
+<Details summary="How do I turn a callback-based function into a promise?">
+  Wrap it in `new Promise((resolve, reject) => { ... })` and call `resolve` or `reject` from inside the callback. In
+  Node.js, `util.promisify()` does this for any function that follows the error-first callback convention, and most
+  core modules already ship promise versions, such as `node:fs/promises`.
+</Details>
+
+<Details summary="Why does Node.js crash on an unhandled promise rejection?">
+  Since Node.js 15, an unhandled rejection is treated like an uncaught exception, so the process exits by default.
+  Attach a `.catch()` or wrap the `await` in `try`/`catch` wherever a rejection can happen, and keep a
+  `process.on("unhandledRejection", ...)` handler only as a last-resort logger.
+</Details>
+
+<Details summary="Is there a shorter way to add a timeout to fetch?">
+  Yes. `fetch(url, { signal: AbortSignal.timeout(5000) })` aborts the request after five seconds without a manual
+  `setTimeout`. It rejects with a `TimeoutError` rather than an `AbortError`, and `AbortSignal.any([...])` combines it
+  with your own controller's signal when the user can cancel as well.
+</Details>
+
+<Details summary="Is async/await slower than using promises directly?">
+  Not in any way that matters. Modern engines optimise `await` heavily, and it's built on the same promises
+  underneath. What does cost real time is awaiting independent tasks one after another, so reach for `Promise.all`
+  before worrying about syntax.
+</Details>
+
 ## Wrapping Up
 
 Asynchronous JavaScript has evolved to solve real problems:

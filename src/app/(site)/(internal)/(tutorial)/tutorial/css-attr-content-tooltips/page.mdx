@@ -364,6 +364,30 @@ transition only — not the hiding one — fixes it, and gives the tooltip the i
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Can a CSS tooltip have a line break?">
+  Yes. Put a newline character reference, `&#10;`, in the attribute where the break should go, and add
+  `white-space: pre-line` to the pseudo-element so the browser respects it instead of collapsing it into a space.
+</Details>
+
+<Details summary="Which attributes can content: attr() read?">
+  Any attribute on the element being styled — `data-*`, `aria-label`, `title`, even `href`, which is how print
+  stylesheets show a link's URL after its text. It can't read attributes from a parent or any other element.
+</Details>
+
+<Details summary="Can the tooltip text be translated?">
+  Yes, and easily. The text lives in the markup, so whatever renders your translated HTML translates the tooltip too.
+  That's a real advantage over writing the text into the stylesheet as a `content` string.
+</Details>
+
+<Details summary="Can users select or search the tooltip text?">
+  Generally no. Generated content isn't selectable, and find-in-page usually doesn't match it, so copying or searching
+  for a tooltip's text won't work. That's another reason to keep essential information in the page itself.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `content: attr(data-tooltip)` on a `::after`, positioned against its element and revealed on `:hover` and

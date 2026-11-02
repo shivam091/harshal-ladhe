@@ -204,6 +204,34 @@ Retrying these only wastes time because another attempt will almost certainly fa
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="How many retries should I allow?">
+  Three to five covers most transient failures. Count the total wait as well as the attempts: with the defaults, three
+  retries wait 1 + 2 + 4 seconds, so a request can take more than 7 seconds to fail. Keep that within what the user
+  or the caller is prepared to wait.
+</Details>
+
+<Details summary="Why doesn't fetch throw on an HTTP 500 error?">
+  `fetch` only rejects when the request can't complete at all, such as a network failure. Any HTTP response, including
+  `500` or `503`, resolves normally. Check `response.ok` and throw yourself, as the example does, or `retry` will
+  treat the failed response as a success.
+</Details>
+
+<Details summary="Should I respect the Retry-After header?">
+  Yes. A `429` or `503` response may include `Retry-After`, telling you how long the server wants you to wait. When it's
+  present, use that value instead of the computed delay — the server knows its own recovery time better than a
+  doubling formula does.
+</Details>
+
+<Details summary="Should I retry on both the client and the server?">
+  Pick one layer. If the browser retries three times and the API it calls also retries three times, a single failure
+  becomes up to sixteen requests to the struggling service. Retry at the layer closest to the failure, and let the
+  others fail fast.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 The standard `retry` utility provides a safety net for flaky APIs. By using an **Options Object** and **Max Delay**, you ensure your code remains maintainable and resilient under stress.

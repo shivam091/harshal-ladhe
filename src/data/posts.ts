@@ -107,6 +107,7 @@ export const posts: Post[] = [
     signoff: "A lot of testing and refining went into getting these grid-area, alignment, spanning, subgrid, and accessibility examples just right, and I hope that effort shows in how clearly they click for you. Thanks for following along — hope your layouts feel a little more precise now. 📐",
     pinned: true,
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-08-15", change: "Added interactive playground for alignment, spanning, and implicit tracks" },
       { date: "2026-07-05", change: "Initial publication" }
     ]
@@ -156,6 +157,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
@@ -225,6 +227,7 @@ export const posts: Post[] = [
     },
     signoff: "Between the six shape playgrounds, the presentation-attributes demo, and getting that radar sweep to pivot from exactly the right point, this ended up with more moving pieces than any SVG post so far — I hope tinkering with those sliders builds more intuition than the coordinate math alone ever could. Thanks for working through the whole toolkit with me. Go build something that scales without breaking a sweat. 🎯",
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-08-25", change: "Added cross-reference to post 'SVG Polygon vs Polyline: Differences, Fill Rules, and Use Cases'" },
       { date: "2026-08-21", change: "Initial publication" }
@@ -248,6 +251,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Every operator in this guide—from `+` to `??=`—got its own runnable example, and the precedence table alone went through more revisions than I'd like to admit before it was scannable at a glance. This is the most thorough reference on the site so far; thanks for working through all of it with me. Go write cleaner conditionals. ✨",
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2025-08-23", change: "Initial publication" }
     ]
   },
@@ -291,6 +295,7 @@ export const posts: Post[] = [
     },
     signoff: "This one leaned harder on visuals than any post before it — four custom SVG diagrams built to keep the inline and block axes crossing the right way in every writing mode, plus the direction/writing-mode toggle above to prove it live. Chasing all sixty-some properties across sixteen categories down to their physical equivalents turned up a few surprises along the way — a couple of values that looked valid but aren't implemented anywhere, one that isn't even real syntax. I hope watching those arrows and toggles do their thing builds more intuition than the mapping tables alone ever could. Thanks for tracing every axis with me — go replace a `margin-left` with something that actually adapts. 🧭",
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-17", change: "Added cross-reference to tutorial 'Squircles, Bevels and Scoops with `corner-shape`'" },
       { date: "2026-09-19", change: "Added cross-reference to tutorial 'Dynamic Viewport Height Units'" },
       { date: "2026-08-30", change: "Initial publication" }
@@ -313,6 +318,7 @@ export const posts: Post[] = [
     },
     signoff: "The five diagrams gave me the most trouble up front—getting the off-center radial boundaries to line up with the actual math, and the conic sweep to read as clockwise-from-the-top at a glance—and turning the playground into three real tabs (gradient types plus repeating, a toggleable glass layer stack, and all three animated demos with a reduced-motion switch) took a lot more wiring than the original single-panel version. I hope dragging every one of those controls makes gradients click in a way reading about them never quite does. Thanks for gradient-ing along with me. 🌈",
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-07", change: "Added cross-reference to post 'HTML5 Canvas Guide: Drawing, Animation, and Best Practices'" },
       { date: "2026-09-28", change: "Added cross-reference to post 'CSS Gradient Borders: Complete Guide with Techniques & Examples'" },
@@ -338,6 +344,7 @@ export const posts: Post[] = [
     signoff: "Getting the radar's sweep to pivot from the right point back in the basic shapes post turned out to be the easy part. This round added five more interactive panels, each wiring its own live code and controls to real `@keyframes` — and the trickiest bug wasn't in the animation at all, it was figuring out why an elliptical arc needs to end 0.1 units short of its own starting point just to keep the motion-path math from collapsing into nothing. Thanks for hovering the heart and sun, looping the radar, dragging the draw-on and stagger sliders, toggling the comet's curve-following on and off, and watching a circle round itself into a square with me — go animate something that used to just sit there. 🎯",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-04", change: "Added cross-reference to post 'An Interactive Guide to CSS cubic-bezier()'" },
       { date: "2026-09-24", change: 'Added cross reference to post "Mastering CSS steps() for Discrete, Stepped Animations" from the radar scanner case study' },
       { date: "2026-09-06", change: "Initial publication" }
@@ -361,6 +368,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Getting ten interactive command demos, a full heart-shape decode, and the fill-rule, pathLength, and CSS path() sections to all click together took a fair share of iteration, and I hope it leaves you able to read — and write — a `d` string without flinching. Thanks for sticking with me through the whole alphabet of path commands — go draw something only you could have coded. ✏️",
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-08", change: "Initial publication" }
     ],
   },
@@ -404,6 +412,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Getting the microtask-vs-macrotask ordering to click as a diagram instead of just a list of rules took a few passes, and building a live Promise.all/allSettled/race/any playground next to the section that explains them felt like the right way to make combinator choice concrete instead of theoretical. Thanks for following the whole callbacks → promises → async/await arc with me; go find an unnecessary sequential await in your own code and fix it. ⏱️",
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-12", change: "Initial publication" }
     ],
   },
@@ -425,6 +434,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Between the core keyframes playground and a second sandbox built just to make `animation-timeline` and `animation-range` tangible — complete with a live range slider and its own feature-detection fallback for browsers that don't support scroll-driven animations yet — this one ended up needing two full interactive builds instead of one. Getting the `animation-range` diagram to actually line up entry/contain/cover/exit against a scrolling element took more iteration than the rest of the post combined. Thanks for tweaking every duration, delay, and range slider with me — go give your loops, spinners, and scroll reveals some real personality. 🎬",
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
       { date: "2026-09-24", change: "Added cross-reference to post 'Mastering CSS steps() for Discrete, Stepped Animations'" },
@@ -581,6 +591,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one grew from a first `fillRect()` all the way to `OffscreenCanvas` workers, pixel manipulation, and a full cheat sheet, and the four diagrams carry the parts words kept fumbling — the y-axis running down, `arc()` angles turning clockwise, `rotate()` swinging around the origin until `translate()` moves it, and one canvas pixel smeared across a 2 × 2 block on a high-DPI screen. The playground took the most rounds: particles that collide by swapping velocity along the contact normal and answer mouse, touch, and pen alike, then a second mode that projects, depth-sorts, and flat-shades a cube, pyramid, and octahedron with nothing but maths on a plain 2D context. Thanks for drawing along with me — go paint something worth redrawing sixty times a second. 🎨",
     changelog: [
+      { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-07", change: "Initial publication" }
     ]
   },

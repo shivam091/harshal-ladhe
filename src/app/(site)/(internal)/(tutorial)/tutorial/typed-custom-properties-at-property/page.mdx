@@ -282,6 +282,33 @@ parameters and return value are typed with the same syntax as `@property`.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Is @property part of CSS Houdini?">
+  Yes. It comes from the CSS Properties and Values API, one of the Houdini specifications, alongside
+  `CSS.registerProperty()`. Unlike some other Houdini APIs, it needs no worklet or JavaScript at all when you use the
+  `@property` rule.
+</Details>
+
+<Details summary="What does getComputedStyle return for a registered property?">
+  The computed value, in the registered type. `getComputedStyle(el).getPropertyValue("--gap")` returns `20px` for a
+  registered `<length>` set to `1em` on a 20px element, whereas an unregistered property returns the text exactly as
+  written.
+</Details>
+
+<Details summary="Can I animate a registered property with the Web Animations API?">
+  Yes. Once it's registered, `el.animate([{ "--angle": "0deg" }, { "--angle": "360deg" }], 1000)` interpolates it
+  just like a CSS transition or `@keyframes` would. Without registration, the value flips halfway through instead.
+</Details>
+
+<Details summary="Does Tailwind CSS use @property?">
+  Tailwind CSS v4 does. It registers many of its internal `--tw-*` variables with `@property`, so utilities that
+  combine several of them get typed values and sensible initial values. Your own registrations work alongside them, as
+  long as the names don't collide.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 An ordinary custom property is text: it can't animate, it accepts anything, and it always inherits. `@property`
