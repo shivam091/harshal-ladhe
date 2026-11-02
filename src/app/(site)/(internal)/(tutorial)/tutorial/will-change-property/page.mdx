@@ -76,6 +76,33 @@ For the full walkthrough of transitions, timing functions, and the rest of the p
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Can I set will-change in the :hover rule itself?">
+  It's usually too late there, because the hover state and the transition start in the same frame. Set it one step
+  earlier instead: on the parent's `:hover`, so the child is promoted as the pointer approaches, or from JavaScript on
+  `pointerenter`, as shown above.
+</Details>
+
+<Details summary="Why does my text look blurry with will-change: transform?">
+  A promoted layer is rasterised once and then moved or scaled as a bitmap, so text inside it can look soft,
+  especially after a `scale()`. Removing `will-change` when the animation ends lets the browser redraw the element
+  sharply, which is one more reason not to leave it on.
+</Details>
+
+<Details summary="What other values can will-change take?">
+  Besides property names such as `transform` and `opacity`, it accepts `scroll-position`, for an element whose
+  scroll position is about to change, and `contents`, for an element whose content is about to change. `auto`, the
+  default, means no hint at all.
+</Details>
+
+<Details summary="How can I see which elements are promoted to layers?">
+  In Chrome and Edge DevTools, the Layers panel lists every compositor layer and why it was created, and the
+  Rendering tab's layer borders option outlines them on the page. Safari's Web Inspector has a Layers tab as well.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `will-change` turns a layer-promotion cost the browser would otherwise pay on the first frame of a transition into one it pays ahead of time, during idle time instead. Set it right before you need it, remove it right after — leaving it on permanently just relocates the performance problem instead of solving it.
