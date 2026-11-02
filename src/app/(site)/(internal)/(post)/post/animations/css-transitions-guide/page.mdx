@@ -620,5 +620,6 @@ While transitions are excellent for simple, state-driven changes, complex motion
 - Optimize with **will-change** only when necessary
 - Force a reflow (or use `requestAnimationFrame`) before adding a class that should trigger a transition on a freshly-inserted element
 - Reach for `transition-behavior: allow-discrete` and `@starting-style` instead of `visibility` hacks when animating `display`
+- Opt in with `interpolate-size: allow-keywords` to transition `height` to `auto` — see [Animating `height: auto` in CSS with `interpolate-size`](/tutorial/interpolate-size-auto-animations)
 - Respect `prefers-reduced-motion` — accessible motion isn't optional
 - Keep motion **subtle and consistent**
