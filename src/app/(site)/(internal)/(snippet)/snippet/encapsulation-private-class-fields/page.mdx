@@ -99,6 +99,33 @@ building a library that follows a traditional OOP structure.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="How do I check whether an object has a private field?">
+  Use the `in` operator with the field name inside the class: `#count in obj` returns `true` for instances of the
+  class and `false` for anything else, without throwing. It's the safe way to tell a genuine instance from an object
+  that only looks like one.
+</Details>
+
+<Details summary="Can subclasses access private fields?">
+  No. A subclass instance does carry the field, because the parent constructor sets it up, but only code written
+  inside the class that declares `#count` can read or write it. JavaScript has no `protected` modifier, so expose
+  what subclasses need through methods or getters.
+</Details>
+
+<Details summary="Do private fields show up in JSON.stringify or Object.keys?">
+  No. Private fields aren't properties, so `JSON.stringify`, `Object.keys`, spreading and `Reflect.ownKeys` all skip
+  them. Add a `toJSON()` method if the internal state should be serialised.
+</Details>
+
+<Details summary="Why do private fields break when the object is wrapped in a Proxy?">
+  Methods that read `this.#count` look the field up on the object they're called on. Called through a `Proxy`,
+  `this` is the proxy, which has no private fields, so the method throws a `TypeError`. Bind such methods to the
+  original instance, or avoid proxying classes that use private fields.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 Private Class Fields are the modern standard for **Object-Oriented Encapsulation**. They offer a cleaner syntax than closures for

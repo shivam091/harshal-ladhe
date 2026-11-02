@@ -651,6 +651,39 @@ Not every SVG carries information, though. A decorative icon sitting next to a t
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Should I inline an SVG or load it with an img tag?">
+  Inline it when you need to style or animate its shapes with CSS, change colour with `currentColor`, or script it.
+  Use `<img src="icon.svg">` (or a CSS background) when it's a static picture: the file is cached separately and
+  keeps your HTML smaller, but the page's CSS can't reach inside it.
+</Details>
+
+<Details summary="How do I make an SVG responsive?">
+  Keep the `viewBox`, drop the fixed `width` and `height` attributes (or override them), and set `width: 100%` and
+  `height: auto` in CSS. The browser works out the height from the `viewBox` ratio, so the graphic scales with its
+  container.
+</Details>
+
+<Details summary="Why does my stroke get thicker when the SVG scales up?">
+  Because `stroke-width` is measured in user units, so it scales along with everything else in the `viewBox`. Add
+  `vector-effect: non-scaling-stroke` to the shape to keep the stroke the same on-screen width at any size.
+</Details>
+
+<Details summary="Why is the edge of my stroke cut off?">
+  Strokes are centred on the shape's outline, so half the stroke sits outside the geometry. A shape that touches the
+  edge of the `viewBox` loses that outer half. Inset the shape by half the stroke width, or widen the `viewBox` to
+  leave room.
+</Details>
+
+<Details summary="Do I need the xmlns attribute on an SVG?">
+  Only in a standalone `.svg` file, including one loaded through `<img>` or a CSS background — without
+  `xmlns="http://www.w3.org/2000/svg"` it won't render. SVG written inline in an HTML document doesn't need it,
+  because the HTML parser assigns the namespace itself.
+</Details>
+
+<RainbowDivider />
+
 ## Wrapping Up
 
 In this post, we've laid the groundwork for building professional, resolution-independent graphics. By mastering the basics, you've

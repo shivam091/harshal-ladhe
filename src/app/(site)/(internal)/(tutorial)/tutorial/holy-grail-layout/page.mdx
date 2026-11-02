@@ -169,6 +169,34 @@ Simply rearrange the `grid-template-areas` inside the media query.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Why is it called the Holy Grail layout?">
+  Because for years it was a layout everyone wanted and nobody could build cleanly. With floats, getting equal-height
+  columns, a footer that stays at the bottom, and the main content first in the source order all at once took
+  negative margins and wrapper elements. Grid turned it into a few lines of CSS.
+</Details>
+
+<Details summary="Should I use Grid or Flexbox for this layout?">
+  Grid. The layout is two-dimensional — the header and footer span every column while the middle row splits into
+  three — and that's exactly what `grid-template-areas` describes. Flexbox can do it, but only with a nested flex
+  container for the middle row.
+</Details>
+
+<Details summary="Does reordering with grid-template-areas affect keyboard navigation?">
+  Yes. Tab order and screen reader order follow the DOM, not the visual grid, so moving `nav` visually above `main`
+  on mobile doesn't change the order a keyboard user moves through them. Keep the source order sensible and limit
+  visual reordering to changes that don't confuse that order.
+</Details>
+
+<Details summary="How do I make the sidebars shrink instead of using a fixed width?">
+  Replace the fixed width in `--sidebar-width` with something flexible, such as `minmax(10rem, 15rem)` directly in
+  `grid-template-columns`, or a `clamp()` value. The `1fr` middle column still takes whatever space is left. See
+  [min(), max(), and clamp()](/tutorial/min-max-clamp-functions) for bounding widths like this.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 This Grid-based Holy Grail layout is:

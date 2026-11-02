@@ -305,6 +305,31 @@ and `<select>` isn't the right base for it. But for "pick one from a list", whic
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="How do I check whether the browser supports a customisable select?">
+  Use a feature query: `@supports (appearance: base-select) { … }`. Styles inside it only apply where the opt-in is
+  understood, which is useful for anything that would look wrong on a classic select.
+</Details>
+
+<Details summary="Can I hide the checkmark or the arrow?">
+  Yes. Both are pseudo-elements, so `option::checkmark { display: none; }` removes the tick and
+  `select::picker-icon { display: none; }` removes the arrow. Keep some other sign of the selected option, such as an
+  `option:checked` background, if you remove the tick.
+</Details>
+
+<Details summary="Do option groups still work?">
+  Yes. `<optgroup>` still groups options and is announced as a group, and in a customisable select it's an ordinary
+  box you can style, with a heading, spacing or a divider between groups.
+</Details>
+
+<Details summary="How do I stop a long list of options filling the screen?">
+  Give the picker a maximum size, such as `::picker(select) { max-block-size: 20rem; overflow-y: auto; }`. The options
+  then scroll inside the dropdown, and the keyboard still moves through all of them.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `appearance: base-select` on `select` and `::picker(select)` turns the least styleable form control into one of the

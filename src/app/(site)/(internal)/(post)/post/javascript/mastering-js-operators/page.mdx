@@ -1278,6 +1278,38 @@ The table below lists the operators covered in this guide, ordered from highest 
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Why does 0.1 + 0.2 not equal 0.3?">
+  JavaScript numbers are 64-bit floating-point values, and neither `0.1` nor `0.2` can be stored exactly in binary,
+  so the sum comes out as `0.30000000000000004`. Compare decimals with a tolerance, such as
+  `Math.abs(a - b) < Number.EPSILON`, and do money calculations in whole units like pence or cents.
+</Details>
+
+<Details summary="Is it ever fine to use == instead of ===?">
+  There's one widely accepted case: `value == null` is `true` for both `null` and `undefined` and nothing else, so it
+  replaces `value === null || value === undefined` in a single check. Everywhere else, `===` is the safer default.
+</Details>
+
+<Details summary="How do I check whether a value is an array?">
+  Use `Array.isArray(value)`. `typeof` returns `"object"` for arrays, and `instanceof Array` fails for arrays created
+  in another realm, such as an iframe, because each realm has its own `Array` constructor.
+</Details>
+
+<Details summary="Can I use arithmetic operators with BigInt?">
+  Yes — `+`, `-`, `*`, `/`, `%` and `**` all work on `BigInt` values, but both operands must be `BigInt`. Mixing a
+  `BigInt` with a regular number throws a `TypeError`, `/` rounds towards zero, and the unary `+` isn't allowed at
+  all. Convert explicitly with `BigInt()` or `Number()` first.
+</Details>
+
+<Details summary="What's the difference between the in operator and Object.hasOwn()?">
+  `in` returns `true` for properties anywhere on the prototype chain, so `"toString" in {}` is `true`.
+  `Object.hasOwn(obj, key)` only checks the object's own properties, which is usually what you mean when checking
+  data, such as a parsed JSON object.
+</Details>
+
+<RainbowDivider />
+
 ## Wrapping Up
 
 JavaScript operators are the building blocks of logic and computation. They let you transform, compare, and assign values in concise ways—from basic arithmetic and comparisons to modern features like optional chaining, nullish coalescing, and logical assignment.

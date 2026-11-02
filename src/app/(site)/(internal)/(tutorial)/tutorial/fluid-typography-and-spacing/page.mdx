@@ -242,6 +242,35 @@ For the rest of the `cq*` family (`cqb`, `cqmin`, `cqmax`) and the containment r
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="How do I work out the preferred value for a given minimum and maximum width?">
+  Pick the two viewport widths where the value should hit its floor and ceiling, then solve the straight line between
+  them. The slope is `(max size − min size) / (max width − min width)`, which becomes the `vw` term once multiplied by
+  100, and the intercept is `min size − slope × min width`, which becomes the `rem` term. Online fluid-type
+  calculators do exactly this sum for you.
+</Details>
+
+<Details summary="Does fluid typography pass WCAG resize text requirements?">
+  It can, as long as the formula includes a `rem` term and the ceiling isn't too tight. WCAG asks that text can be
+  zoomed to 200%, and a value made only of `vw` won't grow with zoom at all. Test by zooming the page to 200% and
+  checking that the text actually gets larger.
+</Details>
+
+<Details summary="Should I use clamp() for line-height?">
+  Usually not. A unitless `line-height` such as `1.5` already scales with whatever `font-size` the `clamp()`
+  produces, so it stays proportional without any extra work. Reach for a fluid `line-height` only when headings need
+  noticeably tighter leading at large sizes than at small ones.
+</Details>
+
+<Details summary="Can I still use media queries alongside clamp()?">
+  Yes. `clamp()` replaces the breakpoints that only exist to nudge a size, but layout changes such as switching from
+  one column to two still belong in a media or container query. The two work together: the query changes the
+  structure, and `clamp()` keeps the sizes smooth within each structure.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `clamp()` turns "pick a handful of fixed sizes and jump between them at breakpoints" into "pick a floor, a ceiling, and a formula for what happens in between" — one line per property, no per-breakpoint maintenance, and (with a `rem` term in the mix) no accessibility regression. The same idea covers type, spacing, and radii alike; swap `vw` for `cqi`/`cqb` once a component needs to scale off its own container instead of the page.

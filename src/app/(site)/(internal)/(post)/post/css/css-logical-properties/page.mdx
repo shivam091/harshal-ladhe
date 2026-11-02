@@ -482,6 +482,39 @@ your logical properties. This ensures that browsers without logical property sup
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="What happens if I set both margin-left and margin-inline-start?">
+  They write to the same side of the box, so they compete like any two declarations for one property: whichever
+  comes later in the cascade wins. That's what makes the physical-then-logical fallback pattern above work, and also
+  why mixing them by accident causes confusing overrides.
+</Details>
+
+<Details summary="Is the margin shorthand logical?">
+  No. Multi-value shorthands such as `margin: 1rem 2rem` and `padding` are always physical — top, right, bottom,
+  left. For flow-relative spacing, use the two-value `margin-block` and `margin-inline` shorthands instead.
+</Details>
+
+<Details summary="Do Flexbox and Grid follow the writing direction?">
+  Yes. A `flex-direction: row` container lays items out along the inline axis, and alignment values such as
+  `justify-content: start` and the Grid line numbers all follow the writing mode and direction. A row of items flips
+  automatically in RTL with no extra CSS.
+</Details>
+
+<Details summary="Should I set direction in CSS or with the dir attribute?">
+  Use the `dir` attribute in your HTML — `<html dir="rtl">`, or on any element whose language differs. Text
+  direction is part of the content's meaning, so it belongs in the markup, where browsers, screen readers and search
+  engines can all see it. Keep the CSS `direction` property for rare presentational cases.
+</Details>
+
+<Details summary="Do transforms have logical equivalents?">
+  No. `transform`, `translate` and `rotate` are always physical, so a `translateX(1rem)` nudge moves right even in
+  RTL. Flip it for RTL with the `:dir(rtl)` pseudo-class, or multiply the distance by a custom property set to `-1`
+  inside that selector.
+</Details>
+
+<RainbowDivider />
+
 ## Conclusion
 
 CSS Logical Properties aren't just about cleaner code — they represent the future of responsive, internationalized web design.

@@ -840,6 +840,32 @@ To ensure your keyframe animations are smooth, efficient, and accessible, follow
 - **Vendor Prefix Note (Legacy):** While not required in modern, stable browsers, if you need to support very old browser versions (e.g., specific Android or Safari targets), you may still need to use **vendor prefixes** for both the keyframe definition and the properties (e.g., `@-webkit-keyframes` and `-webkit-animation:`).
 - **The Hybrid Approach:** For the ultimate performance-to-control ratio, combine CSS Keyframes with JS Observers. Use [MutationObserver](/post/javascript/mastering-js-observers#mutationobserver-watching-the-dom-structure) to detect when a specific component is added to the DOM, then apply a CSS class that triggers a high-performance `@keyframes` intro animation. This keeps your "motion" in CSS and your "logic" in JavaScript.
 
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Can I use CSS custom properties inside @keyframes?">
+  Yes. A `var()` inside a keyframe is resolved against the element being animated, so one set of keyframes can produce different motion on different elements — for example, `transform: translateY(var(--lift))` with a different `--lift` on each card. Animating the custom property _itself_ is another matter: an unregistered variable can't be interpolated, so it jumps from value to value. Registering it with [`@property`](/tutorial/typed-custom-properties-at-property) gives it a type the browser can animate smoothly.
+</Details>
+
+<Details summary="What happens if two @keyframes rules have the same name?">
+  The browser uses the last one it finds and ignores the others entirely. Keyframes rules aren't merged, so you can't define `0%` in one block and `100%` in another. Give each animation a unique, descriptive name to avoid one stylesheet silently replacing another's motion.
+</Details>
+
+<Details summary="Do animations override inline styles and !important?">
+  Animations override normal declarations, inline styles included, for as long as they run. They lose to `!important` declarations, though, and `!important` _inside_ a keyframe is simply ignored. If an animated property refuses to move, look for an `!important` rule on that property.
+</Details>
+
+<Details summary="Do keyframe percentages have to be in order?">
+  No. The browser sorts the selectors by percentage, so `100%` can be written before `50%`. Percentages outside `0%`–`100%` are invalid, though, and the keyframe using them is dropped.
+</Details>
+
+<Details summary="Why doesn't my animation run on an element with display: none?">
+  Elements with `display: none` don't render, so their animations don't run. When the element is shown again, the animation starts from the beginning, which makes it a simple way to replay an entrance animation. Hiding with `visibility: hidden` or `opacity: 0` keeps the animation running in the background instead.
+</Details>
+
+<RainbowDivider />
+
 ## Conclusion
 
 **CSS keyframe animations** empower you to define complex, multi-stage motion with ultimate precision and intent. By mastering the sequence and control properties, and critically, by leveraging **GPU-accelerated properties** like `transform` and `opacity`, you can create highly engaging visual effects that make interfaces feel truly alive. They provide full control over timing, direction, and repetition **without compromising performance or usability**.

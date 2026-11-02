@@ -115,6 +115,33 @@ This snippet provides a `usePointerPosition` hook that tracks the pointer's coor
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Why use clientX instead of pageX?">
+  `getBoundingClientRect()` measures the element relative to the viewport, and so does `clientX`. Subtracting one
+  from the other gives the position inside the element. `pageX` includes the scroll offset, so mixing it with the
+  rect would be wrong as soon as the page scrolls.
+</Details>
+
+<Details summary="Why doesn't the position update when the page scrolls?">
+  `pointermove` only fires when the pointer moves. Scrolling moves the element under a still pointer, so an
+  element-relative position goes stale until the next movement. If that matters, listen for `scroll` as well and
+  recalculate from the last known `clientX` and `clientY`.
+</Details>
+
+<Details summary="How do I reset the position when the pointer leaves the element?">
+  The hook keeps the last coordinates it saw. Add a `pointerleave` listener alongside `pointermove` that sets the
+  state back to its initial value, or to `null` if your component should hide its effect entirely.
+</Details>
+
+<Details summary="Does the hook support multi-touch?">
+  Not directly. Every finger fires its own `pointermove` with a different `pointerId`, and the hook stores whichever
+  moved last, so two fingers make the position jump between them. Keep a `Map` keyed by `pointerId` to track each
+  touch point separately.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `usePointerPosition` replaces separate mouse/touch tracking logic with a single Pointer Events listener, adds element-relative coordinates via an optional `target` ref, and stays a drop-in `useMousePosition` for existing call sites — one hook that works correctly across every pointing device.
