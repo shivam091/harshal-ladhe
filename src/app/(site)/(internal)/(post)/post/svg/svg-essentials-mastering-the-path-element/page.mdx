@@ -560,6 +560,33 @@ A few habits separate a path that merely works from one that's ready to ship:
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="How do I draw a full circle with a single path?">
+  Use two arcs. A single arc whose start and end points are the same draws nothing, so split the circle into two
+  halves: `M10 50 A40 40 0 1 0 90 50 A40 40 0 1 0 10 50 Z` draws a circle of radius 40 centred on (50, 50).
+</Details>
+
+<Details summary="How do I convert a circle or rectangle into a path?">
+  Most vector editors have a convert-to-path or outline command that rewrites a shape as `<path>` data, and SVGO's
+  `convertShapeToPath` plugin does it automatically when the result is shorter. By hand, a rectangle is just `M`, `H`,
+  `V` and `Z`, and a circle is the two-arc pattern above.
+</Details>
+
+<Details summary="Why doesn't clip-path: path() scale with my element?">
+  The numbers in CSS `path()` are fixed pixel values, so the clip stays the same size however large the element
+  gets. For a clip that scales, use an SVG `<clipPath clipPathUnits="objectBoundingBox">` with coordinates from `0`
+  to `1`, or the newer CSS `shape()` function, which accepts percentages, where it's supported.
+</Details>
+
+<Details summary="Can I change a path's d value from CSS?">
+  In Chromium and Firefox, yes: `d` is also a CSS property, so `path { d: path("M10 10 H90"); }` works and can even be
+  transitioned between paths with the same commands. Safari support has lagged behind, so keep the `d` attribute in
+  the markup as the fallback.
+</Details>
+
+<RainbowDivider />
+
 ## Summary
 
 While we used `<rect>` and `<circle>` in the [previous post](/post/svg/svg-essentials-mastering-basic-shapes) for simple geometry,

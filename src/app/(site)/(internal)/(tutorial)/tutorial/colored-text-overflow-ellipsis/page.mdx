@@ -358,6 +358,32 @@ through its container, has none of these problems.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Can I truncate text in the middle instead of at the end?">
+  Not with CSS alone — `text-overflow` only acts on the end of a line. The usual workaround splits the text into two
+  elements in a flex row: a start that truncates and a short end, such as a file extension, with `flex-shrink: 0` so
+  it always stays visible.
+</Details>
+
+<Details summary="How do I truncate text in a table cell?">
+  The cell is the block container, so the same rules apply to it. Table columns grow to fit no-wrap content, though,
+  so the cell never overflows unless the table has `table-layout: fixed` or the column has a fixed width.
+</Details>
+
+<Details summary="Why doesn't text-overflow work on my link?">
+  An `<a>` is inline by default, and `text-overflow` only applies to block containers. Give the link
+  `display: block` (or `inline-block`) with a limited width, or truncate the heading or wrapper around it instead.
+</Details>
+
+<Details summary="Can I fade the text out instead of showing dots?">
+  Yes. Keep `white-space: nowrap` and `overflow: hidden`, drop `text-overflow`, and add a `mask-image` with a
+  `linear-gradient()` that goes from opaque to transparent near the end. Unlike the ellipsis, the fade shows even
+  when the text fits, so apply it only where text is likely to overflow.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 The ellipsis from `text-overflow` is styled by the block container that truncates, not by the text it cuts off. Put

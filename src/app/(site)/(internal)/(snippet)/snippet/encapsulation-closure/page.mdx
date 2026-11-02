@@ -113,6 +113,33 @@ They are excellent for **Unique ID Generators** or simple state containers.
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Do closures cause memory leaks?">
+  Not by themselves. Captured variables stay in memory for as long as a function that closes over them is reachable,
+  which is exactly what keeps `count` alive. A leak only happens when a closure is kept around longer than it's
+  needed — in a forgotten event listener or a long-lived cache — while holding on to large data.
+</Details>
+
+<Details summary="Why doesn't assigning counter.count throw an error?">
+  The returned object is frozen, so adding a property to it fails silently in sloppy mode and throws a `TypeError` in
+  strict mode, which includes ES modules and class bodies. Either way the real `count` is untouched, because it's a
+  local variable, not a property of the object.
+</Details>
+
+<Details summary="Are closures slower than classes?">
+  Each call to `createCounter()` creates a fresh set of methods, while class instances share theirs through the
+  prototype. For a handful of objects the difference is negligible; for thousands, the class version uses noticeably
+  less memory — see [Encapsulation with Private Class Fields](/snippet/encapsulation-private-class-fields).
+</Details>
+
+<Details summary="Can I see closure variables while debugging?">
+  Yes. Pause on a breakpoint inside one of the returned methods and your browser's DevTools lists the captured
+  variables under a **Closure** entry in the Scope panel, even though no code outside the factory can reach them.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 Closures are a lightweight, framework-independent solution for private state, forming the foundation of the **Module Pattern**

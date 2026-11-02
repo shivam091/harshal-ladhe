@@ -138,6 +138,33 @@ When the same formula keeps reappearing with different numbers, you can name it 
 
 <RainbowDivider />
 
+## Frequently Asked Questions
+
+<Details summary="Why does min() pick the maximum width and max() the minimum?">
+  It's the most common source of confusion. `width: min(90%, 60ch)` sets a _maximum_ width of `60ch`, because the
+  smaller value always wins; `max(1rem, 4%)` sets a _minimum_ of `1rem`. Read `min()` as "no bigger than" and
+  `max()` as "no smaller than".
+</Details>
+
+<Details summary="Is min() the same as setting max-width?">
+  Often the result looks the same, but `min()` is a single value for one property, while `max-width` is a separate
+  constraint layered on top of `width`. `min()` also works in properties that have no `max-` counterpart, such as
+  `padding`, `gap` and `font-size`.
+</Details>
+
+<Details summary="Do I need calc() inside min(), max() or clamp()?">
+  No. Each argument already accepts maths directly, so `clamp(1rem, 0.5rem + 2vw, 2rem)` is valid without wrapping
+  the middle argument in `calc()`. Adding `calc()` does no harm, but it isn't required.
+</Details>
+
+<Details summary="Can I use min(), max() or clamp() in a media query?">
+  Yes, they're allowed anywhere a length is valid, including media query conditions such as
+  `@media (width >= max(40rem, 600px))`. Keep in mind that relative units in media queries are based on the browser's
+  initial font size, not your root `font-size`.
+</Details>
+
+<RainbowDivider />
+
 ## Key Takeaway
 
 `min()`, `max()`, and `clamp()` replace "a base value plus a `@media` override that only ever swaps in one different number" with a single declaration that picks the right value itself, live, at every width. `clamp()` in particular is worth reaching for by default whenever a size needs to be proportional *and* bounded — see [fluid typography and spacing](/tutorial/fluid-typography-and-spacing) for what that looks like applied to an entire type scale.
