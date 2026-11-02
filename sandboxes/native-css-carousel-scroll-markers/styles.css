@@ -1,0 +1,176 @@
+/* Only shown where the generated controls can't appear. */
+.support-tip {
+  margin: 0;
+}
+
+@supports (scroll-marker-group: after) {
+  .support-tip {
+    display: none;
+  }
+}
+
+.playground-header code,
+.tip code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+/*
+  The marker group is generated as a sibling of the carousel, so a column gap spaces it from the slides whichever side
+  it's on. The arrows sit over the carousel's edges, so nothing here needs clipping.
+*/
+.demo-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  overflow: visible;
+}
+
+.carousel {
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+
+  /* The arrows are positioned against the carousel with anchor positioning. */
+  anchor-name: --carousel;
+
+  /* Inherited by the marker group and every marker, so the group can be sized to fit them. */
+  --marker-size: 0.625rem;
+
+  /* The feature: one marker per slide, collected in a group after the carousel. The control swaps it to before. */
+  scroll-marker-group: after;
+}
+
+.carousel.group-before {
+  scroll-marker-group: before;
+}
+
+.carousel.markers-numbers {
+  --marker-size: 1.75rem;
+}
+
+/* Clicking a dot or an arrow scrolls the carousel, so the scroll follows the reduced-motion setting like any other. */
+@media (prefers-reduced-motion: no-preference) {
+  .carousel {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Only hide the scrollbar once the dots and arrows replace it, so the fallback still shows the row scrolls. */
+@supports (scroll-marker-group: after) {
+  .carousel {
+    scrollbar-width: none;
+  }
+}
+
+.slide {
+  flex: 0 0 100%;
+  display: grid;
+  place-items: center;
+  block-size: 9rem;
+  background: var(--bg);
+  color: #0f1220;
+  font-size: 1.5rem;
+  font-weight: 700;
+  scroll-snap-align: center;
+}
+
+/*
+  The arrows are generated next to the carousel, not inside it, so without positioning they'd stack as separate boxes.
+  The text after the slash is the accessible name, since a screen reader would otherwise announce "‹".
+*/
+.carousel::scroll-button(left) {
+  content: "‹" / "Previous colour";
+  left: calc(anchor(left) + 0.5rem);
+}
+
+.carousel::scroll-button(right) {
+  content: "›" / "Next colour";
+  right: calc(anchor(right) + 0.5rem);
+}
+
+.carousel::scroll-button(*) {
+  position: absolute;
+  position-anchor: --carousel;
+  top: anchor(center);
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  padding: 0 0 0.125rem;
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: 50%;
+  background: var(--pg-surface);
+  color: var(--pg-text);
+  font-size: 1.375rem;
+  line-height: 1;
+  box-shadow: var(--pg-shadow-sm);
+  cursor: pointer;
+}
+
+.carousel::scroll-button(*):focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.125rem;
+}
+
+/* Disabled automatically at either end, so there's no boundary check to write. */
+.carousel::scroll-button(*):disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/*
+  The group is an ordinary box: without a layout, the markers sit inline wherever it lands. Chrome doesn't grow it to fit
+  its markers, so without a block-size they spill over the slides or whatever comes after.
+*/
+.carousel::scroll-marker-group {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  block-size: var(--marker-size);
+}
+
+/* Markers need a size, since empty content on its own gives a zero-sized box. The alt text names each dot. */
+.slide::scroll-marker {
+  content: "" / attr(data-label);
+  inline-size: var(--marker-size);
+  block-size: var(--marker-size);
+  border-radius: 50%;
+  background: var(--pg-border);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.carousel.markers-numbers .slide::scroll-marker {
+  content: attr(data-index) / attr(data-label);
+  display: grid;
+  place-items: center;
+  font-family: var(--pg-mono);
+  font-size: 0.78rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+}
+
+/* The marker for whichever slide is snapped into view. */
+.slide::scroll-marker:target-current {
+  background: var(--pg-primary);
+}
+
+.carousel.markers-numbers .slide::scroll-marker:target-current {
+  color: #0f1220;
+  background: var(--pg-primary);
+  border-color: var(--pg-primary);
+}
+
+.slide::scroll-marker:focus-visible {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.125rem;
+}
