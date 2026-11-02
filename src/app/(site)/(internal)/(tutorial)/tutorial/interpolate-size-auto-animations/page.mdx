@@ -1,0 +1,354 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("interpolate-size-auto-animations");
+
+## Introduction
+
+Accordions, collapsible panels and "show more" cards all want the same thing: open smoothly to the height of their
+content. That height is `auto`, and until recently CSS couldn't animate to it. A transition needs two lengths to
+move between, and `auto` isn't a length. So `height: 0` to `height: auto` simply jumped, and every accordion shipped a
+workaround.
+
+**`interpolate-size: allow-keywords`** removes the need for one. It lets the browser animate between a length and a
+sizing keyword such as `auto`, so a panel can transition straight to its natural height. This tutorial covers the
+property, its companion function `calc-size()`, how to animate `<details>`, and how to keep collapsed content hidden
+from screen readers.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      interpolate-size: allow-keywords;
+    }
+  }
+
+  .panel {
+    height: 0;
+    overflow: hidden;
+    transition: height 320ms ease;
+  }
+
+  .panel.open {
+    height: auto;
+  }
+`}
+</CodeBlock>
+
+The property is inherited, so setting it once on `html` turns it on for the whole page. After that, a transition
+between `0` and `auto` animates like any other. The browser works out the content's natural height and interpolates
+towards it.
+
+It also covers the other sizing keywords: `min-content`, `max-content` and `fit-content`. It works on every sizing
+property: `width`, `height`, `inline-size` and `block-size`, their `min-` and `max-` versions, and `flex-basis`.
+
+<RainbowDivider />
+
+## Respecting Reduced Motion
+
+The opt-in sits inside a `prefers-reduced-motion: no-preference` query, the same pattern as the
+[modern CSS reset](/tutorial/modern-css-reset#animating-to-auto). Some people turn on reduced motion because large
+movement makes them feel dizzy or sick, and a panel sliding open is exactly that kind of movement.
+
+With reduced motion on, `interpolate-size` stays off and panels snap open and closed, as they always have. Nothing
+breaks, and you don't need to touch each component's `transition`. For more on motion preferences, see
+[Respecting Motion Preferences](/post/animations/css-transitions-guide#accessibility-respecting-motion-preferences) in
+the CSS transitions guide.
+
+<RainbowDivider />
+
+## The Workarounds This Replaces
+
+Three workarounds have been common until now.
+
+**The `grid-template-rows` trick.** The panel becomes a grid container whose single row transitions from `0fr` to
+`1fr`. Grid can animate `fr` values, and `1fr` resolves to the content's height. It needs an inner wrapper that can
+shrink to nothing:
+
+<CodeBlock language="css">
+{`
+  .panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 320ms ease;
+  }
+
+  .panel.open {
+    grid-template-rows: 1fr;
+  }
+
+  /* The extra wrapper. Without these, it won't shrink below its content. */
+  .panel > .panel-inner {
+    min-height: 0;
+    overflow: hidden;
+  }
+`}
+</CodeBlock>
+
+It works in every modern browser, and it's still the right choice where `interpolate-size` isn't supported. But it
+needs an extra element, and it takes over the panel's `display`.
+
+**The `max-height` guess.** Transition `max-height` from `0` to a number larger than any content could be:
+
+<CodeBlock language="css">
+{`
+  .panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 320ms ease;
+  }
+
+  .panel.open {
+    max-height: 9999px;
+  }
+`}
+</CodeBlock>
+
+The animation runs over the whole `9999px`, not the real height. A short panel finishes opening almost at once, then
+appears to wait before it starts to close. Pick a smaller number and long content gets cut off.
+
+**Measuring with JavaScript.** Read the content's `scrollHeight` and set it as an explicit pixel height:
+
+<CodeBlock language="js">
+{`
+  panel.style.height = \`\${panel.scrollHeight}px\`;
+`}
+</CodeBlock>
+
+Reading `scrollHeight` forces a layout, and the stored height goes stale whenever the content changes, so it has to be
+measured again.
+
+<RainbowDivider />
+
+## Try It Live
+
+The accordion below is four `<details>` elements with no JavaScript behind them. Open a question and its panel
+animates from `0` to `auto`. Untick **`interpolate-size`** to see the same panels snap instead, and drag the
+**Duration** slider to slow the animation down. The readout shows which panel is open and why it animates or snaps.
+
+<Sandbox slug="interpolate-size-auto-animations" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Animating `<details>`
+
+`<details>` and `<summary>` are the browser's built-in disclosure widget. They're keyboard accessible, announce
+whether they're open, and need no JavaScript. Until recently there was no way to style the part that opens and closes.
+The `::details-content` pseudo-element now selects it, so it can be animated like any other box:
+
+<CodeBlock language="css">
+{`
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      interpolate-size: allow-keywords;
+    }
+  }
+
+  details::details-content {
+    block-size: 0;
+    overflow-y: clip;
+    transition:
+      block-size 320ms ease,
+      content-visibility 320ms allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+  }
+`}
+</CodeBlock>
+
+The second transition matters. A closed `<details>` hides its content with `content-visibility: hidden`, and that
+property switches instantly, so on its own the content would vanish before the closing animation began.
+`transition-behavior: allow-discrete`, written here as the `allow-discrete` keyword, delays the switch until the
+animation ends. The CSS transitions guide covers
+[discrete transitions](/post/animations/css-transitions-guide#pitfall-2-you-cant-transition-display-or-visibility-discrete-properties)
+in more detail.
+
+### Exclusive Accordions with `name`
+
+Give several `<details>` the same `name` and the browser lets only one of them be open at a time, the way radio
+buttons work:
+
+<CodeBlock language="html">
+{`
+  <details name="faq" open>
+    <summary>What changed?</summary>
+    <div class="panel-body">…</div>
+  </details>
+
+  <details name="faq">
+    <summary>What did this replace?</summary>
+    <div class="panel-body">…</div>
+  </details>
+`}
+</CodeBlock>
+
+Opening one closes the other, and both animate at the same time. That's a complete, accessible accordion without any
+JavaScript.
+
+<RainbowDivider />
+
+## Hiding Closed Content Properly
+
+`height: 0` with `overflow: hidden` hides content only visually. Everything inside is still in the page: screen
+readers read it out, and links and buttons inside it can still be reached with the Tab key. A keyboard user can end up
+focused on something they can't see.
+
+There are three ways to hide it properly:
+
+* **Use `<details>`.** A closed `<details>` already hides its content from screen readers and the keyboard. This is
+  the simplest fix, and the one the demo above uses.
+* **Transition `visibility` as well.** `visibility: hidden` removes content from the accessibility tree and the tab
+  order. Transitioned with `allow-discrete`, it only takes effect once the panel has finished closing, as shown below.
+* **Use `hidden="until-found"`.** The browser hides the content but still searches it with find-in-page, and reveals
+  it when there's a match. Listen for the `beforematch` event to update your own open state when that happens.
+
+<CodeBlock language="css">
+{`
+  .panel {
+    height: 0;
+    overflow: hidden;
+    visibility: hidden;
+    transition:
+      height 320ms ease,
+      visibility 320ms allow-discrete;
+  }
+
+  .panel.open {
+    height: auto;
+    visibility: visible;
+  }
+`}
+</CodeBlock>
+
+Whichever you use, the button that opens a custom panel should also have `aria-expanded` and `aria-controls`, so
+screen readers announce whether the panel is open. `<summary>` handles this itself.
+
+<RainbowDivider />
+
+## `calc-size()`: Maths on Intrinsic Sizes
+
+`interpolate-size` is a page-wide opt-in. `calc-size()` does the same job for a single declaration, and it can do
+maths on the keyword too. Its first argument is the size to start from, and the second is a calculation in which
+`size` stands for that size:
+
+<CodeBlock language="css">
+{`
+  .panel.open {
+    height: calc-size(auto, size);           /* the same as auto, but animatable */
+  }
+
+  .card.expanded {
+    height: calc-size(auto, size + 2rem);    /* the content height plus 2rem */
+  }
+
+  .preview {
+    height: calc-size(auto, size * 0.5);     /* half the content height */
+  }
+
+  .tag {
+    width: calc-size(fit-content, round(up, size, 1rem)); /* rounded up to a whole rem */
+  }
+`}
+</CodeBlock>
+
+A `calc-size()` value can always be animated, with or without `interpolate-size`. That makes it useful inside
+components that shouldn't change behaviour for the rest of the page, or when you need a size `calc()` can't express
+because it starts from the content. Since it doesn't depend on `interpolate-size`, the reduced-motion query around
+that opt-in won't stop it, so put the `transition` inside a reduced-motion query of its own.
+
+`calc()` can't do any of this, because `calc(auto + 2rem)` isn't valid CSS.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`interpolate-size` and `calc-size()` arrived together in Chrome and Edge 129, in September 2024. Firefox and Safari
+don't support either yet, so check [MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/interpolate-size) for the
+latest status. `::details-content` is more widely available: Chrome and Edge 131, Safari 18.4 and Firefox 143.
+
+In browsers without support, panels open and close instantly, exactly as they did before. Nothing breaks, so you can
+add the property today and treat the animation as progressive enhancement.
+
+If the animation matters in every browser, keep the `grid-template-rows` trick and use the new approach only where
+it's supported:
+
+<CodeBlock language="css">
+{`
+  @supports (interpolate-size: allow-keywords) {
+    /* the 0 to auto transition */
+  }
+
+  @supports not (interpolate-size: allow-keywords) {
+    /* the grid-template-rows fallback */
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Production Considerations
+
+* **Content that changes while a panel is open resizes it instantly.** An open panel's height is simply `auto`, so it
+  follows its content with no transition. Only the next open or close animates, and the browser measures the new
+  height then. There's no cached measurement to update, unlike the `scrollHeight` approach.
+* **It's inherited, so you can switch it off.** `interpolate-size: numeric-only` is the default. Set it on a subtree to
+  turn keyword animation off there while the rest of the page keeps it.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Padding on the Animated Element
+
+The `height: 0` box still has its padding, so a strip of it stays visible when the panel is closed. Put the padding
+on an inner element, as the demo does with `.panel-body`, and keep the animated element itself free of padding and
+borders.
+
+### 2. Forgetting `overflow`
+
+`height: 0` doesn't clip anything on its own. Without `overflow: hidden`, or `overflow-y: clip` on
+`::details-content`, the content spills out over whatever comes next.
+
+### 3. Transitioning Between Two Keywords
+
+Going from `height: auto` to `height: max-content` won't animate, even with `interpolate-size` set. Use a length at
+one end, or `calc-size()` with the same keyword at both ends.
+
+### 4. Expecting It to Animate `display: none`
+
+`interpolate-size` only affects sizes. A panel that changes from `display: none` to `display: block` still appears
+instantly, because the element has no height to animate from while it isn't displayed. Keep the panel rendered at
+`height: 0`, or add `display` to the transition with `allow-discrete` and `@starting-style`.
+
+### 5. Setting It in Every Component
+
+Because it's inherited, declaring it once on `html` covers the whole page, and repeating it in each component's CSS
+only adds noise. The exception is a shared component library, which can't rely on the page having set it. There, set it
+on the component's root element, still inside a reduced-motion query.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Accordions, FAQ sections and expandable cards, especially with `<details>` and `::details-content`
+- Any panel currently animated with the `grid-template-rows` trick, a `max-height` guess, or a `scrollHeight` script
+- Dropdown menus, toasts and notification stacks that grow and shrink to fit their content
+- Sizes based on content with something added, such as `calc-size(auto, size + 2rem)`
+
+For other properties CSS couldn't animate before, such as gradients and custom properties, see
+[Typed Custom Properties with `@property`](/tutorial/typed-custom-properties-at-property).
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`interpolate-size: allow-keywords` lets a transition end at `auto`, so a panel can animate to its real height without
+JavaScript or the `grid-template-rows` trick. Set it once on `html` inside a `prefers-reduced-motion` query, animate
+`<details>` with `::details-content`, and make sure closed content is hidden from screen readers too. Use
+`calc-size()` when you need maths on the content size, or animation for one property only. Browsers without support
+snap instead, so it's safe to add today.
