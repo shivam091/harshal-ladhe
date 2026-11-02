@@ -33,7 +33,8 @@ This looks as if it should rotate the gradient, but it jumps. To animate a value
 steps in between, and it can only do that for a type it knows. An unregistered custom property has no type, so a
 transition changes it instantly, and `@keyframes` flip it halfway, like
 [discrete properties](/post/animations/css-transitions-guide#pitfall-2-you-cant-transition-display-or-visibility-discrete-properties)
-such as `display`.
+such as `display`. Keywords such as `auto` jump for the same reason; for those, see
+[Animating `height: auto` in CSS with `interpolate-size`](/tutorial/interpolate-size-auto-animations).
 
 <RainbowDivider />
 
