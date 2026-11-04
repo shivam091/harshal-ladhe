@@ -284,6 +284,10 @@ To avoid memory leaks, your subscribe method should always return an **`unsubscr
 `}
 </CodeBlock>
 
+Storing the callbacks in a `Set` means each one is registered only once and removal is fast. To compare two sets of
+subscribers, such as which were added and which were removed, see
+[Native JavaScript Set Methods: union, intersection and difference](/tutorial/set-methods-union-intersection#diffing-two-lists-of-ids).
+
 **Use Cases:**
 
 - State management in applications

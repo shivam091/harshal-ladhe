@@ -129,7 +129,9 @@ This ensures **all levels of the object tree are immutable**, preventing acciden
 <Details summary="Does deepFreeze work on a Map, Set or Date?">
   Only partly. Freezing them stops new properties being added, but their contents live in internal slots rather than
   properties, so `map.set()`, `set.add()` and `date.setFullYear()` still work. Plain objects and arrays are the
-  structures `deepFreeze` fully protects.
+  structures `deepFreeze` fully protects. For comparing or combining Sets without changing either, the native
+  `union()`, `intersection()` and `difference()` methods always return a new Set — see
+  [Native JavaScript Set Methods: union, intersection and difference](/tutorial/set-methods-union-intersection).
 </Details>
 
 <RainbowDivider />

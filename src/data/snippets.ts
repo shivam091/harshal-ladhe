@@ -25,6 +25,7 @@ export const snippets: Snippet[] = [
       caption: "Freezing a JavaScript object and every object nested inside it."
     },
     changelog: [
+      { date: "2026-11-04", change: "Added cross-reference to tutorial 'Native JavaScript Set Methods: union, intersection and difference'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-07-12", change: "Initial publication" }
     ]
