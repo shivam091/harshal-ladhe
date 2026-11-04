@@ -541,6 +541,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "shape-function-clip-path",
+    title: "The CSS `shape()` Function: Responsive `clip-path` Shapes",
+    excerpt: "Cut responsive curved shapes with CSS shape() and clip-path.",
+    description: "Draw responsive clip-path shapes with the CSS shape() function: lines, curves and arcs in %, calc() and custom properties, plus browser support and fallbacks.",
+    category: ["CSS"],
+    tags: ["css", "clip-path", "shape-function", "css-functions", "custom-properties", "progressive-enhancement", "css-2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/shape-function-clip-path/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for the CSS shape() function, showing a curved speech bubble with editable points and the same shape at three widths.",
+      caption: "A speech bubble whose curved tail is drawn with CSS shape()."
+    },
+    changelog: [
+      { date: "2026-11-04", change: "Initial publication." }
+    ]
   }
 ];
 
