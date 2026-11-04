@@ -356,6 +356,7 @@ export const tutorials: Tutorial[] = [
       caption: "Squircle, bevel, scoop and notch corners shaped with corner-shape."
     },
     changelog: [
+      { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-17", change: "Initial publication." }
     ]
@@ -418,6 +419,7 @@ export const tutorials: Tutorial[] = [
       caption: "Gradient rings animating smoothly through typed custom properties."
     },
     changelog: [
+      { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
       { date: "2026-11-02", change: "Added cross-reference to tutorial 'Animating `height: auto` in CSS with `interpolate-size`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },

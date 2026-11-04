@@ -237,6 +237,10 @@ Try it below — the duration, stroke width, and color are all live, and the loo
 
 `inset(top right bottom left)` describes a rectangle clipped in from each edge. At rest, `inset(0 100% 0 0)` clips the entire width away from the right edge inward, hiding the group underneath completely; hovering animates that to `inset(0 0% 0 0)` — no clipping at all — and the banner wipes in from the left as the clip region grows to match the full shape.
 
+`inset()` only ever clips to a rectangle. For a curved clip that still animates, such as an edge that bends on hover,
+see [The CSS `shape()` Function: Responsive `clip-path` Shapes](/tutorial/shape-function-clip-path#animating-a-shape)
+— like shape morphing with `d`, it's smooth as long as both shapes share the same command sequence.
+
 <Info title="clip-path clips groups, not just single shapes">
   Unlike `stroke-dasharray`, which only ever applies to one stroked path at a time, `clip-path` on a `<g>` clips
   everything inside it as a single unit — the rectangle and the text above wipe in together, driven by one
