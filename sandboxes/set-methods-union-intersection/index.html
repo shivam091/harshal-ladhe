@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Set Methods Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Comparing Two Sets of Roles</h1>
+        <p>Tick the roles you hold and the roles a page requires, then pick a method. Every result comes from one native <code>Set</code> method call, with no array conversion.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support the new <code>Set</code> methods yet, so the results use the array fallback from the tutorial. The answers are identical, but the code underneath is the spread-and-filter pattern the native methods replace.</p>
+
+      <div class="fields-grid">
+        <fieldset class="control-group">
+          <legend>Your roles</legend>
+          <div class="chip-list" id="your-roles"></div>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Required for this page</legend>
+          <div class="chip-list" id="required-roles"></div>
+        </fieldset>
+      </div>
+
+      <fieldset class="control-group">
+        <legend>Method</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Set method" id="method-picker"></div>
+        <p class="tip" id="tip"></p>
+      </fieldset>
+
+      <section class="demo-area result-area" aria-live="polite">
+        <p class="result-label" id="result-label"></p>
+        <div class="chip-list" id="result"></div>
+      </section>
+
+      <output class="readout" id="readout"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
