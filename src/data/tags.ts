@@ -871,6 +871,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS Functions",
     description: "Modern CSS functions such as `clamp()`, `min()`, `max()`, and `if()` that compute values directly in the browser."
   },
+  "shape-function": {
+    title: "The CSS `shape()` Function",
+    description: "Drawing responsive `clip-path` and `offset-path` shapes with CSS-native line, curve and arc commands that accept percentages, `calc()` and custom properties."
+  },
   "corner-shape": {
     title: "Shaping Corners with `corner-shape`",
     description: "Using the CSS `corner-shape` property and `superellipse()` to turn rounded corners into squircles, bevels, scoops and notches."
