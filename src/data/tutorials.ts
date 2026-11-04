@@ -562,6 +562,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-04", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "set-methods-union-intersection",
+    title: "Native JavaScript Set Methods: union, intersection and difference",
+    excerpt: "Compare two Sets natively, with no array conversion.",
+    description: "Compare JavaScript Sets with native union(), intersection(), difference() and more: usage, browser support, edge cases and a fallback.",
+    category: ["JavaScript"],
+    tags: ["javascript", "set-methods", "data-structures", "es2025", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/set-methods-union-intersection/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Infographic illustrating native JavaScript Set methods: union, intersection, difference, and symmetric difference, with Venn diagrams and code examples for comparing two Sets without array conversion.",
+      caption: "Two role sets compared with native Set methods."
+    },
+    changelog: [
+      { date: "2026-11-04", change: "Initial publication." }
+    ]
   }
 ];
 
