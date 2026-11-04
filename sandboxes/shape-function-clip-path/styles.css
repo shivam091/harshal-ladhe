@@ -1,0 +1,155 @@
+/* Only shown where shape() isn't supported, so the plainer fallback bubble doesn't look broken. */
+.support-note {
+  margin: 0;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+/* Only shown to readers who've asked for less motion, explaining why ticking the checkbox does nothing. */
+.motion-tip {
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .motion-tip {
+    display: none;
+  }
+}
+
+.playground-header code,
+.support-note code,
+.checkbox-field code,
+.example code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+/*
+  Registering --tail as a <percentage> is what lets it animate: an unregistered custom property is
+  just text to the browser, so keyframes would jump between values instead of sliding.
+*/
+@property --tail {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@keyframes sweep-tail {
+  from {
+    --tail: 15%;
+  }
+
+  to {
+    --tail: 85%;
+  }
+}
+
+/* Decorative motion, so it only runs for readers who haven't asked for less of it. */
+@media (prefers-reduced-motion: no-preference) {
+  .stage.animate-tail .bubble--shape {
+    animation: sweep-tail 2.4s ease-in-out infinite alternate;
+  }
+}
+
+/* Dimmed while the animation is in charge of --tail, so it's clear the slider is paused. */
+input[type="range"]:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* The sliders set these on the stage so both bubbles share one width and one tail position. */
+.stage {
+  --bubble-width: 320px;
+  --tail: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.example {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.example figcaption {
+  font-size: 0.78rem;
+  color: var(--pg-text-muted);
+}
+
+/*
+  A fixed height keeps the path() comparison fair: its coordinates were drawn for exactly
+  320 × 144px. The bottom padding keeps text clear of the 1.5rem tail strip that's cut away.
+*/
+.bubble {
+  inline-size: var(--bubble-width);
+  max-inline-size: 100%;
+  block-size: 9rem;
+  padding-block: 1rem 2.5rem;
+  padding-inline: 1.25rem;
+  display: flex;
+  align-items: center;
+  color: #0f1220;
+}
+
+.bubble p {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/*
+  The fallback for browsers without shape(). Declaring it first isn't enough on its own: a shape()
+  containing var() is only checked once the variable is substituted, so an unsupported browser
+  would get clip-path: none instead of this polygon(). That's why the shape() sits in @supports.
+*/
+.bubble--shape {
+  background: var(--pg-primary);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 1.5rem),
+    calc(var(--tail) + 1.25rem) calc(100% - 1.5rem),
+    var(--tail) 100%,
+    calc(var(--tail) - 1.25rem) calc(100% - 1.5rem),
+    0 calc(100% - 1.5rem)
+  );
+}
+
+/*
+  Clockwise from the top-left corner. Every corner is a 1rem arc, and the tail is two quadratic
+  curves meeting at var(--tail) on the bottom edge, so the outline scales with the box and the
+  tail moves with one custom property.
+*/
+@supports (clip-path: shape(from 0 0, line to 100% 0)) {
+  .bubble--shape {
+    clip-path: shape(
+      from 1rem 0,
+      hline to calc(100% - 1rem),
+      arc to 100% 1rem of 1rem cw,
+      vline to calc(100% - 2.5rem),
+      arc to calc(100% - 1rem) calc(100% - 1.5rem) of 1rem cw,
+      hline to calc(var(--tail) + 1.25rem),
+      curve to var(--tail) 100% with calc(var(--tail) + 0.25rem) calc(100% - 1.5rem),
+      curve to calc(var(--tail) - 1.25rem) calc(100% - 1.5rem) with calc(var(--tail) - 0.25rem) calc(100% - 1.5rem),
+      hline to 1rem,
+      arc to 0 calc(100% - 2.5rem) of 1rem cw,
+      vline to 1rem,
+      arc to 1rem 0 of 1rem cw,
+      close
+    );
+  }
+}
+
+/* The same outline in path() syntax, worked out in pixels for a 320 × 144px box with the tail at 160px. */
+.bubble--path {
+  background: var(--pg-text-muted);
+  clip-path: path("M16 0 H304 A16 16 0 0 1 320 16 V104 A16 16 0 0 1 304 120 H180 Q164 120 160 144 Q156 120 140 120 H16 A16 16 0 0 1 0 104 V16 A16 16 0 0 1 16 0 Z");
+}
