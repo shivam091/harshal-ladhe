@@ -395,6 +395,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Four observer APIs, a custom Pub/Sub implementation, and a sandbox that lets you mutate, scroll, and resize your way through all three DOM observers live — getting the IntersectionObserver strike-zone math right for the scrollspy pattern took more whiteboarding than I expected. Thanks for reading all the way to the FAQ section; go replace a scroll listener with something that only runs when it actually needs to. 👀",
     changelog: [
+      { date: "2026-11-04", change: "Added cross-reference to tutorial 'Native JavaScript Set Methods: union, intersection and difference'" },
       { date: "2026-11-02", change: "Added cross-reference to tutorial 'Pure CSS Carousels with `::scroll-marker` and `::scroll-button()`'" },
       { date: "2026-09-13", change: "Added cross-reference to tutorial 'Hinting Layer Promotion with will-change'" },
       { date: "2026-09-12", change: "Initial publication" }
