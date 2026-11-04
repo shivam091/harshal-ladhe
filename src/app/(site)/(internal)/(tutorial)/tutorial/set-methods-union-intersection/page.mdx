@@ -1,0 +1,314 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("set-methods-union-intersection");
+
+## Introduction
+
+Which permissions do two users share? Which tags were added since the last save? Does this user hold every role a page requires? Each of these questions compares two collections of unique values, and for years JavaScript's answer was to spread both `Set`s into arrays, reach for `.filter()` and `.includes()`, and build a new `Set` at the end. That works, but it's wordy, easy to get subtly wrong, and it throws away the very thing that made a `Set` worth using in the first place.
+
+**Native set methods** answer those questions directly. Seven methods — `union`, `intersection`, `difference`, `symmetricDifference`, `isSubsetOf`, `isSupersetOf` and `isDisjointFrom` — take a `Set` in and give a `Set` (or a boolean) back:
+
+<CodeBlock language="js">
+{`
+  const yourRoles = new Set(["editor", "reviewer", "billing"]);
+  const required = new Set(["editor", "admin"]);
+
+  yourRoles.intersection(required); // Set(1) {"editor"}
+  required.isSubsetOf(yourRoles);   // false: "admin" is missing
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## A Quick Refresher on Sets
+
+<Info title="Already comfortable with Set?">
+  Skip ahead to **Set Algebra in Plain English**. This section only covers what the new methods build on.
+</Info>
+
+A `Set` is a collection of **unique** values. Adding something it already holds does nothing, and checking whether it holds a value is fast, however large the `Set` grows:
+
+<CodeBlock language="js">
+{`
+  const tags = new Set(["css", "js", "css"]);
+
+  tags.size;        // 2: the duplicate "css" was ignored
+  tags.has("js");   // true, and quick even with a million entries
+  tags.add("html"); // adds a value
+  tags.delete("js"); // removes one
+`}
+</CodeBlock>
+
+That fast `has()` check is the key point. An array has to be searched item by item with `.includes()`, so comparing two large arrays gets slower very quickly. The methods in this tutorial keep working with the `Set`s themselves, so you keep that speed.
+
+`Set`s are also a good home for things like a list of subscribers, where each callback should be stored once. The
+[Mastering JavaScript Observers](/post/javascript/mastering-js-observers) post builds a small observer that works that way, and
+[Deep Freeze Objects in JavaScript](/snippet/deep-freeze-objects) explains why freezing a `Set` doesn't stop `add()`, which these methods avoid by never changing the originals.
+
+<RainbowDivider />
+
+## Set Algebra in Plain English
+
+These are the same operations a maths lesson or a Venn diagram would name. In every row, `a` is the `Set` you call the method on and `b` is the one you pass in:
+
+| Method | Reads as | Returns |
+| --- | --- | --- |
+| `a.union(b)` | Everything in either | A new `Set` |
+| `a.intersection(b)` | Only what's in both | A new `Set` |
+| `a.difference(b)` | In `a`, but not in `b` | A new `Set` |
+| `a.symmetricDifference(b)` | In exactly one of the two | A new `Set` |
+| `a.isSubsetOf(b)` | Every item of `a` is in `b` | `true` or `false` |
+| `a.isSupersetOf(b)` | Every item of `b` is in `a` | `true` or `false` |
+| `a.isDisjointFrom(b)` | Nothing in common | `true` or `false` |
+
+<RainbowDivider />
+
+## Methods That Return a New Set
+
+The first four build a new `Set`. The originals are never changed:
+
+<CodeBlock language="js">
+{`
+  const yourRoles = new Set(["editor", "reviewer", "billing"]);
+  const required = new Set(["editor", "admin"]);
+
+  yourRoles.union(required);
+  // Set(4) {"editor", "reviewer", "billing", "admin"}
+
+  yourRoles.intersection(required);
+  // Set(1) {"editor"}: roles you hold that are required
+
+  yourRoles.difference(required);
+  // Set(2) {"reviewer", "billing"}: yours, but not required
+
+  yourRoles.symmetricDifference(required);
+  // Set(3) {"reviewer", "billing", "admin"}: held by only one side
+`}
+</CodeBlock>
+
+`difference` is the only one where the order matters. `yourRoles.difference(required)` gives what you have that isn't required, while `required.difference(yourRoles)` gives what's required that you lack, which here is `Set {"admin"}`. `union`, `intersection` and `symmetricDifference` give the same members whichever way round you call them.
+
+<RainbowDivider />
+
+## Methods That Answer Yes or No
+
+The last three return a boolean, which makes them a natural fit for `if` statements:
+
+<CodeBlock language="js">
+{`
+  const small = new Set([1, 2]);
+  const large = new Set([1, 2, 3, 4]);
+
+  small.isSubsetOf(large);   // true: every item of small is in large
+  large.isSupersetOf(small); // true: the same fact, read from the other side
+  small.isDisjointFrom(new Set([8, 9])); // true: no overlap at all
+`}
+</CodeBlock>
+
+`isSubsetOf` and `isSupersetOf` are mirror images, so use whichever reads more naturally. A permission check reads best as `yourRoles.isSupersetOf(required)`: "you hold everything required".
+
+<Info title="The empty set">
+  An empty `Set` is a subset of every `Set`, and it's disjoint from every `Set`. So `new Set().isSubsetOf(anything)` is `true`. That surprises people, but it follows the maths: with no items, there's nothing that could be missing.
+</Info>
+
+<RainbowDivider />
+
+## The Array Detour These Replace
+
+Before these methods, every operation needed its own hand-written pipeline:
+
+<CodeBlock language="js">
+{`
+  const union = new Set([...a, ...b]);
+
+  const intersection = new Set([...a].filter((item) => b.has(item)));
+
+  const difference = new Set([...a].filter((item) => !b.has(item)));
+
+  const symmetricDifference = new Set([
+    ...[...a].filter((item) => !b.has(item)),
+    ...[...b].filter((item) => !a.has(item))
+  ]);
+
+  const isSubset = [...a].every((item) => b.has(item));
+`}
+</CodeBlock>
+
+Each of these is a slightly different mix of spread, filter and `has`, and they're easy to mix up: `difference` and `intersection` differ by a single `!`. The native versions say what they mean in their name, so the code is shorter and a reviewer doesn't have to work out which pipeline they're looking at.
+
+<RainbowDivider />
+
+## Try It Live
+
+Tick the roles you hold and the roles a page requires, then choose a method. The result updates straight away, with a one-line explanation under the picker and the exact call, with both input sets, in the readout at the bottom. Try these:
+
+- Untick everything in **Your roles** and choose `isSubsetOf` to see the empty-set rule.
+- Choose `difference`, then compare it with `symmetricDifference` to see which side's items each one keeps.
+- Choose `isSupersetOf` and tick `admin` under **Yours** to watch the permission check flip from `false` to `true`.
+
+In a browser without the new methods, the playground uses the array fallback described below, and a note says so.
+
+<Sandbox slug="set-methods-union-intersection" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Real-World Patterns
+
+### Permission Checks
+
+<CodeBlock language="js">
+{`
+  const canOpen = (userRoles, requiredRoles) => userRoles.isSupersetOf(requiredRoles);
+
+  canOpen(new Set(["editor", "admin"]), new Set(["admin"])); // true
+  canOpen(new Set(["editor"]), new Set(["admin"]));          // false
+`}
+</CodeBlock>
+
+This replaces an `.every()` and `.includes()` combination with a single call that states the intent.
+
+### Diffing Two Lists of IDs
+
+Comparing the previous state with the next gives you everything a sync or an undo needs:
+
+<CodeBlock language="js">
+{`
+  const previous = new Set([1, 2, 3, 4]);
+  const next = new Set([3, 4, 5]);
+
+  const added = next.difference(previous);        // Set {5}
+  const removed = previous.difference(next);      // Set {1, 2}
+  const unchanged = previous.intersection(next);  // Set {3, 4}
+`}
+</CodeBlock>
+
+### Filtering by Tags
+
+To find the items that carry **every** selected tag, or **any** of them:
+
+<CodeBlock language="js">
+{`
+  const selected = new Set(["css", "animation"]);
+
+  const matchesAll = (item) => item.tags.isSupersetOf(selected);
+  const matchesAny = (item) => !item.tags.isDisjointFrom(selected);
+`}
+</CodeBlock>
+
+This assumes each `item.tags` is a `Set`. If yours are arrays, wrap them once with `new Set(item.tags)` when you load the data, not on every filter pass.
+
+<RainbowDivider />
+
+## Arguments, Order and Edge Cases
+
+### The Argument Must Be Set-Like, Not an Array
+
+The `Set` you call the method on must be a real `Set`, but the argument only has to be **set-like**: an object with a numeric `size`, a `has()` method and a `keys()` method. A `Map` qualifies, and its keys are used:
+
+<CodeBlock language="js">
+{`
+  const allowed = new Set(["a", "b", "c"]);
+  const prices = new Map([["a", 1], ["b", 2]]);
+
+  allowed.intersection(prices); // Set(2) {"a", "b"}: compared against the Map's keys
+`}
+</CodeBlock>
+
+An **array is not set-like**, because it has no `size` or `has()`, so passing one throws a `TypeError`:
+
+<CodeBlock language="js">
+{`
+  allowed.union(["d", "e"]);             // TypeError
+  allowed.union(new Set(["d", "e"]));    // Set(5) {"a", "b", "c", "d", "e"}
+`}
+</CodeBlock>
+
+Wrap the array in `new Set(...)` first.
+
+### Values Are Compared the Same Way as Always
+
+Primitives are compared by value and objects by reference, exactly as `Set` has always worked. Two different objects that look identical are different members:
+
+<CodeBlock language="js">
+{`
+  const a = new Set([{ id: 1 }]);
+  const b = new Set([{ id: 1 }]);
+
+  a.intersection(b); // Set(0) {}: two separate objects
+`}
+</CodeBlock>
+
+If you need to compare objects by content, compare a primitive key such as the `id` instead.
+
+### Order Isn't a Promise
+
+`union` returns the items of the first `Set` followed by the new items from the second. For `intersection`, the order can follow either set, depending on which is smaller, so don't rely on it. If the order matters, sort the result: `[...result].sort()`.
+
+### A Set Is Not an Array
+
+The result is a `Set`, so it has no `.map()` or `.sort()`. Spread it (`[...result]`) or use `Array.from(result)` when you need array methods.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+These methods became available in all major browsers in mid-2024: Chrome and Edge 122, Firefox 127 and Safari 17. They're also in Node.js 22, and are part of ES2025. That's wide enough for most projects, but older browsers and older Node.js versions will throw `TypeError: a.union is not a function`.
+
+Detect the feature rather than the browser:
+
+<CodeBlock language="js">
+{`
+  const hasSetMethods = typeof Set.prototype.union === "function";
+`}
+</CodeBlock>
+
+You have two ways to cover older environments. The simplest is a polyfill such as `core-js`, which adds all seven methods so the rest of your code stays the same:
+
+<CodeBlock language="js">
+{`
+  import "core-js/actual/set";
+`}
+</CodeBlock>
+
+The other is a small helper that uses the native method when it exists and the array pattern when it doesn't:
+
+<CodeBlock language="js">
+{`
+  const intersection = (a, b) =>
+    typeof a.intersection === "function"
+      ? a.intersection(b)
+      : new Set([...a].filter((item) => b.has(item)));
+`}
+</CodeBlock>
+
+The playground above does exactly this, with one fallback per method.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Passing an Array
+
+`new Set([1, 2]).union([3])` throws a `TypeError`. Wrap it: `.union(new Set([3]))`.
+
+### 2. Expecting the Original to Change
+
+All seven methods leave both `Set`s untouched. To keep a result, assign it: `roles = roles.union(extra)`. If you want to change a `Set` in place, use `add()` and `delete()` as before.
+
+### 3. Swapping `difference` Around
+
+`a.difference(b)` and `b.difference(a)` are different questions. If you want both directions at once, that's `symmetricDifference`.
+
+### 4. Comparing Objects by Content
+
+Two objects with the same contents are different members. Compare a stable primitive such as an `id`.
+
+### 5. Forgetting Older Runtimes
+
+A Node.js version older than 22, or a browser from before mid-2024, won't have these methods. Check your support targets, then use a polyfill or the helper above.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`union`, `intersection`, `difference`, `symmetricDifference`, `isSubsetOf`, `isSupersetOf` and `isDisjointFrom` replace a family of hand-written spread-and-filter pipelines with calls that say exactly what they do, and they keep your data in a `Set` throughout. Pass them a `Set` or another set-like object, never an array, and add a polyfill if you still support browsers from before mid-2024.

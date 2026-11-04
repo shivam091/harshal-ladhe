@@ -1,0 +1,86 @@
+/* Shown only when the Set methods aren't supported, so the array fallback isn't mistaken for the native feature. */
+.support-note {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.85rem;
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.0625rem solid rgba(245, 158, 11, 0.4);
+}
+
+.playground-header code,
+.support-note code {
+  font-family: var(--pg-mono);
+}
+
+.segmented-control {
+  margin-block-end: 0.875rem;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* A role is a real checkbox with its label hidden behind a pill, so it stays keyboard and screen-reader friendly. */
+.chip {
+  position: relative;
+}
+
+.chip input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chip span,
+.result-chip {
+  display: block;
+  padding-block: 0.375rem;
+  padding-inline: 0.75rem;
+  font-family: var(--pg-mono);
+  font-size: 0.82rem;
+  color: var(--pg-text-muted);
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: 999px;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.chip input:checked + span {
+  color: var(--pg-text);
+  background: var(--pg-primary-soft);
+  border-color: var(--pg-primary);
+}
+
+.chip input:focus-visible + span {
+  outline: 0.125rem solid var(--pg-primary);
+  outline-offset: 0.1875rem;
+}
+
+.result-area {
+  min-block-size: 5.5rem;
+}
+
+.result-label {
+  margin-block: 0 0.625rem;
+  margin-inline: 0;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+.result-chip {
+  color: var(--pg-text);
+  border-color: var(--pg-primary);
+}
+
+/* An empty set or a boolean answer has no members to show, so it reads as plain text instead of a pill. */
+.result-text {
+  font-family: var(--pg-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--pg-text);
+}

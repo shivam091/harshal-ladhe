@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "set-methods-union-intersection",
+    title: "Set Methods Playground",
+    description: "Tick the roles you hold and the roles a page requires, then run any of the seven native Set methods on them, with a plain-English reading of each result and an array fallback where the methods are missing.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "shape-function-clip-path",
     title: "Responsive Speech Bubble with shape()",
     description: "A speech bubble with rounded corners and a curved tail drawn with shape(), resizing and moving its tail with two sliders, beside a pixel-based path() that can't.",
