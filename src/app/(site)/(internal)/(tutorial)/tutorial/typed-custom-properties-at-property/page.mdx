@@ -273,7 +273,9 @@ Browsers don't consistently apply `@property` rules inside a shadow root. Regist
 ## When to Use This
 
 **Register a custom property** when it drives an animation, when it should only ever hold one type (a colour token,
-for example), or when it's component state that shouldn't inherit.
+for example), or when it's component state that shouldn't inherit. That includes a value used inside another
+function, such as a speech bubble's tail position in a
+[`clip-path: shape()`](/tutorial/shape-function-clip-path#animating-a-shape).
 
 **Leave it unregistered** when it only passes a list or shorthand through to `var()`, or must resolve `em` or `%`
 against each element that reads it.
