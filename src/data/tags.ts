@@ -1066,5 +1066,21 @@ export const tagMeta: Record<string, TagMeta> = {
   "css-architecture": {
     title: "CSS Architecture for Large Codebases",
     description: "Structuring CSS at scale — reset/base/component/utility layering schemes, naming conventions, and taming third-party styles."
+  },
+  "set-methods": {
+    title: "JavaScript Set Methods",
+    description: "Native Set methods such as `union()`, `intersection()` and `difference()` for comparing collections of unique values without converting them to arrays."
+  },
+  "data-structures": {
+    title: "Data Structures in JavaScript",
+    description: "Choosing and using built-in collections such as `Set`, `Map` and arrays to store and compare data efficiently."
+  },
+  "es2025": {
+    title: "Modern JavaScript Features of ES2025",
+    description: "Language features added in ECMAScript 2025, with browser support, edge cases and fallbacks for older runtimes."
+  },
+  "polyfills": {
+    title: "JavaScript Polyfills and Fallbacks",
+    description: "Feature detection, polyfills such as `core-js` and hand-written fallbacks that let modern JavaScript features run in older browsers and runtimes."
   }
 };
