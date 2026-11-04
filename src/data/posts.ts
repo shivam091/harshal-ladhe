@@ -274,6 +274,7 @@ export const posts: Post[] = [
     signoff: "From the point-scrambling playground that turns a clean square into a self-intersecting hourglass mid-drag and the square, hexagon, and star presets, to the ray diagram that finally shows why a star's centre winds twice, the miter-limit slider that snaps a spike into a bevel right at 29°, and the generated points behind a sparkline that stretches without its stroke going wonky, this post leaned on live demos to do work that formulas alone never quite pull off. Thanks for dragging every vertex, flipping every fill rule, and sharpening every corner with me — go close off a shape that's entirely your own. ⬡",
     featured: true,
     changelog: [
+      { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
       { date: "2026-10-17", change: "Added cross-reference to tutorial 'Squircles, Bevels and Scoops with `corner-shape`'" },
       { date: "2026-09-30", change: "Expanded with fill-rule, miter-limit, generated-points, sparkline, animation and switch-to-path sections, three diagrams and two playgrounds; corrected fill-rule and hole explanations" },
       { date: "2026-08-25", change: "Initial publication" }
@@ -346,6 +347,7 @@ export const posts: Post[] = [
     signoff: "Getting the radar's sweep to pivot from the right point back in the basic shapes post turned out to be the easy part. This round added five more interactive panels, each wiring its own live code and controls to real `@keyframes` — and the trickiest bug wasn't in the animation at all, it was figuring out why an elliptical arc needs to end 0.1 units short of its own starting point just to keep the motion-path math from collapsing into nothing. Thanks for hovering the heart and sun, looping the radar, dragging the draw-on and stagger sliders, toggling the comet's curve-following on and off, and watching a circle round itself into a square with me — go animate something that used to just sit there. 🎯",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-04", change: "Added cross-reference to post 'An Interactive Guide to CSS cubic-bezier()'" },
       { date: "2026-09-24", change: 'Added cross reference to post "Mastering CSS steps() for Discrete, Stepped Animations" from the radar scanner case study' },
@@ -370,6 +372,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Getting ten interactive command demos, a full heart-shape decode, and the fill-rule, pathLength, and CSS path() sections to all click together took a fair share of iteration, and I hope it leaves you able to read — and write — a `d` string without flinching. Thanks for sticking with me through the whole alphabet of path commands — go draw something only you could have coded. ✏️",
     changelog: [
+      { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-08", change: "Initial publication" }
     ],
