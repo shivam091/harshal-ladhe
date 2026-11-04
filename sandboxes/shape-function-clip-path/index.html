@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>shape() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>A Responsive Speech Bubble with shape()</h1>
+        <p>Both bubbles use the same outline: rounded corners drawn with <code>arc</code> and a curved tail drawn with <code>curve</code>. The top one is a <code>shape()</code> written in <code>%</code>, <code>rem</code> and <code>calc(var(--tail) …)</code>. The bottom one is the same outline as a <code>path()</code>, which only understands pixels.</p>
+      </header>
+
+      <p class="support-note" id="support-note" hidden>This browser doesn't support <code>shape()</code> yet, so the top bubble falls back to a straight-edged <code>polygon()</code> with square corners and a pointed tail.</p>
+
+      <fieldset class="control-group">
+        <legend>Bubble</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="width-input">Width</label>
+            <div class="range-row">
+              <span class="range-edge">200px</span>
+              <div class="range-track">
+                <input type="range" id="width-input" min="200" max="440" step="10" value="320">
+                <output class="range-bubble" id="width-value" for="width-input">320px</output>
+              </div>
+              <span class="range-edge">440px</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="tail-input">Tail position</label>
+            <div class="range-row">
+              <span class="range-edge">15%</span>
+              <div class="range-track">
+                <input type="range" id="tail-input" min="15" max="85" step="1" value="50">
+                <output class="range-bubble" id="tail-value" for="tail-input">50%</output>
+              </div>
+              <span class="range-edge">85%</span>
+            </div>
+          </div>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="animate-toggle">
+          Animate the tail with <code>@property --tail</code>
+        </label>
+      </fieldset>
+
+      <p class="tip motion-tip">Reduced motion is turned on in your system settings, so the tail stays still when animation is ticked. Use the <strong>Tail position</strong> slider to move it instead.</p>
+
+      <section class="demo-area stage" id="stage" aria-label="Speech bubble preview">
+        <figure class="example">
+          <figcaption><code>clip-path: shape(…)</code></figcaption>
+          <div class="bubble bubble--shape">
+            <p>Resize me or move my tail. The whole outline follows.</p>
+          </div>
+        </figure>
+
+        <figure class="example">
+          <figcaption><code>clip-path: path("…")</code>, drawn for 320 × 144px</figcaption>
+          <div class="bubble bubble--path">
+            <p>My outline is frozen at the size it was drawn for.</p>
+          </div>
+        </figure>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
