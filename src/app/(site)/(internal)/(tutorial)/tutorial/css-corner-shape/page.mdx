@@ -230,4 +230,5 @@ of the box — keep concave radii modest relative to the element's size.
 `border-radius` sets the size of a corner; `corner-shape` sets its shape. Together they replace most of the SVG
 masks, `clip-path` polygons and pseudo-element tricks once needed for squircles, bevels, scoops and notches — and
 unlike those, the border, shadow and outline follow along, it animates, and browsers without support simply fall
-back to rounded corners.
+back to rounded corners. When an outline needs more than shaped corners, such as a curved speech-bubble tail or a
+wavy edge, [`shape()`](/tutorial/shape-function-clip-path) draws it as a responsive `clip-path`.
