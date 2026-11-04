@@ -89,7 +89,7 @@ If you've read [the basic shapes post](/post/svg/svg-essentials-mastering-basic-
 </CodeBlock>
 
 <Info title="Not to be confused with CSS clip-path: polygon()">
-  CSS has its own, unrelated `polygon()` function used inside `clip-path` (e.g. `clip-path: polygon(50% 0%, 100% 100%, 0% 100%)`). It shares the name and the "list of points" idea, but it clips the visible region of *any* HTML or SVG element. It isn't an SVG element, and it has nothing to do with the `<polygon>` tag covered in this post. If all you want is bevelled or notched corners on a box, [`corner-shape`](/tutorial/css-corner-shape) does it without clipping, so the element keeps its border and shadow.
+  CSS has its own, unrelated `polygon()` function used inside `clip-path` (e.g. `clip-path: polygon(50% 0%, 100% 100%, 0% 100%)`). It shares the name and the "list of points" idea, but it clips the visible region of *any* HTML or SVG element. It isn't an SVG element, and it has nothing to do with the `<polygon>` tag covered in this post. If all you want is bevelled or notched corners on a box, [`corner-shape`](/tutorial/css-corner-shape) does it without clipping, so the element keeps its border and shadow. And when a clip needs curves or arcs as well as straight edges, [CSS `shape()`](/tutorial/shape-function-clip-path) draws them in percentages, so the shape still scales with the element.
 </Info>
 
 <RainbowDivider />
