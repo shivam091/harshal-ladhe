@@ -1,0 +1,193 @@
+.demo-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.demo-block {
+  flex: 1 1 12.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.demo-block-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pg-text-muted);
+  font-family: var(--pg-mono);
+}
+
+.demo-block-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+.demo-block-desc code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+.demo-block .toggle-btn {
+  align-self: flex-start;
+}
+
+/* Native <dialog> */
+
+.dialog-demo {
+  inline-size: min(24rem, calc(100vw - 3rem));
+  padding: 1.5rem;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--pg-shadow);
+
+  /* Closed state — a real <dialog> already defaults to display: none, so this only needs to
+     cover the properties that actually need a "before" value. */
+  opacity: 0;
+  transform: translateY(-0.75rem) scale(0.95);
+
+  /* The full pattern: display gets its own allow-discrete entry so it flips at 0% on entry and
+     100% on exit (see the post), and overlay does the same for top-layer membership so the
+     dialog doesn't get yanked out from under a still-playing exit transition. */
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease,
+    display 0.28s allow-discrete,
+    overlay 0.28s allow-discrete;
+}
+
+.dialog-demo[open] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* The "before" value for the very first frame [open] is applied — scoped to :not(.no-discrete)
+   so unchecking the toggle stops this from matching at all, not just from looking right. */
+@starting-style {
+  .dialog-demo[open]:not(.no-discrete) {
+    opacity: 0;
+    transform: translateY(-0.75rem) scale(0.95);
+  }
+}
+
+/* Toggle OFF: same opacity/transform states above still apply, but with no display/overlay
+   allow-discrete and no matching @starting-style, display just snaps and opacity/transform pop. */
+.dialog-demo.no-discrete {
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.dialog-demo::backdrop {
+  background: rgb(0 0 0 / 0%);
+  transition: background 0.28s ease, display 0.28s allow-discrete, overlay 0.28s allow-discrete;
+}
+
+.dialog-demo[open]::backdrop {
+  background: rgb(0 0 0 / 55%);
+}
+
+@starting-style {
+  .dialog-demo[open]:not(.no-discrete)::backdrop {
+    background: rgb(0 0 0 / 0%);
+  }
+}
+
+.dialog-demo.no-discrete::backdrop {
+  transition: background 0.28s ease;
+}
+
+.dialog-demo-title {
+  margin-block: 0 0.625rem;
+  margin-inline: 0;
+  font-size: 1.05rem;
+}
+
+.dialog-demo p {
+  margin-block: 0 1rem;
+  margin-inline: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+}
+
+.dialog-demo code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+/* Popover */
+
+.popover-demo {
+  inline-size: min(22rem, calc(100vw - 3rem));
+  margin: auto;
+  padding: 1.5rem;
+  color: var(--pg-text);
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  border-radius: 0.75rem;
+  box-shadow: var(--pg-shadow);
+
+  opacity: 0;
+  transform: translateY(0.75rem) scale(0.95);
+
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s ease,
+    display 0.28s allow-discrete,
+    overlay 0.28s allow-discrete;
+}
+
+.popover-demo:popover-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@starting-style {
+  .popover-demo:popover-open:not(.no-discrete) {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.95);
+  }
+}
+
+.popover-demo.no-discrete {
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.popover-demo-title {
+  margin-block: 0 0.625rem;
+  margin-inline: 0;
+  font-size: 1.05rem;
+}
+
+.popover-demo p {
+  margin-block: 0 1rem;
+  margin-inline: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--pg-text-muted);
+}
+
+.popover-demo code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+@media (max-width: 30rem) {
+  .demo-area {
+    flex-direction: column;
+  }
+
+  .dialog-demo,
+  .popover-demo {
+    inline-size: calc(100vw - 2.5rem);
+    padding: 1.125rem;
+  }
+}

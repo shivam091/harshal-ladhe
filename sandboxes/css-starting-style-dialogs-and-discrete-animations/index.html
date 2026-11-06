@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dialog &amp; Popover Entry/Exit Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <div class="playground-header">
+        <h1>Dialog &amp; Popover Entry/Exit Playground</h1>
+        <p>Open and close a real <code>&lt;dialog&gt;</code> and a real popover, both animated with <code>transition-behavior: allow-discrete</code> and <code>@starting-style</code>. Flip either checkbox off, then open/close that one again, to feel the difference between a real transition and an instant snap.</p>
+      </div>
+
+      <section class="demo-area" aria-label="Dialog and popover triggers">
+        <div class="demo-block">
+          <h2 class="demo-block-title">Native Dialog</h2>
+          <p class="demo-block-desc">Opens via <code>.showModal()</code> — top layer, <code>::backdrop</code>, focus trap, and Esc-to-dismiss all included for free.</p>
+          <button id="open-dialog-btn" class="toggle-btn" type="button">Open Dialog</button>
+        </div>
+
+        <div class="demo-block">
+          <h2 class="demo-block-title">Popover</h2>
+          <p class="demo-block-desc">Opens via <code>popovertarget</code> — top layer and light-dismiss included, no JavaScript required just to trigger it.</p>
+          <button popovertarget="demo-popover" class="toggle-btn" type="button">Open Popover</button>
+        </div>
+      </section>
+
+      <output id="playground-output" class="readout" aria-live="polite">Dialog closed · Popover closed</output>
+
+      <fieldset class="control-group">
+        <legend>Dialog Transition</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label class="checkbox-field" for="dialog-discrete-toggle">
+              <input type="checkbox" id="dialog-discrete-toggle" checked>
+              <span>Enable <code>allow-discrete</code> + <code>@starting-style</code></span>
+            </label>
+          </div>
+        </div>
+        <p class="tip">Turn this off, then open or close the dialog again — <code>display</code> snaps instantly instead of fading and scaling, because it's no longer part of the transition and there's no starting-style value left for opacity/transform to animate from either.</p>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Popover Transition</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label class="checkbox-field" for="popover-discrete-toggle">
+              <input type="checkbox" id="popover-discrete-toggle" checked>
+              <span>Enable <code>allow-discrete</code> + <code>@starting-style</code></span>
+            </label>
+          </div>
+        </div>
+        <p class="tip">Same toggle, applied to the popover instead. Dismiss it with Esc, an outside click, or the button inside it — all built into the Popover API for free.</p>
+      </fieldset>
+
+      <dialog id="demo-dialog" class="dialog-demo">
+        <h2 class="dialog-demo-title">A Native &lt;dialog&gt;</h2>
+        <p>This element is opened with <code>.showModal()</code>, which promotes it to the top layer, gives it a <code>::backdrop</code>, traps focus inside it, and closes it on Esc — none of that is written in this sandbox's JavaScript.</p>
+        <button id="close-dialog-btn" class="toggle-btn" type="button">Close</button>
+      </dialog>
+
+      <div id="demo-popover" class="popover-demo" popover="auto">
+        <h2 class="popover-demo-title">A Popover</h2>
+        <p>Promoted to the top layer purely by the <code>popover</code> attribute. Click outside, press Esc, or use the button below to dismiss it.</p>
+        <button popovertarget="demo-popover" popovertargetaction="hide" class="toggle-btn toggle-btn--ghost" type="button">Close</button>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
