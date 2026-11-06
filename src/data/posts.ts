@@ -731,6 +731,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-starting-style-performance-and-accessibility",
+    title: "Advanced CSS `@starting-style`: Performance & Accessibility",
+    excerpt: "Ship smooth, accessible, framework-friendly CSS entry animations.",
+    description: "Keep @starting-style fast and accessible: rendering performance, prefers-reduced-motion, framework use, and comparisons with @keyframes and View Transitions.",
+    category: ["Animations"],
+    tags: ["css", "starting-style", "performance", "gpu-acceleration", "accessibility", "web-performance", "prefers-reduced-motion", "view-transitions", "web-animations-api", "keyframes", "react", "modern-css", "advanced", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-starting-style-performance-and-accessibility/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for advanced CSS @starting-style performance and accessibility, comparing a layout-heavy animation with a compositor-only one, plus a production checklist.",
+      caption: "Height versus transform through the rendering pipeline, plus reduced motion and a production checklist."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This half turns @starting-style from \"a neat trick\" into something you can ship — I hope the rendering-pipeline diagram, the tool-choice matrix, the framework side-by-sides, and the production checklist save you from reaching for a bigger tool than the job needs, or from shipping an entrance that's slow or uncomfortable for someone. Thanks for working through the whole series with me. 🚀",
+    changelog: [
+      { date: "2026-11-06", change: "Initial publication" }
+    ]
   }
 ];
 

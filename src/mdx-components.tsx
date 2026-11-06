@@ -61,7 +61,9 @@ import StaggerTimelineDiagram from "@/components/mdx/StaggerTimelineDiagram";
 import KeyedListDiagram from "@/components/mdx/KeyedListDiagram";
 import AllowDiscreteTimelineDiagram from "@/components/mdx/AllowDiscreteTimelineDiagram";
 import TopLayerDiagram from "@/components/mdx/TopLayerDiagram";
+import RenderingPipelineDiagram from "@/components/mdx/RenderingPipelineDiagram";
 import StartingStyleTriggerDiagram from "@/components/mdx/StartingStyleTriggerDiagram";
+import ToolChoiceDiagram from "@/components/mdx/ToolChoiceDiagram";
 import ObserverPatternDiagram from "@/components/mdx/ObserverPatternDiagram";
 import ResizeBoxModelDiagram from "@/components/mdx/ResizeBoxModelDiagram";
 import IntersectionGeometryDiagram from "@/components/mdx/IntersectionGeometryDiagram";
@@ -192,7 +194,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     KeyedListDiagram,
     AllowDiscreteTimelineDiagram,
     TopLayerDiagram,
+    RenderingPipelineDiagram,
     StartingStyleTriggerDiagram,
+    ToolChoiceDiagram,
     ObserverPatternDiagram,
     ResizeBoxModelDiagram,
     IntersectionGeometryDiagram,
