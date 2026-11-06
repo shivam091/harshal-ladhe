@@ -710,6 +710,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-starting-style-dialogs-and-discrete-animations",
+    title: "Animate Dialogs & Popovers with CSS `@starting-style`",
+    excerpt: "Animate display: none, dialogs, and popovers in CSS.",
+    description: "Animate display: none in CSS with allow-discrete and @starting-style — native <dialog> and Popover API examples, plus the top layer explained.",
+    category: ["Animations"],
+    tags: ["css", "starting-style", "allow-discrete", "top-layer", "dialog", "popover", "discrete-animation", "animation", "transition", "css-transitions", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-starting-style-dialogs-and-discrete-animations/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for animating dialogs and popovers with CSS @starting-style, showing a dialog floating in the top layer above the page and timelines of when display flips.",
+      caption: "The top layer above the page, and why display flips at 0% on entry but 100% on exit."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Getting the display flip to land at the *start* of the entrance and the *end* of the exit — and drawing that asymmetry so it reads at a glance — took more iterations than I expected, as did the top-layer diagram and a playground where a real dialog and popover each snap back to the old behaviour on demand. I hope the timelines make that one rule stick. Part 4 closes the series with performance and accessibility. 🗂️",
+    changelog: [
+      { date: "2026-11-06", change: "Initial publication" }
+    ]
   }
 ];
 

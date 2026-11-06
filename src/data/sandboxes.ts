@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-starting-style-dialogs-and-discrete-animations",
+    title: "Dialog & Popover Entry/Exit Playground",
+    description: "Open and close a native <dialog> and a popover with @starting-style and transition-behavior: allow-discrete — toggle either one off to watch the animation break.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-starting-style-entry-animations",
     title: "Entry Animation Pattern Playground",
     description: "Add cards, toasts, and accordion items on the fly — toggle @starting-style on and off to feel the difference between a real transition and an instant pop-in.",
