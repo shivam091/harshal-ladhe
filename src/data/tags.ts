@@ -1082,5 +1082,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "polyfills": {
     title: "JavaScript Polyfills and Fallbacks",
     description: "Feature detection, polyfills such as `core-js` and hand-written fallbacks that let modern JavaScript features run in older browsers and runtimes."
-  }
+  },
+  "starting-style": {
+    title: "The CSS @starting-style At-Rule",
+    description: "Guides to `@starting-style` — defining an element's before-change styles so transitions have something to animate from on first render."
+  },
+  "css-transitions": {
+    title: "CSS Transitions Guides and Tutorials",
+    description: "Guides to CSS transitions: timing, easing, entry and exit animations, discrete properties, and keeping transitions smooth and accessible."
+  },
 };
