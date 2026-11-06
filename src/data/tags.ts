@@ -1091,8 +1091,24 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Entry and Exit Animation Patterns",
     description: "Practical patterns for animating elements as they enter or leave the DOM — cards, toasts, menus, and dynamically inserted content."
   },
+  "allow-discrete": {
+    title: "The `allow-discrete` Transition Behavior",
+    description: "Using `transition-behavior: allow-discrete` to animate keyword-only properties like `display` and `content-visibility` instead of flipping them instantly."
+  },
+  "top-layer": {
+    title: "The Browser Top Layer Explained",
+    description: "How `<dialog>`, popovers, and fullscreen elements render in the browser-managed top layer, outside normal stacking contexts."
+  },
+  "dialog": {
+    title: "The HTML <dialog> Element",
+    description: "Building and styling native `<dialog>` modals, including open/close transitions and default browser behavior."
+  },
   "css-transitions": {
     title: "CSS Transitions Guides and Tutorials",
     description: "Guides to CSS transitions: timing, easing, entry and exit animations, discrete properties, and keeping transitions smooth and accessible."
+  },
+  "popover": {
+    title: "The HTML Popover API",
+    description: "Using the `popover` attribute and Popover API to build dismissible menus, tooltips, and toasts without extra JavaScript."
   },
 };
