@@ -471,7 +471,7 @@ That's why the classic fade-out pattern combines both, using a matching delay so
 `}
 </CodeBlock>
 
-Modern CSS removes the need for this workaround. `transition-behavior: allow-discrete` lets discrete properties — including `display` — join the transition, and `@starting-style` gives the browser an explicit "before" state to animate from, which discrete properties otherwise don't have:
+Modern CSS removes the need for this workaround. `transition-behavior: allow-discrete` lets discrete properties — including `display` — join the transition, and `@starting-style` ([Part 1 of the series](/post/animations/css-starting-style-guide) explains it from scratch) gives the browser an explicit "before" state to animate from, which discrete properties otherwise don't have:
 
 <CodeBlock language="css">
 {`
@@ -499,7 +499,7 @@ Modern CSS removes the need for this workaround. `transition-behavior: allow-dis
 </CodeBlock>
 
 <Warning title="Browser support">
-  `allow-discrete` and `@starting-style` reached Baseline in 2024 (Chrome/Edge 117+, Safari 17.4+, Firefox 129+). Browsers without support simply skip the discrete part of the transition and flip `display` instantly — a safe fallback, not a broken one.
+  `allow-discrete` and `@starting-style` reached Baseline in 2024 (Chrome/Edge 117+, Safari 17.4+, Firefox 129+). Browsers without support simply skip the discrete part of the transition and flip `display` instantly — a safe fallback, not a broken one. [Animate Dialogs & Popovers with CSS `@starting-style`](/post/animations/css-starting-style-dialogs-and-discrete-animations) goes deeper on `<dialog>`, popovers and the top layer.
 </Warning>
 
 <RainbowDivider />
