@@ -157,6 +157,7 @@ export const posts: Post[] = [
     signoff: "This one took a fair bit of tinkering to get the playground feeling just right, and I hope tuning duration, delay, and timing-function with your own hands makes transitions click in a way reading alone never quite does. Thanks for hovering, toggling, and sticking with me through it — go make your UI feel a little smoother. ✨",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-11-06", change: "Added cross-references to posts 'Mastering CSS `@starting-style`: The Complete Beginner's Guide' and 'Animate Dialogs & Popovers with CSS `@starting-style`'" },
       { date: "2026-11-02", change: "Added cross-reference to tutorial 'Animating `height: auto` in CSS with `interpolate-size`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
@@ -441,6 +442,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Between the core keyframes playground and a second sandbox built just to make `animation-timeline` and `animation-range` tangible — complete with a live range slider and its own feature-detection fallback for browsers that don't support scroll-driven animations yet — this one ended up needing two full interactive builds instead of one. Getting the `animation-range` diagram to actually line up entry/contain/cover/exit against a scrolling element took more iteration than the rest of the post combined. Thanks for tweaking every duration, delay, and range slider with me — go give your loops, spinners, and scroll reveals some real personality. 🎬",
     changelog: [
+      { date: "2026-11-06", change: "Added cross-reference to post 'Mastering CSS `@starting-style`: The Complete Beginner's Guide'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-10-04", change: "Added cross-references to posts 'An Interactive Guide to CSS Easing Functions', 'An Interactive Guide to CSS cubic-bezier()' and 'An Interactive Guide to the CSS linear() Easing Function'" },
@@ -620,6 +622,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around three new pieces: an exploded view of the seven painting layers, a version-number tree showing why 9999 can lose to 10, and a three-tab sandbox that runs real HTML and CSS rather than pictures of them — the trapped tooltip, the negative z-index box, and the blend-mode circles — each with a readout explaining what the browser just painted. Getting the playground's readout to agree with the browser in every combination — ties, z-index: 0 versus auto, an opacity of 0.99 that changes almost nothing on screen yet everything underneath — meant re-deriving the painting order more times than I'd like to admit. I hope the next time a 9999 refuses to budge, you go looking for its parent instead of adding another 9. Thanks for stacking up with me. 🥞",
     changelog: [
+      { date: "2026-11-06", change: "Added cross-reference to post 'Animate Dialogs & Popovers with CSS `@starting-style`'" },
       { date: "2026-10-31", change: "Added cross-reference to post 'CSS Cascade Layers (`@layer`): End Specificity Wars in Large Codebases'" },
       { date: "2026-10-27", change: "Added cross-reference to tutorial 'Styling a `<select>` Dropdown with CSS `appearance: base-select`'" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'CSS-Only Tooltips with `attr()` and `content`'" },
@@ -645,6 +648,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around four diagrams and a three-tab sandbox: two containment panels that make the size-collapse pitfall impossible to miss, nested boxes where one arrow has to visibly skip past the nearer container, a single box showing cqmin and cqmax borrowing their values from cqi and cqb, and two identical cards that only a custom property tells apart. The named-container diagram took the most redrawing — an arrow that skips past a box can very easily look like one pointing at the wrong thing. The sandbox's middle tab is the one I'm proudest of: the same @container rule, the same 400px breakpoint, and a single radio button alone decides which box gets measured. Getting every tab's live CSS readout to match what the browser actually applies took more back-and-forth than I'd like to admit. I hope the next time a component looks wrong in a sidebar, you ask which box it's measuring before reaching for another media query. Thanks for containing yourself with me. 📦",
     changelog: [
+      { date: "2026-11-06", change: "Added cross-reference to post 'CSS `@starting-style` Entry Animations: Practical Patterns'" },
       { date: "2026-10-18", change: "Initial publication" }
     ]
   },

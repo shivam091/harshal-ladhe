@@ -861,7 +861,7 @@ To ensure your keyframe animations are smooth, efficient, and accessible, follow
 </Details>
 
 <Details summary="Why doesn't my animation run on an element with display: none?">
-  Elements with `display: none` don't render, so their animations don't run. When the element is shown again, the animation starts from the beginning, which makes it a simple way to replay an entrance animation. Hiding with `visibility: hidden` or `opacity: 0` keeps the animation running in the background instead.
+  Elements with `display: none` don't render, so their animations don't run. When the element is shown again, the animation starts from the beginning, which makes it a simple way to replay an entrance animation. If you'd rather keep a plain `transition` for the entrance, [`@starting-style`](/post/animations/css-starting-style-guide) gives it a starting point on the element's first render. Hiding with `visibility: hidden` or `opacity: 0` keeps the animation running in the background instead.
 </Details>
 
 <RainbowDivider />

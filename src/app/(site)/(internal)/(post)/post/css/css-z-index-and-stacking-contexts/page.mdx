@@ -480,6 +480,8 @@ Elements are placed in the top layer when you:
 - Open a [customisable `<select>`](/tutorial/css-customizable-select#positioning-and-animating-the-picker), whose
   dropdown picker is drawn in the top layer
 
+Because an element leaves the top layer the instant it closes, animating its exit takes the `overlay` property; [the top layer, explained](/post/animations/css-starting-style-dialogs-and-discrete-animations#the-top-layer-explained) covers how.
+
 <CodeBlock language="html">
 {`
   <button popovertarget="account-menu">Account</button>
