@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 import Link from "next/link";
 import { getPostUrl } from "@/utils/post-url";
+import { inlineMarkdownToHtml, stripInlineMarkdown } from "@/utils/markdown";
 import type { PostSeriesInfo } from "@/data/series";
 import {
   SeriesNav,
@@ -49,10 +50,9 @@ export default function SeriesPostNav({ series }: SeriesPostNavProps): JSX.Eleme
                   as={Link}
                   href={getPostUrl(previousPost)}
                   rel="prev"
-                  aria-label={`Previous post in series: ${previousPost.title}`}
-                >
-                  {previousPost.title}
-                </SeriesNavLink>
+                  aria-label={`Previous post in series: ${stripInlineMarkdown(previousPost.title)}`}
+                  dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(previousPost.title) }}
+                />
               </SeriesNavItem>
             )}
 
@@ -63,10 +63,9 @@ export default function SeriesPostNav({ series }: SeriesPostNavProps): JSX.Eleme
                   as={Link}
                   href={getPostUrl(nextPost)}
                   rel="next"
-                  aria-label={`Next post in series: ${nextPost.title}`}
-                >
-                  {nextPost.title}
-                </SeriesNavLink>
+                  aria-label={`Next post in series: ${stripInlineMarkdown(nextPost.title)}`}
+                  dangerouslySetInnerHTML={{ __html: inlineMarkdownToHtml(nextPost.title) }}
+                />
                 <SeriesNavItemIcon aria-hidden="true">➡️</SeriesNavItemIcon>
               </SeriesNavItem>
             )}
