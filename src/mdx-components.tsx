@@ -59,6 +59,8 @@ import StartingStyleTimelineDiagram from "@/components/mdx/StartingStyleTimeline
 import StartingStyleInsertDemo from "@/components/StartingStyleInsertDemo";
 import StaggerTimelineDiagram from "@/components/mdx/StaggerTimelineDiagram";
 import KeyedListDiagram from "@/components/mdx/KeyedListDiagram";
+import AllowDiscreteTimelineDiagram from "@/components/mdx/AllowDiscreteTimelineDiagram";
+import TopLayerDiagram from "@/components/mdx/TopLayerDiagram";
 import StartingStyleTriggerDiagram from "@/components/mdx/StartingStyleTriggerDiagram";
 import ObserverPatternDiagram from "@/components/mdx/ObserverPatternDiagram";
 import ResizeBoxModelDiagram from "@/components/mdx/ResizeBoxModelDiagram";
@@ -188,6 +190,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     StartingStyleInsertDemo,
     StaggerTimelineDiagram,
     KeyedListDiagram,
+    AllowDiscreteTimelineDiagram,
+    TopLayerDiagram,
     StartingStyleTriggerDiagram,
     ObserverPatternDiagram,
     ResizeBoxModelDiagram,
