@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Entry Animation Pattern Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <div class="playground-header">
+        <h1>Entry Animation Pattern Playground</h1>
+        <p>Add toasts and cards on the fly, then flip the toggle below off to feel the difference between a real transition and an instant pop-in.</p>
+      </div>
+
+      <section class="demo-area starting-style-enabled" id="demo-area" aria-label="Entry animation preview">
+        <div class="demo-block">
+          <h2 class="demo-block-title">Toast Queue</h2>
+          <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+        </div>
+
+        <div class="demo-block">
+          <h2 class="demo-block-title">Card Grid</h2>
+          <div id="card-grid" class="card-grid"></div>
+        </div>
+      </section>
+
+      <output id="playground-output" class="readout" aria-live="polite">0 toasts · 0 cards</output>
+
+      <fieldset class="control-group">
+        <legend>Controls</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label class="checkbox-field" for="starting-style-toggle">
+              <input type="checkbox" id="starting-style-toggle" checked>
+              <span>Enable <code>@starting-style</code></span>
+            </label>
+          </div>
+        </div>
+        <p class="tip">Turn this off, then add another toast or card — it pops in instantly instead of transitioning, because there's no "before" state left for the browser to animate from.</p>
+      </fieldset>
+
+      <div class="button-row">
+        <button id="add-toast-btn" class="toggle-btn" type="button">Add Toast</button>
+        <button id="add-card-btn" class="toggle-btn" type="button">Add Card</button>
+        <button id="clear-btn" class="toggle-btn toggle-btn--ghost" type="button">Clear All</button>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -1087,6 +1087,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The CSS @starting-style At-Rule",
     description: "Guides to `@starting-style` — defining an element's before-change styles so transitions have something to animate from on first render."
   },
+  "entry-animation": {
+    title: "Entry and Exit Animation Patterns",
+    description: "Practical patterns for animating elements as they enter or leave the DOM — cards, toasts, menus, and dynamically inserted content."
+  },
   "css-transitions": {
     title: "CSS Transitions Guides and Tutorials",
     description: "Guides to CSS transitions: timing, easing, entry and exit animations, discrete properties, and keeping transitions smooth and accessible."
