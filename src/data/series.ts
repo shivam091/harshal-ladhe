@@ -129,6 +129,31 @@ export const series: Series[] = [
       { date: "2026-08-15", change: "Initial publication" }
     ]
   },
+  {
+    slug: "css-starting-style",
+    title: "CSS @starting-style: From First Render to Production",
+    order: 3,
+    excerpt: "Animate entrances, dialogs, and popovers with plain CSS.",
+    description: "A 4-part CSS @starting-style guide: entry animation patterns, animating display: none for dialogs and popovers, plus performance and accessibility.",
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/series/css-starting-style/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for the CSS @starting-style series, showing a card fading in across film frames above four numbered part cards.",
+      caption: "Four parts taking @starting-style from a first render to production."
+    },
+    parts: [
+      "css-starting-style-guide",
+      "css-starting-style-entry-animations",
+      "css-starting-style-dialogs-and-discrete-animations",
+      "css-starting-style-performance-and-accessibility"
+    ],
+    signoff: "Four posts, eight custom diagrams, three interactive demos, and a lot of real-browser testing went into this one missing piece. It runs from the single-frame collapse that started it all, through a full pattern library, to display: none itself joining the transition, and everything it takes to ship it with confidence. Thanks for working through the whole series with me. Go give your next entrance a real \"before.\" ✨",
+    changelog: [
+      { date: "2026-11-06", change: "Initial publication" }
+    ]
+  },
 ];
 
 // Curated `order` rather than dates so navigation follows the intended reading sequence; title breaks ties.
