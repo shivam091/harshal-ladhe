@@ -689,6 +689,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-starting-style-entry-animations",
+    title: "CSS `@starting-style` Entry Animations: Practical Patterns",
+    excerpt: "Build cards, toasts, and menus with reusable entrances.",
+    description: "Reusable @starting-style entry animation patterns: cards, toasts, sidebars, dropdowns, accordions, chat messages, and framework-rendered lists.",
+    category: ["Animations"],
+    tags: ["css", "starting-style", "entry-animation", "animation", "transition", "css-transitions", "css-animation", "microinteractions", "ui-design", "ui-animation", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-starting-style-entry-animations/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for CSS @starting-style entry animation patterns, showing cards, toasts and menus easing in with a stagger timeline.",
+      caption: "A library of entrance patterns, plus a 40-card stagger capped to settle by 0.7s."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Building this one meant testing every pattern in a real browser, then catching a few that looked right but quietly didn't animate — plus a stagger diagram, a keyed-list diagram, and a toast-and-card playground with an on/off switch so you can feel the difference. I hope it saves you the same trial and error. Part 3 tackles the entrance CSS can't do alone: display: none. 🍞",
+    changelog: [
+      { date: "2026-11-06", change: "Initial publication" }
+    ]
   }
 ];
 
