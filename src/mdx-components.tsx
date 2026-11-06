@@ -57,6 +57,8 @@ import RepeatingGradientDiagram from "@/components/mdx/RepeatingGradientDiagram"
 import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
 import StartingStyleTimelineDiagram from "@/components/mdx/StartingStyleTimelineDiagram";
 import StartingStyleInsertDemo from "@/components/StartingStyleInsertDemo";
+import StaggerTimelineDiagram from "@/components/mdx/StaggerTimelineDiagram";
+import KeyedListDiagram from "@/components/mdx/KeyedListDiagram";
 import StartingStyleTriggerDiagram from "@/components/mdx/StartingStyleTriggerDiagram";
 import ObserverPatternDiagram from "@/components/mdx/ObserverPatternDiagram";
 import ResizeBoxModelDiagram from "@/components/mdx/ResizeBoxModelDiagram";
@@ -184,6 +186,8 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     GradientLayeringDiagram,
     StartingStyleTimelineDiagram,
     StartingStyleInsertDemo,
+    StaggerTimelineDiagram,
+    KeyedListDiagram,
     StartingStyleTriggerDiagram,
     ObserverPatternDiagram,
     ResizeBoxModelDiagram,
