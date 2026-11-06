@@ -668,6 +668,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-10-31", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-starting-style-guide",
+    title: "Mastering CSS `@starting-style`: The Complete Beginner's Guide",
+    excerpt: "Give entering elements a real \"before\" to animate.",
+    description: "Why CSS transitions skip an element's first render, and how the @starting-style at-rule fixes it — syntax, the cascade, and fade, slide, and scale-in examples.",
+    category: ["Animations"],
+    tags: ["css", "starting-style", "animation", "transition", "css-animation", "css-transitions", "opacity", "transform", "browser-support", "progressive-enhancement", "modern-css", "beginner", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/animations/css-starting-style-guide/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for the CSS @starting-style beginner’s guide, showing a card that pops in without it and eases in with it.",
+      caption: "The single-frame collapse and its fix, with the three states and both syntax forms."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one's the foundation the rest of the series builds on, and the single-frame collapse was surprisingly hard to draw so it reads at a glance — that diagram, the trigger map beside it, and the side-by-side insert demo took more iterations than the prose did. I hope seeing both columns run makes the fix click faster than the spec ever could. Part 2 turns it into a full pattern library. 🌱",
+    changelog: [
+      { date: "2026-11-06", change: "Initial publication" }
+    ]
   }
 ];
 

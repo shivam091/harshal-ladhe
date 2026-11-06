@@ -55,6 +55,9 @@ import RadialGradientDiagram from "@/components/mdx/RadialGradientDiagram";
 import ConicGradientDiagram from "@/components/mdx/ConicGradientDiagram";
 import RepeatingGradientDiagram from "@/components/mdx/RepeatingGradientDiagram";
 import GradientLayeringDiagram from "@/components/mdx/GradientLayeringDiagram";
+import StartingStyleTimelineDiagram from "@/components/mdx/StartingStyleTimelineDiagram";
+import StartingStyleInsertDemo from "@/components/StartingStyleInsertDemo";
+import StartingStyleTriggerDiagram from "@/components/mdx/StartingStyleTriggerDiagram";
 import ObserverPatternDiagram from "@/components/mdx/ObserverPatternDiagram";
 import ResizeBoxModelDiagram from "@/components/mdx/ResizeBoxModelDiagram";
 import IntersectionGeometryDiagram from "@/components/mdx/IntersectionGeometryDiagram";
@@ -179,6 +182,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     ConicGradientDiagram,
     RepeatingGradientDiagram,
     GradientLayeringDiagram,
+    StartingStyleTimelineDiagram,
+    StartingStyleInsertDemo,
+    StartingStyleTriggerDiagram,
     ObserverPatternDiagram,
     ResizeBoxModelDiagram,
     IntersectionGeometryDiagram,
