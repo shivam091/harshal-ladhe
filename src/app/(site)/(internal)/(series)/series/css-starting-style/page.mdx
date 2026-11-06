@@ -1,0 +1,20 @@
+import { buildSeriesMetadata } from "@/utils/series-metadata";
+
+export const metadata = buildSeriesMetadata("css-starting-style");
+
+🎬 **CSS @starting-style** fills in the one piece CSS transitions never had: a real "before" state for an element's very first render.
+
+Without it, an element that's just been inserted into the DOM — or that's just gone from `display: none` to visible — has its before-style and after-style computed in the very same frame, so there's nothing to transition from and the element just pops into view. This 4-part series covers the fix, start to finish, with no JavaScript reflow tricks required:
+
+- **Part 1: Mastering CSS @starting-style: The Complete Beginner's Guide** — Why transitions skip an element's first render, when `@starting-style` does and doesn't apply, the syntax, the cascade, and fade, slide, and scale-in examples.
+- **Part 2: CSS @starting-style Entry Animations: Practical Patterns** — Reusable patterns for cards, toasts, sidebars, dropdowns, tooltips, accordions, chat messages, and framework-rendered lists, with a live playground.
+- **Part 3: Animate Dialogs & Popovers with CSS @starting-style** — Pairing `transition-behavior: allow-discrete` with `@starting-style` to finally animate `display: none` itself, plus native `<dialog>`, the Popover API, and the top layer.
+- **Part 4: Advanced CSS @starting-style: Performance & Accessibility** — Rendering-pipeline performance, `prefers-reduced-motion`, framework integration, and how it compares with `@keyframes`, the Web Animations API, and View Transitions.
+
+By the end of the series, you'll be able to reach for a plain `transition` on almost any entrance — no `@keyframes` boilerplate, no mount-then-reflow-then-toggle dance — and know exactly when it's the wrong tool for the job.
+
+<Quote>
+  A transition needs two states to move between — **@starting-style is what gives it one on the very first frame.**
+</Quote>
+
+<RainbowDivider />
