@@ -1103,9 +1103,21 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The HTML <dialog> Element",
     description: "Building and styling native `<dialog>` modals, including open/close transitions and default browser behavior."
   },
+  "prefers-reduced-motion": {
+    title: "Respecting prefers-reduced-motion in CSS",
+    description: "Designing animations and transitions that honour the `prefers-reduced-motion` media query, so motion stays comfortable for people who ask for less of it."
+  },
   "css-transitions": {
     title: "CSS Transitions Guides and Tutorials",
     description: "Guides to CSS transitions: timing, easing, entry and exit animations, discrete properties, and keeping transitions smooth and accessible."
+  },
+  "view-transitions": {
+    title: "The View Transitions API",
+    description: "Using the View Transitions API for page-wide and shared-element animations, and how it compares to CSS transitions and keyframes."
+  },
+  "web-animations-api": {
+    title: "The Web Animations API Explained",
+    description: "Using the Web Animations API for JavaScript-driven, data-dependent animation, and when CSS transitions or keyframes are the simpler choice."
   },
   "popover": {
     title: "The HTML Popover API",
