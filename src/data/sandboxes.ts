@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-starting-style-entry-animations",
+    title: "Entry Animation Pattern Playground",
+    description: "Add cards, toasts, and accordion items on the fly — toggle @starting-style on and off to feel the difference between a real transition and an instant pop-in.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "set-methods-union-intersection",
     title: "Set Methods Playground",
     description: "Tick the roles you hold and the roles a page requires, then run any of the seven native Set methods on them, with a plain-English reading of each result and an array fallback where the methods are missing.",
