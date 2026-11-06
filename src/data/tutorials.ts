@@ -442,6 +442,7 @@ export const tutorials: Tutorial[] = [
       caption: "A fully styled select dropdown with colour swatches, still keyboard accessible."
     },
     changelog: [
+      { date: "2026-11-06", change: "Added cross-reference to post 'Animate Dialogs & Popovers with CSS `@starting-style`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-27", change: "Initial publication." }
     ]
@@ -522,6 +523,7 @@ export const tutorials: Tutorial[] = [
       caption: "An accordion opening smoothly to its natural height, rather than snapping."
     },
     changelog: [
+      { date: "2026-11-06", change: "Added cross-reference to post 'Animate Dialogs & Popovers with CSS `@starting-style`'" },
       { date: "2026-11-02", change: "Initial publication." }
     ]
   },
