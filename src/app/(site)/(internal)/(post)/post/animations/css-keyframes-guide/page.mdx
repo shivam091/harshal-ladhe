@@ -793,7 +793,7 @@ Infinite loops and large motion — a spinner that never stops, a banner that ke
 `}
 </CodeBlock>
 
-Not every animation needs the same treatment. A one-off entrance animation (a banner fading in on page load) can usually just be turned off — the element still ends up in its final state via `animation-fill-mode`. A *looping* indicator that's communicating "this is still loading" shouldn't simply vanish, since that removes real information; slowing it down or switching to a subtler `opacity` pulse keeps the message without the motion that triggers discomfort.
+Not every animation needs the same treatment. A one-off entrance animation (a banner fading in on page load) can usually just be turned off — the element still ends up in its final state via `animation-fill-mode`. A *looping* indicator that's communicating "this is still loading" shouldn't simply vanish, since that removes real information; slowing it down or switching to a subtler `opacity` pulse keeps the message without the motion that triggers discomfort. [CSS & SVG Loading Spinner from One Circle](/snippet/svg-spinning-loader) applies this to an SVG spinner, with a reduced-motion fallback built in.
 
 <RainbowDivider />
 
