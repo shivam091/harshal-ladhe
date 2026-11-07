@@ -171,6 +171,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Line-Draw Animations with `stroke-dashoffset`",
     description: "Animating `stroke-dashoffset` to create the classic self-drawing line effect, paired with `stroke-dasharray` and the `pathLength` attribute."
   },
+  "pathlength": {
+    title: "Normalising SVG Shapes with `pathLength`",
+    description: "Using the `pathLength` attribute to give any SVG shape a fixed length, so `stroke-dasharray` and `stroke-dashoffset` values become simple percentages."
+  },
+  "loading-spinner": {
+    title: "Building Loading Spinners with CSS and SVG",
+    description: "Lightweight, accessible loading indicators built from SVG shapes and CSS animation, with colour, sizing, and reduced-motion handling covered."
+  },
   "clip-path": {
     title: "Revealing Shapes with CSS `clip-path`",
     description: "Animating the `clip-path` property to wipe a shape, image, or entire group into view, using `inset()` and other clip-region shapes."
