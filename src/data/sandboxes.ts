@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "array-fromasync-async-iterables",
+    title: "Collecting a Paginated API with Array.fromAsync()",
+    description: "Collect three pages from an async iterable into one array, make page 2 fail to see the earlier pages discarded, and compare one-at-a-time requests with Promise.all().",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-starting-style-dialogs-and-discrete-animations",
     title: "Dialog & Popover Entry/Exit Playground",
     description: "Open and close a native <dialog> and a popover with @starting-style and transition-behavior: allow-discrete — toggle either one off to watch the animation break.",
