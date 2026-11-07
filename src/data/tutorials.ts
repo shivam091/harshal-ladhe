@@ -583,6 +583,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-04", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "array-fromasync-async-iterables",
+    title: "Collecting Async Iterables into Arrays with `Array.fromAsync()`",
+    excerpt: "Collect any async iterable into an array, one await.",
+    description: "Use JavaScript's Array.fromAsync() to collect async generators and iterables into an array: mapping, error handling, sequential vs Promise.all, and browser support.",
+    category: ["JavaScript"],
+    tags: ["javascript", "array-fromasync", "async-await", "async-iterators", "promises", "async-javascript"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/array-fromasync-async-iterables/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "An async generator handing back paginated results one at a time, collected into a single array by Array.fromAsync().",
+      caption: "Three pages from an async generator collected into one array, beside the loop it replaces, its one-at-a-time timing and its all-or-nothing errors."
+    },
+    changelog: [
+      { date: "2026-11-07", change: "Initial publication." }
+    ]
   }
 ];
 
