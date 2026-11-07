@@ -113,6 +113,29 @@ export const snippets: Snippet[] = [
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-26", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-spinning-loader",
+    title: "CSS & SVG Loading Spinner from One Circle",
+    excerpt: "Build an SVG loading spinner from one circle.",
+    description: "Build an accessible SVG loading spinner from one circle: pathLength and stroke-dasharray draw the arc, CSS spins it, with reduced-motion support.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "loading-spinner", "svg-animation", "css-animation", "stroke-dasharray", "pathLength", "keyframes", "prefers-reduced-motion", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-spinning-loader/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a circular loading spinner made from a single glowing arc on a faint circular track.",
+      caption: "A single glowing arc on a faint track, spinning as a loader."
+    },
+    changelog: [
+      { date: "2026-11-07", change: "Initial publication." }
+    ]
   }
 ];
 
