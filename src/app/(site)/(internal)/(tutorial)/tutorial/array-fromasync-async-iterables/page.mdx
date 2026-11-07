@@ -6,7 +6,9 @@ export const metadata = buildTutorialMetadata("array-fromasync-async-iterables")
 
 `Array.from()` turns anything iterable into an array: a `Set`, a `NodeList`, a generator. It can't do the same for
 *async* iterables, such as an async generator that fetches one page of results at a time. Until recently, collecting
-one of those meant writing a `for await...of` loop that pushes each value into an array.
+one of those meant writing a `for await...of` loop that pushes each value into an array. If async generators and
+`for await...of` are new to you, start with
+[Async Iterators and `for-await-of`](/post/javascript/mastering-async-javascript#async-iterators-and-for-await-of).
 
 **`Array.fromAsync()`** is the async version of `Array.from()`. Give it an async iterable and it returns a promise
 for an array of every value it produced, in order. It also accepts ordinary iterables and array-likes, and awaits
@@ -205,6 +207,9 @@ page instead, the way `Promise.allSettled()` reports each promise:
   const pages = results.filter((result) => result.ok).map((result) => result.value);
 `}
 </CodeBlock>
+
+To give a failed page another chance before giving up on it, wrap the `fetch()` call in a retry helper such as the
+[Exponential Backoff Retry Utility](/tutorial/async-retry-exponential-backoff).
 
 <RainbowDivider />
 
