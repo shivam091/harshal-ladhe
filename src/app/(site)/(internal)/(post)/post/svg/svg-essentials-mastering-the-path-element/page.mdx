@@ -466,6 +466,8 @@ With `pathLength="100"`, the recipe is always the same regardless of the path's 
 - `stroke-dashoffset: 100` — shifts that dash fully off the start, so nothing is visible yet.
 - Animating `stroke-dashoffset` down to `0` slides the dash back into place, revealing the stroke as it goes.
 
+The same setup isn't limited to `<path>`: `pathLength` works on a `<circle>` as well, which is how [CSS & SVG Loading Spinner from One Circle](/snippet/svg-spinning-loader) turns a single circle into a spinning arc.
+
 <Info title="Going further">
   This is the CSS-only half of path animation. Reading a path's length back out with JavaScript, motion-following an element along a curve, and morphing between two different `d` values are all covered in depth in [Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes).
 </Info>
