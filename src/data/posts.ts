@@ -422,6 +422,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Getting the microtask-vs-macrotask ordering to click as a diagram instead of just a list of rules took a few passes, and building a live Promise.all/allSettled/race/any playground next to the section that explains them felt like the right way to make combinator choice concrete instead of theoretical. Thanks for following the whole callbacks → promises → async/await arc with me; go find an unnecessary sequential await in your own code and fix it. ⏱️",
     changelog: [
+      { date: "2026-11-07", change: "Added cross-reference to tutorial 'Collecting Async Iterables into Arrays with `Array.fromAsync()`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-12", change: "Initial publication" }
     ],

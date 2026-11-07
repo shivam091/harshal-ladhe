@@ -772,7 +772,9 @@ An **async generator function** — declared with `async function*` — is what 
 `}
 </CodeBlock>
 
-Each iteration waits for the promise returned by the iterator to resolve before continuing.
+Each iteration waits for the promise returned by the iterator to resolve before continuing. When you need every
+value at once rather than one at a time, `Array.fromAsync()` collects the whole sequence into an array in a single
+call; see [Collecting Async Iterables into Arrays with `Array.fromAsync()`](/tutorial/array-fromasync-async-iterables).
 
 ### Common Use Cases
 
