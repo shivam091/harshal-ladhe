@@ -1,0 +1,330 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("array-fromasync-async-iterables");
+
+## Introduction
+
+`Array.from()` turns anything iterable into an array: a `Set`, a `NodeList`, a generator. It can't do the same for
+*async* iterables, such as an async generator that fetches one page of results at a time. Until recently, collecting
+one of those meant writing a `for await...of` loop that pushes each value into an array.
+
+**`Array.fromAsync()`** is the async version of `Array.from()`. Give it an async iterable and it returns a promise
+for an array of every value it produced, in order. It also accepts ordinary iterables and array-likes, and awaits
+each value in them.
+
+<RainbowDivider />
+
+## Basic Usage
+
+A common source of async iterables is a paginated API, where each response includes the URL of the next page. An
+async generator can hide the paging and hand back products one at a time:
+
+<CodeBlock language="js">
+{`
+  async function* fetchAllProducts() {
+    let url = "/api/products?page=1";
+
+    while (url) {
+      const response = await fetch(url);
+      const { items, next } = await response.json();
+      yield* items; // hand back this page's products one by one
+      url = next;   // null on the last page
+    }
+  }
+
+  const products = await Array.fromAsync(fetchAllProducts());
+`}
+</CodeBlock>
+
+`products` is a plain array of every product from every page. `Array.fromAsync()` always returns a promise, so it
+has to be awaited, either inside an `async` function or at the top level of a module.
+
+<RainbowDivider />
+
+## The Loop It Replaces
+
+<CodeBlock language="js">
+{`
+  const products = [];
+
+  for await (const product of fetchAllProducts()) {
+    products.push(product);
+  }
+`}
+</CodeBlock>
+
+For an async iterable, this loop and `Array.fromAsync()` produce the same array. The difference is that
+`Array.fromAsync()` says what you mean in one expression, the way `Array.from()` does for ordinary iterables, and it
+leaves no half-filled array behind if something goes wrong.
+
+<RainbowDivider />
+
+## The Full Signature
+
+<CodeBlock language="js">
+{`
+  Array.fromAsync(items)
+  Array.fromAsync(items, mapFn)
+  Array.fromAsync(items, mapFn, thisArg)
+`}
+</CodeBlock>
+
+### What It Accepts
+
+`items` can be any of three things, checked in this order:
+
+- **An async iterable**, such as an async generator or any object with a `Symbol.asyncIterator` method. Values are
+  collected as they arrive.
+- **An ordinary iterable**, such as an array, a `Set` or a generator. Each value is awaited, so an array containing
+  promises becomes an array of their results.
+- **An array-like object**, with a `length` and numbered keys. Each value is awaited, as with an iterable.
+
+<CodeBlock language="js">
+{`
+  await Array.fromAsync(new Set([1, 2, 3]));                  // [1, 2, 3]
+  await Array.fromAsync([Promise.resolve("a"), "b"]);         // ["a", "b"]
+  await Array.fromAsync({ length: 2, 0: "x", 1: "y" });      // ["x", "y"]
+`}
+</CodeBlock>
+
+### Mapping Values
+
+The optional `mapFn` runs on each value before it's added to the array. It receives the value and its index, and it
+can be `async`: whatever it returns is awaited.
+
+<CodeBlock language="js">
+{`
+  const names = await Array.fromAsync(fetchAllProducts(), (product) => product.name);
+
+  const withStock = await Array.fromAsync(fetchAllProducts(), async (product) => ({
+    ...product,
+    stock: await fetchStock(product.id)
+  }));
+`}
+</CodeBlock>
+
+`thisArg` sets `this` inside `mapFn`. It's rarely needed, since an arrow function can use variables from the
+surrounding scope instead.
+
+<RainbowDivider />
+
+## Sequential, Not Concurrent
+
+`Array.fromAsync()` handles **one value at a time**. It waits for each value, and for `mapFn` to finish with it,
+before asking for the next. For an async generator that's the only option anyway, since the generator can't produce
+page 2 until page 1 has arrived. With an async `mapFn`, though, it means the work runs one item after another:
+
+<CodeBlock language="js">
+{`
+  const ids = [1, 2, 3, 4, 5];
+
+  // One request at a time: about 5 × the time of one request
+  const slow = await Array.fromAsync(ids, (id) => fetchItem(id));
+
+  // All five requests at once: about the time of the slowest one
+  const fast = await Promise.all(ids.map((id) => fetchItem(id)));
+`}
+</CodeBlock>
+
+Both produce the same array, in the same order. If each request takes 300ms, the first takes about 1.5 seconds and
+the second about 300ms. Running requests one at a time is sometimes what you want, for example to stay under an API's
+rate limit, but if the items don't depend on each other, start them together with `Promise.all()`.
+
+<RainbowDivider />
+
+## Try It Live
+
+**Collect all pages** collects three pages of products from an async iterable that takes 300ms per page, and the
+readout shows when each page arrived. Tick **Page 2 fails** first to see the whole call reject and the products from
+page 1 thrown away with it. **Compare timings** runs five 300ms requests through `Array.fromAsync()` with an async
+mapper, then through `Promise.all()`, and shows how long each took.
+
+<Sandbox slug="array-fromasync-async-iterables" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## `Array.fromAsync()` vs `Promise.all()`
+
+Because `Array.fromAsync()` awaits each value in an array, it can look like a tidier `Promise.all()`. It isn't a
+replacement, and for an array of promises `Promise.all()` is the better choice.
+
+| | `Array.fromAsync()` | `Promise.all()` |
+| --- | --- | --- |
+| **Input** | Async iterables, iterables, array-likes | Iterables of promises or values |
+| **Waits on values** | One at a time, in order | All at once |
+| **Async `mapFn`** | Runs one call at a time | No mapper: map first, so the calls run at once |
+| **When a value rejects** | Rejects when it reaches that value | Rejects as soon as any value rejects |
+| **Use it for** | Collecting an async sequence | Waiting for work that's already running |
+
+The rejection row matters more than it looks. Given `[promiseA, promiseB]`, `Array.fromAsync()` doesn't listen to
+`promiseB` until `promiseA` has settled. If `promiseB` rejects first, nothing is handling it yet, so the browser
+reports an unhandled rejection, and Node, by default, **ends the process**. `Promise.all()` listens to every promise
+straight away, so it never has that problem.
+
+<RainbowDivider />
+
+## Error Handling
+
+If the iterable throws, or a value or `mapFn` rejects, the promise from `Array.fromAsync()` rejects with that error,
+and everything collected so far is thrown away. There's no partial result:
+
+<CodeBlock language="js">
+{`
+  try {
+    const products = await Array.fromAsync(fetchAllProducts());
+    render(products);
+  } catch (error) {
+    // page 3 failed: pages 1 and 2 are gone too
+    showError(error);
+  }
+`}
+</CodeBlock>
+
+When `mapFn` throws, `Array.fromAsync()` also closes the iterator, so an async generator's `finally` block runs. That's
+the place to release anything the generator was holding, such as a database cursor or a lock.
+
+### Keeping Partial Results
+
+If some pages failing shouldn't lose the rest, catch errors inside the generator and yield a result object for every
+page instead, the way `Promise.allSettled()` reports each promise:
+
+<CodeBlock language="js">
+{`
+  async function* fetchPagesSettled(urls) {
+    for (const url of urls) {
+      try {
+        const response = await fetch(url);
+        yield { ok: true, value: await response.json() };
+      } catch (error) {
+        yield { ok: false, error };
+      }
+    }
+  }
+
+  const results = await Array.fromAsync(fetchPagesSettled(urls));
+  const pages = results.filter((result) => result.ok).map((result) => result.value);
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Stopping Early and Cancelling
+
+`Array.fromAsync()` keeps going until the iterable is finished; there's no option to stop after a number of items.
+The generator decides when it's done, so put the limit there:
+
+<CodeBlock language="js">
+{`
+  async function* fetchAllProducts({ maxPages = 10, signal } = {}) {
+    let url = "/api/products?page=1";
+
+    for (let page = 0; url && page < maxPages; page++) {
+      const response = await fetch(url, { signal });
+      const { items, next } = await response.json();
+      yield* items;
+      url = next;
+    }
+  }
+
+  const controller = new AbortController();
+  const products = await Array.fromAsync(fetchAllProducts({ maxPages: 5, signal: controller.signal }));
+`}
+</CodeBlock>
+
+A `maxPages` limit stops a runaway loop, and passing an `AbortSignal` to `fetch()` lets the caller cancel. Calling
+`controller.abort()` rejects the current request, which rejects the whole `Array.fromAsync()` call.
+
+<RainbowDivider />
+
+## Collecting a Stream
+
+A `ReadableStream`, such as `response.body`, is an async iterable in Chrome and Edge 124, Firefox 110 and Node, and
+Safari only added it in version 27. The values it produces are chunks of bytes, not text, so pipe it through a
+`TextDecoderStream` first:
+
+<CodeBlock language="js">
+{`
+  const response = await fetch("/api/report");
+  const chunks = await Array.fromAsync(response.body.pipeThrough(new TextDecoderStream()));
+  const text = chunks.join("");
+`}
+</CodeBlock>
+
+If all you want is the whole body, `await response.text()` does the same thing in one call and works in every
+browser. Collecting a stream with `Array.fromAsync()` is most useful when the stream has already been transformed into
+separate records, such as one parsed object per line.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`Array.fromAsync()` is Baseline and widely available. It's supported in Safari 16.4, Firefox 115, Chrome and Edge 121
+and Node 22, so every current browser and server runtime has it.
+
+For older targets, either load a polyfill (core-js includes one), or use a small helper built on the loop it
+replaces:
+
+<CodeBlock language="js">
+{`
+  async function collect(iterable) {
+    const values = [];
+    for await (const value of iterable) values.push(value);
+    return values;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Forgetting `await`
+
+`Array.fromAsync()` returns a promise, not an array. `const products = Array.fromAsync(...)` followed by
+`products.map(...)` throws, because a promise has no `map` method.
+
+### 2. Using It for Concurrency
+
+An async `mapFn` runs one item at a time. To make several independent requests at once, use
+`Promise.all(items.map(fn))` instead.
+
+### 3. Passing an Array of Promises
+
+It works, but a promise that rejects before its turn causes an unhandled rejection. Use `Promise.all()` or
+`Promise.allSettled()` for promises that are already running.
+
+### 4. Never-Ending Iterables
+
+An iterable that never finishes, such as a generator that polls for new messages forever, means the promise never
+settles. Give the generator an end condition, or consume it with `for await...of` and stop with `break`.
+
+### 5. Expecting Pages to Be Flattened
+
+If the generator yields whole pages (`yield items`), the result is an array of arrays. Either yield items one by one
+with `yield* items`, or call `.flat()` on the result.
+
+### 6. Collecting Too Much
+
+The whole result is kept in memory until the iterable finishes. For a very large sequence, process each value as it
+arrives with `for await...of` instead of collecting them all first.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Paginated API clients, where an async generator follows `next` links and the caller wants every result
+- Tests and scripts that need the full output of an async generator to check or save it
+- Streams that have been transformed into separate records, such as one parsed object per line
+- Anywhere a `for await...of` loop exists only to push values into an array
+
+**Reach for something else** when the work could run in parallel (`Promise.all()`), when you need results as they
+arrive rather than all at the end (`for await...of`), or when the sequence might be very large or never end.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Array.fromAsync()` does for async iterables what `Array.from()` does for ordinary ones: it collects every value into
+an array in one awaited call. It works one value at a time, so use it to collect sequences, such as paginated results,
+not to run independent requests, which belong in `Promise.all()`. Wrap it in `try`/`catch`, since a single failure
+discards everything collected, and let the generator decide when to stop.

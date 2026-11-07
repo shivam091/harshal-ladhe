@@ -599,6 +599,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Async/Await in Modern JavaScript",
     description: "Using async and await to write asynchronous JavaScript that reads like synchronous code, including error handling with try/catch."
   },
+  "async-iterators": {
+    title: "Async Iterators and Generators in JavaScript",
+    description: "Producing and consuming asynchronous sequences with `async function*`, `for await...of` and `Symbol.asyncIterator`."
+  },
+  "array-fromasync": {
+    title: "JavaScript `Array.fromAsync()`",
+    description: "Collecting async iterables, generators and streams into arrays with `Array.fromAsync()`, and when `Promise.all()` is the better tool."
+  },
   "event-loop": {
     title: "The JavaScript Event Loop Explained",
     description: "The JavaScript runtime model — the call stack, Web APIs, task queues, and the event loop that ties them together."
