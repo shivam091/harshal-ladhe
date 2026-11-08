@@ -1371,4 +1371,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Textures for Web Graphics",
     description: "Adding surface detail such as grain, paper, and noise to shapes and backgrounds with SVG filters, patterns, and CSS."
   },
+  "mask-type": {
+    title: "Luminance and Alpha Masks with `mask-type`",
+    description: "Choosing whether an SVG `<mask>` is read by brightness (`luminance`, the default) or by opacity alone (`alpha`)."
+  },
+  "maskcontentunits": {
+    title: "Reusable Masks with `maskContentUnits`",
+    description: "Using `maskContentUnits=\"objectBoundingBox\"` so the content of an SVG `<mask>` is drawn in fractions of each masked element's box."
+  },
 };

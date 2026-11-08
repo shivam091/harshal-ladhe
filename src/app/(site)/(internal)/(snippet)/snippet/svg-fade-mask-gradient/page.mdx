@@ -1,0 +1,171 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-fade-mask-gradient");
+
+## Introduction
+
+A `clip-path` can only show or hide a pixel, so its edges are always hard. To make a shape or image **fade out gradually**, you need a mask. An SVG `<mask>` filled with a white-to-black `<linearGradient>` does exactly that: where the mask is white the content shows, where it's black the content is hidden, and the greys in between fade it smoothly.
+
+It's a few lines of markup, needs no extra image asset, and works on any SVG content: shapes, groups, text or `<image>`.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 100" width="160" height="160" aria-hidden="true">
+    <defs>
+      <linearGradient id="fm-gradient" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="white" />
+        <stop offset="1" stop-color="black" />
+      </linearGradient>
+      <mask id="fm-mask">
+        <rect x="0" y="0" width="100" height="100" fill="url(#fm-gradient)" />
+      </mask>
+    </defs>
+    <circle cx="50" cy="50" r="42" fill="#6366f1" mask="url(#fm-mask)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The `<linearGradient>` runs from left (`x1="0"`) to right (`x2="1"`), from `white` to `black`. These are fractions of the box of whatever the gradient fills, because `gradientUnits` defaults to `objectBoundingBox`.
+2. The `<mask>` contains one `<rect>` that covers the whole `100 × 100` drawing and is painted with that gradient. Mask content is never drawn on screen; it's only used to work out how visible each pixel should be.
+3. `mask="url(#fm-mask)"` on the `<circle>` applies it. By default a mask is a **luminance** mask: each pixel's brightness (multiplied by its alpha) becomes the opacity of the circle at that point. White is fully visible, black is fully hidden, and greys are partly visible, in proportion to their brightness.
+4. The result is a circle that's solid on the left and fades to nothing on the right.
+5. Anywhere the mask has nothing painted counts as hidden, like black. That's why the mask rect must cover all of the content you want to see.
+
+<RainbowDivider />
+
+## Variant: One Mask for Shapes of Any Size
+
+The mask above is drawn in the SVG's own coordinates, so it only fits content inside that `100 × 100` square. To reuse one mask on shapes of different sizes, set `maskContentUnits="objectBoundingBox"`. The mask content is then drawn in `0`–`1` units of **each masked element's own box**, so a `1 × 1` rect always covers exactly that element:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 320 200" width="320" height="200" aria-hidden="true">
+    <defs>
+      <linearGradient id="fm-bbox-gradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0.4" stop-color="white" />
+        <stop offset="1" stop-color="black" />
+      </linearGradient>
+      <mask id="fm-bbox-mask" maskContentUnits="objectBoundingBox">
+        <rect x="0" y="0" width="1" height="1" fill="url(#fm-bbox-gradient)" />
+      </mask>
+    </defs>
+    <rect x="10" y="10" width="300" height="70" rx="8" fill="#6366f1" mask="url(#fm-bbox-mask)" />
+    <rect x="10" y="95" width="120" height="95" rx="8" fill="#ec4899" mask="url(#fm-bbox-mask)" />
+    <circle cx="240" cy="142" r="48" fill="#14b8a6" mask="url(#fm-bbox-mask)" />
+  </svg>
+`}
+</SvgSnippet>
+
+- **The gradient is vertical** (`y2="1"`) and stays white until `0.4`, so each shape is solid for its top 40% and then fades out towards its bottom edge.
+- **Three sizes, one mask:** the wide bar, the tall card and the circle all fade over their own height, because the mask is measured against each one separately.
+- **The mask region already fits:** `maskUnits` defaults to `objectBoundingBox` with a region of `-10%` to `110%`, so it follows each shape too. Only the content units needed changing.
+
+<RainbowDivider />
+
+## Variant: An Alpha Mask
+
+Set `mask-type="alpha"` on the `<mask>` and only the **opacity** of the mask content counts. Colour and brightness are ignored. Here the gradient is opaque black fading to transparent, which would hide everything as a luminance mask, but shows the content fully on the left as an alpha mask:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 100" width="160" height="160" aria-hidden="true">
+    <defs>
+      <linearGradient id="fm-alpha-gradient" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="black" stop-opacity="1" />
+        <stop offset="1" stop-color="black" stop-opacity="0" />
+      </linearGradient>
+      <mask id="fm-alpha-mask" mask-type="alpha">
+        <rect x="0" y="0" width="100" height="100" fill="url(#fm-alpha-gradient)" />
+      </mask>
+    </defs>
+    <circle cx="50" cy="50" r="42" fill="#f59e0b" mask="url(#fm-alpha-mask)" />
+  </svg>
+`}
+</SvgSnippet>
+
+Luminance (the default) is the right choice when you draw the mask yourself in white, black and greys. Alpha is the right choice when the mask content is artwork in any colour, such as an icon or a PNG with transparency, and only its silhouette should matter.
+
+<RainbowDivider />
+
+## Example Usage
+
+Fade the bottom of a photo into the page. The mask rect uses the same position and size as the `<image>`, so the gradient spans the photo exactly:
+
+<CodeBlock language="html">
+{`
+  <svg viewBox="0 0 600 400" width="600" height="400" role="img" aria-label="Mountain lake at sunrise">
+    <defs>
+      <linearGradient id="photo-fade-gradient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0.6" stop-color="white" />
+        <stop offset="1" stop-color="black" />
+      </linearGradient>
+      <mask id="photo-fade">
+        <rect x="0" y="0" width="600" height="400" fill="url(#photo-fade-gradient)" />
+      </mask>
+    </defs>
+    <image href="lake.jpg" x="0" y="0" width="600" height="400" preserveAspectRatio="xMidYMid slice" mask="url(#photo-fade)" />
+  </svg>
+`}
+</CodeBlock>
+
+For a vignette that fades towards every edge, swap the `<linearGradient>` for a `<radialGradient>` with `white` in the centre and `black` at the outside.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Photos that fade into the background** at the bottom or edges, without a second, pre-faded image.
+- **Decorative shapes and illustrations** that dissolve towards one side.
+- **Reflections**, where a flipped copy of a shape fades out as it moves away.
+- **Charts and sparklines** whose area fill fades towards the baseline.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Luminance vs. alpha:** a luminance mask uses brightness × alpha, so opaque white shows content, opaque black hides it, and transparent hides it too. An alpha mask (`mask-type="alpha"`) uses only alpha, so opaque black shows content fully.
+- **Cover the whole content:** a mask starts empty, and empty means hidden. If the mask rect is smaller than the content, the uncovered part disappears.
+- **Keep content units simple:** with `maskContentUnits="objectBoundingBox"`, every length inside the mask is a fraction, including `stroke-width` and `font-size`. Use filled shapes and gradients there, and switch to user space for strokes or text.
+- **Unique ids:** a `<mask>` and its gradient are found by id, and the first match in the document wins. If you render the same inline SVG more than once, give each copy unique ids.
+- **Masks don't change hit-testing:** the faded-out part is still there for the pointer, so it can still be clicked and hovered.
+- **Accessibility:** masking is purely visual. Decorative SVGs should keep `aria-hidden="true"`; meaningful ones need `role="img"` and an `aria-label`, as in the photo example.
+- **HTML elements:** to fade an ordinary `<img>` or `<div>`, CSS `mask-image: linear-gradient(...)` is simpler and better supported than pointing CSS at an SVG `<mask>`. See [Fade Edges with CSS `mask-image`](/snippet/css-mask-image-fade).
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why is my masked shape completely invisible?">
+  Usually the mask content doesn't cover the shape, so the uncovered part counts as hidden. Check that the mask rect
+  spans the content in the same coordinates, or switch to `maskContentUnits="objectBoundingBox"` with a `1 × 1` rect.
+  Also check the mask isn't painted in black or a transparent colour while it's still a luminance mask.
+</Details>
+
+<Details summary="Why white and black, not opacity?">
+  The default luminance mask reads brightness, so white and black are the natural "show" and "hide" values. If you'd
+  rather think in opacity, set `mask-type="alpha"` and fade `stop-opacity` instead. Both give the same smooth fade.
+</Details>
+
+<Details summary="How do I change where the fade starts?">
+  Move the first `<stop>`. With `offset="0.6"` on the white stop, the content stays solid for the first 60% and fades
+  over the last 40%. Move both stops closer together for a shorter, sharper fade.
+</Details>
+
+<Details summary="How do I fade in a different direction?">
+  Change the gradient's vector. `x1="0" x2="1"` fades left to right, `y1="0" y2="1"` fades top to bottom, and swapping
+  the stop colours reverses it. For a diagonal fade, set both, for example `x2="1" y2="1"`.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Put a `<rect>` filled with a white-to-black `<linearGradient>` inside a `<mask>`, apply it with `mask="url(#id)"`, and the content fades out along the gradient. Use `maskContentUnits="objectBoundingBox"` to reuse one mask on shapes of any size, and `mask-type="alpha"` when the mask content's transparency, not its colour, should decide what shows.

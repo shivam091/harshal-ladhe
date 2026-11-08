@@ -678,6 +678,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-fade-mask-gradient",
+    title: "Fade Out SVG Content with a Gradient Mask",
+    excerpt: "Fade SVG shapes and images out with a gradient mask.",
+    description: "Fade SVG shapes and images out smoothly with a mask and a white-to-black linearGradient, with luminance vs. alpha masks and a reusable any-size version.",
+    category: ["SVG"],
+    tags: ["svg", "svg-mask", "linear-gradient", "gradients", "mask-type", "maskContentUnits", "objectBoundingBox", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-fade-mask-gradient/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing circle that fades smoothly from solid on one side to transparent on the other.",
+      caption: "A circle fading out along a white-to-black gradient mask."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
