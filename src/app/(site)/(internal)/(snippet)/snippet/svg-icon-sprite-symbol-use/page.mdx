@@ -1,0 +1,228 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-icon-sprite-symbol-use");
+
+## Introduction
+
+An SVG sprite keeps every icon in one place. Each icon is drawn once as a `<symbol>`, and wherever you need it, a small `<svg>` with a `<use>` element points at it by `id`. Change the symbol and every copy on the page changes with it.
+
+Done well, sprite icons behave like text: they take their colour from `currentColor` and their size from the font size around them. Done badly, they render at 300 × 150 pixels, ignore your colours and confuse screen readers. This snippet is the version that works, with the CSS it needs and the right accessibility attributes.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <div class="svg-icon-demo">
+    <style>
+      .svg-icon-demo {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 2rem;
+      }
+
+      .svg-icon-demo .svg-icon {
+        inline-size: 1em;
+        block-size: 1em;
+        fill: currentColor;
+        flex-shrink: 0;
+      }
+    </style>
+
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <symbol id="ssu-star" viewBox="0 0 24 24">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+      </symbol>
+      <symbol id="ssu-heart" viewBox="0 0 24 24">
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      </symbol>
+      <symbol id="ssu-check" viewBox="0 0 24 24">
+        <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      </symbol>
+    </svg>
+
+    <svg class="svg-icon" aria-hidden="true" focusable="false"><use href="#ssu-star" /></svg>
+    <svg class="svg-icon" style="color: #f59e0b" aria-hidden="true" focusable="false"><use href="#ssu-star" /></svg>
+    <svg class="svg-icon" style="color: #ec4899" role="img" aria-label="Favourite"><use href="#ssu-heart" /></svg>
+    <svg class="svg-icon" style="color: #14b8a6" role="img" aria-label="Done"><use href="#ssu-check" /></svg>
+  </div>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The first `<svg>` is the **sprite sheet**. It holds only `<symbol>` elements, and a `<symbol>` is never drawn where it's defined, only where a `<use>` points at it. Each symbol has its own `viewBox`, so it scales to fill whatever box it's drawn into.
+2. The sheet is hidden with `width="0" height="0"` and `position: absolute`, so it takes up no space, and `aria-hidden="true"`, so screen readers skip it. It's **not** hidden with `display: none`, because in some browsers gradients, masks and filters inside a `display: none` subtree stop working when other elements refer to them.
+3. Each icon is a small `<svg class="svg-icon">` with one `<use href="#ssu-star">`. The `<use>` makes a copy of the symbol inside the wrapper, and with no `width` or `height` of its own, the copy fills the wrapper.
+4. The `.svg-icon` CSS is **required**. A wrapper `<svg>` with no `viewBox`, `width` or `height` defaults to 300 × 150 pixels. `inline-size: 1em` and `block-size: 1em` make it a square the size of the surrounding text instead.
+5. `fill: currentColor` on the wrapper is inherited by the copy inside `<use>`, so the star and heart paths, which have no `fill` of their own, are painted in the text colour. Setting `color` on one icon (the amber star) recolours just that icon.
+6. The check mark is a stroked icon, so its symbol sets `fill="none"` and `stroke="currentColor"` on the path itself. It still follows `color`, because `currentColor` is resolved for each copy.
+
+<RainbowDivider />
+
+## Variant: Two-Tone Icons
+
+`currentColor` gives you one colour. For a second, have the symbol ask for it through a CSS custom property with a fallback: `fill: var(--icon-accent, currentColor)`. Custom properties are inherited into the `<use>` copy just like `color`, so each instance can set its own accent:
+
+<SvgSnippet>
+{`
+  <div class="svg-duo-demo">
+    <style>
+      .svg-duo-demo {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 2rem;
+      }
+
+      .svg-duo-demo .svg-duo {
+        inline-size: 1em;
+        block-size: 1em;
+        flex-shrink: 0;
+      }
+
+      .svg-duo--online {
+        --icon-accent: #14b8a6;
+      }
+
+      .svg-duo--away {
+        --icon-accent: #f59e0b;
+      }
+
+      .svg-duo--busy {
+        --icon-accent: #ec4899;
+      }
+    </style>
+
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <symbol id="ssu-status" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.5" />
+        <circle cx="12" cy="12" r="4" style="fill: var(--icon-accent, currentColor)" />
+      </symbol>
+    </svg>
+
+    <svg class="svg-duo" role="img" aria-label="Status unknown"><use href="#ssu-status" /></svg>
+    <svg class="svg-duo svg-duo--online" role="img" aria-label="Online"><use href="#ssu-status" /></svg>
+    <svg class="svg-duo svg-duo--away" role="img" aria-label="Away"><use href="#ssu-status" /></svg>
+    <svg class="svg-duo svg-duo--busy" role="img" aria-label="Busy"><use href="#ssu-status" /></svg>
+  </div>
+`}
+</SvgSnippet>
+
+- **The ring** uses `stroke="currentColor"`, so it always follows the text colour.
+- **The dot** uses `--icon-accent` when an instance sets it, and falls back to `currentColor` when it doesn't, so the first icon is a plain one-colour icon.
+- **Use `style`, not a `fill` attribute:** `var()` belongs in CSS declarations. Support for `var()` inside presentation attributes like `fill="..."` has not been reliable, so the inline `style` is the safe choice.
+
+<RainbowDivider />
+
+## Example Usage
+
+In your own stylesheet, one `.icon` rule covers every icon. The `vertical-align` nudge lines the icon up with the text beside it:
+
+<CodeBlock language="css">
+{`
+  .icon {
+    inline-size: 1em;
+    block-size: 1em;
+    vertical-align: -0.125em;
+    fill: currentColor;
+    flex-shrink: 0;
+  }
+`}
+</CodeBlock>
+
+Every icon is either **decorative**, because visible text already says what it means, or **meaningful**, because it's the only thing that does. They need opposite treatment:
+
+<CodeBlock language="html">
+{`
+  <!-- Decorative: the text says it all, so hide the icon -->
+  <button type="button">
+    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-heart" /></svg>
+    Add to favourites
+  </button>
+
+  <!-- Icon-only button: the name goes on the button, the icon stays hidden -->
+  <button type="button" aria-label="Add to favourites">
+    <svg class="icon" aria-hidden="true" focusable="false"><use href="#icon-heart" /></svg>
+  </button>
+
+  <!-- Meaningful image: role="img" and a name on the outer svg -->
+  <svg class="icon" role="img" aria-label="Featured"><use href="#icon-star" /></svg>
+
+  <!-- Or name it with a title element, referenced by aria-labelledby -->
+  <svg class="icon" role="img" aria-labelledby="featured-title">
+    <title id="featured-title">Featured</title>
+    <use href="#icon-star" />
+  </svg>
+`}
+</CodeBlock>
+
+On a larger site, move the sprite sheet into its own file and point at it by URL. The file is the same `<svg>` of symbols, saved on its own with `xmlns="http://www.w3.org/2000/svg"` on the root element:
+
+<CodeBlock language="html">
+{`
+  <svg class="icon" aria-hidden="true" focusable="false">
+    <use href="/sprite.svg#icon-star" />
+  </svg>
+`}
+</CodeBlock>
+
+The browser downloads `sprite.svg` once and caches it for every page, instead of every page carrying the whole sheet. The file **must be on the same origin** as the page, though: see the notes below.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Icon systems** for a site or app, as a lighter and more accessible alternative to icon fonts.
+- **Buttons, links and menus** whose icons should follow the text colour on hover, focus and in dark mode.
+- **Status indicators** with a second accent colour, such as online, away and busy.
+- **Repeated graphics**, such as rating stars, where one change to the symbol should update every copy.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Ids must be unique:** every `id` on a page has to be unique, including symbol ids. If two inline sprites both define `icon-star`, every `<use>` points at whichever comes first. Prefix your ids (`icon-`, or the project name) so they don't clash with anything else on the page.
+- **Don't hard-code colours in symbols:** a `fill="#000"` left on a path by a design tool wins over anything inherited, so `color` and `fill` on the icon have no effect. Remove those fills, or replace them with `currentColor`.
+- **Same origin only:** `<use href="/sprite.svg#icon">` only works when the file comes from the same origin as the page. `<use>` has no CORS mode, so `Access-Control-Allow-Origin` headers on a CDN don't help. Serve the file from your own domain, or `fetch()` it (which does respect CORS) and insert it into the page once.
+- **External files are harder to style:** your page's CSS can't reach inside an external sprite, so theming has to come through inherited values like `color`, `fill` and custom properties. Gradients and filters defined inside an external sprite have also been unreliable in some browsers, so test those.
+- **`href` vs `xlink:href`:** plain `href` works in all current browsers. Very old browsers only understood `xlink:href`.
+- **`focusable="false"`:** this only matters for old Internet Explorer and pre-Chromium Edge, which made inline SVGs tab stops. It's harmless everywhere else.
+- **Preview class names:** the previews above prefix their classes (`.svg-icon-demo .svg-icon`) because a `<style>` element applies to the whole page. In your own stylesheet, a plain `.icon` rule is enough.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why are my sprite icons 300 × 150 pixels?">
+  The wrapper `<svg>` has no `viewBox`, `width` or `height`, so the browser falls back to the default size for an
+  embedded object, 300 × 150 pixels. Give it a size in CSS, such as `inline-size: 1em; block-size: 1em`, and the copy of
+  the symbol scales to fit.
+</Details>
+
+<Details summary="Why doesn't setting fill or color on the icon change it?">
+  The symbol's shapes probably have their own `fill` or `stroke`. A copy made by `<use>` only inherits values the
+  original doesn't set itself, so a hard-coded colour always wins. Remove it, or change it to `currentColor`.
+</Details>
+
+<Details summary="Can I style one part of a single icon with a selector?">
+  No. The copy that `<use>` makes lives in a shadow tree, so a selector like `.card use path` never matches it. Leave
+  that property unset in the symbol and pass the value in through something that inherits, such as `color` or a custom
+  property like `--icon-accent`.
+</Details>
+
+<Details summary="Should I put a title inside the symbol?">
+  Don't rely on it. A `<title>` inside the symbol ends up in the `<use>` copy, and screen readers don't announce it
+  reliably. Put `role="img"` and the name on the outer `<svg>` instead, with `aria-label` or a `<title>` referenced by
+  `aria-labelledby`.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Draw each icon once as a `<symbol>` with its own `viewBox` and no hard-coded colours, and place it with `<svg class="icon"><use href="#id" /></svg>`. The `.icon` rule sets the size and `fill: currentColor`, a custom property adds a second colour, and `aria-hidden` or `role="img"` with a name makes each icon decorative or meaningful. Keep ids unique, and serve external sprite files from your own origin.

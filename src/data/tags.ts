@@ -1159,4 +1159,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Decorative Section Dividers",
     description: "Waves, curves and angled edges between page sections, built with SVG or CSS and kept seamless, responsive and themeable."
   },
+  "svg-sprite": {
+    title: "SVG Icon Sprites",
+    description: "Defining icons once in an SVG sprite sheet and reusing them across a site, inline or from an external file, with caching and accessibility in mind."
+  },
+  "symbol": {
+    title: "Reusable Graphics with SVG `<symbol>`",
+    description: "Defining reusable SVG graphics with `<symbol>`, each with its own `viewBox`, so they can be drawn anywhere at any size."
+  },
+  "use": {
+    title: "Referencing SVG Graphics with `<use>`",
+    description: "Drawing copies of SVG symbols and shapes with `<use>`, including how styles inherit into the copy and the same-origin rules for external files."
+  },
 };

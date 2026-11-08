@@ -274,6 +274,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-icon-sprite-symbol-use",
+    title: "SVG Icon Sprite with symbol and use",
+    excerpt: "Build an accessible SVG icon sprite with symbol and use.",
+    description: "Build an SVG icon sprite with symbol and use: CSS sizing, currentColor, a two-tone custom property, accessible icons and same-origin sprite files.",
+    category: ["SVG"],
+    tags: ["svg", "css", "icons", "svg-sprite", "symbol", "use", "currentColor", "custom-properties", "accessibility", "frontend-development"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-icon-sprite-symbol-use/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing sprite sheet of icons, with copies of a star, heart and check mark drawn from it in different colours.",
+      caption: "One glowing sprite sheet feeding many coloured icons."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
