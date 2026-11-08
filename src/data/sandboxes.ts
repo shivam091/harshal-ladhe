@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "iterator-chunking-includes-join",
+    title: "Iterator Chunks, Windows, includes() and join() Playground",
+    description: "Type a list and a size to compare chunks() with windows(), switch windows() to \"allow-partial\", watch a moving average built from the windows, and see how many values includes() reads before it stops and what join() does with null and undefined, using each native method where the browser has it and a clearly labelled fallback where it doesn't.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "array-fromasync-async-iterables",
     title: "Collecting a Paginated API with Array.fromAsync()",
     description: "Collect three pages from an async iterable into one array, make page 2 fail to see the earlier pages discarded, and compare one-at-a-time requests with Promise.all().",

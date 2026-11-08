@@ -602,6 +602,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-07", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "iterator-chunking-includes-join",
+    title: "Iterator Chunking, `includes()` and `join()`",
+    excerpt: "Group, window, search and join any iterator natively.",
+    description: "Use ES2027's iterator chunks(), windows(), includes() and join(): batching, calendar rows, moving averages, the undersized option, edge cases, browser support and fallbacks.",
+    category: ["JavaScript"],
+    tags: ["javascript", "iterator-helpers", "iterators", "es2027", "data-structures", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/iterator-chunking-includes-join/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A row of values split into non-overlapping chunks and overlapping sliding windows, beside an includes() search that stops at its match and a join() that builds a string.",
+      caption: "One iterator cut into chunks and windows, searched with includes() and joined into a string."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

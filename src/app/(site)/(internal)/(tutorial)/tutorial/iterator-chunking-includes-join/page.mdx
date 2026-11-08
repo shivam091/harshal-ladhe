@@ -1,0 +1,539 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("iterator-chunking-includes-join");
+
+## Introduction
+
+Iterator helpers gave JavaScript `map()`, `filter()`, `take()` and friends for any iterator, not just arrays. Four
+everyday array tasks were still missing: splitting values into groups of `n`, looking at overlapping runs of `n`
+values, checking whether a value appears, and joining everything into a string. Each one meant converting to an array
+first or writing a loop by hand.
+
+ES2027 adds all four to `Iterator.prototype`:
+
+- **`chunks(n)`** yields arrays of `n` values that don't overlap. The last one may be shorter.
+- **`windows(n)`** yields overlapping arrays of `n` values, moving forward one value at a time.
+- **`includes(value)`** returns `true` as soon as it finds the value, and stops reading.
+- **`join(separator)`** concatenates every value into a string, exactly like `Array.prototype.join()`.
+
+They come from three TC39 proposals, Iterator Chunking, Iterator Includes and Iterator Join, which have all reached
+stage 4 and are part of ES2027.
+
+<RainbowDivider />
+
+## A Quick Iterator Helpers Refresher
+
+An **iterator** is an object with a `next()` method that hands back `{ value, done }` one value at a time. Arrays,
+`Map`s, `Set`s, strings and generators all give you one: `array.values()`, `map.entries()`, `set.values()`, or calling
+a generator function.
+
+All of these built-in iterators inherit from `Iterator.prototype`, and since ES2025 it has array-like methods:
+
+<CodeBlock language="js">
+{`
+  const scores = [12, 7, 30, 18, 4];
+
+  const top = scores
+    .values()                 // an iterator, not an array
+    .filter((n) => n >= 10)
+    .map((n) => n * 2)
+    .toArray();               // [24, 60, 36]
+`}
+</CodeBlock>
+
+Two things matter for the rest of this tutorial:
+
+- **Helpers that return an iterator are lazy.** `filter()` and `map()` don't do anything until something asks for
+  values, such as `toArray()`, a `for...of` loop or spreading. Each value goes through the whole chain before the next
+  one is read.
+- **Helpers that return a single answer consume the iterator.** `reduce()`, `some()`, `find()` and `toArray()` read
+  values until they have their answer. An iterator can only be read once, so after that it's used up.
+
+`chunks()` and `windows()` belong to the first group: they return lazy iterators of arrays. `includes()` and `join()`
+belong to the second. For iterators that don't inherit from `Iterator.prototype`, such as a hand-written object with a
+`next()` method, `Iterator.from(object)` wraps it so the helpers work.
+
+<RainbowDivider />
+
+## `chunks(n)`: Groups That Don't Overlap
+
+<CodeBlock language="js">
+{`
+  const digits = () => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].values();
+
+  digits().chunks(3).toArray();
+  // [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
+
+  digits().chunks(5).toArray();
+  // [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
+`}
+</CodeBlock>
+
+Every chunk is a new array of `n` values, except the last, which holds whatever is left over. An empty source yields no
+chunks at all, not one empty array.
+
+The size has to be an integer from 1 to 2<sup>32</sup> − 1. Anything else throws straight away, before a single value
+is read:
+
+<CodeBlock language="js">
+{`
+  digits().chunks(0);    // RangeError: out of range
+  digits().chunks(2.5);  // TypeError: not an integer
+  digits().chunks("2");  // TypeError: strings aren't converted
+`}
+</CodeBlock>
+
+The last line is easy to trip over: unlike many built-ins, `chunks()` doesn't convert its argument to a number. A size
+read from an `<input>` has to go through `Number()` first.
+
+Because `chunks()` is lazy, it only ever holds one chunk in memory, so it works on huge or endless iterators too. With
+`take()`, you can ask for the first few chunks of something that never ends:
+
+<CodeBlock language="js">
+{`
+  function naturals() {
+    let n = 1;
+    return Iterator.from({ next: () => ({ value: n++, done: false }) });
+  }
+
+  naturals().chunks(4).take(2).toArray(); // [[1, 2, 3, 4], [5, 6, 7, 8]]
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## `windows(n)`: Overlapping Runs
+
+<CodeBlock language="js">
+{`
+  digits().windows(3).toArray();
+  // [[0, 1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5], [4, 5, 6], [5, 6, 7], [6, 7, 8], [7, 8, 9]]
+`}
+</CodeBlock>
+
+Each window drops the oldest value and adds the next one, so a source of `length` values gives `length - n + 1`
+windows. Every window is a full `n` values long, and each is a new array, so it's safe to keep or change one. The size
+follows the same rules as `chunks()`: an integer from 1 to 2<sup>32</sup> − 1, or a `RangeError` / `TypeError`.
+
+### When There Aren't Enough Values
+
+If the source has fewer than `n` values, there's no full window, so by default `windows()` yields **nothing**. A
+second argument, `undersized`, changes that:
+
+<CodeBlock language="js">
+{`
+  [1, 2].values().windows(3).toArray();                  // []
+  [1, 2].values().windows(3, "only-full").toArray();     // [] (the default)
+  [1, 2].values().windows(3, "allow-partial").toArray(); // [[1, 2]]
+
+  [1, 2, 3, 4].values().windows(3, "allow-partial").toArray();
+  // [[1, 2, 3], [2, 3, 4]]
+`}
+</CodeBlock>
+
+`"allow-partial"` only makes a difference when the whole source is shorter than one window: then it yields a single
+window with every value. If there's at least one full window, the result is the same as the default, so it never adds
+short windows at the end. Any other string throws a `TypeError`.
+
+<RainbowDivider />
+
+## `includes(value)`: Stop at the First Match
+
+<CodeBlock language="js">
+{`
+  const statuses = ["queued", "running", "failed", "queued"];
+
+  statuses.values().includes("failed");   // true
+  statuses.values().includes("done");     // false
+
+  [1, NaN, 3].values().includes(NaN);     // true
+  [0].values().includes(-0);              // true
+`}
+</CodeBlock>
+
+It compares values with **SameValueZero**, like `Array.prototype.includes()`: the same as `===`, except that `NaN`
+matches `NaN`. Objects match only if they're the same object.
+
+The difference from the array method is what happens to the source. `includes()` reads one value at a time and **stops
+at the first match**, closing the iterator. For a generator, that means its `finally` block runs and it won't produce
+anything else:
+
+<CodeBlock language="js">
+{`
+  function* readLines() {
+    try {
+      yield "header";
+      yield "ERROR: disk full";
+      yield "footer"; // never reached
+    } finally {
+      console.log("closed");
+    }
+  }
+
+  readLines().includes("ERROR: disk full");
+  // logs "closed", returns true
+`}
+</CodeBlock>
+
+If there's no match, it reads every value before returning `false`. On an iterator that never ends, a value that never
+turns up means `includes()` never returns.
+
+### The Second Argument
+
+Like the array method, `includes()` takes an optional second argument. For an iterator, it's the number of values to
+**skip** before comparing, so `iterator.includes(x, 2)` works like `iterator.drop(2).includes(x)`:
+
+<CodeBlock language="js">
+{`
+  const queue = () => ["queued", "running", "failed"].values();
+
+  queue().includes("queued", 1);  // false: the only "queued" was skipped
+  queue().includes("failed", 1);  // true
+
+  queue().includes("failed", -1); // RangeError: can't count from the end
+  queue().includes("failed", 1.5); // TypeError: not an integer
+`}
+</CodeBlock>
+
+An iterator doesn't know its length, so there's no "count back from the end": negative numbers throw a `RangeError`.
+Non-integers throw a `TypeError` instead of being rounded, as they would be for an array.
+
+<RainbowDivider />
+
+## `join(separator)`: Straight to a String
+
+<CodeBlock language="js">
+{`
+  const tags = new Set(["css", "javascript", "html"]);
+
+  tags.values().join(", "); // "css, javascript, html"
+  tags.values().join();     // "css,javascript,html"
+`}
+</CodeBlock>
+
+`join()` follows `Array.prototype.join()` exactly:
+
+- With no separator (or `undefined`), it uses a comma.
+- Any other separator is converted to a string, so `join(null)` uses the text `"null"`, just as `[1, 2].join(null)`
+  gives `"1null2"`.
+- `null` and `undefined` values become empty strings; every other value is converted with `String()`.
+- An empty iterator gives `""`.
+
+<CodeBlock language="js">
+{`
+  ["a", null, undefined, 1].values().join(); // "a,,,1"
+  [].values().join("-");                     // ""
+`}
+</CodeBlock>
+
+Before `join()`, the usual options were `Array.from(iterator).join(sep)`, which builds a throwaway array, or
+`reduce((a, b) => a + sep + b)`, which throws on an empty iterator. `join()` reads the values once and builds the
+string as it goes.
+
+<RainbowDivider />
+
+## Real-World Uses
+
+### Batching API Requests
+
+Many APIs cap how many IDs one request can take. `chunks()` turns a long list into requests of the right size:
+
+<CodeBlock language="js">
+{`
+  async function fetchUsers(userIds) {
+    const users = [];
+
+    for (const batch of userIds.values().chunks(50)) {
+      const response = await fetch(\`/api/users?ids=\${batch.join(",")}\`);
+      users.push(...(await response.json()));
+    }
+
+    return users;
+  }
+`}
+</CodeBlock>
+
+The batches run one after another, which keeps the number of requests in flight to one. For 230 IDs that's five
+requests, the last one with 30 IDs. The `batch.join(",")` inside is the ordinary array method, since every chunk is an
+array.
+
+### Calendar and Grid Rows
+
+A month view is a list of day cells cut into rows of seven. Pad the start with blanks for the weekday the month begins
+on, then chunk:
+
+<CodeBlock language="js">
+{`
+  function monthRows(startWeekday, daysInMonth) {
+    const blanks = Array.from({ length: startWeekday }, () => null);
+    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+    return [...blanks, ...days]
+      .values()
+      .chunks(7)
+      .map((week) => week.map((day) => (day === null ? "  " : String(day).padStart(2))).join(" "))
+      .join("\\n");
+  }
+
+  console.log(monthRows(3, 30));
+  //           1  2  3  4
+  //  5  6  7  8  9 10 11
+  // 12 13 14 15 16 17 18
+  // 19 20 21 22 23 24 25
+  // 26 27 28 29 30
+`}
+</CodeBlock>
+
+The inner `join(" ")` is the array method on each week; the outer `join("\n")` is the new iterator method, so the rows
+go straight into one string without being collected first. The shorter last chunk is the last week of the month.
+
+### Moving Averages
+
+A moving average is the mean of each window. `windows()` gives you the windows, and `map()` averages each one:
+
+<CodeBlock language="js">
+{`
+  const dailyVisits = [3, 5, 7, 6, 8, 10];
+
+  const average = (values) => values.reduce((sum, n) => sum + n, 0) / values.length;
+
+  dailyVisits.values().windows(3).map(average).toArray();
+  // [5, 6, 7, 8]
+`}
+</CodeBlock>
+
+Because everything is lazy, the same chain works on a live feed of readings: each average is ready as soon as its
+window is full, and only `n` values are held at a time.
+
+### Pairwise Differences
+
+A window of two is a value and the one before it, which is all you need for changes between readings:
+
+<CodeBlock language="js">
+{`
+  const balances = [100, 104, 101, 110];
+
+  balances.values().windows(2).map(([previous, current]) => current - previous).toArray();
+  // [4, -3, 9]
+`}
+</CodeBlock>
+
+The same shape checks whether a list is sorted (`.every(([a, b]) => a <= b)`) or finds the first big jump
+(`.find(([a, b]) => Math.abs(b - a) > 50)`).
+
+<RainbowDivider />
+
+## Try It Live
+
+Type a list of values and a size to see `chunks()` and `windows()` side by side, with a moving average worked out from
+the windows. Try a size larger than the list, then switch `undersized` to `"allow-partial"`, or enter `0` or `2.5` to
+see the errors. Below, `includes()` reports how many values it read before it stopped, and `join()` shows what happens
+to `null` and `undefined`.
+
+The playground checks for each method separately. Where your browser has one natively it uses it; where it doesn't,
+the result comes from the fallbacks further down this page, and the method is clearly marked "fallback". In Chrome,
+for example, `chunks()` and `windows()` always use the fallback.
+
+<Sandbox slug="iterator-chunking-includes-join" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+| Method | Chrome / Edge | Firefox | Safari | Node.js |
+| --- | --- | --- | --- | --- |
+| `chunks()` / `windows()` | Not yet | 154 | Technology Preview | Not yet |
+| `join()` | 153 | 154 | Technology Preview | Not yet |
+| `includes()` | 154 | 154 | Technology Preview | Not yet |
+
+Firefox is the only stable browser with all four. Chrome and Edge have `join()` and `includes()` but not the chunking
+methods, and Node.js 26 has none of them. The iterator helpers they build on are much older: Chrome and Edge 122,
+Firefox 131, Safari 18.4 and Node 22.
+
+Detect each method on its own, because support differs between them:
+
+<CodeBlock language="js">
+{`
+  const hasChunks = typeof Iterator !== "undefined" && typeof Iterator.prototype.chunks === "function";
+`}
+</CodeBlock>
+
+### Fallback Helpers
+
+These plain functions follow the spec's rules and take any iterable, so they work on arrays directly as well as on
+iterators. `chunks()` and `windows()` return hand-written lazy iterators (an object with `next()`, `return()` and
+`Symbol.iterator`), so they behave like the native versions in a `for...of` loop or a spread, and `return()` passes an
+early `break` on to the source. To chain helpers such as `map()` after them, wrap the result in `Iterator.from()`.
+
+<CodeBlock language="js">
+{`
+  const DONE = { done: true, value: undefined };
+
+  function checkSize(size) {
+    if (typeof size !== "number" || !Number.isInteger(size)) throw new TypeError("size must be an integer");
+    if (size < 1 || size > 2 ** 32 - 1) throw new RangeError("size must be between 1 and 2^32 - 1");
+  }
+
+  function chunks(iterable, size) {
+    checkSize(size);
+    const source = iterable[Symbol.iterator]();
+    let finished = false;
+
+    return {
+      [Symbol.iterator]() { return this; },
+      next() {
+        if (finished) return DONE;
+        const chunk = [];
+        while (chunk.length < size) {
+          const step = source.next();
+          if (step.done) { finished = true; break; }
+          chunk.push(step.value);
+        }
+        return chunk.length > 0 ? { done: false, value: chunk } : DONE;
+      },
+      return() {
+        if (!finished) { finished = true; source.return?.(); }
+        return DONE;
+      }
+    };
+  }
+
+  function windows(iterable, size, undersized = "only-full") {
+    checkSize(size);
+    if (undersized !== "only-full" && undersized !== "allow-partial") {
+      throw new TypeError('undersized must be "only-full" or "allow-partial"');
+    }
+    const source = iterable[Symbol.iterator]();
+    const buffer = [];
+    let finished = false;
+
+    return {
+      [Symbol.iterator]() { return this; },
+      next() {
+        while (!finished) {
+          const step = source.next();
+          if (step.done) {
+            finished = true;
+            if (undersized === "allow-partial" && buffer.length > 0 && buffer.length < size) {
+              return { done: false, value: [...buffer] };
+            }
+            break;
+          }
+          buffer.push(step.value);
+          if (buffer.length > size) buffer.shift();
+          if (buffer.length === size) return { done: false, value: [...buffer] };
+        }
+        return DONE;
+      },
+      return() {
+        if (!finished) { finished = true; source.return?.(); }
+        return DONE;
+      }
+    };
+  }
+
+  function includes(iterable, searchElement, skip = 0) {
+    if (typeof skip !== "number" || (!Number.isInteger(skip) && Math.abs(skip) !== Infinity)) {
+      throw new TypeError("skip must be an integer");
+    }
+    if (skip < 0) throw new RangeError("skip can't be negative");
+
+    let skipped = 0;
+    for (const value of iterable) {     // for...of closes the source on an early return
+      if (skipped < skip) skipped += 1;
+      else if (value === searchElement || (value !== value && searchElement !== searchElement)) return true;
+    }
+    return false;
+  }
+
+  function join(iterable, separator) {
+    const sep = separator === undefined ? "," : String(separator);
+    let result = "";
+    let first = true;
+    for (const value of iterable) {
+      if (!first) result += sep;
+      first = false;
+      if (value !== undefined && value !== null) result += String(value);
+    }
+    return result;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  [...chunks([1, 2, 3, 4, 5], 2)];           // [[1, 2], [3, 4], [5]]
+  [...windows([1, 2, 3, 4], 2)];             // [[1, 2], [2, 3], [3, 4]]
+  includes(new Set(["a", NaN]), NaN);        // true
+  join(new Map([["a", 1], ["b", 2]]).keys(), " / "); // "a / b"
+`}
+</CodeBlock>
+
+To use the native method when it exists, pick one at the call site rather than patching `Iterator.prototype`:
+
+<CodeBlock language="js">
+{`
+  const toChunks = (iterator, size) =>
+    typeof iterator.chunks === "function" ? iterator.chunks(size) : chunks(iterator, size);
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Calling Them on an Array
+
+`[1, 2, 3].chunks(2)` throws, because arrays don't have these methods; only iterators do. Call `.values()` first, or
+use `Iterator.from()` for anything else that's iterable.
+
+### 2. Passing a String as the Size
+
+`chunks("3")` and `windows("3")` throw a `TypeError` rather than converting the string. Sizes read from form fields or
+URL parameters need `Number()` first, and `0` or a negative number throws a `RangeError`.
+
+### 3. Expecting a Short Window
+
+With fewer values than the window size, `windows()` yields nothing by default. Pass `"allow-partial"` if a short
+input should still produce one window, and remember it never adds short windows at the end of a longer input.
+
+### 4. Reusing an Iterator After `includes()` or `join()`
+
+Both consume the iterator. After `join()` it's empty, and after `includes()` returns `true` a generator has been
+closed. Create a fresh iterator (call `.values()` or the generator again) for each question you ask.
+
+### 5. Treating the Second Argument of `includes()` as an Array Index
+
+It's a number of values to skip. It can't be negative and must be an integer, so `includes(x, -1)` and
+`includes(x, 0.5)` throw instead of behaving as they would on an array.
+
+### 6. Searching an Endless Iterator
+
+`includes()` on an iterator that never ends only returns if the value turns up. Put a `take(n)` in front of it to cap
+how far it looks.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- **`chunks()`**: batching API calls, database inserts or queue messages; laying out grid rows and calendar weeks;
+  paging through results on the client.
+- **`windows()`**: moving averages and other running statistics; differences or comparisons between neighbours;
+  spotting runs, such as three failures in a row.
+- **`includes()`**: asking whether a stream, generator or `Map`/`Set` iterator contains a value without collecting it
+  into an array, and stopping as soon as the answer is known.
+- **`join()`**: building CSV lines, query strings or log output from any iterator.
+
+**Reach for something else** when you already have an array and need index-based access (`slice()` in a loop is just
+as clear), or when the test is a condition rather than one value, which is what `some()` and `find()` are for.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`chunks(n)` and `windows(n)` turn any iterator into lazy groups of `n` values, without overlap and with overlap
+respectively, and only hold one group at a time. `includes()` and `join()` answer a question about an iterator directly:
+`includes()` stops and closes the source at the first SameValueZero match, and `join()` behaves exactly like the array
+method. Sizes must be integers, short inputs give no windows unless you pass `"allow-partial"`, and the second argument
+of `includes()` is a skip count, never negative. Until every engine has them, detect each method separately and fall
+back to the plain functions above.

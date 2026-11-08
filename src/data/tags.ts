@@ -1139,4 +1139,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The HTML Popover API",
     description: "Using the `popover` attribute and Popover API to build dismissible menus, tooltips, and toasts without extra JavaScript.",
   },
+  "iterators": {
+    title: "JavaScript Iterators",
+    description: "The iterator protocol, hand-written iterators and the helpers on `Iterator.prototype` for working with sequences one value at a time."
+  },
+  "es2027": {
+    title: "Modern JavaScript Features of ES2027",
+    description: "Language features headed for ECMAScript 2027, such as Temporal and explicit resource management, with browser support and fallbacks."
+  },
+  "iterator-helpers": {
+    title: "JavaScript Iterator Helpers",
+    description: "Lazy `map`, `filter`, `take`, `drop` and other helpers on JavaScript iterators, added in ES2025, for working with generators and infinite sequences."
+  }
 };

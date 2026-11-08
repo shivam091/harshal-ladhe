@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iterator Chunking, includes() and join() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Chunks, Windows, includes() and join()</h1>
+        <p>Type a comma-separated list and a size. <code>chunks(n)</code> splits it into groups that don't overlap, <code>windows(n)</code> slides over it one value at a time, and the windows feed a moving average. Below, <code>includes()</code> shows how far it reads before it stops, and <code>join()</code> builds a string.</p>
+      </header>
+
+      <ul class="status" id="status" aria-label="Native or fallback, per method"></ul>
+
+      <p class="tip" id="fallback-tip" hidden>Methods marked "fallback" are missing in this browser, so those results come from the hand-written fallbacks in the tutorial, which follow the same rules. <code>chunks()</code> and <code>windows()</code> are native in Firefox 154; <code>join()</code> in Chrome and Edge 153 and Firefox 154; <code>includes()</code> in Chrome and Edge 154 and Firefox 154. Safari has all four in Technology Preview.</p>
+
+      <fieldset class="control-group">
+        <legend>Source values</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label for="values">Values <span>(NaN, null and undefined are kept as those values)</span></label>
+            <input type="text" id="values" value="3, 5, 7, 6, 8, 10, 12" spellcheck="false" autocomplete="off">
+            <p class="hint" id="parsed"></p>
+          </div>
+          <div class="field">
+            <label for="size">Chunk / window size</label>
+            <input type="number" id="size" value="3" step="any">
+          </div>
+          <div class="field">
+            <label for="undersized">windows() undersized</label>
+            <select id="undersized">
+              <option value="only-full">"only-full" (default)</option>
+              <option value="allow-partial">"allow-partial"</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <section class="demo-area groups" aria-label="Chunks and windows">
+        <div>
+          <h2 class="group-title" id="chunks-title">chunks</h2>
+          <ol class="rows" id="chunks-list"></ol>
+        </div>
+        <div>
+          <h2 class="group-title" id="windows-title">windows</h2>
+          <ol class="rows" id="windows-list"></ol>
+        </div>
+      </section>
+
+      <output class="readout" id="groups-readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>includes() and join()</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="search">includes() search value</label>
+            <input type="text" id="search" value="6" spellcheck="false" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="skip">Values to skip <span>(optional)</span></label>
+            <input type="number" id="skip" placeholder="not passed" step="any">
+          </div>
+          <div class="field">
+            <label for="separator">join() separator</label>
+            <input type="text" id="separator" value=" | " spellcheck="false" autocomplete="off">
+          </div>
+        </div>
+        <label class="checkbox-field">
+          <input type="checkbox" id="default-separator">
+          Call <code>join()</code> with no separator
+        </label>
+      </fieldset>
+
+      <output class="readout" id="search-readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
