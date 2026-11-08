@@ -335,6 +335,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-drop-shadow-filter",
+    title: "SVG Drop Shadow Filter That Follows Any Shape",
+    excerpt: "Build an SVG drop shadow that follows any outline.",
+    description: "Build an SVG drop shadow from feGaussianBlur, feOffset, feFlood and feMerge, size the filter region so it never clips, and compare feDropShadow and CSS.",
+    category: ["SVG"],
+    tags: ["svg", "svg-filters", "drop-shadow", "feDropShadow", "feGaussianBlur", "feComposite", "filter-region", "graphics"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-drop-shadow-filter/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing rounded square and circle floating above soft, offset shadows that follow their outlines.",
+      caption: "Soft shadows that follow each shape's outline, built from an SVG filter."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

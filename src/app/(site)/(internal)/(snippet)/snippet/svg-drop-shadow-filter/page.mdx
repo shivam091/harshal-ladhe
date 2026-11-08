@@ -1,0 +1,181 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-drop-shadow-filter");
+
+## Introduction
+
+CSS `box-shadow` follows an element's rectangular box, so it can't shadow a circle, a star, or an icon's outline. An SVG `<filter>` can. It builds the shadow from the shape's own **silhouette**, so the shadow follows every curve, and it works inside a standalone `.svg` file with no stylesheet.
+
+This snippet builds the shadow by hand from five primitives, so you can see each step and change any of them. The one-line `feDropShadow` shortcut and the CSS `drop-shadow()` function come after.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 110" width="400" height="220" role="img" aria-label="A rounded square and a circle with soft drop shadows">
+    <defs>
+      <filter id="ds-shadow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="4" result="blur" />
+        <feOffset in="blur" dx="3" dy="5" result="offsetBlur" />
+        <feFlood flood-color="#0f172a" flood-opacity="0.45" result="tint" />
+        <feComposite in="tint" in2="offsetBlur" operator="in" result="shadow" />
+        <feMerge>
+          <feMergeNode in="shadow" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    <rect x="20" y="20" width="70" height="60" rx="12" fill="#6366f1" filter="url(#ds-shadow)" />
+    <circle cx="145" cy="50" r="30" fill="#14b8a6" filter="url(#ds-shadow)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `feGaussianBlur in="SourceAlpha"` blurs the shape's **silhouette**. `SourceAlpha` is the shape with every pixel turned black and only its transparency kept, so the shadow doesn't pick up the shape's colours.
+2. `feOffset` moves the blurred silhouette `3` units right and `5` units down. It only shifts pixels, it doesn't change them.
+3. `feFlood` fills the filter region with the shadow colour and opacity. On its own it's a solid rectangle.
+4. `feComposite operator="in"` keeps the flood only where the offset blur has alpha, so the rectangle is cut down to a soft, coloured shadow shape.
+5. `feMerge` stacks its nodes in order: the shadow first, then `SourceGraphic` (the shape as it was drawn) on top.
+6. `x`/`y`/`width`/`height` on the `<filter>` set the **filter region**, the area the filter is allowed to paint. Anything outside it is cut off with a hard edge. The default is the shape's bounding box plus 10% on every side, which is too small here: a blur spreads about 3 × `stdDeviation` (12 units) and the offset adds 5 more. `-30%` / `160%` gives the 60-unit-tall square 18 units of room on each side, enough for the 17 units the shadow needs below it.
+
+<RainbowDivider />
+
+## Variant: The `feDropShadow` Shortcut
+
+`feDropShadow` does the whole chain above in one element. The spec defines it as the same blur, offset, flood, composite and merge, so the result is the same. Here it gives a button a coloured glow that shows up on light and dark backgrounds:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="400" height="200" role="img" aria-label="A pill-shaped button with a pink glow beneath it">
+    <defs>
+      <filter id="ds-quick" x="-20%" y="-40%" width="140%" height="200%" color-interpolation-filters="sRGB">
+        <feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#ec4899" flood-opacity="0.6" />
+      </filter>
+    </defs>
+    <rect x="40" y="20" width="120" height="44" rx="22" fill="#6366f1" filter="url(#ds-quick)" />
+    <text x="100" y="47" font-size="16" font-weight="700" font-family="system-ui, sans-serif" text-anchor="middle" fill="#fff">Button</text>
+  </svg>
+`}
+</SvgSnippet>
+
+- The blur spreads 15 units and the offset adds 6, so the shadow needs 21 units below a 44-unit-tall button. `y="-40%"` and `height="200%"` give it 17.6 units above and 26.4 below.
+- The `<text>` sits outside the filtered `<rect>`, so the label isn't shadowed. Put the filter on a `<g>` around both if you want the label's outline to cast a shadow too.
+- Use the shortcut for a plain shadow. Write the long form when you need a step it hides, such as a spread (an `feMorphology` dilate before the blur) or two shadows with different colours in one filter. Chaining two `feDropShadow`s doesn't give you two independent shadows, because the second one also shadows the first one's shadow.
+
+<RainbowDivider />
+
+## Example Usage
+
+### Small Icons and the Filter Region
+
+Region percentages are a share of the shape's bounding box, but `stdDeviation` and `dx`/`dy` are in user units. A small shape gets a small margin, while the blur stays the same size. On the left, a 20-unit circle with the default region gets only 2 units of margin, and the shadow is sliced off into a square. On the right, `filterUnits="userSpaceOnUse"` with `100%` makes the region the whole SVG viewport, so nothing is cut:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 120 56" width="240" height="112" role="img" aria-label="Two circles with shadows: the left shadow is clipped into a square, the right one is soft">
+    <defs>
+      <filter id="ds-icon-clipped">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+        <feOffset in="blur" dy="4" result="offsetBlur" />
+        <feFlood flood-color="#0f172a" flood-opacity="0.5" result="tint" />
+        <feComposite in="tint" in2="offsetBlur" operator="in" result="shadow" />
+        <feMerge>
+          <feMergeNode in="shadow" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+      <filter id="ds-icon-fixed" filterUnits="userSpaceOnUse" x="0" y="0" width="100%" height="100%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+        <feOffset in="blur" dy="4" result="offsetBlur" />
+        <feFlood flood-color="#0f172a" flood-opacity="0.5" result="tint" />
+        <feComposite in="tint" in2="offsetBlur" operator="in" result="shadow" />
+        <feMerge>
+          <feMergeNode in="shadow" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    <circle cx="30" cy="20" r="10" fill="#f59e0b" filter="url(#ds-icon-clipped)" />
+    <circle cx="90" cy="20" r="10" fill="#f59e0b" filter="url(#ds-icon-fixed)" />
+    <text x="30" y="53" font-size="7" text-anchor="middle" fill="currentColor">default region</text>
+    <text x="90" y="53" font-size="7" text-anchor="middle" fill="currentColor">userSpaceOnUse</text>
+  </svg>
+`}
+</SvgSnippet>
+
+With `filterUnits="userSpaceOnUse"`, `x`/`y`/`width`/`height` are plain user units in the coordinates of the filtered element, and percentages refer to the SVG viewport. `x="0" y="0" width="100%" height="100%"` is a reusable "the whole SVG" region. It costs more on a large SVG with a small shape, because the filter processes every pixel of its region.
+
+### The CSS Alternative
+
+For a single shadow, the CSS `drop-shadow()` function builds the same kind of alpha-based shadow, and it works on HTML elements and on inline SVG:
+
+<CodeBlock language="css">
+{`
+  .logo {
+    /* x-offset, y-offset, blur radius, colour */
+    filter: drop-shadow(3px 5px 8px rgb(15 23 42 / 0.45));
+  }
+`}
+</CodeBlock>
+
+The CSS blur value is a radius, roughly twice the SVG `stdDeviation`, so `8px` here is close to `stdDeviation="4"` when one user unit is one CSS pixel. The browser sizes the area for you, so there's no region to clip. Use the SVG filter when the shadow has to live inside an `.svg` file, has to feed further filter steps, or needs layered colours.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Icons and logos** that need a shadow following their outline rather than their bounding box.
+- **Standalone SVG files**, such as illustrations, sprites, or exported badges, where you can't rely on page CSS.
+- **Chart elements** like markers, bars, or tooltips that need a lift off the plot.
+- **Layered or coloured shadows**, for example a tight dark contact shadow plus a soft tinted one, in a single filter.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Clipped shadow? Grow the region:** a shadow with a straight, hard edge almost always means the filter region is too small. Budget about 3 × `stdDeviation` plus the offset on each side. Don't make it far bigger than needed, because every pixel in the region is processed.
+- **Use `SourceAlpha`, not `SourceGraphic`:** blurring `SourceGraphic` gives a shadow tinted with the shape's colours. That's a glow, not a shadow.
+- **Colour space:** SVG filters default to `color-interpolation-filters="linearRGB"`, while CSS filter functions work in sRGB. Setting `sRGB` on the `<filter>` makes the result match CSS and the colours you wrote.
+- **Shadows follow transforms:** `dx`/`dy` are in the element's own coordinate system, so a rotated shape's shadow rotates with it. Put the filter on an untransformed parent `<g>` if the shadow must always fall down the screen.
+- **Unique ids:** every inline SVG on a page shares one id space. Two SVGs that both define `id="shadow"` both use the first one, so give each filter a specific id.
+- **Browser support:** `feGaussianBlur`, `feOffset`, `feFlood`, `feComposite` and `feMerge` work in all browsers. `feDropShadow` works in all current browsers, including Safari. Only legacy (pre-Chromium) Edge lacked it.
+- **Accessibility:** a filter is purely visual and doesn't change what assistive technology reads. Don't let a shadow be the only sign of a state such as "selected". Forced-colours modes may also drop it.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why is my SVG shadow cut off with a straight edge?">
+  The shadow has spread past the filter region, which by default is the shape's bounding box plus 10%. Enlarge `x`, `y`,
+  `width` and `height` on the `<filter>` (for example `-30%` and `160%`), or switch to `filterUnits="userSpaceOnUse"`
+  and give the region in user units. Small shapes need this most, because their 10% is only a few units.
+</Details>
+
+<Details summary="Should I use feDropShadow or the long form?">
+  Use `feDropShadow` for a plain single shadow: it's shorter and does the same thing. Use the long form when you need
+  an intermediate result, such as a spread, two shadows with different colours, or a shadow that's blurred or textured
+  further.
+</Details>
+
+<Details summary="What's the difference between this and CSS drop-shadow()?">
+  Both build the shadow from the element's alpha. CSS `drop-shadow()` is one line, works on HTML, and needs no region,
+  but it has no spread and can't feed other filter steps. The SVG filter can live inside an `.svg` file and be combined
+  with any other primitive.
+</Details>
+
+<Details summary="Why not just use box-shadow?">
+  `box-shadow` follows the element's box, so on an `<svg>` or `<img>` you get a rectangular shadow around the whole image.
+  It also doesn't apply to shapes inside an SVG. A filter shadow follows the drawn pixels instead.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Blur `SourceAlpha`, offset it, colour it with `feFlood` and `feComposite operator="in"`, and merge the original on top. That's an SVG drop shadow that follows any outline. Give the filter region room for about three times the blur plus the offset, or use `filterUnits="userSpaceOnUse"` for small shapes, and switch to `feDropShadow` or CSS `drop-shadow()` when a single plain shadow is all you need.

@@ -1191,4 +1191,28 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Rotating SVG Markers with `orient`",
     description: "Using `orient=\"auto\"` and `orient=\"auto-start-reverse\"` so markers follow a line's direction, including outward-pointing double arrows."
   },
+  "svg-filters": {
+    title: "Building Effects with SVG Filters",
+    description: "Using the SVG `<filter>` element and its `fe*` primitives to build shadows, glows, colour treatments, textures, and other raster effects for vector graphics."
+  },
+  "drop-shadow": {
+    title: "Drop Shadows with SVG and CSS",
+    description: "Shadows that follow an element's outline, built with SVG filter primitives, `feDropShadow`, or the CSS `drop-shadow()` filter function."
+  },
+  "fedropshadow": {
+    title: "The SVG `feDropShadow` Primitive",
+    description: "Using the one-element `feDropShadow` filter primitive for plain shadows, and knowing when to build the longer chain by hand instead."
+  },
+  "fegaussianblur": {
+    title: "Blurring with SVG `feGaussianBlur`",
+    description: "Using `feGaussianBlur` and its `stdDeviation` to blur shapes and silhouettes, the basis of SVG shadows, glows, and gooey effects."
+  },
+  "fecomposite": {
+    title: "Combining Images with SVG `feComposite`",
+    description: "Using `feComposite` operators such as `in`, `out`, and `atop` to clip, cut out, and combine intermediate results inside an SVG filter."
+  },
+  "filter-region": {
+    title: "Sizing the SVG Filter Region",
+    description: "How the `x`, `y`, `width`, and `height` of an SVG `<filter>` and `filterUnits` decide where an effect can paint, and how to stop shadows and blurs being clipped."
+  },
 };
