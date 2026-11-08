@@ -1,0 +1,207 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-drag-and-drop");
+
+## Introduction
+
+Dragging a shape around an SVG sounds simple, but two things usually go wrong. The pointer position comes in screen pixels while the shape lives in `viewBox` units, so it drifts as soon as the SVG is scaled. And on touchscreens, the browser scrolls the page instead of moving the shape.
+
+This snippet fixes both in about 45 lines of plain JavaScript. **Pointer Events** handle mouse, touch, and pen with one set of listeners, `getScreenCTM()` converts the pointer into SVG coordinates, and `setPointerCapture()` keeps the drag going even when the pointer outruns the shape.
+
+<RainbowDivider />
+
+## The Code
+
+The markup is a plain SVG with a class on each draggable shape. The preview below is static, because scripts don't run in it:
+
+<SvgSnippet>
+{`
+  <svg id="dd-board" class="dd-board" viewBox="0 0 200 120" width="320" height="192" role="group" aria-label="Draggable shapes">
+    <style>
+      .dd-board {
+        touch-action: none;
+      }
+
+      .dd-handle {
+        cursor: grab;
+      }
+
+      .dd-handle.is-dragging {
+        cursor: grabbing;
+      }
+    </style>
+    <rect x="1" y="1" width="198" height="118" rx="8" fill="none" stroke="currentColor" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="6 4" />
+    <circle class="dd-handle" cx="60" cy="60" r="16" fill="#6366f1" />
+    <circle class="dd-handle" cx="140" cy="60" r="16" fill="#14b8a6" />
+  </svg>
+`}
+</SvgSnippet>
+
+The JavaScript:
+
+<CodeBlock language="js">
+{`
+  const board = document.querySelector("#dd-board");
+  let active = null;
+  let grab = { x: 0, y: 0 };
+
+  // Converts a pointer event's screen position into the element's SVG user units.
+  function toSvgPoint(element, event) {
+    const ctm = element.getScreenCTM();
+    if (!ctm) return null; // not rendered (display: none, or detached)
+    return new DOMPoint(event.clientX, event.clientY).matrixTransform(ctm.inverse());
+  }
+
+  // Moves a circle, keeping it fully inside the viewBox.
+  function moveTo(handle, x, y) {
+    const { width, height } = board.viewBox.baseVal;
+    const r = handle.r.baseVal.value;
+    handle.cx.baseVal.value = Math.min(Math.max(x, r), width - r);
+    handle.cy.baseVal.value = Math.min(Math.max(y, r), height - r);
+  }
+
+  board.addEventListener("pointerdown", (event) => {
+    const handle = event.target.closest(".dd-handle");
+    if (!handle || event.button !== 0) return;
+    const point = toSvgPoint(board, event);
+    if (!point) return;
+
+    active = handle;
+    // Remember where the circle was grabbed, so it doesn't jump to the pointer.
+    grab = { x: point.x - handle.cx.baseVal.value, y: point.y - handle.cy.baseVal.value };
+    handle.setPointerCapture(event.pointerId);
+    handle.classList.add("is-dragging");
+  });
+
+  board.addEventListener("pointermove", (event) => {
+    if (!active) return;
+    const point = toSvgPoint(board, event);
+    if (point) moveTo(active, point.x - grab.x, point.y - grab.y);
+  });
+
+  function endDrag() {
+    active?.classList.remove("is-dragging");
+    active = null;
+  }
+
+  board.addEventListener("pointerup", endDrag);
+  board.addEventListener("pointercancel", endDrag);
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. One `pointerdown` listener sits on the `<svg>`, not on each shape. `event.target.closest(".dd-handle")` finds the shape that was pressed, so shapes added later are draggable too. `event.button !== 0` ignores right and middle clicks.
+2. `toSvgPoint()` converts the pointer into SVG coordinates. `getScreenCTM()` returns the matrix that maps the element's user units to screen pixels, including the `viewBox` scale, any letterboxing, and CSS transforms. Its `inverse()` goes the other way, and `DOMPoint.matrixTransform()` applies it to the pointer's `clientX` and `clientY`.
+3. On `pointerdown`, the code stores the **grab offset**: the distance between the pointer and the circle's centre. Every move subtracts it, so the circle stays under the same spot of the finger or cursor instead of snapping its centre to the pointer.
+4. `setPointerCapture(event.pointerId)` sends all further events for that pointer to the circle until it's released. Without it, a fast drag leaves the circle behind and the moves stop arriving.
+5. `moveTo()` writes the new position through `cx.baseVal.value`, which takes a number directly instead of a string. It also clamps the circle so it can't be dragged outside the `viewBox`.
+6. `pointerup` and `pointercancel` end the drag. The browser sends `pointercancel` when it takes over the gesture, for example to scroll, so handling both avoids a shape that stays stuck to the pointer.
+7. In the CSS, `touch-action: none` stops touch drags from scrolling or zooming the page, and the `grab` and `grabbing` cursors show that the shapes can be moved.
+
+<RainbowDivider />
+
+## Variant: Keyboard Support
+
+Dragging alone locks out keyboard and switch users, and WCAG 2.2 asks for a non-dragging alternative ("Dragging Movements"). Make each handle focusable with `tabindex="0"`, give it a name, and let the arrow keys nudge it. This reuses `moveTo()` from above:
+
+<CodeBlock language="html">
+{`
+  <circle class="dd-handle" cx="60" cy="60" r="16" fill="#6366f1" tabindex="0" aria-label="Indigo circle. Use the arrow keys to move it." />
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const STEPS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+
+  board.addEventListener("keydown", (event) => {
+    const handle = event.target.closest(".dd-handle");
+    const step = STEPS[event.key];
+    if (!handle || !step) return;
+
+    event.preventDefault(); // stop the arrow keys from scrolling the page
+    const distance = event.shiftKey ? 10 : 2;
+    moveTo(handle, handle.cx.baseVal.value + step[0] * distance, handle.cy.baseVal.value + step[1] * distance);
+  });
+`}
+</CodeBlock>
+
+Add a visible focus style, such as `.dd-handle:focus-visible { stroke: currentColor; stroke-width: 3; }`, so keyboard users can see which shape is selected. A stroke is used because browsers haven't always drawn `outline` on SVG shapes.
+
+<RainbowDivider />
+
+## Example Usage
+
+To drag something other than a circle, store and update a `transform` instead of `cx` and `cy`. Wrap the shape in a `<g class="dd-handle">` and track its position yourself:
+
+<CodeBlock language="js">
+{`
+  // Instead of reading and writing cx/cy:
+  const x = Number(handle.dataset.x ?? 0);
+  const y = Number(handle.dataset.y ?? 0);
+
+  // ...and when moving it:
+  handle.dataset.x = newX;
+  handle.dataset.y = newY;
+  handle.setAttribute("transform", \`translate(\${newX} \${newY})\`);
+`}
+</CodeBlock>
+
+To save the layout, read each handle's position on `pointerup` and send it to your server or `localStorage`.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Diagram and flowchart editors**, where nodes are moved around a canvas.
+- **Chart controls**, such as draggable range handles or threshold lines.
+- **Simple games and puzzles**, like sorting tiles or placing pieces on a board.
+- **Image annotation tools**, with pins and labels the user can reposition.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Convert into the right coordinate system:** the code converts into the `<svg>`'s space, which is right for shapes placed directly in it. If a shape sits inside a transformed `<g>`, pass that `<g>` to `toSvgPoint()` instead, so the result is in the same units as the shape's `cx` and `cy`.
+- **The clamp assumes the `viewBox` starts at `0 0`:** for a `viewBox` such as `-50 -50 100 100`, include its `x` and `y` in the limits.
+- **Element-relative pixels aren't enough:** subtracting `getBoundingClientRect()` from `clientX`, as the [usePointerPosition hook](/snippet/use-pointer-position) does, gives CSS pixels. That's right for HTML, but SVG shapes need `viewBox` units, which is what `getScreenCTM()` handles.
+- **`touch-action` goes on the SVG:** with `touch-action: none` on the whole board, touching anywhere on it won't scroll the page. If the SVG is large, use `touch-action: pan-y` on the board and `none` only on the handles, so the page can still scroll vertically.
+- **Unique `id`s and classes:** `id="dd-board"` has to be unique on the page, and a `<style>` inside an inline SVG applies to the whole page, so keep the class names specific or move the rules into your stylesheet.
+- **Browser support:** Pointer Events, `setPointerCapture()`, `getScreenCTM()`, and `DOMPoint` work in all current browsers. Older code uses `svg.createSVGPoint()` instead of `new DOMPoint()`; it does the same job.
+- **Accessibility:** with `role="group"` and an `aria-label`, the SVG is announced as a group and the focusable handles inside it stay reachable. Don't use `role="img"` here, because it hides everything inside the SVG from assistive technology.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does the shape drift away from the pointer when the SVG is scaled?">
+  The pointer's `clientX` and `clientY` are in CSS pixels, and the shape's `cx` and `cy` are in `viewBox` units. If the
+  SVG is drawn at a different size from its `viewBox`, the two scales differ, and adding pixel movement to user units
+  moves the shape too far or not far enough. Converting through `getScreenCTM().inverse()` puts both in the same units.
+</Details>
+
+<Details summary="Why do I need setPointerCapture?">
+  Without capture, `pointermove` only fires on the element under the pointer. If the pointer moves faster than the
+  shape follows, it leaves the shape and the events go to the background, so the drag stops halfway. With capture, all
+  events for that pointer go to the shape until the pointer is released.
+</Details>
+
+<Details summary="Why does dragging scroll the page on my phone?">
+  The browser treats a touch drag as a scroll or zoom gesture unless told otherwise. When it does, it sends
+  `pointercancel` and stops sending moves. Set `touch-action: none` on the SVG (or on the handles) so the gesture is
+  passed to your code instead.
+</Details>
+
+<Details summary="Can I drag several shapes at once with multiple fingers?">
+  Not with this code, because it stores one `active` shape. For multi-touch, keep a `Map` from `event.pointerId` to
+  the shape and its grab offset, and look up the right entry in each `pointermove`.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Put one set of Pointer Events listeners on the `<svg>`, convert the pointer with `getScreenCTM().inverse()` so movement is in `viewBox` units, and use `setPointerCapture()` so the drag never drops. Add `touch-action: none` for touchscreens, a `grab` cursor, and arrow-key support on focusable handles so the shapes can be moved without dragging.

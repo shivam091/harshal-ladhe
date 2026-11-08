@@ -598,6 +598,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-drag-and-drop",
+    title: "Drag and Drop SVG Elements with Pointer Events",
+    excerpt: "Drag SVG shapes with Pointer Events and getScreenCTM().",
+    description: "Drag SVG shapes with mouse, touch and pen: Pointer Events, getScreenCTM() coordinate conversion, setPointerCapture, and keyboard support.",
+    category: ["SVG", "JavaScript"],
+    tags: ["svg", "javascript", "pointer-events", "drag-and-drop", "getScreenCTM", "setPointerCapture", "touch-action", "coordinate-system", "viewbox", "dom", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-drag-and-drop/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of two glowing circles inside a dashed frame, one being dragged by a pointer cursor with a motion trail.",
+      caption: "Glowing SVG circles being dragged around a dashed board."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

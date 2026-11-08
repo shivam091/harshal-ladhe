@@ -1319,4 +1319,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Moving Shapes Along Paths with `<animateMotion>`",
     description: "Using SVG's `<animateMotion>` and `<mpath>` elements to move a shape along a path, with `rotate=\"auto\"` to follow the direction of travel."
   },
+  "getscreenctm": {
+    title: "Converting Coordinates with `getScreenCTM()`",
+    description: "Using `getScreenCTM()` and its inverse to map pointer positions in screen pixels to SVG user units, whatever the scale or transform."
+  },
+  "setpointercapture": {
+    title: "Keeping Pointer Input with `setPointerCapture()`",
+    description: "Using `setPointerCapture()` to send every event for a pointer to one element, so drags and gestures don't drop when the pointer moves fast."
+  },
+  "touch-action": {
+    title: "Controlling Touch Gestures with `touch-action`",
+    description: "Using the CSS `touch-action` property to stop the browser scrolling or zooming, so touch drags reach your own Pointer Events code."
+  },
 };
