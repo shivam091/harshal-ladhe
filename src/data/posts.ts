@@ -760,6 +760,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "iterators-vs-arrays-lazy-evaluation",
+    title: "Iterators vs Arrays: When Lazy Evaluation Wins",
+    excerpt: "When lazy iterators beat arrays, and when they don't.",
+    description: "Compare JavaScript iterator helpers with array methods: short-circuiting, memory, infinite sequences and intermediate arrays, and where arrays still win on sorting, reuse and speed.",
+    category: ["JavaScript"],
+    tags: ["javascript", "iterator-helpers", "lazy-evaluation", "generators", "es2025", "web-performance", "functional-programming", "best-practices"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/iterators-vs-arrays-lazy-evaluation/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Side-by-side comparison of an eager array pipeline building a new array at every step and a lazy iterator pipeline passing one value at a time and stopping early.",
+      caption: "Eager arrays build every intermediate result; lazy iterators pass one value through and stop when they have enough."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "I went into this one expecting to write \"lazy is faster\" and came out with \"lazy does less work, when there's work to skip\", which is a less exciting headline and a much more useful rule. Run the benchmark on your own engine before you trust my numbers, and next time you write filter().slice(), ask whether you really needed every match. 🔁",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 

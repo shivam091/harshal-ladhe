@@ -1,0 +1,396 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("iterators-vs-arrays-lazy-evaluation");
+
+## Introduction
+
+ES2025 gave every JavaScript iterator `map()`, `filter()`, `take()`, `reduce()` and the rest of the familiar
+pipeline methods. Since then, a common piece of advice has been to "use iterators instead of arrays, they're lazy".
+Laziness is a real advantage in some situations and a cost in others, and the method names being the same makes it
+easy to swap one for the other without noticing which situation you're in.
+
+This post looks at what lazy evaluation actually changes, where it saves real work, where it costs you, and how to
+decide. It assumes you've seen the helpers before. If not,
+[Iterator Helpers: Lazy Pipelines over Any Iterator](/tutorial/iterator-helpers-lazy-pipelines) covers each method
+with a playground.
+
+<RainbowDivider />
+
+## Two Ways to Run the Same Pipeline
+
+Here is one pipeline written twice:
+
+<CodeBlock language="js">
+{`
+  const orders = loadOrders(); // an array
+
+  // Eager: array methods
+  const bigTotals = orders
+    .filter((order) => order.total > 100)
+    .map((order) => order.total);
+
+  // Lazy: iterator helpers
+  const bigTotalsLazy = orders
+    .values()
+    .filter((order) => order.total > 100)
+    .map((order) => order.total)
+    .toArray();
+`}
+</CodeBlock>
+
+Both produce the same array, but the work happens in a different order.
+
+- **Eager (arrays):** `filter()` visits every order and builds a new array of the big ones. Then `map()` visits that
+  array and builds another. Each step finishes completely before the next starts.
+- **Lazy (iterators):** nothing happens until `toArray()` asks for a value. Then one order is read, tested, and, if it
+  passes, mapped and collected, before the next order is read. Each value goes through every step in turn.
+
+When every value is needed, both orders do the same number of callback calls. The differences show up when you
+**don't** need every value, when the data **isn't** in an array, or when it's **large**.
+
+<RainbowDivider />
+
+## Where Lazy Evaluation Wins
+
+### Short-Circuiting: Stopping When You Have Enough
+
+This is the biggest and most reliable win. If you only need the first few results, a lazy pipeline stops as soon as
+it has them. An array pipeline processes everything and then throws most of it away.
+
+<CodeBlock language="js">
+{`
+  const numbers = Array.from({ length: 1_000_000 }, (_, i) => i);
+  let checks = 0;
+  const isMatch = (n) => {
+    checks++;
+    return n % 1000 === 999;
+  };
+
+  numbers.filter(isMatch).slice(0, 3);
+  console.log(checks); // 1000000
+
+  checks = 0;
+  numbers.values().filter(isMatch).take(3).toArray();
+  console.log(checks); // 3000
+`}
+</CodeBlock>
+
+The saving depends on where the matches are. If the three matches were the last three numbers, both versions would
+check all million. Lazy evaluation never does *more* checks than the eager version; it does fewer whenever it can stop
+early. `find()`, `some()` and `every()` have always short-circuited on arrays, so this is mainly about `take()` and
+about long chains that end in one of those.
+
+It matters even more when one step is expensive. Only the values that reach `take()` are ever mapped:
+
+<CodeBlock language="js">
+{`
+  const lines = Array.from({ length: 5 }, (_, i) => \`{"id":\${i}}\`);
+  let parsed = 0;
+  const parse = (line) => {
+    parsed++;
+    return JSON.parse(line);
+  };
+
+  lines.map(parse).slice(0, 2);
+  console.log(parsed); // 5
+
+  parsed = 0;
+  lines.values().map(parse).take(2).toArray();
+  console.log(parsed); // 2
+`}
+</CodeBlock>
+
+With five lines that's nothing. With fifty thousand log lines and a preview that shows the first twenty, it's the
+difference between parsing twenty and parsing fifty thousand.
+
+### Memory: No Intermediate Arrays
+
+Every array method in a chain allocates a new array. For `data.filter(a).map(b).slice(0, n)` with a million items,
+the engine builds the filtered array, then the mapped array, then the slice. While `map()` runs, the source, the
+filtered array and the mapped array are all in memory at once.
+
+A lazy chain holds one value at a time between steps. Its extra memory is a few small iterator objects, however large
+the input is, plus whatever `toArray()` collects at the end. If you finish with `reduce()`, `some()` or `forEach()`
+instead, nothing is collected at all.
+
+That only helps if the source is lazy too. `bigArray.values().filter(...)` avoids the intermediate arrays, but
+`bigArray` itself is still fully in memory. The full benefit comes from a source that produces values on demand,
+such as a generator that reads records one at a time.
+
+### Infinite and Unbounded Sequences
+
+An array has to end. An iterator doesn't, so a lazy pipeline can describe "all the numbers", "every retry delay" or
+"IDs forever", and something downstream decides how many to read:
+
+<CodeBlock language="js">
+{`
+  function* retryDelays(baseMs) {
+    let attempt = 0;
+    while (true) yield baseMs * 2 ** attempt++;
+  }
+
+  retryDelays(100).take(5).toArray(); // [100, 200, 400, 800, 1600]
+  retryDelays(100).find((ms) => ms > 5000); // 6400
+`}
+</CodeBlock>
+
+There is no array equivalent without first deciding on a length, which means guessing. The generator separates
+*producing* values from deciding *how many*. For a full retry helper built on this idea, see the
+[Exponential Backoff Retry Utility](/tutorial/async-retry-exponential-backoff).
+
+### Data That Isn't an Array to Begin With
+
+A `Set`, a `Map`, a generator and the result of `matchAll()` are all iterators or iterables, not arrays. Before
+iterator helpers, filtering one meant copying it into an array first:
+
+<CodeBlock language="js">
+{`
+  const tags = new Set(["css", "js", "html"]);
+
+  [...tags].filter((tag) => tag.length === 2);       // ["js"], after copying all three
+  tags.values().filter((tag) => tag.length === 2).toArray(); // ["js"], no copy
+`}
+</CodeBlock>
+
+For a three-item `Set` the copy costs nothing worth measuring. The point is more about consistency: the same pipeline
+code works on any iterable, so a function can accept "anything iterable" without forcing callers to build an array.
+
+<RainbowDivider />
+
+## What Laziness Costs
+
+### Per-Value Overhead
+
+Each step in a lazy chain is an iterator, and every value passes through a `next()` call at each step, with a fresh
+`{ value, done }` result object. Engines optimise array methods heavily, and they have had many years to do it. When
+you consume every value, the eager version is usually at least as fast.
+
+I ran the benchmark at the end of this post several times on Node 26. When every value was needed, the
+iterator-helper chain over a million numbers was **consistently slower** than the array chain, by anything from about a
+quarter to more than double depending on the run, and a plain `for...of` loop **beat both** every time.
+When only the first ten results were needed, the lazy chain finished in a tiny fraction of the time, because it
+stopped after about thirty values. The exact numbers will differ on your machine, in other engines and in future
+versions, but that shape is what to expect: laziness saves work you can skip, and adds a little cost to work you
+can't.
+
+### One-Shot Values
+
+An array can be read any number of times. An iterator can be read once:
+
+<CodeBlock language="js">
+{`
+  const evens = [1, 2, 3, 4].values().filter((n) => n % 2 === 0);
+
+  [...evens]; // [2, 4]
+  [...evens]; // []: no error, just nothing
+`}
+</CodeBlock>
+
+If two parts of your code need the same results, an iterator forces you to either collect it into an array or run the
+pipeline twice. The silent empty second read is a common source of bugs.
+
+### Work Happens Later, Against Live Data
+
+A lazy pipeline reads its source when it's consumed, not when it's built. If the source changes in between, you see
+the changed data:
+
+<CodeBlock language="js">
+{`
+  const items = [1, 2];
+  const doubled = items.values().map((n) => n * 2);
+
+  items.push(3);
+  doubled.toArray(); // [2, 4, 6]: includes the value pushed afterwards
+`}
+</CodeBlock>
+
+That deferral also changes debugging. Callbacks run interleaved, one value at a time, so log output from different
+steps is mixed together, and an error thrown inside `filter()` surfaces at the `toArray()` or `for...of` that pulled
+the value, possibly far from where the pipeline was built.
+
+### No Length, No Index
+
+An iterator doesn't know how many values it has until it's exhausted, and it can't jump to the 500th value without
+reading the 499 before it. `drop(499)` reads and discards them, it doesn't skip over them.
+
+<RainbowDivider />
+
+## Where Arrays Still Win
+
+### Random Access and Length
+
+`array[i]`, `array.at(-1)` and `array.length` are instant. If your code needs any of them, such as for pagination by
+index, binary search, or showing "312 results", you need an array.
+
+### Reading the Data More Than Once
+
+Rendering a list, then counting it, then passing it to a chart: each of those reads the data again. An array is built
+once and read as often as you like. Using an iterator here means collecting it with `toArray()` anyway.
+
+### Sorting and Anything Else That Needs Every Value
+
+`sort()`, `reverse()`, `toSorted()`, grouping and de-duplicating all need to see the whole input before they can
+produce the first result. There's nothing for laziness to save. Iterators don't have these methods for exactly that
+reason, so you'll collect first:
+
+<CodeBlock language="js">
+{`
+  const topThree = scores
+    .values()
+    .filter((score) => score.valid)
+    .toArray()       // laziness ends here
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 3);
+`}
+</CodeBlock>
+
+### Small Data
+
+For a few hundred items already in an array, the difference between the two styles is far below anything a user
+could notice, and the array version is the one every reader of your code already knows. Choosing iterators for small
+arrays adds a `.values()` and a `.toArray()` for no measurable gain.
+
+### Throughput When You Consume Everything
+
+If the pipeline reads every value and keeps the result, laziness skips nothing, so you pay its per-value overhead and
+get none of its savings. In a hot path over large arrays, the array methods, or a plain loop, are the faster choice.
+
+<RainbowDivider />
+
+## A Simple Benchmark You Can Run
+
+Treat any benchmark with suspicion, including this one. It's here so you can check the shape of the trade-off in
+your own engine, not to produce a headline number:
+
+<CodeBlock language="js">
+{`
+  function time(label, fn, runs = 20) {
+    fn(); // warm up
+    const start = performance.now();
+    for (let i = 0; i < runs; i++) fn();
+    console.log(label, ((performance.now() - start) / runs).toFixed(3), "ms");
+  }
+
+  const data = Array.from({ length: 1_000_000 }, (_, i) => i);
+  const keep = (n) => n % 3 === 0;
+  const double = (n) => n * 2;
+
+  // Every value needed
+  time("array, all", () => data.filter(keep).map(double).reduce((a, b) => a + b, 0));
+  time("iterator, all", () => data.values().filter(keep).map(double).reduce((a, b) => a + b, 0));
+  time("loop, all", () => {
+    let sum = 0;
+    for (const n of data) if (keep(n)) sum += double(n);
+    return sum;
+  });
+
+  // Only the first ten needed
+  time("array, first 10", () => data.filter(keep).map(double).slice(0, 10));
+  time("iterator, first 10", () => data.values().filter(keep).map(double).take(10).toArray());
+`}
+</CodeBlock>
+
+Try it with a few different sizes. With 100 items, all five finish in microseconds and the differences don't matter.
+As the size grows, the "first 10" lazy version stays flat while everything else grows with the input.
+
+<RainbowDivider />
+
+## A Decision Checklist
+
+| Situation | Better choice | Why |
+| --- | --- | --- |
+| You need the first *n* results, or any match | Iterator | Stops early |
+| The source has no end | Iterator | Arrays can't represent it |
+| One step is expensive and you keep few results | Iterator | Expensive step runs only on kept values |
+| The source is a generator, `Set`, `Map` or `matchAll()` | Iterator | No copy into an array first |
+| You need `length`, an index, or the last item | Array | Iterators don't know them |
+| You read the results more than once | Array | Iterators are one-shot |
+| You sort, reverse or group | Array | Needs every value anyway |
+| Small data already in an array | Array | Simpler, and just as fast |
+| Hot path, every value consumed | Array or a loop | Less per-value overhead |
+
+<RainbowDivider />
+
+## Mixing the Two
+
+It's rarely all one or the other. A good pattern is to stay lazy while the data is being narrowed down, and switch to
+an array at the point where you need array features:
+
+<CodeBlock language="js">
+{`
+  const recentErrors = logLines()          // a generator over a large log
+    .filter((line) => line.level === "error")
+    .map(parseTimestamp)
+    .take(50)
+    .toArray()                              // 50 items: arrays from here on
+    .toSorted((a, b) => b.time - a.time);
+`}
+</CodeBlock>
+
+`.values()` takes you from an array into an iterator, and `.toArray()` takes you back. Both are cheap compared with
+the work in between, so put them wherever the trade-offs change.
+
+<RainbowDivider />
+
+## What About Async and Streaming Data?
+
+Iterator helpers are synchronous only. Async generators and streams don't have `map()`, `filter()` or `take()`
+yet: helpers for async iterators are a separate proposal and aren't part of any edition so far. Laziness still
+matters there, and is often the only option, since a paginated API or a network stream can't be loaded all at once.
+For now:
+
+- Process async values one at a time with `for await...of`, and `break` when you have enough, which closes the async
+  generator. [Async Iterators and `for-await-of`](/post/javascript/mastering-async-javascript#async-iterators-and-for-await-of)
+  covers the loop itself.
+- Collect a finite async sequence with
+  [`Array.fromAsync()`](/tutorial/array-fromasync-async-iterables), accepting that it holds everything in memory.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Should I replace my array methods with iterator helpers?">
+  No. For data that's already in an array and that you use in full, array methods are simpler and usually faster. Use
+  iterator helpers where they change the amount of work: early exits, large or unbounded sources, and data that isn't
+  an array yet.
+</Details>
+
+<Details summary="Is lazy evaluation the same as being asynchronous?">
+  No. A lazy pipeline is fully synchronous: when you call `toArray()`, it runs to completion on the spot. Lazy only
+  means the work is deferred until a value is asked for, and limited to the values that are asked for.
+</Details>
+
+<Details summary="Do iterator helpers use less memory than arrays?">
+  They avoid intermediate arrays, so a chain of steps uses roughly constant extra memory however large the input. But
+  if the source is a huge array, that array is still in memory, and `toArray()` at the end still builds a full result.
+  The real saving comes when the source is lazy too and the end step doesn't collect everything.
+</Details>
+
+<Details summary="Why is a plain for...of loop faster than both?">
+  A loop with an `if` inside does no callback calls and allocates no intermediate arrays or iterator result objects.
+  It's the most direct way to express the work, and engines optimise it well. The pipeline methods trade a bit of
+  that speed for readability, which is the right trade almost everywhere except hot paths.
+</Details>
+
+<Details summary="Which browsers support iterator helpers?">
+  Chrome and Edge 122, Firefox 131, Safari 18.4 and Node 22, so every current browser. Older targets need a polyfill
+  such as `core-js`. Everything new in that edition is covered in [What's New in ES2025](/post/javascript/whats-new-in-es2025).
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+Lazy evaluation isn't faster in general. It does **less work** when there's work to skip:
+
+- Stopping early with `take()`, `find()`, `some()` or `every()`
+- Running expensive steps only on the values you keep
+- Handling sources that are unbounded or too large to hold
+- Avoiding a copy when the data isn't an array yet
+
+Arrays remain the better tool for random access, `length`, sorting, reusing results, small data, and hot paths where
+every value is consumed. Most real code mixes the two: narrow the data lazily, then switch to an array when you need
+what arrays do best.
+
+For the first-*n*-matches pattern on its own, see
+[Lazy First N Matches with `Iterator.prototype.take()`](/snippet/iterator-take-first-n-matches).
