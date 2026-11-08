@@ -352,6 +352,8 @@ Branches are the feature that makes Git's workflow possible — because a branch
 `}
 </CodeBlock>
 
+`git branch -d` refuses branches merged on GitHub with "Squash and merge", because the squash creates a new commit and the branch's own commits never reach `main`. To clear out every branch that has landed in one go, including those, see [`git prune-branches`](/snippet/git-prune-branches).
+
 ### Switching Branches: `switch` vs. `checkout` vs. `restore`
 
 Historically, `git checkout` did three unrelated jobs — switch branches, restore files, and check out a detached commit — which made it confusing and easy to misuse by accident. Git 2.23 split it into two focused commands.
