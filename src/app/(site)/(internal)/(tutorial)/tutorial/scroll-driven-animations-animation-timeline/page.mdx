@@ -1,0 +1,868 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("scroll-driven-animations-animation-timeline");
+
+## Introduction
+
+A normal CSS animation runs on the clock: `animation-duration: 2s` means 0% of the keyframes at the start and 100%
+two seconds later. A **scroll-driven animation** swaps the clock for a scroll position. The keyframes move forwards
+as the user scrolls down, backwards as they scroll up, and stop when scrolling stops. Reading progress bars, reveal
+effects and parallax headers all fit this model, and none of them need a `scroll` event listener.
+
+The property that makes the swap is **`animation-timeline`**. The
+[`animation-timeline` section of the CSS keyframes guide](/post/animations/css-keyframes-guide#9-animation-timeline)
+introduces it with a quick `view()` example and the four main named ranges. This tutorial goes further: both kinds
+of timeline and all their arguments, named timelines, every range name, `timeline-scope`, the JavaScript API,
+performance, reduced motion and fallbacks, with five complete examples along the way.
+
+It's also a good time to learn it properly. Firefox 159 shipped scroll-driven animations in October 2026, joining
+Chrome, Edge and Safari, so the feature is now Baseline.
+
+<RainbowDivider />
+
+## How a Scroll-Driven Animation Works
+
+You still write ordinary `@keyframes`. What changes is the **timeline** the animation is attached to. There are two
+kinds:
+
+- A **scroll progress timeline** goes from 0% to 100% as a scroll container scrolls from its start to its end.
+  You get one with `scroll()` or the `scroll-timeline` property.
+- A **view progress timeline** goes from 0% to 100% as one element passes through a scroll container's visible
+  area, from the moment its first pixel appears to the moment its last pixel leaves. You get one with `view()` or the
+  `view-timeline` property.
+
+Here's the smallest complete example, a box that changes colour as the page scrolls:
+
+<CodeBlock language="css">
+{`
+  @keyframes change-background {
+    from {
+      background-color: aliceblue;
+    }
+
+    to {
+      background-color: cornflowerblue;
+    }
+  }
+
+  .subject {
+    animation: change-background linear both;
+    animation-timeline: scroll();
+  }
+`}
+</CodeBlock>
+
+Three details in that rule matter for every scroll-driven animation you write.
+
+### The Shorthand Resets `animation-timeline`
+
+`animation-timeline` is a *reset-only* part of the `animation` shorthand in current browsers: writing `animation`
+sets `animation-timeline` back to its initial value, `auto` (the document's normal time-based timeline), but you
+can't set a scroll timeline from inside the shorthand. Order is therefore significant:
+
+<CodeBlock language="css">
+{`
+  /* Broken: the shorthand runs second and resets the timeline to auto */
+  .subject {
+    animation-timeline: scroll();
+    animation: change-background linear both;
+  }
+
+  /* Works: shorthand first, then the timeline */
+  .subject {
+    animation: change-background linear both;
+    animation-timeline: scroll();
+  }
+`}
+</CodeBlock>
+
+The same applies to `animation-range`, which the shorthand also resets. Always write `animation` first and the
+scroll-specific longhands after it. The CSS Animations Level 2 draft now lists the timeline as a shorthand component,
+but browsers don't accept it there yet, so a shorthand ending in `scroll()` or `view()` is invalid and gets dropped
+as a whole.
+
+### Durations Become `auto`
+
+There's no duration in that example, and that's deliberate. `animation-duration` now accepts `auto`, which is its
+initial value. For a time-based animation, `auto` means `0s`. For a scroll-driven animation it means "whatever it
+takes to fill the timeline", after allowing for `animation-range`, `animation-delay` and
+`animation-iteration-count`.
+
+A time value such as `1s` is treated as `auto` on a scroll timeline, so it does nothing useful. Leave the duration
+out, or write `animation-duration: auto` if you prefer to be explicit. With an iteration count of 3, the timeline is
+split into three equal parts and the keyframes play once in each.
+
+### `linear` and `both`
+
+The default easing for animations is `ease`, which would make the effect run slowly at the start and end of the
+scroll and quickly in the middle. `linear` keeps the animation in step with the scrollbar, and you can still put a
+different easing on individual keyframes if you want one.
+
+`both` (the fill mode) keeps the first keyframe applied before the animation's range starts and the last keyframe
+applied after it ends. Without it, an element reverts to its unanimated style outside the range: a card that has
+faded in would suddenly snap to its normal style once its range ends.
+
+<RainbowDivider />
+
+## Scroll Progress Timelines
+
+### `scroll()` and Its Arguments
+
+`scroll()` creates an anonymous scroll progress timeline. It takes up to two keywords in either order: which scroll
+container to follow, and which axis.
+
+| Argument | Values | Default |
+| --- | --- | --- |
+| Scroller | `nearest`: the nearest ancestor that scrolls in that axis<br />`root`: the document viewport<br />`self`: the element itself, which must be a scroll container | `nearest` |
+| Axis | `block`, `inline`, `x`, `y` | `block` |
+
+So `scroll()`, `scroll(block)`, `scroll(nearest)` and `scroll(nearest block)` are all the same timeline. Some
+variations:
+
+<CodeBlock language="css">
+{`
+  .page-indicator {
+    animation-timeline: scroll(root);        /* the page, vertical in a horizontal writing mode */
+  }
+
+  .carousel-shadow {
+    animation-timeline: scroll(self inline); /* the element's own horizontal scrolling */
+  }
+
+  .panel-badge {
+    animation-timeline: scroll(x nearest);   /* the nearest ancestor that scrolls horizontally */
+  }
+`}
+</CodeBlock>
+
+`block` and `inline` follow the writing mode, so `inline` is horizontal in English and vertical in a vertical
+writing mode. `x` and `y` are always physical. Progress is measured from the scroll container's *scroll origin*,
+which can be on the right in a right-to-left page even when you use `x`.
+
+If the chosen container can't scroll in that axis, because its content doesn't overflow or it isn't a scroll
+container at all, the timeline is **inactive** and the animation has no effect. The element keeps its unanimated
+styles.
+
+### Named Scroll Timelines with `scroll-timeline`
+
+`scroll()` always looks *up* the tree from the animated element. When the animated element isn't inside the scroller,
+give the scroller a timeline name instead, and refer to that name:
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    overflow-x: auto;
+    scroll-timeline: --gallery inline;  /* shorthand for scroll-timeline-name and scroll-timeline-axis */
+  }
+
+  .gallery .counter {
+    animation: count-up linear both;
+    animation-timeline: --gallery;
+  }
+`}
+</CodeBlock>
+
+Timeline names are dashed idents (`--gallery`), like custom property names, so they can never clash with a CSS
+keyword. The axis defaults to `block`. As for which elements can see the name, see
+[Sharing a Timeline with `timeline-scope`](#sharing-a-timeline-with-timeline-scope) below.
+
+### Example: Reading Progress Bar
+
+A bar fixed to the top of the window that fills as the reader scrolls:
+
+<CodeBlock language="css">
+{`
+  .reading-progress {
+    position: fixed;
+    inset-block-start: 0;
+    inset-inline: 0;
+    z-index: 10;
+    block-size: 0.25rem;
+    background: rebeccapurple;
+    transform-origin: left center;
+
+    animation: grow-progress linear both;
+    animation-timeline: scroll(root);
+  }
+
+  @keyframes grow-progress {
+    from {
+      transform: scaleX(0);
+    }
+
+    to {
+      transform: scaleX(1);
+    }
+  }
+`}
+</CodeBlock>
+
+Two choices here are worth copying. `scroll(root)` names the document viewport explicitly instead of relying on
+`nearest`, so the bar still follows the page if it's ever moved inside a wrapper that happens to scroll. And it
+animates `transform: scaleX()` rather than `width`, which keeps the work off the layout step (more on that in
+[Performance](#performance)). For a right-to-left page, use `transform-origin: right center`.
+
+<RainbowDivider />
+
+## View Progress Timelines
+
+### `view()` and Its Inset
+
+`view()` creates a view progress timeline for the animated element itself, the **subject**, inside its nearest
+scroll container. It accepts an axis (default `block`) and an optional **inset**, in either order:
+
+<CodeBlock language="css">
+{`
+  .card {
+    animation-timeline: view();                /* block axis, inset from scroll-padding */
+  }
+
+  .slide {
+    animation-timeline: view(inline);          /* for a horizontal scroller */
+  }
+
+  .card--late {
+    animation-timeline: view(block 0% 20%);    /* ignore the bottom 20% of the scrollport */
+  }
+`}
+</CodeBlock>
+
+The inset shrinks (or, with negative values, grows) the part of the scrollport that counts as "in view". The first
+value is the start edge, the top in a vertical scroller, and the second is the end edge, the bottom. A single value
+applies to both. `view(block 0% 20%)` means a card only counts as entering once it's 20% of the way up from the
+bottom, which is handy when you don't want an effect to start right at the edge of the screen.
+
+The default inset is `auto`, which uses the scroller's `scroll-padding`. If a site sets `scroll-padding-top` to
+clear a sticky header, its view timelines already treat the area under the header as out of view.
+
+### Named View Timelines with `view-timeline`
+
+As with scroll timelines, you can declare a view timeline by name on the subject and drive *other* elements from it:
+
+<CodeBlock language="css">
+{`
+  .chapter {
+    view-timeline: --chapter block;  /* name, then optional axis and inset */
+  }
+
+  .chapter .chapter-title {
+    animation: slide-in linear both;
+    animation-timeline: --chapter;
+    animation-range: entry;
+  }
+`}
+</CodeBlock>
+
+Here the title animates according to where the whole chapter is, not where the title is. The longhands are
+`view-timeline-name`, `view-timeline-axis` and `view-timeline-inset`.
+
+### Example: Reveal-on-Scroll Cards
+
+<CodeBlock language="css">
+{`
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(3rem) scale(0.95);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .card {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 30%;
+  }
+`}
+</CodeBlock>
+
+Every card gets its own view timeline, because every element that uses `view()` is tracked separately, even with one
+rule. The range makes each card start revealing shortly after it begins entering and finish while it's still in
+the lower part of the screen, rather than spreading the reveal across its entire time on screen. Scroll back up and
+the cards hide again, which is usually fine. If you need a strictly one-way reveal, that's a trigger rather than a
+scrubbed effect, and the IntersectionObserver approach in [Browser Support and Fallbacks](#browser-support-and-fallbacks)
+does that.
+
+Transforms don't affect where a view timeline thinks its subject is (relative and absolute positioning do), so it's
+safe to translate the element whose visibility drives the timeline. The card above moves 3rem without shifting its
+own range.
+
+<RainbowDivider />
+
+## Choosing the Range with `animation-range`
+
+By default an animation fills its whole timeline: the full scroll range for `scroll()`, and the full pass through
+the scrollport for `view()`. `animation-range` attaches it to a smaller (or larger) segment instead.
+
+### The Range Names
+
+View progress timelines define named ranges, measured as the subject moves through the scrollport. With the subject
+entering from the bottom of a vertical scroller:
+
+| Range | 0% is when... | 100% is when... |
+| --- | --- | --- |
+| `cover` | its top edge reaches the bottom of the scrollport | its bottom edge passes the top of the scrollport |
+| `contain` | it's fully inside the scrollport, or fully covering it | it starts to leave, or stops covering it |
+| `entry` | `cover 0%` | `contain 0%` |
+| `exit` | `contain 100%` | `cover 100%` |
+| `entry-crossing` | its top edge reaches the bottom of the scrollport | its bottom edge reaches the bottom of the scrollport |
+| `exit-crossing` | its top edge reaches the top of the scrollport | its bottom edge passes the top of the scrollport |
+
+<AnimationRangeDiagram />
+
+`entry-crossing` and `exit-crossing` look like `entry` and `exit`, and for an element shorter than the scrollport
+they're identical. They differ for an element **taller** than the scrollport. For a tall element, `contain` is the
+stretch where it covers the whole scrollport, so `entry` ends as soon as its top edge reaches the top of the screen.
+`entry-crossing` keeps going until its bottom edge has crossed the bottom of the screen, which is the whole time the
+element is crossing that edge. For a long article or a full-height section, the `-crossing` versions are usually the
+ones that match what you mean.
+
+### Offsets, Lengths and the Shorthand
+
+`animation-range` is a shorthand for `animation-range-start` and `animation-range-end`. Each takes a range name with
+an optional offset, a plain offset, or `normal` (the start or end of the whole timeline):
+
+<CodeBlock language="css">
+{`
+  animation-range: entry;                  /* entry 0% to entry 100% */
+  animation-range: entry exit;             /* entry 0% to exit 100% */
+  animation-range: entry 10% exit 90%;
+  animation-range: cover 25% cover 75%;    /* the middle half of the element's time on screen */
+  animation-range: 10%;                    /* 10% of the whole timeline to normal */
+  animation-range: 0 150px;                /* the first 150px of scrolling */
+  animation-range: entry calc(100% - 4rem) exit 4rem;
+`}
+</CodeBlock>
+
+The rules for the shorthand are worth remembering. A range name on its own means 0% at the start and 100% at the end.
+If you give only a start that includes a range name, the end becomes that same range at 100%, so `entry` alone means
+`entry 0% entry 100%`. If you give only a plain offset, the end stays `normal`. Percentages are of the named range
+when there is one, otherwise of the whole timeline. Lengths and `calc()` work too, which is how you get "the first
+150px of scrolling".
+
+Offsets below 0% or above 100% are allowed, and so is a range wider than its timeline. Bear in mind that some
+positions are never reached: a card at the very top of a scroller is already partly in view at scroll position 0, so
+the start of its `entry` range happened "before" the page loaded.
+
+### Ranges on Scroll Timelines
+
+Range names belong to view progress timelines. On a `scroll()` or `scroll-timeline` timeline, use plain offsets:
+`animation-range: 0 150px` or `animation-range: 20% 80%`.
+
+### Range Names in `@keyframes`
+
+The spec also lets you put range names straight into keyframe selectors, so one `@keyframes` rule can describe an
+entry and an exit:
+
+<CodeBlock language="css">
+{`
+  @keyframes in-and-out {
+    entry 0%   { opacity: 0; }
+    entry 100% { opacity: 1; }
+    exit 0%    { opacity: 1; }
+    exit 100%  { opacity: 0; }
+  }
+`}
+</CodeBlock>
+
+Chrome, Edge and Safari support this, but Firefox only has it in preview builds, so it isn't Baseline yet. Until it
+is, write two animations with one range each, which works everywhere:
+
+<CodeBlock language="css">
+{`
+  .card {
+    animation:
+      fade-in linear both,
+      fade-out linear forwards;
+    animation-timeline: view();
+    animation-range: entry, exit;
+  }
+`}
+</CodeBlock>
+
+Like every `animation-*` longhand, `animation-timeline` and `animation-range` take comma-separated lists that match
+the animations in `animation-name` by position. A single `view()` here applies to both animations, because a shorter
+list repeats to fill the gaps.
+
+<RainbowDivider />
+
+## Sharing a Timeline with `timeline-scope`
+
+A named timeline is always visible to the element that declares it and to that element's descendants. Often the
+element you want to animate is somewhere else: a progress indicator *next to* a carousel, or a reading bar that sits
+outside the article it measures. `timeline-scope` on a shared ancestor makes the name available to that ancestor's
+whole subtree:
+
+<CodeBlock language="css">
+{`
+  /* The bar is outside the article, so lift the name up to <body> */
+  body {
+    timeline-scope: --article;
+  }
+
+  article {
+    view-timeline: --article;
+  }
+
+  .reading-progress {
+    animation: grow-progress linear both;
+    animation-timeline: --article;
+    animation-range: contain;
+  }
+`}
+</CodeBlock>
+
+This version of the reading bar measures the article instead of the whole page, so comments and the footer no longer
+count as "reading". The range does the rest. For an article taller than the viewport, `contain` runs from its top edge
+reaching the top of the screen to its bottom edge reaching the bottom, which is exactly the stretch you spend reading
+it.
+
+`timeline-scope` also keeps repeated components apart. If every `.carousel` declares `--slides` and every
+`.carousel` contains an indicator that uses it, putting `timeline-scope: --slides` on `.carousel` guarantees each
+indicator finds its own carousel's timeline and not one from another carousel on the page.
+
+The current Editor's Draft of the spec is relaxing how names are looked up, so that a name can be found anywhere in
+the document, with `timeline-scope` used mainly to limit a name to a subtree. Putting `timeline-scope` on a common
+ancestor works under both the old and the new rules, so it's the safe choice either way. Support for
+`timeline-scope` arrived one version after the rest of the feature in Chrome and Edge (116), and in the same release
+as the rest in Safari 26 and Firefox 159.
+
+<RainbowDivider />
+
+## More Examples
+
+### Parallax Header
+
+The hero image drifts down more slowly than the page scrolls, so it appears to sit further back:
+
+<CodeBlock language="css">
+{`
+  .hero {
+    overflow: hidden;
+    view-timeline: --hero;
+  }
+
+  .hero img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    scale: 1.2; /* overscan, so the moving image never shows an edge */
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero img {
+      animation: parallax linear both;
+      animation-timeline: --hero;
+      animation-range: exit;
+    }
+  }
+
+  @keyframes parallax {
+    to {
+      transform: translateY(30%);
+    }
+  }
+`}
+</CodeBlock>
+
+The hero sits at the top of the page, so it's fully in view at scroll position 0. Its `exit` range starts right
+there and ends when the hero has scrolled out of sight, which is the only stretch where the effect is visible. Using
+the hero's timeline rather than the image's keeps the measurement on the element that doesn't move. The keyframes
+only define `to`, so the browser takes the starting value from the element's own style. The individual `scale`
+property composes with the animated `transform`, so the overscan and the drift don't overwrite each other. The
+reduced-motion wrapper is there because parallax is one of the effects most likely to make people feel unwell; see
+[Respecting `prefers-reduced-motion`](#respecting-prefers-reduced-motion).
+
+### Image Scale in a Gallery
+
+A horizontal gallery where the photo nearest the centre is full size and the others shrink and dim:
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+  }
+
+  .gallery img {
+    flex: 0 0 70%;
+    scroll-snap-align: center;
+    animation: focus-image linear both;
+    animation-timeline: view(inline);
+  }
+
+  @keyframes focus-image {
+    0%,
+    100% {
+      opacity: 0.5;
+      transform: scale(0.8);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`}
+</CodeBlock>
+
+`view(inline)` tracks each image along the gallery's horizontal axis. On the default `cover` range, 50% is the halfway
+point of the image's pass across the gallery, which, for an image narrower than the gallery, is when it's centred.
+Scroll snap lands each image on that point, so the image you stop on is the full-size one.
+
+### Sticky Header Shrink
+
+A header that tightens up over the first 150px of scrolling:
+
+<CodeBlock language="css">
+{`
+  .site-header {
+    position: sticky;
+    inset-block-start: 0;
+    background-color: transparent;
+    animation: header-solid linear both;
+    animation-timeline: scroll();
+    animation-range: 0 150px;
+  }
+
+  .site-header .logo {
+    transform-origin: left center;
+    animation: logo-shrink linear both;
+    animation-timeline: scroll();
+    animation-range: 0 150px;
+  }
+
+  @keyframes header-solid {
+    to {
+      background-color: white;
+      box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.1);
+    }
+  }
+
+  @keyframes logo-shrink {
+    to {
+      transform: scale(0.7);
+    }
+  }
+`}
+</CodeBlock>
+
+The header's own height doesn't change. Animating `height` or `padding` would work, but it re-lays out the page on
+every frame of scrolling, and the content under a sticky header jumps as it shrinks. Scaling the logo and fading in a
+background gives the same impression for much less work. `scroll()` here resolves to the document viewport because
+it's the nearest scroll container above the header.
+
+<RainbowDivider />
+
+## Driving Timelines from JavaScript
+
+The same timelines are available as objects in the Web Animations API, and `element.animate()` accepts them through
+its `timeline` option. `ScrollTimeline` and `ViewTimeline` are supported in the same versions as the CSS properties.
+
+<CodeBlock language="js">
+{`
+  const bar = document.querySelector(".reading-progress");
+
+  bar.animate(
+    { transform: ["scaleX(0)", "scaleX(1)"] },
+    {
+      timeline: new ScrollTimeline({ source: document.documentElement, axis: "block" }),
+      fill: "both"
+    }
+  );
+`}
+</CodeBlock>
+
+`ScrollTimeline` takes a `source` (the scroll container, defaulting to the document's scrolling element) and an
+`axis` (default `"block"`). There's no duration: the Web Animations API's default duration is already `"auto"`.
+
+`ViewTimeline` takes a required `subject`, plus `axis` and `inset`, and `animate()` takes `rangeStart` and `rangeEnd`
+in the same syntax as `animation-range`:
+
+<CodeBlock language="js">
+{`
+  for (const card of document.querySelectorAll(".card")) {
+    const timeline = new ViewTimeline({ subject: card, axis: "block", inset: "0% 20%" });
+
+    card.animate(
+      { opacity: [0, 1], transform: ["translateY(3rem)", "none"] },
+      { timeline, rangeStart: "entry 0%", rangeEnd: "entry 100%", fill: "both" }
+    );
+  }
+`}
+</CodeBlock>
+
+For a `ViewTimeline`, `source` is worked out for you: the subject's nearest ancestor that scrolls in that axis.
+`startOffset` and `endOffset` give the scroll positions, in pixels from the scroll origin, where its 0% and 100%
+fall.
+
+### Reading Progress
+
+A timeline's `currentTime` is a percentage rather than a number of milliseconds, and it's `null` while the timeline
+is inactive. Where CSS Typed OM is available (Chrome, Edge and Safari) it's a `CSSUnitValue` such as
+`{ value: 42, unit: "percent" }`. Firefox doesn't ship Typed OM yet, so don't assume `.value` exists. An animation's
+own progress through its range is a plain number from `getComputedTiming()`:
+
+<CodeBlock language="js">
+{`
+  const [animation] = document.querySelector(".card").getAnimations();
+
+  animation.timeline;                          // the ViewTimeline that CSS created for view()
+  animation.timeline.currentTime;              // e.g. CSSUnitValue { value: 37.5, unit: "percent" }
+  animation.effect.getComputedTiming().progress; // 0 to 1 through the animation-range
+`}
+</CodeBlock>
+
+`getAnimations()` works on CSS animations as well, so you can inspect the timelines that `scroll()` and `view()`
+created without building them yourself. Each use of `scroll()` or `view()` gets its own timeline object, even when
+two elements point at the same scroller.
+
+### When JavaScript Is the Better Choice
+
+Reach for the JavaScript API when the keyframes or ranges come from data, such as a chart whose bars each animate
+over a range calculated from their values, or when the timeline should be created and destroyed along with a
+component. For anything you can write in a stylesheet, CSS is shorter and keeps working if a script fails to load.
+
+Scroll-driven animations also fire the usual `animationstart`, `animationend` and `animationiteration` events. When
+the user scrolls backwards, `animationstart` fires at the end of the range and `animationend` at the start, so don't
+treat them as one-off "it happened" signals.
+
+<RainbowDivider />
+
+## Performance
+
+Scroll-driven animations replace a classic pattern: a `scroll` listener that reads `scrollTop` and writes a style on
+every event. That pattern runs on the main thread, so a busy page makes it lag behind the scrollbar. A scroll-driven
+animation is declared once and the browser updates it as part of rendering.
+
+How cheap each frame is depends on what you animate:
+
+- **`transform` and `opacity`** don't need layout or paint. Chromium runs scroll-driven animations of these
+  properties on the compositor, off the main thread, so they stay smooth even while JavaScript is busy. This is why
+  the progress bar uses `scaleX()` and the header scales its logo.
+- **`filter`, `background-color`, `box-shadow`, `clip-path`** need repainting each frame, which is fine for small
+  elements and worth testing for large ones.
+- **`width`, `height`, `padding`, `top`, `margin`** trigger layout on every frame of scrolling, for the element and
+  potentially everything around it. Avoid them, or confine them to small, isolated elements.
+
+You rarely need `will-change` for these animations. Keep the number of animated elements reasonable too: a hundred
+cards each with their own view timeline is fine, but a filtered `blur()` on every one of them is not.
+
+<RainbowDivider />
+
+## Respecting `prefers-reduced-motion`
+
+A scroll-driven animation moves when the user moves, which makes it less jarring than an animation that starts on
+its own. Large movements tied to scrolling, parallax especially, can still cause discomfort for people with
+vestibular disorders. Put movement behind `prefers-reduced-motion`, and keep content readable without it:
+
+<CodeBlock language="css">
+{`
+  /* Visible and in place by default */
+  .card {
+    opacity: 1;
+  }
+
+  @supports (animation-timeline: view()) {
+    .card {
+      animation: fade-in linear both;
+      animation-timeline: view();
+      animation-range: entry;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .card {
+        animation-name: reveal; /* the version that also slides and scales */
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+People who ask for reduced motion still get a gentle fade, and everyone else gets the full slide. A reading progress
+bar or a header that changes colour is generally fine to keep for everyone, since neither moves content around.
+
+<RainbowDivider />
+
+## Try It Live
+
+The panel in the playground has its own scroll container, because the sandbox itself is too short to scroll. The bar
+pinned to its top uses `scroll(nearest)`, which finds the panel. The cards use the timeline chosen in the first
+select: `view()`, `view()` with a 25% inset at the bottom, or `scroll(nearest)`, where every card follows the panel's
+scroll position together. Change the start and end of `animation-range` and scroll again. The readout shows the CSS
+being applied, the panel's scroll progress, and both the timeline progress and the animation progress for two of the
+cards, so you can see how a range maps one onto the other.
+
+<Sandbox slug="scroll-driven-animations-animation-timeline" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+| Feature | Chrome / Edge | Safari | Firefox |
+| --- | --- | --- | --- |
+| `animation-timeline`, `scroll()`, `view()` | 115 | 26 | 159 |
+| `scroll-timeline`, `view-timeline`, `view-timeline-inset` | 115 | 26 | 159 |
+| `animation-range` | 115 | 26 | 159 |
+| `timeline-scope` | 116 | 26 | 159 |
+| `ScrollTimeline`, `ViewTimeline`, `rangeStart` / `rangeEnd` in `animate()` | 115 | 26 | 159 |
+| Range names in `@keyframes` selectors | 115 | 26 | Preview builds only |
+
+Firefox 159, released on 27 October 2026, was the last of the major engines to ship, which made scroll-driven
+animations **Baseline newly available**. They'll be Baseline widely available around April 2029. Scroll-driven
+animations are also one of the Interop 2026 focus areas, so the remaining differences between engines are being worked
+on together. (If you read about this feature while it was Chromium-only, as the keyframes guide's support table
+describes, that's no longer the case.)
+
+### Feature Queries
+
+Users on older browsers will be around for a while, so treat scroll-driven effects as an enhancement. Put the
+animation inside `@supports`:
+
+<CodeBlock language="css">
+{`
+  @supports (animation-timeline: scroll()) {
+    .reading-progress {
+      animation: grow-progress linear both;
+      animation-timeline: scroll(root);
+    }
+  }
+`}
+</CodeBlock>
+
+This is more than tidiness. In a browser without support, `animation-timeline` is ignored but `animation` isn't, so
+the keyframes run as a normal time-based animation with a duration of `0s`. With `both`, that jumps straight to the
+last keyframe. For a reveal, ending fully visible is harmless. For a progress bar, it means a bar stuck at 100%,
+which is wrong. Wrapping it in `@supports` and hiding the bar by default avoids that.
+
+### An IntersectionObserver Fallback for Reveals
+
+For reveal effects you can fall back to a one-way trigger with
+[IntersectionObserver](/post/javascript/mastering-js-observers#intersectionobserver-the-viewport-watcher). It doesn't
+follow the scrollbar, but it gives older browsers the same "appear as you arrive" feel:
+
+<CodeBlock language="js">
+{`
+  if (!CSS.supports("animation-timeline: view()") && "IntersectionObserver" in window) {
+    document.documentElement.classList.add("io-reveal");
+
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target); // reveal once, then stop watching
+      }
+    }, { rootMargin: "0px 0px -10% 0px" });
+
+    document.querySelectorAll(".card").forEach((card) => observer.observe(card));
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .io-reveal .card {
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .io-reveal .card:not(.is-visible) {
+    opacity: 0;
+    transform: translateY(2rem);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .io-reveal .card {
+      transition: opacity 0.4s ease;
+    }
+
+    .io-reveal .card:not(.is-visible) {
+      transform: none;
+    }
+  }
+`}
+</CodeBlock>
+
+The cards are only hidden once the script has run and added `io-reveal`, so if JavaScript fails they stay visible.
+The negative bottom `rootMargin` plays the same role as a `view()` inset, waiting until a card is 10% of the way up
+the screen. IntersectionObserver is also the right tool in every browser when reaching an element should *do*
+something, such as loading data or recording an analytics event, since scroll-driven animations only change styles.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. `animation` After `animation-timeline`
+
+The shorthand resets the timeline to `auto`, and the animation runs once on page load at a duration of `0s`. Write
+`animation` first, then `animation-timeline` and `animation-range`.
+
+### 2. Putting the Timeline in the Shorthand
+
+`animation: reveal linear both view()` isn't accepted by browsers yet, and the whole declaration is thrown away. Use
+the longhand.
+
+### 3. Forgetting `linear` or the Fill Mode
+
+The default `ease` makes the effect lag behind the scrollbar and then catch up. Without `both`, elements jump back to
+their unanimated style as soon as they leave the range.
+
+### 4. A Timeline with Nothing to Scroll
+
+If the scroll container's content doesn't overflow, or `scroll(self)` is used on an element that isn't a scroll
+container, the timeline is inactive and nothing animates. This often bites in a short page in development, where
+`scroll(root)` has nothing to track.
+
+### 5. A Named Timeline That Isn't in Scope
+
+`animation-timeline: --gallery` on an element outside `.gallery` finds nothing unless an ancestor of both declares
+`timeline-scope: --gallery`. Check the scope before suspecting the keyframes.
+
+### 6. Expecting Time Values to Matter
+
+`animation-duration: 2s` is treated as `auto` on a scroll timeline. Change how fast an effect plays by changing its
+range.
+
+### 7. Animating Layout Properties
+
+Animating `height`, `width` or `top` on scroll re-lays out the page on every frame. Use `transform`, `scale`,
+`translate` and `opacity` wherever possible.
+
+### 8. Range Names on a Scroll Timeline
+
+`entry`, `exit`, `cover` and the others only exist on view progress timelines. On a `scroll()` timeline, use lengths or
+percentages.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Reading progress bars and "how far through" indicators
+- Revealing cards, images and headings as they scroll into view
+- Parallax and depth effects on hero sections, behind a reduced-motion check
+- Headers that change appearance as the page scrolls
+- Carousels and galleries that emphasise the item in the middle
+- Progress indicators for horizontal scrollers, shared with `timeline-scope`
+
+**Reach for something else** when reaching an element should cause a side effect such as fetching data, playing a
+video or logging analytics (IntersectionObserver), when an animation should play once on its own clock after a
+trigger rather than follow the scrollbar, or when an effect only makes sense with exact pixel control over its
+timing, which is easier to reason about in JavaScript.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`animation-timeline` swaps the clock for a scrollbar. `scroll()` and `scroll-timeline` follow a scroll container from
+start to end; `view()` and `view-timeline` follow an element through the scrollport. `animation-range` picks the
+segment that matters, with `entry`, `exit`, `contain`, `cover` and the `-crossing` ranges describing the moments
+people actually care about, and `timeline-scope` lets an element use a timeline from outside its own ancestors. Write
+the `animation` shorthand first, use `linear` and `both`, animate `transform` and `opacity`, respect reduced motion,
+and wrap it all in `@supports`. With Firefox 159 it's Baseline, so effects that used to need a scroll listener and
+careful throttling are now a few lines of CSS.

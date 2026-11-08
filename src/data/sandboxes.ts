@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "scroll-driven-animations-animation-timeline",
+    title: "animation-timeline and animation-range Playground",
+    description: "Scroll a panel with a scroll(nearest) progress bar and view()-driven cards, switch the cards between view() and scroll(), and change animation-range start and end to compare timeline progress with animation progress.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-custom-highlight-api",
     title: "Custom Highlight API Playground",
     description: "Search an article and watch every match painted by ::highlight(search-results), with the current match on top via a higher-priority ::highlight(search-current). Step through matches, toggle case sensitivity, edit the text to see the StaticRanges rebuilt, and confirm that no <mark> element is ever added.",

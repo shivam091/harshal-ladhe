@@ -716,6 +716,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "scroll-driven-animations-animation-timeline",
+    title: "Scroll-Driven Animations with `animation-timeline`",
+    excerpt: "Drive CSS animations from scroll position, not the clock.",
+    description: "Build scroll-driven CSS animations with animation-timeline: scroll() and view() timelines, animation-range names, timeline-scope, ScrollTimeline and ViewTimeline, performance, reduced motion and fallbacks.",
+    category: ["CSS"],
+    tags: ["css", "animation-timeline", "scroll-animation", "view-timeline", "keyframes", "web-animations-api", "prefers-reduced-motion", "progressive-enhancement", "css-2027"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/scroll-driven-animations-animation-timeline/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A scrolling page with a reading progress bar along its top and cards fading in as they enter the viewport, with the entry, contain and exit ranges of a view timeline marked beside them.",
+      caption: "A progress bar on a scroll() timeline and cards revealed on view() timelines, timed with animation-range."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

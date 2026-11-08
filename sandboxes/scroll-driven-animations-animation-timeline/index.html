@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>animation-timeline and animation-range Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Scroll-Driven Animations with animation-timeline</h1>
+        <p>Scroll the panel below. The bar at its top runs on <code>scroll(nearest)</code>, and the cards run on whichever timeline you pick. Change where each card's animation starts and ends with <code>animation-range</code>, and watch the readout to see the timeline's progress next to the animation's.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support scroll-driven animations. They're supported in Chrome and Edge 115, Safari 26 and Firefox 159 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Card timeline</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label for="timeline-select">animation-timeline</label>
+            <select id="timeline-select">
+              <option value="view()" selected>view(): each card tracks its own visibility</option>
+              <option value="view(block 0% 25%)">view(block 0% 25%): ignore the bottom quarter of the panel</option>
+              <option value="scroll(nearest)">scroll(nearest): every card tracks the panel's scroll position</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>animation-range</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="start-name">Start range</label>
+            <select id="start-name">
+              <option value="cover">cover</option>
+              <option value="contain">contain</option>
+              <option value="entry" selected>entry</option>
+              <option value="exit">exit</option>
+              <option value="entry-crossing">entry-crossing</option>
+              <option value="exit-crossing">exit-crossing</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="start-offset">Start offset (%)</label>
+            <input type="number" id="start-offset" min="0" max="100" step="5" value="0">
+          </div>
+          <div class="field">
+            <label for="end-name">End range</label>
+            <select id="end-name">
+              <option value="cover">cover</option>
+              <option value="contain">contain</option>
+              <option value="entry" selected>entry</option>
+              <option value="exit">exit</option>
+              <option value="entry-crossing">entry-crossing</option>
+              <option value="exit-crossing">exit-crossing</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="end-offset">End offset (%)</label>
+            <input type="number" id="end-offset" min="0" max="100" step="5" value="100">
+          </div>
+        </div>
+        <p class="hint" id="range-hint">Range names only exist on view progress timelines. With <code>scroll()</code>, the offsets are percentages of the whole scroll range.</p>
+        <div class="actions">
+          <button type="button" class="secondary-btn" id="reset-btn">Reset to entry</button>
+        </div>
+      </fieldset>
+
+      <section class="demo-area scroller" id="scroller" aria-label="Scrollable demo panel" tabindex="0">
+        <div class="progress" aria-hidden="true"></div>
+        <p class="scroller-intro">Scroll down inside this panel.</p>
+        <ol class="cards">
+          <li class="card"><span class="card-badge">1</span>Fades and rises as its range plays.</li>
+          <li class="card"><span class="card-badge">2</span>The same keyframes on every card.</li>
+          <li class="card"><span class="card-badge">3</span>No scroll listener moves anything.</li>
+          <li class="card"><span class="card-badge">4</span>Scroll back up and it plays in reverse.</li>
+          <li class="card"><span class="card-badge">5</span>Outside its range, fill-mode holds the end state.</li>
+          <li class="card"><span class="card-badge">6</span>The last card.</li>
+        </ol>
+        <p class="scroller-outro">End of the panel.</p>
+      </section>
+
+      <output class="readout" id="readout" aria-live="off">Scroll the panel to see progress.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
