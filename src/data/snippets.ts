@@ -453,6 +453,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-responsive-clip-path-html",
+    title: "Responsive SVG Clip Path for HTML Elements",
+    excerpt: "Clip any HTML element to a blob that scales with it.",
+    description: "Clip images and HTML elements to a curved SVG shape that scales with them, using objectBoundingBox clipPathUnits and clip-path: url(#id).",
+    link: {
+      label: "Read the full post: SVG Essentials: Mastering the Path Element",
+      href: "/post/svg/svg-essentials-mastering-the-path-element"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "clip-path", "clipPathUnits", "objectBoundingBox", "responsive", "aspect-ratio", "object-fit", "shape-function", "pointer-events"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-responsive-clip-path-html/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing gradient blob shape clipping a square image, repeated at three different sizes.",
+      caption: "One SVG blob clip path scaling with HTML elements of different sizes."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

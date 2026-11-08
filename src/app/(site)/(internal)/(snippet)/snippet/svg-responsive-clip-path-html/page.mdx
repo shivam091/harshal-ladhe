@@ -1,0 +1,179 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-responsive-clip-path-html");
+
+## Introduction
+
+CSS `clip-path: path()` can cut an element into a curved shape, but its coordinates are fixed pixels, so the shape doesn't grow or shrink with the element. An SVG `<clipPath>` with `clipPathUnits="objectBoundingBox"` solves that. Its coordinates run from `0` to `1` across the element it's applied to, so **one blob shape fits any element at any size**.
+
+You define the shape once in a hidden inline `<svg>` and point any HTML element at it with `clip-path: url(#id)`: images, videos, cards, or plain `<div>`s.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+    <clipPath id="rcp-blob" clipPathUnits="objectBoundingBox">
+      <path d="M0.5,0.04 C0.68,0 0.9,0.1 0.95,0.32 C1,0.52 0.92,0.74 0.76,0.88 C0.6,1 0.36,0.99 0.2,0.86 C0.04,0.73 0,0.5 0.06,0.3 C0.13,0.12 0.32,0.08 0.5,0.04 Z" />
+    </clipPath>
+  </svg>
+
+  <div class="rcp-avatar"></div>
+
+  <style>
+    .rcp-avatar {
+      inline-size: 160px;
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, #6366f1, #ec4899 55%, #f59e0b);
+      clip-path: url(#rcp-blob);
+    }
+  </style>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `clipPathUnits="objectBoundingBox"` makes every coordinate inside the `<clipPath>` a **fraction of the clipped element's box**. `0,0` is its top-left corner and `1,1` is its bottom-right corner, whatever its size in pixels.
+2. The `<path>` draws a smooth, slightly lopsided blob with cubic Bézier curves, staying inside the `0`–`1` square. Only its geometry matters: fill, stroke and colour inside a `<clipPath>` are ignored.
+3. `clip-path: url(#rcp-blob)` on the `<div>` keeps the part of the element inside the blob and hides the rest. Resize the element and the blob resizes with it, because the units are relative.
+4. The defining `<svg>` has `width="0"`, `height="0"` and `position: absolute`, so it takes up no space and doesn't affect layout. `aria-hidden="true"` keeps it out of the accessibility tree.
+5. It is **not** hidden with `display: none`. In some browsers, references into an SVG that isn't rendered fail to resolve, and the clip silently disappears.
+
+<RainbowDivider />
+
+## Variant: Keeping the Blob in Shape on Non-Square Elements
+
+`objectBoundingBox` scales the x axis by the element's width and the y axis by its height **separately**. On a square element the blob looks as drawn. On a wide element the whole coordinate system stretches, and the blob becomes a flat oval. The first box below is `240 × 120`. The second is `120px` wide with `aspect-ratio: 1`:
+
+<SvgSnippet>
+{`
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+    <clipPath id="rcp-blob-2" clipPathUnits="objectBoundingBox">
+      <path d="M0.5,0.04 C0.68,0 0.9,0.1 0.95,0.32 C1,0.52 0.92,0.74 0.76,0.88 C0.6,1 0.36,0.99 0.2,0.86 C0.04,0.73 0,0.5 0.06,0.3 C0.13,0.12 0.32,0.08 0.5,0.04 Z" />
+    </clipPath>
+  </svg>
+
+  <div class="rcp-compare">
+    <div class="rcp-shape rcp-shape-wide"></div>
+    <div class="rcp-shape rcp-shape-square"></div>
+  </div>
+
+  <style>
+    .rcp-compare {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+    }
+
+    .rcp-shape {
+      inline-size: 120px;
+      background: linear-gradient(135deg, #14b8a6, #6366f1);
+      clip-path: url(#rcp-blob-2);
+    }
+
+    .rcp-shape-wide {
+      inline-size: 240px;
+      block-size: 120px;
+    }
+
+    .rcp-shape-square {
+      aspect-ratio: 1;
+    }
+  </style>
+`}
+</SvgSnippet>
+
+- **Give the element a square box:** `aspect-ratio: 1` (or equal `width` and `height`) keeps the bounding box square, so the blob keeps its proportions at every size.
+- **For images, add `object-fit: cover`:** a `4:3` photo in a square box would otherwise be squashed. `object-fit: cover` crops it to fill the square instead, and the clip is applied to that square box.
+- **Or wrap it:** put the image inside a square container and clip the container instead of the image.
+
+<RainbowDivider />
+
+## Example Usage
+
+A blob-shaped avatar from a photo of any shape. The `<img>` is forced into a square box, and the photo is cropped to fill it:
+
+<CodeBlock language="html">
+{`
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+    <clipPath id="blob-clip" clipPathUnits="objectBoundingBox">
+      <path d="M0.5,0.04 C0.68,0 0.9,0.1 0.95,0.32 C1,0.52 0.92,0.74 0.76,0.88 C0.6,1 0.36,0.99 0.2,0.86 C0.04,0.73 0,0.5 0.06,0.3 C0.13,0.12 0.32,0.08 0.5,0.04 Z" />
+    </clipPath>
+  </svg>
+
+  <img class="avatar" src="team/priya.jpg" alt="Priya, product designer" />
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .avatar {
+    inline-size: clamp(6rem, 20vw, 12rem);
+    aspect-ratio: 1;
+    object-fit: cover;
+    clip-path: url(#blob-clip);
+  }
+`}
+</CodeBlock>
+
+The same `url(#blob-clip)` can be reused on a `<video>`, a card or a button. Put the hidden `<svg>` once near the top of the `<body>` so every component can reference it.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Blob or organic avatars** and team photos that need to resize with the layout.
+- **Hero images and section art** cut into a brand shape, such as a logo outline you already have as an SVG path.
+- **Video thumbnails and cards** with curved edges that `border-radius` can't produce.
+- **One shape, many elements:** a single `<clipPath>` shared by every image in a gallery, whatever their sizes.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Clipping changes hit-testing:** the clipped-away area is gone for the pointer too. Clicks and hovers only register inside the blob, so the corners of a clipped button or link aren't clickable. That's usually what you want, but keep the visible shape large enough to tap.
+- **Focus outlines get clipped:** `clip-path` also cuts off `outline` and `box-shadow`. On a focusable element, show focus another way, for example on a wrapper, or with `filter: drop-shadow()` on a parent (filters on the parent run after the child has been clipped).
+- **Unique ids:** `url(#rcp-blob)` resolves against the first element with that id in the document. If a component renders its own `<svg>` with a hard-coded id more than once, give each instance a unique id, or define the shape once and share it.
+- **Don't use `display: none` on the defining SVG:** use `width="0" height="0"` and `position: absolute` as shown. Avoid `visibility: hidden` too: it's inherited by the `<path>`, and a hidden child adds nothing to the clip region, so the element vanishes.
+- **The CSS alternative:** the [CSS `shape()` function](/tutorial/shape-function-clip-path) draws responsive curves directly in `clip-path`, using percentages, and works in all current browsers. The SVG `<clipPath>` is still useful for older browsers, and when the shape already exists as SVG path data, such as a logo.
+- **Browser support:** `clip-path: url(#id)` pointing at an inline SVG `<clipPath>` works on HTML elements in all current browsers. References into an **external** file (`url(shapes.svg#blob)`) are less reliable, so keep the `<clipPath>` inline in the page.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does my blob look stretched?">
+  `objectBoundingBox` scales the x and y axes separately, by the element's width and height. On anything that isn't
+  square, the blob stretches with it. Give the element `aspect-ratio: 1`, and add `object-fit: cover` on images so the
+  photo is cropped into the square box rather than squashed.
+</Details>
+
+<Details summary="Why did the clip disappear completely?">
+  The most common causes are a defining `<svg>` hidden with `display: none`, an id that's duplicated or misspelled, or
+  a reference into an external SVG file. Keep the `<svg>` inline at zero size, check that the id is unique, and make
+  sure the `<clipPath>` uses `clipPathUnits="objectBoundingBox"`: without it, a `0`–`1` shape is one pixel wide.
+</Details>
+
+<Details summary="How do I add a shadow or border to the clipped shape?">
+  `box-shadow` and `border` are clipped along with everything else. Wrap the element and put
+  `filter: drop-shadow(...)` on the wrapper. The filter follows the clipped outline, because the child is clipped
+  before the parent's filter runs.
+</Details>
+
+<Details summary="Should I use this or CSS shape()?">
+  For a new design that only targets current browsers, `clip-path: shape(...)` keeps everything in CSS and scales with
+  percentages. Use the SVG `<clipPath>` when you need older browsers, or when you already have the outline as SVG path
+  data and want to reuse it unchanged.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Draw the shape once in `0`–`1` coordinates inside a `<clipPath clipPathUnits="objectBoundingBox">`, keep its `<svg>` in the page at zero size, and apply it with `clip-path: url(#id)`. The blob then scales with any element it's applied to. Keep that element square, with `aspect-ratio: 1` and `object-fit: cover` for images, so the blob keeps its shape.

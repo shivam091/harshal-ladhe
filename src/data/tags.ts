@@ -1263,4 +1263,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Fitting SVG Text with `textLength`",
     description: "Forcing SVG text to an exact length with `textLength`, with `lengthAdjust` choosing whether spacing or glyphs are stretched."
   },
+  "clippathunits": {
+    title: "Scaling Clip Paths with `clipPathUnits`",
+    description: "Using the `clipPathUnits` attribute on an SVG `<clipPath>` to switch between user-space coordinates and `0`–`1` fractions of the clipped element's bounding box."
+  },
+  "aspect-ratio": {
+    title: "Sizing Boxes with CSS `aspect-ratio`",
+    description: "Using the `aspect-ratio` property to keep an element's width and height in a fixed proportion, such as a square avatar, at any size."
+  },
+  "object-fit": {
+    title: "Cropping Images with CSS `object-fit`",
+    description: "Controlling how an image or video fills its box with `object-fit`, such as `cover` to crop it instead of stretching it."
+  },
 };
