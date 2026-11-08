@@ -1,0 +1,164 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-arrowhead-marker");
+
+## Introduction
+
+Arrows in diagrams are often drawn as a line plus a separate triangle, placed by hand at the line's end. That works until the line moves, bends, or changes thickness, and then every triangle has to be moved and rotated again.
+
+SVG's `<marker>` element does that work for you. You draw the arrowhead **once**, inside `<defs>`, and attach it to the end of any `<line>`, `<path>`, `<polyline>`, or `<polygon>`. The browser places it on the line's end, rotates it to match the line's direction, and scales it with the stroke. With `orient="auto-start-reverse"`, the same marker also gives you double-headed arrows.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 80" width="300" height="120" role="img" aria-label="A single-headed arrow and a double-headed arrow">
+    <defs>
+      <marker id="sam-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor" />
+      </marker>
+    </defs>
+    <line x1="20" y1="25" x2="170" y2="25" stroke="currentColor" stroke-width="2" marker-end="url(#sam-arrow)" />
+    <line x1="30" y1="55" x2="170" y2="55" stroke="currentColor" stroke-width="2" marker-start="url(#sam-arrow)" marker-end="url(#sam-arrow)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The `<marker>` has its own `viewBox="0 0 10 10"`, so the triangle is drawn on a simple 10 × 10 grid with its tip at `(10, 5)`. That grid is then scaled to fit a box `markerWidth` × `markerHeight` in size.
+2. `markerUnits` defaults to `strokeWidth`, so `markerWidth="6"` means **6 stroke widths**. On a line with `stroke-width="2"` the arrowhead is 12 user units across, and on a thicker line it grows to match.
+3. `refX` and `refY` pick the point **inside the marker's grid** that sits on the line's end. The default is `(0, 0)`, the top-left corner, which pushes the arrow off to one side. `refY="5"` puts the line on the arrow's centre line, and `refX="8"` places the end of the line 2 units behind the tip, where the triangle is wider than the stroke, so the stroke's square end is hidden inside the arrow.
+4. `orient="auto"` would rotate the marker to follow the line's direction at each end. `orient="auto-start-reverse"` does the same, but **flips the marker 180° when it's used as `marker-start`**. Used as `marker-end` it behaves like `auto`, so one marker points outwards at both ends of the second line.
+5. `fill="currentColor"` on the triangle takes its colour from the `<svg>`'s `color`, so the arrows match the surrounding text in light and dark themes.
+
+<RainbowDivider />
+
+## Variant: Fixed-Size Arrowheads
+
+With the default `markerUnits="strokeWidth"`, a thick line gets a big arrowhead. When every arrow should be the same size whatever the stroke, set `markerUnits="userSpaceOnUse"`. `markerWidth` and `markerHeight` are then measured in the SVG's own user units:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 80" width="300" height="120" role="img" aria-label="A thin and a thick arrow with arrowheads of the same size">
+    <defs>
+      <marker id="sam-fixed" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="#6366f1" />
+      </marker>
+    </defs>
+    <line x1="20" y1="25" x2="170" y2="25" stroke="#6366f1" stroke-width="1" marker-end="url(#sam-fixed)" />
+    <line x1="20" y1="55" x2="170" y2="55" stroke="#6366f1" stroke-width="4" marker-end="url(#sam-fixed)" />
+  </svg>
+`}
+</SvgSnippet>
+
+Both arrowheads are 12 user units across. Note that `refX` is `6` here, not `8`. The marker no longer grows with the stroke, so it has to be wide enough to hide the end of the thickest line it's used on. The triangle is `10 − refX` grid units tall at the reference point: at `refX="8"` that's `2 × 1.2 = 2.4` user units, narrower than the 4-unit line, while at `refX="6"` it's 4.8 units, which covers it.
+
+<RainbowDivider />
+
+## Variant: Two Markers for Older Browsers
+
+`orient="auto-start-reverse"` is part of SVG 2. Some older engines treated it as an invalid value and fell back to `orient="0"`, so both arrows pointed right. If you have to support those, define a second marker that is **drawn pointing the other way** and use plain `orient="auto"` on both:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 50" width="300" height="75" role="img" aria-label="A double-headed arrow built from two markers">
+    <defs>
+      <marker id="sam-fb-end" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="#14b8a6" />
+      </marker>
+      <marker id="sam-fb-start" viewBox="0 0 10 10" refX="2" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 10 0 L 0 5 L 10 10 Z" fill="#14b8a6" />
+      </marker>
+    </defs>
+    <line x1="30" y1="25" x2="170" y2="25" stroke="#14b8a6" stroke-width="2" marker-start="url(#sam-fb-start)" marker-end="url(#sam-fb-end)" />
+  </svg>
+`}
+</SvgSnippet>
+
+The start marker's tip is at `(0, 5)`, so its `refX` is `2` rather than `8`: still 2 units behind the tip, just measured from the other side. This version works everywhere, at the cost of a second definition.
+
+<RainbowDivider />
+
+## Example Usage
+
+In a flowchart, the arrow should touch the next box rather than overlap it. With `refX="8"`, the tip overshoots the line's end by `(10 − 8) × (6 ÷ 10) × stroke-width`, which is `2.4` user units on a 2-unit stroke. End the line that much short of the box edge:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 80" width="300" height="120" role="img" aria-label="Flowchart: Start leads to End">
+    <defs>
+      <marker id="sam-flow-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="currentColor" />
+      </marker>
+    </defs>
+    <rect x="10" y="20" width="60" height="40" rx="6" fill="none" stroke="#6366f1" stroke-width="2" />
+    <rect x="130" y="20" width="60" height="40" rx="6" fill="none" stroke="#ec4899" stroke-width="2" />
+    <text x="40" y="44" font-size="12" text-anchor="middle" fill="currentColor">Start</text>
+    <text x="160" y="44" font-size="12" text-anchor="middle" fill="currentColor">End</text>
+    <!-- The box edge is at x = 129; the line stops 2.4 units short of it. -->
+    <line x1="71" y1="40" x2="126.6" y2="40" stroke="currentColor" stroke-width="2" marker-end="url(#sam-flow-arrow)" />
+  </svg>
+`}
+</SvgSnippet>
+
+Markers work on bent lines too. On a `<path>` or `<polyline>`, `orient="auto"` follows the direction of the **last segment** at the end and the first segment at the start, so an elbow connector still gets correctly rotated arrowheads.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Flowcharts and diagrams**, where connectors move and change length.
+- **Annotated screenshots and illustrations**, with arrows pointing at details.
+- **Dimension lines** in technical drawings, using the double-headed version.
+- **Chart axes and trend lines**, with an arrow on the end of the axis.
+- **Directed graphs**, where every edge needs an arrow pointing to its target node.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Namespace the marker ids:** an `id` is global to the page. If the same SVG is inlined twice, for example by a component rendered in a list, you end up with two `#sam-arrow` elements, and `url(#sam-arrow)` resolves to the first one in the document. If that first copy is removed or hidden, the arrowheads on the other copy can disappear. Give each marker a specific prefix, or generate a unique id per instance (such as React's `useId()`).
+- **Don't hide the defining SVG with `display: none`:** if you keep shared markers in a separate SVG, hide it with `width="0" height="0"` and `position: absolute` instead. Markers referenced from a `display: none` subtree can fail to render in some browsers.
+- **`refX="10"` for exact tips:** if the arrow must end exactly on a point and the line is thin, set `refX="10"`. On thick lines the stroke's square corners then poke out on either side of the tip.
+- **Colour comes from the marker, not the line:** the triangle inherits `fill` and `color` from the `<marker>`'s own ancestors, not from the line using it. `currentColor` follows the `<svg>`'s `color`. To match each line's own colour, see [SVG Arrowheads that Match the Line Colour](/snippet/svg-marker-context-stroke).
+- **Bounding boxes ignore markers:** `getBBox()` measures the line's geometry only, so a `viewBox` sized from it will crop the arrowheads. Leave a few units of padding.
+- **Browser support:** `<marker>`, `refX`/`refY`, `markerUnits` and `orient="auto"` work in every browser. `orient="auto-start-reverse"` works in all current browsers; use the two-marker variant only if you support older engines.
+- **Accessibility:** arrows usually carry meaning (which step follows which), so give a diagram `role="img"` and an `aria-label` that describes the relationship, not just "arrow".
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why is my arrowhead offset from the line?">
+  `refX` and `refY` default to `(0, 0)`, the top-left corner of the marker's `viewBox`, so that corner lands on the
+  line's end. Set `refY` to the arrow's vertical centre (`5` on a `0 0 10 10` grid) and `refX` to a point on or just
+  behind the tip.
+</Details>
+
+<Details summary="Why do both arrows point the same way?">
+  With `orient="auto"`, both markers follow the direction the path is drawn in, so the start arrow points into the
+  line. Use `orient="auto-start-reverse"` to flip the start marker, or the two-marker variant for older browsers. A
+  fixed angle such as `orient="0"` never rotates at all.
+</Details>
+
+<Details summary="Why does the arrowhead get bigger when I make the line thicker?">
+  `markerUnits` defaults to `strokeWidth`, so `markerWidth` and `markerHeight` are multiples of the stroke width.
+  Set `markerUnits="userSpaceOnUse"` to give the arrowhead a fixed size in user units instead.
+</Details>
+
+<Details summary="Can I put arrowheads on the corners of a path too?">
+  Yes. `marker-mid` places a marker on every vertex between the first and last. With `orient="auto"`, a mid marker is
+  rotated to the average direction of the two segments that meet there. The `marker` shorthand, used in CSS, sets
+  start, mid and end at once.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Define one arrowhead in a `<marker>` with its own `viewBox`, anchor it with `refX`/`refY` just behind the tip, and set `orient="auto-start-reverse"` so the same marker works as `marker-end` and `marker-start`. It scales with the stroke by default, or stays fixed with `markerUnits="userSpaceOnUse"`. Namespace its id, and fall back to two markers only if you support old browsers.

@@ -316,6 +316,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-arrowhead-marker",
+    title: "SVG Arrowheads with `<marker>`",
+    excerpt: "Add single and double arrowheads to SVG lines with one marker.",
+    description: "Reusable SVG arrowheads with <marker>: refX/refY to place the tip, markerUnits for sizing, and orient=\"auto-start-reverse\" for double arrows.",
+    category: ["SVG"],
+    tags: ["svg", "svg-markers", "markerUnits", "orient", "currentColor", "data-visualization", "icons", "browser-support", "progressive-enhancement", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-arrowhead-marker/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of two glowing lines, one with a single arrowhead and one with arrowheads pointing outward at both ends.",
+      caption: "One marker definition giving a single and a double-headed arrow."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

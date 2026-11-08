@@ -1179,4 +1179,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Disclosure State with `aria-expanded`",
     description: "Using the `aria-expanded` attribute to tell assistive technology whether a control's content is open, and as a CSS hook for styling that state."
   },
+  "svg-markers": {
+    title: "Reusable Line Decorations with SVG `<marker>`",
+    description: "Defining arrowheads, dots, and ticks once with `<marker>` and attaching them to the vertices of lines, paths, and polylines."
+  },
+  "markerunits": {
+    title: "Sizing SVG Markers with `markerUnits`",
+    description: "Choosing whether `markerWidth` and `markerHeight` scale with the stroke width (`strokeWidth`) or stay a fixed size (`userSpaceOnUse`)."
+  },
+  "orient": {
+    title: "Rotating SVG Markers with `orient`",
+    description: "Using `orient=\"auto\"` and `orient=\"auto-start-reverse\"` so markers follow a line's direction, including outward-pointing double arrows."
+  },
 };
