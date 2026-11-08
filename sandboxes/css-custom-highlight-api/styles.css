@@ -1,0 +1,102 @@
+.playground-header code,
+.tip code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+.tip {
+  margin: 0;
+}
+
+.search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+input[type="search"] {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  font-size: 0.92rem;
+  font-family: inherit;
+  color: var(--pg-text);
+  background-color: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="search"]:focus {
+  outline: none;
+  border-color: var(--pg-primary);
+  box-shadow: 0 0 0 0.1875rem var(--pg-primary-soft);
+}
+
+input[type="search"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.match-count {
+  min-block-size: 1.25rem;
+  margin-block: 0.625rem;
+  margin-inline: 0;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+.checkbox-field + .checkbox-field {
+  margin-block-start: 0.5rem;
+}
+
+/* The article is its own scroll box, so "Next" can bring a match into view without scrolling the whole page. */
+.article {
+  max-block-size: 18rem;
+  overflow: auto;
+  padding-inline-end: 0.5rem;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.article:focus-visible,
+.article[contenteditable="true"] {
+  outline: 0.125rem dashed var(--pg-primary);
+  outline-offset: 0.25rem;
+}
+
+.article h2 {
+  margin-block: 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.article h2:not(:first-child) {
+  margin-block-start: 1.25rem;
+}
+
+.article p,
+.article ul {
+  margin-block: 0 0.75rem;
+}
+
+.article a {
+  color: var(--pg-primary);
+}
+
+/* Every match. Only a short list of properties applies to highlights: colours, text-decoration and text-shadow. */
+::highlight(search-results) {
+  background-color: rgba(250, 204, 21, 0.3);
+  color: var(--pg-text);
+}
+
+/* The current match. Its priority of 1 paints it above search-results, where the two overlap. */
+::highlight(search-current) {
+  background-color: #f59e0b;
+  color: #111827;
+}
+
+.secondary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

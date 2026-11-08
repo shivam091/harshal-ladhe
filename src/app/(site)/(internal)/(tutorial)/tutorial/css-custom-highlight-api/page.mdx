@@ -1,0 +1,582 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-custom-highlight-api");
+
+## Introduction
+
+Highlighting search results on a page has always meant changing the page. The usual approach finds each match and
+wraps it in a `<mark>` element, which splits text nodes, adds elements the rest of your code didn't expect, and has to
+be undone before the next search. A match that runs across a `<strong>` or a link can't be wrapped cleanly at all.
+
+The **CSS Custom Highlight API** paints text without touching the DOM. You describe the text with `Range` objects,
+group them into a `Highlight`, register it under a name in `CSS.highlights`, and style it with the
+`::highlight(name)` pseudo-element. The browser paints the highlight the same way it paints `::selection`: no new
+elements, no layout, and ranges that cross element boundaries work.
+
+This tutorial builds a find-in-page search with it: every match highlighted, a second highlight for the current match,
+next and previous buttons and a match count, plus the accessibility gap you need to close yourself.
+
+<RainbowDivider />
+
+## The Three Pieces
+
+A custom highlight needs a range, a highlight and a name:
+
+<CodeBlock language="html">
+{`
+  <p id="intro">Lighthouses throw their light across the sea.</p>
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const text = document.getElementById("intro").firstChild; // the paragraph's text node
+
+  // 1. A range: characters 0 to 11 of the text node, "Lighthouses"
+  const range = new Range();
+  range.setStart(text, 0);
+  range.setEnd(text, 11);
+
+  // 2. A highlight: a set of ranges
+  const highlight = new Highlight(range);
+
+  // 3. A name: registering the highlight makes it paintable
+  CSS.highlights.set("search-results", highlight);
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  ::highlight(search-results) {
+    background-color: #fde68a;
+    color: #1f2937;
+  }
+`}
+</CodeBlock>
+
+"Lighthouses" now has a yellow background, and the paragraph's markup is exactly what it was.
+
+- **`Range`** marks a stretch of the document by two boundary points, each a node plus an offset. For a text node the
+  offset counts UTF-16 code units, the same units as `string.length` and `indexOf()`.
+- **`Highlight`** is a set of ranges. `new Highlight(...ranges)` accepts any number of them, and it has the methods of a
+  `Set`: `add()`, `delete()`, `has()`, `clear()` and `size`.
+- **`CSS.highlights`** is the page's highlight registry. It behaves like a `Map` from names to highlights, with
+  `set()`, `get()`, `has()`, `delete()` and `clear()`. A highlight that isn't registered is never painted.
+
+The name you register is the identifier inside `::highlight()`, so it must be a valid CSS identifier: `search-results`
+works, `search results` and `1st-match` can't be written in a selector.
+
+<Info title="Beginner's mental model">
+  Think of a highlight as a sheet of tracing paper laid over the page. The ranges say where to colour in, the CSS says
+  which colour, and the text underneath is never cut or moved. Lift the sheet off with `CSS.highlights.delete()` and
+  the page is untouched.
+</Info>
+
+<RainbowDivider />
+
+## `Range` or `StaticRange`?
+
+A highlight accepts both kinds of range, and they paint identically. The difference is what happens when the DOM
+changes:
+
+<CodeBlock language="js">
+{`
+  // A live Range: the browser moves its boundary points when the DOM around them changes
+  const live = new Range();
+  live.setStart(text, 0);
+  live.setEnd(text, 11);
+
+  // A StaticRange: fixed boundary points, never updated, cheaper for the browser to keep
+  const fixed = new StaticRange({
+    startContainer: text,
+    startOffset: 0,
+    endContainer: text,
+    endOffset: 11
+  });
+`}
+</CodeBlock>
+
+Keeping live ranges up to date has a cost on every DOM change. If you recompute your highlights whenever the content
+changes, which a search does anyway, the specification recommends `StaticRange`: you get the same painting without
+paying for updates you'd throw away. A live `Range` earns its cost when you need its methods, such as
+`getBoundingClientRect()` to find where the text is on screen, or when the text may change and you aren't recomputing.
+
+<RainbowDivider />
+
+## Styling `::highlight()`
+
+Highlight pseudo-elements, custom or built-in like `::selection`, accept only properties that can't change layout. The
+[CSS Pseudo-Elements spec](https://drafts.csswg.org/css-pseudo-4/#highlight-styling) lists them:
+
+| Property | Notes |
+| --- | --- |
+| `color` | Also colours the text's underlines, overlines, line-throughs and emphasis marks |
+| `background-color` | The highlight's fill |
+| `text-decoration` and its longhands | Including `text-underline-offset` and `text-underline-position` |
+| `text-shadow` | |
+| `stroke-color`, `fill-color`, `stroke-width` | For SVG text |
+| Custom properties | Usable through `var()` |
+
+Anything else is ignored, including `font-weight`, `padding`, `border` and `border-radius`, because each of them would
+move text or change the space it takes up. The spec also notes that only `color` and `background-color` have
+historically been supported everywhere, so treat the rest as enhancements and check them in each browser.
+
+A highlight has no default style. Register one without a matching `::highlight()` rule and nothing changes on screen.
+
+<CodeBlock language="css">
+{`
+  ::highlight(search-results) {
+    background-color: rgb(250 204 21 / 0.35);
+  }
+
+  ::highlight(search-current) {
+    background-color: #f59e0b;
+    color: #111827;
+  }
+
+  ::highlight(typos) {
+    text-decoration: underline wavy #dc2626;
+    text-underline-offset: 0.2em;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Overlapping Highlights: `priority`
+
+Text can be covered by several highlights at once: in a search, the current match is also one of the results. Where
+two highlights overlap, the one with the higher `priority` paints on top:
+
+<CodeBlock language="js">
+{`
+  const results = new Highlight(...allMatches);
+  const current = new Highlight(allMatches[0]);
+  current.priority = 1; // the default is 0
+
+  CSS.highlights.set("search-results", results);
+  CSS.highlights.set("search-current", current);
+`}
+</CodeBlock>
+
+The rules, from the specification:
+
+- `priority` is an integer and defaults to `0`. Higher numbers paint above lower ones.
+- When two highlights have the same priority, the one **registered more recently** paints on top. Relying on that is
+  fragile, since re-registering a highlight changes the order, so set `priority` whenever overlap matters.
+- Overlapping ranges **inside one highlight** are painted as their union, so a semi-transparent background doesn't
+  get darker where two of its ranges overlap.
+- Custom highlights paint **below** the built-in ones. Text the user selects shows `::selection` over your highlight.
+
+Each property is resolved separately: if `search-current` sets only `background-color`, the text keeps the `color`
+from `search-results` underneath it.
+
+<RainbowDivider />
+
+## Highlight Types
+
+A highlight also has a `type`, which describes what it means rather than how it looks:
+
+<CodeBlock language="js">
+{`
+  const typos = new Highlight(...misspelledRanges);
+  typos.type = "spelling-error"; // "highlight" (the default), "spelling-error" or "grammar-error"
+  CSS.highlights.set("typos", typos);
+`}
+</CodeBlock>
+
+`type` doesn't change rendering: the CSS still decides what a spelling error looks like. Its purpose is
+accessibility. The specification asks browsers to pass the meaning on to assistive technology, so a custom spellchecker
+can report a misspelled word the way the browser's own spellchecker does. Use `"spelling-error"` and
+`"grammar-error"` for exactly those, and leave everything else as `"highlight"`.
+
+<RainbowDivider />
+
+## Finding Text with `TreeWalker`
+
+To highlight search matches you need ranges for them, and ranges are built from text nodes. A `TreeWalker` set to
+`NodeFilter.SHOW_TEXT` visits every text node under an element in document order:
+
+<CodeBlock language="js">
+{`
+  function findRanges(root, query) {
+    const ranges = [];
+    if (!query) return ranges;
+
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      let index = node.data.indexOf(query);
+
+      while (index !== -1) {
+        ranges.push(new StaticRange({
+          startContainer: node,
+          startOffset: index,
+          endContainer: node,
+          endOffset: index + query.length
+        }));
+        index = node.data.indexOf(query, index + query.length);
+      }
+    }
+
+    return ranges;
+  }
+
+  const article = document.querySelector("article");
+  CSS.highlights.set("search-results", new Highlight(...findRanges(article, "light")));
+`}
+</CodeBlock>
+
+To skip text that isn't really content, give the walker a filter. Rejecting a node here only skips that text node, so
+the check looks at its parent element:
+
+<CodeBlock language="js">
+{`
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      return node.parentElement.closest("script, style, noscript, [hidden]")
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT;
+    }
+  });
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Case-Insensitive Search
+
+The obvious fix for case is to lowercase both strings, and it nearly works. The catch is that lowercasing can change a
+string's length, and then the offsets you find no longer point at the original text:
+
+<CodeBlock language="js">
+{`
+  const text = "İstanbul lights";
+
+  text.toLowerCase().indexOf("lights"); // 10: "İ" lowercases to two code units
+  text.indexOf("lights");                // 9: where "lights" really starts
+`}
+</CodeBlock>
+
+A range built from offset 10 would highlight "ights". A regular expression with the `i` flag matches against the
+original string, so its `index` is always a real offset. Escape the query first, so that a search for `(.*` looks for
+those three characters instead of being treated as a pattern:
+
+<CodeBlock language="js">
+{`
+  // RegExp.escape() is ES2025; the fallback covers older browsers
+  const escapeRegExp = RegExp.escape ?? ((text) => text.replace(/[.*+?^\${}()|[\\]\\\\]/g, "\\\\$&"));
+
+  function findMatches(text, query, caseSensitive = false) {
+    const pattern = new RegExp(escapeRegExp(query), caseSensitive ? "g" : "gi");
+    return [...text.matchAll(pattern)].map((match) => [match.index, match.index + match[0].length]);
+  }
+
+  findMatches("İstanbul lights", "LIGHTS"); // [[9, 15]]
+`}
+</CodeBlock>
+
+Use the length of the match, `match[0].length`, rather than the length of the query: with case folding the two aren't
+guaranteed to be equal.
+
+<RainbowDivider />
+
+## Matching Across Element Boundaries
+
+Searching one text node at a time misses a match like this, where the words sit in two different text nodes:
+
+<CodeBlock language="html">
+{`
+  <p>A <strong>Fresnel</strong> lens bends stray light into a beam.</p>
+`}
+</CodeBlock>
+
+A range can start in one text node and end in another, which is exactly what `<mark>` can't do without splitting the
+`<strong>`. To find such matches, join the text of a block element, search the joined string, and map each offset
+back to the text node it falls in:
+
+<CodeBlock language="js">
+{`
+  function rangesInBlock(block, pattern) {
+    const nodes = [];
+    const starts = [];
+    let joined = "";
+
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      nodes.push(walker.currentNode);
+      starts.push(joined.length);
+      joined += walker.currentNode.data;
+    }
+
+    // Offset in the joined string -> { node, offset }. An end offset that falls exactly
+    // between two nodes stays in the earlier one; a start offset moves to the later one.
+    const locate = (index, isEnd) => {
+      for (let i = nodes.length - 1; i >= 0; i--) {
+        if (isEnd ? starts[i] < index : starts[i] <= index) {
+          return { node: nodes[i], offset: index - starts[i] };
+        }
+      }
+    };
+
+    return [...joined.matchAll(pattern)].map((match) => {
+      const start = locate(match.index, false);
+      const end = locate(match.index + match[0].length, true);
+
+      return new StaticRange({
+        startContainer: start.node,
+        startOffset: start.offset,
+        endContainer: end.node,
+        endOffset: end.offset
+      });
+    });
+  }
+
+  const pattern = /fresnel lens/gi;
+  const ranges = [...article.querySelectorAll("h2, p, li")].flatMap((block) => rangesInBlock(block, pattern));
+`}
+</CodeBlock>
+
+Joining per block, not across the whole article, matters: the last word of one paragraph and the first word of the next
+would otherwise join into one string with no space between them, and a search could match across the gap.
+
+<RainbowDivider />
+
+## Current Match, Next and Previous
+
+A find-in-page box needs one more highlight for the match you're on, and buttons to move it. Register both highlights
+once; after that, `clear()` and `add()` are enough, because changing a registered highlight's ranges repaints it:
+
+<CodeBlock language="js">
+{`
+  const results = new Highlight();
+  const current = new Highlight();
+  current.priority = 1;
+
+  CSS.highlights.set("search-results", results);
+  CSS.highlights.set("search-current", current);
+
+  let matches = [];
+  let index = -1;
+
+  function search(query) {
+    matches = query ? findAllRanges(article, query) : [];
+    results.clear();
+    matches.forEach((range) => results.add(range));
+    index = matches.length ? 0 : -1;
+    showCurrent();
+  }
+
+  function step(direction) {
+    if (!matches.length) return;
+    index = (index + direction + matches.length) % matches.length;
+    showCurrent();
+  }
+
+  function showCurrent() {
+    current.clear();
+    if (index === -1) return;
+
+    current.add(matches[index]);
+    // A StaticRange can't be measured or scrolled to, so scroll its element into view instead
+    matches[index].startContainer.parentElement.scrollIntoView({ block: "center" });
+  }
+`}
+</CodeBlock>
+
+Here `findAllRanges()` stands for the per-block search from the previous section. Wire `search()` to the input's
+`input` event, `step(1)` and `step(-1)` to the buttons, and Enter and Shift+Enter in the search box to the same two
+calls. For long documents, debounce `search()` so it doesn't rebuild every range on each keystroke.
+
+<RainbowDivider />
+
+## Try It Live
+
+Type in the search box and every match in the article is highlighted, with the current one in a stronger colour.
+**Prev** and **Next** (or Shift+Enter and Enter) move through the matches, **Match case** switches the search to
+case-sensitive, and **Make the article editable** lets you change the text and watch the highlights follow it. Try
+*fresnel lens*, which crosses a `<strong>` boundary. The readout confirms that no `<mark>` element is ever added.
+
+<Sandbox slug="css-custom-highlight-api" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Live Updates When the Text Changes
+
+Highlights built from `StaticRange` objects don't follow DOM changes. If the content can change, by editing,
+streaming or a framework re-render, recompute the ranges when it does. For a `contenteditable` region, its `input`
+event is enough; for anything else,
+[`MutationObserver`](/post/javascript/mastering-js-observers) tells you when text was added, removed or edited:
+
+<CodeBlock language="js">
+{`
+  const observer = new MutationObserver(() => search(input.value));
+
+  observer.observe(article, {
+    childList: true,
+    subtree: true,
+    characterData: true // edits inside existing text nodes
+  });
+`}
+</CodeBlock>
+
+Rebuilding is cheap compared with the `<mark>` approach, which would have to unwrap every mark, call `normalize()` to
+merge the split text nodes, and wrap again: three rounds of DOM mutations, each of which your own `MutationObserver` would report back to you.
+
+<RainbowDivider />
+
+## Why Not Just Wrap Matches in `<mark>`?
+
+| | `<mark>` elements | Custom Highlight API |
+| --- | --- | --- |
+| **DOM changes** | Splits text nodes, adds an element per match | None |
+| **Across element boundaries** | Breaks or throws unless you split the match into pieces | One range can span any elements |
+| **Cost** | Style recalculation and layout after each change | Repaint only: highlight properties can't affect layout |
+| **Clearing** | Unwrap each mark and merge text nodes again | `highlight.clear()` or `CSS.highlights.delete(name)` |
+| **Interferes with other code** | Framework re-renders can discard or duplicate marks; selectors and `textContent` see them | Nothing else sees it |
+| **Styling** | Any CSS property | Colours, decorations and text shadows only |
+| **Semantics** | The `mark` element has its own role | `type` hints, but browsers may not expose it |
+
+The trade-off is in the last two rows. If a match needs padding, rounded corners or a bold weight, or if the
+highlight itself carries meaning that must reach every user, `<mark>` is still the tool.
+
+<RainbowDivider />
+
+## Accessibility
+
+A screen reader user reads the article exactly as it was. Painting a highlight doesn't move focus, doesn't add
+anything to the accessibility tree, and the specification only says browsers *should* expose highlights to assistive
+technology, so don't count on a screen reader announcing them, not even with a `type` set. That leaves three jobs for
+you.
+
+**Announce the result count.** Put the count in a live region, so it's read out whenever it changes:
+
+<CodeBlock language="html">
+{`
+  <p id="match-count" role="status" aria-live="polite">Match 3 of 12</p>
+`}
+</CodeBlock>
+
+**Make the current match reachable.** Scrolling to the match helps sighted users; screen reader users still need a way
+to get there. If the matches matter beyond visual scanning, move focus to the element that contains the current match
+(give it `tabindex="-1"` first), or fall back to `<mark>`.
+
+**Don't rely on colour alone.** Choose highlight colours with enough contrast against both the text and the page, and
+make the current match differ by more than a slightly darker shade, for example with a text decoration as well.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+| Feature | Chrome / Edge | Firefox | Safari |
+| --- | --- | --- | --- |
+| `Highlight` and `CSS.highlights` | 105 | 140 | 17.2 |
+| `::highlight()` with every listed property | 105 | 149 | 17.2 |
+| `new StaticRange()` | 90 | 71 | 13.1 |
+| `CSS.highlights.highlightsFromPoint()` | 140 | 150 | Technology Preview only |
+
+Firefox 140 added the API with partial styling: `text-decoration` on `::highlight()` arrived in Firefox 146 and
+`text-shadow` in Firefox 149. With Firefox 149, released in March 2026, the API and its pseudo-element became
+**Baseline newly available**. Custom highlights are also an Interop 2026 focus area, so browsers are working on
+rendering them consistently. One known gap: Safari ignores `::highlight()` styles on text with `user-select: none`.
+
+`highlightsFromPoint()` returns the highlights under a pair of coordinates, ordered by priority, so you can respond to
+a click on highlighted text. It isn't available in Safari yet, so treat it as an enhancement.
+
+Detect the API before using it, and fall back to `<mark>` where it's missing. The fallback wraps only matches that
+sit inside a single text node, working backwards so that splitting a node doesn't shift the offsets of the matches
+still to come:
+
+<CodeBlock language="js">
+{`
+  function highlightMatches(ranges) {
+    if ("highlights" in CSS) {
+      CSS.highlights.set("search-results", new Highlight(...ranges));
+      return;
+    }
+
+    clearMarks(article);
+
+    for (const { startContainer, startOffset, endContainer, endOffset } of [...ranges].reverse()) {
+      if (startContainer !== endContainer) continue; // <mark> can't straddle element boundaries cleanly
+
+      const range = new Range();
+      range.setStart(startContainer, startOffset);
+      range.setEnd(endContainer, endOffset);
+      range.surroundContents(document.createElement("mark"));
+    }
+  }
+
+  function clearMarks(root) {
+    for (const mark of root.querySelectorAll("mark")) mark.replaceWith(...mark.childNodes);
+    root.normalize(); // merge the text nodes the marks split apart
+  }
+`}
+</CodeBlock>
+
+The ranges have to be found again after `clearMarks()`, since unwrapping and normalising replaces the text nodes they
+pointed at. That's the bookkeeping the Custom Highlight API removes.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Forgetting to Register the Highlight
+
+`new Highlight(range)` on its own does nothing visible. Only highlights in `CSS.highlights` are painted, and only if a
+`::highlight()` rule with the same name exists.
+
+### 2. Styling with Properties That Don't Apply
+
+`font-weight: bold`, `padding` or `border-radius` on `::highlight()` are silently ignored. Stick to `color`,
+`background-color`, `text-decoration` and `text-shadow`.
+
+### 3. Offsets from a Transformed String
+
+Offsets must index the text node's own `data`. Lowercasing, normalising or trimming the string before searching can
+shift every offset after the first changed character, so search the original text with a case-insensitive regular
+expression instead.
+
+### 4. Stale `StaticRange`s
+
+After the DOM changes, a `StaticRange` can point at text that has moved, or at a node that has gone. The browser
+ignores ranges that are no longer valid, but ones that are still valid will highlight the wrong characters. Recompute
+on change, or use live `Range`s if you can't.
+
+### 5. Searching the DOM, Not What's on Screen
+
+The text nodes hold the source text, not the rendered text. Collapsed whitespace, a line break in the HTML between two
+words, `text-transform`, generated content from `::before` and `::after`, and elements hidden with CSS all make the two
+differ. A search for "fresnel lens" fails if the HTML has a newline and indentation between the words, so normalise
+whitespace in the pattern (for example, turn each space into `\s+`) if your markup is formatted that way.
+
+### 6. Expecting Screen Readers to Notice
+
+Highlights are visual. Announce the match count in a live region, and use `<mark>` when the highlight carries
+information every user needs.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Find-in-page and filter-as-you-type search over articles, documentation and long lists
+- Highlighting the words that matched a search when a user lands on a result page
+- Custom spellcheckers and grammar checkers, with `type` set to `"spelling-error"` or `"grammar-error"`
+- Code editors and syntax highlighting over plain text, without wrapping every token in a `<span>`
+- Collaborative editing, showing other people's selections as named highlights
+- Read-along text, highlighting the word being spoken
+
+**Reach for something else** when the highlight needs layout-affecting styles, when it must be announced by assistive
+technology, or when it should survive being copied as HTML: `<mark>` does all three.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Build `Range` or `StaticRange` objects over the text, group them with `new Highlight(...ranges)`, register the
+highlight with `CSS.highlights.set(name, highlight)`, and style it with `::highlight(name)` using colours, decorations
+and text shadows. The DOM never changes, ranges can cross element boundaries, and a higher `priority` lets a
+current-match highlight sit on top of the results. Search the original text with a case-insensitive regular
+expression so the offsets stay correct, recompute static ranges when the content changes, and announce the result
+count yourself, because a highlight is something users see, not something assistive technology reads.

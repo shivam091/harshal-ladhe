@@ -1246,5 +1246,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "details-element": {
     title: "The HTML <details> Element",
     description: "Native disclosure widgets and accordions with `<details>` and `<summary>`: markers, exclusive groups and `::details-content` animations."
+  },
+  "custom-highlight-api": {
+    title: "All Content Tagged Custom Highlight API",
+    description: "All content tagged with the CSS Custom Highlight API: painting text ranges with Highlight, CSS.highlights and the ::highlight() pseudo-element without changing the DOM."
+  },
+  "text-search": {
+    title: "All Content Tagged Text Search",
+    description: "All content tagged with text search, covering find-in-page, matching text in the DOM and highlighting search results."
   }
 };
