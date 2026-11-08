@@ -1238,5 +1238,21 @@ export const tagMeta: Record<string, TagMeta> = {
   "floating-point": {
     title: "Floating-Point Numbers in JavaScript",
     description: "How 64-bit floats store and round numbers in JavaScript, why 0.1 + 0.2 isn't 0.3, and when to use integers or exact summation instead."
+  },
+  "temporal": {
+    title: "The Temporal API",
+    description: "JavaScript's Temporal API for immutable dates, times, durations and time zones, and how it replaces the `Date` object.",
+  },
+  "date-time": {
+    title: "Dates and Times in JavaScript",
+    description: "Working with dates, times and durations in JavaScript: parsing, formatting, arithmetic and the pitfalls of the built-in `Date` object.",
+  },
+  "time-zones": {
+    title: "Time Zones and Daylight Saving Time",
+    description: "Converting between IANA time zones and keeping date arithmetic correct across daylight saving time changes.",
+  },
+  "es2027": {
+    title: "Modern JavaScript Features of ES2027",
+    description: "Language features headed for ECMAScript 2027, such as Temporal and explicit resource management, with browser support and fallbacks.",
   }
 };

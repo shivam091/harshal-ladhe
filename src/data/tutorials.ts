@@ -678,6 +678,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "temporal-api-dates-and-time-zones",
+    title: "The Temporal API: Dates, Times and Time Zones Without the `Date` Pitfalls",
+    excerpt: "Immutable dates, real time zones and DST-safe maths.",
+    description: "Use JavaScript's Temporal API: Instant, ZonedDateTime, PlainDate and Duration, month-end overflow, DST-safe arithmetic, formatting, parsing, Date conversion and polyfills.",
+    category: ["JavaScript"],
+    tags: ["javascript", "temporal", "date-time", "time-zones", "immutability", "es2027", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/temporal-api-dates-and-time-zones/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "The Temporal type family, from Instant and ZonedDateTime to PlainDate, PlainTime and Duration, with a meeting converted across time zones and a DST change where adding one day and adding 24 hours land an hour apart.",
+      caption: "Temporal's types side by side, a meeting shown in four time zones, and a day that's only 23 hours long."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

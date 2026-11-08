@@ -1,0 +1,639 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("temporal-api-dates-and-time-zones");
+
+## Introduction
+
+JavaScript's `Date` stores one thing: a count of milliseconds since 1 January 1970 UTC. Everything else, the month,
+the hour, the time zone, is worked out from that number using either UTC or whatever zone the user's device is set to.
+There's no way to say "9 March, no time", "09:00 in Tokyo" or "two months", so code that needs those ends up faking
+them, and the fakes break around month ends, daylight saving changes and users in other countries.
+
+**Temporal** is the replacement. It's a global namespace object, like `Math` or `Intl`, holding a family of types,
+each modelling one kind of date or time value exactly. Every Temporal object is immutable, months run from 1 to 12,
+time zones are real IANA zones such as `"Europe/London"`, and arithmetic knows the difference between a day and 24
+hours.
+
+<Info title="ES2027, not ES2026">
+  Temporal reached stage 4 in March 2026, but it's listed for ES2027, not ES2026 as it's sometimes reported. It's
+  already shipping in Chrome, Edge, Firefox and Node, and the polyfills cover the rest.
+</Info>
+
+This tutorial covers the API itself: the types, how to choose between them, arithmetic, time zones, comparing,
+formatting, parsing and converting to and from `Date`. For the history of `Date` and the specific bugs Temporal was
+designed to fix, read the companion post,
+[Why Temporal Replaces Date](/post/javascript/why-temporal-replaces-date).
+
+<RainbowDivider />
+
+## The Type Family
+
+Temporal splits date and time values into separate types, depending on how much information each one carries. The
+"Plain" types have no time zone: they're wall-clock values, the numbers you'd read off a calendar or a clock.
+
+| Type | Holds | Example string |
+| --- | --- | --- |
+| `Temporal.Instant` | An exact moment, with no calendar or zone | `2026-11-08T04:00:00Z` |
+| `Temporal.ZonedDateTime` | An exact moment in a particular time zone | `2026-11-08T09:30:00+05:30[Asia/Kolkata]` |
+| `Temporal.PlainDateTime` | A date and a wall-clock time, no zone | `2026-11-08T09:30:00` |
+| `Temporal.PlainDate` | A calendar date | `2026-11-08` |
+| `Temporal.PlainTime` | A wall-clock time | `09:30:00` |
+| `Temporal.PlainYearMonth` | A month in a particular year | `2026-11` |
+| `Temporal.PlainMonthDay` | A day in a month, every year | `11-08` |
+| `Temporal.Duration` | A length of time | `P1DT2H30M` |
+
+`Temporal.Now` isn't a type. It's a namespace of functions that read the current time:
+
+<CodeBlock language="js">
+{`
+  Temporal.Now.instant();                       // the current exact moment, as an Instant
+  Temporal.Now.timeZoneId();                    // the system time zone, e.g. "Europe/London"
+  Temporal.Now.zonedDateTimeISO();              // now, in the system time zone
+  Temporal.Now.zonedDateTimeISO("Asia/Tokyo");  // now, in Tokyo
+  Temporal.Now.plainDateISO();                  // today's date in the system time zone
+  Temporal.Now.plainTimeISO();                  // the current wall-clock time
+`}
+</CodeBlock>
+
+The `ISO` suffix means the result uses the ISO 8601 calendar, the ordinary Gregorian one. Temporal also supports
+other calendars, such as Hebrew or Japanese, but you only meet them if you ask for them.
+
+<RainbowDivider />
+
+## Choosing the Right Type
+
+Pick the type that carries **exactly** the information you have. Carrying more than that, such as a time or a zone
+you made up, is where most date bugs come from.
+
+- **A timestamp: when something happened** (a log line, a `createdAt` column, a token's expiry): `Instant`. It's the
+  same moment everywhere, and it's what you store.
+- **An event that happens at a local time somewhere** (a meeting, a flight departure, a reminder at 9am):
+  `ZonedDateTime`. It's the only type that can do arithmetic across daylight saving changes correctly.
+- **A date with no time** (a birthday, a due date, a public holiday): `PlainDate`. No time means no midnight to slip
+  into the previous day.
+- **A time with no date** (opening hours, an alarm): `PlainTime`.
+- **A date and time whose zone you don't know yet** (the values from a date and a time input, before you know where the
+  user is): `PlainDateTime`. Convert it to a `ZonedDateTime` once you do.
+- **A month** (a billing period, a credit card expiry): `PlainYearMonth`. **A recurring date** (an anniversary):
+  `PlainMonthDay`.
+- **A length of time** (a timer, "3 days", the gap between two dates): `Duration`.
+
+The types convert into each other, adding or dropping information as they go:
+
+<CodeBlock language="js">
+{`
+  const meeting = Temporal.ZonedDateTime.from("2026-11-08T09:30[Asia/Kolkata]");
+
+  meeting.toInstant().toString();       // "2026-11-08T04:00:00Z"
+  meeting.toPlainDate().toString();     // "2026-11-08"
+  meeting.toPlainTime().toString();     // "09:30:00"
+
+  const date = Temporal.PlainDate.from("2026-11-08");
+
+  date.toPlainDateTime("09:30").toString();
+  // "2026-11-08T09:30:00"
+  date.toZonedDateTime({ timeZone: "Asia/Tokyo", plainTime: "09:30" }).toString();
+  // "2026-11-08T09:30:00+09:00[Asia/Tokyo]"
+
+  Temporal.Instant.from("2026-11-08T10:30:00Z").toZonedDateTimeISO("Asia/Tokyo").toString();
+  // "2026-11-08T19:30:00+09:00[Asia/Tokyo]"
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Creating Values
+
+Every type has a static `from()` that accepts an ISO string, an object of fields, or another Temporal object:
+
+<CodeBlock language="js">
+{`
+  Temporal.PlainDate.from("2026-11-08");
+  Temporal.PlainDate.from({ year: 2026, month: 11, day: 8 });   // month 11 is November
+  Temporal.PlainTime.from("14:05");
+  Temporal.PlainYearMonth.from("2026-02");
+  Temporal.Duration.from({ hours: 1, minutes: 30 });
+  Temporal.ZonedDateTime.from({ timeZone: "Europe/Paris", year: 2026, month: 11, day: 8, hour: 9 });
+`}
+</CodeBlock>
+
+Months are numbered 1 to 12, so `month: 11` is November. With `Date`, 11 is December.
+
+Each object exposes its parts as properties, along with some calendar facts that would take a helper function with
+`Date`:
+
+<CodeBlock language="js">
+{`
+  const date = Temporal.PlainDate.from("2026-11-08");
+
+  date.year;          // 2026
+  date.month;         // 11
+  date.day;           // 8
+  date.dayOfWeek;     // 7 (Monday is 1, Sunday is 7)
+  date.daysInMonth;   // 30
+  date.inLeapYear;    // false
+
+  Temporal.PlainYearMonth.from("2026-02").daysInMonth;   // 28
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Immutability
+
+Temporal objects never change. Methods that look like setters return a new object and leave the original alone:
+
+<CodeBlock language="js">
+{`
+  const due = Temporal.PlainDate.from("2026-11-08");
+
+  const firstOfMonth = due.with({ day: 1 });
+  const extended = due.add({ weeks: 2 });
+
+  due.toString();            // "2026-11-08", unchanged
+  firstOfMonth.toString();   // "2026-11-01"
+  extended.toString();       // "2026-11-22"
+`}
+</CodeBlock>
+
+The properties are read-only too: assigning `due.year = 2030` throws a `TypeError` in strict mode code (which includes
+every module) and is silently ignored otherwise. That means you can pass a Temporal value to any function, store it in
+state or use it as a default, without worrying that something will change it behind your back, which is a real risk
+with `Date` and its `setMonth()`-style methods.
+
+<RainbowDivider />
+
+## Arithmetic
+
+### `add()` and `subtract()`
+
+Both take a `Duration`, or an object or string that can become one:
+
+<CodeBlock language="js">
+{`
+  const date = Temporal.PlainDate.from("2026-11-08");
+
+  date.add({ days: 47 }).toString();          // "2026-12-25"
+  date.subtract({ months: 1 }).toString();    // "2026-10-08"
+  date.add("P1Y2M").toString();               // "2028-01-08"
+
+  Temporal.PlainTime.from("23:30").add({ hours: 1 }).toString();
+  // "00:30:00": a PlainTime wraps around midnight
+
+  Temporal.PlainDateTime.from("2026-11-08T23:30").add({ hours: 1 }).toString();
+  // "2026-11-09T00:30:00"
+`}
+</CodeBlock>
+
+### `until()` and `since()`
+
+`a.until(b)` returns the `Duration` from `a` to `b`, and `b.since(a)` returns the same thing. By default the result
+uses the largest unit that makes sense for the type: days for dates, hours for times and exact moments. Pass
+`largestUnit` to break it down further:
+
+<CodeBlock language="js">
+{`
+  const start = Temporal.PlainDate.from("2026-01-15");
+  const end = Temporal.PlainDate.from("2026-11-08");
+
+  start.until(end).toString();                             // "P297D"
+  start.until(end, { largestUnit: "months" }).toString();  // "P9M24D"
+  end.since(start, { largestUnit: "years" }).toString();   // "P9M24D"
+
+  start.until(end).days;                                   // 297
+`}
+</CodeBlock>
+
+### Month-End Overflow: `constrain` vs `reject`
+
+Not every month has a 31st. When arithmetic or `from()` lands on a day that doesn't exist, the `overflow` option decides
+what happens. The default, `"constrain"`, clamps to the last valid day. `"reject"` throws a `RangeError` instead:
+
+<CodeBlock language="js">
+{`
+  const jan31 = Temporal.PlainDate.from("2026-01-31");
+
+  jan31.add({ months: 1 }).toString();                         // "2026-02-28"
+  jan31.add({ months: 1 }, { overflow: "reject" });            // throws RangeError
+
+  Temporal.PlainDate.from({ year: 2026, month: 2, day: 31 }).toString();   // "2026-02-28"
+  Temporal.PlainDate.from({ year: 2026, month: 2, day: 31 }, { overflow: "reject" });   // throws RangeError
+`}
+</CodeBlock>
+
+Compare that with `Date`, which rolls the extra days into the next month: `new Date(2026, 0, 31)` followed by
+`setMonth(1)` gives **3 March**. Use `"reject"` when the input came from a user and an impossible date should be an
+error, such as a form field, and the default `"constrain"` for "same day next month" logic such as billing dates.
+
+Clamping isn't reversible, so the starting point matters when you repeat it:
+
+<CodeBlock language="js">
+{`
+  const jan31 = Temporal.PlainDate.from("2026-01-31");
+
+  [1, 2, 3].map((n) => jan31.add({ months: n }).toString());
+  // ["2026-02-28", "2026-03-31", "2026-04-30"]
+
+  jan31.add({ months: 1 }).add({ months: 1 }).toString();
+  // "2026-03-28": the 28 from February carries on
+`}
+</CodeBlock>
+
+For a monthly schedule, always add `n` months to the original date rather than one month to the previous result.
+
+<RainbowDivider />
+
+## DST-Safe Arithmetic with `ZonedDateTime`
+
+In most of Europe and North America, one day a year has 23 hours and another has 25, when the clocks change for
+daylight saving time (DST). In the UK, clocks go forward at 01:00 on 29 March 2026. A `ZonedDateTime` knows that, so
+it can tell "the same time tomorrow" apart from "24 hours later":
+
+<CodeBlock language="js">
+{`
+  const standup = Temporal.ZonedDateTime.from("2026-03-28T09:00[Europe/London]");
+
+  standup.add({ days: 1 }).toString();
+  // "2026-03-29T09:00:00+01:00[Europe/London]": same wall-clock time
+
+  standup.add({ hours: 24 }).toString();
+  // "2026-03-29T10:00:00+01:00[Europe/London]": exactly 24 hours later
+
+  standup.until(standup.add({ days: 1 })).toString();
+  // "PT23H": that day was only 23 hours long
+
+  Temporal.ZonedDateTime.from("2026-03-29T12:00[Europe/London]").hoursInDay;   // 23
+`}
+</CodeBlock>
+
+Days, weeks, months and years are **calendar units**: they keep the wall-clock time and let the length in hours vary.
+Hours, minutes and smaller units are **exact units**: they always add that much real time. A daily reminder should
+add days. A 24-hour countdown should add hours. A `PlainDateTime` can't tell the two apart because it has no zone,
+which is why scheduling code belongs in `ZonedDateTime`.
+
+### Times That Don't Exist, or Happen Twice
+
+When clocks go forward, 01:30 on 29 March doesn't exist in London. When they go back, 01:30 on 25 October happens
+twice. Converting a wall-clock time to a `ZonedDateTime` has to pick, and the `disambiguation` option controls how:
+
+<CodeBlock language="js">
+{`
+  const gap = Temporal.PlainDateTime.from("2026-03-29T01:30");
+  gap.toZonedDateTime("Europe/London").toString();
+  // "2026-03-29T02:30:00+01:00[Europe/London]": moved forward past the gap
+  gap.toZonedDateTime("Europe/London", { disambiguation: "reject" });
+  // throws RangeError
+
+  const overlap = Temporal.PlainDateTime.from("2026-10-25T01:30");
+  overlap.toZonedDateTime("Europe/London").toString();
+  // "2026-10-25T01:30:00+01:00[Europe/London]": the first 01:30
+  overlap.toZonedDateTime("Europe/London", { disambiguation: "later" }).toString();
+  // "2026-10-25T01:30:00+00:00[Europe/London]": the second 01:30
+`}
+</CodeBlock>
+
+The default, `"compatible"`, matches what `Date` does, so it's a safe choice for most apps. Use `"reject"` when a
+user is entering the time and should be told it doesn't exist.
+
+<RainbowDivider />
+
+## Converting Between Time Zones
+
+`withTimeZone()` keeps the exact moment and changes the zone it's displayed in. It's the core of any "what time is
+this for everyone else" feature:
+
+<CodeBlock language="js">
+{`
+  const meeting = Temporal.ZonedDateTime.from("2026-11-08T09:30[Asia/Kolkata]");
+
+  meeting.withTimeZone("America/New_York").toString();
+  // "2026-11-07T23:00:00-05:00[America/New_York]": still the previous evening there
+
+  meeting.withTimeZone("Asia/Tokyo").toPlainTime().toString();
+  // "13:00:00"
+`}
+</CodeBlock>
+
+Time zone IDs are IANA names, such as `"Europe/London"` or `"America/Los_Angeles"`, or `"UTC"`. Use a city-based
+name rather than a fixed offset like `"+05:30"` whenever the place observes DST, because the offset is something the
+zone's rules work out for each date, not a property of the place.
+
+<RainbowDivider />
+
+## Comparing Values
+
+Temporal objects can't be compared with `<` or `>`. Trying it throws a `TypeError`, rather than silently comparing
+something meaningless. Use the static `compare()`, which returns -1, 0 or 1, and is shaped to drop straight into
+`sort()`:
+
+<CodeBlock language="js">
+{`
+  const a = Temporal.PlainDate.from("2026-03-01");
+  const b = Temporal.PlainDate.from("2026-02-28");
+
+  Temporal.PlainDate.compare(a, b);    // 1: a is later
+
+  ["2026-12-01", "2026-03-15", "2026-07-04"]
+    .map((s) => Temporal.PlainDate.from(s))
+    .sort(Temporal.PlainDate.compare)
+    .map(String);
+  // ["2026-03-15", "2026-07-04", "2026-12-01"]
+
+  a.equals(Temporal.PlainDate.from("2026-03-01"));   // true
+`}
+</CodeBlock>
+
+For `ZonedDateTime`, `compare()` looks only at the exact moment, while `equals()` also requires the same time zone and
+calendar:
+
+<CodeBlock language="js">
+{`
+  const london = Temporal.ZonedDateTime.from("2026-03-28T09:00[Europe/London]");
+  const utc = london.withTimeZone("UTC");
+
+  Temporal.ZonedDateTime.compare(london, utc);   // 0: the same moment
+  london.equals(utc);                            // false: different zones
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Working with Durations
+
+A `Duration` stores each unit separately, so `{ minutes: 90 }` stays as 90 minutes until you ask for it to be
+balanced. `round()` balances and rounds, and `total()` converts the whole thing to a single number:
+
+<CodeBlock language="js">
+{`
+  const elapsed = Temporal.Duration.from({ hours: 1, minutes: 47, seconds: 30 });
+
+  elapsed.round({ smallestUnit: "minutes" }).toString();                         // "PT1H48M"
+  elapsed.round({ smallestUnit: "minutes", roundingMode: "floor" }).toString();  // "PT1H47M"
+  elapsed.round({ smallestUnit: "hours" }).toString();                           // "PT2H"
+  elapsed.total({ unit: "minutes" });                                            // 107.5
+
+  Temporal.Duration.from("PT90M").round({ largestUnit: "hours" }).toString();   // "PT1H30M"
+
+  // Round to the nearest 15 minutes, e.g. for billing
+  Temporal.Duration.from({ minutes: 47 })
+    .round({ smallestUnit: "minutes", roundingIncrement: 15 })
+    .toString();                                                                 // "PT45M"
+`}
+</CodeBlock>
+
+Months and days don't have a fixed length, so comparing or totalling durations that contain them needs a starting
+point, given as `relativeTo`. Without one, Temporal throws a `RangeError` rather than guess:
+
+<CodeBlock language="js">
+{`
+  Temporal.Duration.compare({ months: 1 }, { days: 30 });
+  // throws RangeError
+
+  Temporal.Duration.compare({ months: 1 }, { days: 30 }, { relativeTo: Temporal.PlainDate.from("2026-02-01") });
+  // -1: February 2026 has 28 days
+
+  Temporal.Duration.from({ days: 1 }).total({
+    unit: "hours",
+    relativeTo: Temporal.ZonedDateTime.from("2026-03-29T00:00[Europe/London]")
+  });
+  // 23
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Formatting
+
+`toString()` gives the ISO 8601 form, which is what you send to an API or store. `toJSON()` returns the same string,
+so `JSON.stringify()` works without help. For people, use `toLocaleString()`, which takes the same locales and options
+as `Intl.DateTimeFormat`:
+
+<CodeBlock language="js">
+{`
+  const date = Temporal.PlainDate.from("2026-11-08");
+
+  date.toLocaleString("en-GB", { dateStyle: "full" });   // "Sunday, 8 November 2026"
+  date.toLocaleString("en-US");                          // "11/8/2026"
+  date.toLocaleString("de-DE");                          // "8.11.2026"
+
+  Temporal.PlainTime.from("14:05").toLocaleString("en-US", { timeStyle: "short" });   // "2:05 PM"
+
+  const standup = Temporal.ZonedDateTime.from("2026-03-28T09:00[Europe/London]");
+  standup.toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
+  // "Sat, 09:00 GMT"
+
+  Temporal.Duration.from({ hours: 2, minutes: 5 }).toLocaleString("en-GB", { style: "long" });
+  // "2 hours, 5 minutes"
+`}
+</CodeBlock>
+
+A `ZonedDateTime` is always formatted in its own time zone, so passing a `timeZone` option to its `toLocaleString()`
+throws a `TypeError`. Call `withTimeZone()` first instead.
+
+A reusable `Intl.DateTimeFormat` accepts the Plain types and `Instant` directly, including in `formatRange()`. It
+doesn't accept a `ZonedDateTime`, which throws a `TypeError`, because the formatter has a time zone of its own and the
+two could disagree. Pass `zdt.toInstant()` and set the formatter's `timeZone`, or use the object's `toLocaleString()`:
+
+<CodeBlock language="js">
+{`
+  const fmt = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
+
+  fmt.format(Temporal.PlainDate.from("2026-11-08"));       // "8 Nov 2026"
+  fmt.formatRange(
+    Temporal.PlainDate.from("2026-11-08"),
+    Temporal.PlainDate.from("2026-11-12")
+  );                                                       // "8 – 12 Nov 2026"
+
+  const tokyo = new Intl.DateTimeFormat("en-GB", { dateStyle: "long", timeStyle: "short", timeZone: "Asia/Tokyo" });
+  tokyo.format(Temporal.Instant.from("2026-11-08T04:00:00Z"));   // "8 November 2026 at 13:00"
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Parsing ISO Strings
+
+Temporal only parses ISO 8601 strings and the RFC 9557 extension of them, which adds the time zone in square brackets
+after the offset. There's no guessing at formats like `"03/10/2026"`, which is the single biggest difference from
+`Date`'s parser. Each type takes what it needs from the string and checks that the rest makes sense:
+
+<CodeBlock language="js">
+{`
+  const s = "2026-11-08T09:30:00+05:30[Asia/Kolkata]";
+
+  Temporal.ZonedDateTime.from(s).toString();   // "2026-11-08T09:30:00+05:30[Asia/Kolkata]"
+  Temporal.Instant.from(s).toString();         // "2026-11-08T04:00:00Z"
+  Temporal.PlainDate.from(s).toString();       // "2026-11-08"
+
+  Temporal.ZonedDateTime.from("2026-11-08T09:30:00+05:30");
+  // throws RangeError: an offset alone doesn't say which zone's rules to follow
+
+  Temporal.Instant.from("2026-11-08T09:30");
+  // throws RangeError: without an offset there's no exact moment
+`}
+</CodeBlock>
+
+If a string has both an offset and a zone, and they disagree, `ZonedDateTime.from()` throws by default. That can
+happen when a future date was saved and the zone's rules changed since. The `offset` option chooses which part to
+trust: `"use"` keeps the exact moment from the offset, `"ignore"` keeps the wall-clock time from the zone, and
+`"prefer"` uses the offset if it's still valid for the zone and the zone otherwise.
+
+<CodeBlock language="js">
+{`
+  Temporal.ZonedDateTime.from("2026-11-08T09:30:00+01:00[Asia/Kolkata]");
+  // throws RangeError: +01:00 is never valid in Kolkata
+
+  Temporal.ZonedDateTime.from("2026-11-08T09:30:00+01:00[Asia/Kolkata]", { offset: "use" }).toString();
+  // "2026-11-08T14:00:00+05:30[Asia/Kolkata]"
+`}
+</CodeBlock>
+
+To serialise a `ZonedDateTime` without losing its zone, store the whole `toString()` output, brackets included. Storing
+only the `Instant` loses which zone the user meant, and storing only the offset loses the DST rules.
+
+<RainbowDivider />
+
+## Converting to and from `Date`
+
+Existing code, libraries and APIs will hand you `Date` objects for years yet. A `Date` is an exact moment, so it maps
+onto `Instant`. `Date.prototype.toTemporalInstant()` converts one way, and `epochMilliseconds` the other:
+
+<CodeBlock language="js">
+{`
+  const legacy = new Date("2026-11-08T10:30:00Z");
+
+  const instant = legacy.toTemporalInstant();
+  instant.toString();                                        // "2026-11-08T10:30:00Z"
+  instant.toZonedDateTimeISO("Europe/Berlin").toString();   // "2026-11-08T11:30:00+01:00[Europe/Berlin]"
+
+  // Without toTemporalInstant(), go through the millisecond count
+  Temporal.Instant.fromEpochMilliseconds(legacy.getTime()).toString();   // "2026-11-08T10:30:00Z"
+
+  // Back to a Date, from an Instant or a ZonedDateTime
+  new Date(instant.epochMilliseconds).toISOString();         // "2026-11-08T10:30:00.000Z"
+`}
+</CodeBlock>
+
+Temporal measures time in nanoseconds (`epochNanoseconds` is a `BigInt`), and `Date` in milliseconds, so converting
+to a `Date` drops anything below a millisecond:
+
+<CodeBlock language="js">
+{`
+  const precise = Temporal.Instant.from("2026-11-08T10:30:00.123456789Z");
+
+  precise.epochNanoseconds;    // 1794133800123456789n
+  precise.epochMilliseconds;   // 1794133800123
+`}
+</CodeBlock>
+
+A good migration pattern is to convert at the edges. Turn a `Date` into a Temporal value as soon as it enters your
+code, work in Temporal, and convert back only where a library insists on a `Date`.
+
+<RainbowDivider />
+
+## Try It Live
+
+The playground is a small meeting planner. Pick a date, a time and the organiser's time zone, and tick the attendees'
+zones: the table shows the meeting in each zone using Temporal, next to what you get from `new Date("<date>T<time>")`,
+which reads the time in **your** time zone rather than the organiser's. Rows where they disagree are highlighted, so
+set the organiser to a zone other than your own to see the difference. **Load a DST change** jumps to 09:00 on 28
+March 2026 in London, the day before the clocks go forward, and the readout compares `add({ days: 1 })` with
+`add({ hours: 24 })` and with adding 86,400,000 milliseconds to a `Date`.
+
+<Sandbox slug="temporal-api-dates-and-time-zones" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Polyfills
+
+Temporal is supported in Chrome and Edge 144, Firefox 139 and Node 26. Safari only has it in Technology Preview so far,
+so for now any site with Safari users needs a fallback. Feature-detect it with a simple check:
+
+<CodeBlock language="js">
+{`
+  if (typeof Temporal === "undefined") {
+    // load a polyfill, or fall back to Date
+  }
+`}
+</CodeBlock>
+
+There are two maintained polyfills:
+
+- **`temporal-polyfill`**: a smaller, spec-compliant polyfill. `import "temporal-polyfill/global"` installs
+  `Temporal` on the global object, or `import { Temporal } from "temporal-polyfill"` uses it without touching globals.
+- **`@js-temporal/polyfill`**: maintained by the proposal's champions. It exports `Temporal`, a patched `Intl` and a
+  `toTemporalInstant` function you can assign to `Date.prototype` yourself.
+
+To avoid shipping the polyfill to browsers that don't need it, load it conditionally from a module:
+
+<CodeBlock language="js">
+{`
+  if (typeof Temporal === "undefined") {
+    await import("temporal-polyfill/global");
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Reaching for `PlainDateTime` for Events
+
+A `PlainDateTime` has no zone, so it can't tell when a DST change happens, and adding 24 hours is always the same as
+adding a day. If the value is "this time, in this place", use `ZonedDateTime`.
+
+### 2. Storing a Date-Only Value as a Timestamp
+
+Saving a birthday as midnight UTC means it displays as the previous day for everyone west of Greenwich. Store it as a
+`PlainDate` string such as `"2026-11-08"` and keep it that way.
+
+### 3. Comparing with `<`, `>` or `===`
+
+`<` and `>` throw a `TypeError`, and `===` compares object identity, so two equal dates are never `===`. Use
+`compare()` and `equals()`.
+
+### 4. Expecting `add()` to Change the Object
+
+`date.add({ days: 1 })` on its own line does nothing useful: it returns a new date that's thrown away. Assign the
+result.
+
+### 5. Adding One Month Repeatedly
+
+Each step clamps to the end of a shorter month, and the clamped day sticks. Add `n` months to the original date
+instead.
+
+### 6. Passing a `ZonedDateTime` to `Intl.DateTimeFormat`
+
+`format()` throws a `TypeError` for a `ZonedDateTime`. Use `zdt.toLocaleString()`, or pass `zdt.toInstant()` to a
+formatter with the `timeZone` you want.
+
+### 7. Losing the Time Zone When Storing
+
+An `Instant` or an offset-only string can't be turned back into the zone the user chose. Store the full
+`ZonedDateTime` string, with the bracketed zone, for anything that will be shown or edited in that zone later.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Scheduling: meetings, reminders, recurring events and anything that must survive a DST change
+- Time zone conversion, such as showing an event in each attendee's local time
+- Date-only data: birthdays, due dates, holidays, booking dates
+- Durations and countdowns, including rounding for billing or display
+- Any new code that would otherwise reach for a date library
+
+**Keep `Date` for now** where you only need a timestamp, such as `Date.now()` for timing or a log line, and where a
+library or browser API takes or returns a `Date`. Convert at the boundary rather than spreading both through your code.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Temporal replaces one overloaded `Date` with a type for each kind of value: `Instant` for exact moments,
+`ZonedDateTime` for events in a place, `PlainDate`, `PlainTime` and friends for wall-clock values, and `Duration` for
+lengths of time. Every value is immutable, months start at 1, parsing only accepts unambiguous ISO strings, and
+`ZonedDateTime` arithmetic knows a day from 24 hours. Choose the type that carries exactly the information you have,
+convert `Date` values at the edges with `toTemporalInstant()`, and use a polyfill until Safari ships it. For the story
+of why `Date` behaves the way it does, and how to plan a migration, read
+[Why Temporal Replaces Date](/post/javascript/why-temporal-replaces-date).

@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "temporal-api-dates-and-time-zones",
+    title: "A Meeting Planner with Temporal",
+    description: "Pick a meeting date, time and organiser's zone to see it in each attendee's zone with ZonedDateTime, next to what new Date() gets wrong, then load a DST change to compare adding one day, adding 24 hours and adding milliseconds to a Date.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "map-upsert-getorinsert",
     title: "Grouping Words with getOrInsertComputed()",
     description: "Group a sentence's words into a Map with has/set/get, getOrInsert(key, []) and getOrInsertComputed(key, () => []), comparing map calls and arrays created, then count words with getOrInsert(word, 0).",

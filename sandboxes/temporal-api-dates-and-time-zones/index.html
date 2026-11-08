@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Temporal Meeting Planner</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>A Meeting Planner with Temporal</h1>
+        <p>Pick when the meeting starts in the organiser's time zone and see it in every attendee's zone with <code>ZonedDateTime.withTimeZone()</code>. The last column shows what <code>new Date("&lt;date&gt;T&lt;time&gt;")</code> gives instead: it reads the time in your own zone, not the organiser's.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>Temporal</code>. It's supported in Chrome and Edge 144, Firefox 139 and Node 26 or later; Safari only has it in Technology Preview. Elsewhere, load <code>temporal-polyfill</code> or <code>@js-temporal/polyfill</code>.</p>
+
+      <fieldset class="control-group">
+        <legend>Meeting</legend>
+        <div class="fields-grid fields-grid--3">
+          <div class="field">
+            <label for="date">Date</label>
+            <input type="date" id="date" value="2026-11-12">
+          </div>
+          <div class="field">
+            <label for="time">Time</label>
+            <input type="time" id="time" value="15:00">
+          </div>
+          <div class="field">
+            <label for="organiser">Organiser's zone</label>
+            <select id="organiser">
+              <option value="Europe/London" selected>London</option>
+              <option value="Europe/Berlin">Berlin</option>
+              <option value="America/New_York">New York</option>
+              <option value="America/Los_Angeles">Los Angeles</option>
+              <option value="Asia/Kolkata">Kolkata</option>
+              <option value="Asia/Tokyo">Tokyo</option>
+              <option value="Australia/Sydney">Sydney</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="secondary-btn" id="dst-btn">Load a DST change</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Attendees</legend>
+        <div class="fields-grid" id="attendees">
+          <label class="checkbox-field"><input type="checkbox" value="Europe/Berlin"> Berlin</label>
+          <label class="checkbox-field"><input type="checkbox" value="America/New_York" checked> New York</label>
+          <label class="checkbox-field"><input type="checkbox" value="America/Los_Angeles"> Los Angeles</label>
+          <label class="checkbox-field"><input type="checkbox" value="Asia/Kolkata" checked> Kolkata</label>
+          <label class="checkbox-field"><input type="checkbox" value="Asia/Tokyo" checked> Tokyo</label>
+          <label class="checkbox-field"><input type="checkbox" value="Australia/Sydney" checked> Sydney</label>
+        </div>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Meeting time in each zone">
+        <table class="zones">
+          <thead>
+            <tr>
+              <th scope="col">Zone</th>
+              <th scope="col">Temporal</th>
+              <th scope="col"><code>new Date()</code></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+        <p class="hint" id="local-zone"></p>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
