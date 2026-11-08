@@ -1,0 +1,196 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("error-iserror-cross-realm");
+
+## Introduction
+
+In JavaScript, `throw` accepts any value: a string, a plain object, `null`. So a `catch` block or a rejection handler
+often needs to ask "is this actually an error?" before reading `.message` or `.stack`. The usual answer,
+`value instanceof Error`, has a gap: it returns `false` for errors created in **another realm**, such as an iframe or a
+`node:vm` context. And the usual workaround,
+`Object.prototype.toString`, can be fooled by any object that sets `Symbol.toStringTag`.
+
+**`Error.isError(value)`**, added in ES2026, answers the question reliably. It returns `true` only for genuine error
+objects, from any realm, and `false` for everything else, however convincing it looks.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  function isError(value) {
+    if (typeof Error.isError === "function") return Error.isError(value);
+
+    // Fallback: works across realms, but can be fooled by Symbol.toStringTag.
+    return Object.prototype.toString.call(value) === "[object Error]";
+  }
+
+  function toError(value) {
+    return isError(value) ? value : new Error(String(value), { cause: value });
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Every realm has its own `Error`.** A page, each iframe in it and each `node:vm` context get their own set of
+   built-ins. An error created in an iframe inherits from *that iframe's* `Error.prototype`, so `instanceof Error` in
+   the parent page walks the wrong prototype chain and returns `false`.
+2. **`Error.isError()` checks what the object is, not what it inherits from.** Every error created by an `Error`
+   constructor carries an internal marker that the engine sets at creation. `Error.isError()` looks for that marker, so
+   it doesn't care which realm's `Error` made the object, and it can't be faked by changing the prototype or adding
+   properties.
+3. **`Object.prototype.toString` used to be the cross-realm check.** It returns `"[object Error]"` for real errors from
+   any realm, but it reads `Symbol.toStringTag` first, so any object can claim to be an error, and a real error with a
+   custom tag stops being recognised. That's why it's only the fallback.
+4. **`toError()` normalises what was thrown.** Real errors pass through untouched; anything else is wrapped in a new
+   `Error`, with the original value kept as `cause`, so the rest of the code can always rely on `.message` and `.stack`.
+
+<RainbowDivider />
+
+## Example Usage
+
+### An Error from Another Realm
+
+`node:vm` runs code in a fresh context with its own built-ins, the same way an iframe does in a browser:
+
+<CodeBlock language="js">
+{`
+  import vm from "node:vm";
+
+  const foreign = vm.runInNewContext("new TypeError('from another realm')");
+
+  foreign instanceof Error;                  // false
+  foreign instanceof TypeError;              // false
+  Object.prototype.toString.call(foreign);   // "[object Error]"
+  Error.isError(foreign);                    // true
+`}
+</CodeBlock>
+
+In a browser, the same happens with `iframe.contentWindow.eval("new Error()")`, or with an error thrown by a function
+that belongs to another same-origin window.
+
+### Lookalikes and Spoofing
+
+<CodeBlock language="js">
+{`
+  const fake = { name: "Error", message: "looks real", [Symbol.toStringTag]: "Error" };
+  Object.prototype.toString.call(fake);      // "[object Error]"
+  Error.isError(fake);                       // false
+
+  const borrowed = Object.create(Error.prototype);
+  borrowed instanceof Error;                 // true
+  Error.isError(borrowed);                   // false
+
+  const tagged = new Error("real");
+  tagged[Symbol.toStringTag] = "Custom";
+  Object.prototype.toString.call(tagged);    // "[object Custom]"
+  Error.isError(tagged);                     // true
+`}
+</CodeBlock>
+
+Each check fails in a different direction: `instanceof` trusts the prototype, `toString` trusts the tag, and only
+`Error.isError()` gets all three right.
+
+### What Counts as an Error
+
+<CodeBlock language="js">
+{`
+  class ValidationError extends Error {}
+
+  Error.isError(new Error("x"));                         // true
+  Error.isError(new ValidationError());                  // true, subclasses count
+  Error.isError(new AggregateError([]));                 // true
+  Error.isError(new DOMException("x", "AbortError"));    // true
+  Error.isError(structuredClone(new RangeError("x")));   // true
+
+  Error.isError("Something went wrong");                 // false
+  Error.isError({ message: "x", stack: "..." });         // false
+  Error.isError(new Proxy(new Error("x"), {}));          // false
+`}
+</CodeBlock>
+
+`DOMException` counts, which matters in practice: an aborted `fetch()` rejects with a `DOMException` named
+`"AbortError"`, and `AbortSignal.reason` is one by default. A `Proxy` around an error doesn't count, because the
+proxy itself was never created by an error constructor.
+
+### Normalising Anything That Was Thrown
+
+<CodeBlock language="js">
+{`
+  try {
+    await runPlugin(plugin); // third-party code might throw anything
+  } catch (thrown) {
+    const error = toError(thrown);
+    logger.error(error.message, { stack: error.stack, cause: error.cause });
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Logging and error-reporting libraries** that receive values from code they don't control and need to tell errors
+  from everything else.
+- **Pages that talk to iframes**, such as embedded editors or sandboxed widgets, where errors can cross window
+  boundaries.
+- **Test runners and sandboxes built on `node:vm`**, where the code under test has its own built-ins.
+- **Serialisation code** that treats errors specially, for example copying `name`, `message`, `stack` and `cause` into
+  JSON, since `JSON.stringify(new Error("x"))` gives `"{}"`.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Browser support:** `Error.isError()` is ES2026. It's supported in Chrome and Edge 134, Firefox 138 and Node 24.3.
+  Safari only has it in Technology Preview so far, so keep the fallback for Safari users.
+- **The fallback is good, not perfect.** `Object.prototype.toString` handles cross-realm errors correctly, which is the
+  common problem. It's only wrong for objects that set `Symbol.toStringTag` on purpose, which ordinary code rarely does.
+- **Use `instanceof` for your own subclasses.** `Error.isError()` tells you something is an error, not which kind.
+  `error instanceof ValidationError` or checking `error.name` is still how you pick a branch.
+- **Not a type for `catch`.** TypeScript types a caught value as `unknown` (with `useUnknownInCatchVariables`, on by
+  default under `strict`). Wrapping the check in a function with a `value is Error` return type narrows it.
+- **Similar to `Array.isArray()`.** It's the same idea: `Array.isArray()` has always recognised arrays from other realms
+  where `instanceof Array` doesn't, and `Error.isError()` does the same for errors.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="When would I actually see an error from another realm?">
+  Most often with iframes: calling a function on `iframe.contentWindow`, or receiving an error from a same-origin
+  child window, hands you objects built by that window's `Error`. On the server, `node:vm` contexts and some test
+  runners produce the same situation. If your code never crosses those boundaries, `instanceof` works, but
+  `Error.isError()` still rejects lookalikes that `instanceof` accepts.
+</Details>
+
+<Details summary="Why does Object.create(Error.prototype) return false?">
+  It inherits from `Error.prototype`, but it wasn't created by an error constructor, so it doesn't have the internal
+  marker. `Error.isError()` reports what the object is, not
+  what it inherits from.
+</Details>
+
+<Details summary="Is a DOMException an Error?">
+  Yes. `DOMException` is a genuine error type in browsers and Node, and `Error.isError()` returns `true` for it. That
+  covers `AbortError` from cancelled `fetch()` calls and the other errors Web APIs throw.
+</Details>
+
+<Details summary="Should I replace every instanceof Error with Error.isError()?">
+  At boundaries, yes: anywhere you handle values from code or windows you don't control. Inside your own code, where
+  every error comes from the same realm, `instanceof Error` gives the same answer, but `Error.isError()` is just as
+  short and won't break if that changes.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`instanceof Error` fails for errors from iframes and `node:vm` contexts, and `Object.prototype.toString` can be fooled
+by `Symbol.toStringTag`. `Error.isError()` checks the internal marker every genuine error carries, so it's right in
+both cases, and it counts subclasses and `DOMException`. Use it wherever thrown values come from code you don't
+control, with the `toString` check as a fallback until Safari ships it. For the rest of the edition, see
+[What's New in ES2026](/post/javascript/whats-new-in-es2026).

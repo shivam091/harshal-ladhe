@@ -1222,5 +1222,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "caching": {
     title: "Client-Side Caching Patterns",
     description: "In-memory caches in JavaScript: memoised results, per-object caches, deduplicated requests and evicting stale or failed entries."
+  },
+  "error-iserror": {
+    title: "JavaScript `Error.isError()`",
+    description: "Detecting genuine error objects with ES2026's `Error.isError()`, across realms and without being fooled by lookalike objects."
+  },
+  "cross-realm": {
+    title: "Cross-Realm JavaScript: iframes and vm Contexts",
+    description: "How separate realms such as iframes and `node:vm` contexts get their own built-ins, why `instanceof` fails across them, and the checks that don't."
   }
 };

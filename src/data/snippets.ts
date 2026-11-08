@@ -228,6 +228,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "error-iserror-cross-realm",
+    title: "Reliable Error Detection with `Error.isError()`",
+    excerpt: "Detect real errors across iframes and vm contexts.",
+    description: "Use ES2026's Error.isError() to detect genuine errors where instanceof fails across realms and Symbol.toStringTag fools toString, with a node:vm demo and a fallback.",
+    link: {
+      label: "Read the full post: What's New in ES2026",
+      href: "/post/javascript/whats-new-in-es2026"
+    },
+    category: ["JavaScript"],
+    tags: ["javascript", "error-handling", "error-iserror", "cross-realm", "nodejs", "es2026", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/error-iserror-cross-realm/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "An error crossing from an iframe into the parent page, where instanceof Error returns false and Error.isError() returns true, beside a fake error object rejected by Error.isError().",
+      caption: "instanceof, toString and Error.isError() compared on a cross-realm error and a lookalike."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
