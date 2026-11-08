@@ -844,6 +844,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "why-temporal-replaces-date",
+    title: "Why Temporal Replaces Date: Time Zones, Immutability and Arithmetic",
+    excerpt: "Where Date goes wrong, and how Temporal fixes it.",
+    description: "Why JavaScript's Date causes off-by-one-day, DST and parsing bugs, how each Temporal type fixes one, how to migrate gradually, and how it compares with Moment, date-fns, Luxon and Day.js.",
+    category: ["JavaScript"],
+    tags: ["javascript", "temporal", "date-time", "time-zones", "immutability", "es2027", "modern-js", "best-practices"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/why-temporal-replaces-date/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A single overloaded JavaScript Date object splitting into Temporal's separate types, with the Date pitfalls it fixes: zero-based months, mutation, a birthday shown a day early and a reminder an hour late after a DST change.",
+      caption: "One Date doing every job, next to a Temporal type for each, and the bugs that disappear on the way."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "I've lost more hours than I'd like to admit to birthdays showing a day early and reminders drifting an hour after the clocks changed, so writing down exactly why Date does that, bug by bug, was oddly satisfying. I hope the side-by-side fixes and the migration steps make the move to Temporal feel like a series of small, safe changes rather than a rewrite. 🕰️",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 

@@ -1,0 +1,415 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("why-temporal-replaces-date");
+
+## Introduction
+
+Almost every JavaScript developer has a `Date` story: the birthday that showed up a day early, the report that ran an
+hour late after the clocks changed, the "add a month" helper that skipped February. These aren't careless mistakes. The
+`Date` object makes them easy to write and hard to spot, and for almost 30 years the only fix was a date library.
+
+**Temporal** is the language's own answer. It reached stage 4 in March 2026, and it's listed for ES2027, not ES2026 as
+it's often reported. It's already in Chrome, Edge, Firefox and Node, with polyfills for everything else.
+
+This post is about the *why*: where `Date` came from, the specific ways it goes wrong, how each part of Temporal answers
+one of those problems, and how to move an existing codebase across. For the API itself, with every type, method and
+option, see the companion tutorial,
+[The Temporal API: Dates, Times and Time Zones Without the `Date` Pitfalls](/tutorial/temporal-api-dates-and-time-zones).
+
+<RainbowDivider />
+
+## A Short History of `Date`
+
+JavaScript was written in about ten days in 1995, and it was meant to look like Java. Its `Date` object was copied
+from Java's `java.util.Date` of the time, quirks included: months counted from 0, `getYear()` returning the year
+minus 1900, and a single object trying to be a timestamp, a calendar date and a clock reading at once.
+
+<CodeBlock language="js">
+{`
+  const d = new Date(2026, 2, 10);   // 10 March: month 2 is March
+
+  d.getMonth();      // 2
+  d.getYear();       // 126, years since 1900 (use getFullYear())
+  d.getFullYear();   // 2026
+`}
+</CodeBlock>
+
+Java moved on quickly. Most of `java.util.Date` was deprecated in Java 1.1 in 1997, and Java 8 replaced the lot with
+the `java.time` package in 2014. JavaScript couldn't do the same: once websites depend on a behaviour, it can't be
+changed without breaking them. So `Date` stayed exactly as it was, and libraries such as Moment.js grew up around it
+to paper over the gaps.
+
+Temporal started as a TC39 proposal in 2017, with the aim of doing for JavaScript what `java.time` did for Java:
+leave `Date` alone, and add a separate, well-designed API next to it. It reached stage 3 in 2021, and spent the
+following years being refined as browser engines implemented it, until it reached stage 4 in March 2026.
+
+<RainbowDivider />
+
+## Where `Date` Goes Wrong
+
+A `Date` is a single number: milliseconds since 1 January 1970 UTC. Every method that reads or sets a month, an hour or
+a day of the week converts that number using one of only two time zones, UTC or the device's local zone. Most of its
+problems follow from that design.
+
+### 1. Months Start at 0
+
+Days of the month run from 1 to 31, but months run from 0 to 11, and days of the week from 0 (Sunday) to 6:
+
+<CodeBlock language="js">
+{`
+  const d = new Date(2026, 2, 10);
+
+  d.getDate();    // 10
+  d.getMonth();   // 2, meaning March
+  d.getDay();     // 2, meaning Tuesday
+`}
+</CodeBlock>
+
+Every developer learns this, and every codebase still has a `month + 1` or a `month - 1` somewhere that's wrong.
+
+### 2. Dates Are Mutable
+
+`setMonth()`, `setDate()` and the other setters change the object in place. A function that "calculates" a date from
+one passed in quietly changes the caller's copy too:
+
+<CodeBlock language="js">
+{`
+  function nextMonth(date) {
+    date.setMonth(date.getMonth() + 1);
+    return date;
+  }
+
+  const invoice = new Date(2026, 0, 15);
+  const reminder = nextMonth(invoice);
+
+  invoice.toDateString();    // "Sun Feb 15 2026": the invoice date moved too
+  reminder.toDateString();   // "Sun Feb 15 2026"
+`}
+</CodeBlock>
+
+The usual defence is to copy first (`new Date(date)`) everywhere, which works until someone forgets.
+
+### 3. Month Arithmetic Overflows
+
+Setters don't stop at the end of the month. Extra days roll into the next one, so "one month after 31 January" is
+3 March in 2026:
+
+<CodeBlock language="js">
+{`
+  const d = new Date(2026, 0, 31);
+  d.setMonth(1);
+  d.toDateString();   // "Tue Mar 03 2026"
+`}
+</CodeBlock>
+
+### 4. Parsing Is a Lottery
+
+The specification only defines how `Date` parses one format, a simplified ISO 8601, plus the strings its own
+`toString()` and `toUTCString()` produce. Anything else, such as `"03/10/2026"` or `"10 March 2026"`, is left to each
+engine, so the same string can give different results, or `Invalid Date`, in different browsers. Is `"03/10/2026"`
+3 October or 10 March? `Date` doesn't let you say.
+
+Even the ISO format has a trap. A date on its own is read as UTC, but a date and time without an offset is read as
+local time:
+
+<CodeBlock language="js">
+{`
+  // Run in New York (UTC-4 in March)
+  new Date("2026-03-10").toISOString();         // "2026-03-10T00:00:00.000Z": UTC midnight
+  new Date("2026-03-10T00:00").toISOString();   // "2026-03-10T04:00:00.000Z": local midnight
+`}
+</CodeBlock>
+
+And a string that can't be parsed doesn't throw. It produces an `Invalid Date`, whose `getTime()` is `NaN`, and the
+error only surfaces later, somewhere else, when `toISOString()` throws a `RangeError` or a `NaN` reaches the UI.
+
+### 5. Local Time and UTC Are Mixed Together
+
+Every getter comes in two versions, local and UTC, and `toString()` shows local time while `toISOString()` shows UTC.
+The same object reads differently depending on which method you happen to call:
+
+<CodeBlock language="js">
+{`
+  // Run in New York (UTC-5 in November)
+  const t = new Date("2026-11-08T09:30:00Z");
+
+  t.getHours();      // 4
+  t.getUTCHours();   // 9
+  t.toString();      // "Sun Nov 08 2026 04:30:00 GMT-0500 (Eastern Standard Time)"
+  t.toISOString();   // "2026-11-08T09:30:00.000Z"
+`}
+</CodeBlock>
+
+The result also depends on where the code runs. A test that passes on a laptop in London can fail on a CI server set to
+UTC, or for a colleague in Bangalore.
+
+### 6. No Time Zones Beyond Local and UTC
+
+`Date` can *display* a moment in another zone, through `toLocaleString()` with a `timeZone` option, but it can't
+*calculate* in one. There's no way to ask for "9:00 on 12 November in Tokyo", or "the start of the day in New York",
+without working out the offset yourself, which means knowing that zone's DST rules for that date. That's the job a
+time zone library exists to do.
+
+### 7. DST Breaks Arithmetic
+
+Because a `Date` is a millisecond count, the obvious way to add a day is to add 86,400,000 milliseconds. On the day
+the clocks change, a day isn't 24 hours long:
+
+<CodeBlock language="js">
+{`
+  // Run in New York: clocks go forward on 8 March 2026
+  const before = new Date(2026, 2, 7, 9, 0);   // 7 March, 09:00
+  const after = new Date(before.getTime() + 24 * 60 * 60 * 1000);
+
+  after.toString();   // "Sun Mar 08 2026 10:00:00 GMT-0400 (Eastern Daylight Time)"
+`}
+</CodeBlock>
+
+The daily reminder now fires at 10:00. `setDate(getDate() + 1)` does keep the wall-clock time, but only in the
+device's own zone: for a meeting in any other zone there's no correct `Date` method at all.
+
+### 8. No Date-Only Type
+
+A birthday or a due date has no time and no zone. `Date` has no way to say that, so the usual approach is to store
+midnight, and midnight in one zone is the previous evening in another:
+
+<CodeBlock language="js">
+{`
+  // Run in New York
+  const birthday = new Date("2026-03-10");   // parsed as UTC midnight
+
+  birthday.toDateString();   // "Mon Mar 09 2026"
+  birthday.getDate();        // 9
+`}
+</CodeBlock>
+
+This is the classic off-by-one-day bug. Everyone west of Greenwich sees the day before, and it only shows up for users
+in the "wrong" place, which is often not where the developers are.
+
+### 9. Millisecond Precision
+
+A `Date` can't hold anything finer than a millisecond. That's fine for most UIs, but timestamps from databases, logs
+and other languages often carry microseconds or nanoseconds, and `Date` silently drops them:
+
+<CodeBlock language="js">
+{`
+  new Date("2026-11-08T09:30:00.123456789Z").toISOString();
+  // "2026-11-08T09:30:00.123Z"
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How Temporal Fixes Each One
+
+Temporal's central idea is that "a date" isn't one thing. It gives each kind of value its own type, so the type itself
+says how much you know, and every operation means exactly one thing.
+
+| `Date` problem | Temporal's answer |
+| --- | --- |
+| Months start at 0 | Months run from 1 to 12, and `dayOfWeek` from 1 (Monday) to 7 |
+| Mutable objects | Every Temporal object is immutable: `add()` and `with()` return new objects |
+| Month arithmetic overflows | Clamps to the last day of the month by default, or throws with `overflow: "reject"` |
+| Lenient, engine-specific parsing | Only ISO 8601 and RFC 9557 strings are accepted, and bad input throws a `RangeError` |
+| Local and UTC mixed together | `Instant` has no local time at all; `ZonedDateTime` always carries its zone |
+| Only local and UTC zones | `ZonedDateTime` works in any IANA zone, such as `"Asia/Tokyo"` |
+| DST breaks arithmetic | `ZonedDateTime` adds days in wall-clock time and hours in exact time |
+| No date-only type | `PlainDate`, plus `PlainTime`, `PlainYearMonth` and `PlainMonthDay` |
+| Millisecond precision | Nanosecond precision, with `epochNanoseconds` as a `BigInt` |
+
+Here are the same bugs from above, written with Temporal:
+
+<CodeBlock language="js">
+{`
+  // Months start at 1, and the invoice can't be changed by accident
+  const invoice = Temporal.PlainDate.from({ year: 2026, month: 1, day: 15 });
+  const reminder = invoice.add({ months: 1 });
+  invoice.toString();    // "2026-01-15"
+  reminder.toString();   // "2026-02-15"
+
+  // One month after 31 January is the end of February, not 3 March
+  Temporal.PlainDate.from("2026-01-31").add({ months: 1 }).toString();   // "2026-02-28"
+
+  // A birthday is a date, so there's no midnight to slip into the day before
+  Temporal.PlainDate.from("2026-03-10").toString();   // "2026-03-10", in every time zone
+
+  // The daily reminder keeps its time across the DST change
+  Temporal.ZonedDateTime.from("2026-03-07T09:00[America/New_York]").add({ days: 1 }).toString();
+  // "2026-03-08T09:00:00-04:00[America/New_York]"
+
+  // 9:00 in Tokyo, calculated rather than worked out by hand
+  Temporal.PlainDateTime.from("2026-11-12T09:00").toZonedDateTime("Asia/Tokyo").toInstant().toString();
+  // "2026-11-12T00:00:00Z"
+
+  // Bad input fails immediately
+  Temporal.PlainDate.from("not a date");   // throws RangeError
+
+  // Nothing is lost below a millisecond
+  Temporal.Instant.from("2026-11-08T09:30:00.123456789Z").toString();
+  // "2026-11-08T09:30:00.123456789Z"
+`}
+</CodeBlock>
+
+The types themselves are the biggest change. `Instant` is the old `Date` done properly: an exact moment, with no
+pretence of a local time. `ZonedDateTime` is that moment plus a real time zone, and it's the type to use for anything
+scheduled. The `Plain` types are wall-clock values with no zone, so a `PlainDate` can't be shifted a day by a time zone
+because it doesn't have one. `Duration` gives lengths of time a type of their own, instead of a bare number of
+milliseconds that can't express "one month".
+
+<Info title="Why so many types?">
+  Each extra piece of information a value carries is a chance for it to be wrong. A birthday stored with a made-up
+  time and zone can drift; a `PlainDate` can't. Choosing the type with exactly the information you have is what makes
+  the bugs above impossible, rather than just less likely.
+</Info>
+
+<RainbowDivider />
+
+## A Migration Strategy
+
+Nobody rewrites every date in a codebase in one go, and there's no need to. `Date` isn't going anywhere, and the two
+convert in one line each. A gradual migration works well:
+
+### 1. Load a Polyfill Where Needed
+
+Temporal is supported in Chrome and Edge 144, Firefox 139 and Node 26, but Safari only has it in Technology Preview.
+Until that changes, load `temporal-polyfill` or `@js-temporal/polyfill` when `typeof Temporal === "undefined"`, so the
+same code runs everywhere.
+
+### 2. Write New Code in Temporal
+
+Start with new features, especially anything involving time zones, recurring events or date-only values. These are
+where `Date` code is most likely to be wrong, so they get the most benefit.
+
+### 3. Convert at the Boundaries
+
+Keep the conversion at the edges of your code, where `Date` values arrive from libraries, older modules or browser
+APIs, and convert straight away:
+
+<CodeBlock language="js">
+{`
+  // Date in, Temporal inside
+  const instant = legacyDate.toTemporalInstant();
+  const local = instant.toZonedDateTimeISO(user.timeZone);
+
+  // Temporal inside, Date out, for a library that needs one
+  chart.setStart(new Date(local.epochMilliseconds));
+`}
+</CodeBlock>
+
+`Date.prototype.toTemporalInstant()` is part of Temporal. If you're on `@js-temporal/polyfill`, which doesn't add it
+for you, `Temporal.Instant.fromEpochMilliseconds(date.getTime())` does the same job.
+
+### 4. Fix the Storage Format
+
+Decide what each stored value really is, and store the matching string:
+
+- **Timestamps** (created, updated, expires): an `Instant` string such as `"2026-11-08T04:00:00Z"`. If you already
+  store epoch milliseconds, `Temporal.Instant.fromEpochMilliseconds()` reads them.
+- **Date-only values** (birthdays, due dates): a `PlainDate` string such as `"2026-11-08"`, never a timestamp.
+- **Scheduled events**: the full `ZonedDateTime` string, such as `"2026-11-12T09:00:00+09:00[Asia/Tokyo]"`. The
+  bracketed zone keeps the DST rules; an offset alone doesn't.
+
+This step usually finds real bugs, such as date-only values that were being stored as midnight UTC all along.
+
+### 5. Replace Library Calls Gradually
+
+If you use a date library, move one module at a time and delete the library once nothing imports it. Most operations
+have a direct equivalent:
+
+| Task | `Date` or a library | Temporal |
+| --- | --- | --- |
+| Today's date | `new Date()` and some formatting | `Temporal.Now.plainDateISO()` |
+| Add a month | `setMonth(getMonth() + 1)` or `add(1, "month")` | `date.add({ months: 1 })` |
+| Days between dates | Subtract and divide by 86,400,000 | `a.until(b).days` |
+| Show in another zone | `toLocaleString({ timeZone })` | `zdt.withTimeZone(zone)` |
+| Start of day | `setHours(0, 0, 0, 0)`, local zone only | `zdt.startOfDay()` |
+| Compare | `a.getTime() < b.getTime()` | `Temporal.PlainDate.compare(a, b)` |
+
+### 6. Test in More Than One Time Zone
+
+`Date` bugs hide when every developer and server is in the same zone. Run your date tests with a different `TZ`
+environment variable in Node, such as `TZ=America/New_York`, and include a DST change date in the test data.
+
+<RainbowDivider />
+
+## When `Date` Is Still Fine
+
+Temporal doesn't make every use of `Date` a bug. It's still reasonable when:
+
+- **You only need a timestamp.** `Date.now()` for a log line or a cache key is fine, though `performance.now()` is the
+  better tool for measuring how long something took.
+- **An API takes or returns a `Date`.** Plenty of libraries and browser APIs do, such as a date input's
+  `valueAsDate`. Convert at the boundary rather than fighting it.
+- **The code is old, works and never touches time zones.** Rewriting it for its own sake is risk with no payoff. Migrate
+  it when you next need to change it.
+- **You're targeting runtimes with no Temporal and can't add a polyfill.** Stick with `Date`, but treat it carefully:
+  ISO strings only, UTC for storage, and no millisecond arithmetic for days.
+
+<RainbowDivider />
+
+## What About Date Libraries?
+
+For years, the answer to `Date`'s problems was a library, and each popular one is still a reasonable choice in an
+existing project:
+
+- **Moment.js** was the default for most of the 2010s. Its maintainers put it into maintenance mode in 2020 and
+  recommend against using it in new projects. Its objects are mutable, like `Date`, and it doesn't tree-shake well.
+- **date-fns** is a collection of small functions that work on ordinary `Date` objects, so you only bundle what you
+  import. Because it uses `Date` underneath, it inherits the lack of a date-only type, and time zone support comes
+  from a separate add-on.
+- **Luxon** was written by one of Moment's maintainers. Its objects are immutable, and it uses the browser's `Intl`
+  data for time zones, so it's the closest of the four to Temporal's design.
+- **Day.js** is a very small library with an API modelled on Moment's, which makes it the usual drop-in replacement.
+  Time zones and many other features come as plugins.
+
+All four were built because the language had nothing better. Temporal now covers what most projects used them for,
+immutable values, time zone arithmetic and durations, with no download in supporting browsers. For new code, start with
+Temporal and reach for a library only if you need something it doesn't do. In an existing project, there's no rush:
+the migration strategy above works just as well from a library as from plain `Date`.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Is Temporal part of ES2026?">
+  No. It reached stage 4 at TC39's March 2026 meeting, and it's listed for ES2027. Plenty of articles call it an
+  ES2026 feature, but that's not where it landed. It's already shipping in Chrome, Edge, Firefox and Node, so the
+  edition number matters less than the browser support table.
+</Details>
+
+<Details summary="Will Date be deprecated or removed?">
+  No. Removing it would break a large part of the web, so `Date` will keep working exactly as it does today. Temporal
+  sits next to it, and the two convert with `toTemporalInstant()` and `epochMilliseconds`.
+</Details>
+
+<Details summary="Can I use Temporal in production today?">
+  Yes, with a polyfill for Safari, which only has it in Technology Preview. Load `temporal-polyfill` or
+  `@js-temporal/polyfill` when `Temporal` is missing and the same code runs in every browser.
+</Details>
+
+<Details summary="Which Temporal type should I use for a timestamp from my database?">
+  `Temporal.Instant`. It's an exact moment with no zone, which is what a timestamp column holds. Convert it to a
+  `ZonedDateTime` with `toZonedDateTimeISO(zone)` only when you need to show it in someone's local time.
+</Details>
+
+<Details summary="Does Temporal handle time zones without a library?">
+  Yes. It uses the time zone data the browser or runtime already ships for `Intl`, so names like `"Europe/London"`
+  work with no extra download, and DST rules stay as current as the browser itself.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+`Date` was copied from a Java class that Java itself abandoned, and it has been causing the same bugs ever since:
+
+- Months that start at 0, and setters that change shared objects
+- Parsing that depends on the engine, and a date-only string read as UTC
+- Only two time zones, and day arithmetic that breaks twice a year
+- No way to say "a date with no time", and nothing below a millisecond
+
+Temporal answers each of those with a type that says exactly what a value is, immutable objects, real time zones and
+arithmetic that knows a day from 24 hours. Start new code with it, convert `Date` values at the edges, and fix your
+storage formats as you go. When you're ready to write some, the tutorial walks through every type with runnable
+examples and a playground:
+[The Temporal API: Dates, Times and Time Zones Without the `Date` Pitfalls](/tutorial/temporal-api-dates-and-time-zones).
