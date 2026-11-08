@@ -1163,6 +1163,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "JavaScript Iterator Helpers",
     description: "Lazy `map`, `filter`, `take`, `drop` and other helpers on JavaScript iterators, added in ES2025, for working with generators and infinite sequences."
   },
+  "baseline": {
+    title: "Baseline Browser Support",
+    description: "Baseline's newly and widely available statuses for web platform features, and how to use them to choose which features are safe to ship."
+  },
   "es2027": {
     title: "Modern JavaScript Features of ES2027",
     description: "Language features headed for ECMAScript 2027, such as Temporal and explicit resource management, with browser support and fallbacks.",
@@ -1178,5 +1182,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "map-upsert": {
     title: "Map and WeakMap `getOrInsert()` and `getOrInsertComputed()`",
     description: "Reading or inserting `Map` and `WeakMap` entries in one call with ES2027's upsert methods, for groups, nested maps and caches."
+  },
+  "interop": {
+    title: "Interop and Cross-Browser Compatibility",
+    description: "The yearly Interop project, in which browser vendors align chosen web features across engines, and what its focus areas mean for authors."
+  },
+  "css-2027": {
+    title: "CSS Features to Watch in 2027",
+    description: "CSS features most likely to become usable across browsers in 2027, based on current browser support and Interop commitments."
   }
 };

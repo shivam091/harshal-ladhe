@@ -794,6 +794,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-css-2027",
+    title: "What's New in CSS in 2027: What to Expect",
+    excerpt: "CSS features closest to working everywhere in 2027.",
+    description: "An evidence-based look at the CSS features most likely to work in every browser in 2027: typed attr(), customisable select, random(), @function and more.",
+    category: ["CSS"],
+    tags: ["css", "css-2027", "modern-css", "browser-support", "interop", "baseline", "attr", "customizable-select", "at-function", "corner-shape", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/whats-new-in-css-2027/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for what to expect in CSS in 2027, showing feature cards for typed attr(), customisable select, random() and @function, each with the engines that already support it and the one still missing.",
+      caption: "The CSS features closest to working everywhere, ranked by evidence rather than promises."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Predictions are easy to get wrong, so this post took far more checking than writing: browser release notes, the Interop 2026 announcement, preview builds and MDN's compatibility data, so that every claim rests on a shipped release rather than a vendor promise. I'll revisit the list as 2027 unfolds, and I hope the tracking links help you keep score too. 🔭",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 
