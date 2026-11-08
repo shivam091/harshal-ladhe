@@ -1143,4 +1143,8 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Building Progress Indicators",
     description: "Progress bars and rings that show how far a task has got, built with SVG and CSS, with accessible values for screen readers."
   },
+  "drag-and-drop": {
+    title: "Drag and Drop on the Web",
+    description: "Dragging elements with Pointer Events and styling drop zones and selected states, with keyboard alternatives for accessibility."
+  },
 };
