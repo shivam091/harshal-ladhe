@@ -659,6 +659,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-contrast-color",
+    title: "`contrast-color()`: Automatic Readable Text on Any Background",
+    excerpt: "Let CSS pick white or black text for any background.",
+    description: "Use CSS contrast-color() to pick white or black text for any background colour: how the spec defines it, custom properties and brand colours, buttons and tags, pairing with light-dark(), mid-tone limits, and an @supports fallback.",
+    category: ["CSS"],
+    tags: ["css", "contrast-color", "accessibility", "wcag", "css-functions", "design-tokens", "light-dark", "progressive-enhancement", "css-2027"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-contrast-color/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Coloured buttons, badges and tags whose text switches between white and black automatically with the CSS contrast-color() function, beside their WCAG contrast ratios.",
+      caption: "One contrast-color() rule choosing white or black text across a palette of background colours."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

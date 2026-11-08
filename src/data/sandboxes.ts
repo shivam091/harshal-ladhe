@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-contrast-color",
+    title: "contrast-color() Text on Any Background",
+    description: "Pick any background colour and see the white or black text contrast-color() returns on a preview, button, badge and tag, with the WCAG 2 ratio against white and against black worked out in JavaScript, a flag when the browser's choice differs from WCAG 2, and a swatch grid of light, dark and mid-tone colours.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-container-style-queries",
     title: "Container Style Queries Playground",
     description: "A pricing card whose featured, sale and sold-out variants and compact density come entirely from @container style() rules: set --variant and --density on its parent, or move them onto the card itself to see that an element never queries its own custom properties.",

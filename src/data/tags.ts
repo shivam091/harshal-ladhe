@@ -1226,5 +1226,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "css-2027": {
     title: "CSS Features to Watch in 2027",
     description: "CSS features most likely to become usable across browsers in 2027, based on current browser support and Interop commitments."
+  },
+  "contrast-color": {
+    title: "CSS contrast-color() Function",
+    description: "Choosing readable white or black text for any background colour with CSS `contrast-color()`, its limits and fallbacks."
+  },
+  "wcag": {
+    title: "WCAG Colour Contrast",
+    description: "Web Content Accessibility Guidelines contrast ratios, AA and AAA thresholds, and checking text colours against them."
   }
 };
