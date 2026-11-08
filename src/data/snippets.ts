@@ -415,6 +415,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-gradient-not-showing-on-line",
+    title: "Fix: SVG Gradient Not Showing on a Straight Line",
+    excerpt: "Fix an SVG gradient that vanishes on a horizontal or vertical line.",
+    description: "Why an SVG gradient stroke vanishes on a horizontal or vertical line, and how gradientUnits=\"userSpaceOnUse\" with user coordinates fixes it.",
+    category: ["SVG"],
+    tags: ["svg", "gradients", "svg-gradient", "gradientUnits", "objectBoundingBox", "debugging", "coordinate-system"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-gradient-not-showing-on-line/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of an empty dashed outline where a line should be, above a glowing horizontal line with an indigo to amber gradient.",
+      caption: "A missing gradient line next to its fixed, glowing counterpart."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

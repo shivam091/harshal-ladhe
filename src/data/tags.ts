@@ -1239,4 +1239,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Embedding HTML in SVG with `<foreignObject>`",
     description: "Using `<foreignObject>` to place HTML inside an SVG for full CSS layout, such as wrapped text, and its rendering trade-offs."
   },
+  "svg-gradient": {
+    title: "SVG Gradients with `<linearGradient>` and `<radialGradient>`",
+    description: "Defining SVG gradient paint servers, their stops and units, and the edge cases that make them render unexpectedly."
+  },
+  "gradientunits": {
+    title: "Choosing SVG `gradientUnits`",
+    description: "How `gradientUnits` switches gradient coordinates between the shape's bounding box and user space, and when each one is the right choice."
+  },
+  "objectboundingbox": {
+    title: "The SVG `objectBoundingBox` Unit System",
+    description: "How `objectBoundingBox` units map coordinates to fractions of a shape's bounding box, and why they fail on zero-width or zero-height shapes."
+  },
 };

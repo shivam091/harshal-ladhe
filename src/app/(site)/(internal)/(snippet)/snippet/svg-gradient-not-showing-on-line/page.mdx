@@ -1,0 +1,157 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-gradient-not-showing-on-line");
+
+## Introduction
+
+You give a `<line>` a gradient stroke, the gradient is defined correctly, the stroke is 8 units thick, and the line **disappears**. Change the stroke to a plain colour and it comes back. Make the line slightly diagonal and the gradient works.
+
+The cause is the gradient's default units. A perfectly horizontal or vertical line has a bounding box with **zero height or zero width**, and a gradient measured against that box has nothing to stretch over. The fix is one attribute, `gradientUnits="userSpaceOnUse"`, plus coordinates that match the line.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 100" width="480" height="200" font-family="system-ui, sans-serif" role="img" aria-label="Before and after: the first horizontal line with a default gradient renders nothing; the fixed line shows an indigo to amber gradient">
+    <defs>
+      <linearGradient id="gl-broken">
+        <stop offset="0" stop-color="#6366f1" />
+        <stop offset="1" stop-color="#f59e0b" />
+      </linearGradient>
+      <linearGradient id="gl-fixed" gradientUnits="userSpaceOnUse" x1="20" y1="0" x2="220" y2="0">
+        <stop offset="0" stop-color="#6366f1" />
+        <stop offset="1" stop-color="#f59e0b" />
+      </linearGradient>
+    </defs>
+
+    <!-- Before: default objectBoundingBox units, so this line paints nothing -->
+    <text x="20" y="14" font-size="11" fill="currentColor">Before: renders nothing</text>
+    <rect x="20" y="22" width="200" height="16" fill="none" stroke="currentColor" stroke-opacity="0.4" stroke-dasharray="4 3" />
+    <line x1="20" y1="30" x2="220" y2="30" stroke="url(#gl-broken)" stroke-width="8" />
+
+    <!-- After: userSpaceOnUse, with the gradient running along the line -->
+    <text x="20" y="64" font-size="11" fill="currentColor">After: userSpaceOnUse</text>
+    <line x1="20" y1="80" x2="220" y2="80" stroke="url(#gl-fixed)" stroke-width="8" />
+  </svg>
+`}
+</SvgSnippet>
+
+The dashed box marks where the first line should be. **The empty space inside it is the bug.** The line is there, with an 8-unit stroke, but its gradient paints nothing.
+
+<RainbowDivider />
+
+## How It Works
+
+1. By default, a gradient uses `gradientUnits="objectBoundingBox"`. Its `x1`, `y1`, `x2` and `y2` are fractions of the shape's **bounding box**, so `0` is one edge of the box and `1` is the other.
+2. The bounding box is measured from the geometry alone, **without the stroke**. A line from `(20, 30)` to `(220, 30)` has a box 200 units wide and **0 units tall**.
+3. Mapping fractions onto a box with no height can't work. The spec says that in this case the gradient is ignored, and current browsers then paint nothing at all.
+4. `gradientUnits="userSpaceOnUse"` measures the gradient in the line's own user coordinates instead. The bounding box isn't used, so its zero height doesn't matter.
+5. `x1="20"` and `x2="220"` put the first and last stops at the line's ends. The `y` values don't matter for a horizontal gradient, because the colour is constant along any line at right angles to the gradient's direction.
+
+<RainbowDivider />
+
+## Variant: Shading Across the Stroke
+
+With `userSpaceOnUse` you can also run the gradient **across** the stroke instead of along it. Set `y1` and `y2` to the stroke's top and bottom edges. For a line at `y="30"` with an 8-unit stroke, that's `26` and `34`:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 60" width="480" height="120" aria-hidden="true">
+    <defs>
+      <linearGradient id="gl-across" gradientUnits="userSpaceOnUse" x1="0" y1="22" x2="0" y2="38">
+        <stop offset="0" stop-color="#ec4899" />
+        <stop offset="0.5" stop-color="#f59e0b" />
+        <stop offset="1" stop-color="#ec4899" />
+      </linearGradient>
+    </defs>
+    <line x1="20" y1="30" x2="220" y2="30" stroke="url(#gl-across)" stroke-width="16" stroke-linecap="round" />
+  </svg>
+`}
+</SvgSnippet>
+
+- The stroke is 16 units thick, so it spans `y="22"` to `y="38"`, and the gradient vector covers exactly that.
+- With the default units this would be impossible even on a nudged line, because the bounding box doesn't include the stroke.
+
+<RainbowDivider />
+
+## Example Usage
+
+Because the colour only changes along `x`, one `userSpaceOnUse` gradient works for **every** horizontal line that spans the same `x` range, at any height. That suits chart gridlines and dividers:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 100" width="480" height="200" aria-hidden="true">
+    <defs>
+      <linearGradient id="gl-grid" gradientUnits="userSpaceOnUse" x1="10" y1="0" x2="230" y2="0">
+        <stop offset="0" stop-color="#14b8a6" stop-opacity="0" />
+        <stop offset="0.5" stop-color="#14b8a6" />
+        <stop offset="1" stop-color="#14b8a6" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+    <g stroke="url(#gl-grid)" stroke-width="2">
+      <line x1="10" y1="20" x2="230" y2="20" />
+      <line x1="10" y1="40" x2="230" y2="40" />
+      <line x1="10" y1="60" x2="230" y2="60" />
+      <line x1="10" y1="80" x2="230" y2="80" />
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+For a **vertical** line, swap the axes: keep `x1` and `x2` equal and set `y1` and `y2` to the line's ends. The same bug and fix apply to a straight `<path>` such as `M20 30 H220`, and to a `<polyline>` whose points all share one `y` or one `x`.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Gradient dividers** and horizontal rules.
+- **Chart axes and gridlines** that fade out at the ends.
+- **Progress bars and sliders** drawn as a thick, round-capped line.
+- **Timelines and connectors** in diagrams.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Only straight horizontal or vertical geometry is affected:** a diagonal line or a curved path has a bounding box with both width and height, so the default units work there.
+- **Coordinates follow the shape's transform:** `userSpaceOnUse` uses the coordinate system of the element that references the gradient, including its own `transform`. If you move a line with `transform="translate(0 50)"`, the gradient moves with it, so keep `x1`/`x2` in the line's own coordinates.
+- **A fallback colour won't reliably save you:** `stroke="url(#gl-broken) #6366f1"` sets a colour to use if the gradient can't be used, but browsers don't treat the zero-size case consistently. Fix the units instead.
+- **Ids are page-wide:** an inline SVG's gradient `id` is shared with the whole page, so give each one a unique name.
+- **Accessibility:** a decorative divider gets `aria-hidden="true"`. If the line carries meaning, such as a progress value, give the SVG `role="img"` and an `aria-label` that states it.
+- **Browser support:** `gradientUnits="userSpaceOnUse"` works in all current browsers.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does my gradient work on a rectangle but not on a line?">
+  A rectangle has both width and height, so `objectBoundingBox` has something to measure against. A horizontal line's
+  bounding box has no height, because the stroke isn't part of the box, so the gradient is ignored and nothing is
+  painted. Switch to `gradientUnits="userSpaceOnUse"`.
+</Details>
+
+<Details summary="Can I keep objectBoundingBox?">
+  Yes, by making the box not quite flat: end the line at `y2="30.01"` instead of `30`. That gives it a tiny height, and
+  a left-to-right gradient then works. It's a workaround, though. `userSpaceOnUse` says what you mean and doesn't depend
+  on the shape's geometry.
+</Details>
+
+<Details summary="Do I need to update the gradient if the line gets longer?">
+  Yes. With `userSpaceOnUse`, the gradient is fixed in user coordinates, so `x1` and `x2` should match the line's ends.
+  If the line becomes longer, the part past `x2` is painted in the last stop's colour. In a component, set the line
+  and gradient coordinates from the same values.
+</Details>
+
+<Details summary="Does the same thing happen with radial gradients and patterns?">
+  Yes. Anything measured in `objectBoundingBox` units has the same problem on a zero-height or zero-width shape. That
+  includes `radialGradient`, `<pattern>` with its default `patternUnits`, and masks and filters left on their default
+  bounding-box units. The fix is the same: switch to `userSpaceOnUse`.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A horizontal or vertical line has a zero-height or zero-width bounding box, so a gradient with the default `objectBoundingBox` units has nothing to fit and the stroke vanishes. Add `gradientUnits="userSpaceOnUse"` and set `x1`/`x2` (or `y1`/`y2`) to the line's ends in user coordinates, and the gradient shows up.
