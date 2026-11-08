@@ -354,6 +354,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-inner-shadow",
+    title: "SVG Inner Shadow Filter for Any Shape",
+    excerpt: "Add an inset shadow to any SVG shape with a filter.",
+    description: "Add an inner shadow or inner glow to any SVG shape: invert a blurred silhouette with feComposite out, colour it, and merge it over the fill.",
+    category: ["SVG"],
+    tags: ["svg", "svg-filters", "inner-shadow", "feComposite", "feGaussianBlur", "graphics"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-inner-shadow/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a rounded rectangle and a circle that look pressed into the surface, with dark shadows along their inner top-left edges.",
+      caption: "Shapes pressed into the page with an SVG inner shadow."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

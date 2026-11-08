@@ -1215,4 +1215,8 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Sizing the SVG Filter Region",
     description: "How the `x`, `y`, `width`, and `height` of an SVG `<filter>` and `filterUnits` decide where an effect can paint, and how to stop shadows and blurs being clipped."
   },
+  "inner-shadow": {
+    title: "Inner Shadows for Any Shape",
+    description: "Inset shadows and inner glows for SVG shapes, built with filter primitives where CSS `box-shadow: inset` can't reach."
+  },
 };

@@ -1,0 +1,164 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-inner-shadow");
+
+## Introduction
+
+CSS has `box-shadow: inset` for boxes, but nothing for the inside of a circle, a path, or a letter. An SVG filter can draw an **inner shadow** for any shape: a soft dark band just inside the edge, as if the shape were pressed into the page.
+
+There's no single primitive for it. The trick is to work out which part of the shape a shifted, blurred copy of itself **no longer covers**, and paint only that part.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 120" width="450" height="180" role="img" aria-label="A rounded rectangle and a circle with inner shadows along their top-left edges">
+    <defs>
+      <filter id="is-inner" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+        <feOffset in="blur" dx="3" dy="3" result="offsetBlur" />
+        <feComposite in="SourceAlpha" in2="offsetBlur" operator="out" result="rim" />
+        <feFlood flood-color="#0f172a" flood-opacity="0.6" result="tint" />
+        <feComposite in="tint" in2="rim" operator="in" result="shadow" />
+        <feMerge>
+          <feMergeNode in="SourceGraphic" />
+          <feMergeNode in="shadow" />
+        </feMerge>
+      </filter>
+    </defs>
+    <rect x="20" y="20" width="120" height="80" rx="16" fill="#e0e7ff" filter="url(#is-inner)" />
+    <circle cx="220" cy="60" r="40" fill="#fde68a" filter="url(#is-inner)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `feGaussianBlur in="SourceAlpha"` blurs the shape's silhouette. The result is fully opaque deep inside the shape and fades out across its edge.
+2. `feOffset` moves that blur `3` units right and down. Along the top and left edges, the blurred copy has now slid away, so there it's faint or empty. Along the bottom and right, it still covers the shape.
+3. `feComposite in="SourceAlpha" in2="offsetBlur" operator="out"` keeps the shape **only where the offset blur is not**. Each pixel's alpha becomes `shape × (1 − offsetBlur)`. That's an inverted blur, cut to the shape: a band along the top-left edges, fading softly inwards. It's named `rim`.
+4. `feFlood` and `feComposite operator="in"` colour the rim with the shadow colour and opacity.
+5. `feMerge` paints the original shape first and the shadow **on top** of it. That order matters: an inner shadow sits over the fill, whereas a drop shadow sits under it.
+6. Every step is derived from `SourceAlpha`, so nothing is painted outside the shape. The default filter region (the bounding box plus 10%) is enough. It only has to be at least as wide as the offset, so the shifted blur still has something to read near the edges.
+
+<RainbowDivider />
+
+## Variant: Inner Glow
+
+With no offset, the rim runs evenly around the whole edge, and a bright flood colour turns it into an inner glow. Merging the glow twice makes it stronger, because with no offset the rim is only about half opaque at the edge:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="400" height="200" role="img" aria-label="A dark rounded rectangle with a cyan glow around the inside of its edge">
+    <defs>
+      <filter id="is-glow" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="blur" />
+        <feComposite in="SourceAlpha" in2="blur" operator="out" result="rim" />
+        <feFlood flood-color="#22d3ee" result="tint" />
+        <feComposite in="tint" in2="rim" operator="in" result="glow" />
+        <feMerge>
+          <feMergeNode in="SourceGraphic" />
+          <feMergeNode in="glow" />
+          <feMergeNode in="glow" />
+        </feMerge>
+      </filter>
+    </defs>
+    <rect x="30" y="20" width="140" height="60" rx="14" fill="#1e293b" filter="url(#is-glow)" />
+  </svg>
+`}
+</SvgSnippet>
+
+- `stdDeviation` sets how far the glow reaches inwards. Here it fades out over roughly 10 units.
+- For a softer look, drop the second `feMergeNode` or lower `flood-opacity` instead.
+
+<RainbowDivider />
+
+## Example Usage
+
+Define the filter once in a hidden SVG and switch it on with CSS, for example to make a button look pressed while it's held down. The hidden SVG uses zero size rather than `display: none`, because some browsers don't render filters defined inside a `display: none` SVG:
+
+<CodeBlock language="html">
+{`
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <filter id="pressed" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+      <feOffset in="blur" dx="2" dy="3" result="offsetBlur" />
+      <feComposite in="SourceAlpha" in2="offsetBlur" operator="out" result="rim" />
+      <feFlood flood-color="#0f172a" flood-opacity="0.5" result="tint" />
+      <feComposite in="tint" in2="rim" operator="in" result="shadow" />
+      <feMerge>
+        <feMergeNode in="SourceGraphic" />
+        <feMergeNode in="shadow" />
+      </feMerge>
+    </filter>
+  </svg>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .toggle-knob:active {
+    filter: url(#pressed);
+  }
+`}
+</CodeBlock>
+
+Here `.toggle-knob` is a shape inside an inline SVG. On HTML elements, a CSS `box-shadow: inset` is simpler and better supported.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Pressed and inset states** for SVG buttons, toggles, and knobs.
+- **Engraved or debossed** icons, badges, and lettering.
+- **Wells and slots**, such as the track of a slider or the hole of a progress ring.
+- **Inner glows** on dark UI elements, like a neon outline on the inside of a card.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Changing the light direction:** the offset points away from the light. `dx="3" dy="3"` puts the shadow on the top-left edges. Use negative values to put it on the bottom-right.
+- **Order of the merge:** the shadow must be the **last** `feMergeNode`, so it's painted over the fill. Swap them and the shadow is hidden behind the shape.
+- **Name every result:** the chain branches (`SourceAlpha` is used twice, and `SourceGraphic` comes back at the end), so explicit `in` and `result` names make it readable and stop a missing `in` silently picking up the wrong step.
+- **On text:** it works on `<text>` too, but keep the blur small (`stdDeviation` of 1 to 2) so thin strokes stay legible.
+- **Unique ids:** inline SVGs on one page share one id space, so give each filter a specific id.
+- **Browser support:** `feGaussianBlur`, `feOffset`, `feComposite`, `feFlood` and `feMerge` are long-established and work in all current browsers.
+- **Accessibility:** an inner shadow is decoration. If it signals a state such as "pressed", expose that state too, for example with `aria-pressed` on the button.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Does the inner shadow need a bigger filter region?">
+  No. The shadow is cut to the shape's own alpha, so nothing is drawn outside the bounding box. The default 10% margin
+  only needs to be at least the offset. For very small shapes, where 10% is less than the offset, add a little margin
+  so the edges come out at full accuracy.
+</Details>
+
+<Details summary="I've seen a version that floods the whole region first. Is that the same?">
+  That version builds the inverse first (`feFlood` then `feComposite operator="out"` against `SourceAlpha`, which gives
+  everything outside the shape), blurs and offsets it, then clips it back with `operator="in"`. It gives the same result,
+  but its inverse ends at the filter region's edge, so the blur fades there. It needs margin for the offset plus about
+  3 × `stdDeviation` on every side. Inverting after the blur, as here, avoids that.
+</Details>
+
+<Details summary="Can I use feDropShadow for an inner shadow?">
+  No. `feDropShadow` always paints the shadow behind the shape and outside it, and it doesn't expose the intermediate
+  blur you'd need to invert. An inner shadow needs the hand-built chain.
+</Details>
+
+<Details summary="How do I change the shadow's softness and size?">
+  `stdDeviation` controls how far the shadow fades inwards, and `dx`/`dy` control how thick the band is on the lit side.
+  A larger offset with a small blur gives a hard, deep inset. A small offset with a larger blur gives a soft, shallow one.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Blur the silhouette, offset it, and keep the part of the shape it no longer covers with `feComposite operator="out"`. Colour that rim with `feFlood` and `operator="in"`, and merge it **over** the original. Because every step comes from `SourceAlpha`, the shadow stays inside the shape and the default filter region is enough.
