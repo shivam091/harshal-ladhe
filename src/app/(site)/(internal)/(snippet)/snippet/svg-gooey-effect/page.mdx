@@ -1,0 +1,225 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-gooey-effect");
+
+## Introduction
+
+The **gooey effect** makes separate shapes melt into each other like drops of liquid: as two blobs move closer, a bridge grows between them, and as they pull apart it stretches and snaps. It's often used for menus, loaders, and playful buttons.
+
+It takes just two filter primitives. A blur makes the shapes bleed into each other, and a colour matrix sharpens that blur back into hard edges. Wherever the blurs overlapped enough, the edges come back joined.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 120" width="480" height="240" aria-hidden="true">
+    <style>
+      .svg-goo-left {
+        animation: svg-goo-left 3s ease-in-out infinite;
+      }
+
+      .svg-goo-right {
+        animation: svg-goo-right 3s ease-in-out infinite;
+      }
+
+      @keyframes svg-goo-left {
+        0%, 100% {
+          transform: translateX(0);
+        }
+
+        50% {
+          transform: translateX(-70px);
+        }
+      }
+
+      @keyframes svg-goo-right {
+        0%, 100% {
+          transform: translateX(0);
+        }
+
+        50% {
+          transform: translateX(70px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .svg-goo-left {
+          animation: none;
+          transform: translateX(-38px);
+        }
+
+        .svg-goo-right {
+          animation: none;
+          transform: translateX(38px);
+        }
+      }
+    </style>
+    <defs>
+      <filter id="goo" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="120">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+    </defs>
+    <g filter="url(#goo)" fill="#6366f1">
+      <circle cx="120" cy="60" r="20" />
+      <circle class="svg-goo-left" cx="120" cy="60" r="16" />
+      <circle class="svg-goo-right" cx="120" cy="60" r="16" />
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The filter is on the `<g>`, not on the circles. The group's children are drawn together first, and the filter runs once on the combined image, so the circles can blur **into each other**.
+2. `feGaussianBlur` with `stdDeviation="8"` turns each circle into a soft cloud. Where two clouds overlap, their alpha adds up.
+3. `feColorMatrix` leaves red, green and blue alone (the first three rows are the identity) and rewrites alpha with the last row: `A′ = 18 × A − 7`. Anything below about 0.39 alpha becomes fully transparent, and anything above about 0.44 becomes fully opaque. The soft blur snaps back into a hard edge.
+4. Between two nearby circles, the overlapping clouds push the alpha over that threshold, so the hard edge wraps around both of them and a bridge appears.
+5. `feComposite operator="atop"` paints the original, unblurred circles over the goo, clipped to it. The circles keep their crisp shape and solid colour, and the goo supplies the bridges.
+6. The CSS moves the two small circles out from the centre and back with `transform`. As they leave, the bridge stretches thinner until the alpha between them drops under the threshold and it snaps.
+
+<RainbowDivider />
+
+## Variant: Filter on the Group vs on Each Shape
+
+The most common mistake is putting the filter on each shape. Each shape is then blurred and sharpened on its own, so there's nothing to merge. Both rows below use the same filter and the same circles:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 150" width="480" height="300" role="img" aria-label="Top row: three separate circles. Bottom row: the same circles joined into one gooey shape">
+    <defs>
+      <filter id="goo-2" filterUnits="userSpaceOnUse" x="0" y="0" width="240" height="150">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur" />
+        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+    </defs>
+    <g fill="#14b8a6">
+      <circle cx="70" cy="40" r="22" filter="url(#goo-2)" />
+      <circle cx="120" cy="40" r="22" filter="url(#goo-2)" />
+      <circle cx="170" cy="40" r="22" filter="url(#goo-2)" />
+    </g>
+    <g fill="#14b8a6" filter="url(#goo-2)">
+      <circle cx="70" cy="110" r="22" />
+      <circle cx="120" cy="110" r="22" />
+      <circle cx="170" cy="110" r="22" />
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+- **Top row:** the filter is on each circle, so the circles stay separate, even though there are only 6 units between them.
+- **Bottom row:** the filter is on the `<g>`, so the blurs overlap and the circles join into one shape.
+
+<RainbowDivider />
+
+## Example Usage
+
+The same filter makes a gooey loader. Three dots move up and down out of step, and the goo joins and separates them as they pass:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 160 80" width="160" height="80" role="img" aria-label="Loading">
+    <style>
+      .svg-goo-dot {
+        animation: svg-goo-bob 1.2s ease-in-out infinite;
+      }
+
+      .svg-goo-dot:nth-child(2) {
+        animation-delay: -0.4s;
+      }
+
+      .svg-goo-dot:nth-child(3) {
+        animation-delay: -0.8s;
+      }
+
+      @keyframes svg-goo-bob {
+        0%, 100% {
+          transform: translateY(-14px);
+        }
+
+        50% {
+          transform: translateY(14px);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .svg-goo-dot {
+          animation-duration: 4s;
+        }
+      }
+    </style>
+    <defs>
+      <filter id="goo-3" filterUnits="userSpaceOnUse" x="0" y="0" width="160" height="80">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+        <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+        <feComposite in="SourceGraphic" in2="goo" operator="atop" />
+      </filter>
+    </defs>
+    <g filter="url(#goo-3)" fill="#ec4899">
+      <circle class="svg-goo-dot" cx="56" cy="40" r="12" />
+      <circle class="svg-goo-dot" cx="80" cy="40" r="12" />
+      <circle class="svg-goo-dot" cx="104" cy="40" r="12" />
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+The dots are 24 units apart and 24 units wide, so neighbours touch when they're level and pull apart as their phases differ. The loader slows down rather than stopping for reduced motion, so it still shows that something is happening.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Gooey menus**, where items squeeze out of a central button when it opens.
+- **Loaders** whose dots join and split.
+- **Toggles and tab indicators** where a blob stretches from one option to the next.
+- **Playful illustrations**, such as lava lamps, liquid drops, and cells dividing.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Give the goo room:** the blur and the bridges need space around the shapes. The default region is the group's bounding box plus 10%, which for a short, wide group is only a few units top and bottom, and the goo gets cut off with flat edges. These demos use `filterUnits="userSpaceOnUse"` with the size of the whole viewBox, which also stays correct while the shapes move.
+- **Use solid fills:** the filter works on the group's combined pixels, so gradients and strokes blur and threshold unpredictably. One flat fill colour per group gives clean bridges.
+- **Tuning the matrix:** in `A′ = m × A − c`, a larger `m` gives sharper edges, and `c / m` is the threshold. Raising `c` makes the shapes thinner and the bridges snap sooner. Change `stdDeviation` with it: a bigger blur joins shapes from further apart.
+- **Without `atop`:** drop the last `feComposite` and the filter outputs the goo itself. The edges are slightly softer and the shapes slightly smaller, but it's one step cheaper.
+- **Namespace the CSS:** a `<style>` inside an inline SVG applies to the whole page, and ids are shared too. Give classes, `@keyframes` names, and filter ids specific names.
+- **Performance:** the blur runs on every frame while the shapes move, and its cost grows with the region's area. Keep the region as small as the motion allows.
+- **Browser support:** `feGaussianBlur`, `feColorMatrix` and `feComposite` work in all current browsers, as do CSS `transform` animations on SVG shapes.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why don't my shapes merge?">
+  The filter is probably on each shape instead of on a parent `<g>`. A filter on a single shape can only see that shape.
+  Move `filter="url(#goo)"` to a `<g>` that wraps all the shapes that should merge. If they still don't join, they're too
+  far apart for the blur: raise `stdDeviation` or move them closer.
+</Details>
+
+<Details summary="Why are the edges of my blobs cut off flat?">
+  The filter region is too small. Increase `y` and `height` (and `x` and `width`) on the `<filter>`, or use
+  `filterUnits="userSpaceOnUse"` with a region that covers everywhere the shapes can move.
+</Details>
+
+<Details summary="Can I use different colours for each blob?">
+  Yes, but the bridges between them blend the two colours, because they come from the blurred image. With `atop`, the
+  blobs themselves keep their colours. Expect muddy bridges between very different colours.
+</Details>
+
+<Details summary="Does it work on HTML elements?">
+  Yes. Define the filter in an inline SVG and apply it with CSS `filter: url(#goo)` to the container of the elements that
+  should merge. Test it in Safari, which has been less consistent with SVG filters on HTML content.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Blur the group, then push its alpha through `feColorMatrix` with a last row like `0 0 0 18 -7` to snap the blur back into hard, merged edges, and composite the originals `atop` for crisp colour. Put the filter on a `<g>`, give it a generous region, use solid fills, and animate the shapes with CSS to make the bridges stretch and snap.

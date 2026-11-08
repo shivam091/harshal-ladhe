@@ -373,6 +373,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-gooey-effect",
+    title: "Gooey Blob Effect with SVG Filters and CSS",
+    excerpt: "Make SVG shapes melt into each other like liquid.",
+    description: "Create the gooey blob effect with feGaussianBlur and an alpha-contrast feColorMatrix, animate it with CSS, and fix clipping and non-merging shapes.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "svg-filters", "gooey-effect", "feColorMatrix", "feGaussianBlur", "svg-animation", "css-animation", "keyframes", "prefers-reduced-motion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-gooey-effect/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of glowing liquid blobs stretching apart, joined by thin gooey bridges.",
+      caption: "Blobs that merge and stretch apart like liquid."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

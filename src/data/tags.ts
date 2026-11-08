@@ -1219,4 +1219,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Inner Shadows for Any Shape",
     description: "Inset shadows and inner glows for SVG shapes, built with filter primitives where CSS `box-shadow: inset` can't reach."
   },
+  "gooey-effect": {
+    title: "The Gooey Blob Effect",
+    description: "Making shapes merge like liquid with a blur followed by an alpha-contrast colour matrix, for menus, loaders, and playful UI."
+  },
+  "fecolormatrix": {
+    title: "Recolouring with SVG `feColorMatrix`",
+    description: "Using `feColorMatrix` and its `saturate`, `hueRotate`, and `matrix` types to change colour and alpha, from greyscale to gooey thresholds."
+  },
 };
