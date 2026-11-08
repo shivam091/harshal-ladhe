@@ -762,6 +762,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-pattern-texture-overlay",
+    title: "Recolour an SVG Pattern and Overlay a Texture",
+    excerpt: "Recolour SVG patterns and layer one texture over many colours.",
+    description: "Why SVG patterns ignore the shape's currentColor, how to recolour them, and how to overlay one shared texture on shapes of any colour.",
+    category: ["SVG"],
+    tags: ["svg", "svg-pattern", "currentColor", "css-custom-properties", "mix-blend-mode", "data-visualization", "theming", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-pattern-texture-overlay/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of three glowing bars in indigo, amber and teal, each overlaid with the same diagonal stripe texture.",
+      caption: "One shared stripe texture layered over bars of different colours."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

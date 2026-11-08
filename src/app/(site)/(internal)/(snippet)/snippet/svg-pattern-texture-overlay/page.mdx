@@ -1,0 +1,176 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-pattern-texture-overlay");
+
+## Introduction
+
+You've built a striped `<pattern>` with `fill="currentColor"`, and now you want three bars in three colours. So you set `color` on each bar, and nothing changes: every bar still has the same stripes in the same colour.
+
+That's not a bug. A pattern's content doesn't inherit from the shape that uses it. The simplest fix doesn't recolour the pattern at all: **paint each shape twice**, once with its solid colour and once with a shared, translucent texture on top.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 160 80" width="480" height="240" role="img" aria-label="Three bars in indigo, amber and teal, each with the same diagonal stripe texture">
+    <defs>
+      <pattern id="pto-texture" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="6" height="2" fill="white" fill-opacity="0.4" />
+      </pattern>
+    </defs>
+
+    <rect x="10" y="10" width="40" height="60" fill="#6366f1" />
+    <rect x="10" y="10" width="40" height="60" fill="url(#pto-texture)" />
+
+    <rect x="60" y="10" width="40" height="60" fill="#f59e0b" />
+    <rect x="60" y="10" width="40" height="60" fill="url(#pto-texture)" />
+
+    <rect x="110" y="10" width="40" height="60" fill="#14b8a6" />
+    <rect x="110" y="10" width="40" height="60" fill="url(#pto-texture)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. Each bar is drawn twice with the same geometry. The first copy has a plain colour fill, so the colour belongs to the shape, where you can set it however you like.
+2. The second copy is filled with `url(#pto-texture)`, a diagonal stripe pattern. SVG paints in document order, so the texture lands on top of the colour.
+3. The stripes are `white` at `fill-opacity="0.4"`, and the gaps between them are transparent. The bar's own colour shows through both, just lighter under the stripes.
+4. The texture has no colour of its own to change, so **one pattern serves every bar**, however many colours you need.
+
+<RainbowDivider />
+
+## Variant: Recolouring the Pattern Itself
+
+Sometimes you really do want the pattern drawn in a different colour. To do that, you need to know where `currentColor` comes from.
+
+**The content of a `<pattern>` inherits from the `<pattern>` element's own place in the document**, meaning its ancestors such as `<defs>` and the `<svg>`. It does **not** inherit from the shape that references it. `fill="url(#id)"` points at the pattern; it doesn't move the tile inside that shape. Here both rectangles set their own `color`, and their outlines use it, but the dots stay indigo:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 80" width="400" height="160" style="color: #6366f1" role="img" aria-label="Two rectangles with pink and teal outlines, both filled with indigo dots">
+    <defs>
+      <pattern id="pto-dots" width="10" height="10" patternUnits="userSpaceOnUse">
+        <circle cx="5" cy="5" r="2" fill="currentColor" />
+      </pattern>
+    </defs>
+    <rect x="10" y="10" width="80" height="60" style="color: #ec4899" fill="url(#pto-dots)" stroke="currentColor" stroke-width="2" />
+    <rect x="110" y="10" width="80" height="60" style="color: #14b8a6" fill="url(#pto-dots)" stroke="currentColor" stroke-width="2" />
+  </svg>
+`}
+</SvgSnippet>
+
+`currentColor` in the dots resolves at the `<pattern>`, which inherits `color` from the `<svg>`. So the ways to recolour it are:
+
+- **Set the colour on an ancestor.** Changing `color` on the `<svg>` (or any element above the `<pattern>`) recolours every `currentColor` pattern inside it. That's enough for theming and dark mode.
+- **Set the colour on the `<pattern>` itself,** with one pattern per colour. The tile's content inherits from it:
+
+<CodeBlock language="html">
+{`
+  <pattern id="dots-pink" width="10" height="10" patternUnits="userSpaceOnUse" style="color: #ec4899">
+    <circle cx="5" cy="5" r="2" fill="currentColor" />
+  </pattern>
+`}
+</CodeBlock>
+
+- **CSS custom properties follow the same rule.** `style="fill: var(--dot-color)"` in the tile reads `--dot-color` from the pattern's ancestors, not from the shape. A variable doesn't get around the rule. It's just a tidier way to set the colour on the `<svg>` or on each `<pattern>`. Use it in a `style` attribute or a stylesheet rather than the `fill` attribute, where `var()` isn't reliable.
+- **Don't rely on `context-fill`.** SVG 2 defines `context-fill` and `context-stroke` for markers and for content used through `<use>`, not for pattern tiles, and browser support for them is still incomplete.
+
+<RainbowDivider />
+
+## Variant: Blending the Texture
+
+With `mix-blend-mode: multiply`, a neutral grey texture takes on the hue of the colour beneath it, so each bar gets darker dots in its own colour instead of white ones:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 160 80" width="480" height="240" style="isolation: isolate" role="img" aria-label="Three bars in indigo, amber and teal, each with darker dots in its own colour">
+    <defs>
+      <pattern id="pto-grain" width="6" height="6" patternUnits="userSpaceOnUse">
+        <circle cx="3" cy="3" r="1.5" fill="#64748b" />
+      </pattern>
+    </defs>
+
+    <rect x="10" y="10" width="40" height="60" fill="#6366f1" />
+    <rect x="10" y="10" width="40" height="60" fill="url(#pto-grain)" style="mix-blend-mode: multiply" />
+
+    <rect x="60" y="10" width="40" height="60" fill="#f59e0b" />
+    <rect x="60" y="10" width="40" height="60" fill="url(#pto-grain)" style="mix-blend-mode: multiply" />
+
+    <rect x="110" y="10" width="40" height="60" fill="#14b8a6" />
+    <rect x="110" y="10" width="40" height="60" fill="url(#pto-grain)" style="mix-blend-mode: multiply" />
+  </svg>
+`}
+</SvgSnippet>
+
+- `multiply` multiplies the two colours channel by channel, so the result is always darker than the bar but keeps its hue. Transparent gaps leave the bar unchanged.
+- `isolation: isolate` on the `<svg>` keeps the blend inside the SVG, so it can't mix with the page behind it.
+
+<RainbowDivider />
+
+## Example Usage
+
+In a component, keep the colour on the shape and reuse one texture for every series. With CSS classes, the colour stays in your stylesheet:
+
+<CodeBlock language="css">
+{`
+  .bar--revenue { fill: var(--color-indigo); }
+  .bar--costs   { fill: var(--color-amber); }
+  .bar--profit  { fill: var(--color-teal); }
+
+  .bar-texture  { fill: url(#pto-texture); }
+`}
+</CodeBlock>
+
+Draw each bar as a `.bar--*` rectangle followed by a `.bar-texture` copy with the same `x`, `y`, `width` and `height`. Changing a series colour is then a one-line CSS change, and the texture never needs touching.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Charts with many series**, where you want one texture for all of them.
+- **Hatched "projected" or "estimated" values** layered on top of normal bars.
+- **Print- and colour-blind-friendly fills**, where texture is a second signal next to colour.
+- **Themed illustrations**, where one grain or stripe texture sits over a palette that changes.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Texture is not a label:** a textured fill helps people tell series apart, but it still needs a legend or direct labels. Give a meaningful chart `role="img"` and an `aria-label`, or a text alternative.
+- **White or black overlays:** white texture lightens, which suits mid-tone and dark colours. On very light fills, use black at a low opacity instead so the texture stays visible.
+- **Ids are page-wide:** an inline SVG's `id`s are shared with the whole page, so give each pattern a unique, namespaced id.
+- **Data URIs are cut off from the page:** an SVG used as an image can't see the page's `color` or custom properties at all, so none of the recolouring options above apply there.
+- **Browser support:** patterns and the paint-twice approach work in all current browsers. `mix-blend-mode` on SVG shapes is also supported in current browsers. Check caniuse if you need older Safari versions.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why doesn't setting color on my shape change the pattern?">
+  The pattern's content inherits properties from the `<pattern>` element's ancestors, not from the shape that uses it.
+  `currentColor` inside the tile is resolved at the pattern, so the shape's `color` never reaches it. Set the colour on
+  an ancestor of the `<pattern>`, on the `<pattern>` itself, or paint the colour on the shape and use the pattern only
+  as a texture.
+</Details>
+
+<Details summary="Do CSS variables get around this?">
+  No. Custom properties inherit along the same tree as `color`, so a variable used in the tile comes from the pattern's
+  ancestors too. They're still useful, because setting one variable on the `<svg>` can recolour several patterns at
+  once.
+</Details>
+
+<Details summary="Does painting the shape twice slow things down?">
+  Not in any way you'd notice for a chart or an illustration. It's one extra shape per bar. For thousands of shapes,
+  measure first, but that's true of any SVG with that many elements.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A pattern takes `currentColor` and custom properties from where the `<pattern>` element sits, not from the shape that uses it. To recolour a pattern, set the colour on an ancestor or on the pattern itself. To texture shapes of many colours with one pattern, paint each shape twice: a solid fill, then a translucent or blended texture on top.
