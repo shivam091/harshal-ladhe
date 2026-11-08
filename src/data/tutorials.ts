@@ -659,6 +659,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "map-upsert-getorinsert",
+    title: "`Map.prototype.getOrInsert()` and `getOrInsertComputed()`: Upsert Without the Boilerplate",
+    excerpt: "Read or insert a Map entry in one call, no has/set/get.",
+    description: "Replace has/set/get with ES2026's Map and WeakMap getOrInsert() and getOrInsertComputed(): counting, grouping, nested maps, Map.groupBy, ??= and a fallback.",
+    category: ["JavaScript"],
+    tags: ["javascript", "map-upsert", "data-structures", "weakmap", "es2026", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/map-upsert-getorinsert/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Three lines of Map has, set and get code collapsing into a single getOrInsertComputed() call that groups words into arrays by their first letter.",
+      caption: "The has/set/get pattern beside the one getOrInsertComputed() call that replaces it."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

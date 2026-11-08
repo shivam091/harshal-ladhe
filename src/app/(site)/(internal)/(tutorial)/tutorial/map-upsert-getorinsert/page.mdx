@@ -1,0 +1,424 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("map-upsert-getorinsert");
+
+## Introduction
+
+A `Map` is the natural home for counters, groups and caches, and all three start the same way: look the key up, and if
+it isn't there yet, store a starting value. JavaScript has never had a method for that, so every codebase has some
+version of the same three lines: `has()`, then `set()`, then `get()`.
+
+ES2026 adds two methods that do it in one call. **`getOrInsert(key, value)`** returns the value stored under `key`,
+inserting `value` first if the key is missing. **`getOrInsertComputed(key, callback)`** does the same, but only calls
+`callback` to build the value when the key is missing. Both exist on `Map` and `WeakMap`, and both came out of the
+TC39 proposal known as "Upsert" (update or insert).
+
+<RainbowDivider />
+
+## The Pattern It Replaces
+
+Grouping orders by customer is a typical case. Each customer needs an array, but only the first order for that customer
+should create it:
+
+<CodeBlock language="js">
+{`
+  const ordersByCustomer = new Map();
+
+  for (const order of orders) {
+    if (!ordersByCustomer.has(order.customerId)) {
+      ordersByCustomer.set(order.customerId, []);
+    }
+    ordersByCustomer.get(order.customerId).push(order);
+  }
+`}
+</CodeBlock>
+
+That's three lookups for one key, the key expression written three times, and a `get()` whose result TypeScript
+types as `Order[] | undefined` even though the line above guarantees it exists. The shorter version people reach for
+has its own problem:
+
+<CodeBlock language="js">
+{`
+  const list = ordersByCustomer.get(order.customerId) ?? [];
+  ordersByCustomer.set(order.customerId, list);
+  list.push(order);
+`}
+</CodeBlock>
+
+It calls `set()` on every order, not just the first, and `??` treats a stored `undefined` or `null` as missing. With
+`getOrInsertComputed()` the whole loop body is one line:
+
+<CodeBlock language="js">
+{`
+  for (const order of orders) {
+    ordersByCustomer.getOrInsertComputed(order.customerId, () => []).push(order);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## `getOrInsert(key, value)`
+
+`getOrInsert()` takes the value to insert directly. If `key` is already in the map, it returns the stored value and
+ignores the second argument. If not, it stores the second argument and returns it.
+
+<CodeBlock language="js">
+{`
+  const settings = new Map([["theme", "dark"]]);
+
+  settings.getOrInsert("theme", "light");    // "dark" (already there, nothing changes)
+  settings.getOrInsert("fontSize", 16);      // 16 (inserted)
+  [...settings];                             // [["theme", "dark"], ["fontSize", 16]]
+`}
+</CodeBlock>
+
+It's the right choice when the default is a primitive, such as `0`, `""` or `false`, or a value that already exists,
+because then it costs nothing to create. That makes it the natural fit for counting:
+
+<CodeBlock language="js">
+{`
+  const words = "the cat and the hat and the bat".split(" ");
+  const counts = new Map();
+
+  for (const word of words) {
+    counts.set(word, counts.getOrInsert(word, 0) + 1);
+  }
+
+  counts; // Map { "the" => 3, "cat" => 1, "and" => 2, "hat" => 1, "bat" => 1 }
+`}
+</CodeBlock>
+
+A count is a primitive, so it still needs the `set()` to store the new total. The upsert methods remove the "is it
+there yet?" check, not the update itself.
+
+<RainbowDivider />
+
+## `getOrInsertComputed(key, callback)`
+
+The arguments to any function call are evaluated before the call happens. In `map.getOrInsert(key, [])`, a new empty
+array is created **every time**, even when the key exists and the array is thrown away straight after. For a cheap
+array that's mostly waste. For an expensive default, such as a parsed file, a `new Map()` of its own or a network
+request, it's a real cost.
+
+`getOrInsertComputed()` takes a function instead, and only calls it when the key is missing:
+
+<CodeBlock language="js">
+{`
+  let created = 0;
+  const groups = new Map();
+
+  for (const word of ["apple", "avocado", "banana", "blueberry", "cherry"]) {
+    groups.getOrInsertComputed(word[0], () => {
+      created += 1;
+      return [];
+    }).push(word);
+  }
+
+  created; // 3, one array per letter, not one per word
+  groups;  // Map { "a" => ["apple", "avocado"], "b" => ["banana", "blueberry"], "c" => ["cherry"] }
+`}
+</CodeBlock>
+
+### The Callback Receives the Key
+
+The callback is called with the key as its only argument. That means a function that already takes a key can be
+passed straight in, with no wrapper:
+
+<CodeBlock language="js">
+{`
+  const slugs = new Map();
+  const toSlug = (title) => title.toLowerCase().replaceAll(" ", "-");
+
+  slugs.getOrInsertComputed("Hello World", toSlug); // "hello-world"
+  slugs.getOrInsertComputed("Hello World", toSlug); // "hello-world" (toSlug isn't called again)
+`}
+</CodeBlock>
+
+One small detail: `Map` treats `-0` and `0` as the same key, and `getOrInsertComputed()` turns a `-0` key into `0`
+before passing it to the callback, so the callback sees the same key that ends up stored.
+
+### What It Returns
+
+Both methods return **the value now stored in the map**, whatever it is. That includes `undefined`: if a key is stored
+with the value `undefined`, it counts as present, and the default isn't used. This is the difference from
+`map.get(key) ?? fallback`, which can't tell "missing" from "stored as `undefined`".
+
+<CodeBlock language="js">
+{`
+  const map = new Map([["unset", undefined]]);
+
+  map.getOrInsert("unset", "default");   // undefined (the key exists)
+  map.get("unset") ?? "default";         // "default"
+`}
+</CodeBlock>
+
+### When the Callback Throws
+
+If the callback throws, the error propagates out of `getOrInsertComputed()` and **nothing is inserted**, so the next
+call tries again. The callback also has to be a function even when the key is present: passing anything else throws a
+`TypeError` on every call, not just the first.
+
+<CodeBlock language="js">
+{`
+  const map = new Map();
+
+  try {
+    map.getOrInsertComputed("config", () => {
+      throw new Error("file not found");
+    });
+  } catch (error) {
+    error.message;      // "file not found"
+    map.has("config");  // false
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Grouping, and How It Compares with `Map.groupBy()`
+
+ES2024 added `Map.groupBy(items, callback)`, which builds a new map of groups from an iterable in one call:
+
+<CodeBlock language="js">
+{`
+  const words = ["apple", "avocado", "banana", "blueberry", "cherry"];
+
+  Map.groupBy(words, (word) => word[0]);
+  // Map { "a" => ["apple", "avocado"], "b" => ["banana", "blueberry"], "c" => ["cherry"] }
+`}
+</CodeBlock>
+
+When all the items are in hand at once and the groups are arrays, `Map.groupBy()` is the shorter choice. Reach for
+`getOrInsertComputed()` when any of these is true:
+
+- **The items arrive over time**, such as events from a WebSocket or lines from a log, and each one is added to a map
+  that already exists.
+- **The map already has entries** that new items should be added to, rather than starting from an empty map.
+- **The groups aren't arrays**: a `Set` to drop duplicates, a running total, or a nested `Map`.
+
+<CodeBlock language="js">
+{`
+  const visitorsByPage = new Map();
+
+  socket.addEventListener("message", (event) => {
+    const { page, visitorId } = JSON.parse(event.data);
+    visitorsByPage.getOrInsertComputed(page, () => new Set()).add(visitorId);
+  });
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Nested Maps
+
+Two levels of grouping used to mean two copies of the has/set/get dance. Since each call returns the stored value,
+calls can be chained, one per level:
+
+<CodeBlock language="js">
+{`
+  const byYearAndMonth = new Map();
+
+  function addEvent(event) {
+    const [year, month] = event.date.split("-");
+
+    byYearAndMonth
+      .getOrInsertComputed(year, () => new Map())
+      .getOrInsertComputed(month, () => [])
+      .push(event);
+  }
+
+  addEvent({ date: "2026-11-08", title: "Release" });
+  addEvent({ date: "2026-11-21", title: "Retro" });
+
+  byYearAndMonth.get("2026").get("11").length; // 2
+`}
+</CodeBlock>
+
+Here `() => new Map()` matters more than it did for arrays: with `getOrInsert(year, new Map())`, every event would
+create and throw away a whole `Map`.
+
+<RainbowDivider />
+
+## The `WeakMap` Versions
+
+`WeakMap` gets the same two methods, with the same behaviour. The usual `WeakMap` rule still applies: keys must be
+objects or **non-registered symbols** (symbols made with `Symbol()`, not `Symbol.for()`), because the map holds them
+weakly and lets them be garbage-collected. Anything else throws a `TypeError`:
+
+<CodeBlock language="js">
+{`
+  const metadata = new WeakMap();
+
+  metadata.getOrInsertComputed(document.body, () => ({ clicks: 0 })).clicks += 1;
+
+  metadata.getOrInsert(Symbol("token"), 1);     // 1
+  metadata.getOrInsert("body", 1);              // TypeError: Invalid value used as weak map key
+  metadata.getOrInsert(Symbol.for("token"), 1); // TypeError: Invalid value used as weak map key
+`}
+</CodeBlock>
+
+A `WeakMap` with `getOrInsertComputed()` is a tidy way to attach data to an object you don't own, such as a DOM node
+or an object from a library, without adding properties to it. When the object is garbage-collected, its entry goes
+with it. For a cache built on this idea, see [A Lazy Cache with `getOrInsertComputed()`](/snippet/getorinsertcomputed-lazy-cache).
+
+<RainbowDivider />
+
+## When the Callback Changes the Map
+
+The callback runs in the middle of `getOrInsertComputed()`, so it could, in principle, change the map itself. The
+method handles that predictably: after the callback returns, it looks the key up again. If the callback inserted the
+same key, the callback's **return value overwrites it**, in the position the callback gave it. If the callback changed
+other keys, those changes stay, and the new entry is added at the end.
+
+<CodeBlock language="js">
+{`
+  const map = new Map([["a", 1]]);
+
+  const result = map.getOrInsertComputed("x", () => {
+    map.set("x", "set inside");
+    map.delete("a");
+    map.set("z", 26);
+    return "returned";
+  });
+
+  result; // "returned"
+  [...map]; // [["x", "returned"], ["z", 26]]
+`}
+</CodeBlock>
+
+That's well-defined, but hard to read. Keep callbacks to building and returning the value, and do any other
+bookkeeping before or after the call.
+
+<RainbowDivider />
+
+## Compared with `??=` on Plain Objects
+
+On a plain object, the logical nullish assignment operator already gives a one-line version, covered in
+[Mastering JavaScript Operators](/post/javascript/mastering-js-operators#assignment-operators):
+
+<CodeBlock language="js">
+{`
+  const groups = {};
+
+  for (const word of ["apple", "avocado", "banana"]) {
+    (groups[word[0]] ??= []).push(word);
+  }
+
+  groups; // { a: ["apple", "avocado"], b: ["banana"] }
+`}
+</CodeBlock>
+
+Like `getOrInsertComputed()`, the right-hand side of `??=` only runs when it's needed. The differences come from what
+an object is:
+
+| | `obj[key] ??= value` | `map.getOrInsertComputed(key, fn)` |
+| --- | --- | --- |
+| **Keys** | Strings and symbols; numbers become strings | Any value, including objects |
+| **"Missing" means** | `undefined` or `null` | The key isn't in the map |
+| **Inherited keys** | A key such as `"constructor"` finds `Object.prototype` | No inherited entries |
+| **Works on** | Objects, variables, properties | `Map` and `WeakMap` only |
+
+There's no `??=` for a `Map`, because `map.get(key)` isn't something you can assign to. That gap is what these methods
+fill.
+
+<RainbowDivider />
+
+## Try It Live
+
+Pick a sample text and how to group its words, then run the same grouping three ways. The readout counts how many
+method calls each approach made on the map and how many arrays it created. The classic `has`/`set`/`get` version and
+`getOrInsertComputed()` create one array per group; `getOrInsert(key, [])` creates one per word and throws most of
+them away. **Count words** tallies each word with `getOrInsert(word, 0) + 1`. If your browser doesn't have the new
+methods yet, those buttons are disabled and only the classic version runs.
+
+<Sandbox slug="map-upsert-getorinsert" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`getOrInsert()` and `getOrInsertComputed()` are part of ES2026. They're supported in Chrome and Edge 145, Firefox 144,
+Safari 26.2 and Node 26, on both `Map` and `WeakMap`. Older browsers and Node 24 or earlier throw
+`TypeError: map.getOrInsertComputed is not a function`.
+
+Detect the method rather than the browser. If you can't rely on it, a small helper gives the same result everywhere
+and uses the native method when it's there:
+
+<CodeBlock language="js">
+{`
+  function getOrInsertComputed(map, key, callback) {
+    if (typeof map.getOrInsertComputed === "function") {
+      return map.getOrInsertComputed(key, callback);
+    }
+
+    if (map.has(key)) return map.get(key);
+
+    const value = callback(key);
+    map.set(key, value);
+    return value;
+  }
+
+  getOrInsertComputed(groups, word[0], () => []).push(word);
+`}
+</CodeBlock>
+
+It works with a `WeakMap` too, since `has()`, `get()` and `set()` exist on both. If the callback inserts the same
+key, the helper's `set()` overwrites it, just as the native method does. The one difference is that the helper passes
+a `-0` key to the callback as `-0` rather than `0`, which doesn't matter for ordinary code.
+
+To call `map.getOrInsertComputed()` directly in older environments, polyfill it instead. core-js includes both methods.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Using `getOrInsert()` with an Object Default
+
+`map.getOrInsert(key, [])` and `map.getOrInsert(key, new Map())` create a new object on every call, and the one that
+gets stored is just the first. Use `getOrInsertComputed()` whenever the default is an object or costs anything to make.
+
+### 2. Expecting the Update to Happen Too
+
+The methods insert a default; they don't apply an update. For a counter, you still need
+`map.set(key, map.getOrInsert(key, 0) + 1)`. Mutable defaults such as arrays and sets don't need the extra `set()`,
+because you change the stored object itself.
+
+### 3. Doing Other Work in the Callback
+
+The callback only runs for missing keys, so logging, counting or other side effects inside it happen once per key,
+not once per call. That's often what you want, as in the playground, but it surprises people who expect it to run
+every time.
+
+### 4. Primitive Keys in a `WeakMap`
+
+`weakMap.getOrInsert("id", value)` throws a `TypeError`, exactly as `weakMap.set("id", value)` does. Use a `Map` for
+string, number and registered-symbol keys.
+
+### 5. Reaching for It When `Map.groupBy()` Fits
+
+For a one-off grouping of a finished array into arrays, `Map.groupBy(items, fn)` says it in one expression. Use the
+upsert methods for maps you keep adding to.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Grouping and indexing: orders by customer, files by extension, events by date, especially when items arrive over time
+- Counters and tallies with `getOrInsert(key, 0)`
+- Memoisation and caches, where the callback does the expensive work once per key
+- Attaching data to objects you don't own with a `WeakMap`
+- Multi-level structures such as `Map<year, Map<month, Event[]>>`, one chained call per level
+
+**Reach for something else** when you're grouping a complete array in one go (`Map.groupBy()`), when your data lives in
+a plain object (`obj[key] ??= value`), or when you need to update an existing value rather than insert a missing one.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`getOrInsert()` and `getOrInsertComputed()` replace the has/set/get dance with a single call that returns the stored
+value. Use `getOrInsert()` for cheap, primitive defaults like `0`, and `getOrInsertComputed()` for anything that has to
+be built, since its callback only runs when the key is missing and receives the key as its argument. Both work on
+`WeakMap` with object keys. They're in every current browser and Node 26, and a five-line helper covers everything
+older. For the other additions in the same edition, see [What's New in ES2026](/post/javascript/whats-new-in-es2026).

@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "map-upsert-getorinsert",
+    title: "Grouping Words with getOrInsertComputed()",
+    description: "Group a sentence's words into a Map with has/set/get, getOrInsert(key, []) and getOrInsertComputed(key, () => []), comparing map calls and arrays created, then count words with getOrInsert(word, 0).",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "float16array-half-precision",
     title: "Float64 vs Float32 vs Float16 Playground",
     description: "Write your own numbers into Float64Array, Float32Array and Float16Array and compare the stored values, the float16 rounding error and the bytes each array uses, then see any value's 16 bits split into sign, exponent and mantissa with the gap to the next float16.",

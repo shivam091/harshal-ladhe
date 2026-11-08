@@ -1202,5 +1202,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "core-js": {
     title: "core-js Polyfills",
     description: "Using the core-js library to polyfill modern JavaScript APIs, loading only the features your target browsers are missing."
+  },
+  "es2026": {
+    title: "Modern JavaScript Features of ES2026",
+    description: "Language features added in ECMAScript 2026, with browser support, edge cases and fallbacks for older runtimes."
+  },
+  "map-upsert": {
+    title: "Map and WeakMap `getOrInsert()` and `getOrInsertComputed()`",
+    description: "Reading or inserting `Map` and `WeakMap` entries in one call with ES2026's upsert methods, for counters, groups, nested maps and caches."
+  },
+  "weakmap": {
+    title: "JavaScript WeakMap",
+    description: "Attaching data to objects without keeping them alive using `WeakMap`, its key rules, and patterns such as per-object caches."
   }
 };

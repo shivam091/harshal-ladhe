@@ -1,0 +1,60 @@
+.playground-header code,
+.tip code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+.tip {
+  margin: 0;
+}
+
+/* The selects sit in a .fields-grid, whose .field margin would leave a gap above the fieldset's bottom edge. */
+.fields-grid .field {
+  margin-bottom: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.actions button {
+  font-family: var(--pg-mono);
+  font-size: 0.8rem;
+}
+
+.secondary-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--pg-mono);
+  font-size: 0.8rem;
+}
+
+.entries li {
+  padding-block: 0.375rem;
+  padding-inline: 0.625rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  overflow-wrap: anywhere;
+}
+
+.entries .key {
+  color: var(--pg-primary);
+}
+
+.empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}

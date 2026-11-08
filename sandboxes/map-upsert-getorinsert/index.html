@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Map getOrInsert() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Grouping Words with getOrInsertComputed()</h1>
+        <p>Group the words of a sentence into a <code>Map</code> three ways and compare the work each one does: how many methods it calls on the map, and how many arrays it creates. Then count the words with <code>getOrInsert(word, 0)</code>.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>Map.prototype.getOrInsert()</code> and <code>getOrInsertComputed()</code>, so only the classic version can run. They're supported in Chrome and Edge 145, Firefox 144, Safari 26.2 and Node 26 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Input</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="text-select">Sample text</label>
+            <select id="text-select">
+              <option value="the quick brown fox jumps over the lazy dog then the fox naps">Quick brown fox</option>
+              <option value="she sells sea shells on the sea shore and the shells she sells are sea shells">Sea shells</option>
+              <option value="to be or not to be that is the question whether tis nobler in the mind to suffer">To be or not to be</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="group-select">Group words by</label>
+            <select id="group-select">
+              <option value="letter">First letter</option>
+              <option value="length">Word length</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Group the words</legend>
+        <div class="actions">
+          <button type="button" class="secondary-btn" id="classic-btn">has / set / get</button>
+          <button type="button" class="secondary-btn native" id="eager-btn">getOrInsert(key, [])</button>
+          <button type="button" class="toggle-btn native" id="computed-btn">getOrInsertComputed(key, () =&gt; [])</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Count the words</legend>
+        <div class="actions">
+          <button type="button" class="secondary-btn native" id="count-btn">Count words</button>
+        </div>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Resulting map">
+        <ul class="entries" id="entries"></ul>
+        <p class="empty" id="empty">The map is empty.</p>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite">Press a button to build the map.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
