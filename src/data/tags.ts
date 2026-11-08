@@ -1387,4 +1387,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Fading and Shaping Elements with CSS `mask-image`",
     description: "Using `mask-image` with gradients or SVG images to fade an element's edges or cut it into an icon shape, with `-webkit-` prefixes for older browsers."
   },
+  "xmlserializer": {
+    title: "Serialising DOM Nodes with `XMLSerializer`",
+    description: "Turning live DOM and SVG elements back into markup strings with `XMLSerializer`, for saving, exporting, or loading them as images."
+  },
+  "image-export": {
+    title: "Exporting Images in the Browser",
+    description: "Generating PNG, JPEG, and WebP files on the client with canvas, blobs, and object URLs, ready to download, copy, or upload."
+  },
+  "blob": {
+    title: "Working with `Blob` and Object URLs",
+    description: "Creating `Blob` objects and temporary object URLs to load, download, and upload binary data in the browser, and revoking them afterwards."
+  },
 };

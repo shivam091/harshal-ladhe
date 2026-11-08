@@ -739,6 +739,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-to-png-javascript",
+    title: "Convert an Inline SVG to PNG with JavaScript and Canvas",
+    excerpt: "Export an inline SVG as a PNG in the browser.",
+    description: "Convert an inline SVG to a PNG in the browser with XMLSerializer, an image, and canvas.toBlob(), with high-DPI scaling and the limits explained.",
+    link: {
+      label: "Read the full post: HTML5 Canvas Guide: Drawing, Animation, and Best Practices",
+      href: "/post/javascript/html5-canvas-guide"
+    },
+    category: ["JavaScript", "SVG"],
+    tags: ["svg", "javascript", "canvas", "canvas-api", "xmlserializer", "image-export", "blob", "web-apis", "dom"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-to-png-javascript/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing vector badge passing through a canvas frame and coming out as a pixelated PNG file icon.",
+      caption: "An inline SVG badge converted to a PNG through a canvas."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

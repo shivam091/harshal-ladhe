@@ -1,0 +1,188 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-to-png-javascript");
+
+## Introduction
+
+Sometimes you need a picture of an SVG rather than the SVG itself: a chart for a slide deck, a badge for social media, or an image for a tool that doesn't read vectors. The browser can do the conversion with no library and no server. **Serialise the SVG to a string, load it as an image, draw it on a `<canvas>`, and export the canvas as a PNG.**
+
+The catch is that an SVG loaded as an image is cut off from the page. Your stylesheets, web fonts, and linked images don't come with it. This snippet shows the conversion, and exactly what you have to put inside the SVG for it to come out right.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  async function svgToPng(svg, { width, height, scale = window.devicePixelRatio || 1, background } = {}) {
+    const box = svg.getBoundingClientRect();
+    width ??= box.width;
+    height ??= box.height;
+    const pixelWidth = Math.round(width * scale);
+    const pixelHeight = Math.round(height * scale);
+
+    // Copy the SVG and give the copy an explicit size in output pixels.
+    const clone = svg.cloneNode(true);
+    clone.setAttribute("width", pixelWidth);
+    clone.setAttribute("height", pixelHeight);
+    clone.style.color = getComputedStyle(svg).color; // so currentColor survives
+
+    const markup = new XMLSerializer().serializeToString(clone);
+    const url = URL.createObjectURL(new Blob([markup], { type: "image/svg+xml;charset=utf-8" }));
+
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = pixelWidth;
+      canvas.height = pixelHeight;
+      const context = canvas.getContext("2d");
+      if (background) {
+        context.fillStyle = background;
+        context.fillRect(0, 0, pixelWidth, pixelHeight);
+      }
+      context.drawImage(img, 0, 0, pixelWidth, pixelHeight);
+
+      return await new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("PNG export failed"))), "image/png");
+      });
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url)); // revoke after the click has been handled
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The size comes from the `width` and `height` options, or from the SVG's rendered size if you leave them out. `scale` multiplies both, and defaults to `devicePixelRatio`, so the PNG is as sharp as the SVG looks on a high-density screen.
+2. The SVG is **cloned**, so the page isn't changed. The clone gets explicit `width` and `height` attributes in output pixels. An SVG image needs a size of its own: without one, browsers fall back to a default or fail to draw it. Setting it to the full output size also means the browser draws the vector at that resolution, rather than drawing it small and stretching the pixels.
+3. `currentColor` inside an image can't see the page's `color`, so the computed colour is copied onto the clone.
+4. `XMLSerializer` turns the clone into a string of SVG markup, including the `xmlns="http://www.w3.org/2000/svg"` namespace an SVG file needs. The string is wrapped in a `Blob` with the type `image/svg+xml` and given a temporary URL.
+5. `img.decode()` waits until the image has loaded and is ready to draw, and rejects if the SVG can't be parsed. That's tidier than wiring up `onload` and `onerror` by hand.
+6. The canvas is created at the same pixel size, filled with an optional `background` (PNGs are transparent otherwise), and the image is drawn onto it.
+7. `canvas.toBlob()` encodes the canvas as a PNG. It uses a callback, so it's wrapped in a `Promise`. The object URL is revoked in `finally`, whether the export worked or not.
+8. `downloadBlob()` saves the result through a temporary `<a download>` link.
+
+<RainbowDivider />
+
+## Variant: A Data URL Instead of a Blob
+
+If you'd rather not manage object URLs, encode the markup into a `data:` URL. It loads the same way, and there's nothing to revoke:
+
+<CodeBlock language="js">
+{`
+  const markup = new XMLSerializer().serializeToString(clone);
+  img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(markup);
+  await img.decode();
+`}
+</CodeBlock>
+
+`encodeURIComponent()` is needed because characters such as `#` and `%` have special meanings in a URL. For a large SVG, the Blob version avoids building a very long string.
+
+<RainbowDivider />
+
+## Example Usage
+
+An SVG that exports cleanly keeps everything it needs inside itself: colours as attributes or in an internal `<style>`, a `viewBox`, and fonts that every system has:
+
+<SvgSnippet>
+{`
+  <svg id="png-badge" viewBox="0 0 240 120" width="240" height="120" role="img" aria-label="Build passing badge">
+    <style>
+      .png-badge-label {
+        font: 600 18px system-ui, sans-serif;
+        fill: #ffffff;
+      }
+    </style>
+    <rect width="240" height="120" rx="16" fill="#6366f1" />
+    <circle cx="52" cy="60" r="22" fill="#14b8a6" />
+    <path d="M 41 60 L 49 68 L 63 52" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+    <text class="png-badge-label" x="88" y="67">Build passing</text>
+  </svg>
+`}
+</SvgSnippet>
+
+<CodeBlock language="js">
+{`
+  document.querySelector("#export-button").addEventListener("click", async () => {
+    const svg = document.querySelector("#png-badge");
+
+    try {
+      const blob = await svgToPng(svg, { width: 480, height: 240 });
+      downloadBlob(blob, "badge.png");
+    } catch (error) {
+      console.error("Could not export the SVG", error);
+    }
+  });
+`}
+</CodeBlock>
+
+Here the badge is drawn at 240 × 120 on the page but exported at 480 × 240, multiplied again by `devicePixelRatio`. Pass `scale: 1` if you want an exact pixel size.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **"Download as PNG" buttons** for charts, diagrams, and dashboards.
+- **Generated images** such as badges, certificates, or social cards built from an SVG template.
+- **Copying to the clipboard**, by passing the blob to `navigator.clipboard.write()` with a `ClipboardItem`.
+- **Uploading previews or thumbnails** of user-made drawings to a server.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **External CSS is not copied:** this code serialises the SVG's markup only. Rules from your page stylesheets don't apply inside an image, so anything styled from outside the SVG comes out unstyled. Use presentation attributes, `style` attributes, or a `<style>` element inside the SVG. Copying computed styles onto each element yourself also works, but it's a lot more code.
+- **External images don't load:** an SVG used as an image can't fetch anything. An `<image href="photo.jpg">` comes out blank. Convert each image to a `data:` URI before exporting.
+- **Web fonts don't load either:** text falls back to a system font unless the font file is embedded as a `data:` URI in an `@font-face` rule inside the SVG. Fonts installed on the user's system still work.
+- **Use a `viewBox`:** the code scales the image by changing its `width` and `height`. Without a `viewBox`, the drawing doesn't scale with them and ends up small in the top-left corner.
+- **Some content taints the canvas:** some browsers mark the canvas as tainted for certain SVG content, and Safari has been stricter than others here in the past. Once the canvas is tainted, `toBlob()` throws a `SecurityError`, which this code turns into a rejected promise. Test the export in Safari as well as Chromium and Firefox.
+- **Unique `id`s:** the exported SVG keeps its `id`s, and on the page they must be unique like any other. A `<style>` inside an inline SVG applies to the whole page, so namespace its class names, as with `.png-badge-label` above.
+- **Browser support:** `XMLSerializer`, `img.decode()`, `canvas.toBlob()`, and the `??=` operator work in all current browsers.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does my exported PNG have no styles or the wrong font?">
+  When an SVG is loaded as an image, it's a separate document. Your page's stylesheets and loaded web fonts aren't
+  part of it, and it isn't allowed to fetch anything. Move the styles into the SVG, and embed the font as a `data:` URI
+  in an `@font-face` rule inside the SVG's own `<style>`.
+</Details>
+
+<Details summary="Why is the PNG blurry?">
+  The canvas is probably smaller than the size it's displayed at. Export at a larger `scale`, such as `2` or `3`, so
+  the canvas has more pixels. The code sizes the SVG copy to the output size, so the vector is drawn at full resolution
+  rather than stretched.
+</Details>
+
+<Details summary="Why does toBlob throw a SecurityError?">
+  The canvas is tainted, which means the browser has decided its pixels mustn't be read. That happens with images from
+  other origins drawn without CORS permission, and in some browsers with certain kinds of SVG content. Keep the SVG
+  self-contained and simple, and test in each browser you support.
+</Details>
+
+<Details summary="Can I export to JPEG or WebP instead?">
+  Yes. Pass `"image/jpeg"` or `"image/webp"` as the type in `toBlob()`, with an optional quality between `0` and `1` as
+  the third argument. JPEG has no transparency, so pass a `background` colour, or transparent areas turn black.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Serialise a sized copy of the SVG with `XMLSerializer`, load it as an `image/svg+xml` image, wait for `img.decode()`, draw it on a canvas sized for `devicePixelRatio`, and call `toBlob()`. The code is short; the work is in the SVG. Keep its styles, images, and fonts inside it, give it a `viewBox`, and test the export in Safari before you rely on it.
