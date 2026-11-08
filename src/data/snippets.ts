@@ -155,6 +155,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "uint8array-hex-encoding",
+    title: "Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`",
+    excerpt: "Convert bytes to hex strings and back without padStart loops.",
+    description: "Encode bytes as hex with ES2026's Uint8Array toHex(), decode with fromHex() and setFromHex(), with SHA-256 digests, colours, error cases and a padStart fallback.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2026", "typed-arrays", "binary-data", "hex-encoding", "web-crypto", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/uint8array-hex-encoding/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A row of byte values converted by toHex() into the string 48656c6c6f and back into bytes with Uint8Array.fromHex().",
+      caption: "Bytes to a hex string with toHex(), and back again with fromHex()."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

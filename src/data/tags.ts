@@ -1166,5 +1166,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "concurrency": {
     title: "Concurrency",
     description: "Coordinating work that runs at the same time: locks, spin-waits, races and the patterns that keep shared state consistent."
+  },
+  "typed-arrays": {
+    title: "JavaScript Typed Arrays",
+    description: "Storing numbers in fixed-size binary form with `Float32Array`, `Uint8Array`, `Float16Array` and the other typed arrays, and reading them with `DataView`."
+  },
+  "binary-data": {
+    title: "Working with Binary Data in JavaScript",
+    description: "Reading and writing raw bytes with `ArrayBuffer`, typed arrays and `DataView`: file formats, byte order and data for GPUs and network protocols."
+  },
+  "hex-encoding": {
+    title: "Hex Encoding",
+    description: "Converting bytes to hexadecimal strings and back, for hashes, colours, IDs and debugging binary data."
+  },
+  "web-crypto": {
+    title: "Web Crypto API",
+    description: "Hashing, random values and encryption in the browser and Node.js with `crypto.subtle` and `crypto.getRandomValues()`."
+  },
+  "es2026": {
+    title: "Modern JavaScript Features of ES2026",
+    description: "Language features added in ECMAScript 2026, with browser support, edge cases and fallbacks for older runtimes."
   }
 };
