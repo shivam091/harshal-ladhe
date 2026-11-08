@@ -907,6 +907,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-css-2026",
+    title: "What's New in CSS in 2026",
+    excerpt: "The CSS features that became usable across browsers in 2026.",
+    description: "What became usable in CSS in 2026: anchor positioning, scroll-driven animations, @scope and contrast-color(), plus Chromium-only features, Interop 2026 and the CSS Snapshot.",
+    category: ["CSS"],
+    tags: ["css", "css-2026", "modern-css", "browser-support", "anchor-positioning", "animation-timeline", "scroll-animation", "style-queries", "interop", "progressive-enhancement", "frontend"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/whats-new-in-css-2026/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for what's new in CSS in 2026, showing feature cards for anchor positioning, scroll-driven animations, @scope and contrast-color() with Chrome, Firefox and Safari support marks.",
+      caption: "The CSS features that reached all three engines in 2026, and the ones still waiting."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Sorting a whole year of CSS into \"works everywhere\", \"two engines\" and \"Chromium only\" meant checking every feature against the compatibility data rather than the launch posts, and a few surprised me, Safari shipping masonry first among them. I hope it helps you decide what to reach for on your next project. 🎨",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 

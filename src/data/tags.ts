@@ -1266,5 +1266,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "abortcontroller": {
     title: "AbortController and AbortSignal",
     description: "Cancelling requests and tearing down listeners, timers and other work with `AbortController` and `AbortSignal`."
+  },
+  "css-2026": {
+    title: "Modern CSS Features of 2026",
+    description: "CSS features that became usable across browsers in 2026, from anchor positioning to scroll-driven animations and @scope."
+  },
+  "interop": {
+    title: "Interop and Cross-Browser Compatibility",
+    description: "The yearly Interop project, in which browser vendors align chosen web features across engines, and what its focus areas mean for authors."
   }
 };

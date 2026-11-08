@@ -1,0 +1,534 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("whats-new-in-css-2026");
+
+CSS doesn't have releases. There's no "CSS 2026" that browsers ship on a particular day, and there hasn't been a
+numbered version of CSS since CSS 2.1. Instead, each feature is specified in its own module and arrives in each
+browser engine on its own schedule. So the useful question for any year isn't "what was added to CSS?" but "what can
+I actually use now that I couldn't before?"
+
+For 2026, the answer is a lot. Anchor positioning, scroll-driven animations, `@scope`, `contrast-color()` and a long
+list of smaller features finished arriving in Chrome, Firefox and Safari. At the same time, Chromium shipped a run of
+features that the other engines haven't caught up with yet, and Safari shipped two that nobody else has.
+
+<Quote>
+  A CSS feature becomes useful the day the last engine you care about ships it, not the day the first one does.
+</Quote>
+
+In this post, we'll cover:
+
+- What "usable across browsers" means, and where Baseline fits in
+- The features that reached all three engines, with a short example of each
+- Features in two engines, waiting for a third
+- Features only in Chromium, and the two that Safari shipped first
+- What Interop 2026 is focusing on
+- What the W3C's CSS Snapshot 2026 is, and what it isn't
+- A summary table and frequently asked questions
+
+All support data is as of November 2026, with Chrome and Edge 156, Firefox 159 and Safari 27.2 as the current stable
+releases. Versions are the first stable release with support.
+
+<RainbowDivider />
+
+## What "Usable Across Browsers" Means
+
+The yardstick most people use now is **Baseline**, the label shown on MDN, caniuse and web.dev. A feature is
+**Baseline newly available** once it works in the current versions of Chrome, Edge, Firefox and Safari, on desktop
+and mobile. It becomes **Baseline widely available** 30 months later, once most users' browsers have caught up.
+
+Most of the features in the next section became Baseline newly available during 2026. That means current browsers
+support them; it doesn't mean every visitor has updated. For anything a page can't work without, keep a fallback or
+use `@supports` for a while yet.
+
+<RainbowDivider />
+
+## Now in All Three Engines
+
+### Anchor Positioning
+
+The headline feature of the year. Anchor positioning lets you tether an absolutely positioned element, such as a
+tooltip or a menu, to another element, with no JavaScript measuring and no positioning library:
+
+<CodeBlock language="css">
+{`
+  .trigger {
+    anchor-name: --menu;
+  }
+
+  .menu {
+    position: absolute;
+    position-anchor: --menu;
+    position-area: bottom;
+    position-try-fallbacks: --above;
+  }
+
+  @position-try --above {
+    position-area: top;
+  }
+`}
+</CodeBlock>
+
+`position-area` places the menu relative to its anchor on a 3×3 grid, and `@position-try` defines a fallback the
+browser switches to when the first position would overflow the viewport.
+
+**Support:** Chrome and Edge 125, Firefox 147, Safari 26. It was an Interop focus area in 2025 and carried over into
+2026, and with Firefox 147 it became Baseline this year.
+
+### Scroll-Driven Animations
+
+`animation-timeline` connects a CSS animation to scroll position instead of time. A reading progress bar, for
+instance, is now a few lines of CSS:
+
+<CodeBlock language="css">
+{`
+  @keyframes grow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+  }
+
+  .reading-progress {
+    transform-origin: left;
+    animation: grow linear both;
+    animation-timeline: scroll(root);
+  }
+`}
+</CodeBlock>
+
+Set `animation-timeline` *after* the `animation` shorthand, because the shorthand resets it. `view()` timelines, which
+track an element as it crosses the viewport, work the same way.
+
+**Support:** Chrome and Edge 115, Safari 26, and Firefox 159, the current stable release. It's one of the Interop 2026
+focus areas, and Firefox's release means it now works in all three engines, though only very recently.
+
+### `@scope`
+
+`@scope` limits a block of rules to a part of the DOM, with an optional lower boundary where the scope stops:
+
+<CodeBlock language="css">
+{`
+  @scope (.card) to (.card-content) {
+    img {
+      border-radius: 8px;
+    }
+  }
+`}
+</CodeBlock>
+
+Images inside `.card` are rounded, but not those inside its `.card-content` slot, which might hold content from
+elsewhere. When two scoped rules have the same specificity, the one whose scope root is closer in the DOM wins. It
+pairs well with
+[cascade layers](/post/css/css-cascade-layers): layers decide which group of rules you trust more, while `@scope`
+decides where a rule applies.
+
+**Support:** Chrome and Edge 118, Firefox 146, Safari 26.4.
+
+### `contrast-color()`
+
+`contrast-color()` takes a colour and returns black or white, whichever contrasts more with it. It's ideal for text on
+user-chosen or theme-driven backgrounds:
+
+<CodeBlock language="css">
+{`
+  .badge {
+    background: var(--brand);
+    color: contrast-color(var(--brand));
+  }
+`}
+</CodeBlock>
+
+Choosing between black and white doesn't guarantee accessible contrast for every mid-tone background, so it's still
+worth checking your actual palette. It works well alongside [`light-dark()`](/tutorial/light-dark-color-scheme).
+
+**Support:** Chrome and Edge 147, Firefox 146, Safari 26. An Interop 2026 focus area.
+
+### `shape()`
+
+`shape()` is a `clip-path` (and `offset-path`) function that uses path-like commands but accepts any CSS units,
+including percentages and `calc()`, so shapes resize with the element:
+
+<CodeBlock language="css">
+{`
+  .hero {
+    clip-path: shape(
+      from 0% 0%,
+      line to 100% 0%,
+      line to 100% 85%,
+      line to 0% 100%,
+      close
+    );
+  }
+`}
+</CodeBlock>
+
+**Support:** Chrome and Edge 135, Firefox 148, Safari 18.4. Another Interop 2026 focus area. The full guide is
+[The CSS `shape()` Function: Responsive `clip-path` Shapes](/tutorial/shape-function-clip-path).
+
+### `sibling-index()` and `sibling-count()`
+
+These return an element's position among its siblings and the number of siblings, as integers you can use in
+`calc()`. Staggered animations no longer need an `nth-child` rule per item or an inline custom property:
+
+<CodeBlock language="css">
+{`
+  .list-item {
+    transition-delay: calc(sibling-index() * 50ms);
+  }
+`}
+</CodeBlock>
+
+**Support:** Chrome and Edge 138, Firefox 154, Safari 26.2. See
+[CSS-Only Staggered Animations with `sibling-index()` and `sibling-count()`](/tutorial/sibling-index-count-functions).
+
+### `field-sizing`
+
+`field-sizing: content` makes a form control size itself to its content, so a textarea grows as you type and an input
+fits its value:
+
+<CodeBlock language="css">
+{`
+  textarea {
+    field-sizing: content;
+    min-block-size: 3lh;
+    max-block-size: 12lh;
+  }
+`}
+</CodeBlock>
+
+**Support:** Chrome and Edge 123, Firefox 152, Safari 26.2. See
+[Auto-Growing Textareas with CSS `field-sizing: content`](/tutorial/field-sizing-content-textarea).
+
+### `text-box-trim` and `text-box`
+
+Text always carries extra space above and below the glyphs, which is why a button label never looks quite centred
+and a heading never lines up exactly with an image beside it. `text-box` trims that space to the font's metrics:
+
+<CodeBlock language="css">
+{`
+  h1,
+  .button {
+    text-box: trim-both cap alphabetic;
+  }
+`}
+</CodeBlock>
+
+This trims the top edge to the cap height and the bottom edge to the baseline.
+
+**Support:** Chrome and Edge 133, Firefox 154, Safari 18.2.
+
+### `progress()`
+
+`progress()` returns where a value sits between two others, as a number (0 at the start, 1 at the end), which you can
+then feed into `calc()`:
+
+<CodeBlock language="css">
+{`
+  h1 {
+    --p: progress(100vw, 320px, 1280px);
+    font-size: calc(1.5rem + 1.5rem * var(--p));
+  }
+`}
+</CodeBlock>
+
+It's a readable building block for fluid sizing and for mapping one range onto another, without hand-written slope
+arithmetic.
+
+**Support:** Chrome and Edge 138, Firefox 155, Safari 26.
+
+### Container Style Queries
+
+Container queries on size have been everywhere since 2023. Style queries, which test a custom property's value on a
+container, were the missing piece in Firefox:
+
+<CodeBlock language="css">
+{`
+  .card-wrapper {
+    --variant: featured;
+  }
+
+  @container style(--variant: featured) {
+    .card {
+      border-color: gold;
+    }
+  }
+`}
+</CodeBlock>
+
+**Support (custom properties):** Chrome and Edge 111, Firefox 151, Safari 18. An Interop 2026 focus area. For the full
+picture, read [Container Queries Deep Dive](/post/css/container-queries-deep-dive).
+
+### `:open`
+
+`:open` matches elements that have an open state: `<details>` when expanded, `<dialog>` when showing, and `<select>`
+and `<input>` pickers while their picker is displayed:
+
+<CodeBlock language="css">
+{`
+  details:open > summary {
+    font-weight: 600;
+  }
+`}
+</CodeBlock>
+
+**Support:** Chrome and Edge 133, Firefox 136, Safari 26.5. It's part of Interop 2026's combined dialog and popover
+focus area. For animating those elements as they open and close, see
+[Animate Dialogs & Popovers with CSS `@starting-style`](/post/animations/css-starting-style-dialogs-and-discrete-animations).
+
+### Custom Highlights
+
+The CSS Custom Highlight API lets you style arbitrary text ranges, such as search matches or spelling errors, without
+wrapping them in extra elements. You register ranges in JavaScript and style them with `::highlight()`:
+
+<CodeBlock language="js">
+{`
+  const paragraph = document.querySelector("p");
+  const range = new Range();
+  range.setStart(paragraph.firstChild, 0);
+  range.setEnd(paragraph.firstChild, 5);
+
+  CSS.highlights.set("search", new Highlight(range));
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  ::highlight(search) {
+    background-color: yellow;
+    color: black;
+  }
+`}
+</CodeBlock>
+
+**Support:** Chrome and Edge 105, Firefox 149, Safari 17.2. Another Interop 2026 focus area.
+
+<RainbowDivider />
+
+## In Two Engines, Waiting for a Third
+
+These features work in two of the three engines. They're good candidates for progressive enhancement now, and
+they're covered in more detail in [What's New in CSS in 2027](/post/css/whats-new-in-css-2027).
+
+**Typed `attr()`** lets `attr()` return real typed values, such as numbers, lengths and colours, in any property, not
+just strings in `content`. It's in Chrome and Edge 133 and Firefox 155; Safari has it in Technology Preview only.
+"Advanced `attr()`" is an Interop 2026 focus area. See
+[HTML Attributes as Real CSS Values with Typed `attr()`](/tutorial/css-typed-attr).
+
+**Customizable `<select>`** with `appearance: base-select` gives you a fully stylable dropdown that keeps native
+behaviour and accessibility. It's in Chrome and Edge 135 and, as of this year, Safari 27. Firefox has it behind a
+flag. See [Styling a `<select>` Dropdown with CSS `appearance: base-select`](/tutorial/css-customizable-select).
+
+**Cross-document view transitions** (`@view-transition`) animate between full page loads. They're in Chrome and Edge
+126 and Safari 18.2, but not Firefox. Same-document view transitions are more widely supported, and
+`view-transition-name: match-element` is in all three (Chrome 137, Firefox 144, Safari 18.4).
+
+**`text-wrap: pretty`**, which avoids short last lines in paragraphs, is in Chrome and Edge 117 and Safari 26, but not
+Firefox. Browsers that don't support it simply wrap normally, so it's safe to use today.
+
+**`text-decoration-inset`**, for shortening underlines at each end, is in Firefox 146 and coming to Chrome in 157
+(currently in beta). Safari has it in Technology Preview.
+
+<RainbowDivider />
+
+## Chromium Only
+
+Chrome and Edge shipped a long run of features that Firefox and Safari don't support in a stable release yet. They're
+fine to use as enhancements, but don't build anything essential on them:
+
+| Feature | Chrome / Edge | Firefox | Safari | Guide |
+| --- | --- | --- | --- | --- |
+| `if()` | 137 | No | No | [Conditional values with `if()`](/tutorial/css-if-conditional-values) |
+| `@function` | 139 | No | Technology Preview | [CSS custom functions](/tutorial/css-custom-functions-at-function) |
+| `corner-shape` | 139 | No | Technology Preview | [Squircles with `corner-shape`](/tutorial/css-corner-shape) |
+| `interpolate-size`, `calc-size()` | 129 | No | No | [Animating `height: auto`](/tutorial/interpolate-size-auto-animations) |
+| `::scroll-marker`, `scroll-marker-group` | 135 | No | No | [Pure CSS carousels](/tutorial/native-css-carousel-scroll-markers) |
+| `scroll-target-group` | 140 | No | No | |
+| Scroll-state container queries | 133 | No | No | |
+| `reading-flow` | 137 | No | No | |
+| `animation-trigger` | 146 | No | No | |
+| `border-shape` | 147 | No | No | |
+| `caret-shape` | 144 | No | No | |
+
+Two of these, `@function` and `corner-shape`, are in Safari Technology Preview, which is the strongest sign of what
+might spread next. `if()` and `@function` in particular change how much logic you can keep in CSS, so they're worth
+learning now even if you only ship them behind a fallback:
+
+<CodeBlock language="css">
+{`
+  .panel {
+    background: white;
+    background: if(style(--theme: dark): #111; else: white);
+  }
+`}
+</CodeBlock>
+
+In a browser without `if()`, the second declaration is invalid and dropped, and the first one applies.
+
+<RainbowDivider />
+
+## Safari First
+
+Two features went the other way, with Safari shipping before anyone else.
+
+**`display: grid-lanes`**, the long-debated masonry layout, is in Safari 26.4 and nowhere else yet. Items are placed
+into columns (or rows) like a grid, but pack tightly along the other axis instead of lining up in rows:
+
+<CodeBlock language="css">
+{`
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  @supports (display: grid-lanes) {
+    .gallery {
+      display: grid-lanes;
+    }
+  }
+`}
+</CodeBlock>
+
+Because `grid-lanes` uses the same track definitions, falling back to an ordinary grid costs one `@supports` block.
+
+**`random()`** generates a random value within a range, directly in CSS, for things like confetti, scattered cards or
+subtle variety in a pattern:
+
+<CodeBlock language="css">
+{`
+  .card {
+    rotate: random(-4deg, 4deg);
+  }
+`}
+</CodeBlock>
+
+It shipped in Safari 26.2 first and reached Chrome and Edge in 156, the current release. Firefox doesn't support it
+yet.
+
+<RainbowDivider />
+
+## Interop 2026
+
+Interop is the yearly project in which Apple, Google, Microsoft, Mozilla and others agree on a set of focus areas and
+work to make them behave the same in every engine, measured by shared tests. The 2026 focus areas were announced on
+12 February 2026.
+
+The CSS focus areas are:
+
+- Advanced `attr()`
+- Container style queries
+- `contrast-color()`
+- Custom highlights
+- Media pseudo-classes (such as `:playing` and `:paused`)
+- Scroll-driven animations
+- Scroll snap
+- `shape()`
+- Anchor positioning (carried over from 2025)
+- View transitions (carried over from 2025)
+- CSS `zoom` (carried over from 2025)
+
+There's also an HTML focus area that combines `<dialog>`, popover and the `:open` pseudo-class, plus focus areas
+outside CSS such as the Navigation API, scoped custom element registries, IndexedDB and WebTransport.
+
+Interop is a good predictor because it's a public commitment backed by tests. Many of the features in the "all three
+engines" section above are Interop 2026 areas, and the remaining gaps, such as typed `attr()` in Safari or media
+pseudo-classes in Chrome, are exactly what the project is meant to close. You can follow the scores on the Interop
+dashboard at wpt.fyi.
+
+<RainbowDivider />
+
+## The W3C CSS Snapshot 2026
+
+The CSS Working Group publishes a yearly **CSS Snapshot**. CSS Snapshot 2026 was published as a W3C Group Note on 22
+June 2026 (an earlier version appeared on 26 March 2026), edited by Tab Atkins Jr. and fantasai.
+
+It's easy to misread, so it's worth being clear about what it is:
+
+- **It is** a list of the specifications that together make up CSS as of 2026, grouped by how stable each
+  specification is: the official definition, reliable Candidate Recommendations, fairly stable modules with limited
+  implementation experience, and modules with rough interoperability.
+- **It is** written mainly for implementers, and it includes guidance on implementing CSS responsibly, such as how to
+  handle partial and experimental implementations.
+
+And what it isn't:
+
+- **It isn't** a list of features you can use. The snapshot itself says it groups modules by specification
+  stability, not by browser adoption. A spec can be stable long before every browser ships it, and the reverse.
+- **It isn't** "CSS4" or a new version of CSS. CSS doesn't have versions; modules have levels, and they move
+  independently.
+- **It isn't** a W3C Recommendation. Group Notes are not endorsed by W3C or its members.
+
+For "can I use this?", Baseline and the support tables are the right tools. The snapshot answers a different question:
+"which specifications are mature?"
+
+<RainbowDivider />
+
+## 2026 at a Glance
+
+| Feature | Chrome / Edge | Firefox | Safari |
+| --- | --- | --- | --- |
+| Anchor positioning | 125 | 147 | 26 |
+| Scroll-driven animations | 115 | 159 | 26 |
+| `@scope` | 118 | 146 | 26.4 |
+| `contrast-color()` | 147 | 146 | 26 |
+| `shape()` | 135 | 148 | 18.4 |
+| `sibling-index()`, `sibling-count()` | 138 | 154 | 26.2 |
+| `field-sizing` | 123 | 152 | 26.2 |
+| `text-box-trim`, `text-box` | 133 | 154 | 18.2 |
+| `progress()` | 138 | 155 | 26 |
+| Container style queries (custom properties) | 111 | 151 | 18 |
+| `:open` | 133 | 136 | 26.5 |
+| Custom highlights | 105 | 149 | 17.2 |
+| Typed `attr()` | 133 | 155 | Technology Preview |
+| `appearance: base-select` | 135 | Behind a flag | 27 |
+| `random()` | 156 | No | 26.2 |
+| `display: grid-lanes` | No | No | 26.4 |
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Is there a CSS4?">
+  No. After CSS 2.1, CSS was split into separate modules that each have their own level, such as Selectors Level 4
+  or Color Level 5. People sometimes say "CSS4" to mean modern CSS in general, but no such version exists, and the
+  CSS Snapshot isn't one either.
+</Details>
+
+<Details summary="Is anchor positioning safe to use in production now?">
+  In current browsers, yes: it's in Chrome, Edge, Firefox and Safari. Because it only became Baseline this year, some
+  visitors will still be on older versions. Wrap it in `@supports (anchor-name: --a)` and keep a simpler placement
+  as the fallback for those visitors.
+</Details>
+
+<Details summary="Why do features often ship in Chrome first?">
+  Chromium often prototypes and ships features while the specification is still being written. That's useful for
+  feedback, but it's why "shipped in Chrome" and "usable on the web" can be years apart.
+  This year also showed it isn't a fixed rule: Safari shipped `grid-lanes` and `random()` first.
+</Details>
+
+<Details summary="What's the difference between Baseline and Interop?">
+  Baseline is a status: it tells you whether a feature works in all the core browsers today. Interop is a project: a
+  yearly commitment by browser vendors to fix a chosen set of features so they behave consistently. Interop work is
+  one of the main ways features become Baseline.
+</Details>
+
+<Details summary="Where should I check support for a specific feature?">
+  MDN shows the Baseline status and a detailed table, caniuse gives a quick overview, and webstatus.dev tracks
+  Baseline across many features at once. MDN's tables come from browser-compat-data (BCD), the open dataset that
+  Baseline is calculated from as well.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+2026 was the year a lot of long-awaited CSS finally became usable everywhere:
+
+- **Anchor positioning** and **scroll-driven animations** reached all three engines
+- **`@scope`**, **`contrast-color()`**, **`shape()`** and **`sibling-index()`** became cross-browser tools
+- **`field-sizing`**, **`text-box`**, **`progress()`**, **style queries**, **`:open`** and **custom highlights**
+  filled in the gaps
+- **Chromium** pushed ahead with `if()`, `@function`, `corner-shape` and more
+- **Safari** shipped `grid-lanes` and `random()` first
+
+The features stuck in one or two engines are the interesting ones to watch next. For an evidence-based look at which
+of them are most likely to become usable everywhere, read
+[What's New in CSS in 2027: What to Expect](/post/css/whats-new-in-css-2027).
