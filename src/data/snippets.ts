@@ -182,6 +182,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "set-dedupe-and-compare",
+    title: "Dedupe Two Lists, Then Compare Them with Set Methods",
+    excerpt: "Dedupe two lists and diff them with native Set methods.",
+    description: "Remove duplicates with new Set(), then compare two lists with union, intersection, difference, symmetricDifference and the subset checks: tags, permissions and IDs.",
+    link: {
+      label: "Read the full tutorial: Native JavaScript Set Methods: union, intersection and difference",
+      href: "/tutorial/set-methods-union-intersection"
+    },
+    category: ["JavaScript"],
+    tags: ["javascript", "set-methods", "data-structures", "es2025", "deduplication"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/set-dedupe-and-compare/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Two lists of tags with duplicates collapsed into two Sets, then compared to show added, removed and kept values.",
+      caption: "Old and new tag lists deduped, then diffed into added, removed and kept."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

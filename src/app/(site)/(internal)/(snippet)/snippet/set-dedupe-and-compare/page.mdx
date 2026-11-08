@@ -1,0 +1,177 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("set-dedupe-and-compare");
+
+## Introduction
+
+Two lists arrive, both with duplicates: the tags on a post before and after an edit, or the permissions a user has and
+the ones a new role would give them. You want to know what was added, what was removed and what stayed the same.
+
+`new Set(list)` removes the duplicates in one step, and the **ES2025 set methods** answer the comparison questions
+directly: `union`, `intersection`, `difference`, `symmetricDifference`, `isSubsetOf`, `isSupersetOf` and
+`isDisjointFrom`. No `.filter()`, no `.includes()`, no nested loops.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  function compareLists(before, after) {
+    const a = new Set(before); // duplicates removed
+    const b = new Set(after);
+
+    return {
+      added: [...b.difference(a)],
+      removed: [...a.difference(b)],
+      kept: [...a.intersection(b)],
+      changed: [...a.symmetricDifference(b)],
+      all: [...a.union(b)],
+      unchanged: a.isSubsetOf(b) && a.isSupersetOf(b),
+      onlyAdditions: a.isSubsetOf(b),
+      onlyRemovals: a.isSupersetOf(b),
+      noOverlap: a.isDisjointFrom(b)
+    };
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `new Set(before)` keeps the **first** occurrence of each value and drops the rest, so
+   `["css", "js", "css"]` becomes `Set {"css", "js"}`. Insertion order is kept.
+2. `b.difference(a)` is everything in the new list that wasn't in the old one: the **additions**. Swap the two and
+   `a.difference(b)` gives the **removals**. `difference` is the only method here where the order matters.
+3. `a.intersection(b)` is what both lists share, and `a.symmetricDifference(b)` is what appears in only one of them,
+   which is additions and removals together.
+4. `a.union(b)` is every distinct value from either list.
+5. The three boolean methods answer yes-or-no questions. If `a` is a subset of `b`, nothing was removed. If it's a
+   superset, nothing was added. If it's both, the two lists hold the same values, whatever their order or duplicates.
+6. Each method returns a new `Set` and leaves `a` and `b` untouched. Spreading the result (`[...set]`) turns it back
+   into an array for JSON, rendering or sorting.
+
+<RainbowDivider />
+
+## Example Usage
+
+### Old vs New Tags
+
+<CodeBlock language="js">
+{`
+  const oldTags = ["css", "js", "css", "animation", "js"];
+  const newTags = ["js", "svg", "animation", "svg", "a11y"];
+
+  const diff = compareLists(oldTags, newTags);
+
+  diff.added;         // ["svg", "a11y"]
+  diff.removed;       // ["css"]
+  diff.kept;          // ["js", "animation"]
+  diff.changed;       // ["css", "svg", "a11y"]
+  diff.all;           // ["css", "js", "animation", "svg", "a11y"]
+  diff.unchanged;     // false
+  diff.onlyAdditions; // false: "css" was removed
+`}
+</CodeBlock>
+
+### A Permissions Diff
+
+Before granting a new role, show the reviewer exactly what it changes:
+
+<CodeBlock language="js">
+{`
+  const current = ["read", "write", "read"];
+  const proposed = ["read", "write", "delete", "admin"];
+
+  const { added, removed, onlyAdditions } = compareLists(current, proposed);
+
+  added;         // ["delete", "admin"]
+  removed;       // []
+  onlyAdditions; // true: the new role grants more and takes nothing away
+`}
+</CodeBlock>
+
+### Comparing Lists of Objects
+
+A `Set` compares objects by reference, so two `{ id: 2 }` objects from two API responses are different members.
+Compare a primitive key instead:
+
+<CodeBlock language="js">
+{`
+  const before = [{ id: 1, name: "Ada" }, { id: 2, name: "Lin" }];
+  const after = [{ id: 2, name: "Lin" }, { id: 3, name: "Sam" }];
+
+  const ids = (users) => new Set(users.map((user) => user.id));
+
+  ids(after).difference(ids(before)); // Set(1) {3}: new users
+  ids(before).difference(ids(after)); // Set(1) {1}: removed users
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Tag and category editors:** show "added" and "removed" chips before saving.
+- **Permission and role reviews:** confirm a change only grants, or only revokes, before it goes live.
+- **Syncing two systems:** work out which IDs to create and which to delete.
+- **Feature flags and settings:** compare enabled flags between two environments.
+- **Form state:** check whether a multi-select has really changed before sending a request.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Normalise before you dedupe.** `new Set(["CSS", "css "])` keeps both values. Clean the strings first:
+
+<CodeBlock language="js">
+{`
+  const normalise = (list) => new Set(list.map((tag) => tag.trim().toLowerCase()));
+
+  normalise([" CSS", "css ", "Js"]); // Set(2) {"css", "js"}
+`}
+</CodeBlock>
+
+- **Pass a `Set`, not an array.** The argument must be set-like (with `size`, `has()` and `keys()`), so
+  `a.union(["x"])` throws a `TypeError`. That's why both lists are wrapped in `new Set()` first.
+- **Don't rely on result order** for `intersection`: it can follow either set. Sort the array if the order matters.
+- **The empty list is a subset of everything.** If `before` is empty, `onlyAdditions` is `true`, which is correct: nothing
+  could have been removed.
+- **Browser support:** the set methods work in Chrome and Edge 122, Firefox 127, Safari 17 and Node 22. For older
+  targets, see the fallbacks in the [full set methods tutorial](/tutorial/set-methods-union-intersection#browser-support-and-fallbacks).
+- **Going further:** [Native JavaScript Set Methods](/tutorial/set-methods-union-intersection) covers set-like arguments,
+  edge cases and an interactive playground, and [What's New in ES2025](/post/javascript/whats-new-in-es2025) puts these
+  methods alongside the rest of that edition.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Does new Set() keep the original order?">
+  Yes. A `Set` remembers insertion order, and the first occurrence of each value wins. `new Set(["b", "a", "b"])` iterates
+  as `"b"`, then `"a"`.
+</Details>
+
+<Details summary="Is this faster than filter() and includes()?">
+  For large lists, yes. `includes()` searches an array item by item, so filtering one list against another gets slow as
+  both grow. A `Set` lookup is fast whatever its size, and the set methods use those lookups internally.
+</Details>
+
+<Details summary="How do I check that two lists hold exactly the same values?">
+  Dedupe both, then check `a.isSubsetOf(b) && a.isSupersetOf(b)`. Comparing `a.size === b.size` together with
+  `a.isSubsetOf(b)` gives the same answer.
+</Details>
+
+<Details summary="Why is diff.changed the same as added plus removed?">
+  Because `symmetricDifference` is everything in exactly one of the two sets. Values only in the new list were added, and
+  values only in the old list were removed.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Wrap each list in `new Set()` to drop duplicates, then let the set methods name the comparison: `difference` for
+additions and removals, `intersection` for what's shared, `symmetricDifference` for everything that changed, and
+`isSubsetOf`, `isSupersetOf` and `isDisjointFrom` for the yes-or-no checks.

@@ -1158,5 +1158,9 @@ export const tagMeta: Record<string, TagMeta> = {
   "webgpu": {
     title: "WebGPU",
     description: "The WebGPU API for GPU rendering and compute in the browser: devices, buffers, vertex formats and WGSL shaders."
+  },
+  "deduplication": {
+    title: "Removing Duplicates in JavaScript",
+    description: "Deduplicating arrays and lists in JavaScript with `Set`, normalising values first, and comparing the results."
   }
 };
