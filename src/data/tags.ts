@@ -1218,5 +1218,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "tc39": {
     title: "TC39 Proposals",
     description: "Proposals moving through TC39, the committee that standardises JavaScript: what each stage means and what's coming to the language."
+  },
+  "css-scope": {
+    title: "CSS @scope",
+    description: "Using the @scope at-rule to limit where selectors match, with scoping roots, donut-scope limits and scope proximity in the cascade."
+  },
+  "css-2027": {
+    title: "CSS Features to Watch in 2027",
+    description: "CSS features most likely to become usable across browsers in 2027, based on current browser support and Interop commitments."
   }
 };

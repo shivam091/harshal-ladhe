@@ -1,0 +1,150 @@
+.playground code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+/* ---------- Demo 1: nested theme cards ---------- */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  border: 0.0625rem solid;
+}
+
+/* Each card's own background is never ambiguous, so it lives outside the experiment. */
+.card.theme-light {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.card.theme-dark {
+  background: #1e293b;
+  border-color: #475569;
+}
+
+.card .title {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.card .text {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+/*
+  Mode 1: descendant selectors. Every rule has the same specificity (0,2,1), so the dark rules win
+  for anything inside ANY dark ancestor, simply because they come later in the file. The innermost
+  light card is inside a dark card, so its text turns pale on a pale background.
+*/
+[data-mode="descendant"] .theme-light .title,
+[data-mode="descendant"] .theme-light .text { color: #0f172a; }
+[data-mode="descendant"] .theme-light .link { color: #1d4ed8; }
+
+[data-mode="descendant"] .theme-dark .title,
+[data-mode="descendant"] .theme-dark .text { color: #e2e8f0; }
+[data-mode="descendant"] .theme-dark .link { color: #93c5fd; }
+
+/*
+  Mode 2: @scope. The inner selectors are plain type selectors (0,0,1), equal on both sides, so the
+  cascade falls through to scope proximity: the theme root with the fewest hops to the element wins.
+  The dark block still comes later in the file, and still loses inside the innermost light card.
+*/
+@scope ([data-mode="scope"] .theme-light) {
+  h2, p { color: #0f172a; }
+  a { color: #1d4ed8; }
+}
+
+@scope ([data-mode="scope"] .theme-dark) {
+  h2, p { color: #e2e8f0; }
+  a { color: #93c5fd; }
+}
+
+/*
+  Mode 3: same as mode 2, except the dark block uses class selectors (0,1,0). Specificity is checked
+  BEFORE scope proximity, so the dark rules win everywhere inside a dark card again.
+*/
+@scope ([data-mode="specific"] .theme-light) {
+  h2, p { color: #0f172a; }
+  a { color: #1d4ed8; }
+}
+
+@scope ([data-mode="specific"] .theme-dark) {
+  .title, .text { color: #e2e8f0; }
+  .link { color: #93c5fd; }
+}
+
+/* ---------- Demo 2: donut scope ---------- */
+
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #ffffff;
+  color: #1f2937;
+}
+
+.profile .name {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.content {
+  padding: 0.75rem;
+  border: 0.0625rem dashed #9ca3af;
+  font-size: 0.875rem;
+}
+
+.content p {
+  margin: 0;
+}
+
+/* Without a limit, these rules reach every p and a in the card, including the user's bio. */
+@scope (#donut:not(.limited) .profile) {
+  p {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #4f46e5;
+  }
+
+  a {
+    padding-block: 0.375rem;
+    padding-inline: 0.875rem;
+    border-radius: 999px;
+    background: #4f46e5;
+    color: #ffffff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+}
+
+/* With "to (.content)", .content and everything inside it is outside the scope: a donut. */
+@scope (#donut.limited .profile) to (.content) {
+  p {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #4f46e5;
+  }
+
+  a {
+    padding-block: 0.375rem;
+    padding-inline: 0.875rem;
+    border-radius: 999px;
+    background: #4f46e5;
+    color: #ffffff;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+}

@@ -621,6 +621,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-scope-component-styles",
+    title: "`@scope`: Component-Level Style Isolation",
+    excerpt: "Limit where selectors match, with donut scopes and proximity.",
+    description: "Use the CSS @scope at-rule to keep component styles inside a scoping root, stop them at a scoping limit with donut scope, and let scope proximity settle nested themes. Covers :scope and & specificity, prelude-less @scope in inline style elements, where proximity sits in the cascade after layers and specificity, @scope inside @layer, and how it compares with BEM, CSS Modules and Shadow DOM.",
+    category: ["CSS"],
+    tags: ["css", "css-scope", "cascade-layers", "specificity", "css-architecture", "encapsulation", "theming", "modern-css", "css-2027"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-scope-component-styles/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Light and dark theme cards nested inside each other, with the innermost light card keeping its own colours because its @scope root is the nearest, beside a profile card whose styles stop at a dashed content slot.",
+      caption: "Nested theme cards resolved by scope proximity, and a donut scope that stops at the content slot."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

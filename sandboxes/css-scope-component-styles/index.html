@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS @scope Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Theme Cards and Donut Scope with @scope</h1>
+        <p>Three theme cards nested inside each other: light, dark, then light again. Switch how the theme rules are written and watch which colours the innermost card picks up.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>Theme rules</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="How the theme rules are written">
+          <label class="segment"><input type="radio" name="mode" value="descendant" checked><span>Descendant selectors</span></label>
+          <label class="segment"><input type="radio" name="mode" value="scope"><span>@scope</span></label>
+          <label class="segment"><input type="radio" name="mode" value="specific"><span>@scope, dark more specific</span></label>
+        </div>
+        <p class="tip" id="scope-support" hidden>Your browser doesn't support <code>@scope</code> yet (Chrome and Edge 118, Firefox 146, Safari 26.4), so the two <code>@scope</code> options are disabled.</p>
+      </fieldset>
+
+      <section class="demo-area" id="themes" data-mode="descendant" aria-label="Nested theme cards">
+        <div class="card theme-light">
+          <h2 class="title">Light card</h2>
+          <p class="text">Outer card. <a class="link" href="#">A link</a></p>
+          <div class="card theme-dark">
+            <h2 class="title">Dark card</h2>
+            <p class="text">Nested inside the light card. <a class="link" href="#">A link</a></p>
+            <div class="card theme-light" id="innermost">
+              <h2 class="title">Light card again</h2>
+              <p class="text" id="innermost-text">Nested inside the dark card. <a class="link" href="#">A link</a></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <output class="readout" id="themes-readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Scope limit</legend>
+        <label class="checkbox-field">
+          <input type="checkbox" id="limit">
+          <span>Stop the profile card's styles at <code>.content</code></span>
+        </label>
+      </fieldset>
+
+      <section class="demo-area" id="donut" aria-label="Profile card with user content">
+        <article class="profile">
+          <p class="kicker">Profile</p>
+          <h2 class="name">Ada Byron</h2>
+          <a href="#">Follow</a>
+          <div class="content">
+            <p>User-written bio. I write about <a href="#">analytical engines</a> and poetry.</p>
+          </div>
+        </article>
+      </section>
+
+      <output class="readout" id="donut-readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

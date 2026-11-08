@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-scope-component-styles",
+    title: "CSS @scope Playground",
+    description: "Three theme cards nested light, dark, light: switch between descendant selectors, @scope, and @scope with a more specific dark rule to see scope proximity fix the innermost card and specificity override it again, then toggle a to (.content) limit to stop a profile card's styles leaking into its user bio.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "iterator-chunking-includes-join",
     title: "Iterator Chunks, Windows, includes() and join() Playground",
     description: "Type a list and a size to compare chunks() with windows(), switch windows() to \"allow-partial\", watch a moving average built from the windows, and see how many values includes() reads before it stops and what join() does with null and undefined, using each native method where the browser has it and a clearly labelled fallback where it doesn't.",
