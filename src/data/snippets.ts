@@ -205,6 +205,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-three-dot-loader",
+    title: "SVG Three-Dot Loading Indicator with Staggered Delay",
+    excerpt: "Build a three-dot SVG loader with staggered delays.",
+    description: "Build an accessible three-dot SVG loading indicator: three circles, one keyframes rule and negative animation-delay values, with reduced-motion support.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "loading-spinner", "svg-animation", "css-animation", "keyframes", "animation-delay", "staggered-animation", "transform-box", "transform-origin", "opacity", "prefers-reduced-motion", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-three-dot-loader/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of three glowing dots in a row, pulsing one after another as a loading indicator.",
+      caption: "Three glowing dots pulsing in a staggered wave."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
