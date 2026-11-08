@@ -1311,4 +1311,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Matching Marker Colours with `context-stroke`",
     description: "Using the SVG 2 `context-stroke` and `context-fill` paint values so a marker takes the stroke or fill of the element that uses it."
   },
+  "smil": {
+    title: "Native SVG Animation with SMIL",
+    description: "Animating SVG with its built-in animation elements, `<animate>`, `<animateTransform>`, `<animateMotion>` and `<set>`, without CSS or JavaScript."
+  },
+  "animatemotion": {
+    title: "Moving Shapes Along Paths with `<animateMotion>`",
+    description: "Using SVG's `<animateMotion>` and `<mpath>` elements to move a shape along a path, with `rotate=\"auto\"` to follow the direction of travel."
+  },
 };

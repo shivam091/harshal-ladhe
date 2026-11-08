@@ -1,0 +1,162 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-animate-along-path");
+
+## Introduction
+
+Moving a shape along a curve by hand means working out `x` and `y` for every frame, and the angle as well if the shape should turn to face where it's going. SVG can do all of that for you. **`<animateMotion>` with an `<mpath>` child moves any element along an existing `<path>`, and `rotate="auto"` turns it to follow the curve.**
+
+It's SVG's built-in animation syntax (SMIL), so there's no JavaScript and no stylesheet. This snippet also shows the CSS version, `offset-path`, which is easier to switch off for users who prefer reduced motion.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="320" height="160" role="img" aria-label="An arrow travelling around an oval track">
+    <path id="aap-track" d="M 30 50 C 30 10, 170 10, 170 50 S 30 90, 30 50 Z" fill="none" stroke="currentColor" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="4 4" />
+    <path d="M -6 -5 L 8 0 L -6 5 Z" fill="#6366f1">
+      <animateMotion dur="4s" repeatCount="indefinite" rotate="auto">
+        <mpath href="#aap-track" />
+      </animateMotion>
+    </path>
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The first `<path>` is the **track**. It's drawn faintly, with a low `stroke-opacity` and a dash pattern, so you can see the route. It only needs an `id`; it would work just as well inside `<defs>`, where it isn't drawn at all.
+2. The second `<path>` is the moving arrow. It's drawn **around the point `0,0`**, pointing right along the positive x-axis. `<animateMotion>` moves the element's origin onto the track, so whatever sits at `0,0` is what follows the line.
+3. `<mpath href="#aap-track">` tells `<animateMotion>` which path to follow. You can also write the path data inline with a `path="M ..."` attribute, but referencing a visible path keeps the track and the motion in sync.
+4. `rotate="auto"` turns the element to match the direction of the path at each point. Because the arrow points along the x-axis, it always faces the way it's travelling. `rotate="auto-reverse"` faces it backwards, and a number such as `rotate="0"` keeps a fixed angle.
+5. `dur="4s"` and `repeatCount="indefinite"` make one lap take four seconds, forever. `<animateMotion>` uses `calcMode="paced"` by default, so the speed is constant along the curve rather than per path segment.
+6. The track is a closed loop (it ends where it starts, heading in the same direction), so the restart at the end of each lap is invisible.
+
+<RainbowDivider />
+
+## Variant: The CSS Version with `offset-path`
+
+CSS motion path does the same job with three properties: `offset-path` takes the same path data, `offset-distance` is what you animate, and `offset-rotate: auto` matches `rotate="auto"`. Unlike SMIL, it's controlled by your stylesheet, so a `prefers-reduced-motion` media query can switch it off:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="320" height="160" role="img" aria-label="An arrow travelling around an oval track">
+    <style>
+      .aap-css-arrow {
+        offset-path: path("M 30 50 C 30 10, 170 10, 170 50 S 30 90, 30 50 Z");
+        offset-rotate: auto;
+        animation: aap-css-move 4s linear infinite;
+      }
+
+      @keyframes aap-css-move {
+        to {
+          offset-distance: 100%;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .aap-css-arrow {
+          animation: none;
+          offset-distance: 25%;
+        }
+      }
+    </style>
+    <path d="M 30 50 C 30 10, 170 10, 170 50 S 30 90, 30 50 Z" fill="none" stroke="currentColor" stroke-opacity="0.25" stroke-width="2" stroke-dasharray="4 4" />
+    <path class="aap-css-arrow" d="M -6 -5 L 8 0 L -6 5 Z" fill="#ec4899" />
+  </svg>
+`}
+</SvgSnippet>
+
+- The path data is copied into CSS, because `offset-path` can't point at an element by `id`. Keep the two strings identical, or the arrow will drift off the visible track.
+- For SVG elements, the `path()` coordinates are in the SVG's user units, so the same numbers line up with the `viewBox`.
+- `linear` timing keeps the speed even, like the SMIL version's paced default.
+- With reduced motion, the arrow stops at a fixed point (`25%` of the way round) instead of disappearing.
+
+[Animating SVG: A Guide to CSS Transitions and Keyframes](/post/animations/svg-transitions-and-keyframes#moving-a-shape-along-a-path-with-offset-path) covers motion paths in more depth.
+
+<RainbowDivider />
+
+## Example Usage
+
+SMIL animations ignore CSS, including `prefers-reduced-motion`. If you keep the `<animateMotion>` version, pause it with JavaScript. The root `<svg>` element's `pauseAnimations()` and `unpauseAnimations()` methods freeze and resume every SMIL animation inside it:
+
+<CodeBlock language="js">
+{`
+  const svg = document.querySelector("#route-map");
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function applyMotionPreference() {
+    if (reduceMotion.matches) svg.pauseAnimations();
+    else svg.unpauseAnimations();
+  }
+
+  applyMotionPreference();
+  reduceMotion.addEventListener("change", applyMotionPreference);
+`}
+</CodeBlock>
+
+To play the motion once and leave the shape at the end, use a finite `repeatCount` with `fill="freeze"`, and use an open path:
+
+<CodeBlock language="html">
+{`
+  <animateMotion dur="2s" repeatCount="1" fill="freeze" rotate="auto">
+    <mpath href="#delivery-route" />
+  </animateMotion>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Route and journey maps**, such as a parcel or a plane moving along its route.
+- **Flow diagrams**, with dots travelling along connector lines to show data or current moving.
+- **Animated SVG files used as images**, where there's no page script or stylesheet to drive the motion.
+- **Orbit and loop animations** for loading states and decorative illustrations.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **SMIL or CSS?** Prefer the `offset-path` version when the SVG is inline in your page. It's driven by your stylesheet, so reduced motion is one media query. You can see the difference on this page: with reduced motion turned on, the SMIL demo keeps moving and the CSS one stops. Use `<animateMotion>` when the SVG has to animate on its own, for example a standalone `.svg` file shown through `<img>`, where page CSS and scripts can't reach it.
+- **Reduced motion in standalone files:** an SVG loaded through `<img>` can't run a script, so `pauseAnimations()` isn't an option there. Keep that kind of motion slow and small, or embed the SVG inline so you can control it.
+- **Draw the moving shape at the origin:** a `<circle cx="50" cy="50">` moved by `<animateMotion>` ends up 50 units away from the track, because its own position is added to the motion. Use `cx="0" cy="0"`, or wrap the shape in a `<g>` and animate the group.
+- **Unique `id`s:** `<mpath>` finds its track by `id`, and `id`s are global to the page. If the same SVG appears twice, give each track its own `id`. A `<style>` inside an inline SVG is page-wide too, so namespace its class and `@keyframes` names.
+- **Browser support:** `<animateMotion>` works in all current browsers. `offset-path: path()` also works in all current browsers, but support on SVG elements came later than on HTML elements, so check MDN or caniuse if you support older versions.
+- **Accessibility:** give the SVG a name with `role="img"` and `aria-label` if the motion carries meaning, or `aria-hidden="true"` if it's decorative.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why is my shape offset from the path instead of sitting on it?">
+  `<animateMotion>` moves the element's coordinate origin along the path, and the shape's own position is added on
+  top. If the shape is drawn at `cx="50" cy="50"`, it travels 50 units right and 50 units down from the track. Draw it
+  around `0,0`, or reset its position attributes to zero.
+</Details>
+
+<Details summary="Which way should the moving shape point?">
+  Draw it facing right, along the positive x-axis. `rotate="auto"` sets the element's angle to the direction of the
+  path, and an angle of zero means "pointing right". A shape drawn pointing up would travel sideways.
+</Details>
+
+<Details summary="Can I make the shape go back and forth instead of looping?">
+  Yes. Use `keyPoints="0;1;0"` with `keyTimes="0;0.5;1"` and `calcMode="linear"` to travel to the end and back in one
+  cycle. With `rotate="auto"` the shape will move backwards on the return trip, because the path's direction doesn't
+  change. In CSS, use `animation-direction: alternate` with the same caveat.
+</Details>
+
+<Details summary="Does the SMIL version need JavaScript to start?">
+  No. It starts when the SVG loads, including when it's inserted with `innerHTML`, and it also runs in an SVG file
+  shown through `<img>`. You only need JavaScript to pause it, for example for reduced motion.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`<animateMotion>` with an `<mpath>` moves a shape along any `<path>` with no JavaScript, and `rotate="auto"` turns it to face the direction of travel. Draw the shape at `0,0`, pointing right. When the SVG is inline, prefer the CSS `offset-path` version, because a `prefers-reduced-motion` query can stop it; SMIL ignores CSS and needs `pauseAnimations()` instead.

@@ -575,6 +575,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-animate-along-path",
+    title: "Animate a Shape Along an SVG Path",
+    excerpt: "Move a shape along any SVG path with animateMotion.",
+    description: "Move a shape along any SVG path with animateMotion, mpath and rotate=\"auto\", plus a CSS offset-path version that respects reduced motion.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "svg-animation", "smil", "animateMotion", "offset-path", "motion-path", "css-animation", "keyframes", "prefers-reduced-motion", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-animate-along-path/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing arrow travelling around a faint dashed oval track, turning to follow the curve.",
+      caption: "A glowing arrow following a dashed track with animateMotion."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
