@@ -182,6 +182,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-line-draw-animation",
+    title: "SVG Line-Draw Animation with stroke-dashoffset",
+    excerpt: "Make any SVG stroke draw itself with pathLength and CSS.",
+    description: "Make SVG paths draw themselves: pathLength, stroke-dasharray and stroke-dashoffset, with staggered paths, getTotalLength() and scroll triggers.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "svg-animation", "css-animation", "stroke-dasharray", "stroke-dashoffset", "pathLength", "keyframes", "staggered-animation", "animation-delay", "intersection-observer", "javascript", "prefers-reduced-motion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-line-draw-animation/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing line tracing a mountain and sun drawing, with part of the stroke still being drawn.",
+      caption: "A glowing line drawing itself stroke by stroke."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

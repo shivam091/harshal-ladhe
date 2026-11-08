@@ -1,0 +1,223 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-line-draw-animation");
+
+## Introduction
+
+The line-draw effect makes an SVG stroke look as if it's being drawn by an invisible pen. It's used for signatures, icons, illustrations, and success ticks, and it needs **no JavaScript**: one dash, one offset, and one keyframe.
+
+The only hard part used to be finding the length of the path. The `pathLength` attribute removes that step. Set `pathLength="100"`, and every path, whatever its real size, is 100 units long as far as dashes are concerned.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg class="svg-draw" viewBox="0 0 220 80" width="264" height="96" role="img" aria-label="A wavy line">
+    <style>
+      .svg-draw path {
+        stroke-dasharray: 100;
+        stroke-dashoffset: 100;
+        animation: svg-draw-line 1.5s ease-in-out forwards;
+      }
+
+      @keyframes svg-draw-line {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .svg-draw path {
+          animation: none;
+          stroke-dashoffset: 0;
+        }
+      }
+    </style>
+    <path d="M10 40 Q35 0 60 40 T110 40 T160 40 T210 40" fill="none" stroke="#6366f1" stroke-width="6" stroke-linecap="round" pathLength="100" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `pathLength="100"` makes the browser treat the path as **100 units long** for dash calculations. The wave's real length is about 270 user units, but you never need that number.
+2. `stroke-dasharray: 100` splits the stroke into one dash as long as the whole path, then a gap of the same length.
+3. `stroke-dashoffset: 100` shifts the pattern along by one full dash. The gap now lies over the path, so the stroke is hidden.
+4. The keyframe moves the offset to `0`. As it shrinks, the dash slides back onto the path from its start, so the line appears to be drawn in the direction of the path data.
+5. `forwards` keeps the last frame, so the line stays drawn when the animation ends.
+6. For reduced motion, the animation is removed and the offset is set to `0`, so the finished line is shown straight away.
+
+<RainbowDivider />
+
+## Variant: Staggering Several Paths
+
+A drawing usually has more than one stroke. Give every shape the same animation and a different start time. A `--i` custom property on each element, multiplied in `calc()`, keeps it to one rule however many shapes there are. `pathLength` works on basic shapes too, so the sun can stay a `<circle>`:
+
+<SvgSnippet>
+{`
+  <svg class="svg-draw-stagger" viewBox="0 0 200 100" width="240" height="120" role="img" aria-label="Mountains with a sun">
+    <style>
+      .svg-draw-stagger path,
+      .svg-draw-stagger circle {
+        fill: none;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 100;
+        stroke-dashoffset: 100;
+        animation: svg-draw-stagger-line 1s ease-in-out forwards;
+        animation-delay: calc(var(--i) * 0.4s);
+      }
+
+      @keyframes svg-draw-stagger-line {
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .svg-draw-stagger path,
+        .svg-draw-stagger circle {
+          animation: none;
+          stroke-dashoffset: 0;
+        }
+      }
+    </style>
+    <path style="--i: 0" d="M10 90 L190 90" stroke="currentColor" pathLength="100" />
+    <path style="--i: 1" d="M20 90 L70 35 L100 65 L130 30 L180 90" stroke="#6366f1" pathLength="100" />
+    <circle style="--i: 2" cx="40" cy="28" r="12" stroke="#f59e0b" pathLength="100" />
+  </svg>
+`}
+</SvgSnippet>
+
+- **Every shape lasts `1s`**, because each one is 100 units long. A short line and a long one take the same time.
+- **The delays are `0s`, `0.4s` and `0.8s`**, so each stroke starts before the previous one finishes, which keeps the drawing flowing.
+- **During its delay**, each shape is held hidden by the base `stroke-dashoffset: 100`, so nothing flashes on screen first.
+
+<RainbowDivider />
+
+## Variant: Measuring with `getTotalLength()`
+
+Before `pathLength` was widely used, the length came from JavaScript. `getTotalLength()` returns the path's real length in user units, and you use that number for both the dash and the offset:
+
+<CodeBlock language="js">
+{`
+  const path = document.querySelector(".signature path");
+  const length = path.getTotalLength();
+
+  path.style.strokeDasharray = length;
+  path.style.strokeDashoffset = length;
+
+  path.animate(
+    [{ strokeDashoffset: length }, { strokeDashoffset: 0 }],
+    { duration: length * 4, easing: "ease-in-out", fill: "forwards" }
+  );
+`}
+</CodeBlock>
+
+It's more code, and the number goes stale if the path data changes, so `pathLength` is the better default. The measured length is still useful when **speed** matters more than duration. With `pathLength`, every path takes the same time. With the real length, `duration: length * 4` gives 4ms per unit, so longer strokes take longer, the way a pen would.
+
+`getTotalLength()` ignores `pathLength` and always returns the geometric length. Don't set both on the same path, or the measured number and the normalised dash units will disagree.
+
+<RainbowDivider />
+
+## Example Usage
+
+A drawing that plays on page load is often finished before anyone scrolls to it. Start it with a class instead, and add the class when the SVG comes into view:
+
+<CodeBlock language="css">
+{`
+  .draw-on-scroll path {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+  }
+
+  .draw-on-scroll.is-visible path {
+    animation: svg-draw-line 1.5s ease-in-out forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .draw-on-scroll path {
+      stroke-dashoffset: 0;
+    }
+
+    .draw-on-scroll.is-visible path {
+      animation: none;
+    }
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      }
+    }
+  }, { threshold: 0.5 });
+
+  document.querySelectorAll(".draw-on-scroll").forEach((svg) => observer.observe(svg));
+`}
+</CodeBlock>
+
+The same class works for any trigger, such as a click, a hover, or a finished form. If you want the line to undraw when the class is removed, use `transition: stroke-dashoffset 1.5s ease-in-out` and set `stroke-dashoffset: 0` in the class instead of a keyframe animation. To tie the drawing to the scroll position itself, see the `animation-timeline` section of the full post.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Success states**, such as an [animated checkmark](/snippet/svg-animated-checkmark) after a form is sent.
+- **Hand-drawn signatures and logos** that write themselves on a landing page.
+- **Illustrations and diagrams** revealed stroke by stroke as they scroll into view.
+- **Charts**, where a line graph draws from left to right.
+- **Loaders**, where the same dash maths with a shorter dash gives a [spinning loader](/snippet/svg-spinning-loader).
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Strokes only:** the effect animates the stroke, so the shape needs a `stroke` and usually `fill="none"`. A filled shape can fade its fill in after the stroke finishes, using a second animation with a delay.
+- **Direction follows the path data:** the line is drawn from the first point to the last. Animate from `-100` to `0` to draw it from the other end, or reverse the path.
+- **Don't hide content without JavaScript:** in the scroll version, the line stays hidden if the script never runs. If that matters, add a class such as `js` to `<html>` from your script and only hide the strokes under `.js .draw-on-scroll`.
+- **Reduced motion means the end state:** set `stroke-dashoffset: 0` along with `animation: none`. Removing the animation alone leaves the line hidden at its base offset.
+- **Namespace classes and keyframes:** a `<style>` inside an inline SVG applies to the **whole page**. Use specific names like `.svg-draw` and `svg-draw-line`, or move the rules into your stylesheet.
+- **Browser support:** `stroke-dashoffset` animations and `pathLength` on `<path>` work in all current browsers. `pathLength` on basic shapes such as `<circle>` and `<polyline>` is part of SVG 2; it works in current browsers, but if you support old ones, check MDN, or fall back to `getTotalLength()`.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does stroke-dasharray need to be 100, not something smaller?">
+  The dash has to be at least as long as the path, or you'd see a dashed line instead of a solid one. With
+  `pathLength="100"`, `100` is exactly the whole path. The gap is the same length, so with an offset of `100` the
+  gap covers the path completely and nothing shows.
+</Details>
+
+<Details summary="Does pathLength change the shape of the path?">
+  No. It only changes how distances along the path are measured for dashes, offsets, and `<textPath>` positions. The
+  geometry, the `viewBox`, and the size on screen stay the same.
+</Details>
+
+<Details summary="Why does my line appear for a moment before it starts drawing?">
+  The hidden state is probably set inside the keyframes instead of on the element. Put `stroke-dasharray` and
+  `stroke-dashoffset: 100` in the normal rule, so the stroke is hidden before the animation starts and during any
+  `animation-delay`.
+</Details>
+
+<Details summary="Can I draw text this way?">
+  Not live `<text>` reliably, because each glyph is drawn separately and the dash pattern doesn't flow across letters
+  the way a pen would. Convert the lettering to paths in a design tool first, then animate those paths like any other.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Set `pathLength="100"` on a stroked shape, hide it with `stroke-dasharray: 100` and `stroke-dashoffset: 100`, and animate the offset to `0`. Stagger several shapes with a `--i` delay, start the drawing with a class when it scrolls into view, and use `getTotalLength()` only when you need a constant drawing speed rather than a fixed duration.
