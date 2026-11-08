@@ -640,6 +640,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-duotone-filter",
+    title: "SVG Duotone Filter for Images and Artwork",
+    excerpt: "Recolour any image with two colours using an SVG filter.",
+    description: "Turn images and SVG artwork into a two-colour duotone with feColorMatrix and feComponentTransfer, and apply it to HTML img elements with CSS.",
+    category: ["SVG"],
+    tags: ["svg", "svg-filters", "duotone", "feColorMatrix", "feComponentTransfer", "image-effects", "graphics"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-duotone-filter/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a landscape image split in two, full colour on one side and a navy and amber duotone on the other.",
+      caption: "One image, recoloured into a two-colour duotone."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

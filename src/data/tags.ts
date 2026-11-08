@@ -1347,4 +1347,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Building for Screen Readers",
     description: "How screen readers announce web content, and the markup patterns that give images, icons, and controls clear, reliable names."
   },
+  "duotone": {
+    title: "Duotone Image Effects",
+    description: "Recolouring images and artwork with two colours, mapping shadows to one and highlights to the other, using SVG filters."
+  },
+  "fecomponenttransfer": {
+    title: "Remapping Channels with SVG `feComponentTransfer`",
+    description: "Using `feComponentTransfer` with `table`, `discrete`, `linear`, and `gamma` functions to remap each colour channel independently."
+  },
+  "image-effects": {
+    title: "Image Effects on the Web",
+    description: "Treating photos and graphics in the browser with filters and blending, from colour treatments to textures, without editing the source files."
+  },
 };

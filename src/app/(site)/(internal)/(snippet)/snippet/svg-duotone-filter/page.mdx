@@ -1,0 +1,196 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-duotone-filter");
+
+## Introduction
+
+A **duotone** recolours an image with just two colours: the shadows become one colour, the highlights another, and everything in between is a blend of the two. It's a popular way to make mixed photos and illustrations look like one set, or to tint them with brand colours.
+
+An SVG filter does it in two steps, with no image editor and no extra files. First remove the colour, then map black and white to your two colours.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 290 110" width="435" height="165" role="img" aria-label="A colourful illustration, shown in full colour on the left and as a navy and amber duotone on the right">
+    <defs>
+      <filter id="duo" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="grey" />
+        <feComponentTransfer in="grey">
+          <feFuncR type="table" tableValues="0.118 0.984" />
+          <feFuncG type="table" tableValues="0.106 0.749" />
+          <feFuncB type="table" tableValues="0.294 0.141" />
+        </feComponentTransfer>
+      </filter>
+      <linearGradient id="duo-sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#e0f2fe" />
+        <stop offset="1" stop-color="#0369a1" />
+      </linearGradient>
+      <g id="duo-art">
+        <rect x="0" y="0" width="130" height="100" rx="10" fill="url(#duo-sky)" />
+        <circle cx="95" cy="30" r="16" fill="#facc15" />
+        <circle cx="40" cy="55" r="26" fill="#ef4444" />
+        <rect x="15" y="80" width="100" height="10" rx="5" fill="#1e293b" />
+      </g>
+    </defs>
+    <use href="#duo-art" x="10" y="5" />
+    <use href="#duo-art" x="150" y="5" filter="url(#duo)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `feColorMatrix type="saturate" values="0"` removes all colour. Each pixel becomes a grey whose brightness is its luminance (about `0.21 × R + 0.72 × G + 0.07 × B`), so yellow comes out light and red and dark blue come out dark.
+2. `feComponentTransfer` remaps each channel on its own. A two-value `table` maps an input of `0` to the first value and `1` to the second, and blends evenly in between.
+3. The first values are navy, `#1e1b4b` (`30, 27, 75` divided by 255). The second values are amber, `#fbbf24` (`251, 191, 36` divided by 255). So black becomes navy, white becomes amber, and each grey becomes the matching mix.
+4. In the blue channel, the second value is **smaller** than the first, because amber has less blue than navy. Blue falls as brightness rises, and that's fine: the table doesn't need to increase.
+5. `color-interpolation-filters="sRGB"` makes the filter work on the same numbers as your hex colours. Under the default, `linearRGB`, the table values would be read as linear light and both end colours would come out lighter than intended.
+6. The artwork is drawn twice with `<use>`: unchanged on the left, and with the filter on the right.
+
+<RainbowDivider />
+
+## Variant: On a Real `<image>`
+
+Photos are where duotones are usually used, and the filter works the same on an `<image>` element. This example uses a small SVG as a `data:` URI, so it has no external file to load. Swap the `href` for a photo URL and nothing else changes:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 270 100" width="405" height="150" role="img" aria-label="A small landscape image, in colour on the left and as a duotone on the right">
+    <defs>
+      <filter id="duo-2" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="grey" />
+        <feComponentTransfer in="grey">
+          <feFuncR type="table" tableValues="0.118 0.984" />
+          <feFuncG type="table" tableValues="0.106 0.749" />
+          <feFuncB type="table" tableValues="0.294 0.141" />
+        </feComponentTransfer>
+      </filter>
+    </defs>
+    <image x="10" y="10" width="120" height="80" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 80'%3E%3Crect width='120' height='80' fill='%2338bdf8'/%3E%3Ccircle cx='88' cy='26' r='14' fill='%23facc15'/%3E%3Cpath d='M0 80L38 36L64 62L86 44L120 74V80Z' fill='%2316a34a'/%3E%3C/svg%3E" />
+    <image x="140" y="10" width="120" height="80" filter="url(#duo-2)" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 80'%3E%3Crect width='120' height='80' fill='%2338bdf8'/%3E%3Ccircle cx='88' cy='26' r='14' fill='%23facc15'/%3E%3Cpath d='M0 80L38 36L64 62L86 44L120 74V80Z' fill='%2316a34a'/%3E%3C/svg%3E" />
+  </svg>
+`}
+</SvgSnippet>
+
+- `x="0" y="0" width="100%" height="100%"` makes the filter region exactly the image's box. A colour filter doesn't spread outside the image, so the default 10% margin would only be extra pixels to process.
+- In the `data:` URI, `<`, `>` and `#` are written as `%3C`, `%3E` and `%23`, so it's valid inside an attribute in both HTML and standalone SVG files.
+
+<RainbowDivider />
+
+## Variant: A Tritone
+
+Add a third value to each table and the middle greys map to a third colour. Here pink `#ec4899` sits between navy and amber:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 140 100" width="210" height="150" role="img" aria-label="A small landscape image recoloured in navy, pink and amber">
+    <defs>
+      <filter id="duo-3" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feColorMatrix in="SourceGraphic" type="saturate" values="0" result="grey" />
+        <feComponentTransfer in="grey">
+          <feFuncR type="table" tableValues="0.118 0.925 0.984" />
+          <feFuncG type="table" tableValues="0.106 0.282 0.749" />
+          <feFuncB type="table" tableValues="0.294 0.6 0.141" />
+        </feComponentTransfer>
+      </filter>
+    </defs>
+    <image x="10" y="10" width="120" height="80" filter="url(#duo-3)" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 80'%3E%3Crect width='120' height='80' fill='%2338bdf8'/%3E%3Ccircle cx='88' cy='26' r='14' fill='%23facc15'/%3E%3Cpath d='M0 80L38 36L64 62L86 44L120 74V80Z' fill='%2316a34a'/%3E%3C/svg%3E" />
+  </svg>
+`}
+</SvgSnippet>
+
+With three values, `0` to `0.5` blends from the first colour to the second, and `0.5` to `1` from the second to the third.
+
+<RainbowDivider />
+
+## Example Usage
+
+The filter can also recolour an ordinary HTML `<img>`. Define it once in a hidden inline SVG and reference it from CSS:
+
+<CodeBlock language="html">
+{`
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <filter id="duotone-brand" color-interpolation-filters="sRGB">
+      <feColorMatrix type="saturate" values="0" />
+      <feComponentTransfer>
+        <feFuncR type="table" tableValues="0.118 0.984" />
+        <feFuncG type="table" tableValues="0.106 0.749" />
+        <feFuncB type="table" tableValues="0.294 0.141" />
+      </feComponentTransfer>
+    </filter>
+  </svg>
+
+  <img class="duotone" src="team-photo.jpg" alt="The team at the 2026 offsite" />
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .duotone {
+    filter: url(#duotone-brand);
+  }
+
+  .duotone:hover {
+    filter: none;
+  }
+`}
+</CodeBlock>
+
+The hidden SVG uses zero size instead of `display: none`, because some browsers don't apply filters defined inside a `display: none` SVG. Chromium and Firefox apply `url()` filters to HTML elements reliably. Safari supports them too but has a history of rendering bugs here, so test it there.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Consistent image sets**, such as team photos or blog covers from different sources, tinted to match.
+- **Brand-coloured hero images** without exporting a recoloured copy of each one.
+- **Hover effects** that reveal the full-colour image when the filter is removed.
+- **Illustrations and icons** that need a themed colour scheme.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Converting a colour to table values:** divide each of its RGB channels by 255. Put the shadow colour first and the highlight colour second.
+- **Always set `sRGB`:** without `color-interpolation-filters="sRGB"`, your end colours won't match their hex values.
+- **Low-contrast images:** if a photo has few true blacks or whites, it only uses the middle of the range. Add a contrast step before the tables (an `feComponentTransfer` with `type="linear"`, for example `slope="1.4" intercept="-0.2"`) to stretch it.
+- **Unique ids:** inline SVGs on one page share one id space, so give each filter a specific id.
+- **Browser support:** `feColorMatrix` and `feComponentTransfer` work in all current browsers on SVG content. For HTML elements, see the Safari note above.
+- **Accessibility:** a duotone can reduce contrast. Don't put text on a duotone image without checking contrast, and keep the image's `alt` text as it was: the filter doesn't change what the image shows.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why do my duotone colours look washed out?">
+  The filter is probably running in the default `linearRGB` colour space, which reads the table values as linear light.
+  Add `color-interpolation-filters="sRGB"` to the `<filter>` element.
+</Details>
+
+<Details summary="Can I do this with CSS filter functions?">
+  Not exactly. `grayscale()`, `sepia()` and `hue-rotate()` can tint an image, but they can't map dark and light to two
+  colours you choose. A common CSS alternative is `mix-blend-mode` with coloured layers, which needs extra elements. The
+  SVG filter does it on the image itself.
+</Details>
+
+<Details summary="Can I do it in one step instead of two?">
+  Yes. A single `feColorMatrix type="matrix"` can compute the luminance and blend between the two colours in one go, but
+  its numbers are much harder to work out and change. The two-step version is easier to read: each table is just "shadow
+  value, highlight value".
+</Details>
+
+<Details summary="Does the filter work on external images?">
+  Yes. It recolours whatever the `<image>` or `<img>` draws. A cross-origin image still displays and filters normally;
+  the filter doesn't need to read the image's pixels from script.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Desaturate with `feColorMatrix type="saturate" values="0"`, then give `feComponentTransfer` a two-value `table` per channel: shadow colour first, highlight colour second, each divided by 255. Set `color-interpolation-filters="sRGB"` so the colours match, and apply the filter to SVG shapes, `<image>` elements, or HTML `<img>` elements through CSS `filter: url(#id)`.
