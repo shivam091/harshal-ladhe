@@ -1,0 +1,261 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("intl-durationformat");
+
+## Introduction
+
+Showing how long something took, such as a video's length, a workout, or a build time, used to mean hand-written
+string building: `h + "h " + m + "m"` in English, and a pile of plural rules and word order for every other language.
+
+**`Intl.DurationFormat`** does that work for you. Give it an object like `{ hours: 1, minutes: 46 }` and a locale,
+and it returns `"1 hour, 46 minutes"`, `"1 Stunde, 46 Minuten"` or `"1:46:00"`, depending on the style you pick.
+It's part of ECMA-402, the Internationalization API, and was added in the 2025 edition.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  const duration = { hours: 1, minutes: 46, seconds: 40 };
+
+  new Intl.DurationFormat("en", { style: "long" }).format(duration);
+  // "1 hour, 46 minutes, 40 seconds"
+
+  new Intl.DurationFormat("en", { style: "short" }).format(duration);
+  // "1 hr, 46 min, 40 sec" (short is the default)
+
+  new Intl.DurationFormat("en", { style: "narrow" }).format(duration);
+  // "1h 46m 40s"
+
+  new Intl.DurationFormat("en", { style: "digital" }).format(duration);
+  // "1:46:40"
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The **duration object** can have any of `years`, `months`, `weeks`, `days`, `hours`, `minutes`, `seconds`,
+   `milliseconds`, `microseconds` and `nanoseconds`. Keys are plural, values must be integers, and at least one
+   valid key is required.
+2. **`style`** sets the default for every unit: `"long"`, `"short"` (the default), `"narrow"` or `"digital"`.
+   `"digital"` prints hours, minutes and seconds as a clock, and shows larger units in short form before it.
+3. **Zero units are hidden** in the word styles, so `{ hours: 2, minutes: 0, seconds: 5 }` becomes `"2 hours, 5
+   seconds"`. The digital style always shows hours, minutes and seconds.
+4. The **locale** decides the words, plurals, separators and the "and" before the last unit.
+
+<CodeBlock language="js">
+{`
+  const duration = { hours: 1, minutes: 46, seconds: 40 };
+
+  for (const locale of ["fr", "de", "es", "ja"]) {
+    console.log(new Intl.DurationFormat(locale, { style: "long" }).format(duration));
+  }
+  // "1 heure, 46 minutes et 40 secondes"
+  // "1 Stunde, 46 Minuten und 40 Sekunden"
+  // "1 hora, 46 minutos y 40 segundos"
+  // "1 時間 46 分 40 秒"
+
+  new Intl.DurationFormat("en", { style: "digital" }).format({ days: 2, hours: 3, minutes: 4, seconds: 5 });
+  // "2 days, 3:04:05"
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Options Worth Knowing
+
+### Per-unit styles and display
+
+Each unit has its own option (`hours`, `minutes`, `seconds` and so on) that overrides `style` for that unit, and a
+matching `*Display` option (`"auto"` or `"always"`) that controls whether a zero value is shown:
+
+<CodeBlock language="js">
+{`
+  new Intl.DurationFormat("en", { style: "short", hours: "long", minutes: "narrow" })
+    .format({ hours: 1, minutes: 46, seconds: 40 });
+  // "1 hour, 46m, 40 sec"
+
+  new Intl.DurationFormat("en", { style: "long", minutesDisplay: "always" })
+    .format({ hours: 2, seconds: 5 });
+  // "2 hours, 0 minutes, 5 seconds"
+
+  new Intl.DurationFormat("en", { style: "digital", hours: "2-digit" })
+    .format({ hours: 1, minutes: 46, seconds: 40 });
+  // "01:46:40"
+`}
+</CodeBlock>
+
+### Fractional seconds
+
+With the digital style, milliseconds and smaller units are folded into the seconds as a decimal.
+**`fractionalDigits`** (0 to 9) fixes how many digits appear. Extra digits are cut off, not rounded:
+
+<CodeBlock language="js">
+{`
+  const lap = { minutes: 3, seconds: 7, milliseconds: 456 };
+
+  new Intl.DurationFormat("en", { style: "digital" }).format(lap);
+  // "0:03:07.456"
+
+  new Intl.DurationFormat("en", { style: "digital", fractionalDigits: 2 }).format(lap);
+  // "0:03:07.45"
+
+  new Intl.DurationFormat("en", { style: "digital", fractionalDigits: 3 })
+    .format({ minutes: 3, seconds: 7, milliseconds: 45 });
+  // "0:03:07.045"
+`}
+</CodeBlock>
+
+In the word styles, milliseconds get their own unit (`"7 sec, 456 ms"`) unless you set `milliseconds: "numeric"`,
+which folds them into the seconds the same way.
+
+### `formatToParts()`
+
+For custom markup, such as making the numbers bold, `formatToParts()` returns the pieces with their unit:
+
+<CodeBlock language="js">
+{`
+  new Intl.DurationFormat("en", { style: "short" }).formatToParts({ hours: 1, minutes: 5 });
+  // [
+  //   { type: "integer", value: "1", unit: "hour" },
+  //   { type: "literal", value: " ", unit: "hour" },
+  //   { type: "unit", value: "hr", unit: "hour" },
+  //   { type: "literal", value: ", " },
+  //   { type: "integer", value: "5", unit: "minute" },
+  //   { type: "literal", value: " ", unit: "minute" },
+  //   { type: "unit", value: "min", unit: "minute" }
+  // ]
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Example Usage
+
+### From milliseconds
+
+Most durations start life as a number of milliseconds, from `performance.now()`, a media element or a timestamp
+difference. Split it into units first:
+
+<CodeBlock language="js">
+{`
+  function msToDuration(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    return {
+      hours: Math.floor(totalSeconds / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+      milliseconds: ms % 1000,
+    };
+  }
+
+  const elapsed = msToDuration(6_405_250);
+  // { hours: 1, minutes: 46, seconds: 45, milliseconds: 250 }
+
+  new Intl.DurationFormat("en", { style: "long" }).format(elapsed);
+  // "1 hour, 46 minutes, 45 seconds, 250 milliseconds"
+
+  new Intl.DurationFormat("en", { style: "digital" }).format(elapsed);
+  // "1:46:45.25"
+`}
+</CodeBlock>
+
+### It doesn't balance units for you
+
+`Intl.DurationFormat` formats exactly what you give it. Ninety minutes stays ninety minutes, even in the digital style:
+
+<CodeBlock language="js">
+{`
+  new Intl.DurationFormat("en", { style: "long" }).format({ minutes: 90 });
+  // "90 minutes"
+
+  new Intl.DurationFormat("en", { style: "digital" }).format({ minutes: 90 });
+  // "0:90:00"
+`}
+</CodeBlock>
+
+That's why the `msToDuration()` helper above does the division itself. If you want `"1 hour, 30 minutes"`, balance
+the values before formatting.
+
+### With `Temporal.Duration`
+
+`format()` also accepts a `Temporal.Duration`, and Temporal can do the balancing. Temporal is part of ES2027, and in
+runtimes that ship it (Chrome and Edge 144, Firefox 139, Node.js 26) the two work together:
+
+<CodeBlock language="js">
+{`
+  const df = new Intl.DurationFormat("en", { style: "long" });
+  const duration = Temporal.Duration.from({ minutes: 90 });
+
+  df.format(duration); // "90 minutes"
+  df.format(duration.round({ largestUnit: "hours" })); // "1 hour, 30 minutes"
+
+  Temporal.Duration.from({ milliseconds: 6_405_250 })
+    .round({ largestUnit: "hours" })
+    .toLocaleString("en", { style: "digital" });
+  // "1:46:45.25"
+`}
+</CodeBlock>
+
+`Temporal.Duration.prototype.toLocaleString()` takes the same options and uses `Intl.DurationFormat` under the hood.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Media players:** video and podcast lengths in the digital style, `"1:46:40"`.
+- **Fitness and timers:** workout times, lap splits with `fractionalDigits`, countdowns.
+- **Build and job dashboards:** `"2 min, 14 sec"` instead of `"134 s"`.
+- **Travel and booking:** flight times and durations of stay in the visitor's own language.
+- **Accessible labels:** a long-style string for `aria-label` next to a compact digital one on screen.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Browser support:** Chrome and Edge 129, Firefox 136, Safari 16.4 and Node.js 23. Check with
+  `typeof Intl.DurationFormat === "function"` and fall back to your own formatting when it's missing.
+- **Create the formatter once:** building an `Intl.DurationFormat` does the locale lookup. Reuse it in loops and
+  render functions instead of creating one per call.
+- **Integers only:** `{ hours: 1.5 }` throws a `RangeError`. Convert to `{ hours: 1, minutes: 30 }` first.
+- **One sign for everything:** values can be negative, but they must all share a sign, and the sign is printed once:
+  `{ hours: -1, minutes: -5 }` gives `"-1 hour, 5 minutes"`. Mixing signs throws a `RangeError`.
+- **Plural keys:** `{ hour: 1 }` doesn't work. With no valid keys at all, `format()` throws a `TypeError`.
+- **Months and years are just labels:** the formatter doesn't know how long a month is, so it can't convert between
+  calendar units and days. Temporal can, given a reference date.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="How is Intl.DurationFormat different from Intl.RelativeTimeFormat?">
+  `Intl.RelativeTimeFormat` describes a point in time relative to now, like "in 3 days" or "2 hours ago", and handles
+  one unit at a time. `Intl.DurationFormat` describes a length of time with several units, like "2 hours, 15 minutes",
+  with no "ago" or "in".
+</Details>
+
+<Details summary="Why does 90 minutes not become 1 hour 30 minutes?">
+  The formatter never changes your numbers. Balance them yourself with a little arithmetic, or with
+  `Temporal.Duration.round({ largestUnit: "hours" })` where Temporal is available.
+</Details>
+
+<Details summary="Is Intl.DurationFormat part of ES2025 or ES2026?">
+  Neither. It's defined in ECMA-402, the separate Internationalization API standard, and was added in its 2025
+  edition. ECMA-262 (the language) and ECMA-402 are published side by side each year.
+</Details>
+
+<Details summary="Can I format a number of seconds directly?">
+  Yes, `{ seconds: 6405 }` is a valid duration, but it prints as `"6,405 sec"` because nothing is balanced. Split it
+  into hours, minutes and seconds first if you want the larger units shown.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`new Intl.DurationFormat(locale, { style })` turns a duration object into a localised string in long, short, narrow
+or digital form, with per-unit options, `fractionalDigits` and `formatToParts()` when you need more control. It formats
+exactly the units you pass, so balance them first, by hand or with `Temporal.Duration.round()`.

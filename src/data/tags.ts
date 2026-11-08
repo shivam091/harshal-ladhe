@@ -1186,5 +1186,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "es2026": {
     title: "Modern JavaScript Features of ES2026",
     description: "Language features added in ECMAScript 2026, with browser support, edge cases and fallbacks for older runtimes."
+  },
+  "intl": {
+    title: "The Intl API",
+    description: "JavaScript's built-in `Intl` formatters for numbers, dates, lists, plurals and durations in the user's own language."
+  },
+  "date-time": {
+    title: "Dates and Times in JavaScript",
+    description: "Working with dates, times and durations in JavaScript: parsing, formatting, arithmetic and the pitfalls of the built-in `Date` object.",
+  },
+  "temporal": {
+    title: "The Temporal API",
+    description: "JavaScript's Temporal API for immutable dates, times, durations and time zones, and how it replaces the `Date` object.",
   }
 };

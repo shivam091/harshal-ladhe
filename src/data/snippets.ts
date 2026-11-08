@@ -174,6 +174,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "intl-durationformat",
+    title: "Format Durations with `Intl.DurationFormat`",
+    excerpt: "Localised durations in long, short, narrow or digital style.",
+    description: "Format durations with Intl.DurationFormat: long, short, narrow and digital styles, locales, fractionalDigits, per-unit options, formatToParts and Temporal.Duration.",
+    category: ["JavaScript"],
+    tags: ["javascript", "intl", "i18n", "date-time", "temporal"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/intl-durationformat/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "One duration of 1 hour, 46 minutes and 40 seconds formatted four ways: long, short, narrow and digital as 1:46:40.",
+      caption: "The same duration in long, short, narrow and digital styles."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
