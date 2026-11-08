@@ -110,6 +110,7 @@ export const snippets: Snippet[] = [
       caption: "Commit dates realigned after a rebase, before and after."
     },
     changelog: [
+      { date: "2026-11-08", change: "Added cross-reference to snippet 'Git Aliases Worth Adding to Your `~/.gitconfig`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-26", change: "Initial publication." }
     ]
