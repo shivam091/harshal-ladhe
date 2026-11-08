@@ -1146,5 +1146,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "generators": {
     title: "JavaScript Generators",
     description: "Producing sequences on demand with `function*` and `yield`, including infinite sequences, cleanup in `finally` and the iterator protocol behind them."
+  },
+  "typed-arrays": {
+    title: "JavaScript Typed Arrays",
+    description: "Storing numbers in fixed-size binary form with `Float32Array`, `Uint8Array`, `Float16Array` and the other typed arrays, and reading them with `DataView`."
+  },
+  "binary-data": {
+    title: "Working with Binary Data in JavaScript",
+    description: "Reading and writing raw bytes with `ArrayBuffer`, typed arrays and `DataView`: file formats, byte order and data for GPUs and network protocols."
+  },
+  "webgpu": {
+    title: "WebGPU",
+    description: "The WebGPU API for GPU rendering and compute in the browser: devices, buffers, vertex formats and WGSL shaders."
   }
 };

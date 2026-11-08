@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "float16array-half-precision",
+    title: "Float64 vs Float32 vs Float16 Playground",
+    description: "Write your own numbers into Float64Array, Float32Array and Float16Array and compare the stored values, the float16 rounding error and the bytes each array uses, then see any value's 16 bits split into sign, exponent and mantissa with the gap to the next float16.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "regexp-escape-and-modifiers",
     title: "RegExp.escape() Search and Modifiers Playground",
     description: "Search a paragraph with a term built into new RegExp(), toggle RegExp.escape() to see 1.5, c++, (c) and $5.00 match too much, nothing or throw without it, then test (?i:...), (?-i:...), (?m:...) and (?s:...) modifiers and a duplicate named group date pattern on your own strings.",

@@ -1,0 +1,437 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("float16array-half-precision");
+
+## Introduction
+
+JavaScript numbers are 64-bit floats, and typed arrays have long offered two smaller options for storing them in bulk:
+`Float64Array` with 8 bytes per value and `Float32Array` with 4. GPUs and machine learning models often use a third
+format, **16-bit half precision**, which takes 2 bytes per value. Until ES2025, JavaScript had no way to read or write
+it, so code that handled half-precision data packed and unpacked the bits by hand in a `Uint16Array`.
+
+ES2025 added native support in three places:
+
+- **`Float16Array`**, a typed array that stores each element as a 16-bit float.
+- **`Math.f16round()`**, which rounds a number to the nearest half-precision value, the way `Math.fround()` does for
+  32-bit floats.
+- **`DataView.prototype.getFloat16()` and `setFloat16()`**, for reading and writing half-precision values at any
+  offset in binary data.
+
+Half the memory of `Float32Array` sounds like a free win. It isn't: a 16-bit float has a small range and only about
+three significant decimal digits. This tutorial shows exactly where those limits are, where the savings are worth it,
+and the mistakes that are easy to make along the way.
+
+<RainbowDivider />
+
+## What Half Precision Means
+
+All three formats are IEEE 754 binary floating-point numbers. Each one splits its bits into a **sign**, an
+**exponent** that sets the scale, and a **mantissa** (also called the significand) that holds the digits. Fewer bits
+in each part means a smaller range and fewer digits:
+
+| Format | Typed array | Bytes | Sign / exponent / mantissa bits | Largest finite value | Significant decimal digits |
+| --- | --- | --- | --- | --- | --- |
+| Double precision (binary64) | `Float64Array` | 8 | 1 / 11 / 52 | about 1.8 × 10³⁰⁸ | about 15.9 |
+| Single precision (binary32) | `Float32Array` | 4 | 1 / 8 / 23 | about 3.4 × 10³⁸ | about 7.2 |
+| Half precision (binary16) | `Float16Array` | 2 | 1 / 5 / 10 | 65504 | about 3.3 |
+
+A normal float16 value is `(-1)^sign × 2^(exponent - 15) × (1 + mantissa / 1024)`. The exponent field is 5 bits, so
+it runs from 0 to 31, and the bias of 15 shifts that to a usable range of -14 to 15. An exponent of 31 is reserved for
+`Infinity` and `NaN`, and an exponent of 0 is used for **subnormal** numbers, which trade digits for the ability to get
+closer to zero.
+
+The value `3.14159`, for example, is stored as `0x4248`:
+
+<CodeBlock language="text">
+{`
+  0 10000 1001001000
+  │ │     └─ mantissa 584:  1 + 584 / 1024 = 1.5703125
+  │ └─ exponent 16:  2^(16 - 15) = 2
+  └─ sign 0: positive
+
+  2 × 1.5703125 = 3.140625
+`}
+</CodeBlock>
+
+The nearest float16 to `3.14159` is `3.140625`. That's the precision you get: three correct digits, then a guess.
+
+<RainbowDivider />
+
+## Range and Precision in Numbers
+
+These are the limits to keep in mind. Every value here can be checked with `Math.f16round()`:
+
+| Limit | Value |
+| --- | --- |
+| Largest finite value | `65504` |
+| Smallest positive normal value | `2^-14`, about `0.000061035` |
+| Smallest positive subnormal value | `2^-24`, about `0.0000000596` |
+| Gap between `1` and the next value (epsilon) | `2^-10`, about `0.000977` |
+| Largest range where every integer is exact | `-2048` to `2048` |
+
+The gap between neighbouring values grows with the size of the number. Each time the value doubles, so does the gap:
+
+| Range | Gap between values |
+| --- | --- |
+| 0.5 to 1 | 0.00048828125 |
+| 1 to 2 | 0.0009765625 |
+| 512 to 1024 | 0.5 |
+| 1024 to 2048 | 1 |
+| 2048 to 4096 | 2 |
+| 32768 to 65504 | 32 |
+
+So above 1024 there are no fractions at all, above 2048 only even integers exist, and near the top of the range values
+are 32 apart:
+
+<CodeBlock language="js">
+{`
+  Math.f16round(512.3);    // 512.5
+  Math.f16round(1000.7);   // 1000.5
+  Math.f16round(2049);     // 2048
+  Math.f16round(2051);     // 2052
+  Math.f16round(32785);    // 32800
+  Math.f16round(65519);    // 65504
+  Math.f16round(65520);    // Infinity
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## `Float16Array`
+
+`Float16Array` works like every other typed array. It has the same constructors, the same methods (`map()`,
+`subarray()`, `sort()`, `set()` and the rest) and a `BYTES_PER_ELEMENT` of `2`:
+
+<CodeBlock language="js">
+{`
+  const weights = new Float16Array([0.1, 0.5, 3.14159, 70000]);
+
+  weights;                         // Float16Array [0.0999755859375, 0.5, 3.140625, Infinity]
+  weights.byteLength;              // 8
+  Float16Array.BYTES_PER_ELEMENT;  // 2
+
+  new Float16Array(1_000_000).byteLength;  // 2000000 (a Float32Array would need 4000000)
+`}
+</CodeBlock>
+
+Values are rounded **when they're written**. Reading an element gives back an ordinary JavaScript number, and any
+arithmetic on it happens in full 64-bit precision. The result is only rounded again if you store it back in the array:
+
+<CodeBlock language="js">
+{`
+  const h = new Float16Array([1.5, 2.25]);
+
+  typeof h[0];     // "number"
+  h[0] * h[1];     // 3.375: computed as a normal 64-bit number
+
+  h[0] = 0.1;
+  h[0];            // 0.0999755859375: rounded on the way in
+`}
+</CodeBlock>
+
+Converting between typed arrays rounds each value to the target format, which is a quick way to shrink existing data:
+
+<CodeBlock language="js">
+{`
+  const full = new Float32Array([0.25, 0.7333, 1]);
+  const half = new Float16Array(full);  // Float16Array [0.25, 0.7333984375, 1]
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## `Math.f16round()`
+
+`Math.f16round(x)` returns the number you'd get by storing `x` in a `Float16Array` and reading it back, without
+allocating an array. Use it to check whether a value survives the conversion, or to round values in advance so that
+comparisons later on match what's stored:
+
+<CodeBlock language="js">
+{`
+  Math.f16round(0.5);        // 0.5: exactly representable
+  Math.f16round(0.1);        // 0.0999755859375
+  Math.f16round(1 / 3);      // 0.333251953125
+  Math.f16round(1e-10);      // 0: too small, rounds to zero
+  Math.f16round("1.5");      // 1.5: the argument is converted to a number first
+
+  const fitsExactly = (x) => Math.f16round(x) === x;
+
+  fitsExactly(0.75);  // true
+  fitsExactly(0.7);   // false
+  fitsExactly(2049);  // false
+`}
+</CodeBlock>
+
+It's the half-precision partner of `Math.fround()`, which rounds to the nearest 32-bit float.
+
+<RainbowDivider />
+
+## Reading and Writing Binary Data with `DataView`
+
+Binary file formats and network protocols often mix value types at fixed offsets: a header of integers, then
+half-precision floats. `DataView` reads and writes them at any byte offset, and now has `getFloat16()` and
+`setFloat16()` to go with `getFloat32()` and `getFloat64()`:
+
+<CodeBlock language="js">
+{`
+  const buffer = new ArrayBuffer(6);
+  const view = new DataView(buffer);
+
+  view.setFloat16(0, 0.5, true);     // true = little-endian
+  view.setFloat16(2, -2, true);
+  view.setFloat16(4, 1000.3, true);  // rounded to 1000.5
+
+  view.getFloat16(4, true);          // 1000.5
+  new Uint8Array(buffer);            // Uint8Array [0, 56, 0, 192, 209, 99]
+`}
+</CodeBlock>
+
+The last argument is the byte order. Like every `DataView` method, it defaults to **big-endian** when you leave it out.
+Typed arrays such as `Float16Array` use the platform's byte order instead, which is little-endian on practically all
+current hardware. If a file was written with a `Float16Array` and is read back with a `DataView`, pass `true`.
+
+`setFloat16()` is also the easiest way to see the raw bits of a half-precision value:
+
+<CodeBlock language="js">
+{`
+  function float16Bits(value) {
+    const view = new DataView(new ArrayBuffer(2));
+    view.setFloat16(0, value);
+    return view.getUint16(0).toString(2).padStart(16, "0");
+  }
+
+  float16Bits(1);        // "0011110000000000"
+  float16Bits(-2.5);     // "1100000100000000"
+  float16Bits(65504);    // "0111101111111111"
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How Rounding Works
+
+When a number falls between two half-precision values, it's rounded to the **nearest** one. If it's exactly halfway,
+it goes to the one whose last mantissa bit is 0, known as **round half to even**. That's why `2049`, halfway between
+`2048` and `2050`, becomes `2048`, while `2051` becomes `2052`.
+
+At the edges of the range:
+
+- **Overflow:** anything from `65520` upwards rounds to `Infinity`, and from `-65520` downwards to `-Infinity`. Values
+  between `65504` and `65520` round down to `65504`.
+- **Underflow:** values smaller than half the smallest subnormal, `2^-25`, round to `0`, keeping their sign. Values
+  between `2^-24` and `2^-14` are subnormal, so they keep fewer digits.
+- **Special values:** `NaN`, `Infinity`, `-Infinity` and `-0` are all stored as they are.
+
+<CodeBlock language="js">
+{`
+  Math.f16round(65519);     // 65504
+  Math.f16round(-70000);    // -Infinity
+  Math.f16round(6e-5);      // 0.00006002187728881836: subnormal, fewer digits
+  Math.f16round(2e-8);      // 0
+  Math.f16round(-1e-10);    // -0
+`}
+</CodeBlock>
+
+### Don't Round Twice
+
+Converting a 64-bit number straight to float16 can give a different answer from converting it to float32 first and
+then to float16. The first rounding can land exactly on a halfway point, and the second rounding then goes the other
+way:
+
+<CodeBlock language="js">
+{`
+  const x = 1 + 2 ** -11 + 2 ** -30;  // just above halfway between 1 and 1.0009765625
+
+  Math.f16round(x);                // 1.0009765625: correct
+  Math.f16round(Math.fround(x));   // 1: float32 rounds to exactly halfway, then ties go to even
+`}
+</CodeBlock>
+
+The difference is one step, so it rarely matters for graphics. For reproducible results, such as tests that compare
+against reference output from other tools, convert from the original 64-bit values, not from a `Float32Array`.
+
+<RainbowDivider />
+
+## Where the Memory Savings Matter
+
+Half precision is a storage format. It pays off when you have a lot of numbers whose range and precision needs are
+known to be small, and when the bytes have to travel: over the network, into GPU memory, or across a memory bus.
+
+### Vertex Data for the GPU
+
+A 3D mesh stores several values per vertex. Normals are unit vectors with components from -1 to 1, and texture
+coordinates usually run from 0 to 1, so both fit comfortably in half precision. Positions often don't, because a scene
+measured in metres can easily go past 1024, where float16 has no fractions left.
+
+For a mesh of 10,000 vertices with a position, a normal and a texture coordinate each:
+
+| Layout | Bytes per vertex | Total |
+| --- | --- | --- |
+| Everything as float32 (3 + 3 + 2 floats) | 32 | 320,000 bytes |
+| Position float32, normal and UV float16 | 24 | 240,000 bytes |
+
+The mixed layout stores the normal as four float16 values, not three, because WebGPU's vertex formats come in pairs
+and fours (`"float16x2"` and `"float16x4"`). Even with the padding, it's a quarter smaller.
+
+WebGPU can also use 16-bit floats inside shaders, if the GPU supports them. WGSL has an `f16` type, enabled with
+`enable f16;` at the top of the shader, and the device has to be requested with the `"shader-f16"` feature:
+
+<CodeBlock language="js">
+{`
+  const adapter = await navigator.gpu.requestAdapter();
+
+  if (adapter.features.has("shader-f16")) {
+    const device = await adapter.requestDevice({ requiredFeatures: ["shader-f16"] });
+    const data = new Float16Array([0.25, 0.5, 0.75, 1]);
+
+    const buffer = device.createBuffer({
+      size: data.byteLength,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST
+    });
+
+    device.queue.writeBuffer(buffer, 0, data);
+  }
+`}
+</CodeBlock>
+
+Before `Float16Array`, filling a buffer like this meant converting every value to its 16 bits by hand and writing
+them into a `Uint16Array`. Now the array holds the right bytes already.
+
+### Model Weights
+
+Machine learning models are mostly large arrays of weights, and many are published in 16-bit floats. A model with 100
+million parameters takes 400 MB as float32 and 200 MB as float16. In the browser, `Float16Array` lets you load those
+weights straight from the downloaded bytes, inspect them, or pass them to WebGPU without converting each one:
+
+<CodeBlock language="js">
+{`
+  const response = await fetch("/models/weights-f16.bin");
+  const weights = new Float16Array(await response.arrayBuffer());
+`}
+</CodeBlock>
+
+The buffer's length must be a multiple of 2 for this to work, and the file must store its values in little-endian
+order. If either isn't guaranteed, read the values with `DataView.getFloat16()` instead.
+
+### Other Good Fits
+
+- Colour channels and image data in the 0 to 1 range, including HDR values above 1, such as `rgba16float` textures
+- Sensor readings, audio features or chart data where three significant digits are plenty
+- Caches of computed values held in memory or IndexedDB, where size matters more than the last digit
+
+<RainbowDivider />
+
+## Try It Live
+
+Type comma-separated numbers into the field, or pick one of the presets. Each value is written into a `Float64Array`,
+a `Float32Array` and a `Float16Array` and read back. Values that changed on the way in are highlighted, the last
+column shows how far the float16 value is from what you typed, and the bottom row shows the bytes each array uses.
+
+Choose a value under **Float16 bit layout** to see its 16 bits coloured by part, the formula that turns them back into
+a number, and the gap to the next representable float16. Try **Integers past 2048** to watch odd numbers disappear,
+and **Tiny values** to see subnormals and underflow.
+
+<Sandbox slug="float16array-half-precision" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`Float16Array`, `Math.f16round()` and the `DataView` methods are part of ES2025 and shipped together: Chrome and Edge
+135, Firefox 129, Safari 18.2 and Node 24.
+
+Detect them before relying on them:
+
+<CodeBlock language="js">
+{`
+  const hasFloat16 =
+    typeof Float16Array === "function" &&
+    typeof Math.f16round === "function" &&
+    typeof DataView.prototype.getFloat16 === "function";
+`}
+</CodeBlock>
+
+For older engines, the `@petamoriken/float16` package provides a `Float16Array` implementation along with `f16round()`,
+`getFloat16()` and `setFloat16()` functions. Its `Float16Array` is built on a `Proxy`, so it's noticeably slower than
+the native one. Treat it as a compatibility layer, not something to run in a hot loop.
+
+If all you need is to send half-precision data somewhere, such as a GPU buffer, you can also keep the raw 16-bit
+patterns in a `Uint16Array` and only decode them when you need to display a value. That's what libraries did before
+`Float16Array` existed.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Storing Integers Above 2048
+
+Above 2048, float16 can't represent every integer: `2049` is stored as `2048`, `4099` as `4100`. IDs, counters and
+indexes don't belong in a `Float16Array`. Use `Uint16Array`, `Uint32Array` or a plain array.
+
+### 2. Accumulating in a `Float16Array`
+
+Every `+=` rounds the running total. Once the total reaches a size where the gap between values is bigger than what
+you're adding, it stops growing:
+
+<CodeBlock language="js">
+{`
+  const total = new Float16Array(1);
+
+  for (let i = 0; i < 5000; i++) total[0] += 1;
+  total[0];  // 2048, not 5000
+
+  const sum = new Float16Array(1);
+  for (let i = 0; i < 10000; i++) sum[0] += 0.1;
+  sum[0];    // 256, not 1000
+`}
+</CodeBlock>
+
+Add up values in an ordinary JavaScript number, and only store the result in half precision.
+
+### 3. Values Outside ±65504
+
+Anything from `65520` upwards becomes `Infinity`, and `Infinity` spreads through any calculation it's part of. Scale
+values into a known range before storing them, or check the result with `Number.isFinite()`.
+
+### 4. Comparing Stored Values with Literals
+
+`new Float16Array([0.1])[0] === 0.1` is `false`, because the stored value is `0.0999755859375`. Compare with
+`Math.f16round(0.1)`, or allow a tolerance.
+
+### 5. Forgetting the Byte Order
+
+`DataView` defaults to big-endian, typed arrays use the platform's order. Pass `true` for little-endian data, which
+is what almost every GPU and model file uses.
+
+### 6. Confusing Float16 with bfloat16
+
+Some machine learning tools use **bfloat16**, another 16-bit format with 8 exponent bits and 7 mantissa bits. It has
+the range of float32 and even less precision than float16. `Float16Array` is IEEE half precision only, so bfloat16
+data read into it comes out as wrong numbers.
+
+### 7. Expecting Faster Arithmetic
+
+`Float16Array` saves memory, not time on the CPU. Every read converts to a 64-bit number and every write rounds back,
+so a calculation over a `Float16Array` isn't faster than one over a `Float32Array`. The speed-up comes from moving fewer
+bytes, especially to and from the GPU.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Vertex attributes such as normals, texture coordinates and colours sent to WebGPU
+- Loading or producing 16-bit model weights and activations for in-browser machine learning
+- Large arrays of values with a known small range, where memory or download size is the bottleneck
+- Reading and writing binary formats that contain half-precision fields, with `DataView`
+
+**Reach for something else** when values can be large or need to be exact: positions in big scenes, money, IDs,
+counters and running totals. Keep those in `Float32Array`, `Float64Array` or ordinary numbers.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Float16Array`, `Math.f16round()` and `DataView.getFloat16()`/`setFloat16()` give JavaScript native half-precision
+floats, at 2 bytes per value. They hold numbers up to `65504` with about three significant digits, every integer only
+up to 2048, and they round on every write. Use them to store and move large amounts of low-precision data, especially
+for the GPU and machine learning, and keep calculations and totals in ordinary JavaScript numbers.

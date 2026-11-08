@@ -640,6 +640,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "float16array-half-precision",
+    title: "Half-Precision Numbers with `Float16Array` and `Math.f16round()`",
+    excerpt: "Store numbers in 2 bytes with Float16Array, and know its limits.",
+    description: "Use JavaScript's Float16Array, Math.f16round() and DataView getFloat16()/setFloat16() for half-precision data: range, precision, rounding, WebGPU and model weights, and pitfalls.",
+    category: ["JavaScript"],
+    tags: ["javascript", "float16array", "floating-point", "typed-arrays", "binary-data", "webgpu", "es2025"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/float16array-half-precision/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "The 16 bits of a half-precision float split into sign, exponent and mantissa, next to the same values stored in Float64Array, Float32Array and Float16Array.",
+      caption: "One number in 64, 32 and 16 bits, with the float16 bit layout and the bytes each array needs."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,150 @@
+:root {
+  --sign: #f472b6;
+  --exponent: #fbbf24;
+  --mantissa: #34d399;
+}
+
+.playground-header code,
+.tip code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+.tip {
+  margin: 0;
+}
+
+/* The shared stylesheet only styles number inputs and selects, so the text input gets the same look here. */
+input[type="text"] {
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  font-size: 0.92rem;
+  font-family: var(--pg-mono);
+  color: var(--pg-text);
+  background-color: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--pg-primary);
+  box-shadow: 0 0 0 0.1875rem var(--pg-primary-soft);
+}
+
+input:disabled,
+select:disabled,
+.secondary-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.presets .secondary-btn {
+  padding-block: 0.375rem;
+  padding-inline: 0.625rem;
+  font-size: 0.8rem;
+}
+
+/* Values can be long (0.10000000149011612), so the table scrolls inside .demo-area rather than squeezing. */
+.values {
+  inline-size: 100%;
+  min-inline-size: 34rem;
+  border-collapse: collapse;
+  font-family: var(--pg-mono);
+  font-size: 0.78rem;
+}
+
+.values th,
+.values td {
+  padding-block: 0.4rem;
+  padding-inline: 0.5rem;
+  text-align: start;
+  border-block-end: 0.0625rem solid var(--pg-border);
+}
+
+.values thead th {
+  font-family: var(--pg-font);
+  font-weight: 600;
+  color: var(--pg-text-muted);
+}
+
+.values tfoot th,
+.values tfoot td {
+  border-block-end: none;
+  color: var(--pg-text-muted);
+}
+
+/* A stored value that differs from the input. */
+.values td.changed {
+  color: var(--exponent);
+}
+
+.bits {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 0.1875rem;
+  margin-block: 0.25rem 0.75rem;
+}
+
+.bit {
+  display: grid;
+  place-items: center;
+  block-size: 2rem;
+  font-family: var(--pg-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--pg-bg);
+}
+
+.bit--sign,
+.swatch--sign {
+  background: var(--sign);
+}
+
+.bit--exponent,
+.swatch--exponent {
+  background: var(--exponent);
+}
+
+.bit--mantissa,
+.swatch--mantissa {
+  background: var(--mantissa);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--pg-text-muted);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.swatch {
+  inline-size: 0.75rem;
+  block-size: 0.75rem;
+}
+
+@media (max-width: 30rem) {
+  .bit {
+    block-size: 1.5rem;
+    font-size: 0.75rem;
+  }
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Float16Array Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Storing Numbers in 64, 32 and 16 Bits</h1>
+        <p>Enter some numbers and each one is written into a <code>Float64Array</code>, a <code>Float32Array</code> and a <code>Float16Array</code>, then read back. The table shows what each array actually stored, how far the half-precision value is from what you typed, and how many bytes each array needs. Pick a value to see its 16 bits split into sign, exponent and mantissa.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>Float16Array</code>, <code>Math.f16round()</code> and <code>DataView.prototype.getFloat16()</code>. They're supported in Chrome and Edge 135, Firefox 129, Safari 18.2 and Node 24 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Numbers</legend>
+        <div class="field">
+          <label for="numbers">Comma-separated values</label>
+          <input type="text" id="numbers" value="0.1, 3.14159, 2049, 65504, 70000" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="presets" id="presets" aria-label="Example inputs"></div>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Stored values">
+        <table class="values">
+          <thead>
+            <tr>
+              <th scope="col">Input</th>
+              <th scope="col">Float64</th>
+              <th scope="col">Float32</th>
+              <th scope="col">Float16</th>
+              <th scope="col">Float16 error</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Bytes</th>
+              <td id="bytes-64"></td>
+              <td id="bytes-32"></td>
+              <td id="bytes-16"></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>Float16 bit layout</legend>
+        <div class="field">
+          <label for="bits-select">Value</label>
+          <select id="bits-select"></select>
+        </div>
+        <div class="bits" id="bits" aria-label="The 16 bits of the stored value"></div>
+        <ul class="legend" aria-hidden="true">
+          <li><span class="swatch swatch--sign"></span>Sign (1 bit)</li>
+          <li><span class="swatch swatch--exponent"></span>Exponent (5 bits, bias 15)</li>
+          <li><span class="swatch swatch--mantissa"></span>Mantissa (10 bits)</li>
+        </ul>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
