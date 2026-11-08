@@ -617,6 +617,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "accessible-svg-title-desc",
+    title: "Accessible SVG with title, desc and aria-labelledby",
+    excerpt: "Give inline SVGs a proper accessible name and description.",
+    description: "Make inline SVGs accessible with role=\"img\", <title>, <desc> and aria-labelledby, and handle decorative icons and SVGs in links and buttons.",
+    link: {
+      label: "Read the full post: SVG Essentials: Mastering Shapes, Coordinates, and Styling",
+      href: "/post/svg/svg-essentials-mastering-basic-shapes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "accessibility", "aria", "aria-labelledby", "aria-hidden", "screen-readers", "icons", "data-visualization"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/accessible-svg-title-desc/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing bar chart with title and description labels linked to it by thin connector lines.",
+      caption: "A glowing SVG chart wired to its title and description."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

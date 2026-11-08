@@ -1331,4 +1331,20 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Controlling Touch Gestures with `touch-action`",
     description: "Using the CSS `touch-action` property to stop the browser scrolling or zooming, so touch drags reach your own Pointer Events code."
   },
+  "aria": {
+    title: "Using ARIA Attributes Correctly",
+    description: "Applying WAI-ARIA roles and attributes to name, describe, and hide content for assistive technology, without overriding native semantics."
+  },
+  "aria-labelledby": {
+    title: "Naming Elements with `aria-labelledby`",
+    description: "Building accessible names from other elements' text with `aria-labelledby`, including multiple ids and SVG `<title>` and `<desc>` elements."
+  },
+  "aria-hidden": {
+    title: "Hiding Decorative Content with `aria-hidden`",
+    description: "Removing decorative icons and graphics from the accessibility tree with `aria-hidden=\"true\"`, and when not to use it."
+  },
+  "screen-readers": {
+    title: "Building for Screen Readers",
+    description: "How screen readers announce web content, and the markup patterns that give images, icons, and controls clear, reliable names."
+  },
 };

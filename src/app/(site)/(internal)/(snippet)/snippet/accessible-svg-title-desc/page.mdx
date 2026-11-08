@@ -1,0 +1,176 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("accessible-svg-title-desc");
+
+## Introduction
+
+An `<img>` has `alt`. An inline `<svg>` has nothing like it, so a chart or illustration is often silent to screen readers, or read out as a string of meaningless shapes. The fix is three small additions: **`role="img"`, a `<title>` and a `<desc>` inside the SVG, and `aria-labelledby` pointing at both.**
+
+Just as important is knowing when *not* to name an SVG. Icons next to a text label should be hidden instead, and icons inside links and buttons need different handling again. This snippet covers all three cases.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 120 80" width="240" height="160" role="img" aria-labelledby="ast-chart-title ast-chart-desc">
+    <title id="ast-chart-title">Monthly sign-ups, rising</title>
+    <desc id="ast-chart-desc">Bar chart: 12 sign-ups in January, 20 in February, and 31 in March.</desc>
+    <line x1="8" y1="72" x2="112" y2="72" stroke="currentColor" stroke-opacity="0.4" stroke-width="1" />
+    <rect x="18" y="48" width="20" height="24" rx="2" fill="#6366f1" />
+    <rect x="50" y="32" width="20" height="40" rx="2" fill="#14b8a6" />
+    <rect x="82" y="10" width="20" height="62" rx="2" fill="#ec4899" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `role="img"` tells assistive technology to treat the whole SVG as **one image**. Without it, browsers and screen readers haven't always agreed on how to expose an `<svg>`: some skip it, and some read it as a group.
+2. `<title>` holds a short name, like an `alt` text. Put it as the first child of the `<svg>`. SVG 2 doesn't strictly require that, but older tools and assistive technology expect it there.
+3. `<desc>` holds a longer description: here, the actual numbers the bars show.
+4. `aria-labelledby="ast-chart-title ast-chart-desc"` lists both `id`s, separated by a space. The browser joins their text, in that order, into the accessible name, so a screen reader announces something like "Monthly sign-ups, rising. Bar chart: 12 sign-ups in January… image".
+5. The `<title>` alone is only a fallback for the name, and support for it has been patchy in older browser and screen reader pairs. Pointing `aria-labelledby` at it makes the name explicit.
+
+<RainbowDivider />
+
+## Variant: Decorative SVGs
+
+An icon next to a text label adds nothing a screen reader needs to hear. Hide it completely with `aria-hidden="true"`, and leave out `<title>` and `role`:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" focusable="false">
+    <path d="M12 3 L14.6 9 L21 9.5 L16 13.6 L17.6 20 L12 16.5 L6.4 20 L8 13.6 L3 9.5 L9.4 9 Z" fill="#f59e0b" />
+  </svg>
+`}
+</SvgSnippet>
+
+- `aria-hidden="true"` removes the SVG and everything inside it from the accessibility tree.
+- `role="presentation"` (or `role="none"`) is **not** the same. It only removes the root's own role, and named or focusable children can still be exposed.
+- `focusable="false"` is only needed for old versions of Internet Explorer and Edge, which made SVGs a tab stop. It's harmless in current browsers.
+
+<RainbowDivider />
+
+## Variant: SVGs Inside Links and Buttons
+
+A link or button gets its accessible name from its content. If it has visible text, that text is the name, and the icon should be hidden so it isn't read twice:
+
+<CodeBlock language="html">
+{`
+  <button type="button">
+    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+      <path d="M5 12 H19 M12 5 V19" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+    </svg>
+    Add item
+  </button>
+`}
+</CodeBlock>
+
+For an **icon-only** control there's no visible text, so name the control itself with `aria-label` and still hide the SVG:
+
+<CodeBlock language="html">
+{`
+  <a href="/settings" aria-label="Settings">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2" />
+    </svg>
+  </a>
+`}
+</CodeBlock>
+
+Naming the `<button>` or `<a>` is more reliable than naming the SVG inside it, and it avoids the hover tooltip a `<title>` would add.
+
+<RainbowDivider />
+
+## Example Usage
+
+When the description is long, read it as a **description** instead of folding it into the name. Use `aria-labelledby` for the title and `aria-describedby` for the `<desc>`, so screen reader users hear the short name first and can skip the details:
+
+<CodeBlock language="html">
+{`
+  <svg viewBox="0 0 120 80" role="img" aria-labelledby="sales-chart-title" aria-describedby="sales-chart-desc">
+    <title id="sales-chart-title">Quarterly sales, 2026</title>
+    <desc id="sales-chart-desc">
+      Line chart. Sales rose every quarter, from 2 million in Q1 to 5 million in Q4,
+      with the biggest jump between Q2 and Q3.
+    </desc>
+    <!-- chart shapes -->
+  </svg>
+`}
+</CodeBlock>
+
+In a component that can render several times on one page, generate the `id`s instead of hard-coding them. In React, `useId()` does this:
+
+<CodeBlock language="tsx">
+{`
+  function Chart({ title, description }: { title: string; description: string }) {
+    const id = useId();
+
+    return (
+      <svg viewBox="0 0 120 80" role="img" aria-labelledby={\`\${id}-title \${id}-desc\`}>
+        <title id={\`\${id}-title\`}>{title}</title>
+        <desc id={\`\${id}-desc\`}>{description}</desc>
+        {/* chart shapes */}
+      </svg>
+    );
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Charts and graphs**, where the `<desc>` can carry the key figures.
+- **Illustrations and diagrams** that explain something the surrounding text doesn't.
+- **Logos** used as the only content of a heading or home link (name the link, or the SVG if it stands alone).
+- **Icon sets**, where most icons are decorative and need `aria-hidden="true"`.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **`id`s must be unique on the page:** `aria-labelledby` looks `id`s up across the whole document, not just inside the SVG. If two SVGs both use `id="title"`, the second one may read out the first one's text. Namespace them, as in `ast-chart-title`, or generate them.
+- **`role="img"` hides the inside:** every child of a `role="img"` SVG is treated as presentational, so `<text>` labels and titles on inner shapes aren't read. If parts of the graphic need their own names, use `role="group"` on the root and `role="img"` with a name on each part.
+- **`<title>` shows a tooltip:** most desktop browsers display a `<title>`'s text when you hover the SVG. That's usually fine for a chart. If you don't want it, use `aria-label` on the `<svg>` instead of a `<title>`.
+- **There's no `title` attribute in SVG:** `<circle title="...">` does nothing. Only the `<title>` child element works.
+- **Long data belongs in text:** a `<desc>` is fine for a few numbers. For a real data set, put a caption and a table next to the chart, so users can navigate the values.
+- **Browser support:** `role="img"`, `<title>`, `<desc>`, `aria-labelledby`, and `aria-hidden` work in all current browsers. How each screen reader announces the result varies, so test with the ones your users rely on.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Can aria-labelledby point at more than one element?">
+  Yes. It takes a space-separated list of `id`s, and the browser joins the text of each element in the order listed.
+  `aria-labelledby="ast-chart-title ast-chart-desc"` produces the title followed by the description. The referenced
+  elements can even be hidden; their text is still used.
+</Details>
+
+<Details summary="Should I use aria-labelledby or aria-describedby for the desc?">
+  Listing the `<desc>` in `aria-labelledby` makes it part of the name, so it's read every time, in full. That suits a
+  short description. For anything longer than a sentence, point `aria-describedby` at the `<desc>` instead, so the
+  name stays short and the description is read after it or on request.
+</Details>
+
+<Details summary="Is a title enough without role=img?">
+  Sometimes, but not reliably. Without `role="img"`, some browser and screen reader pairs don't expose the SVG as an
+  image at all, so the title is never announced. `role="img"` plus a name is the combination that works most
+  consistently.
+</Details>
+
+<Details summary="Can I use aria-label instead of title?">
+  Yes. `aria-label="Monthly sign-ups, rising"` on the `<svg>` gives the same name without a `<title>` element and
+  without the hover tooltip. It's a good choice for small graphics. Use `<title>` and `<desc>` when you also want a
+  description, or when the SVG is saved as a file, where the `<title>` still documents what it shows.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+For a meaningful SVG, add `role="img"`, a `<title>` and a `<desc>`, and point `aria-labelledby` at both with unique, namespaced `id`s. Hide decorative SVGs with `aria-hidden="true"`, and inside links and buttons name the control rather than the icon. Three small habits, and every SVG on the page is either clearly described or properly silent.
