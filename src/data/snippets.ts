@@ -193,6 +193,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-playing-paused-pseudo-classes",
+    title: "`:playing` and `:paused`: Style Media by Playback State",
+    excerpt: "Style audio and video players from their playback state.",
+    description: "Style audio and video by playback state with CSS :playing, :paused, :buffering and :muted, plus :has() patterns and a JavaScript fallback.",
+    category: ["CSS"],
+    tags: ["css", "media-pseudo-classes", "pseudo-classes", "has-selector", "progressive-enhancement", "browser-support", "css-2027"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/css-playing-paused-pseudo-classes/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A custom video player showing a large play icon while paused and faded controls while playing, beside a playlist whose currently playing track is highlighted by :has(audio:playing).",
+      caption: "A video player and playlist styled from :playing and :paused, with no state classes."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

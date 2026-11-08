@@ -1254,5 +1254,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "text-search": {
     title: "All Content Tagged Text Search",
     description: "All content tagged with text search, covering find-in-page, matching text in the DOM and highlighting search results."
+  },
+  "media-pseudo-classes": {
+    title: "All Content Tagged Media Pseudo-Classes",
+    description: "All content tagged with the CSS media pseudo-classes, such as :playing, :paused, :buffering and :muted, for styling audio and video by their state."
+  },
+  "has-selector": {
+    title: "All Content Tagged :has()",
+    description: "All content tagged with the CSS :has() relational pseudo-class, for styling an element based on what it contains."
   }
 };
