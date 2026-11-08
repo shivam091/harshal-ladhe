@@ -928,6 +928,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-css-2027",
+    title: "What's New in CSS in 2027: What to Expect",
+    excerpt: "Which CSS features are most likely to work everywhere in 2027.",
+    description: "An evidence-based look at the CSS features most likely to reach every browser in 2027: typed attr(), customizable select, random(), @function and more, and how to track them.",
+    category: ["CSS"],
+    tags: ["css", "css-2027", "modern-css", "browser-support", "interop", "baseline", "attr", "customizable-select", "at-function", "corner-shape", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/whats-new-in-css-2027/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for what to expect in CSS in 2027, showing feature cards for typed attr(), customizable select, random() and @function, each with the engines that already support it and the one still missing.",
+      caption: "The CSS features closest to working everywhere, ranked by evidence rather than promises."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Predictions are easy to get wrong, so I've tried to show my working: every feature here comes with the releases and preview builds behind it, and nothing rests on a vendor promise. I'll check back on this list as 2027 unfolds, and I hope the tracking links make it easy for you to do the same. 🔭",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 

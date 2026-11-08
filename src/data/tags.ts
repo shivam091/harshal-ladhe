@@ -1274,5 +1274,9 @@ export const tagMeta: Record<string, TagMeta> = {
   "interop": {
     title: "Interop and Cross-Browser Compatibility",
     description: "The yearly Interop project, in which browser vendors align chosen web features across engines, and what its focus areas mean for authors."
+  },
+  "css-2027": {
+    title: "CSS Features to Watch in 2027",
+    description: "CSS features most likely to become usable across browsers in 2027, based on current browser support and Interop commitments."
   }
 };
