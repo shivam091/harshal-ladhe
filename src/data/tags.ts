@@ -1150,5 +1150,33 @@ export const tagMeta: Record<string, TagMeta> = {
   "progress-indicator": {
     title: "Building Progress Indicators",
     description: "Progress bars and rings that show how far a task has got, built with SVG and CSS, with accessible values for screen readers."
+  },
+  "lazy-evaluation": {
+    title: "Lazy Evaluation in JavaScript",
+    description: "Deferring work until a value is actually needed, with iterators, generators and iterator helpers, and when it saves time and memory compared with arrays."
+  },
+  "ecmascript": {
+    title: "ECMAScript Editions and the TC39 Process",
+    description: "The yearly ECMAScript editions that define JavaScript, the TC39 proposal stages, and what each edition adds to the language."
+  },
+  "iterator-helpers": {
+    title: "JavaScript Iterator Helpers",
+    description: "Lazy `map`, `filter`, `take`, `drop` and other helpers on JavaScript iterators, added in ES2025, for working with generators and infinite sequences."
+  },
+  "es2027": {
+    title: "Modern JavaScript Features of ES2027",
+    description: "Language features headed for ECMAScript 2027, such as Temporal and explicit resource management, with browser support and fallbacks.",
+  },
+  "temporal": {
+    title: "The Temporal API",
+    description: "JavaScript's Temporal API for immutable dates, times, durations and time zones, and how it replaces the `Date` object."
+  },
+  "explicit-resource-management": {
+    title: "Explicit Resource Management in JavaScript",
+    description: "Using `using`, `await using`, `Symbol.dispose` and `DisposableStack` to release files, locks, timers and listeners reliably."
+  },
+  "map-upsert": {
+    title: "Map and WeakMap `getOrInsert()` and `getOrInsertComputed()`",
+    description: "Reading or inserting `Map` and `WeakMap` entries in one call with ES2027's upsert methods, for groups, nested maps and caches."
   }
 };

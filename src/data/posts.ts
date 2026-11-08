@@ -773,6 +773,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-es2027",
+    title: "What's New in ES2027: Temporal, using and More",
+    excerpt: "Temporal, using and six more confirmed ES2027 features.",
+    description: "Every ES2027 feature confirmed as of November 2026: Temporal, using, Map upsert, Iterator.zip, chunks, windows, join, includes and Atomics.pause, with examples.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2027", "ecmascript", "modern-js", "temporal", "explicit-resource-management", "map-upsert", "iterator-helpers", "error-handling", "browser-support", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/whats-new-in-es2027/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for ES2027 as of November 2026, showing Temporal, using and await using, Iterator.zip, chunks and windows, join, includes and Atomics.pause as cards, with a note that the edition is still open.",
+      caption: "The proposals confirmed for ES2027 as of November 2026, with room left for more."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "An unfinished edition is a moving target, so this one took more reading than writing: TC39's finished proposals list and meeting notes to pin down what's really in ES2027, and the compatibility data behind every number in the support table. Temporal and using are the two I've waited on longest, and I hope the examples show why. I'll update this post once ES2027 is published. ⏳",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 
