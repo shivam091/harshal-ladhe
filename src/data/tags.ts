@@ -1258,5 +1258,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "explicit-resource-management": {
     title: "Explicit Resource Management in JavaScript",
     description: "Using `using`, `await using`, `Symbol.dispose` and `DisposableStack` to release files, locks, timers and listeners reliably."
+  },
+  "memory-leaks": {
+    title: "Finding and Preventing Memory Leaks",
+    description: "Spotting and fixing leaks from forgotten listeners, timers, handles and closures in browser and Node.js code."
+  },
+  "abortcontroller": {
+    title: "AbortController and AbortSignal",
+    description: "Cancelling requests and tearing down listeners, timers and other work with `AbortController` and `AbortSignal`."
   }
 };

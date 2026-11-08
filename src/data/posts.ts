@@ -865,6 +865,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "resource-management-try-finally-to-using",
+    title: "Resource Management in JavaScript: From try/finally to using",
+    excerpt: "Stop leaking files, listeners, timers and locks.",
+    description: "How JavaScript cleans up resources: try/finally and error masking, callback helpers, AbortController, generator finally blocks, and the ES2027 using declaration compared with C#, Python, Java and Go.",
+    category: ["JavaScript"],
+    tags: ["javascript", "explicit-resource-management", "es2027", "error-handling", "memory-leaks", "abortcontroller", "generators", "design-patterns", "clean-code", "best-practices", "nodejs"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/resource-management-try-finally-to-using/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Three nested try/finally blocks flattening into three using declarations, alongside the equivalent constructs in C#, Python, Java and Go.",
+      caption: "A nested try/finally pyramid flattened into using declarations, and how other languages do the same job."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "The hardest part of this one was checking that the hand-written try/finally really behaves like `using` in every combination of failures, and lining up five languages' answers to \"what if clean-up throws too?\" without hand-waving. I hope it makes the next leaked listener or swallowed error easier to spot, and the switch to `using` an easy one when your targets allow it. 🧹",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 
