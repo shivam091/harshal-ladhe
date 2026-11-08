@@ -1139,4 +1139,8 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The HTML Popover API",
     description: "Using the `popover` attribute and Popover API to build dismissible menus, tooltips, and toasts without extra JavaScript.",
   },
+  "progress-indicator": {
+    title: "Building Progress Indicators",
+    description: "Progress bars and rings that show how far a task has got, built with SVG and CSS, with accessible values for screen readers."
+  },
 };

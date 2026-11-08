@@ -136,6 +136,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-07", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-circular-progress-ring",
+    title: "SVG Circular Progress Ring with CSS Variables",
+    excerpt: "Build an SVG progress ring driven by one CSS variable.",
+    description: "Build an accessible SVG circular progress ring: pathLength and a --progress variable set the arc, with a gradient variant and smooth value transitions.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "progress-indicator", "stroke-dasharray", "pathLength", "css-custom-properties", "at-property", "css-transitions", "linear-gradient", "javascript", "accessibility", "prefers-reduced-motion"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-circular-progress-ring/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a circular progress ring with a glowing arc filling most of a faint circular track and a percentage in the centre.",
+      caption: "A glowing arc on a faint track, filled to the current progress."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
