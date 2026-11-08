@@ -1,0 +1,157 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-text-on-circle");
+
+## Introduction
+
+Circular badges, stamps and seals put text around a ring: one line arching over the top, another curving under the bottom. In HTML that means rotating every letter by hand. In SVG it's built in: **`<textPath>`** lays a line of text along any path, and the glyphs follow the curve.
+
+The only trick is getting the bottom line to read upright instead of upside down. That comes down to the direction the path is drawn in.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 200" width="240" height="240" role="img" aria-label="Handmade since 2026">
+    <defs>
+      <path id="toc-top" d="M 30 100 A 70 70 0 0 1 170 100" />
+      <path id="toc-bottom" d="M 18 100 A 82 82 0 0 0 182 100" />
+    </defs>
+    <circle cx="100" cy="100" r="92" fill="none" stroke="currentColor" stroke-width="2" />
+    <circle cx="100" cy="100" r="56" fill="none" stroke="currentColor" stroke-width="1" />
+    <text font-size="14" font-weight="700" letter-spacing="2" text-anchor="middle" fill="currentColor">
+      <textPath href="#toc-top" startOffset="50%">HANDMADE</textPath>
+    </text>
+    <text font-size="14" font-weight="700" letter-spacing="2" text-anchor="middle" fill="currentColor">
+      <textPath href="#toc-bottom" startOffset="50%">SINCE 2026</textPath>
+    </text>
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The two arcs live in `<defs>`, so they're never drawn. They only exist for `<textPath href="…">` to follow. Each `<textPath>` sits inside a normal `<text>` element, which carries the font settings.
+2. The top arc, `A 70 70 0 0 1 170 100`, runs from the left of the circle to the right with sweep flag `1` (clockwise on screen), so it goes **over the top**. Text stands on the outside of the arc and reads left to right.
+3. The bottom arc also runs left to right, but with sweep flag `0` (anticlockwise), so it goes **under the bottom**. Text always sits on the left-hand side of a path's direction, which on this arc is the inside, so the glyphs stand upright instead of hanging upside down.
+4. The arcs have different radii on purpose. The top text stands above its baseline at radius 70, and the bottom text hangs towards the centre from its baseline at radius 82, so both end up in the same band between the two drawn circles (radii 56 and 92).
+5. `startOffset="50%"` starts the text halfway along the arc, and `text-anchor="middle"` centres the text on that point. Together they centre each line on its arc, whatever its length.
+
+<RainbowDivider />
+
+## Variant: Text All the Way Round
+
+For a full ring of text, use a closed circular path. A `<circle>` can't be used directly, because Chrome and Safari only accept a `<path>` as a `<textPath>` target, so draw the circle as two half-arcs. `textLength` then spreads the text over the whole circumference, so the ring closes without a gap:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 200" width="240" height="240" role="img" aria-label="SVG text on a circle">
+    <defs>
+      <path id="toc-ring" d="M 100 20 A 80 80 0 0 1 100 180 A 80 80 0 0 1 100 20" />
+    </defs>
+    <circle cx="100" cy="100" r="60" fill="none" stroke="#6366f1" stroke-width="2" />
+    <text font-size="13" font-weight="700" fill="#6366f1">
+      <textPath href="#toc-ring" textLength="500" lengthAdjust="spacing">SVG TEXT • ON A CIRCLE • SVG TEXT • ON A CIRCLE •</textPath>
+    </text>
+  </svg>
+`}
+</SvgSnippet>
+
+The path starts at the top and runs clockwise, so the text begins at twelve o'clock. Its circumference is `2π × 80 ≈ 502.7`, and `textLength="500"` stretches the letter spacing to fill almost all of it. `lengthAdjust="spacing"` only changes the gaps; `spacingAndGlyphs` would stretch the letters too.
+
+<RainbowDivider />
+
+## Example Usage
+
+A slowly rotating stamp is a common hero-section detail. Rotate the text, not the whole SVG, and set `transform-origin` to the circle's centre in user units. Stop it for users who prefer reduced motion:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Scroll to explore">
+    <style>
+      .toc-spin {
+        transform-origin: 100px 100px;
+        animation: toc-spin-rotate 20s linear infinite;
+      }
+
+      @keyframes toc-spin-rotate {
+        to {
+          rotate: 360deg;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .toc-spin {
+          animation: none;
+        }
+      }
+    </style>
+    <defs>
+      <path id="toc-spin-ring" d="M 100 20 A 80 80 0 0 1 100 180 A 80 80 0 0 1 100 20" />
+    </defs>
+    <text class="toc-spin" font-size="13" font-weight="700" fill="#ec4899">
+      <textPath href="#toc-spin-ring" textLength="500" lengthAdjust="spacing">SCROLL TO EXPLORE • SCROLL TO EXPLORE •</textPath>
+    </text>
+    <path d="M 100 80 L 100 120 M 88 108 L 100 120 L 112 108" fill="none" stroke="#ec4899" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+`}
+</SvgSnippet>
+
+With the animation switched off, the label still reads normally, so nothing is lost.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Badges and seals**, such as "Handmade since 2026" or "Certified organic".
+- **Logos and wordmarks** with curved type.
+- **Rotating "scroll down" or "play" stamps** in hero sections.
+- **Labels on donut charts and gauges** that follow the ring.
+- **Decorative frames** around avatars or product images.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **The arcs are a fixed size:** text that's longer than its arc is cut off. With `startOffset="50%"` and `text-anchor="middle"` it's cut off at both ends. For longer text, increase the arc's radius (and the matching circles), reduce `font-size` or `letter-spacing`, or extend the arc past a half circle.
+- **`textLength` for a fixed fit:** setting `textLength` on the `<textPath>` makes the text exactly that long, squeezing or spreading the letter spacing. It's ideal for a full ring. On short arcs, extreme values look cramped or gappy, so keep the natural text length close to the target.
+- **Path ids must be unique:** the `href` looks up the path by `id` across the whole page. Two badges inlined with the same `toc-top` id will both follow the first one's path. Prefix ids per badge, or generate them per instance.
+- **Flip sides by reversing the path:** SVG 2's `side="right"` attribute is only implemented in Firefox, so reversing the path's direction is the portable way to move text to the other side of a curve.
+- **Accessibility:** the text is real text, but a role of `img` with an `aria-label` reads the badge as one phrase instead of two fragments. If the badge is purely decorative, use `aria-hidden="true"` instead.
+- **Browser support:** `<textPath>`, `startOffset` and `textLength` work in all current browsers. `href` without the `xlink:` prefix works in all current browsers too; add `xlink:href` only for very old renderers.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why is the text on the bottom upside down?">
+  The path is probably drawn clockwise, from right to left under the circle. Text follows the path's direction and
+  stands on its left-hand side. Draw the bottom arc from left to right with sweep flag `0` instead, as in the code
+  above, and it reads upright.
+</Details>
+
+<Details summary="Why is part of my text missing?">
+  The text is longer than the arc. Glyphs that fall past the end of a path aren't drawn. Make the radius bigger, the
+  font smaller, or use `textLength` to fit the text to the path's length.
+</Details>
+
+<Details summary="Can I point textPath at a circle element?">
+  SVG 2 allows it, but Chrome and Safari only accept `<path>` elements as targets. Draw the circle as a path made
+  of two half-circle arcs, as in the "all the way round" variant.
+</Details>
+
+<Details summary="How do I move the text closer to the edge?">
+  Change the radius of the arc, not the circles. For the top text the baseline is on the arc and the letters rise
+  outward, so a larger radius moves them out. For the bottom text the letters hang inward from the arc, so its radius
+  should be roughly one cap height larger than the top arc's.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`<textPath>` lays text along a path. For a badge, draw the top arc clockwise and the bottom arc anticlockwise so both read left to right, give the bottom arc a slightly larger radius, and centre each line with `startOffset="50%"` plus `text-anchor="middle"`. Size the arcs for your longest text, use `textLength` for full rings, and keep each path id unique.

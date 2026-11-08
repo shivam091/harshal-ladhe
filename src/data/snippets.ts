@@ -434,6 +434,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-text-on-circle",
+    title: "SVG Text on a Circle with `<textPath>`",
+    excerpt: "Put text around a circular badge with SVG textPath.",
+    description: "Curve text around a circle with SVG <textPath>: upright top and bottom arcs, centring with startOffset, full rings with textLength, and accessible labels.",
+    category: ["SVG"],
+    tags: ["svg", "svg-text", "text-path", "startOffset", "textLength", "typography", "text-effects", "svg-animation", "prefers-reduced-motion", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-text-on-circle/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a circular badge with glowing text arching over the top and curving under the bottom between two rings.",
+      caption: "A circular badge with text following its top and bottom arcs."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

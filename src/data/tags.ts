@@ -1251,4 +1251,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The SVG `objectBoundingBox` Unit System",
     description: "How `objectBoundingBox` units map coordinates to fractions of a shape's bounding box, and why they fail on zero-width or zero-height shapes."
   },
+  "svg-text": {
+    title: "Working with SVG `<text>`",
+    description: "Placing, styling, wrapping, and measuring real text inside SVG with `<text>`, `<tspan>`, and `<textPath>`."
+  },
+  "startoffset": {
+    title: "Positioning Text on a Path with `startOffset`",
+    description: "Setting where `<textPath>` text begins along its path, and centring it with `startOffset=\"50%\"` and `text-anchor=\"middle\"`."
+  },
+  "textlength": {
+    title: "Fitting SVG Text with `textLength`",
+    description: "Forcing SVG text to an exact length with `textLength`, with `lengthAdjust` choosing whether spacing or glyphs are stretched."
+  },
 };
