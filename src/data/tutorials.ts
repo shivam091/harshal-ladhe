@@ -678,6 +678,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-open-pseudo-class",
+    title: "The `:open` Pseudo-Class for `<details>`, `<dialog>` and `<select>`",
+    excerpt: "Style anything that opens, selects included, with one pseudo-class.",
+    description: "Style the open state of <details>, <dialog>, <select> and picker inputs with the CSS :open pseudo-class: how it differs from [open], :popover-open and :modal, custom disclosure arrows, ::details-content and dialog transitions, picker-icon rotation, and fallbacks.",
+    category: ["CSS"],
+    tags: ["css", "open-pseudo-class", "pseudo-classes", "details-element", "dialog", "customizable-select", "starting-style", "progressive-enhancement", "css-2027"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-open-pseudo-class/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "An accordion, a modal dialog and a drop-down select, each highlighted in its open state by the CSS :open pseudo-class, with rotating arrows and matching selector code.",
+      caption: "Disclosures, a dialog and a select styled in their open state with one pseudo-class."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-open-pseudo-class",
+    title: "Styling Details, Dialog and Select with :open",
+    description: "Open an exclusive <details> accordion, a modal or non-modal <dialog> and a <select>, all styled through :open with turning arrows, a ::details-content fade and a @starting-style dialog entrance, while a readout lists which elements currently match :open (and :modal) via element.matches().",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-contrast-color",
     title: "contrast-color() Text on Any Background",
     description: "Pick any background colour and see the white or black text contrast-color() returns on a preview, button, badge and tag, with the WCAG 2 ratio against white and against black worked out in JavaScript, a flag when the browser's choice differs from WCAG 2, and a swatch grid of light, dark and mid-tone colours.",

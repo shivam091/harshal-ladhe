@@ -1234,5 +1234,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "wcag": {
     title: "WCAG Colour Contrast",
     description: "Web Content Accessibility Guidelines contrast ratios, AA and AAA thresholds, and checking text colours against them."
+  },
+  "open-pseudo-class": {
+    title: "The CSS :open Pseudo-Class",
+    description: "Styling the open state of `<details>`, `<dialog>`, `<select>` and picker inputs with `:open`, and how it differs from `[open]`."
+  },
+  "pseudo-classes": {
+    title: "CSS Pseudo-Classes",
+    description: "Selecting elements by state, such as open, checked, playing or focused, with CSS pseudo-classes and their fallbacks."
+  },
+  "details-element": {
+    title: "The HTML <details> Element",
+    description: "Native disclosure widgets and accordions with `<details>` and `<summary>`: markers, exclusive groups and `::details-content` animations."
   }
 };
