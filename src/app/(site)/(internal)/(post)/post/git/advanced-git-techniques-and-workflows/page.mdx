@@ -336,7 +336,7 @@ These end up in `~/.gitconfig` and can also be edited directly:
 
 For a fuller, tested set — one-step fixups, WIP parking, safe force-pushes, and more — see [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases).
 
-When a workflow outgrows a one-line alias, write a script instead: any executable named `git-<name>` on your `PATH` runs as `git <name>`. [`git fix-dates`](/snippet/git-fix-dates) is one example — a Bash script that restores commit dates after a rebase and force-pushes with a lease.
+When a workflow outgrows a one-line alias, write a script instead: any executable named `git-<name>` on your `PATH` runs as `git <name>`. [`git fix-dates`](/snippet/git-fix-dates) is one example — a Bash script that restores commit dates after a rebase and force-pushes with a lease. [`git prune-branches`](/snippet/git-prune-branches) is another — it deletes local branches that have already been merged, with a dry run, a confirmation prompt, and a restore command for each deletion.
 
 <RainbowDivider />
 
@@ -401,6 +401,8 @@ The commands above compose into a handful of well-known branching strategies. No
 <Info title="Merge commit, squash, or rebase-merge on a PR?">
   **Merge commit** preserves every individual commit and shows exactly when the branch was integrated, at the cost of a busier history. **Squash merge** collapses a branch into one clean commit on `main` — the most common default for GitHub PRs. **Rebase-merge** replays the branch's individual commits onto `main` with no merge commit at all, keeping a fully linear history. Most teams pick squash for feature branches (clean `main` history) and reserve real merges for long-lived branches like `release/*`.
 </Info>
+
+Squash and rebase merges have a side effect locally: they create new commits on `main`, so `git branch --merged` and `git branch -d` no longer recognise your feature branches as merged, and they pile up. [`git prune-branches`](/snippet/git-prune-branches) detects both kinds by comparing patches instead of commit hashes, and deletes them safely.
 
 <RainbowDivider />
 
