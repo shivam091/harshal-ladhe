@@ -1230,5 +1230,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "cross-realm": {
     title: "Cross-Realm JavaScript: iframes and vm Contexts",
     description: "How separate realms such as iframes and `node:vm` contexts get their own built-ins, why `instanceof` fails across them, and the checks that don't."
+  },
+  "math-sumprecise": {
+    title: "JavaScript `Math.sumPrecise()`",
+    description: "Summing numbers with a single rounding step using ES2026's `Math.sumPrecise()`, and compensated summation as a fallback."
+  },
+  "floating-point": {
+    title: "Floating-Point Numbers in JavaScript",
+    description: "How 64-bit floats store and round numbers in JavaScript, why 0.1 + 0.2 isn't 0.3, and when to use integers or exact summation instead."
   }
 };

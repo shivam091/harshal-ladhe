@@ -1,0 +1,216 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("math-sumprecise-exact-sums");
+
+## Introduction
+
+Adding up numbers with `reduce()` adds them one pair at a time, and every addition rounds its result to the nearest
+64-bit float. Those small rounding errors pile up, which is why `[0.1, 0.2, 0.3].reduce((a, b) => a + b, 0)` gives
+`0.6000000000000001`, and why adding a huge number and then subtracting it again can wipe out everything small in
+between.
+
+**`Math.sumPrecise(iterable)`**, added in ES2026, sums the values as if with infinite precision and rounds **once**, at
+the end. The result is the float closest to the true sum of the numbers you passed in. It doesn't turn floats into
+decimals, though, and that difference matters for money.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  // Native where available, Neumaier compensated summation everywhere else.
+  function sumPrecise(values) {
+    if (typeof Math.sumPrecise === "function") return Math.sumPrecise(values);
+
+    let sum = -0;
+    let compensation = 0;
+
+    for (const value of values) {
+      if (typeof value !== "number") throw new TypeError("Expected a number, got " + typeof value);
+
+      const total = sum + value;
+      // Recover the low-order bits the addition just lost, from whichever operand was smaller.
+      compensation += Math.abs(sum) >= Math.abs(value) ? sum - total + value : value - total + sum;
+      sum = total;
+    }
+
+    if (!Number.isFinite(sum)) return sum; // NaN or ±Infinity: the compensation is meaningless
+    return compensation === 0 ? sum : sum + compensation;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **`Math.sumPrecise()` takes one iterable**, not a list of arguments: an array, a `Set`, a generator, anything
+   `for...of` accepts. `Math.sumPrecise(1, 2)` throws a `TypeError`, because `1` isn't iterable.
+2. **It computes the exact sum of the values, then rounds once.** Each input is a float with an exact value, and the
+   result is the float nearest to the exact total of those values. With `reduce()`, there's a rounding step after
+   every `+`.
+3. **It doesn't convert anything.** Every value must already be a number. A string, a `BigInt`, `null` or a `Number`
+   object throws a `TypeError`, and the iterator is closed.
+4. **Special values follow the usual rules.** Any `NaN` makes the result `NaN`; `Infinity` gives `Infinity`, and
+   `Infinity` with `-Infinity` gives `NaN`.
+5. **An empty iterable returns `-0`**, not `0`. In floating-point, `-0` is the true "nothing added yet" value, since
+   `-0 + x` is `x` for every `x`, including `-0`. It prints as `0` and compares equal to `0`, so this rarely shows.
+6. **The fallback uses Neumaier summation**, a refinement of Kahan summation. After each addition, it works out the
+   rounding error that addition made (`sum - total + value`, taken from the smaller operand) and keeps a running total
+   of those errors, adding it back at the end. It's not guaranteed to be correctly rounded in every case, but it fixes
+   the usual accumulation errors.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="js">
+{`
+  const values = [0.1, 0.2, 0.3];
+
+  values.reduce((a, b) => a + b, 0);     // 0.6000000000000001
+  Math.sumPrecise(values);               // 0.6
+
+  Array(10).fill(0.1).reduce((a, b) => a + b, 0); // 0.9999999999999999
+  Math.sumPrecise(Array(10).fill(0.1));            // 1
+
+  // A huge value swallows the small one, then cancels out:
+  [1e20, 0.1, -1e20].reduce((a, b) => a + b, 0);  // 0
+  Math.sumPrecise([1e20, 0.1, -1e20]);            // 0.1
+
+  Math.sumPrecise(new Set([1, 2, 3]));   // 6, any iterable works
+  Math.sumPrecise([]);                   // -0
+  Math.sumPrecise([1, "2"]);             // TypeError
+`}
+</CodeBlock>
+
+### Kahan vs Neumaier
+
+The classic Kahan algorithm gets most of these right too, but it fails when a later value is much larger than the
+running total. Neumaier's version handles that case, which is why the fallback uses it:
+
+<CodeBlock language="js">
+{`
+  function kahanSum(values) {
+    let sum = 0;
+    let compensation = 0;
+
+    for (const value of values) {
+      const adjusted = value - compensation;
+      const total = sum + adjusted;
+      compensation = total - sum - adjusted;
+      sum = total;
+    }
+
+    return sum;
+  }
+
+  const values = [1, 1e100, 1, -1e100];
+
+  values.reduce((a, b) => a + b, 0);   // 0
+  kahanSum(values);                    // 0
+  sumPrecise(values);                  // 2, the exact answer (and what Math.sumPrecise returns)
+`}
+</CodeBlock>
+
+### It's Not a Decimal Type
+
+`Math.sumPrecise()` sums the **floats** you give it exactly. It can't sum the decimals you *meant*, because `19.99` and
+`0.1` aren't stored as those decimals in the first place:
+
+<CodeBlock language="js">
+{`
+  [0.1, 0.2].reduce((a, b) => a + b, 0);       // 0.30000000000000004
+  Math.sumPrecise([0.1, 0.2]);                 // 0.30000000000000004, the same
+
+  [19.99, 5.01, 0.1].reduce((a, b) => a + b, 0); // 25.1
+  Math.sumPrecise([19.99, 5.01, 0.1]);           // 25.099999999999998
+`}
+</CodeBlock>
+
+The stored value of `0.1` is slightly more than 0.1, and the stored value of `0.2` slightly more than 0.2, so their
+exact sum is slightly more than 0.3, and the nearest float to that is `0.30000000000000004`. In the second example,
+`reduce()` happens to land on `25.1` because two rounding errors cancel; the exact sum of the three stored values is
+just under 25.1. Neither answer is wrong, but neither is decimal arithmetic.
+
+For money, store **integer minor units** (cents, pence, paise) and sum those. Integers up to
+`Number.MAX_SAFE_INTEGER` (about 9 quadrillion) are exact, so any summing method gives the right answer:
+
+<CodeBlock language="js">
+{`
+  const pricesInCents = [1999, 501, 10];
+  const totalInCents = pricesInCents.reduce((a, b) => a + b, 0); // 2510
+
+  (totalInCents / 100).toFixed(2); // "25.10"
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Statistics and analytics**: means, variances and totals over large datasets, where `reduce()` errors grow with the
+  number of values.
+- **Sums that cancel out**, such as balancing positive and negative measurements, where a large intermediate value can
+  swallow small ones.
+- **Tests and comparisons** that need the same total whatever order the values come in. With `reduce()`, reordering
+  the input can change the result; with `Math.sumPrecise()`, it can't.
+- **Scientific and graphics code** that adds many small increments to a large value.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Browser support:** `Math.sumPrecise()` is ES2026, supported in Chrome and Edge 147, Firefox 137 and Safari 26.2.
+  **Node.js doesn't have it yet**: in Node 26, `typeof Math.sumPrecise` is `"undefined"`, so keep the fallback for
+  server code.
+- **Order doesn't matter.** Because there's only one rounding step, `Math.sumPrecise()` gives the same result for any
+  ordering of the same values. That makes results reproducible, which `reduce()` doesn't guarantee.
+- **Slower than `reduce()`.** Exact summation does more work per value. For a few numbers on a hot path, a plain loop
+  is fine; reach for `Math.sumPrecise()` when accuracy matters or the list is long.
+- **No mapping step.** To sum a property, map first: `Math.sumPrecise(items.map((item) => item.price))`. With iterator
+  helpers, `Math.sumPrecise(items.values().map((item) => item.price))` avoids building the intermediate array.
+- **Validate input you didn't create.** Values parsed from a form or CSV are strings until converted. Because
+  `Math.sumPrecise()` throws instead of coercing, `Math.sumPrecise(rows.map(Number))` is the explicit way to opt in.
+- **The fallback's one gap:** native `Math.sumPrecise()` is correctly rounded for every input; the Neumaier fallback is
+  very close but not guaranteed. If you need the guarantee everywhere, use a polyfill (core-js includes one).
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does Math.sumPrecise([0.1, 0.2]) still give 0.30000000000000004?">
+  Because that's the correctly rounded sum of the two numbers you passed in. `0.1` and `0.2` are stored as the nearest
+  binary floats, which are both slightly larger than the decimals, and their exact sum is closest to
+  `0.30000000000000004`. `Math.sumPrecise()` removes rounding errors *between* additions; it can't change the values
+  themselves.
+</Details>
+
+<Details summary="Why does an empty list return -0?">
+  `-0` is the additive identity for floats: adding it to anything leaves that value unchanged, including `-0` itself.
+  Starting from `+0` would turn a sum of `-0` values into `+0`. `-0 === 0` is `true`, so it only shows up with
+  `Object.is()` or `1 / result`.
+</Details>
+
+<Details summary="Can I pass numbers as separate arguments, like Math.max()?">
+  No. `Math.sumPrecise()` takes a single iterable. Use `Math.sumPrecise([a, b, c])`, not `Math.sumPrecise(a, b, c)`.
+  An iterable means very long lists don't hit the argument-count limits that spreading into `Math.max(...values)`
+  can.
+</Details>
+
+<Details summary="Should I use it for currency?">
+  Not on its own. Sum integer minor units instead, such as cents, which are exact with any method. If you must work
+  with decimal amounts as floats, `Math.sumPrecise()` reduces the error compared with `reduce()`, but the inputs are
+  still binary approximations of the decimals.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Math.sumPrecise()` adds up an iterable of numbers with a single rounding step, so `[0.1, 0.2, 0.3]` sums to `0.6` and
+large values no longer swallow small ones. It's strict about input, returns `-0` for an empty list, and gives the same
+answer in any order. It doesn't make floats decimal, so keep money in integer cents. It's in every current browser but
+not yet in Node, so pair it with the Neumaier fallback above. For the rest of the edition, see
+[What's New in ES2026](/post/javascript/whats-new-in-es2026).

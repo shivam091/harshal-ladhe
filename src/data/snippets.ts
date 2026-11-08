@@ -251,6 +251,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "math-sumprecise-exact-sums",
+    title: "Exact Floating-Point Sums with `Math.sumPrecise()`",
+    excerpt: "Sum floats with one rounding step, not one per addition.",
+    description: "Sum numbers exactly with ES2026's Math.sumPrecise(): why reduce() drifts, -0 for empty input, strict types, a Neumaier fallback, and why money still needs integer cents.",
+    link: {
+      label: "Read the full post: What's New in ES2026",
+      href: "/post/javascript/whats-new-in-es2026"
+    },
+    category: ["JavaScript"],
+    tags: ["javascript", "math-sumprecise", "floating-point", "es2026", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/math-sumprecise-exact-sums/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "The values 0.1, 0.2 and 0.3 summed with reduce() to 0.6000000000000001 and with Math.sumPrecise() to 0.6.",
+      caption: "The same three numbers summed with reduce() and with Math.sumPrecise()."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
