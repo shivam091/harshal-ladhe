@@ -823,6 +823,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-es2026",
+    title: "What's New in ES2026",
+    excerpt: "Every ES2026 feature, with examples and browser support.",
+    description: "Every ES2026 feature explained: Map upsert, JSON.parse source text, Iterator.concat, Uint8Array Base64, Math.sumPrecise, Error.isError and Array.fromAsync.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2026", "ecmascript", "modern-js", "iterator-helpers", "map-upsert", "math-sumprecise", "error-iserror", "array-fromasync", "browser-support"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/whats-new-in-es2026/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for a guide to ES2026, showing the edition's features as cards: getOrInsert, JSON.rawJSON, Iterator.concat, toBase64, Math.sumPrecise, Error.isError and Array.fromAsync.",
+      caption: "Seven small ES2026 features, each one retiring a helper you used to copy between projects."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "No new syntax this year, just seven helpers I'm glad to delete from my own utility files. Running every example in Node and checking every number against the compatibility data is what took the time, along with untangling the Temporal and using mix-up that keeps doing the rounds. I hope the table at the end saves you a few searches. ES2027 is next. 🧰",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 

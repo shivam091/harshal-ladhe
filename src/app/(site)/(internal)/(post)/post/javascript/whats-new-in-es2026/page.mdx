@@ -1,0 +1,381 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("whats-new-in-es2026");
+
+ECMAScript 2026, the 17th edition of the JavaScript specification, was published in June 2026. Like every edition
+since ES2016, it's a snapshot rather than a big-bang release: it contains whichever proposals reached **stage 4** in
+TC39 before the spec was cut for the year. Most of them have been usable in at least one browser for a while, and some
+of them have been shipping for years.
+
+ES2026 is a release of small, sharp tools. There's no new syntax in it at all. Instead it fills gaps that every
+codebase has papered over with a helper: inserting into a `Map` only when a key is missing, parsing large numbers
+from JSON without losing digits, joining iterators together, converting bytes to Base64, adding floats without
+drift, telling a real error apart from an object that looks like one, and collecting an async iterable into an array.
+
+<Quote>
+  If ES2025 was about iterators and sets, ES2026 is about deleting the little utility functions you copy from
+  project to project.
+</Quote>
+
+In this post, we'll cover:
+
+- Upsert: `Map.prototype.getOrInsert()` and `getOrInsertComputed()`
+- `JSON.parse` source text access, `JSON.rawJSON()` and `JSON.isRawJSON()`
+- Iterator sequencing with `Iterator.concat()`
+- `Uint8Array` to and from Base64 and hex
+- `Math.sumPrecise()`
+- `Error.isError()`
+- `Array.fromAsync()`
+- Why Temporal and `using` are **not** in ES2026, despite what you may have read
+- A support table for the whole edition, plus frequently asked questions
+
+<RainbowDivider />
+
+## How a Feature Gets into ES2026
+
+TC39 moves proposals through stages 0 to 4. Stage 4 means the design is finished, the tests are written, and the
+feature has shipped in at least two implementations. Early each year, the spec editors cut the next edition from
+everything that has reached stage 4 by then; Ecma then approves it in June.
+
+That has two practical consequences worth keeping in mind as you read:
+
+- **The edition year is not the year a feature became usable.** `Array.fromAsync()` reached Safari in 16.4, years
+  before it was formally part of ES2026.
+- **Being in the edition doesn't mean every engine has it.** `Error.isError()` is in ES2026, but at the time of
+  writing Safari only has it in Technology Preview. Always check support for the specific feature.
+
+If you missed last year's edition, [What's New in ES2025](/post/javascript/whats-new-in-es2025) covers iterator
+helpers, the new `Set` methods, `Promise.try()`, `RegExp.escape()` and the rest.
+
+<RainbowDivider />
+
+## Upsert: `getOrInsert()` and `getOrInsertComputed()`
+
+"Get the value for this key, or put a default in if it isn't there" is one of the most common things done with a
+`Map`, and until now it took a `has()`, a `set()` and a `get()`:
+
+<CodeBlock language="js">
+{`
+  // Before ES2026
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key).push(item);
+`}
+</CodeBlock>
+
+ES2026 adds two methods to `Map` and `WeakMap` that do the lookup and the insert in one call, and always return the
+value that ends up in the map:
+
+<CodeBlock language="js">
+{`
+  const counts = new Map();
+
+  for (const word of ["a", "b", "a"]) {
+    counts.set(word, counts.getOrInsert(word, 0) + 1);
+  }
+
+  console.log(counts); // Map(2) { 'a' => 2, 'b' => 1 }
+
+  const groups = new Map();
+  groups.getOrInsertComputed("fruit", () => []).push("apple");
+  groups.getOrInsertComputed("fruit", () => []).push("pear");
+
+  console.log(groups); // Map(1) { 'fruit' => [ 'apple', 'pear' ] }
+`}
+</CodeBlock>
+
+`getOrInsert(key, value)` takes the default directly. `getOrInsertComputed(key, callback)` only calls the callback
+when the key is missing, so it's the one to reach for when the default is expensive to build, or when it's a fresh
+object that you don't want to allocate on every call. The callback receives the key as its argument.
+
+**Support:** Chrome and Edge 145, Firefox 144, Safari 26.2, Node 26.
+
+The full walkthrough, including `WeakMap` caches and the pitfalls, is in
+[`Map.prototype.getOrInsert()` and `getOrInsertComputed()`: Upsert Without the Boilerplate](/tutorial/map-upsert-getorinsert),
+and there's a ready-to-paste memoisation pattern in
+[the `getOrInsertComputed()` lazy cache snippet](/snippet/getorinsertcomputed-lazy-cache).
+
+<RainbowDivider />
+
+## `JSON.parse` Source Text Access and `JSON.rawJSON()`
+
+JSON numbers have no size limit, but JavaScript numbers do. An ID like `12345678901234567890` is silently rounded by
+`JSON.parse()`, and by the time a reviver function sees it, the original digits are gone.
+
+ES2026 passes the reviver a third argument, a `context` object. For primitive values (numbers, strings, booleans and
+`null`), `context.source` holds the exact text that was parsed:
+
+<CodeBlock language="js">
+{`
+  const json = '{"id": 12345678901234567890}';
+
+  console.log(JSON.parse(json).id); // 12345678901234567000
+
+  const data = JSON.parse(json, (key, value, context) =>
+    key === "id" ? BigInt(context.source) : value
+  );
+
+  console.log(data.id); // 12345678901234567890n
+`}
+</CodeBlock>
+
+For objects and arrays, `context` is an empty object: there's no single piece of source text to hand over.
+
+The other half of the proposal goes in the opposite direction. `JSON.stringify()` can't write a `BigInt`, and it can't
+write a number with more precision than a JavaScript number holds. `JSON.rawJSON(text)` creates a special frozen
+object that `JSON.stringify()` emits verbatim, and `JSON.isRawJSON()` checks for one:
+
+<CodeBlock language="js">
+{`
+  const payload = { id: JSON.rawJSON("12345678901234567890") };
+
+  console.log(JSON.stringify(payload)); // {"id":12345678901234567890}
+  console.log(JSON.isRawJSON(payload.id)); // true
+`}
+</CodeBlock>
+
+`JSON.rawJSON()` only accepts text for a primitive JSON value. Passing `"{}"` or `"[1, 2]"` throws a `SyntaxError`,
+so it can't be used to splice arbitrary structures into the output.
+
+**Support:** Chrome and Edge 114, Firefox 135, Safari 18.4, Node 21.
+
+<RainbowDivider />
+
+## Iterator Sequencing: `Iterator.concat()`
+
+ES2025's iterator helpers made it easy to `map`, `filter` and `take` over any iterator lazily, but there was no
+built-in way to run one iterator after another. `Iterator.concat()` takes any number of iterables and returns a
+single iterator that walks them in order:
+
+<CodeBlock language="js">
+{`
+  const recent = [1, 2];
+  const archived = new Set([3]);
+  const pinned = new Map([["k", 4]]).values();
+
+  const all = Iterator.concat(recent, archived, pinned);
+
+  console.log([...all]); // [ 1, 2, 3, 4 ]
+`}
+</CodeBlock>
+
+Nothing is copied up front: each source is only opened when the previous one is exhausted, so it works with very
+large or infinite sources and combines naturally with helpers like `.filter()` and `.take()`.
+
+One detail catches people out: every argument must be an iterable **object**. Strings are iterable, but they're
+primitives, so `Iterator.concat("ab")` throws a `TypeError`. Wrap them, for example as `[..."ab"]`, if you need to.
+
+**Support:** Chrome and Edge 146, Firefox 147, Safari 26.4, Node 26.
+
+The lazy model behind this is explained in
+[Iterator Helpers: Lazy Pipelines over Any Iterator](/tutorial/iterator-helpers-lazy-pipelines) and
+[Iterators vs Arrays: When Lazy Evaluation Wins](/post/javascript/iterators-vs-arrays-lazy-evaluation).
+
+<RainbowDivider />
+
+## `Uint8Array` to and from Base64 and Hex
+
+For years, the browser's Base64 tools were `btoa()` and `atob()`, which work on "binary strings" rather than bytes and
+throw on any character above U+00FF. Converting real bytes meant a loop with `String.fromCharCode()`, or a library.
+
+ES2026 adds direct conversions on `Uint8Array`:
+
+<CodeBlock language="js">
+{`
+  const bytes = new TextEncoder().encode("Hi!");
+
+  console.log(bytes.toBase64()); // "SGkh"
+  console.log(bytes.toHex()); // "486921"
+
+  const decoded = Uint8Array.fromBase64("SGkh");
+  console.log(new TextDecoder().decode(decoded)); // "Hi!"
+
+  console.log(Uint8Array.fromHex("486921")); // Uint8Array(3) [ 72, 105, 33 ]
+`}
+</CodeBlock>
+
+`toBase64()` and `fromBase64()` accept an options object. `alphabet: "base64url"` switches to the URL-safe alphabet
+used by JWTs and many APIs, and `omitPadding: true` drops the trailing `=` characters:
+
+<CodeBlock language="js">
+{`
+  const raw = new Uint8Array([251, 255]);
+
+  console.log(raw.toBase64()); // "+/8="
+  console.log(raw.toBase64({ alphabet: "base64url", omitPadding: true })); // "-_8"
+`}
+</CodeBlock>
+
+There are also `setFromBase64()` and `setFromHex()`, which decode into an existing array instead of allocating a new
+one, and return `{ read, written }` so you know how much input was consumed and how many bytes were filled.
+
+**Support:** Chrome and Edge 140, Firefox 133, Safari 18.2, Node 25.
+
+<RainbowDivider />
+
+## `Math.sumPrecise()`
+
+Adding floating-point numbers one at a time accumulates rounding error at every step, and the order of the values
+changes the answer:
+
+<CodeBlock language="js">
+{`
+  const values = [1e20, 0.1, -1e20];
+
+  console.log(values.reduce((a, b) => a + b, 0)); // 0
+  console.log(Math.sumPrecise(values)); // 0.1
+`}
+</CodeBlock>
+
+`Math.sumPrecise()` takes an iterable of numbers and computes the sum as if with unlimited precision, rounding only
+once at the end. It's not a decimal type: `Math.sumPrecise([0.1, 0.2])` is still `0.30000000000000004`, because
+`0.1` and `0.2` aren't exactly representable to begin with. What it removes is the *extra* error that a running total
+adds. It also throws a `TypeError` if any value isn't a number, instead of quietly concatenating strings.
+
+**Support:** Chrome and Edge 147, Firefox 137, Safari 26.2. Node doesn't have it yet.
+
+More examples and a fallback are in [the `Math.sumPrecise()` snippet](/snippet/math-sumprecise-exact-sums).
+
+<RainbowDivider />
+
+## `Error.isError()`
+
+`value instanceof Error` checks the prototype chain, which breaks in two directions. An error created in another
+realm, such as an iframe or a Node `vm` context, has a different `Error` constructor, so `instanceof` returns `false`
+for a real error. And any object can be given `Error.prototype` as its prototype, so `instanceof` returns `true` for
+something that isn't one.
+
+`Error.isError()` checks whether the value was actually created as an error, the same way `Array.isArray()` does for
+arrays:
+
+<CodeBlock language="js">
+{`
+  console.log(Error.isError(new TypeError("Bad input"))); // true
+
+  const lookalike = { name: "Error", message: "Not really" };
+  console.log(Error.isError(lookalike)); // false
+`}
+</CodeBlock>
+
+It's most useful in logging, error-reporting and serialisation code that receives values from places you don't control.
+
+**Support:** Chrome and Edge 134, Firefox 138, Node 24.3. Safari has it in Technology Preview only, so feature-detect
+with `typeof Error.isError === "function"` and fall back to `instanceof` there.
+
+The cross-realm case is demonstrated in [the `Error.isError()` snippet](/snippet/error-iserror-cross-realm).
+
+<RainbowDivider />
+
+## `Array.fromAsync()`
+
+`Array.from()` collects a synchronous iterable. `Array.fromAsync()` is its async counterpart: it accepts an async
+iterable (or a sync iterable of promises), awaits each value in turn, and resolves to an array. An optional mapping
+function runs on each value, just as with `Array.from()`:
+
+<CodeBlock language="js">
+{`
+  async function* pages() {
+    yield 1;
+    yield 2;
+  }
+
+  console.log(await Array.fromAsync(pages(), (n) => n * 10)); // [ 10, 20 ]
+  console.log(await Array.fromAsync([Promise.resolve(1), 2])); // [ 1, 2 ]
+`}
+</CodeBlock>
+
+The important difference from `Promise.all()` is that values are awaited **one after another**, not concurrently.
+That's what you want for a paginated API or a stream, and not what you want for a list of independent requests.
+
+**Support:** Chrome and Edge 121, Firefox 115, Safari 16.4, Node 22. This one is Baseline and widely available.
+
+The full guide, with a playground, is
+[Collecting Async Iterables into Arrays with `Array.fromAsync()`](/tutorial/array-fromasync-async-iterables).
+
+<RainbowDivider />
+
+## Not in ES2026: Temporal and `using`
+
+Many articles list the **Temporal API** and **explicit resource management** (`using`, `await using`,
+`DisposableStack` and friends) as ES2026 features. They aren't.
+
+Both proposals reached stage 4 during 2026, but after the ES2026 edition had already been settled. Temporal, for
+example, reached stage 4 at TC39's March 2026 meeting, while upsert, the last feature into ES2026, got there in
+January. TC39's own list of finished proposals records both Temporal and explicit resource management with an expected
+publication year of **2027**, so they will be part of ES2027.
+
+That's a matter of paperwork, not readiness. Both are already shipping:
+
+- **Temporal:** Chrome and Edge 144, Firefox 139, Node 26. Safari has it in Technology Preview only.
+- **`using` and `await using`:** Chrome and Edge 134, Firefox 141, Node 24, and TypeScript since 5.2. Safari has it in
+  Technology Preview only.
+
+Both get proper coverage in [What's New in ES2027 (So Far)](/post/javascript/whats-new-in-es2027).
+
+<RainbowDivider />
+
+## ES2026 Support at a Glance
+
+| Feature | Chrome / Edge | Firefox | Safari | Node |
+| --- | --- | --- | --- | --- |
+| `Map` / `WeakMap` `getOrInsert()`, `getOrInsertComputed()` | 145 | 144 | 26.2 | 26 |
+| `JSON.parse` source text, `JSON.rawJSON()` | 114 | 135 | 18.4 | 21 |
+| `Iterator.concat()` | 146 | 147 | 26.4 | 26 |
+| `Uint8Array` Base64 and hex | 140 | 133 | 18.2 | 25 |
+| `Math.sumPrecise()` | 147 | 137 | 26.2 | Not yet |
+| `Error.isError()` | 134 | 138 | Technology Preview | 24.3 |
+| `Array.fromAsync()` | 121 | 115 | 16.4 | 22 |
+
+Versions are the first stable release with support. Every feature here can be feature-detected with a simple
+`typeof` check, which is the safest way to ship it today; the patterns for doing that cleanly are in
+[Writing Backwards-Compatible JavaScript](/post/javascript/backwards-compatible-javascript).
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Is ES2026 the same as ECMAScript 17?">
+  Yes. ES2026 is the 17th edition of ECMA-262. Since ES2015 (the 6th edition), editions have been named after the year
+  they're published, so the edition number is rarely used day to day.
+</Details>
+
+<Details summary="Can I use ES2026 features in production today?">
+  Most of them, with checks. `Array.fromAsync()`, `JSON.rawJSON()` and the `Uint8Array` Base64 methods are in every
+  current browser. Upsert, `Math.sumPrecise()` and `Iterator.concat()` need recent versions, `Math.sumPrecise()` isn't
+  in Node yet, and `Error.isError()` isn't in stable Safari. Feature-detect, or load a polyfill such as core-js.
+</Details>
+
+<Details summary="Does TypeScript understand ES2026?">
+  None of the ES2026 features are syntax, so TypeScript doesn't need to transform anything: it only needs type
+  definitions, and a runtime (or polyfill) that provides the methods. Definitions for new built-ins arrive through
+  TypeScript's `lib` files, often a little after the feature ships, so check that your version includes the ones you
+  use, or add a small declaration yourself in the meantime.
+</Details>
+
+<Details summary="Why isn't Temporal in ES2026 if browsers already ship it?">
+  Shipping and being in an edition are separate milestones. Temporal reached stage 4 in March 2026, after the ES2026
+  edition had been settled, so it goes into ES2027. Browsers don't wait for the edition: Chrome, Firefox and Node
+  already ship Temporal, while Safari has it in Technology Preview.
+</Details>
+
+<Details summary="Should I replace atob() and btoa() with the Uint8Array methods?">
+  For new code that works with bytes, yes. `toBase64()` and `fromBase64()` work on real bytes, support the URL-safe
+  alphabet, and don't throw on characters outside Latin-1 the way `btoa()` does on a string. `atob()` and `btoa()`
+  aren't going away, so there's no need to rewrite code that already works.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+ES2026 has no headline syntax, and that's fine. Each feature retires a helper:
+
+- `getOrInsert()` and `getOrInsertComputed()` replace the `has` / `set` / `get` dance
+- `context.source` and `JSON.rawJSON()` let large numbers survive a round trip through JSON
+- `Iterator.concat()` joins iterators without building an array first
+- `toBase64()`, `fromBase64()`, `toHex()` and `fromHex()` replace hand-rolled byte conversion
+- `Math.sumPrecise()` removes the drift from adding floats in a loop
+- `Error.isError()` identifies real errors across realms
+- `Array.fromAsync()` collects async iterables in one line
+
+Temporal and `using` are the features most people are waiting for, and they're closer than the edition year
+suggests. They're next, in [What's New in ES2027 (So Far)](/post/javascript/whats-new-in-es2027).
