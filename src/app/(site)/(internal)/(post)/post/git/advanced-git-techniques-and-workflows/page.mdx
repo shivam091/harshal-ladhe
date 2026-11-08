@@ -34,6 +34,8 @@ Rebasing replays your branch's commits on top of a different base commit, produc
 `}
 </CodeBlock>
 
+`git rebase main` uses your *local* `main`, which is only as fresh as your last pull — rebasing onto a stale `main` is an easy mistake. [`git sync`](/snippet/git-sync) fetches first, fast-forwards `main` without checking it out, and rebases your branch onto it in one command.
+
 <GitRebaseDiagram />
 
 <Warning title="The Golden Rule of Rebasing">
@@ -336,7 +338,7 @@ These end up in `~/.gitconfig` and can also be edited directly:
 
 For a fuller, tested set — one-step fixups, WIP parking, safe force-pushes, and more — see [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases).
 
-When a workflow outgrows a one-line alias, write a script instead: any executable named `git-<name>` on your `PATH` runs as `git <name>`. [`git fix-dates`](/snippet/git-fix-dates) is one example — a Bash script that restores commit dates after a rebase and force-pushes with a lease. [`git prune-branches`](/snippet/git-prune-branches) is another — it deletes local branches that have already been merged, with a dry run, a confirmation prompt, and a restore command for each deletion.
+When a workflow outgrows a one-line alias, write a script instead: any executable named `git-<name>` on your `PATH` runs as `git <name>`. [`git fix-dates`](/snippet/git-fix-dates) is one example — a Bash script that restores commit dates after a rebase and force-pushes with a lease. [`git prune-branches`](/snippet/git-prune-branches) is another — it deletes local branches that have already been merged, with a dry run, a confirmation prompt, and a restore command for each deletion. And [`git sync`](/snippet/git-sync) turns the stash–pull–rebase routine for keeping a feature branch current into a single command.
 
 <RainbowDivider />
 
