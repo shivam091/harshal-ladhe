@@ -1,0 +1,160 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-knockout-text-mask");
+
+## Introduction
+
+Knockout text is text **cut out of a solid shape**, so whatever sits behind the shape shows through the letters: a photo, a gradient, a pattern or the page itself. A `<clipPath>` can only keep shapes, not cut holes in them, but an SVG `<mask>` can do both.
+
+The recipe is short: a white rectangle in the mask keeps the shape visible, black text in the mask hides it where the letters are, and the letters become holes.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 260 100" width="390" height="150" role="img" aria-label="SALE">
+    <defs>
+      <linearGradient id="ko-backdrop" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#6366f1" />
+        <stop offset="0.5" stop-color="#ec4899" />
+        <stop offset="1" stop-color="#f59e0b" />
+      </linearGradient>
+      <mask id="ko-mask" maskUnits="userSpaceOnUse" x="20" y="15" width="220" height="70">
+        <rect x="20" y="15" width="220" height="70" fill="white" />
+        <text x="130" y="63" font-family="system-ui, sans-serif" font-size="40" font-weight="800" text-anchor="middle" fill="black">SALE</text>
+      </mask>
+    </defs>
+    <!-- Backdrop: anything behind the plate shows through the letters -->
+    <rect width="260" height="100" rx="12" fill="url(#ko-backdrop)" />
+    <rect x="20" y="15" width="220" height="70" rx="8" fill="currentColor" mask="url(#ko-mask)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The gradient `<rect>` is only a backdrop for the demo. It stands in for whatever is behind the knockout in a real design.
+2. The solid plate is a `<rect>` filled with `currentColor`, so it's dark on a light page and light on a dark one.
+3. Inside the `<mask>`, a **white** `<rect>` the same size as the plate means "show everything". The mask is a luminance mask by default, so white is fully visible.
+4. The **black** `<text>` on top of it means "hide here". Wherever the letters are, the plate becomes fully transparent and the gradient behind shows through.
+5. `maskUnits="userSpaceOnUse"` with `x`, `y`, `width` and `height` sets the mask region to exactly the plate, in the same coordinates as the drawing. The text is centred with `text-anchor="middle"` at the plate's centre, `x="130"`.
+
+<RainbowDivider />
+
+## Variant: Punching Out Any Shape
+
+The text can be any shape. Black shapes, strokes, or several of them together, all become holes. Here a check mark is cut out of a circle badge, over a striped pattern:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 100 100" width="120" height="120" role="img" aria-label="Done">
+    <defs>
+      <pattern id="ko-stripes-2" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="5" height="10" fill="#14b8a6" />
+      </pattern>
+      <mask id="ko-mask-2" maskUnits="userSpaceOnUse" x="0" y="0" width="100" height="100">
+        <rect width="100" height="100" fill="white" />
+        <polyline points="34,51 45,62 67,40" fill="none" stroke="black" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+      </mask>
+    </defs>
+    <rect width="100" height="100" rx="16" fill="url(#ko-stripes-2)" />
+    <circle cx="50" cy="50" r="36" fill="currentColor" mask="url(#ko-mask-2)" />
+  </svg>
+`}
+</SvgSnippet>
+
+The same pattern gives you a spotlight overlay with a round hole, a card with a notch, or a badge with an icon punched through it. Grey shapes in the mask make semi-transparent holes, and blurred ones make soft-edged holes.
+
+<RainbowDivider />
+
+## Example Usage
+
+Put the SVG over any HTML background and the background shows through the letters. To make it fill its container at any size, size the `<svg>` with CSS. The `viewBox` scales everything inside it, including the mask and the text:
+
+<SvgSnippet>
+{`
+  <div class="ko-hero">
+    <svg class="ko-hero-title" viewBox="0 0 300 80" width="300" height="80" role="img" aria-label="Summer Sale">
+      <defs>
+        <mask id="ko-mask-3" maskUnits="userSpaceOnUse" x="0" y="0" width="300" height="80">
+          <rect width="300" height="80" fill="white" />
+          <text x="150" y="51" font-family="system-ui, sans-serif" font-size="32" font-weight="800" text-anchor="middle" fill="black">SUMMER SALE</text>
+        </mask>
+      </defs>
+      <rect width="300" height="80" rx="10" fill="#0f172a" mask="url(#ko-mask-3)" />
+    </svg>
+  </div>
+
+  <style>
+    .ko-hero {
+      inline-size: min(100%, 360px);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      background: linear-gradient(120deg, #f59e0b, #ec4899, #6366f1, #14b8a6);
+    }
+
+    .ko-hero-title {
+      display: block;
+      inline-size: 100%;
+      block-size: auto;
+    }
+  </style>
+`}
+</SvgSnippet>
+
+Swap the gradient for `background-image: url(photo.jpg)` and the photo shows through the letters instead.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Hero headings** with a photo or video showing through the letters.
+- **Badges and stickers** with an icon or number punched out.
+- **Onboarding spotlights**, a dark overlay with a hole over the feature being introduced.
+- **Logos and wordmarks** that need to sit on changing backgrounds.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Label it:** text inside a `<mask>` is never rendered or exposed to assistive technology, so screen readers don't see "SALE" at all. Add `role="img"` and an `aria-label` with the same words on the `<svg>`. The text also can't be selected, translated or found with find-in-page, so keep knockouts to short headings.
+- **Leave room for the font:** the text is measured with whatever font loads. A fallback font can be wider than the one you designed with, so leave some space on each side of the plate.
+- **Why not `objectBoundingBox` units?** With `maskContentUnits="objectBoundingBox"`, `font-size` becomes a fraction of the shape and the letters stretch with its proportions. For text, keep the mask in user space and let the `viewBox` handle scaling.
+- **Unique ids:** each mask is referenced by id, and the first match in the document wins. If you render the same inline SVG more than once, give each copy its own id.
+- **Masks don't change hit-testing:** the holes are still part of the plate for the pointer. Links or buttons behind the plate can't be clicked through the letters unless you set `pointer-events: none` on the SVG.
+- **Filled letters instead of holes:** if you want the letters to be the only visible part, filled with a gradient, use CSS `background-clip: text`. See the [CSS gradient text guide](/post/css/css-gradient-text).
+- **Browser support:** SVG `<mask>` inside an `<svg>` works in all current browsers.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why white and black in the mask?">
+  An SVG mask is a luminance mask by default. White means fully visible and black means fully hidden. The white rect
+  keeps the whole plate, and the black text removes the plate wherever the letters are, leaving holes.
+</Details>
+
+<Details summary="Why is the whole shape invisible?">
+  A mask starts empty, and anything not painted counts as hidden. Check that the white rect covers the shape in the
+  same coordinates, and that the mask region (`x`, `y`, `width`, `height` on the `<mask>`) covers it too.
+</Details>
+
+<Details summary="How do I make it responsive?">
+  Keep the `viewBox` and set the SVG's width with CSS, for example `inline-size: 100%` and `block-size: auto`. The
+  mask, the plate and the text all scale together, because they share the SVG's coordinate system.
+</Details>
+
+<Details summary="Can I use a web font?">
+  Yes. Set `font-family` on the `<text>` as usual. Until the font loads, the browser uses a fallback, so the letters may
+  change width once it arrives. Leave some space around the text so neither font runs off the plate.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Put a white rect and black `<text>` inside a `<mask>`, apply it to a solid shape, and the letters become holes that show whatever is behind. Keep the mask in user space and let the `viewBox` scale it, and give the SVG `role="img"` and an `aria-label`, because the masked text itself isn't exposed.

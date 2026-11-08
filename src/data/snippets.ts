@@ -697,6 +697,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-knockout-text-mask",
+    title: "Knockout Text with an SVG Mask",
+    excerpt: "Cut text out of a solid shape so the background shows through.",
+    description: "Punch text or icons out of a solid SVG shape with a mask, a white rect and black text, so any background shows through, with accessible labelling.",
+    category: ["SVG"],
+    tags: ["svg", "svg-mask", "knockout-text", "text-effects", "typography", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-knockout-text-mask/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of the word SALE cut out of a solid plate, with a glowing gradient showing through the letters.",
+      caption: "Text punched out of a solid shape, with a gradient showing through."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

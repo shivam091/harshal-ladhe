@@ -1379,4 +1379,8 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Reusable Masks with `maskContentUnits`",
     description: "Using `maskContentUnits=\"objectBoundingBox\"` so the content of an SVG `<mask>` is drawn in fractions of each masked element's box."
   },
+  "knockout-text": {
+    title: "Knockout Text Effects",
+    description: "Cutting text out of a solid shape so whatever is behind it, such as a photo or gradient, shows through the letters."
+  },
 };
