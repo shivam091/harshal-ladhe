@@ -476,6 +476,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-diagonal-stripes-pattern",
+    title: "Seamless Diagonal Stripes with an SVG Pattern",
+    excerpt: "Draw seamless diagonal stripes and crosshatch with an SVG pattern.",
+    description: "Seamless diagonal stripes with an SVG pattern and patternTransform, plus a crosshatch variant, currentColor recolouring and a CSS data URI background.",
+    category: ["SVG"],
+    tags: ["svg", "css", "svg-pattern", "patternTransform", "patternUnits", "currentColor", "data-uri", "background", "vector-graphics"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-diagonal-stripes-pattern/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a rounded rectangle filled with glowing diagonal stripes beside a matching crosshatch tile.",
+      caption: "Glowing diagonal stripes and a crosshatch, tiled with an SVG pattern."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

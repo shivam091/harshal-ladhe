@@ -1,0 +1,158 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-diagonal-stripes-pattern");
+
+## Introduction
+
+Diagonal stripes are a common fill for "disabled" states, placeholder areas, warning bars and hatched chart series. The tempting way to draw them is to put a diagonal line inside a square tile, but then every stripe has to cross the tile's corners exactly, and any mismatch shows up as a broken line.
+
+SVG's `<pattern>` element has a simpler option: draw a **plain horizontal band** in the tile and let `patternTransform="rotate(45)"` turn the whole repeating grid. The tile content never touches a corner, so there's nothing to line up.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 120" width="400" height="240" role="img" aria-label="Rounded rectangle filled with diagonal stripes">
+    <defs>
+      <pattern id="dsp-stripes" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="4" fill="#6366f1" />
+      </pattern>
+    </defs>
+    <rect x="10" y="10" width="180" height="100" rx="12" fill="url(#dsp-stripes)" stroke="#6366f1" stroke-width="2" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The `<pattern>` lives inside `<defs>` and renders nothing on its own. The `<rect>` paints with it through `fill="url(#dsp-stripes)"`, and the browser repeats the tile until the whole shape is covered.
+2. `patternUnits="userSpaceOnUse"` makes `width="10"` and `height="10"` mean **10 user units**. Without it, the default `objectBoundingBox` treats those numbers as fractions of the shape's size, and the stripes would change with every shape.
+3. The tile holds one band, `10` wide and `4` tall. Repeated, that gives horizontal stripes `4` units thick with a `6`-unit gap, because the tile's `height` is the distance from one stripe to the next.
+4. `patternTransform="rotate(45)"` rotates the **tile grid**, not just the band, so the stripes turn diagonal. Each band runs straight into the band in the next tile, and no shape has to be split across a tile corner.
+5. The spaces between the bands are transparent, so whatever is behind the shape shows through. Add a full-size `<rect>` as the first child of the pattern if you want a solid background colour in the gaps.
+
+<RainbowDivider />
+
+## Variant: Crosshatch
+
+A rotation can only change the angle of the stripes. It can't add a second direction. For a crosshatch, put **two bands** in the tile, one horizontal and one vertical. That's a square grid, and the same `rotate(45)` turns it into a diagonal crosshatch:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 120" width="400" height="240" role="img" aria-label="Rounded rectangle filled with a diagonal crosshatch">
+    <defs>
+      <pattern id="dsp-crosshatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="2" fill="#14b8a6" />
+        <rect width="2" height="10" fill="#14b8a6" />
+      </pattern>
+    </defs>
+    <rect x="10" y="10" width="180" height="100" rx="12" fill="url(#dsp-crosshatch)" stroke="#14b8a6" stroke-width="2" />
+  </svg>
+`}
+</SvgSnippet>
+
+- The two lines in a single tile always cross at 90°. For other angles, use two single-stripe patterns (for example `rotate(30)` and `rotate(-30)`) on two copies of the same shape, one on top of the other.
+- Thinner bands (`2` instead of `4`) keep the crosshatch from filling in to a solid colour.
+
+<RainbowDivider />
+
+## Example Usage
+
+### Recolouring with `currentColor`
+
+Use `fill="currentColor"` on the band and set `color` on the `<svg>` (or any ancestor of it). One pattern then follows your text colour, a theme switch, or a hover state:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 120" width="400" height="240" style="color: #ec4899" role="img" aria-label="Rounded rectangle filled with pink diagonal stripes">
+    <defs>
+      <pattern id="dsp-current" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="4" fill="currentColor" />
+      </pattern>
+    </defs>
+    <rect x="10" y="10" width="180" height="100" rx="12" fill="url(#dsp-current)" stroke="currentColor" stroke-width="2" />
+  </svg>
+`}
+</SvgSnippet>
+
+The pattern's content takes `currentColor` from where the `<pattern>` element sits in the document, **not** from the shape that uses it. Setting `color` on the `<rect>` alone won't recolour the stripes. [Recolour an SVG Pattern and Overlay a Texture](/snippet/svg-pattern-texture-overlay) explains this and the workarounds.
+
+### As a CSS Background
+
+To use the stripes as a CSS `background-image`, put the whole SVG in a data URI. Leave out the `viewBox` and give the SVG and its `<rect>` a size of `100%`: the image then has no fixed size of its own, so it covers the element, and the pattern tiles across it at a fixed 10 units:
+
+<SvgSnippet>
+{`
+  <div class="dsp-bg" aria-hidden="true">
+    <style>
+      .dsp-bg {
+        inline-size: 240px;
+        block-size: 120px;
+        border: 2px solid #f59e0b;
+        border-radius: 12px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cdefs%3E%3Cpattern id='s' width='10' height='10' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'%3E%3Crect width='10' height='4' fill='%23f59e0b'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23s)'/%3E%3C/svg%3E");
+      }
+    </style>
+  </div>
+`}
+</SvgSnippet>
+
+In a data URI, encode `#` as `%23` and `%` as `%25`. `<` and `>` are encoded as `%3C` and `%3E` above too, which is the safest choice. Use single quotes inside the SVG so they don't clash with the double quotes around the URL.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Disabled or unavailable areas**, such as booked slots in a calendar or locked cards.
+- **Hatched chart series**, so bars and areas can be told apart without relying on colour alone.
+- **Warning and "under construction" bars**, using two alternating colours.
+- **Placeholder regions** in wireframes and image skeletons.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Change the look with three numbers:** the tile's `height` sets the stripe spacing, the band's `height` sets its thickness, and the angle in `rotate()` sets the direction. `rotate(-45)` slopes the other way, and `rotate(90)` gives vertical stripes.
+- **The rotation pivot is the origin:** `rotate(45)` turns the grid around user-space `(0, 0)`, not the shape's centre. For a static fill this doesn't matter. If you animate the angle, use `rotate(45 cx cy)` with the shape's centre so the stripes don't slide.
+- **Faint seams:** at some zoom levels, tile edges can show as thin lines when the tile size doesn't land on whole device pixels. Whole-number tile sizes help. How visible this is depends on the browser and display.
+- **Ids are page-wide:** an inline SVG's `id` is shared with the rest of the page, so two SVGs that both define `id="stripes"` will clash. Give each pattern a unique id. Inside a data URI the SVG is a separate document, so a short id like `s` is safe there.
+- **`currentColor` doesn't work in a data URI:** an SVG used as an image can't see the page's CSS, so `currentColor` falls back to the image's default (usually black). Write the colour into the data URI instead.
+- **Accessibility:** give a meaningful shape `role="img"` and an `aria-label`. When stripes mark a state, such as "disabled", say so in text too, because the texture on its own isn't announced.
+- **A CSS-only alternative:** `repeating-linear-gradient(45deg, ...)` also draws diagonal stripes, with no SVG at all. See [Mastering CSS Gradients](/post/css/mastering-css-gradients). The SVG pattern is the better choice when the stripes have to fill an SVG shape, or when you want a crosshatch.
+- **Browser support:** `<pattern>` and `patternTransform` work in all current browsers.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why not just draw a diagonal line inside the tile?">
+  A diagonal line in a square tile crosses the tile's edges, and the part that falls outside is clipped off. To make it
+  look continuous you have to add copies of the line at the corners, and it's easy to get slightly wrong. A horizontal
+  band rotated with `patternTransform` never crosses a corner, so there's nothing to patch.
+</Details>
+
+<Details summary="Why do my stripes change size on different shapes?">
+  The pattern is probably using the default `patternUnits="objectBoundingBox"`, where `width` and `height` are fractions
+  of the shape's bounding box. Add `patternUnits="userSpaceOnUse"` so the tile is a fixed size in user units.
+</Details>
+
+<Details summary="How do I add a background colour between the stripes?">
+  Add a `<rect width="10" height="10" fill="..." />` as the first child of the `<pattern>`, before the band. It fills
+  the whole tile, and the band is drawn on top. Or give the shape a solid fill and paint a second copy of it with the
+  pattern.
+</Details>
+
+<Details summary="Can I use the same stripes on a stroke?">
+  Yes. `stroke="url(#dsp-stripes)"` works too, but the stripes don't follow the outline. The stroke shows the part of
+  the same fixed grid that it covers, so a striped frame has stripes running across it, not around its corners.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Draw one horizontal band in a `userSpaceOnUse` tile and rotate the grid with `patternTransform="rotate(45)"`. You get seamless diagonal stripes with nothing to line up at the corners. Add a vertical band for a crosshatch, use `currentColor` to recolour it, and put the SVG in a data URI to use it as a CSS background.

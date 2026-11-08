@@ -1275,4 +1275,20 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Cropping Images with CSS `object-fit`",
     description: "Controlling how an image or video fills its box with `object-fit`, such as `cover` to crop it instead of stretching it."
   },
+  "svg-pattern": {
+    title: "Tiling Fills with SVG `<pattern>`",
+    description: "Using the SVG `<pattern>` element to tile stripes, dots, grids and textures across any shape's fill or stroke, with no image files."
+  },
+  "patterntransform": {
+    title: "Rotating and Scaling Patterns with `patternTransform`",
+    description: "Using `patternTransform` to rotate, scale or skew a pattern's whole tile grid, for diagonal stripes and crosshatch fills."
+  },
+  "patternunits": {
+    title: "Sizing SVG Patterns with `patternUnits`",
+    description: "How `patternUnits` decides whether a pattern tile is measured in user units or as a fraction of the shape's bounding box."
+  },
+  "data-uri": {
+    title: "Inlining Images with Data URIs",
+    description: "Embedding SVG and other images directly in CSS or HTML as data URIs, including the characters that need encoding."
+  },
 };
