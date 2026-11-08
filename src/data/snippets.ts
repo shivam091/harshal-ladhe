@@ -160,6 +160,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-prune-branches",
+    title: "`git prune-branches`: Delete Merged and Squash-Merged Branches",
+    excerpt: "Delete merged, squash-merged and rebased local Git branches safely.",
+    description: "A git prune-branches command that deletes local branches merged into main — including GitHub squash merges git branch --merged misses — with a restore command for each.",
+    category: ["Git"],
+    tags: ["git", "git-commands", "branching", "merging", "squash-merge", "bash", "cli"],
+    link: {
+      label: "Read the full post: Advanced Git: Rebasing, Internals, and Real-World Workflows",
+      href: "/post/git/advanced-git-techniques-and-workflows"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/git-prune-branches/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Commit graph for git prune-branches, showing merged, rebase-merged and squash-merged branches being deleted from main.",
+      caption: "Merged, rebase-merged and squash-merged branches pruned, with main kept."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
