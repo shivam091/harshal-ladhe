@@ -1,0 +1,153 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-gradient-text");
+
+## Introduction
+
+Gradient headings are usually built in CSS with `background-clip: text`. Inside an SVG there's a simpler way: SVG `<text>` takes a `fill` like any other shape, and a fill can be a gradient. Define a `<linearGradient>` once and point the text at it with `fill="url(#…)"`.
+
+The text stays real text, so it's selectable, searchable and readable by screen readers, and the gradient re-fits automatically when the words change.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 80" width="360" height="96" role="img" aria-label="Gradient">
+    <defs>
+      <linearGradient id="sgt-fill" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#6366f1" />
+        <stop offset="0.5" stop-color="#ec4899" />
+        <stop offset="1" stop-color="#f59e0b" />
+      </linearGradient>
+    </defs>
+    <text x="150" y="56" font-size="48" font-weight="800" text-anchor="middle" fill="url(#sgt-fill)">Gradient</text>
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The `<linearGradient>` sits in `<defs>`, so it isn't drawn on its own. Its three `<stop>`s go from indigo at the start, through pink, to amber at the end.
+2. `fill="url(#sgt-fill)"` paints the text with the gradient instead of a solid colour.
+3. `gradientUnits` defaults to `objectBoundingBox`, so `x1`, `y1`, `x2` and `y2` are fractions of the **bounding box of the `<text>` element**. `x1="0" x2="1"` runs the gradient from the left edge of the word to its right edge.
+4. Because the box belongs to the whole `<text>` element, the gradient runs **once across the whole word**, not once per letter. Change "Gradient" to a longer word and the same sweep stretches to fit it.
+5. A different direction is just a different vector: `x2="0" y2="1"` gives a top-to-bottom gradient, and `x2="1" y2="1"` a diagonal one.
+
+<RainbowDivider />
+
+## Variant: One Gradient Across Several Lines
+
+Each `<text>` element has its own bounding box, so with `objectBoundingBox` every line gets the full indigo-to-amber sweep, whatever its length. To make several lines share one continuous gradient, switch to `gradientUnits="userSpaceOnUse"` and give the vector in the SVG's own coordinates:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 120" width="360" height="144" role="img" aria-label="Design Systems">
+    <defs>
+      <linearGradient id="sgt-shared" gradientUnits="userSpaceOnUse" x1="40" y1="10" x2="260" y2="110">
+        <stop offset="0" stop-color="#6366f1" />
+        <stop offset="0.5" stop-color="#ec4899" />
+        <stop offset="1" stop-color="#f59e0b" />
+      </linearGradient>
+    </defs>
+    <text x="150" y="52" font-size="40" font-weight="800" text-anchor="middle" fill="url(#sgt-shared)">Design</text>
+    <text x="150" y="98" font-size="40" font-weight="800" text-anchor="middle" fill="url(#sgt-shared)">Systems</text>
+  </svg>
+`}
+</SvgSnippet>
+
+Now the colour depends on where a letter sits in the SVG, not on which line it's in, so the gradient flows diagonally from the top-left of "Design" to the bottom-right of "Systems". The trade-off is that the vector no longer adjusts itself: if the text gets longer or moves, update `x1`/`y1`/`x2`/`y2` to match.
+
+<RainbowDivider />
+
+## Example Usage
+
+For theming, set the stop colours through custom properties. A `<stop>` inherits from its own ancestors (the gradient, `<defs>` and `<svg>`), not from the text that uses it, so set the properties on the `<svg>`:
+
+<SvgSnippet>
+{`
+  <svg class="sgt-logo" viewBox="0 0 300 80" width="360" height="96" role="img" aria-label="Acme">
+    <style>
+      .sgt-logo {
+        --sgt-start: #14b8a6;
+        --sgt-end: #6366f1;
+      }
+
+      .sgt-logo .sgt-start {
+        stop-color: var(--sgt-start);
+      }
+
+      .sgt-logo .sgt-end {
+        stop-color: var(--sgt-end);
+      }
+    </style>
+    <defs>
+      <linearGradient id="sgt-themed" x1="0" y1="0" x2="1" y2="1">
+        <stop class="sgt-start" offset="0" />
+        <stop class="sgt-end" offset="1" />
+      </linearGradient>
+    </defs>
+    <text x="150" y="58" font-size="52" font-weight="800" text-anchor="middle" fill="url(#sgt-themed) #6366f1">Acme</text>
+  </svg>
+`}
+</SvgSnippet>
+
+Changing `--sgt-start` and `--sgt-end` on `.sgt-logo`, for example in a dark-mode rule or on hover, recolours the gradient without touching the markup. The `#6366f1` after the `url()` is a fallback colour, used if the gradient can't be found.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Logos and wordmarks** delivered as SVG.
+- **Hero headings** inside an illustration or SVG banner.
+- **Chart titles and big numbers** in dashboards drawn with SVG.
+- **Badges and stickers** where the text is part of the artwork.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Bounding box per `<text>`:** with the default `objectBoundingBox`, every `<text>` element gets its own full sweep. Use `userSpaceOnUse` when lines or labels should share one gradient.
+- **The box is the text's, not the glyphs':** the bounding box includes the font's ascent and descent, so the top and bottom of the gradient sit a little above and below the letters. That's mostly noticeable on vertical gradients.
+- **Namespace the gradient id:** ids are global to the page, so two SVGs that both define `#gradient` will both use the first one. If that first SVG is hidden with `display: none`, the gradient can stop rendering in the other one too.
+- **Check contrast at every point:** gradient text has to be readable at its lightest and darkest stops against the background, not just on average.
+- **Forced colours:** in Windows High Contrast mode, browsers may override SVG paint. Add a `@media (forced-colors: active)` rule that sets `fill: CanvasText` on important text, and test it.
+- **Browser support:** gradient fills on SVG text work in every current browser. The fallback colour after `url()` is SVG 1.1 syntax, and works everywhere too.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="How is this different from background-clip: text?">
+  `background-clip: text` is the CSS technique for gradient text in **HTML**: a gradient background is clipped to the
+  letter shapes and the text colour is made transparent. Use it for headings in your page's normal flow. Use an SVG
+  `fill` when the text is already inside an SVG, such as a logo or chart.
+</Details>
+
+<Details summary="Can I do it with a clip-path instead?">
+  Yes. Put the `<text>` inside a `<clipPath>`, then draw a `<rect>` filled with the gradient and give it
+  `clip-path="url(#…)"`. The rectangle only shows through the letter shapes. It's more markup and the text inside a
+  `<clipPath>` isn't rendered as text itself, so it's harder to make accessible. The plain `fill` is simpler, and the
+  clip-path approach is only worth it when several shapes or an animated group need to show through the letters.
+</Details>
+
+<Details summary="Why does every line restart the gradient?">
+  Each line is probably its own `<text>` element, and with the default `objectBoundingBox` each one gets the full
+  gradient across its own bounding box. Switch to `gradientUnits="userSpaceOnUse"` and set the vector in SVG coordinates
+  to share one gradient between them.
+</Details>
+
+<Details summary="Why is my gradient text not showing at all?">
+  The `url(#…)` probably points at an id that doesn't exist, is misspelled, or is defined in an SVG hidden with
+  `display: none`. Check the id, keep it unique, and add a fallback colour after the `url()` so the text is still
+  visible if the gradient fails.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+SVG text takes a gradient like any shape: define a `<linearGradient>` and set `fill="url(#id)"` on the `<text>`. With the default `objectBoundingBox`, the gradient fits each `<text>` element's bounding box, so it runs once across the word and re-fits when the text changes. Switch to `userSpaceOnUse` to share one gradient across several lines, and use CSS `background-clip: text` for HTML text instead.

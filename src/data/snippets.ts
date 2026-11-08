@@ -514,6 +514,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-gradient-text",
+    title: "SVG Gradient Text with `fill`",
+    excerpt: "Fill SVG text with a gradient through its fill attribute.",
+    description: "Fill SVG text with a linearGradient via fill=\"url(#id)\", how gradientUnits maps it to each text's bounding box, and sharing one gradient across lines.",
+    link: {
+      label: "Read the full post: CSS Gradient Text Guide: Background-Clip, Animation & Advanced Tricks",
+      href: "/post/css/css-gradient-text"
+    },
+    category: ["SVG"],
+    tags: ["svg", "svg-text", "gradient-text", "gradients", "svg-gradient", "linear-gradient", "gradientUnits", "objectBoundingBox", "background-clip", "typography", "text-effects", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-gradient-text/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a bold word filled with a glowing gradient flowing from indigo through pink to amber.",
+      caption: "A word filled with an indigo, pink and amber SVG gradient."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
