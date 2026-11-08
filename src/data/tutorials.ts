@@ -621,6 +621,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "regexp-escape-and-modifiers",
+    title: "Safer Dynamic Regex: `RegExp.escape()`, Modifiers and Duplicate Named Groups",
+    excerpt: "Escape user input, scope flags and reuse group names in regex.",
+    description: "Build regular expressions from user input safely with RegExp.escape(), apply i, m and s to part of a pattern with (?i:...) modifiers, and reuse names with duplicate named capture groups.",
+    category: ["JavaScript"],
+    tags: ["javascript", "regex", "es2025", "secure-coding", "feature-detection", "transpilation", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/regexp-escape-and-modifiers/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A search term containing regex syntax passed through RegExp.escape() into a pattern, beside a (?i:...) modifier group and a date pattern with duplicate named groups.",
+      caption: "User input escaped into a literal pattern, flags scoped to one group, and two date formats sharing group names."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

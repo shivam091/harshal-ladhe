@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RegExp.escape() and Modifiers Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Searching with a Pattern Built from User Input</h1>
+        <p>Type a search term and every match in the text is highlighted. With <strong>Escape input</strong> off, the term goes into <code>new RegExp()</code> as it is, so <code>.</code>, <code>+</code>, <code>(</code> and <code>*</code> act as regex syntax. Turn it on and <code>RegExp.escape()</code> makes them literal. Below that, try inline modifiers and duplicate named groups on your own test strings.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support everything this playground uses. <code>RegExp.escape()</code> needs Chrome and Edge 136, Firefox 134, Safari 18.2 or Node 24; inline modifiers need Chrome and Edge 125, Firefox 132, Safari 26 or Node 23; duplicate named groups need Chrome and Edge 125, Firefox 129, Safari 17 or Node 23.</p>
+
+      <fieldset class="control-group">
+        <legend>Search</legend>
+        <div class="field">
+          <label for="term">Search term</label>
+          <input type="text" id="term" value="1.5" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="presets" id="presets" aria-label="Example search terms"></div>
+        <label class="checkbox-field">
+          <input type="checkbox" id="escape-toggle" checked>
+          Escape input with <code>RegExp.escape()</code>
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" id="case-toggle">
+          Ignore case (<code>i</code> flag)
+        </label>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Text being searched">
+        <p class="haystack" id="haystack"></p>
+      </section>
+
+      <output class="readout" id="search-readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Modifiers and duplicate named groups</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label for="pattern-select">Pattern</label>
+            <select id="pattern-select"></select>
+          </div>
+          <div class="field field--full">
+            <label for="subject">Test string</label>
+            <input type="text" id="subject" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+        <p class="hint" id="pattern-hint"></p>
+      </fieldset>
+
+      <output class="readout" id="pattern-readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

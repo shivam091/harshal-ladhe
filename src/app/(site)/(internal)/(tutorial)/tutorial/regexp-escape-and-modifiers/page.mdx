@@ -1,0 +1,474 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("regexp-escape-and-modifiers");
+
+## Introduction
+
+Regular expressions get awkward the moment part of the pattern isn't known in advance. A search box, a list of
+banned words or a file extension from a config file all end up inside `new RegExp()`, and any `.`, `+` or `(` in them
+is read as pattern syntax, not as text. The usual fix was a hand-copied escaping function, and everyone's version
+was slightly different.
+
+ES2025 added three features that make dynamic and complex patterns safer to write:
+
+- **`RegExp.escape()`** turns any string into a pattern that matches that string literally.
+- **Pattern modifiers** switch the `i`, `m` and `s` flags on or off for part of a pattern, with `(?i:...)`.
+- **Duplicate named capture groups** let different alternatives reuse a group name, so one pattern can read several
+  formats into the same `groups` object.
+
+This tutorial covers each one, what it changes in practice, and the edge cases worth knowing before you rely on it.
+
+<RainbowDivider />
+
+## The Problem with Building Patterns from Strings
+
+Suppose a page lets readers search an article, and the search highlights every match. The obvious version passes the
+search term straight to `new RegExp()`:
+
+<CodeBlock language="js">
+{`
+  function findAll(text, term) {
+    return text.match(new RegExp(term, "gi")) ?? [];
+  }
+
+  findAll("Version 1.5, then 105", "1.5");  // ["1.5", "105"]: "." matches any character
+  findAll("I write c++", "c++");            // SyntaxError: Nothing to repeat
+  findAll("Costs $5.00", "$5.00");          // []: "$" means "end of input"
+`}
+</CodeBlock>
+
+None of these are rare inputs. Prices, version numbers, programming languages, file globs and anything in brackets
+all contain regex syntax. Depending on the input, the naive version either matches too much, matches nothing, or
+throws. If the pattern is built from data an attacker controls, it can also be written to take a very long time to
+run, which is a denial-of-service risk on a server.
+
+<RainbowDivider />
+
+## `RegExp.escape()`
+
+`RegExp.escape()` takes a string and returns a new string that, used as a pattern, matches exactly the original
+text:
+
+<CodeBlock language="js">
+{`
+  RegExp.escape("c++");          // \\x63\\+\\+
+  RegExp.escape("$5.00");        // \\$5\\.00
+  RegExp.escape("(was $15)");    // \\(was\\x20\\$15\\)
+
+  function findAll(text, term) {
+    return text.match(new RegExp(RegExp.escape(term), "gi")) ?? [];
+  }
+
+  findAll("Version 1.5, then 105", "1.5");  // ["1.5"]
+  findAll("I write c++", "c++");            // ["c++"]
+  findAll("Costs $5.00", "$5.00");          // ["$5.00"]
+`}
+</CodeBlock>
+
+It's a static method on the `RegExp` constructor, and it only accepts strings. `RegExp.escape(5)` throws a
+`TypeError` instead of converting the number, so call `String()` first if the value might not be a string.
+
+### What It Escapes
+
+The output of `RegExp.escape()` looks busier than the escaping functions you may have seen before. That's
+intentional. It escapes four groups of characters, in three different ways:
+
+| Characters | Escaped as | Example |
+| --- | --- | --- |
+| Pattern syntax: `^ $ \ . * + ? ( ) [ ] { } \| /` | A backslash in front | `.` becomes `\.` |
+| Other ASCII punctuation: `, - = < > # & ! % : ; @ ~ ' "` and the backtick | A `\x` hex escape | `-` becomes `\x2d` |
+| Whitespace and line terminators | `\t`, `\n`, `\v`, `\f`, `\r`, or a `\x`/`\u` escape | a space becomes `\x20` |
+| A digit or ASCII letter, **only as the first character** | A `\x` hex escape | `1.5` becomes `\x31\.5` |
+
+Everything else, including `_`, letters after the first character, and non-ASCII characters such as `é` or emoji, is
+left as it is:
+
+<CodeBlock language="js">
+{`
+  RegExp.escape("hello world");  // \\x68ello\\x20world
+  RegExp.escape("a-b");          // \\x61\\x2db
+  RegExp.escape("_id");          // _id
+  RegExp.escape("café");         // \\x63afé
+`}
+</CodeBlock>
+
+### Why the First Character Is Escaped
+
+Escaping a leading letter or digit looks unnecessary, until you put the escaped text right after something in the
+pattern that's waiting for more characters. A backreference like `\1` followed by a digit becomes a different escape,
+and `\c` followed by a letter becomes a control character:
+
+<CodeBlock language="js">
+{`
+  const userInput = "0";
+
+  // Unescaped: "\\1" + "0" is read as "\\10", an octal escape for a backspace character
+  new RegExp("(a)\\\\1" + userInput).test("aa0");                      // false
+
+  // Escaped: "\\1" + "\\x30" is a backreference followed by a literal "0"
+  new RegExp("(a)\\\\1" + RegExp.escape(userInput)).test("aa0");       // true
+
+  // "\\c" + "J" would be a control character (a line feed); "\\c" + "\\x4a" is not
+  new RegExp("\\\\c" + RegExp.escape("J")).test("\\n");                 // false
+`}
+</CodeBlock>
+
+Escaping the first character as `\x..` means the result can be appended anywhere a pattern can continue, without
+looking at what came before it. The same reasoning covers the punctuation: in a `v`-flag character class, pairs such as
+`&&` and `--` are operators, and `-` makes a range, so writing them as hex escapes keeps them literal there too.
+
+<Info title="It's for patterns, not replacement strings">
+  `RegExp.escape()` makes text safe to use inside a **pattern**. It doesn't make text safe to use as the replacement
+  argument of `replace()`, where `$&`, `$1` and `$<name>` have their own meaning. Pass a function as the replacement
+  instead, as in the highlighter below.
+</Info>
+
+<RainbowDivider />
+
+## Building Patterns from User Input
+
+With escaping handled, a dynamic pattern becomes ordinary string building: escape the parts that came from data, and
+write the regex syntax around them yourself.
+
+### Highlighting Search Matches
+
+<CodeBlock language="js">
+{`
+  function highlight(text, term) {
+    if (!term) return text;
+    const pattern = new RegExp(RegExp.escape(term), "gi");
+    return text.replace(pattern, (match) => \`<mark>\${match}</mark>\`);
+  }
+
+  highlight("Costs $5.00 or $5.50", "$5.00");
+  // "Costs <mark>$5.00</mark> or $5.50"
+`}
+</CodeBlock>
+
+The replacement is a function, so a `$` in the matched text is inserted as it is. If `text` came from users, escape it
+for HTML, or build the result with DOM nodes, before inserting it into the page. `RegExp.escape()` protects the
+pattern, not the HTML.
+
+### Matching Any of Several Words
+
+To match any word from a list, escape each one and join them with `|` inside a non-capturing group:
+
+<CodeBlock language="js">
+{`
+  const languages = ["c++", "node.js", "f#"];
+  const pattern = new RegExp(\`(?:\${languages.map(RegExp.escape).join("|")})\`, "gi");
+
+  "I use Node.js, C++ and F#".match(pattern);  // ["Node.js", "C++", "F#"]
+`}
+</CodeBlock>
+
+`RegExp.escape()` takes a single argument, so it can be passed straight to `map()` without the index sneaking in.
+
+### Anchoring a Literal Inside a Larger Pattern
+
+<CodeBlock language="js">
+{`
+  const hasExtension = (ext) => new RegExp(\`\\\\.\${RegExp.escape(ext)}$\`, "i");
+
+  hasExtension("tar.gz").test("backup.TAR.GZ");  // true
+  hasExtension("tar.gz").test("backup.tarxgz");  // false: the "." in "tar.gz" is literal
+`}
+</CodeBlock>
+
+The `\\.` and `$` are syntax you wrote on purpose; only the extension is escaped. Remember that inside a template
+literal or string, a regex backslash has to be written twice.
+
+<RainbowDivider />
+
+## Pattern Modifiers: Flags for Part of a Pattern
+
+Flags such as `i` (ignore case), `m` (multiline) and `s` (dotAll) have always applied to the whole regular expression.
+If one part needed to ignore case and the rest didn't, the workarounds were character classes like `[Hh][Ee][Ll]...` or
+two separate patterns.
+
+**Pattern modifiers** set flags for a single group. The syntax extends the non-capturing group `(?:...)` with flags
+between the `?` and the `:`:
+
+<CodeBlock language="js">
+{`
+  (?i:...)     // turn i on inside the group
+  (?-i:...)    // turn i off inside the group
+  (?m-s:...)   // turn m on and s off inside the group
+`}
+</CodeBlock>
+
+### Turning a Flag On
+
+<CodeBlock language="js">
+{`
+  const header = /^(?i:content-type):\\s*(?<type>[a-z]+\\/[a-z+.-]+)$/;
+
+  header.exec("Content-Type: application/json").groups.type;  // "application/json"
+  header.exec("CONTENT-TYPE: application/json").groups.type;  // "application/json"
+  header.exec("Content-Type: APPLICATION/JSON");              // null
+`}
+</CodeBlock>
+
+HTTP header names are case-insensitive but this pattern wants the value in lowercase, so only the name is wrapped in
+`(?i:...)`.
+
+### Turning a Flag Off
+
+The reverse is useful when most of a pattern should ignore case but one part must not:
+
+<CodeBlock language="js">
+{`
+  const ticket = /(?-i:ID)-\\d+ (?:open|closed)/i;
+
+  ticket.test("ID-42 OPEN");  // true
+  ticket.test("id-42 open");  // false: "ID" must be uppercase
+`}
+</CodeBlock>
+
+### Multiline and dotAll
+
+`m` changes `^` and `$` to match at line breaks, and `s` lets `.` match line breaks. Modifiers let each part of a
+pattern choose:
+
+<CodeBlock language="js">
+{`
+  /^(?m:total$)/.test("total\\nsubtotal");     // true: "$" matches before the line break
+  /^total$/.test("total\\nsubtotal");          // false
+
+  /(?s:<b>.+<\\/b>)/.test("<b>bold\\ntext</b>");  // true: "." matches the line break
+  /<b>.+<\\/b>/.test("<b>bold\\ntext</b>");       // false
+`}
+</CodeBlock>
+
+### The Rules
+
+- **Only `i`, `m` and `s` are allowed.** `g`, `y`, `d`, `u` and `v` change how the whole regex runs or is parsed, so
+  `(?g:...)` or `(?u:...)` is a `SyntaxError`.
+- **Each flag may appear once per group.** `(?ii:...)` and `(?i-i:...)` are both errors, and so is `(?-:...)` with no
+  flags at all.
+- **There's no colon-less form.** Some other regex engines accept `(?i)` to change flags for the rest of the pattern.
+  JavaScript doesn't: modifiers always wrap a group.
+- **The regex's own flags don't change.** `/(?i:a)b/.flags` is `""`, and `/(?i:a)b/.ignoreCase` is `false`.
+- **Groups nest.** The innermost group's setting wins, so `/(?i:a(?-i:b)c)/` matches `AbC` but not `ABC`.
+
+<CodeBlock language="js">
+{`
+  new RegExp("(?g:a)");     // SyntaxError: Invalid group
+  new RegExp("(?ii:a)");    // SyntaxError: Repeated flag in flag group
+  new RegExp("(?i)a");      // SyntaxError: Invalid group
+  new RegExp("(?ims:a)");   // fine
+`}
+</CodeBlock>
+
+The exact wording of each error depends on the engine; those messages are from V8 (Chrome, Edge and Node).
+
+### Modifiers with Dynamic Patterns
+
+Modifiers combine well with `RegExp.escape()`. A command parser can accept a keyword in any case while keeping the
+rest of the pattern strict:
+
+<CodeBlock language="js">
+{`
+  function commandPattern(keyword) {
+    return new RegExp(\`^(?i:\${RegExp.escape(keyword)}) (?<arg>[A-Z]\\\\w*)$\`);
+  }
+
+  commandPattern("select").exec("SELECT Name").groups.arg;  // "Name"
+  commandPattern("select").exec("select name");             // null: the argument must start uppercase
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Duplicate Named Capture Groups
+
+Named groups such as `(?<year>\d{4})` make matches readable, but until ES2025 each name could appear only once per
+pattern. To accept a date as either `2025-06-26` or `26/06/2025`, you had to give each format its own names and check
+which ones matched:
+
+<CodeBlock language="js">
+{`
+  // Before: different names for each format
+  const old = /(?<isoYear>\\d{4})-(?<isoMonth>\\d{2})-(?<isoDay>\\d{2})|(?<day>\\d{2})\\/(?<month>\\d{2})\\/(?<year>\\d{4})/;
+
+  const { groups } = old.exec("26/06/2025");
+  const year = groups.isoYear ?? groups.year;
+`}
+</CodeBlock>
+
+ES2025 allows the same name in **different alternatives** of a `|`, because only one of them can take part in a
+match:
+
+<CodeBlock language="js">
+{`
+  const date = /(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})|(?<day>\\d{2})\\/(?<month>\\d{2})\\/(?<year>\\d{4})/;
+
+  date.exec("2025-06-26").groups;  // { year: "2025", month: "06", day: "26" }
+  date.exec("26/06/2025").groups;  // { year: "2025", month: "06", day: "26" }
+
+  "Due 26/06/2025".replace(date, "$<year>-$<month>-$<day>");  // "Due 2025-06-26"
+`}
+</CodeBlock>
+
+Whichever alternative matched fills `groups`, so the code that reads it doesn't care which format came in.
+
+### Backreferences Follow the Group That Matched
+
+A `\k<name>` backreference refers to the group with that name in the alternative that matched. That makes it possible
+to match text wrapped in either kind of quote:
+
+<CodeBlock language="js">
+{`
+  const quoted = /(?<q>")(?<text>[^"]*)\\k<q>|(?<q>')(?<text>[^']*)\\k<q>/;
+
+  quoted.exec(\`say "hi"\`).groups.text;   // "hi"
+  quoted.exec(\`say 'yo'\`).groups.text;   // "yo"
+`}
+</CodeBlock>
+
+### The Rules
+
+- **Same name, different alternatives only.** `/(?<a>x)(?<a>y)/` is still a `SyntaxError`, because both groups could
+  match at once. The same goes for `/(?<a>x)|(?:(?<a>y)(?<a>z))/`: two of those groups are in the same alternative.
+- **Each group still has its own number.** In the date pattern above, `match[1]` to `match[3]` belong to the first
+  format and `match[4]` to `match[6]` to the second. The groups that didn't take part are `undefined`. Use
+  `match.groups` rather than numbers when names are duplicated.
+
+<RainbowDivider />
+
+## Try It Live
+
+Type into **Search term**, or click one of the examples, and every match in the text is highlighted. Untick **Escape
+input** to pass the term to `new RegExp()` unchanged: `1.5` also matches `105`, `(c)` matches every `c`, `$5.00`
+matches nothing, and `c++`, `*.js` and `(was` throw a `SyntaxError`. The readout shows the pattern that was built.
+
+The second panel runs the modifier and duplicate group examples from this page. Pick a pattern, edit the test string
+(type `\n` for a line break) and the readout shows the match and its groups.
+
+<Sandbox slug="regexp-escape-and-modifiers" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+All three features are part of ES2025, but they shipped at different times:
+
+| Feature | Chrome / Edge | Firefox | Safari | Node |
+| --- | --- | --- | --- | --- |
+| `RegExp.escape()` | 136 | 134 | 18.2 | 24 |
+| Pattern modifiers `(?i:...)` | 125 | 132 | 26 | 23 |
+| Duplicate named capture groups | 125 | 129 | 17 | 23 |
+
+### `RegExp.escape()` Fallback
+
+`RegExp.escape()` is a method, so it can be detected and replaced:
+
+<CodeBlock language="js">
+{`
+  const escapeRegExp =
+    typeof RegExp.escape === "function"
+      ? RegExp.escape
+      : (string) => string.replace(/[\\\\^$.*+?()[\\]{}|\\/]/g, "\\\\$&");
+`}
+</CodeBlock>
+
+The fallback escapes the pattern syntax characters, which is enough for the common case of putting user text in a
+pattern on its own or between your own syntax. It doesn't escape a leading digit or letter, so don't append its output
+straight after a backreference or `\c`. It also leaves `-` unescaped, because `\-` outside a character class is a
+`SyntaxError` with the `u` or `v` flag. Don't use it inside `[...]`. For full compatibility, `core-js` includes a
+polyfill for `RegExp.escape()`.
+
+The [Escape User Input for a Regex with `RegExp.escape()`](/snippet/regexp-escape-user-input) snippet packages this
+fallback with a search highlighter.
+
+### Modifiers and Duplicate Groups Can't Be Polyfilled
+
+These two are new **syntax**, not new methods. In an engine that doesn't support them, a regex literal containing
+`(?i:...)` or a repeated group name is a `SyntaxError` when the script is parsed, so the whole file fails to run,
+not just the line with the pattern. A runtime polyfill can't help because the file never gets that far.
+
+Your options are:
+
+- **Transpile.** Babel has plugins for both: `@babel/plugin-transform-regexp-modifiers` and
+  `@babel/plugin-transform-duplicate-named-capturing-groups-regex`. They rewrite the pattern into older syntax.
+- **Detect at runtime** by compiling a pattern string with `new RegExp()`, which throws a catchable error instead of
+  breaking the file:
+
+<CodeBlock language="js">
+{`
+  function supportsRegExpSyntax(source) {
+    try {
+      new RegExp(source);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const hasModifiers = supportsRegExpSyntax("(?i:a)");
+  const hasDuplicateGroups = supportsRegExpSyntax("(?<a>x)|(?<a>y)");
+`}
+</CodeBlock>
+
+Then build the newer patterns from strings with `new RegExp()` when the check passes, and use an older pattern when
+it doesn't. The playground above works this way.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Escaping the Whole Pattern
+
+`RegExp.escape()` is for the parts that came from data. `new RegExp(RegExp.escape("\\d+"))` matches the text `\d+`,
+not a number. Escape the user's term, then add your own syntax around it.
+
+### 2. Word Boundaries Around Punctuation
+
+`\b` sits between a word character and a non-word character, so
+`new RegExp("\\b" + RegExp.escape("c++") + "\\b")` doesn't match `"I like c++ a lot"`: there's no word boundary
+between `+` and a space. When the term can start or end with punctuation, use lookarounds such as `(?<!\w)` and
+`(?!\w)` instead of `\b`.
+
+### 3. Using It on the Replacement String
+
+`$&` and `$1` in a replacement string are expanded, whatever `RegExp.escape()` did to the pattern. Pass a function to
+`replace()` when the replacement contains data.
+
+### 4. Assuming Escaping Makes a Pattern Fast
+
+An escaped term is literal text, which is safe. The rest of the pattern is still yours: `(a+)+` around an escaped term
+can still backtrack badly on some inputs. Keep the syntax you add simple, especially on a server.
+
+### 5. Writing New Syntax as a Literal in Shared Code
+
+A regex literal with `(?i:...)` or a repeated group name breaks the whole file in an older engine. Transpile it, or
+build it with `new RegExp()` after a feature check.
+
+### 6. Reading Duplicate Groups by Number
+
+With duplicate names, the same name maps to different numbered groups depending on which alternative matched. Read
+`match.groups.year`, not `match[1]`.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- **`RegExp.escape()`:** search and highlight, filters built from a list of words, matching file names or URLs taken
+  from config, and anywhere a string from outside your code ends up in `new RegExp()`
+- **Pattern modifiers:** case-insensitive keywords inside otherwise strict patterns, mixing single-line and multiline
+  anchors, and replacing long `[Aa][Bb]` character classes
+- **Duplicate named groups:** parsing a value that comes in several formats, such as dates, phone numbers or version
+  strings, into one consistent shape
+
+**Reach for something else** when you only need to know whether a string contains another string:
+`text.includes(term)` or `text.toLowerCase().includes(term.toLowerCase())` needs no regex at all.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`RegExp.escape()` turns any string into a literal pattern that's safe to drop anywhere in a larger one, so user input
+can go into `new RegExp()` without matching too much or throwing. Pattern modifiers apply `i`, `m` and `s` to just part
+of a pattern, and duplicate named capture groups let alternatives share names so several formats produce the same
+`groups`. The method can be polyfilled; the two syntax features need a transpiler or a runtime check before you build
+them with `new RegExp()`.

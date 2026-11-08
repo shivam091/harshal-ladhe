@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "regexp-escape-and-modifiers",
+    title: "RegExp.escape() Search and Modifiers Playground",
+    description: "Search a paragraph with a term built into new RegExp(), toggle RegExp.escape() to see 1.5, c++, (c) and $5.00 match too much, nothing or throw without it, then test (?i:...), (?-i:...), (?m:...) and (?s:...) modifiers and a duplicate named group date pattern on your own strings.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "iterator-helpers-lazy-pipelines",
     title: "Lazy Iterator Pipeline vs Eager Arrays",
     description: "Run filter(), map() and take() lazily over an endless source and watch each value travel down the chain and the source close, then run the same steps as array methods and compare values read, callback calls and arrays created, or pull one value at a time with next().",
