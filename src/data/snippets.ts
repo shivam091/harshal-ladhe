@@ -110,6 +110,7 @@ export const snippets: Snippet[] = [
       caption: "Commit dates realigned after a rebase, before and after."
     },
     changelog: [
+      { date: "2026-11-08", change: "Added cross-reference to snippet '`git sync`: Update Your Branch from `main` in One Command'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet 'Git Aliases Worth Adding to Your `~/.gitconfig`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-26", change: "Initial publication." }
@@ -158,6 +159,7 @@ export const snippets: Snippet[] = [
       caption: "Aliases grouped by task, beside a graph log and a one-step fixup."
     },
     changelog: [
+      { date: "2026-11-08", change: "Added cross-reference to snippet '`git sync`: Update Your Branch from `main` in One Command'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git prune-branches`: Delete Merged and Squash-Merged Branches'" },
       { date: "2026-11-08", change: "Initial publication." }
     ]
@@ -182,6 +184,7 @@ export const snippets: Snippet[] = [
       caption: "Merged, rebase-merged and squash-merged branches pruned, with main kept."
     },
     changelog: [
+      { date: "2026-11-08", change: "Added cross-reference to snippet '`git sync`: Update Your Branch from `main` in One Command'" },
       { date: "2026-11-08", change: "Initial publication." }
     ]
   },
