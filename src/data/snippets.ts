@@ -159,6 +159,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "regexp-escape-user-input",
+    title: "Escape User Input for a Regex with `RegExp.escape()`",
+    excerpt: "Escape user input for new RegExp(), with a fallback.",
+    description: "Escape user input before building a regular expression with RegExp.escape(), plus a one-line fallback for older engines and a safe search highlighter.",
+    link: {
+      label: "Read the full tutorial: Safer Dynamic Regex: RegExp.escape(), Modifiers and Duplicate Named Groups",
+      href: "/tutorial/regexp-escape-and-modifiers"
+    },
+    category: ["JavaScript"],
+    tags: ["javascript", "regex", "es2025", "secure-coding", "polyfills", "feature-detection"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/regexp-escape-user-input/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A search box containing c++ and $5.00, escaped by RegExp.escape() and highlighted as literal matches in a paragraph of text.",
+      caption: "Search terms with regex syntax escaped and highlighted literally."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

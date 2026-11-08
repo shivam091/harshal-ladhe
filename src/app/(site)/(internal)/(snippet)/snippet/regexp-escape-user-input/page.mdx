@@ -1,0 +1,171 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("regexp-escape-user-input");
+
+## Introduction
+
+Passing user input straight to `new RegExp()` breaks as soon as the input contains regex syntax. A search for `1.5`
+also matches `105`, a search for `$5.00` matches nothing, and a search for `c++` throws `SyntaxError: Nothing to
+repeat`.
+
+ES2025 added **`RegExp.escape()`**, which turns any string into a pattern that matches it literally. This snippet wraps
+it in an `escapeRegExp()` helper with a small fallback for older engines, plus a search highlighter built on top.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  const escapeRegExp =
+    typeof RegExp.escape === "function"
+      ? RegExp.escape
+      : (string) => string.replace(/[\\\\^$.*+?()[\\]{}|\\/]/g, "\\\\$&");
+
+  function highlightMatches(text, term, { caseSensitive = false } = {}) {
+    if (!term) return [text];
+
+    const pattern = new RegExp(escapeRegExp(String(term)), caseSensitive ? "g" : "gi");
+    const parts = [];
+    let last = 0;
+
+    for (const match of text.matchAll(pattern)) {
+      parts.push(text.slice(last, match.index), { match: match[0] });
+      last = match.index + match[0].length;
+    }
+
+    parts.push(text.slice(last));
+    return parts.filter((part) => part !== "");
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `escapeRegExp` is `RegExp.escape` where it exists. Otherwise it's a one-line replacement that puts a backslash in
+   front of every regex syntax character: `^ $ \ . * + ? ( ) [ ] { } | /`. `$&` in the replacement string means
+   "the character that matched".
+2. `highlightMatches()` escapes the term, so every character in it is matched literally, and adds the `g` flag, plus
+   `i` unless the search should be case-sensitive.
+3. `matchAll()` walks every match. The text between matches is kept as plain strings, and each match becomes a
+   `{ match }` object, so the caller decides how to display it.
+4. Empty strings, which appear when a match sits at the very start or end, are filtered out.
+
+Returning parts instead of an HTML string means the text is never parsed as HTML, so a `<script>` in the text stays
+text.
+
+<RainbowDivider />
+
+## Example Usage
+
+<CodeBlock language="js">
+{`
+  escapeRegExp("$5.00 (USD)");
+  // RegExp.escape: \\$5\\.00\\x20\\(USD\\)
+  // fallback:      \\$5\\.00 \\(USD\\)
+
+  highlightMatches("Version 1.5 replaces 105.", "1.5");
+  // ["Version ", { match: "1.5" }, " replaces 105."]
+
+  highlightMatches("I write C++ and c++", "c++");
+  // ["I write ", { match: "C++" }, " and ", { match: "c++" }]
+`}
+</CodeBlock>
+
+Rendering the parts into the page with DOM nodes:
+
+<CodeBlock language="js">
+{`
+  function renderHighlighted(element, text, term) {
+    element.replaceChildren(
+      ...highlightMatches(text, term).map((part) => {
+        if (typeof part === "string") return document.createTextNode(part);
+        const mark = document.createElement("mark");
+        mark.textContent = part.match;
+        return mark;
+      })
+    );
+  }
+
+  searchInput.addEventListener("input", () => {
+    renderHighlighted(article, articleText, searchInput.value);
+  });
+`}
+</CodeBlock>
+
+The escaped term can also sit inside a larger pattern you write yourself:
+
+<CodeBlock language="js">
+{`
+  const words = ["node.js", "c++", "f#"];
+  const anyWord = new RegExp(\`(?:\${words.map(escapeRegExp).join("|")})\`, "gi");
+
+  "Node.js, C++ and F#".match(anyWord);  // ["Node.js", "C++", "F#"]
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Search-as-you-type highlighting** in articles, documentation and tables.
+- **Filtering lists** by a typed term, where `includes()` isn't enough because you also need a word boundary or a
+  case-insensitive match.
+- **Blocklists and keyword lists** loaded from a file or a database and joined into one pattern.
+- **File and URL matching**, such as building `\.tar\.gz$` from an extension in a config file.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Support:** `RegExp.escape()` is in Chrome and Edge 136, Firefox 134, Safari 18.2 and Node 24. The fallback covers
+  everything older.
+- **The fallback is narrower.** `RegExp.escape()` also writes a leading digit or letter, spaces and punctuation such as
+  `-` and `,` as `\x` escapes, so its output is safe after a backreference like `\1`, after `\c`, and inside a `v`-flag
+  character class. The fallback doesn't, so only use its output as a standalone piece of a pattern, never inside
+  `[...]`.
+- **Why the fallback skips `-`:** `\-` outside a character class is a `SyntaxError` when the pattern has the `u` or `v`
+  flag. Leaving `-` alone keeps the fallback's output valid with every flag.
+- **Strings only:** `RegExp.escape(5)` throws a `TypeError`. The helper calls `String(term)` so numbers work in both
+  versions.
+- **Replacement strings are separate.** Escaping protects the pattern. In `text.replace(pattern, replacement)`, `$&`
+  and `$1` in a replacement string are still expanded, so pass a function when the replacement comes from data.
+- **`\b` and punctuation:** a term that starts or ends with punctuation, like `c++`, has no word boundary next to it.
+  Use `(?<!\w)` and `(?!\w)` around the escaped term instead of `\b`.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does RegExp.escape() turn letters into \x escapes?">
+  Only the first character, and only if it's an ASCII letter or digit. That's so the result can follow anything in a
+  pattern without merging with it. `"\\1" + "0"` would be read as the escape `\10`, and `"\\c" + "J"` as a control
+  character. With `\x30` and `\x4a`, they stay a backreference followed by `0`, and `\c` followed by `J`.
+</Details>
+
+<Details summary="Can I just use the fallback everywhere?">
+  For putting user text into a pattern on its own, yes: it escapes every character that has a meaning there. Prefer the
+  native method where it exists, since it also handles the edge cases above, and drop the fallback once your supported
+  browsers all have `RegExp.escape()`.
+</Details>
+
+<Details summary="Is this enough to stop ReDoS attacks?">
+  It stops the user's text from adding regex syntax, so the user can't write a slow pattern. The syntax you add around
+  the escaped text still matters: keep it simple, and avoid nested quantifiers such as `(a+)+`.
+</Details>
+
+<Details summary="Do I need a regex at all?">
+  Not for a plain "does this contain that" check. `text.toLowerCase().includes(term.toLowerCase())` is simpler. Reach for
+  an escaped regex when you need every match, positions for highlighting, or extra syntax like anchors and lookarounds.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Never pass user input to `new RegExp()` as it is. Escape it with `RegExp.escape()`, fall back to a one-line syntax
+escape for older engines, and build the rest of the pattern around it. For a closer look at what `RegExp.escape()`
+escapes and why, along with ES2025's pattern modifiers and duplicate named groups, see
+[Safer Dynamic Regex: `RegExp.escape()`, Modifiers and Duplicate Named Groups](/tutorial/regexp-escape-and-modifiers).
