@@ -1,0 +1,194 @@
+.playground code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+}
+
+.demo-area {
+  display: flex;
+  justify-content: center;
+}
+
+/* The parent. No container-type: every element is already a style container. */
+.slot {
+  inline-size: 100%;
+  max-inline-size: 20rem;
+}
+
+/* ---------- Default card: what every browser shows, and the fallback ---------- */
+
+.plan {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: var(--pg-surface);
+  border: 0.125rem solid var(--pg-border);
+  transition: padding 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.plan-name {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.badge {
+  display: none;
+  padding-block: 0.125rem;
+  padding-inline: 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #111827;
+}
+
+.price {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.price strong {
+  font-size: 1.5rem;
+}
+
+.was,
+.sold-out-note {
+  display: none;
+}
+
+.was {
+  color: var(--pg-text-muted);
+}
+
+.features {
+  margin: 0;
+  padding-inline-start: 1.125rem;
+  font-size: 0.8125rem;
+  color: var(--pg-text-muted);
+}
+
+.sold-out-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #fca5a5;
+}
+
+.plan-button {
+  padding-block: 0.5rem;
+  font: inherit;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--pg-primary-dark);
+  border: 0;
+  cursor: pointer;
+}
+
+/* ---------- Style queries ---------- */
+
+/*
+  .plan's nearest ancestor is .slot, so these rules read --variant from the slot. Setting --variant on
+  .plan itself does NOT change .plan's own border or background: an element is never its own container.
+*/
+@container style(--variant: featured) {
+  .plan {
+    border-color: #facc15;
+    background: #1f1d12;
+  }
+}
+
+@container style(--variant: sale) {
+  .plan {
+    border-color: #4ade80;
+  }
+}
+
+@container style(--variant: sold-out) {
+  .plan {
+    background: var(--pg-surface-muted);
+    border-style: dashed;
+  }
+}
+
+@container style(--density: compact) {
+  .plan {
+    gap: 0.375rem;
+    padding: 0.75rem;
+  }
+}
+
+/*
+  The rules below style elements INSIDE .plan. Their nearest ancestor is .plan (or .plan-header),
+  which inherits --variant from the slot, or has it set directly when the second checkbox is ticked.
+*/
+
+/* or: one badge rule for two variants */
+@container style(--variant: featured) or style(--variant: sale) {
+  .badge {
+    display: inline-block;
+  }
+}
+
+@container style(--variant: featured) {
+  .badge {
+    background: #facc15;
+  }
+
+  .badge::before {
+    content: "Popular";
+  }
+}
+
+@container style(--variant: sale) {
+  .badge {
+    background: #4ade80;
+  }
+
+  .badge::before {
+    content: "Sale";
+  }
+
+  .was {
+    display: inline;
+  }
+}
+
+@container style(--variant: sold-out) {
+  .sold-out-note {
+    display: block;
+  }
+
+  .plan-button {
+    background: var(--pg-border);
+    color: var(--pg-text-muted);
+    cursor: not-allowed;
+  }
+}
+
+/* Compact cards drop the feature list */
+@container style(--density: compact) {
+  .features {
+    display: none;
+  }
+}
+
+/* not: the hover effect only applies while the plan can still be chosen */
+@container not style(--variant: sold-out) {
+  .plan-button:hover {
+    filter: brightness(1.15);
+  }
+}
+
+/* and: a compact, sold-out card drops the button too */
+@container style(--variant: sold-out) and style(--density: compact) {
+  .plan-button {
+    display: none;
+  }
+}

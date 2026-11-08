@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Container Style Queries Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Card Variants with @container style()</h1>
+        <p>JavaScript only sets <code>--variant</code> and <code>--density</code> on the card's parent. Every visual change comes from <code>@container style(...)</code> rules in the stylesheet.</p>
+      </header>
+
+      <section class="demo-area" aria-label="Card preview">
+        <div class="slot" id="slot">
+          <article class="plan" id="plan">
+            <div class="plan-header">
+              <h2 class="plan-name">Pro plan</h2>
+              <span class="badge" aria-hidden="true"></span>
+            </div>
+            <p class="price"><s class="was">£24</s> <strong>£18</strong> / month</p>
+            <ul class="features">
+              <li>Unlimited projects</li>
+              <li>Priority support</li>
+              <li>Custom domains</li>
+            </ul>
+            <p class="sold-out-note">Sold out. Join the waiting list.</p>
+            <button type="button" class="plan-button">Choose Pro</button>
+          </article>
+        </div>
+      </section>
+
+      <fieldset class="control-group">
+        <legend>--variant</legend>
+        <div class="segmented-control" role="radiogroup" aria-label="Card variant">
+          <label class="segment"><input type="radio" name="variant" value="none" checked><span>None</span></label>
+          <label class="segment"><input type="radio" name="variant" value="featured"><span>featured</span></label>
+          <label class="segment"><input type="radio" name="variant" value="sale"><span>sale</span></label>
+          <label class="segment"><input type="radio" name="variant" value="sold-out"><span>sold-out</span></label>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" id="compact">
+          <span>Set <code>--density: compact</code></span>
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" id="on-card">
+          <span>Set the properties on the card itself, not its parent</span>
+        </label>
+
+        <p class="tip" id="support-tip" hidden>Your browser doesn't support container style queries yet (Chrome and Edge 111, Firefox 151, Safari 18), so the card stays in its default style whatever you pick.</p>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

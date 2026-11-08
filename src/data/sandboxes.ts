@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-container-style-queries",
+    title: "Container Style Queries Playground",
+    description: "A pricing card whose featured, sale and sold-out variants and compact density come entirely from @container style() rules: set --variant and --density on its parent, or move them onto the card itself to see that an element never queries its own custom properties.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-scope-component-styles",
     title: "CSS @scope Playground",
     description: "Three theme cards nested light, dark, light: switch between descendant selectors, @scope, and @scope with a more specific dark rule to see scope proximity fix the innermost card and specificity override it again, then toggle a to (.content) limit to stop a profile card's styles leaking into its user bio.",

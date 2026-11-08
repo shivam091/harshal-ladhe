@@ -1,0 +1,419 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-container-style-queries");
+
+## Introduction
+
+Most component variants are switched with a class: `.card--featured`, `.card--compact`, `.card--sold-out`. Every
+variant needs a class in the markup, and every child element that changes needs a selector like
+`.card--featured .badge`. Server templates, JavaScript and CSS all have to agree on the class names.
+
+**Container style queries** offer a different switch. Set a custom property such as `--variant: featured` on an
+element, and any descendant can ask about it with `@container style(--variant: featured)`. The variant becomes a value
+that inherits down the tree, instead of a class that every selector has to repeat.
+
+<Info title="Coming from size container queries?">
+  Size queries (`@container (width > 30rem)`) and the setup they need are covered in
+  [CSS Container Queries Deep Dive](/post/css/container-queries-deep-dive), which also introduces style queries
+  briefly. This tutorial goes further into style queries: how the container is chosen, combining conditions,
+  registered properties, fallbacks and how they compare with `if()`.
+</Info>
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .plan-slot {
+    --variant: featured;
+  }
+
+  @container style(--variant: featured) {
+    .plan {
+      border-color: gold;
+    }
+
+    .badge {
+      display: inline-block;
+    }
+  }
+`}
+</CodeBlock>
+
+How to read it:
+
+- **`style(--variant: featured)` is the condition.** It's true when the container's computed value of `--variant` is
+  `featured`.
+- **The rules inside are ordinary style rules.** They can target any element whose container matches, with as many
+  selectors and declarations as you need.
+- **No `container-type` is needed.** That's only required for size queries.
+
+Change `--variant` on `.plan-slot`, from CSS, an inline style or JavaScript, and every rule that depends on it updates.
+
+<RainbowDivider />
+
+## Every Element Is a Style Container
+
+A size query needs an element with `container-type: inline-size` or `size`, because measuring a box requires
+containment. A style query doesn't measure anything, so **every element is a style container by default**.
+
+For an unnamed query, that means the container is simply the **parent element** of the element being styled. The
+browser reads the custom property's computed value there. Because custom properties inherit, that value can come from
+the parent itself or from any element above it:
+
+<CodeBlock language="html">
+{`
+  <main style="--variant: featured">
+    <section>
+      <article class="plan">
+        <span class="badge">Popular</span>
+      </article>
+    </section>
+  </main>
+`}
+</CodeBlock>
+
+Here `.plan` asks `<section>`, and `.badge` asks `.plan`. Neither has `--variant` set directly, but both inherit
+`featured` from `<main>`, so both queries match.
+
+### Named Containers
+
+To query a specific ancestor instead of the parent, give it a `container-name` and name it in the query. Still no
+`container-type` is needed:
+
+<CodeBlock language="css">
+{`
+  .shell {
+    container-name: shell;
+    --tone: warm;
+  }
+
+  /* Reads --tone from the nearest .shell ancestor, however deep .label is */
+  @container shell style(--tone: warm) {
+    .label { color: sienna; }
+  }
+`}
+</CodeBlock>
+
+A name is useful when an element in between overrides the property and you want the outer value, or when the query
+also includes a size condition, as shown in [Combining Conditions](#combining-conditions).
+
+<RainbowDivider />
+
+## The Element Itself Is Never Queried
+
+A container query always asks an **ancestor**, never the element it styles. This is the rule that catches people most
+often:
+
+<CodeBlock language="css">
+{`
+  .plan {
+    --variant: featured;
+  }
+
+  @container style(--variant: featured) {
+    .plan  { border-color: gold; }  /* ❌ Doesn't match: .plan asks its parent, where --variant isn't set */
+    .badge { display: inline-block; }  /* ✅ Matches: .badge asks .plan */
+  }
+`}
+</CodeBlock>
+
+Set the property one level up from the element you want to restyle. In a component, that usually means setting it on
+a wrapper or slot element, or on the component root and styling only its children. The playground below has a
+checkbox that moves the properties from the parent onto the card, so you can watch the card's own border stop
+responding while its children keep working.
+
+<RainbowDivider />
+
+## Try It Live
+
+Choose a `--variant` and toggle `--density: compact`. JavaScript only sets those custom properties on the card's
+parent; the badge, the old price, the sold-out note and the spacing all come from `@container style()` rules. Tick
+**Set the properties on the card itself** to see the rule from the previous section in action.
+
+If your browser doesn't support container style queries, the card stays in its default style and a note says which
+versions do.
+
+<Sandbox slug="css-container-style-queries" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Combining Conditions
+
+Style conditions combine with `and`, `or` and `not`, the same way media query conditions do:
+
+<CodeBlock language="css">
+{`
+  /* or: one rule for two variants */
+  @container style(--variant: featured) or style(--variant: sale) {
+    .badge { display: inline-block; }
+  }
+
+  /* and: both must match */
+  @container style(--variant: sold-out) and style(--density: compact) {
+    .plan-button { display: none; }
+  }
+
+  /* not: everything except one variant */
+  @container not style(--variant: sold-out) {
+    .plan-button:hover { filter: brightness(1.15); }
+  }
+`}
+</CodeBlock>
+
+A single query can also mix a style condition with a size condition. The size part needs a size container, so name
+the container to make sure both parts are asked of the same element:
+
+<CodeBlock language="css">
+{`
+  .panel {
+    container: panel / inline-size;
+    --layout: media;
+  }
+
+  @container panel (width > 30rem) and style(--layout: media) {
+    .panel-body {
+      display: grid;
+      grid-template-columns: 10rem 1fr;
+    }
+  }
+`}
+</CodeBlock>
+
+### Testing Whether a Property Is Set
+
+Leave out the value to ask whether a property has a value at all:
+
+<CodeBlock language="css">
+{`
+  @container style(--accent) {
+    .badge { background: var(--accent); }
+  }
+`}
+</CodeBlock>
+
+`style(--accent)` is true when the computed value is different from the property's initial value. For an unregistered
+custom property, the initial value is "no value", so the query matches as soon as `--accent` is set anywhere above.
+
+<RainbowDivider />
+
+## How Values Are Compared
+
+For an ordinary (unregistered) custom property, the browser compares the value as written, after trimming whitespace.
+`style(--variant: featured)` matches `--variant: featured` and `--variant:   featured  `, but not `--variant: "featured"`
+(a quoted string) or `--variant: Featured` (different case).
+
+### Using Registered `@property` Values
+
+Registering the property with [`@property`](/tutorial/typed-custom-properties-at-property) gives it a type, and that
+changes three things about style queries:
+
+<CodeBlock language="css">
+{`
+  @property --accent {
+    syntax: "<color>";
+    inherits: true;
+    initial-value: black;
+  }
+
+  /* Matches --accent: red, --accent: #ff0000 and --accent: rgb(255 0 0) */
+  @container style(--accent: red) {
+    .badge { color: white; }
+  }
+`}
+</CodeBlock>
+
+- **Values are compared as computed values of that type.** Both sides are computed with the property's syntax, so
+  `red`, `#ff0000` and `rgb(255 0 0)` all match `style(--accent: red)`. An unregistered property would only match the
+  exact text `red`.
+- **The boolean form compares against `initial-value`.** With `initial-value: black`, `style(--accent)` is false when
+  `--accent` is `black`, even if it was set explicitly.
+- **`inherits: false` limits the query to the direct parent.** A non-inherited property only has the set value on the
+  element where it's declared, so only that element's children see it. A grandchild's parent has the initial value.
+
+That last point can be useful: a non-inherited property gives you a variant that applies to one level only and doesn't
+leak into nested components further down.
+
+<RainbowDivider />
+
+## Compared with Class Toggles and Data Attributes
+
+<CodeBlock language="css">
+{`
+  /* Class toggle */
+  .plan--featured { border-color: gold; }
+  .plan--featured .badge { display: inline-block; }
+
+  /* Data attribute */
+  [data-variant="featured"] .plan { border-color: gold; }
+  [data-variant="featured"] .badge { display: inline-block; }
+
+  /* Style query */
+  @container style(--variant: featured) {
+    .plan { border-color: gold; }
+    .badge { display: inline-block; }
+  }
+`}
+</CodeBlock>
+
+All three work, and classes or data attributes are still a good choice. Style queries have three advantages:
+
+- **The value can come from CSS.** A media query, a parent theme or a `:has()` rule can set `--variant`, which a class
+  can't do without JavaScript. For example, `.plan-slot:has(.plan[data-stock="0"]) { --variant: sold-out; }`.
+- **Inheritance does the work.** Set `--density: compact` on a whole sidebar and every card inside it adapts,
+  without adding a class to each card.
+- **Selectors don't grow.** `.badge` keeps specificity (0,1,0) inside the query, while `.plan--featured .badge`
+  is (0,2,0), and the gap grows with each combined variant.
+
+The trade-off is that a class or attribute is visible in the DOM and easy to select from JavaScript and tests, and
+`[data-variant]` selectors work in every browser. A custom property is less visible: you have to check computed styles
+in DevTools to see why a rule matched.
+
+<RainbowDivider />
+
+## Compared with `if()`
+
+The [`if()` function](/tutorial/css-if-conditional-values) has its own `style()` test, inside a single declaration:
+
+<CodeBlock language="css">
+{`
+  .badge {
+    background: if(style(--variant: sale): #4ade80; else: #facc15);
+  }
+`}
+</CodeBlock>
+
+| | `@container style()` | `if(style())` |
+| --- | --- | --- |
+| Changes | Whole rules: many selectors and declarations | One value in one declaration |
+| Reads the property from | The container (an ancestor) | The element being styled |
+| Can style the element that sets the property | No | Yes |
+| Browser support | Chrome and Edge 111, Firefox 151, Safari 18 | Chrome and Edge 137 only |
+
+`if()` is handy for a single value, and it can read a property on the element itself. For anything cross-browser, or
+for switching several properties at once, style queries are the one to use today.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+Container style queries for custom properties are supported in Chrome and Edge 111, Firefox 151 and Safari 18. They
+became Baseline newly available in May 2026, when Firefox 151 shipped. Two related parts are not ready:
+
+- **Querying standard properties**, such as `style(color: red)` or `style(display: flex)`, is in the specification but
+  not supported by any browser. Query a custom property instead.
+- **Safari doesn't treat the root `<html>` element as a container.** The only element whose parent is `<html>` is
+  `<body>` (and `<head>`), so a style query rule that targets `<body>` itself won't match in Safari. Rules for
+  elements inside `<body>` are fine, because `<body>` inherits any custom property set on `:root`.
+
+### Feature Detection
+
+`@supports` can't test container queries. `@supports at-rule(@container)` only tells you the at-rule exists (and
+`at-rule()` itself is only in Chrome 148 and Firefox 157 so far), not whether style queries work. The safe approach
+is to **make the default style complete on its own**: a browser without style query support ignores the whole
+`@container style()` block, and the component keeps its base appearance.
+
+If you need to know in JavaScript, for example to add a class-based fallback, probe it directly:
+
+<CodeBlock language="js">
+{`
+  function supportsStyleQueries() {
+    const style = document.createElement("style");
+    style.textContent = "@container style(--sq-probe: 1) { .sq-probe-child { order: 7; } }";
+
+    const parent = document.createElement("div");
+    parent.style.setProperty("--sq-probe", "1");
+    const child = document.createElement("div");
+    child.className = "sq-probe-child";
+    parent.append(child);
+
+    document.head.append(style);
+    document.body.append(parent);
+    const supported = getComputedStyle(child).order === "7";
+    style.remove();
+    parent.remove();
+    return supported;
+  }
+
+  supportsStyleQueries(); // true in Chrome 111+, Firefox 151+ and Safari 18+
+`}
+</CodeBlock>
+
+The playground uses this function to show its support note.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Setting the Property on the Element You Want to Change
+
+An element never queries itself. If `.plan` sets `--variant`, rules for `.plan` inside the query don't match; only its
+descendants' rules do. Move the property one level up.
+
+### 2. Adding `container-type` Out of Habit
+
+`container-type: inline-size` isn't needed for style queries, and it applies size containment: the element no longer
+sizes itself from its content in the inline direction, which can collapse or reflow a layout unexpectedly. Add it only
+when you also need size queries.
+
+### 3. Values That Look the Same but Don't Match
+
+Unregistered values are compared as text. `"featured"` (quoted) isn't `featured`, and `Featured` isn't `featured`.
+Register the property with `@property` if you want values compared by type, such as colours or lengths.
+
+### 4. An Inner Element Overriding the Value
+
+Because the unnamed container is the parent, a nested component that sets its own `--variant` changes the answer for
+everything inside it. That's usually what you want. When it isn't, query a named container, or register the property
+with `inherits: false`. To keep a component's *selectors* from reaching into nested components, see
+[`@scope`: Component-Level Style Isolation](/tutorial/css-scope-component-styles).
+
+### 5. Querying a Standard Property
+
+`@container style(display: grid)` isn't supported in any browser yet, so it never matches. Only custom properties
+work, so mirror the state you care about into one, such as `--layout: grid`.
+
+### 6. Relying on `:root` in Safari
+
+Safari can't use `<html>` as a container, so `:root { --theme: dark; }` with a style query rule for `body` won't
+match there. Rules for elements inside `<body>` are fine, because their parent inherits the value.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Component variants (`featured`, `sale`, `danger`) chosen by a parent, a layout region or a template
+- Density or size modes (`--density: compact`) set once on a sidebar, table or toolbar and inherited by everything in it
+- Theme switches that change several properties and child elements at once, where `light-dark()` or a single custom
+  property swap isn't enough
+- Variants driven by CSS-only state, such as `:has()`, a media query or a parent's theme, that would otherwise need
+  JavaScript to set a class
+
+**Reach for something else** when the element must restyle itself from its own property (`if()`, or a class), when the
+condition is about size (a size container query), or when the state needs to be visible in the DOM for tests and
+scripts (a data attribute).
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Do style queries need container-type?">
+  No. Every element is a style container, so `@container style()` works without any setup. `container-type` is only
+  needed for size queries, and `container-name` only when you want to query a specific ancestor.
+</Details>
+
+<Details summary="Can I transition between variants?">
+  Yes. When the query starts or stops matching, the affected properties change like any other style change, so a
+  `transition` on `border-color` or `padding` runs as normal. The playground's card does this.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Container style queries let a custom property on an ancestor switch whole sets of rules: variants, density modes and
+themes, without a class per state. Every element is a style container, the parent is asked by default, and the element
+itself is never queried, so set the property one level up. Combine conditions with `and`, `or` and `not`, register the
+property when you want typed comparisons, and keep the default style complete so browsers without support still get a
+working component.

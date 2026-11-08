@@ -640,6 +640,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-container-style-queries",
+    title: "Container Style Queries with `@container style()`",
+    excerpt: "Switch component variants from a custom property on a parent.",
+    description: "Use @container style() to restyle a component from a custom property set on an ancestor: why every element is a style container, why the element itself is never queried, combining conditions with and, or and not, typed comparisons with registered @property values, how it compares with class toggles, data attributes and if(), and safe fallbacks when @supports can't detect it.",
+    category: ["CSS"],
+    tags: ["css", "style-queries", "container-queries", "named-containers", "css-custom-properties", "at-property", "component-driven-design", "progressive-enhancement", "css-2027"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-container-style-queries/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A pricing card switching between featured, sale and sold-out variants as a --variant custom property changes on its parent, each variant driven by an @container style() rule.",
+      caption: "One pricing card, four variants, all chosen by a custom property on its parent."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
