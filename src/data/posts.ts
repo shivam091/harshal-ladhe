@@ -760,6 +760,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-06", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "dynamic-code-brand-checks-trusted-types",
+    title: "Trusted Types and `eval`: The Dynamic Code Brand Checks Proposal",
+    excerpt: "How a Stage 3 proposal lets Trusted Types guard eval and new Function.",
+    description: "Why eval and new Function are risky, how CSP and Trusted Types contain them, and how the Stage 3 Dynamic Code Brand Checks proposal closes the gap. Not in ES2027 yet.",
+    category: ["JavaScript"],
+    tags: ["javascript", "trusted-types", "content-security-policy", "xss", "eval", "tc39", "secure-coding", "web-apis", "browser-support"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/dynamic-code-brand-checks-trusted-types/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for the Dynamic Code Brand Checks proposal, showing a plain string blocked at eval while a TrustedScript created by a policy passes through, with a Stage 3 badge.",
+      caption: "A plain string blocked at eval, and a policy-approved TrustedScript let through."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one sits where JavaScript and the web platform meet, which is why it's taken years to untangle. I hope it makes the moving parts clearer, and gives you a reason to try a report-only CSP on your own site this week. I'll update it when the proposal reaches Stage 4. 🔐",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 

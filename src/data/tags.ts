@@ -1198,5 +1198,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "temporal": {
     title: "The Temporal API",
     description: "JavaScript's Temporal API for immutable dates, times, durations and time zones, and how it replaces the `Date` object.",
+  },
+  "trusted-types": {
+    title: "Trusted Types",
+    description: "The Trusted Types API and CSP directives that make DOM and script injection sinks accept only values created by a reviewed policy."
+  },
+  "content-security-policy": {
+    title: "Content Security Policy (CSP)",
+    description: "Using the `Content-Security-Policy` header to control which scripts may load and run, including `script-src`, `'unsafe-eval'` and report-only mode."
+  },
+  "xss": {
+    title: "Cross-Site Scripting (XSS)",
+    description: "How cross-site scripting bugs happen, from DOM sinks to `eval`, and the browser features and coding habits that prevent them."
+  },
+  "eval": {
+    title: "eval and Dynamic Code",
+    description: "Compiling strings into code at runtime with `eval()`, `new Function()` and string timers: the risks and the safer alternatives."
+  },
+  "tc39": {
+    title: "TC39 Proposals",
+    description: "Proposals moving through TC39, the committee that standardises JavaScript: what each stage means and what's coming to the language."
   }
 };
