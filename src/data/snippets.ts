@@ -205,6 +205,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "getorinsertcomputed-lazy-cache",
+    title: "A Lazy Cache with `getOrInsertComputed()`",
+    excerpt: "Memoise results and dedupe requests in one line per cache.",
+    description: "Build lazy caches with ES2026's getOrInsertComputed(): memoised functions, a WeakMap per-object cache, and a promise cache that dedupes requests and evicts failures.",
+    link: {
+      label: "Read the full tutorial: `Map.prototype.getOrInsert()` and `getOrInsertComputed()`: Upsert Without the Boilerplate",
+      href: "/tutorial/map-upsert-getorinsert"
+    },
+    category: ["JavaScript"],
+    tags: ["javascript", "map-upsert", "memoization", "caching", "weakmap", "promises", "es2026"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/getorinsertcomputed-lazy-cache/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Three requests for the same key sharing one cached promise, with a failed promise being evicted from the Map so the next call retries.",
+      caption: "Concurrent calls sharing one cached promise, and a failure evicted for retry."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

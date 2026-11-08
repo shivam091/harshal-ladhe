@@ -1214,5 +1214,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "weakmap": {
     title: "JavaScript WeakMap",
     description: "Attaching data to objects without keeping them alive using `WeakMap`, its key rules, and patterns such as per-object caches."
+  },
+  "memoization": {
+    title: "Memoisation in JavaScript",
+    description: "Caching the results of expensive function calls by their arguments, so each distinct input is computed only once."
+  },
+  "caching": {
+    title: "Client-Side Caching Patterns",
+    description: "In-memory caches in JavaScript: memoised results, per-object caches, deduplicated requests and evicting stale or failed entries."
   }
 };

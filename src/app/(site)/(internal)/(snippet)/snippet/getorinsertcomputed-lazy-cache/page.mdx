@@ -1,0 +1,206 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("getorinsertcomputed-lazy-cache");
+
+## Introduction
+
+A lazy cache does expensive work the first time a key is asked for, and hands back the stored result every time after
+that. ES2026's `Map.prototype.getOrInsertComputed(key, callback)` is exactly that operation: it returns the value
+stored under `key`, and only calls `callback(key)` to compute and store one when the key is missing.
+
+This snippet uses it for three caches: a **memoised function**, a **per-object cache** on a `WeakMap`, and a **promise
+cache** that merges concurrent requests for the same key into one and forgets failures so they can be retried.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  // 1. Memoise a one-argument function: fn runs once per distinct argument.
+  function memoize(fn) {
+    const cache = new Map();
+    return (key) => cache.getOrInsertComputed(key, fn);
+  }
+
+  // 2. Cache a result per object, without keeping the object alive.
+  function cachePerObject(compute) {
+    const cache = new WeakMap();
+    return (object) => cache.getOrInsertComputed(object, compute);
+  }
+
+  // 3. Share one in-flight promise per key, and forget it if it rejects.
+  function cacheRequests(load) {
+    const cache = new Map();
+
+    return (key) =>
+      cache.getOrInsertComputed(key, (missingKey) => {
+        const promise = load(missingKey);
+
+        promise.catch(() => {
+          // Only evict this promise: a retry may already have stored a newer one.
+          if (cache.get(missingKey) === promise) cache.delete(missingKey);
+        });
+
+        return promise;
+      });
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **`getOrInsertComputed()` passes the key to the callback**, so the function being cached can be handed over as it
+   is. `cache.getOrInsertComputed(key, fn)` calls `fn(key)` on a miss and stores what it returns; on a hit, `fn` isn't
+   called at all.
+2. **The return value is what's stored**, so a hit and a miss look the same to the caller: both return the cached
+   value, and there's no separate `has()` check to keep in step with the `set()`.
+3. **The `WeakMap` version** keys the cache by the object itself. The cache holds the object weakly, so when nothing
+   else refers to it, the object and its cached result can both be garbage-collected. Keys must be objects or
+   non-registered symbols.
+4. **The promise cache stores the promise, not its result.** The first call for a key starts `load(key)` and stores the
+   pending promise straight away, so a second call a millisecond later gets the same promise instead of starting a
+   second request.
+5. **Rejected promises are evicted.** Without the `catch`, a failed request would stay in the cache and every later
+   call would get the same rejection forever. The `cache.get(missingKey) === promise` check makes sure only that exact
+   promise is removed, not a newer one stored by a retry.
+6. **If the callback throws, nothing is stored.** `getOrInsertComputed()` only inserts after the callback returns, so
+   a synchronous error leaves the cache untouched and the next call tries again.
+
+<RainbowDivider />
+
+## Example Usage
+
+### Memoising an Expensive Function
+
+<CodeBlock language="js">
+{`
+  let runs = 0;
+
+  const fibonacci = memoize((n) => {
+    runs += 1;
+    return n < 2 ? n : fibonacci(n - 1) + fibonacci(n - 2);
+  });
+
+  fibonacci(40); // 102334155
+  runs;          // 41, once for each n from 0 to 40
+  fibonacci(40); // 102334155, straight from the cache
+  runs;          // 41
+`}
+</CodeBlock>
+
+The recursion calls the memoised `fibonacci`, so each smaller result is cached on its way up. Without the cache, the
+same call runs the function over 300 million times.
+
+### Per-Element Data
+
+<CodeBlock language="js">
+{`
+  const getWordCount = cachePerObject((element) => element.textContent.trim().split(/\\s+/).length);
+
+  for (const article of document.querySelectorAll("article")) {
+    article.dataset.words = getWordCount(article);
+  }
+`}
+</CodeBlock>
+
+When an article is removed from the page and nothing else refers to it, its cached count goes with it, with no cleanup
+code.
+
+### Deduplicating Concurrent Requests
+
+<CodeBlock language="js">
+{`
+  const getUser = cacheRequests(async (id) => {
+    const response = await fetch("/api/users/" + id);
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    return response.json();
+  });
+
+  // Three components ask for the same user at the same time: one request is made.
+  const [a, b, c] = await Promise.all([getUser(42), getUser(42), getUser(42)]);
+  a === b && b === c; // true, the same object
+
+  // If that request had failed, all three would reject, and the next getUser(42) would try again.
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Pure, expensive functions**: parsing, formatting, layout calculations, anything whose output depends only on its
+  input.
+- **Data attached to objects you don't own**, such as DOM nodes or objects from a library, without adding properties to
+  them.
+- **API clients** where several parts of the page ask for the same resource while it's still loading.
+- **Lazy module or asset loading**, caching `import()` promises per name so each module is requested once.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **A `Map` cache never shrinks.** Every distinct key stays until you delete it. For unbounded inputs, such as user
+  search terms, cap the size: a `Map` keeps insertion order, so `cache.delete(cache.keys().next().value)` removes the
+  oldest entry when `cache.size` passes a limit.
+- **One argument only.** `memoize()` uses the first argument as the key. For several arguments, build a key from them
+  (for example `JSON.stringify([a, b])` for primitives), or nest caches with one `getOrInsertComputed()` per argument.
+- **Keys are compared by identity.** Two objects with the same contents are different keys in a `Map`, so
+  `memoize(fn)({ id: 1 })` misses every time. Use a primitive key, such as the id.
+- **`undefined` is a valid cached value.** If the callback returns `undefined`, it's stored, and the callback isn't
+  called again for that key.
+- **Prefer an `async` loader.** It always returns a promise, so every failure is a rejection that the eviction
+  handles. A plain function that throws before returning a promise stores nothing, so it's retried too, but its
+  callers get a thrown error instead of a rejected promise.
+- **Browser support:** `getOrInsertComputed()` is ES2026, supported in Chrome and Edge 145, Firefox 144, Safari 26.2 and
+  Node 26, on both `Map` and `WeakMap`. For older targets, swap each `cache.getOrInsertComputed(key, fn)` for
+  `getOrInsertComputed(cache, key, fn)` using the helper below.
+
+<CodeBlock language="js">
+{`
+  function getOrInsertComputed(map, key, callback) {
+    if (map.has(key)) return map.get(key);
+    const value = callback(key);
+    map.set(key, value);
+    return value;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why not just use getOrInsert(key, fn(key))?">
+  Arguments are evaluated before the call, so `fn(key)` would run every time, even when the result is already
+  cached. `getOrInsertComputed()` takes the function itself and only calls it on a miss, which is the whole point of a
+  cache.
+</Details>
+
+<Details summary="Why cache the promise instead of the resolved value?">
+  If you only stored the value after it resolved, every call made while the first request was still in flight would
+  see an empty cache and start its own request. Storing the promise immediately means everyone who asks during that
+  time shares one request.
+</Details>
+
+<Details summary="Does the WeakMap cache work with string keys?">
+  No. A `WeakMap` only accepts objects and non-registered symbols as keys, and `getOrInsertComputed()` throws a
+  `TypeError` for anything else. Use the `Map` version for strings and numbers.
+</Details>
+
+<Details summary="How do I clear the cache?">
+  Keep a reference to the `Map` and call `cache.clear()` to empty it, or `cache.delete(key)` for one entry. For the
+  `WeakMap` version there's no `clear()`; create a new `WeakMap` instead.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`getOrInsertComputed()` turns a lazy cache into one line: `cache.getOrInsertComputed(key, compute)` returns the stored
+value, and only calls `compute(key)` when there isn't one. Back it with a `WeakMap` to cache per object without leaks,
+and store promises rather than results to merge concurrent requests, evicting them on rejection so failures can be
+retried. For the full method, its edge cases and a playground, see
+[`Map.prototype.getOrInsert()` and `getOrInsertComputed()`](/tutorial/map-upsert-getorinsert).
