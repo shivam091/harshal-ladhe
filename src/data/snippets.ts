@@ -293,6 +293,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-animated-hamburger-icon",
+    title: "Animated SVG Hamburger to Close Icon with aria-expanded",
+    excerpt: "Turn an SVG hamburger icon into a close icon with CSS.",
+    description: "Animate an SVG hamburger icon into a close (✕) icon with CSS keyed off aria-expanded, transform-box: fill-box and a tiny JavaScript toggle.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "icons", "hamburger-menu", "aria-expanded", "css-transitions", "transform", "transform-box", "transform-origin", "microinteractions", "ui-components", "javascript", "prefers-reduced-motion", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-animated-hamburger-icon/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing three-line hamburger icon morphing into a close cross.",
+      caption: "A glowing hamburger icon turning into a close cross."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

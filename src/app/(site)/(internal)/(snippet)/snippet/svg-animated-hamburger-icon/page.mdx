@@ -1,0 +1,194 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-animated-hamburger-icon");
+
+## Introduction
+
+A hamburger menu button usually shows three lines when the menu is closed and a ✕ when it's open. Animating between the two tells people what the button did. In SVG, that's **three `<rect>`s and a few CSS transforms**: the top and bottom bars rotate into a cross, and the middle bar fades out.
+
+The state lives in one place: the button's `aria-expanded` attribute. Screen readers already need it to know whether the menu is open, and CSS can select on it, so the same attribute drives both the accessibility and the animation. The only JavaScript is a one-line toggle.
+
+<RainbowDivider />
+
+## The Code
+
+Both buttons below use the same markup. The second has `aria-expanded="true"`, so it shows the open state:
+
+<SvgSnippet>
+{`
+  <div class="svg-burger-demo">
+    <style>
+      .svg-burger-demo {
+        display: flex;
+        gap: 1.5rem;
+      }
+
+      .svg-burger {
+        display: inline-grid;
+        place-items: center;
+        padding: 0.5rem;
+        border: 0;
+        background: none;
+        color: inherit;
+        cursor: pointer;
+      }
+
+      .svg-burger rect {
+        fill: currentColor;
+        transform-box: fill-box;
+        transform-origin: center;
+        transition: transform 0.3s ease, opacity 0.2s ease;
+      }
+
+      .svg-burger[aria-expanded="true"] .svg-burger-top {
+        transform: translateY(6px) rotate(45deg);
+      }
+
+      .svg-burger[aria-expanded="true"] .svg-burger-middle {
+        opacity: 0;
+      }
+
+      .svg-burger[aria-expanded="true"] .svg-burger-bottom {
+        transform: translateY(-6px) rotate(-45deg);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .svg-burger rect {
+          transition: none;
+        }
+      }
+    </style>
+    <button class="svg-burger" type="button" aria-expanded="false" aria-label="Menu">
+      <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" focusable="false">
+        <rect class="svg-burger-top" x="4" y="5" width="16" height="2" rx="1" />
+        <rect class="svg-burger-middle" x="4" y="11" width="16" height="2" rx="1" />
+        <rect class="svg-burger-bottom" x="4" y="17" width="16" height="2" rx="1" />
+      </svg>
+    </button>
+    <button class="svg-burger" type="button" aria-expanded="true" aria-label="Menu">
+      <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" focusable="false">
+        <rect class="svg-burger-top" x="4" y="5" width="16" height="2" rx="1" />
+        <rect class="svg-burger-middle" x="4" y="11" width="16" height="2" rx="1" />
+        <rect class="svg-burger-bottom" x="4" y="17" width="16" height="2" rx="1" />
+      </svg>
+    </button>
+  </div>
+`}
+</SvgSnippet>
+
+The preview is static. To flip the state on click, add this to your page:
+
+<CodeBlock language="js">
+{`
+  const button = document.querySelector(".svg-burger");
+
+  button.addEventListener("click", () => {
+    const expanded = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", String(!expanded));
+  });
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The three bars are `16 × 2` rectangles on a `24 × 24` grid, starting at `x="4"`, so each one is centred horizontally. Their centres are at `y = 6`, `12` and `18`, six units apart. `rx="1"` rounds their ends.
+2. `transform-box: fill-box` and `transform-origin: center` make each bar rotate around **its own centre**. Without them, an SVG element rotates around the top-left corner of the `viewBox`, and the bars would swing off to one side.
+3. When `aria-expanded` is `"true"`, the top bar gets `translateY(6px) rotate(45deg)`. Transform functions run from right to left, so the bar first rotates around its own centre at `12, 6`, then moves down 6 units. Its centre ends up at `12, 12`, the middle of the icon.
+4. The bottom bar does the same in reverse: its centre at `12, 18` moves up 6 units to `12, 12`, and it rotates by `-45deg`. The two bars now cross at right angles in the exact centre of the `viewBox`.
+5. Rotated by 45°, a 16-unit bar spans about `11.3` units across and down (`16 ÷ √2`), so the ✕ runs from roughly `6.3` to `17.7` on both axes. That's centred, and well inside the `24 × 24` box.
+6. The middle bar fades to `opacity: 0`. Its fade is a little shorter than the rotation, so it's gone before the other two bars cross over it.
+7. `transition` on the bars animates both directions, so the ✕ turns back into three lines when the menu closes.
+
+<RainbowDivider />
+
+## Example Usage
+
+Connect the button to the menu it controls with `aria-controls`, and show or hide the menu in the same click handler:
+
+<CodeBlock language="html">
+{`
+  <button class="svg-burger" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu">
+    <svg viewBox="0 0 24 24" width="32" height="32" aria-hidden="true" focusable="false">
+      <rect class="svg-burger-top" x="4" y="5" width="16" height="2" rx="1" />
+      <rect class="svg-burger-middle" x="4" y="11" width="16" height="2" rx="1" />
+      <rect class="svg-burger-bottom" x="4" y="17" width="16" height="2" rx="1" />
+    </svg>
+  </button>
+
+  <nav id="site-nav" hidden>
+    <!-- links -->
+  </nav>
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  const button = document.querySelector(".svg-burger");
+  const nav = document.getElementById(button.getAttribute("aria-controls"));
+
+  button.addEventListener("click", () => {
+    const expanded = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", String(!expanded));
+    nav.hidden = expanded;
+  });
+`}
+</CodeBlock>
+
+If the menu was open (`expanded` is `true`), the handler sets `aria-expanded` to `"false"` and hides the menu. If it was closed, it does the opposite. The icon follows automatically, because the CSS only reads the attribute.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Mobile navigation menus** that open from a header button.
+- **Sidebars and drawers** that slide in and out.
+- **Collapsible filter panels** on search and product listing pages.
+- **Any disclosure button** where a ✕ is a clearer "close" than the original icon.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **One source of truth:** keying the CSS off `[aria-expanded="true"]` means the icon can't show "open" while screen readers hear "collapsed". There's no separate `.is-open` class to keep in sync.
+- **No checkbox hack needed:** you don't need a hidden checkbox, a `:checked` selector or `:has()` to hold the state. Those tricks avoid JavaScript, but they misuse a form control and still don't set `aria-expanded`. A real `<button>` with a tiny script is simpler and more accessible.
+- **Name the button, hide the icon:** the button gets `aria-label="Menu"`, and the SVG gets `aria-hidden="true"`. Keep the label the same in both states and let `aria-expanded` say whether it's open, so the button isn't announced as "Close menu, expanded".
+- **Reduced motion:** `transition: none` makes the icon snap straight between the two states. The change is still visible, but nothing rotates.
+- **Namespace the styles:** a `<style>` inside an inline SVG or a preview applies to the **whole page**. Use specific class names, or move the rules into your normal stylesheet.
+- **Browser support:** `transform-box` works in all current browsers. Check MDN if you need much older ones.
+- **Scripts in previews:** the JavaScript is shown separately because markup injected with `innerHTML` doesn't run `<script>` elements. Put the script in your page or bundle as usual.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does the order of translateY() and rotate() matter?">
+  Transform functions apply from right to left. `translateY(6px) rotate(45deg)` rotates the bar around its own centre
+  first, then moves it down, so it lands centred. The other order, `rotate(45deg) translateY(6px)`, would move the bar
+  along its rotated direction, diagonally, and the ✕ would end up off-centre.
+</Details>
+
+<Details summary="Can I do it without transform-box?">
+  Yes. Without it, the origin is measured in `viewBox` coordinates, so set `transform-origin: 12px 12px` (the centre of
+  the icon) on the bars. Then each bar has to move to the centre before it rotates, which reads as
+  `rotate(45deg) translateY(6px)` for the top bar. It works, but the `fill-box` version is easier to follow.
+</Details>
+
+<Details summary="Why <rect> instead of <line>?">
+  Both work. A horizontal `<line>` has a bounding box with no height, because `fill-box` ignores the stroke, but its
+  centre is still the line's midpoint, so the same transforms apply. A `<rect>` has a real box, is filled with
+  `currentColor` like most icons, and gets its rounded ends from `rx` rather than `stroke-linecap`.
+</Details>
+
+<Details summary="How do I make the lines thicker or further apart?">
+  Change `height` and keep each bar's centre in the same place, for example `y="4.5"` and `height="3"` for the top bar.
+  If you move the bars further apart, update the `translateY()` values to match the new distance from each outer bar's
+  centre to `12`.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Three `<rect>`s inside a `<button aria-expanded>` make an animated hamburger icon. CSS keyed off `[aria-expanded="true"]` rotates the outer bars around their own centres with `transform-box: fill-box`, moves them 6 units to the middle, and fades the middle bar. A one-line click handler flips the attribute, so the icon and the accessibility state can never disagree.

@@ -1171,4 +1171,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Referencing SVG Graphics with `<use>`",
     description: "Drawing copies of SVG symbols and shapes with `<use>`, including how styles inherit into the copy and the same-origin rules for external files."
   },
+  "hamburger-menu": {
+    title: "Hamburger Menu Buttons",
+    description: "Accessible menu toggle buttons, from the three-line icon and its animation to the close state and the markup that connects it to the menu."
+  },
+  "aria-expanded": {
+    title: "Disclosure State with `aria-expanded`",
+    description: "Using the `aria-expanded` attribute to tell assistive technology whether a control's content is open, and as a CSS hook for styling that state."
+  },
 };
