@@ -1383,4 +1383,8 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Knockout Text Effects",
     description: "Cutting text out of a solid shape so whatever is behind it, such as a photo or gradient, shows through the letters."
   },
+  "mask-image": {
+    title: "Fading and Shaping Elements with CSS `mask-image`",
+    description: "Using `mask-image` with gradients or SVG images to fade an element's edges or cut it into an icon shape, with `-webkit-` prefixes for older browsers."
+  },
 };

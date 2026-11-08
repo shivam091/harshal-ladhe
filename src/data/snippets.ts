@@ -716,6 +716,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-mask-image-fade",
+    title: "Fade Edges with CSS `mask-image`",
+    excerpt: "Fade the edges of scrollers, text and images with mask-image.",
+    description: "Fade scroll container edges, text previews and images with CSS mask-image and linear-gradient, plus recolourable SVG icons, -webkit- prefixes and support.",
+    link: {
+      label: "Read the full post: Mastering CSS Gradients: Types, Use Cases & Best Practices",
+      href: "/post/css/mastering-css-gradients"
+    },
+    category: ["CSS", "SVG"],
+    tags: ["css", "mask-image", "linear-gradient", "gradients", "icons", "browser-support", "progressive-enhancement", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/css-mask-image-fade/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a horizontal row of glowing chips whose left and right ends fade softly to transparent.",
+      caption: "A horizontal scroller with soft faded edges from a CSS mask."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

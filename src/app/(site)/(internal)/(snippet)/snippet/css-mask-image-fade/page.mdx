@@ -1,0 +1,232 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-mask-image-fade");
+
+## Introduction
+
+A row of chips or cards that scrolls sideways often just stops at a hard edge, and nothing tells the reader there's more. The common fix is an overlay `::after` with a gradient in the background colour, which breaks as soon as the background isn't a flat colour. CSS `mask-image` is cleaner: **it fades the element itself to transparent**, so it works on any background, in light and dark themes alike.
+
+One `linear-gradient()` does it. The same property can also fade the bottom of an image or a block of text, and turn any SVG file into an icon that takes its colour from `currentColor`.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <div class="mf-scroller" tabindex="0" role="region" aria-label="Topics">
+    <span class="mf-chip">CSS</span>
+    <span class="mf-chip">SVG</span>
+    <span class="mf-chip">JavaScript</span>
+    <span class="mf-chip">Accessibility</span>
+    <span class="mf-chip">Animation</span>
+    <span class="mf-chip">Performance</span>
+    <span class="mf-chip">Typography</span>
+    <span class="mf-chip">Layout</span>
+  </div>
+
+  <style>
+    .mf-scroller {
+      --mf-fade: 2rem;
+      display: flex;
+      gap: 0.5rem;
+      inline-size: min(100%, 22rem);
+      overflow-x: auto;
+      padding: 0.25rem var(--mf-fade) 0.75rem;
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--mf-fade), #000 calc(100% - var(--mf-fade)), transparent);
+      mask-image: linear-gradient(to right, transparent, #000 var(--mf-fade), #000 calc(100% - var(--mf-fade)), transparent);
+    }
+
+    .mf-chip {
+      flex: none;
+      padding: 0.375rem 0.875rem;
+      border-radius: 999px;
+      background: #6366f1;
+      color: #fff;
+      font: 600 0.875rem/1.2 system-ui, sans-serif;
+    }
+  </style>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `mask-image` uses an image as a mask over the element. For gradients and normal images, the mask works in **alpha** mode: wherever the mask is opaque the element shows, and wherever it's transparent the element is hidden. The colour doesn't matter, so `#000` here just means "fully opaque".
+2. The gradient goes from `transparent` at the left edge to opaque at `2rem`, stays opaque until `2rem` before the right edge, then goes back to `transparent`. That gives a soft fade on both sides and a solid middle.
+3. The fade width lives in one custom property, `--mf-fade`, so the gradient and the padding stay in step.
+4. `padding-inline` of the same width means the first and last chips can scroll fully clear of the fades, so nothing is stuck half-transparent at either end.
+5. The mask is applied to the scroll container, not to its content, so it stays put while the chips scroll underneath it.
+6. The `-webkit-mask-image` line comes first for older Chromium and Safari versions, and the standard property follows it.
+
+<RainbowDivider />
+
+## Variant: Fading the Bottom of Text or an Image
+
+Point the gradient down, and keep it opaque for most of the height. This is the classic "read more" preview for truncated text, and it works the same way on an `<img>`:
+
+<SvgSnippet>
+{`
+  <p class="mf-preview">
+    Masks work on the rendered element, so this paragraph fades out over its last few lines whatever colour the text
+    or the page behind it is. There's no overlay to keep in sync with the background, and nothing to change for dark
+    mode. Pair it with a fixed height and hidden overflow for a collapsed preview, and remove both when the reader
+    expands it.
+  </p>
+
+  <style>
+    .mf-preview {
+      max-inline-size: 28rem;
+      max-block-size: 6.5em;
+      margin: 0;
+      overflow: hidden;
+      line-height: 1.6;
+      -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent);
+      mask-image: linear-gradient(to bottom, #000 40%, transparent);
+    }
+  </style>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## Variant: An Icon from an SVG Mask
+
+Use an SVG file or a data URI as the mask, and fill the element with `background-color: currentColor`. The SVG's shape becomes the icon, and its colour comes from the CSS `color` property, so one SVG can be any colour:
+
+<SvgSnippet>
+{`
+  <div class="mf-icons">
+    <span class="mf-icon" role="img" aria-label="Done"></span>
+    <span class="mf-icon mf-icon-pink" role="img" aria-label="Done"></span>
+    <span class="mf-icon mf-icon-teal" role="img" aria-label="Done"></span>
+  </div>
+
+  <style>
+    .mf-icons {
+      display: flex;
+      gap: 1rem;
+      font-size: 2rem;
+    }
+
+    .mf-icon {
+      display: inline-block;
+      inline-size: 1em;
+      block-size: 1em;
+      color: #6366f1;
+      background-color: currentColor;
+      -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E");
+      mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E");
+      -webkit-mask-size: contain;
+      mask-size: contain;
+      -webkit-mask-repeat: no-repeat;
+      mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      mask-position: center;
+    }
+
+    .mf-icon-pink {
+      color: #ec4899;
+    }
+
+    .mf-icon-teal {
+      color: #14b8a6;
+    }
+  </style>
+`}
+</SvgSnippet>
+
+- **`mask-size: contain`** scales the SVG to fit the element without cropping or distorting it.
+- **`mask-repeat: no-repeat`** stops it from tiling. Like `background-repeat`, the default is `repeat`.
+- **`mask-position: center`** centres it if the element isn't the same shape as the icon.
+- **Encode the data URI:** `<`, `>` and `#` must be escaped as `%3C`, `%3E` and `%23`. Single quotes inside a double-quoted `url("...")` are fine.
+- **Every property needs both forms:** `-webkit-mask-size`, `-webkit-mask-repeat` and `-webkit-mask-position` are separate from the standard ones, so a browser that only knows the prefixed versions ignores the unprefixed lines. The shorthand `mask: url(...) center / contain no-repeat` (with a matching `-webkit-mask`) is a shorter way to write all four.
+
+<RainbowDivider />
+
+## Example Usage
+
+Reusable utilities, with the fade size as a custom property you can override per component:
+
+<CodeBlock language="css">
+{`
+  .fade-x {
+    --fade-size: 2rem;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 var(--fade-size), #000 calc(100% - var(--fade-size)), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 var(--fade-size), #000 calc(100% - var(--fade-size)), transparent);
+  }
+
+  .fade-bottom {
+    --fade-size: 40%;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--fade-size)), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - var(--fade-size)), transparent);
+  }
+
+  .card-rail {
+    --fade-size: 3rem;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="card-rail fade-x">...</div>
+  <img class="fade-bottom" src="hero.jpg" alt="City skyline at dusk" />
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Horizontal scrollers:** tag lists, card rails, tab bars and carousels that need a hint that there's more.
+- **Collapsed text previews** that fade out before a "Read more" button.
+- **Hero images** that fade into the page at the bottom.
+- **Single-colour icons** from SVG files, coloured with CSS instead of separate files per colour.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Alpha, not luminance:** gradient and image masks use transparency only, so `#000`, `red` or `white` all mean "visible". This is the opposite of an SVG `<mask>`, where black hides. `mask-mode: luminance` switches a layer to brightness, but check support before relying on it.
+- **Browser support:** unprefixed `mask-image`, `mask-size`, `mask-repeat` and `mask-position` work in all current browsers. Chromium only added them in version 120 (late 2023), and before that, and in older Safari versions, only the `-webkit-` forms work. Keep both, with the prefixed line first. Check [caniuse](https://caniuse.com/css-masks) for the versions you support.
+- **The mask covers everything:** it also fades the scrollbar, focus rings and shadows near the edges. Leave some bottom padding for the scrollbar, as in the scroller above, and check that focused items aren't hidden in a fade.
+- **Fades don't react to scroll position:** both edges are faded even at the very start, when there's nothing to the left. To fade only the side with hidden content, toggle classes with a little JavaScript, or look at scroll-driven animations if your browsers support them.
+- **Masked areas are still clickable:** unlike `clip-path`, a mask doesn't change hit-testing. Fully transparent parts still receive clicks and hovers.
+- **Icons need a label:** a masked `<span>` has no text. Give meaningful icons `role="img"` and an `aria-label`, and decorative ones `aria-hidden="true"`.
+- **Namespaced class names:** the demos above use `mf-` prefixes because a `<style>` element applies to the whole page.
+- **More gradient options:** any CSS gradient can be a mask, including `radial-gradient()` for a vignette. See [Mastering CSS Gradients](/post/css/mastering-css-gradients) for the syntax.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why use a mask instead of a gradient overlay?">
+  An overlay fades to a fixed colour, so it only looks right on a flat background that matches it exactly, and it needs
+  a dark-mode version. A mask makes the element itself transparent, so whatever is behind shows through: images,
+  gradients or either theme.
+</Details>
+
+<Details summary="Why does the fade colour not matter?">
+  Gradient and image masks use alpha mode. Only how opaque each point of the mask is matters, not its colour. `#000` is
+  a common choice because it reads as "solid", but any opaque colour gives the same result.
+</Details>
+
+<Details summary="Do I still need the -webkit- prefix?">
+  For current browsers, no. Unprefixed masks are supported everywhere. But older Chromium (before version 120) and
+  older Safari versions only understand the prefixed properties, so keeping both lines is cheap insurance. Put the
+  prefixed line first so the standard one wins where both are understood.
+</Details>
+
+<Details summary="Why is my masked icon a solid square?">
+  The mask image didn't load, so there's no mask and the whole background shows. Check that the data URI is encoded
+  (`%3C`, `%3E`, `%23`), that the SVG has an `xmlns` attribute, and that you set both the `-webkit-` and standard
+  `mask-image`.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`mask-image: linear-gradient(...)` from transparent to opaque fades an element itself, so edge fades on scrollers, text previews and images work on any background. Gradient masks use alpha, so any opaque colour means visible. Keep the `-webkit-` lines alongside the standard ones for older Chromium and Safari, and use the same properties with an SVG `url()` and `background-color: currentColor` for icons you can recolour with CSS.
