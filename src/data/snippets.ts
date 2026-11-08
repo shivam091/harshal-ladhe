@@ -184,6 +184,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-sync",
+    title: "`git sync`: Update Your Branch from `main` in One Command",
+    excerpt: "Fetch, fast-forward main, and rebase your branch onto it.",
+    description: "A `git sync` command that fetches, fast-forwards `main` without a checkout, and rebases or merges your branch onto it — with autostash and undo.",
+    category: ["Git"],
+    tags: ["git", "git-commands", "rebase", "merging", "bash", "cli"],
+    link: {
+      label: "Read the full post: Advanced Git: Rebasing, Internals, and Real-World Workflows",
+      href: "/post/git/advanced-git-techniques-and-workflows"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/git-sync/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for the git sync command, showing a feature branch moving from behind origin/main to rebased on top of it in three steps.",
+      caption: "A feature branch behind origin/main, before and after one git sync."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
