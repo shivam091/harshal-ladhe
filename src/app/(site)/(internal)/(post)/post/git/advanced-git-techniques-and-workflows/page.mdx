@@ -85,6 +85,8 @@ This opens an editor listing your commits, oldest first, each with an action:
 `}
 </CodeBlock>
 
+The `git fixup` alias in [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases) runs both steps in one command, with no editor to step through.
+
 <RainbowDivider />
 
 ## Cherry-Picking
@@ -331,6 +333,8 @@ These end up in `~/.gitconfig` and can also be edited directly:
     lg = log --oneline --graph --all
 `}
 </CodeBlock>
+
+For a fuller, tested set — one-step fixups, WIP parking, safe force-pushes, and more — see [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases).
 
 When a workflow outgrows a one-line alias, write a script instead: any executable named `git-<name>` on your `PATH` runs as `git <name>`. [`git fix-dates`](/snippet/git-fix-dates) is one example — a Bash script that restores commit dates after a rebase and force-pushes with a lease.
 
