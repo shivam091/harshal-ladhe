@@ -227,6 +227,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Merging Branches in Git",
     description: "Fast-forward vs. three-way merges, resolving conflicts, and choosing merge strategies when bringing branches together."
   },
+  "squash-merge": {
+    title: "Squash Merges in Git and GitHub",
+    description: "How squash merging collapses a branch into one commit, why Git then can't tell the branch was merged, and how to detect and clean up those branches."
+  },
   "cli": {
     title: "Command-Line Tooling and Workflows",
     description: "Practical command-line usage and workflows, from everyday commands to productivity aliases and configuration."
