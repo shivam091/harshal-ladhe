@@ -187,6 +187,7 @@ export const posts: Post[] = [
     signoff: "This one's meant to be the guide I wish I'd had when Git still felt like a wall of unfamiliar commands — I hope it makes that first `git merge` conflict feel like a puzzle instead of a crisis. Part 2 picks up right where this leaves off. 🌱",
     pinned: true,
     changelog: [
+      { date: "2026-11-08", change: "Added cross-reference to snippet 'Git Aliases Worth Adding to Your `~/.gitconfig`'" },
       { date: "2026-08-15", change: "Initial publication" }
     ]
   },
@@ -208,6 +209,7 @@ export const posts: Post[] = [
     signoff: "This half is the one that turns Git from \"a tool I follow instructions for\" into something you can actually reason about — I hope the internals section in particular makes the rest of it click. Thanks for sticking with the series through to the end. 🚀",
     pinned: true,
     changelog: [
+      { date: "2026-11-08", change: "Added cross-reference to snippet 'Git Aliases Worth Adding to Your `~/.gitconfig`'" },
       { date: "2026-10-26", change: "Added cross-reference to snippet '`git fix-dates`: Fix GitHub Commit Dates After a Rebase'" },
       { date: "2026-08-15", change: "Initial publication" }
     ]
