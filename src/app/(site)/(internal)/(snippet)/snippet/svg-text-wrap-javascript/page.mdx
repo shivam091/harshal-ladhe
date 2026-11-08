@@ -1,0 +1,191 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-text-wrap-javascript");
+
+## Introduction
+
+SVG's `<text>` element never wraps. However long the string, it stays on one line and runs straight off the edge of the `viewBox`. That's a problem for chart annotations, diagram labels and captions whose text comes from data.
+
+The usual fix is a small function that **measures the words** with `getComputedTextLength()` and splits the text into one `<tspan>` per line. This version keeps the original string in a `data-text` attribute, so you can call it again, after the text or the width changes, without the words running together.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  const SVG_NS = "http://www.w3.org/2000/svg";
+
+  // Rebuilds a <text> element as one <tspan> per line, breaking between words.
+  function wrapSvgText(textEl, maxWidth, lineHeight = "1.2em") {
+    // Always read the source string from data-text. After a first run, textContent is the
+    // tspans joined with no spaces between them, so re-reading it would fuse words together.
+    if (!("text" in textEl.dataset)) {
+      textEl.dataset.text = textEl.textContent.trim();
+    }
+
+    const words = textEl.dataset.text.split(/\\s+/).filter(Boolean);
+    const x = textEl.getAttribute("x") ?? "0";
+    textEl.textContent = "";
+
+    let tspan = createLine(textEl, x);
+    let line = [];
+
+    for (const word of words) {
+      line.push(word);
+      tspan.textContent = line.join(" ");
+
+      if (line.length > 1 && tspan.getComputedTextLength() > maxWidth) {
+        line.pop();
+        tspan.textContent = line.join(" ");
+        line = [word];
+        tspan = createLine(textEl, x, lineHeight);
+        tspan.textContent = word;
+      }
+    }
+  }
+
+  function createLine(textEl, x, dy) {
+    const tspan = document.createElementNS(SVG_NS, "tspan");
+    tspan.setAttribute("x", x);
+    if (dy) tspan.setAttribute("dy", dy);
+    textEl.appendChild(tspan);
+    return tspan;
+  }
+`}
+</CodeBlock>
+
+The markup it expects is an ordinary `<text>` with an `x` and a `y`:
+
+<CodeBlock language="html">
+{`
+  <svg viewBox="0 0 200 100" width="300" height="150">
+    <text id="caption" x="10" y="24" font-size="14" fill="currentColor">
+      SVG text doesn't wrap on its own, so this caption was split into lines by measuring each word.
+    </text>
+  </svg>
+`}
+</CodeBlock>
+
+After `wrapSvgText(document.querySelector("#caption"), 180)` runs, the same element looks like this:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="300" height="150" role="img" aria-label="SVG text doesn't wrap on its own, so this caption was split into lines by measuring each word.">
+    <rect x="10" y="8" width="180" height="84" fill="none" stroke="#6366f1" stroke-width="1" stroke-dasharray="4 3" />
+    <text x="10" y="24" font-size="14" fill="currentColor" data-text="SVG text doesn't wrap on its own, so this caption was split into lines by measuring each word.">
+      <tspan x="10">SVG text doesn't wrap on</tspan>
+      <tspan x="10" dy="1.2em">its own, so this caption</tspan>
+      <tspan x="10" dy="1.2em">was split into lines by</tspan>
+      <tspan x="10" dy="1.2em">measuring each word.</tspan>
+    </text>
+  </svg>
+`}
+</SvgSnippet>
+
+The dashed box marks the 180-unit width. The exact break points depend on the font, so your lines may split differently.
+
+<RainbowDivider />
+
+## How It Works
+
+1. On the first call, the function copies the element's text into `data-text`. Every later call reads from there. Without this, a second call would read `textContent`, which joins the existing `<tspan>`s with **nothing between them**, so "wrap on" + "its own" becomes "wrap onits own".
+2. It empties the `<text>` and adds the first `<tspan>`. Then it adds words one at a time and measures the line with `getComputedTextLength()`, which returns the text's advance width in **user units**, the same units as the `viewBox` and `maxWidth`.
+3. When a word makes the line too long, it's removed from that line and starts a new `<tspan>`. The `line.length > 1` check means a single word that's longer than `maxWidth` gets a line to itself instead of looping forever.
+4. Every `<tspan>` gets the `<text>`'s own `x`, which sends it back to the left edge, like a carriage return.
+5. Every line after the first gets `dy="1.2em"`, which moves it down by 1.2 times the font size relative to the previous line. That's the line height. The first line keeps the `y` from the `<text>`.
+
+<RainbowDivider />
+
+## Variant: HTML Text in `<foreignObject>`
+
+For long or frequently changing copy, you can skip the measuring and let HTML do the layout. `<foreignObject>` embeds HTML inside SVG, and the HTML text wraps like it would anywhere else:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="300" height="150" role="img" aria-label="Text inside foreignObject wraps using normal HTML layout.">
+    <rect x="10" y="8" width="180" height="84" fill="none" stroke="#14b8a6" stroke-width="1" stroke-dasharray="4 3" />
+    <foreignObject x="10" y="8" width="180" height="84">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="font-size: 14px; line-height: 1.2; color: currentColor; margin: 0;">
+        Text inside foreignObject wraps using normal HTML layout, with no JavaScript at all.
+      </div>
+    </foreignObject>
+  </svg>
+`}
+</SvgSnippet>
+
+You get `line-height`, hyphenation and `text-overflow` for free. The trade-offs: the box has a fixed height, so text that's too long overflows it, and `<foreignObject>` isn't supported by many non-browser SVG renderers, such as design tools and some image converters. Inside a browser page, it works everywhere.
+
+<RainbowDivider />
+
+## Example Usage
+
+Measure after web fonts have loaded, or the breaks are calculated with the fallback font. When the text changes, update `data-text` and call the function again:
+
+<CodeBlock language="js">
+{`
+  const caption = document.querySelector("#caption");
+
+  document.fonts.ready.then(() => {
+    wrapSvgText(caption, 180);
+  });
+
+  function setCaption(newText) {
+    caption.dataset.text = newText;
+    wrapSvgText(caption, 180);
+  }
+`}
+</CodeBlock>
+
+You don't need to re-run it on window resize. `maxWidth` is in user units, and the whole SVG scales with its `viewBox`, so the lines stay the same relative width at any size.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Chart annotations and tooltips** drawn inside the SVG, with text from data.
+- **Diagram and flowchart labels** that have to fit inside a box.
+- **Map labels and legends** with long place names.
+- **Generated social images or certificates** built as SVG, where names and titles vary in length.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **The element must be rendered:** `getComputedTextLength()` only returns a real width for text that's in the document and displayed. Inside a `display: none` container it returns `0`, so every word ends up on one line.
+- **Spaces only:** the function breaks between words, not inside them, and doesn't hyphenate. A long URL stays on one line and may overflow.
+- **Keep the line height in `em`:** `dy="1.2em"` scales with `font-size`, so changing the font size keeps the spacing in proportion.
+- **Vertical position:** the text grows downwards from its `y`. To centre a block vertically, count the `<tspan>`s after wrapping and move the `<text>` up by half the total height.
+- **CSS `inline-size` on SVG text:** SVG 2 defines the `inline-size` property on `<text>` to turn on automatic wrapping, but at the time of writing no major browser supports it for SVG text. Check MDN before relying on it, and treat JavaScript or `<foreignObject>` as the practical options.
+- **Accessibility:** the result is still real, selectable text that screen readers can read. Each `<tspan>` is read as part of the same `<text>` element.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why do my words run together when I call the function twice?">
+  The second call is reading `textContent` from the tspans the first call created. `textContent` joins them with no
+  whitespace, so the last word of one line fuses with the first word of the next. Store the original string, as
+  this version does with `data-text`, and always read from there.
+</Details>
+
+<Details summary="Why are all my lines stacked on top of each other?">
+  Each line needs both an `x`, to return to the left edge, and a `dy`, to move down. Without `dy`, every tspan sits on
+  the same baseline. Without `x`, each line carries on from where the previous one ended.
+</Details>
+
+<Details summary="Can I wrap text with CSS alone?">
+  Not in SVG `<text>` today. The SVG 2 `inline-size` property is meant to do it, but browsers don't support it for
+  SVG text. If you don't want JavaScript, use `<foreignObject>` with an HTML element inside.
+</Details>
+
+<Details summary="Does it work with server-side rendering?">
+  Not on its own. `getComputedTextLength()` needs a browser layout engine. On the server you'd need a font-metrics
+  library to estimate widths, or you can render once in the browser and save the resulting markup.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+SVG text doesn't wrap, so measure it: add words to a `<tspan>` until `getComputedTextLength()` passes your width, then start a new `<tspan>` with the same `x` and `dy="1.2em"`. Keep the source string in `data-text` so the function can run again safely, measure after fonts load, and use `<foreignObject>` instead when the copy is long.

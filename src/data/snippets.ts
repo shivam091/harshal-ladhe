@@ -396,6 +396,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-text-wrap-javascript",
+    title: "Wrap SVG Text with JavaScript",
+    excerpt: "Wrap SVG text into lines by measuring words with JavaScript.",
+    description: "SVG text doesn't wrap. Split it into tspan lines with getComputedTextLength(), safely re-runnable via data-text, or use foreignObject instead.",
+    category: ["SVG"],
+    tags: ["svg", "svg-text", "javascript", "getComputedTextLength", "tspan", "foreignObject", "data-attributes", "dom", "typography", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-text-wrap-javascript/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a long line of glowing text being broken into neat, stacked lines inside a dashed box.",
+      caption: "A single line of SVG text split into wrapped lines."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

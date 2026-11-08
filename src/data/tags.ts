@@ -1227,4 +1227,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Recolouring with SVG `feColorMatrix`",
     description: "Using `feColorMatrix` and its `saturate`, `hueRotate`, and `matrix` types to change colour and alpha, from greyscale to gooey thresholds."
   },
+  "getcomputedtextlength": {
+    title: "Measuring SVG Text with `getComputedTextLength()`",
+    description: "Reading the advance width of SVG text in user units, for line breaking, truncation, and fitting labels."
+  },
+  "tspan": {
+    title: "Multi-Line and Styled Runs with `<tspan>`",
+    description: "Splitting SVG text into lines and styled runs with `<tspan>`, using `x` to reset the line start and `dy` for line height."
+  },
+  "foreignobject": {
+    title: "Embedding HTML in SVG with `<foreignObject>`",
+    description: "Using `<foreignObject>` to place HTML inside an SVG for full CSS layout, such as wrapped text, and its rendering trade-offs."
+  },
 };
