@@ -266,6 +266,7 @@ A few one-liners that pair well with `git fix-dates`:
 - **Tags don't move.** Tags pointing at rewritten commits keep pointing at the old ones. Re-tag if they matter.
 - **Clean tree required.** `filter-branch` checks out the result, so the script refuses to run with uncommitted changes rather than risk them. Commit or `git stash` first.
 - **Prefer personal branches.** Force-pushing a shared branch disrupts everyone on it — the lease stops you from losing their commits, but not from rewriting history under them.
+- **Aliases rewrite too.** Shortcuts like `git fixup` and `git amend` from [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases) rebase or amend commits, so they cause the same date drift — run `git fix-dates` after them before pushing.
 - **Use `--no-push` to review.** Rewrite locally, inspect with `git log`, then run `git fix-dates` again once you're happy — with nothing left to rewrite, it asks before force-pushing.
 
 <RainbowDivider />
