@@ -495,6 +495,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-dot-grid-pattern",
+    title: "SVG Dot Grid Background Pattern",
+    excerpt: "Build a dot grid background from one circle in an SVG pattern.",
+    description: "Build a dot grid background with an SVG pattern: adjustable spacing and dot size, a soft mask fade at the edges, and a CSS background version.",
+    category: ["SVG"],
+    tags: ["svg", "css", "svg-pattern", "patternUnits", "svg-mask", "data-uri", "background", "currentColor", "ui-design"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-dot-grid-pattern/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of an evenly spaced grid of glowing dots that fades out towards the edges.",
+      caption: "A glowing dot grid fading softly at its edges."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

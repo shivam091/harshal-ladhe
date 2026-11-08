@@ -1,0 +1,173 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-dot-grid-pattern");
+
+## Introduction
+
+A faint grid of dots is a popular background for hero sections, canvases, diagram editors and empty states. It's usually shipped as a PNG tile, but an SVG `<pattern>` can draw it from **one `<circle>`**, with no image file.
+
+The dot's size and the spacing between dots are two separate numbers, the colour can come from `currentColor`, and the same markup works as a CSS `background-image`.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 140" width="480" height="280" aria-hidden="true">
+    <defs>
+      <pattern id="dg-dots" width="20" height="20" patternUnits="userSpaceOnUse">
+        <circle cx="10" cy="10" r="2" fill="currentColor" fill-opacity="0.5" />
+      </pattern>
+    </defs>
+    <rect width="240" height="140" fill="url(#dg-dots)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The `<pattern>` defines a **20 × 20 tile** with one dot in its centre. The `<rect>` uses it through `fill="url(#dg-dots)"`, and the browser repeats the tile to cover the rectangle.
+2. `patternUnits="userSpaceOnUse"` makes the tile a fixed 20 user units, whatever the size of the shape. With the default `objectBoundingBox`, the numbers would be fractions of the shape's size, and the spacing would change with every shape.
+3. The dot sits at `(10, 10)`, the centre of the tile, so it never touches an edge and is never cut in half by the tile boundary.
+4. `fill="currentColor"` with `fill-opacity="0.5"` takes the text colour and softens it. The same SVG looks right on a light or a dark page.
+5. Tiles start at user-space `(0, 0)`. The rectangle also starts there, so the first dot is 10 units in from each edge.
+
+<RainbowDivider />
+
+## Variant: Fading Edges with a Mask
+
+Fade the grid out towards the edges by masking the rectangle with a radial gradient. In a mask, white keeps what's underneath and black hides it:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 140" width="480" height="280" aria-hidden="true">
+    <defs>
+      <pattern id="dg-fade-dots" width="20" height="20" patternUnits="userSpaceOnUse">
+        <circle cx="10" cy="10" r="2" fill="#6366f1" />
+      </pattern>
+      <radialGradient id="dg-fade-gradient">
+        <stop offset="0.3" stop-color="white" />
+        <stop offset="1" stop-color="black" />
+      </radialGradient>
+      <mask id="dg-fade-mask">
+        <rect width="240" height="140" fill="url(#dg-fade-gradient)" />
+      </mask>
+    </defs>
+    <rect width="240" height="140" fill="url(#dg-fade-dots)" mask="url(#dg-fade-mask)" />
+  </svg>
+`}
+</SvgSnippet>
+
+- The gradient uses the default `objectBoundingBox` units, so it stretches to the mask rectangle and becomes an ellipse that fits the wide shape.
+- Up to `offset="0.3"` the mask is white, so the centre stays fully visible. From there it darkens to black at the edges, and the dots fade out.
+- The mask only changes what's visible. The pattern itself is untouched, so you can reuse it unmasked elsewhere.
+
+<RainbowDivider />
+
+## Example Usage
+
+### Spacing and Dot Size
+
+The tile's `width` and `height` set the spacing, and the circle's `r` sets the dot size. Keep `cx` and `cy` at half the tile size so the dot stays centred:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 100" width="600" height="200" aria-hidden="true">
+    <defs>
+      <pattern id="dg-dense" width="12" height="12" patternUnits="userSpaceOnUse">
+        <circle cx="6" cy="6" r="1" fill="#14b8a6" />
+      </pattern>
+      <pattern id="dg-medium" x="105" width="20" height="20" patternUnits="userSpaceOnUse">
+        <circle cx="10" cy="10" r="2" fill="#6366f1" />
+      </pattern>
+      <pattern id="dg-loose" x="210" width="32" height="32" patternUnits="userSpaceOnUse">
+        <circle cx="16" cy="16" r="4" fill="#ec4899" />
+      </pattern>
+    </defs>
+    <rect width="90" height="100" fill="url(#dg-dense)" />
+    <rect x="105" width="90" height="100" fill="url(#dg-medium)" />
+    <rect x="210" width="90" height="100" fill="url(#dg-loose)" />
+  </svg>
+`}
+</SvgSnippet>
+
+Tiles start at user-space `(0, 0)`, not at the shape's corner. The second and third rectangles start at `x="105"` and `x="210"`, so their patterns set the same `x`. Without it, the grid would be offset inside them and the loose pattern would show a cut-off sliver of a dot at its left edge. To line a grid up with any shape, set the pattern's `x` and `y` to the shape's top-left corner.
+
+### As a CSS Background
+
+A CSS background repeats on its own, so the data URI only needs **one tile**, with no `<pattern>` at all:
+
+<SvgSnippet>
+{`
+  <div class="dg-bg" aria-hidden="true">
+    <style>
+      .dg-bg {
+        inline-size: 240px;
+        block-size: 140px;
+        border-radius: 12px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20'%3E%3Ccircle cx='10' cy='10' r='2' fill='%2394a3b8'/%3E%3C/svg%3E");
+        background-size: 20px 20px;
+      }
+    </style>
+  </div>
+`}
+</SvgSnippet>
+
+`background-size` sets the spacing. Making it larger scales the whole tile, so the dot gets larger too. For a bigger gap with the same dot, change the SVG's `width` and `height` (and the circle's centre) instead. To fade the edges in CSS, add `mask-image: radial-gradient(black 30%, transparent)` to the element.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Hero and landing-page backgrounds** that need a little texture without a photo.
+- **Canvas and diagram editors**, where the dots act as a snapping grid.
+- **Empty states and placeholders**, so a blank area doesn't look broken.
+- **Dashboards and cards**, as a subtle backdrop behind charts.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Keep it faint:** a background pattern should stay behind the content. Use a low opacity or a muted colour, and check that text on top still has enough contrast.
+- **Decorative only:** the grid carries no meaning, so mark the SVG `aria-hidden="true"`.
+- **Ids are page-wide:** an inline SVG's `id` is shared with the whole page. Two SVGs that both define `id="dots"` will clash, so give each pattern a unique id. A data URI is a separate document, so ids inside it can't clash.
+- **`currentColor` and data URIs:** an SVG used as a CSS background can't read the page's `color`, so write the colour into the data URI. Encode `#` as `%23`.
+- **Crisp dots:** whole-number tile sizes and radii keep the dots sharp. Very small dots (`r="0.5"` and below) can look blurry or vanish on low-resolution screens.
+- **Pure CSS alternative:** `radial-gradient(circle, #94a3b8 2px, transparent 2.5px) 0 0 / 20px 20px` draws a similar grid with no SVG.
+- **Want stripes instead?** See [Seamless Diagonal Stripes with an SVG Pattern](/snippet/svg-diagonal-stripes-pattern).
+- **Browser support:** `<pattern>`, `<mask>` and SVG data URIs work in all current browsers.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does the grid change spacing when I resize the shape?">
+  The pattern is using the default `patternUnits="objectBoundingBox"`, which measures the tile as a fraction of the
+  shape. Set `patternUnits="userSpaceOnUse"` and the tile stays a fixed number of user units.
+</Details>
+
+<Details summary="Why are my dots cut in half at the edges of the tile?">
+  The circle is crossing the tile's edge, and anything outside the tile is clipped. Keep the dot inside the tile, which
+  means its centre at half the tile size and a radius smaller than that. For a staggered layout with dots on the
+  corners, add a copy of the dot at each corner so the four quarters join up.
+</Details>
+
+<Details summary="How do I make the dots follow dark mode?">
+  For inline SVG, use `fill="currentColor"` in the tile and change `color` on the `<svg>` or a parent element. The
+  pattern takes its colour from where the `<pattern>` element sits in the page, not from the shape that uses it. For a
+  data URI background, swap the whole `background-image` in a `prefers-color-scheme: dark` media query.
+</Details>
+
+<Details summary="Should I use inline SVG or a CSS background?">
+  Use a CSS background for a page or section backdrop: it's one declaration and needs no extra markup. Use inline SVG
+  when the dots fill an SVG shape, need `currentColor`, or need an SVG mask.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+One `<circle>` centred in a `userSpaceOnUse` tile gives you a dot grid. The tile size sets the spacing, the radius sets the dot size, and `currentColor` handles the colour. Mask it with a radial gradient for soft edges, or put a single tile in a data URI to use it as a CSS background.

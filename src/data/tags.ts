@@ -1291,4 +1291,8 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Inlining Images with Data URIs",
     description: "Embedding SVG and other images directly in CSS or HTML as data URIs, including the characters that need encoding."
   },
+  "svg-mask": {
+    title: "Fading and Hiding with SVG `<mask>`",
+    description: "Using the SVG `<mask>` element, often with gradients, to fade or hide parts of a graphic by luminance."
+  },
 };
