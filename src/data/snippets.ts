@@ -136,6 +136,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-07", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "atomics-pause-spin-wait",
+    title: "Friendlier Spin-Waits with `Atomics.pause()`",
+    excerpt: "Spin briefly with a CPU hint, then sleep with Atomics.wait().",
+    description: "Use ES2027's Atomics.pause() in a bounded spin-then-Atomics.wait() lock over a SharedArrayBuffer, with worker examples, main-thread rules and cross-origin isolation headers.",
+    category: ["JavaScript"],
+    tags: ["javascript", "atomics", "sharedarraybuffer", "web-workers", "concurrency", "es2027", "nodejs"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/atomics-pause-spin-wait/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Two worker threads sharing one lock in a SharedArrayBuffer: one spins briefly with Atomics.pause() before falling back to Atomics.wait() until the other releases it.",
+      caption: "A bounded spin with Atomics.pause(), then a sleep with Atomics.wait()."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
