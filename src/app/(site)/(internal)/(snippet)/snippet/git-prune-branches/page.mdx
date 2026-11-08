@@ -240,6 +240,7 @@ Use `-h` rather than `--help` here: Git turns `git <command> --help` into a man-
 - **Missing `origin/HEAD`?** Repos created with `git init` and `git remote add` don't have it. Run `git remote set-head origin --auto` once to set it, or pass the base branch explicitly.
 - **Remote branches aren't touched.** This only deletes local branches; enable GitHub's *"Automatically delete head branches"* setting to clean up the remote side.
 - **Add your own protected names** by extending the `protected` list (for example `release`, `staging`).
+- **Run it after** [`git sync`](/snippet/git-sync) — sync your branch once its pull request has merged, then prune what landed.
 - **Pairs well with** [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases) — once an alias needs options and safety checks, it's time for a `git-<name>` script like this one or [`git fix-dates`](/snippet/git-fix-dates).
 
 <RainbowDivider />
