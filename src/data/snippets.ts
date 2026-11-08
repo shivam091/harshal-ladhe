@@ -556,6 +556,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-marker-context-stroke",
+    title: "SVG Arrowheads that Match the Line Colour",
+    excerpt: "Make one SVG marker take the colour of each line with context-stroke.",
+    description: "Use fill: context-stroke so one SVG marker matches every line's colour, with a CSS fallback for browsers that don't support it yet.",
+    category: ["SVG"],
+    tags: ["svg", "svg-markers", "context-stroke", "currentColor", "data-visualization", "browser-support", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-marker-context-stroke/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of three glowing lines in indigo, pink and teal, each ending in an arrowhead of the same colour.",
+      caption: "Three coloured lines sharing one arrowhead marker that matches each line."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

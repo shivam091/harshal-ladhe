@@ -1,0 +1,154 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-marker-context-stroke");
+
+## Introduction
+
+An SVG arrowhead defined with `<marker>` doesn't take its colour from the line it's attached to. Its contents inherit from the `<marker>`'s own ancestors, so a blue line and a pink line both get the same arrowhead colour, usually black. The traditional fix is one marker per colour: `#arrow-blue`, `#arrow-pink`, and so on.
+
+SVG 2 added a paint value for exactly this: **`context-stroke`**. Inside a marker, `fill: context-stroke` means "use the stroke of the element that's using me". One marker then matches every line, with a solid colour as the fallback where the value isn't supported.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 90" width="300" height="135" role="img" aria-label="Three arrows in indigo, pink and teal">
+    <style>
+      .smc-head {
+        fill: #6366f1;
+        fill: context-stroke;
+      }
+    </style>
+    <defs>
+      <marker id="smc-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path class="smc-head" d="M 0 0 L 10 5 L 0 10 Z" />
+      </marker>
+    </defs>
+    <line x1="20" y1="20" x2="170" y2="20" stroke="#6366f1" stroke-width="2" marker-end="url(#smc-arrow)" />
+    <line x1="20" y1="45" x2="170" y2="45" stroke="#ec4899" stroke-width="2" marker-end="url(#smc-arrow)" />
+    <line x1="20" y1="70" x2="170" y2="70" stroke="#14b8a6" stroke-width="2" marker-end="url(#smc-arrow)" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. All three lines use the same `#smc-arrow` marker. The marker's triangle has no colour of its own in the markup, only the `.smc-head` class.
+2. `fill: context-stroke` tells the browser to paint the triangle with the **stroke of the context element**, which for a marker is the line or path that references it. Each instance of the marker is painted separately, so each arrowhead gets its own line's colour.
+3. The rule sets `fill` twice. A browser that understands `context-stroke` uses the second declaration. A browser that doesn't treats it as invalid and **drops only that declaration**, so the first one, `#6366f1`, still applies. That's standard CSS fallback behaviour: the later valid declaration wins, and invalid ones are ignored.
+4. Without the fallback, an unsupported browser would fall back to the inherited fill, which is black by default. Indigo arrowheads on pink and teal lines are a better failure than black ones.
+5. `orient="auto"` and `refX="8"` place and rotate the arrowhead as usual. See [SVG Arrowhead Markers](/snippet/svg-arrowhead-marker) for how those work.
+
+<RainbowDivider />
+
+## Variant: Matching Data-Point Dots
+
+`context-stroke` works on any marker, not just arrows. Here one dot marker is used on the start, middle and end vertices of two chart lines, and each set of dots takes its line's colour. The dots use the same `fill: context-stroke` rule with a fallback:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 200 100" width="300" height="150" role="img" aria-label="Line chart with two series, indigo and amber, each with matching data-point dots">
+    <style>
+      .smc-dot {
+        fill: #6366f1;
+        fill: context-stroke;
+      }
+    </style>
+    <defs>
+      <marker id="smc-dot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse">
+        <circle class="smc-dot" cx="5" cy="5" r="4" />
+      </marker>
+    </defs>
+    <polyline points="20,70 60,45 100,55 140,25 180,35" fill="none" stroke="#6366f1" stroke-width="2" marker-start="url(#smc-dot)" marker-mid="url(#smc-dot)" marker-end="url(#smc-dot)" />
+    <polyline points="20,85 60,75 100,40 140,60 180,50" fill="none" stroke="#f59e0b" stroke-width="2" marker-start="url(#smc-dot)" marker-mid="url(#smc-dot)" marker-end="url(#smc-dot)" />
+  </svg>
+`}
+</SvgSnippet>
+
+`markerUnits="userSpaceOnUse"` keeps the dots 8 user units across whatever the line's stroke width. There's also `context-fill`, which uses the context element's `fill` instead. It's handy for hollow markers on filled shapes, but for markers on open lines `context-stroke` is the one you'll usually want.
+
+<RainbowDivider />
+
+## Example Usage
+
+Because the marker follows the line, colour the lines with classes and let the arrowheads come along for free. A diagram with "success" and "error" connectors needs just one marker:
+
+<CodeBlock language="css">
+{`
+  .smc-head {
+    fill: currentColor;
+    fill: context-stroke;
+  }
+
+  .connector {
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    marker-end: url(#smc-arrow);
+  }
+
+  .connector--success {
+    stroke: #14b8a6;
+  }
+
+  .connector--error {
+    stroke: #ec4899;
+  }
+`}
+</CodeBlock>
+
+Here the fallback is `currentColor`, so in browsers without `context-stroke` every arrowhead matches the surrounding text colour, which is still a reasonable result. If the arrowheads must match their lines in every browser, keep one marker per colour instead.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Diagrams with coloured connectors**, such as success and error paths in a flowchart.
+- **Multi-series line charts**, where each series has data-point markers in its own colour.
+- **Themed icon sets**, where a stroke colour changes on hover and the arrowhead should follow it.
+- **Generated graphs**, where edge colours come from data and you don't want to create a marker per colour.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Browser support:** at the time of writing, MDN's compatibility data lists `context-stroke` and `context-fill` as supported in **Chrome and Edge 124+** and **Firefox 111+**, and **not supported in Safari**. Support has changed recently, so check MDN or caniuse before relying on it, and keep the fallback declaration.
+- **Use CSS, not the attribute, for the fallback:** a presentation attribute can only hold one value. `fill="context-stroke"` on its own falls back to black where it isn't understood. You can also combine the two: put `fill="#6366f1"` on the shape as an attribute and `fill: context-stroke` in CSS. CSS beats presentation attributes when it's valid, and the attribute remains when it isn't.
+- **Stick to solid colours:** `context-stroke` is defined to reuse the context element's paint, including gradients, but how a gradient maps onto a small marker is less predictable. Test gradient strokes in each browser before relying on them.
+- **Markers are the safest context:** the spec also lets content referenced by `<use>` use `context-fill` and `context-stroke`. Treat that case as less consistently supported than markers.
+- **Namespace the class and id:** a `<style>` inside an inline SVG applies to the whole page, and ids must be unique. Prefix both, as with `.smc-head` and `#smc-arrow` here.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why doesn't my arrowhead take the line's colour in the first place?">
+  Markers inherit properties from where the `<marker>` element sits in the document, not from the element that
+  references it. The line isn't a parent of the marker's contents, so its `stroke`, `fill` and `color` don't reach them.
+  `context-stroke` is the explicit way to reach across that gap.
+</Details>
+
+<Details summary="Can I use currentColor instead?">
+  Only if every line in the SVG has the same colour. `currentColor` reads `color` from the marker's ancestors, usually
+  the `<svg>`, so it's one colour for all arrowheads. Setting `color` on a single line has no effect on its marker.
+</Details>
+
+<Details summary="What happens in Safari?">
+  Safari ignores the `fill: context-stroke` declaration as invalid and keeps the fallback, so every arrowhead is the
+  fallback colour. If that's not acceptable, use one marker per colour, which works everywhere.
+</Details>
+
+<Details summary="Does it work with stroke as well as fill?">
+  Yes. A marker shape can use `stroke: context-stroke` for an outline in the line's colour, and `context-fill` for the
+  fill of a closed shape that uses the marker. Write each with a fallback declaration first.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`fill: context-stroke` lets one marker take the colour of whichever line uses it, so you no longer need a marker per colour. Write it in CSS after a solid fallback, such as `fill: #6366f1; fill: context-stroke;`, so browsers that don't support it, currently including Safari, still get a sensible colour.

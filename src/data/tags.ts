@@ -1307,4 +1307,8 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Growing and Shrinking Shapes with `feMorphology`",
     description: "Using the `feMorphology` filter primitive to dilate or erode a graphic's shape for outlines, thickening, and thinning effects."
   },
+  "context-stroke": {
+    title: "Matching Marker Colours with `context-stroke`",
+    description: "Using the SVG 2 `context-stroke` and `context-fill` paint values so a marker takes the stroke or fill of the element that uses it."
+  },
 };
