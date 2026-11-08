@@ -1182,5 +1182,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "float16array": {
     title: "Float16Array and Half-Precision Numbers",
     description: "16-bit floating-point numbers in JavaScript with `Float16Array`, `Math.f16round()` and the `DataView` float16 methods, for graphics and machine learning data."
+  },
+  "feature-detection": {
+    title: "Feature Detection in JavaScript",
+    description: "Checking whether a browser supports an API or syntax at runtime with `typeof`, `in`, `try`/`catch` and dynamic imports, instead of sniffing user agents."
+  },
+  "baseline": {
+    title: "Baseline Browser Support",
+    description: "Baseline's newly and widely available statuses for web platform features, and how to use them to choose which features are safe to ship."
+  },
+  "browserslist": {
+    title: "browserslist and Browser Targets",
+    description: "Configuring browser targets with browserslist, including Baseline queries, so Babel, Autoprefixer and other tools agree on what to support."
+  },
+  "transpilation": {
+    title: "Transpiling JavaScript for Older Browsers",
+    description: "Rewriting modern JavaScript syntax for older engines with Babel, esbuild and TypeScript, and where transpiling ends and polyfilling begins."
+  },
+  "core-js": {
+    title: "core-js Polyfills",
+    description: "Using the core-js library to polyfill modern JavaScript APIs, loading only the features your target browsers are missing."
   }
 };

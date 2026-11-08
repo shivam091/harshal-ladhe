@@ -802,6 +802,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "backwards-compatible-javascript",
+    title: "Writing Backwards-Compatible JavaScript: Polyfills, Feature Detection and Baseline",
+    excerpt: "Use new JavaScript without breaking older browsers.",
+    description: "Write backwards-compatible JavaScript: feature detection, safe polyfills with core-js, transpiling syntax vs polyfilling APIs, Baseline and browserslist queries.",
+    category: ["JavaScript"],
+    tags: ["javascript", "polyfills", "feature-detection", "browser-support", "progressive-enhancement", "baseline", "browserslist", "transpilation", "core-js", "best-practices"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/backwards-compatible-javascript/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for writing backwards-compatible JavaScript, showing feature detection, polyfills and a transpiler side by side, with a Baseline timeline from newly to widely available.",
+      caption: "Detect, polyfill or transpile: matching each tool to a missing API or missing syntax, with Baseline as the target."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Most of the compatibility bugs I've chased came down to mixing up a missing API with missing syntax, so I built this post around that one table. I hope it helps you pick the right tool the first time, and maybe delete a polyfill or two you no longer need. 🧰",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 
