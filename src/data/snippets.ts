@@ -537,6 +537,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-text-outline",
+    title: "Outlined SVG Text with `paint-order`",
+    excerpt: "Outline SVG text without thinning the letters, using paint-order.",
+    description: "Outline SVG text with stroke, paint-order=\"stroke\" and round joins so the letters keep their weight, plus an feMorphology filter variant and caveats.",
+    category: ["SVG"],
+    tags: ["svg", "svg-text", "paint-order", "stroke-linejoin", "text-effects", "typography", "svg-filters", "feMorphology", "data-visualization", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-text-outline/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of bold glowing letters with a thick contrasting outline that sits cleanly behind each letter.",
+      caption: "Bold text with a clean outline painted behind the letters."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

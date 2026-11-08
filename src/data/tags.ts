@@ -1295,4 +1295,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Fading and Hiding with SVG `<mask>`",
     description: "Using the SVG `<mask>` element, often with gradients, to fade or hide parts of a graphic by luminance."
   },
+  "paint-order": {
+    title: "Controlling Fill and Stroke Order with `paint-order`",
+    description: "Painting the stroke behind the fill with `paint-order`, so outlines and label halos don't eat into text and shapes."
+  },
+  "stroke-linejoin": {
+    title: "Shaping Stroke Corners with `stroke-linejoin`",
+    description: "Choosing `miter`, `round`, or `bevel` corners for SVG strokes, and avoiding spiky outlines on sharp angles."
+  },
+  "femorphology": {
+    title: "Growing and Shrinking Shapes with `feMorphology`",
+    description: "Using the `feMorphology` filter primitive to dilate or erode a graphic's shape for outlines, thickening, and thinning effects."
+  },
 };

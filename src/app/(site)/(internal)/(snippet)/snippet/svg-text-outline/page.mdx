@@ -1,0 +1,161 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-text-outline");
+
+## Introduction
+
+Outlined text is useful for headlines, stickers, and labels that have to stay readable over busy backgrounds such as maps and charts. SVG `<text>` accepts `stroke` like any other shape, so the outline is one attribute away.
+
+There's a catch, though. A stroke is centred on the edge of each glyph and painted **on top of** the fill, so a thick outline eats into the letters and makes them look thin and blobby. One more attribute, `paint-order="stroke"`, fixes that.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 70" width="360" height="105" role="img" aria-label="Outline">
+    <text x="120" y="48" font-size="36" font-weight="800" text-anchor="middle" fill="currentColor" stroke="#ec4899" stroke-width="6" stroke-linejoin="round" paint-order="stroke">Outline</text>
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `stroke` and `stroke-width` draw an outline along the edge of every glyph. The stroke is centred on that edge, so half of its 6 units falls outside the letter and half falls inside.
+2. By default SVG paints the fill first and the stroke on top, so the inner half of the stroke covers part of each letter. `paint-order="stroke"` swaps the order: **stroke first, then fill**. The fill covers the inner half, and only the outer 3 units show as an outline.
+3. Because only half the stroke is visible, the outline looks half as thick as `stroke-width`. Double the value you want to see.
+4. `stroke-linejoin="round"` rounds the outline at corners. The default `miter` join makes sharp spikes at the points of letters like `M`, `A` and `V`, which get worse as the stroke gets thicker.
+
+Here's the difference, with the default paint order on the left:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 64" width="360" height="96" role="img" aria-label="Comparison of outlined text with and without paint-order stroke">
+    <text x="10" y="38" font-size="26" font-weight="800" fill="currentColor" stroke="#6366f1" stroke-width="4" stroke-linejoin="round">Outline</text>
+    <text x="125" y="38" font-size="26" font-weight="800" fill="currentColor" stroke="#6366f1" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Outline</text>
+    <text x="10" y="58" font-size="8" fill="currentColor" opacity="0.7">default: stroke over fill</text>
+    <text x="125" y="58" font-size="8" fill="currentColor" opacity="0.7">paint-order="stroke"</text>
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## Variant: An Outline with `feMorphology`
+
+A filter can also build an outline. `feMorphology` with `operator="dilate"` grows the text's shape outwards, and the grown shape is then coloured and placed behind the original:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 240 70" width="360" height="105" role="img" aria-label="Outline">
+    <defs>
+      <filter id="sto-morph" x="-10%" y="-20%" width="120%" height="140%">
+        <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="thick" />
+        <feFlood flood-color="#14b8a6" result="colour" />
+        <feComposite in="colour" in2="thick" operator="in" result="outline" />
+        <feMerge>
+          <feMergeNode in="outline" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    <text x="120" y="48" font-size="36" font-weight="800" text-anchor="middle" fill="currentColor" filter="url(#sto-morph)">Outline</text>
+  </svg>
+`}
+</SvgSnippet>
+
+It works, but it's usually the worse choice:
+
+- **Square corners:** `dilate` grows the shape with a rectangular kernel, so the outline has square, blocky corners instead of following the curves of the glyphs. That's the opposite of the rounded look `stroke-linejoin="round"` gives.
+- **It's a bitmap effect:** filters run on pixels. The result is rendered at the screen's resolution, so it stays sharp, but it costs more to draw than a stroke, especially on large or animated text.
+- **The filter region can clip it:** the default region is the text's bounding box plus 10% on each side. A thick outline on short text can poke past that, so set `x`, `y`, `width` and `height` on the `<filter>` with room to spare.
+- **When it helps:** the filter outlines whatever it's applied to as one shape, so it can outline a group of shapes or an HTML element through CSS `filter: url(#sto-morph)`. For plain SVG text, prefer `stroke` with `paint-order`.
+
+<RainbowDivider />
+
+## Example Usage
+
+For a label halo, set the stroke to the background colour. The text then appears to cut a clean gap through any lines behind it, which keeps chart and map labels readable:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 220 90" width="330" height="135" role="img" aria-label="Chart label Peak: 42 with a halo over gridlines">
+    <rect width="220" height="90" rx="8" fill="#1e1b4b" />
+    <g stroke="#6366f1" stroke-opacity="0.6" stroke-width="1">
+      <line x1="0" y1="30" x2="220" y2="30" />
+      <line x1="0" y1="50" x2="220" y2="50" />
+      <line x1="0" y1="70" x2="220" y2="70" />
+      <line x1="60" y1="0" x2="60" y2="90" />
+      <line x1="110" y1="0" x2="110" y2="90" />
+      <line x1="160" y1="0" x2="160" y2="90" />
+    </g>
+    <text x="110" y="56" font-size="20" font-weight="700" text-anchor="middle" fill="#ffffff" stroke="#1e1b4b" stroke-width="6" stroke-linejoin="round" paint-order="stroke">Peak: 42</text>
+  </svg>
+`}
+</SvgSnippet>
+
+In a stylesheet, the same thing is three properties, which makes it easy to apply to every label in a chart:
+
+<CodeBlock language="css">
+{`
+  .chart-label {
+    stroke: var(--chart-background);
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    paint-order: stroke;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Headlines and display type** with a coloured outline.
+- **Label halos** on charts and maps, so text stays readable over gridlines and roads.
+- **Sticker and badge styles**, with a thick white outline around the text.
+- **Captions over images**, where the background colour isn't known in advance.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Browser support:** `paint-order` works in all current browsers. It's also a CSS property, and it works on HTML text in some browsers together with `-webkit-text-stroke`, but support there is less consistent than in SVG.
+- **Outline only, no fill:** for hollow letters, use `fill="none"` and drop `paint-order`. The full stroke width is then visible.
+- **Strokes scale with the SVG:** `stroke-width` is in user units, so the outline grows and shrinks with the `viewBox`. Add `vector-effect="non-scaling-stroke"` if it must stay a fixed number of screen pixels.
+- **Check contrast:** an outline can help text stand out, but the fill colour still needs enough contrast with the background on its own for small text.
+- **Accessibility:** the text stays real, selectable text either way. Give a standalone SVG `role="img"` and an `aria-label` with the same words, or leave it as plain text inside a larger accessible SVG.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does my outlined text look thinner than the plain text?">
+  The stroke is centred on the glyph's edge and drawn over the fill, so its inner half covers part of each letter. Add
+  `paint-order="stroke"` so the fill is painted on top and only the outer half shows.
+</Details>
+
+<Details summary="Why does the outline look half as thick as stroke-width?">
+  With `paint-order="stroke"`, the fill hides the inner half of the stroke. A `stroke-width` of 6 gives a visible outline
+  about 3 units thick, so set it to twice the thickness you want.
+</Details>
+
+<Details summary="Why are there spikes on letters like M and A?">
+  The default `stroke-linejoin` is `miter`, which extends the outline to a point at sharp corners. Use
+  `stroke-linejoin="round"`, or lower `stroke-miterlimit` so long spikes fall back to bevelled corners.
+</Details>
+
+<Details summary="Should I use feMorphology instead of stroke?">
+  Usually not. A stroke follows the glyph outlines exactly, rounds its corners with `stroke-linejoin`, and is cheaper to
+  draw. The filter gives square corners and runs on pixels. Use it only when you need to outline something a stroke can't
+  reach, such as a group of shapes or an HTML element.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+For outlined SVG text, add `stroke`, `paint-order="stroke"` and `stroke-linejoin="round"` to the `<text>`. The stroke is painted behind the fill, so the letters keep their full weight, and the joins stay smooth. Remember that only half the `stroke-width` shows. An `feMorphology` filter can do it too, but with square corners and more cost, so keep it for cases a stroke can't handle.
