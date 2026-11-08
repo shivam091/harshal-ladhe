@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Explicit Resource Management Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Acquire and Release with AsyncDisposableStack</h1>
+        <p>A task takes a lock, opens a file and starts an autosave timer, then does its work. Every resource goes onto an <code>AsyncDisposableStack</code>, which releases them in reverse order however the task ends. Make the task throw part-way, or make closing the file throw as well, and watch what gets released and which error comes out.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>DisposableStack</code> and <code>AsyncDisposableStack</code>. They're supported in Chrome and Edge 134, Firefox 141 and Node 24 or later. Safari only has them in Technology Preview.</p>
+
+      <fieldset class="control-group">
+        <legend>Task</legend>
+        <label class="checkbox-field">
+          <input type="checkbox" id="throw-toggle">
+          Throw in the middle (before the timer starts)
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" id="dispose-toggle">
+          Closing the file throws
+        </label>
+        <div class="actions">
+          <button type="button" class="toggle-btn" id="run-btn">Run task</button>
+          <button type="button" class="secondary-btn" id="reset-btn">Reset</button>
+        </div>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Resources">
+        <ul class="resources" id="resources">
+          <li class="resource" data-resource="lock" data-state="idle"><span class="resource-name">Lock</span><span class="resource-state">idle</span></li>
+          <li class="resource" data-resource="file" data-state="idle"><span class="resource-name">File</span><span class="resource-state">idle</span></li>
+          <li class="resource" data-resource="timer" data-state="idle"><span class="resource-name">Autosave timer</span><span class="resource-state">idle</span></li>
+        </ul>
+      </section>
+
+      <section aria-label="Equivalent code">
+        <p class="code-label">The same task written with <code>await using</code>:</p>
+        <pre class="code" id="code"></pre>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite">Press Run task to start.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

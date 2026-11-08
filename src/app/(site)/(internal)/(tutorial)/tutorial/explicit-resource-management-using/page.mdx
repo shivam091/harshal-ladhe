@@ -1,0 +1,727 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("explicit-resource-management-using");
+
+## Introduction
+
+Plenty of things in a program have to be given back once you're done with them: a file handle has to be closed, a
+lock released, a timer cleared, an event listener removed. Forget one, or skip it because an error was thrown halfway
+through, and you get leaks that only show up later, as a "too many open files" crash or a listener firing on a page
+the user left minutes ago.
+
+JavaScript's answer so far has been `try...finally`. It works, but the clean-up code ends up far from the line that
+created the resource, and every extra resource adds another level of nesting.
+
+**Explicit resource management** adds a declaration that ties clean-up to scope:
+
+<CodeBlock language="js">
+{`
+  async function readConfig(path) {
+    await using file = await open(path); // from node:fs/promises
+    return JSON.parse(await file.readFile({ encoding: "utf8" }));
+  } // file is closed here, whether the function returned or threw
+`}
+</CodeBlock>
+
+When the block that holds a `using` (or `await using`) declaration ends, for whatever reason, the value's clean-up
+method runs automatically. The proposal also adds two well-known symbols, `Symbol.dispose` and `Symbol.asyncDispose`,
+two helper classes, `DisposableStack` and `AsyncDisposableStack`, and a new error type, `SuppressedError`.
+
+<Info title="ES2027, not ES2026">
+  Explicit resource management is often listed as an ES2026 feature. It isn't: TC39 lists it among the finished
+  proposals for **ES2027**. It already ships in Chrome, Edge, Firefox and Node, though, so you don't have to wait for
+  that edition to use it.
+</Info>
+
+<RainbowDivider />
+
+## The Problem with `try...finally`
+
+Here's a function that holds a lock while it copies one file into another, written the careful way:
+
+<CodeBlock language="js">
+{`
+  async function copyLocked(mutex, from, to) {
+    const lock = await mutex.acquire();
+    try {
+      const source = await open(from);
+      try {
+        const target = await open(to, "w");
+        try {
+          await target.writeFile(await source.readFile());
+        } finally {
+          await target.close();
+        }
+      } finally {
+        await source.close();
+      }
+    } finally {
+      lock.release();
+    }
+  }
+`}
+</CodeBlock>
+
+Three resources, three levels of nesting, and the one line that does the real work is buried in the middle. Each
+`finally` sits as far from its resource as the code between them is long. The same function with `await using`:
+
+<CodeBlock language="js">
+{`
+  async function copyLocked(mutex, from, to) {
+    using lock = await mutex.acquire();
+    await using source = await open(from);
+    await using target = await open(to, "w");
+
+    await target.writeFile(await source.readFile());
+  }
+`}
+</CodeBlock>
+
+Same behaviour, including the order things are released in: `target` first, then `source`, then the lock. The rest of
+this tutorial explains exactly how that works.
+
+<RainbowDivider />
+
+## Disposable Objects
+
+A value can be used with `using` if it has a `[Symbol.dispose]()` method. That method is its clean-up code. For
+`await using`, the value can instead have a `[Symbol.asyncDispose]()` method that returns a promise:
+
+<CodeBlock language="js">
+{`
+  function createConnection(name) {
+    console.log(\`open \${name}\`);
+    return {
+      name,
+      [Symbol.dispose]() {
+        console.log(\`close \${name}\`);
+      }
+    };
+  }
+`}
+</CodeBlock>
+
+An object that has `Symbol.dispose` is called **disposable**, and one with `Symbol.asyncDispose` is **async
+disposable**. Classes work the same way, with the symbol as a method name:
+
+<CodeBlock language="js">
+{`
+  class TempFile {
+    constructor(path) { this.path = path; }
+
+    async [Symbol.asyncDispose]() {
+      await rm(this.path, { force: true }); // from node:fs/promises
+    }
+  }
+`}
+</CodeBlock>
+
+The method is called with the value as `this`, and its return value is ignored (apart from being awaited for
+`Symbol.asyncDispose`).
+
+<RainbowDivider />
+
+## `using` Declarations
+
+`using` declares a constant, like `const`, and registers the value for disposal at the end of the enclosing block:
+
+<CodeBlock language="js">
+{`
+  {
+    using db = createConnection("db");
+    console.log("working with", db.name);
+  }
+  console.log("after the block");
+
+  // open db
+  // working with db
+  // close db
+  // after the block
+`}
+</CodeBlock>
+
+The block can be anything with braces: a function body, an `if` branch, a loop body, a `try` block or a bare `{ }`.
+
+### Disposal Runs in Reverse Order
+
+When there are several `using` declarations in a block, they're disposed in the **reverse** order of declaration,
+like a stack. A resource that was opened later may depend on one opened earlier, so it has to be closed first:
+
+<CodeBlock language="js">
+{`
+  {
+    using a = createConnection("a");
+    using b = createConnection("b");
+    using c = createConnection("c");
+  }
+
+  // open a
+  // open b
+  // open c
+  // close c
+  // close b
+  // close a
+`}
+</CodeBlock>
+
+You can also declare several in one statement, `using a = ..., b = ...;`, with the same ordering.
+
+### It Runs on `return`, `throw` and `break`
+
+Disposal happens however the block is left. A `return` value is worked out first, then the resources are disposed,
+then the function returns:
+
+<CodeBlock language="js">
+{`
+  function query() {
+    using db = createConnection("db");
+    return "rows"; // "rows" is computed, then db is closed
+  }
+
+  try {
+    using db = createConnection("db");
+    throw new Error("boom");
+  } catch (error) {
+    console.log("caught", error.message);
+  }
+  // open db
+  // close db
+  // caught boom    <- disposal happens before catch runs
+
+  for (const n of [1, 2, 3]) {
+    using r = createConnection(\`r\${n}\`);
+    if (n === 2) break;
+  }
+  // open r1, close r1, open r2, close r2
+`}
+</CodeBlock>
+
+Notice that in the `try` example the resource is disposed **before** the `catch` block runs: the `using` belongs to
+the `try` block, and that block has already ended.
+
+### `null` and `undefined` Are Allowed
+
+A `using` declaration can hold `null` or `undefined`. Nothing is registered, and nothing happens at the end of the
+block. That makes optional resources easy:
+
+<CodeBlock language="js">
+{`
+  {
+    using cache = options.useCache ? openCache() : null; // fine either way
+  }
+`}
+</CodeBlock>
+
+### Anything Else Must Be Disposable
+
+Any other value without a callable `Symbol.dispose` method throws a `TypeError` straight away, **at the
+declaration**, not at the end of the block. Resources declared before it in the same block are still disposed:
+
+<CodeBlock language="js">
+{`
+  try {
+    using a = createConnection("a");
+    using b = { name: "not disposable" }; // TypeError thrown here
+    console.log("never runs");
+  } catch (error) {
+    console.log(error.name);
+  }
+  // open a
+  // close a
+  // TypeError
+`}
+</CodeBlock>
+
+The method is also looked up at that moment and kept, so replacing `Symbol.dispose` on the object later doesn't
+change what runs at the end of the block.
+
+### The Binding Is Constant
+
+Like `const`, a `using` variable can't be reassigned: `db = other` throws `TypeError: Assignment to using variable` in
+V8. That's deliberate. The value that gets disposed is the one you declared, so swapping it out would leak it.
+
+<RainbowDivider />
+
+## `await using`
+
+`await using` is the async version. At the end of the block it calls `[Symbol.asyncDispose]()` and **awaits** the
+result before carrying on. If the value only has `Symbol.dispose`, that's used instead, so sync disposables work in
+both forms:
+
+<CodeBlock language="js">
+{`
+  async function run() {
+    {
+      await using a = {
+        async [Symbol.asyncDispose]() {
+          await flushToDisk();
+          console.log("a disposed");
+        }
+      };
+      using b = { [Symbol.dispose]() { console.log("b disposed"); } };
+      console.log("body");
+    }
+    console.log("after the block");
+  }
+
+  // body
+  // b disposed
+  // a disposed
+  // after the block
+`}
+</CodeBlock>
+
+Because it awaits, `await using` is only allowed where `await` is: inside an `async` function, an async generator or
+at the top level of a module. A plain `using` is fine inside an `async` function; it just disposes synchronously.
+
+<RainbowDivider />
+
+## Where `using` Is Allowed
+
+The rules come from the specification and are enforced by the parser. I checked each row in Node 26:
+
+| Placement | Allowed? |
+| --- | --- |
+| Any block: function body, `if`/`else` braces, loop body, `try`, bare `{ }` | Yes |
+| Top level of a module | Yes |
+| Top level of a classic `<script>` | No, `SyntaxError` |
+| `for (using x of items)` and `for (await using x of items)` | Yes: each value is disposed at the end of its iteration |
+| `for (using x = ...; ...; ...)` | Yes |
+| `for (using x in obj)` | No, `SyntaxError` |
+| Directly in a `case` clause of a `switch` | No: wrap the clause body in braces |
+| Without braces, e.g. `if (ok) using x = ...;` | No |
+| Destructuring, e.g. `using { a } = obj` | No: declare the object, then read from it |
+| No initialiser, e.g. `using x;` | No |
+
+`using` only becomes a keyword when it's followed by an identifier on the same line, so existing code with a variable
+called `using` keeps working.
+
+<RainbowDivider />
+
+## Errors During Disposal: `SuppressedError`
+
+With `try...finally`, an error thrown inside `finally` **replaces** the error that was already on its way out, and the
+original is lost. `using` doesn't drop either one. If the block threw and then disposal throws too, you get a
+`SuppressedError` that carries both:
+
+<CodeBlock language="js">
+{`
+  try {
+    using file = {
+      [Symbol.dispose]() { throw new Error("close failed"); }
+    };
+    throw new Error("write failed");
+  } catch (error) {
+    console.log(error.name);             // "SuppressedError"
+    console.log(error.error.message);    // "close failed" (the newer error)
+    console.log(error.suppressed.message); // "write failed" (the one it suppressed)
+  }
+`}
+</CodeBlock>
+
+`error` holds the error from disposal and `suppressed` holds the one that was already being thrown. When several
+disposals throw, they nest: each newer error wraps the previous one as its `suppressed`. If only the disposal throws,
+and the block itself finished normally, you get that error on its own, not a `SuppressedError`.
+
+`SuppressedError` is a subclass of `Error`, so `instanceof Error` is `true`. To find the original failure, unwrap it:
+
+<CodeBlock language="js">
+{`
+  function rootCause(error) {
+    while (error instanceof SuppressedError) error = error.suppressed;
+    return error;
+  }
+`}
+</CodeBlock>
+
+You can also construct one yourself with `new SuppressedError(error, suppressed, message)`.
+
+<RainbowDivider />
+
+## `DisposableStack` and `AsyncDisposableStack`
+
+Not everything you need to clean up is a disposable object, and sometimes you don't know how many resources there will
+be until run time. `DisposableStack` is a disposable container you can push clean-up work onto. Disposing the stack
+runs everything on it, last in, first out:
+
+<CodeBlock language="js">
+{`
+  {
+    using stack = new DisposableStack();
+
+    const db = stack.use(createConnection("db"));          // any disposable
+    const id = stack.adopt(setInterval(poll, 1000), clearInterval); // value + clean-up function
+    stack.defer(() => console.log("all done"));            // just a callback
+  }
+  // all done          <- defer ran first: it was added last
+  // (interval cleared)
+  // close db
+`}
+</CodeBlock>
+
+| Method | What it does |
+| --- | --- |
+| `stack.use(value)` | Registers a disposable (or `null`/`undefined`) and returns it. Throws a `TypeError` if it isn't disposable. |
+| `stack.adopt(value, onDispose)` | Registers `onDispose(value)` to run on disposal and returns `value`. For values that aren't disposable themselves. |
+| `stack.defer(onDispose)` | Registers a callback that takes no arguments. |
+| `stack.move()` | Moves everything onto a new stack and returns it. The original becomes disposed, without running anything. |
+| `stack.dispose()` | Runs everything now. Calling it again does nothing. |
+| `stack.disposed` | `true` once the stack has been disposed or moved. |
+
+Once a stack is disposed, calling `use`, `adopt`, `defer` or `move` throws a `ReferenceError`. If more than one
+callback throws during disposal, the errors are combined into nested `SuppressedError`s, just as with `using`.
+
+`AsyncDisposableStack` is the same, with `disposeAsync()` in place of `dispose()`. Its `use()` accepts either kind of
+disposable, and `adopt()` and `defer()` callbacks may return promises, which are awaited one after another.
+
+### Handing Resources Over with `move()`
+
+`move()` is for the case where a function opens several resources, and should close them if something fails, but
+should hand them to the caller if everything succeeds. A constructor is the classic example:
+
+<CodeBlock language="js">
+{`
+  class Pair {
+    #stack;
+
+    constructor(openA, openB) {
+      using stack = new DisposableStack();
+      this.a = stack.use(openA());
+      this.b = stack.use(openB()); // if this throws, a is closed
+      this.#stack = stack.move();  // success: keep them open
+    }
+
+    [Symbol.dispose]() {
+      this.#stack.dispose();
+    }
+  }
+`}
+</CodeBlock>
+
+If `openB()` throws, the constructor's block ends with an error and `stack` disposes `a`. If both succeed, `move()`
+transfers them to a new stack held by the instance, leaving the local `stack` empty, so the end of the constructor
+disposes nothing. The instance is now disposable itself, and `using pair = new Pair(...)` closes `b`, then `a`.
+
+<RainbowDivider />
+
+## Try It Live
+
+The playground runs a task that takes a lock, opens a file and starts an autosave timer, then does some work. It's built
+with `AsyncDisposableStack`, which is ordinary API rather than new syntax, and the panel above the log shows the same
+task written with `await using`. Tick **Throw in the middle** to fail before the timer is started, and **Closing the
+file throws** to see a `SuppressedError` carrying both failures.
+
+<Sandbox slug="explicit-resource-management-using" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Real-World Examples
+
+### File Handles in Node
+
+The `FileHandle` returned by `open()` from `node:fs/promises` has a `Symbol.asyncDispose` method that closes it, so it
+works with `await using` with no wrapper at all:
+
+<CodeBlock language="js">
+{`
+  import { open } from "node:fs/promises";
+
+  async function readConfig(path) {
+    await using file = await open(path);
+    const text = await file.readFile({ encoding: "utf8" });
+    return JSON.parse(text);
+  }
+
+  await readConfig("config.json"); // { port: 8080 }
+`}
+</CodeBlock>
+
+If `JSON.parse()` throws on a broken file, the handle is still closed. If `open()` itself fails, there's nothing to
+close, and the error simply propagates.
+
+### Locks
+
+A lock is a good fit because forgetting to release one doesn't leak memory, it freezes everything waiting on it. Here's
+a small async mutex whose `acquire()` resolves to a disposable that releases it:
+
+<CodeBlock language="js">
+{`
+  class Mutex {
+    #queue = Promise.resolve();
+
+    async acquire() {
+      let release;
+      const next = new Promise((resolve) => (release = resolve));
+      const previous = this.#queue;
+      this.#queue = previous.then(() => next);
+      await previous;
+      return { release, [Symbol.dispose]: release };
+    }
+  }
+
+  const mutex = new Mutex();
+
+  async function task(name, ms) {
+    using lock = await mutex.acquire();
+    console.log(\`\${name} start\`);
+    await wait(ms);
+    console.log(\`\${name} end\`);
+  }
+
+  await Promise.all([task("A", 30), task("B", 10)]);
+  // A start, A end, B start, B end
+`}
+</CodeBlock>
+
+Even though `B` is quicker, it waits for `A` to release the lock, and an error inside `task()` can't leave it held.
+The returned object keeps a plain `release()` method too, for code that manages the lock by hand, like the
+`try...finally` version at the start of this tutorial.
+
+### Timers
+
+A timer that should only fire if something takes too long needs to be cleared when it doesn't. Wrap `setTimeout()` in
+a disposable:
+
+<CodeBlock language="js">
+{`
+  function timeout(ms, callback) {
+    const id = setTimeout(callback, ms);
+    return { [Symbol.dispose]() { clearTimeout(id); } };
+  }
+
+  async function withSlowWarning(promise) {
+    using warning = timeout(2000, () => showToast("Still working..."));
+    return await promise;
+  }
+`}
+</CodeBlock>
+
+The `await` inside the block matters: without it, the function would return the promise immediately, the block would
+end, and the timer would be cleared before the work finished. In Node, the `Timeout` object returned by `setTimeout()`
+is already disposable, so `using t = setTimeout(...)` clears it at the end of the block.
+
+### Event Listeners
+
+Listeners that should only be active for part of a function are easy to leave behind. A small helper returns a
+disposable that removes the listener again:
+
+<CodeBlock language="js">
+{`
+  function listen(target, type, handler, options) {
+    target.addEventListener(type, handler, options);
+    return {
+      [Symbol.dispose]() {
+        target.removeEventListener(type, handler, options);
+      }
+    };
+  }
+
+  async function dragItem(item) {
+    using move = listen(window, "pointermove", (event) => moveTo(item, event));
+    using escape = listen(window, "keydown", cancelOnEscape);
+    await dropped(item); // both listeners are removed after the drop, or if it rejects
+  }
+`}
+</CodeBlock>
+
+`AbortController` does a similar job: pass `{ signal }` to `addEventListener()` and call `abort()` later. A
+disposable built on it is a one-liner, `stack.defer(() => controller.abort())`.
+
+### Temporary DOM Changes
+
+Disabling a button while a request runs, adding a `busy` class, or locking page scroll while a dialog is open are all
+"change it now, put it back later" operations. Recording the old value in the disposable means it's restored exactly:
+
+<CodeBlock language="js">
+{`
+  function disableWhile(button) {
+    const wasDisabled = button.disabled;
+    button.disabled = true;
+    return { [Symbol.dispose]() { button.disabled = wasDisabled; } };
+  }
+
+  async function save(button, data) {
+    using busy = disableWhile(button);
+    await fetch("/api/save", { method: "POST", body: JSON.stringify(data) });
+  } // the button is enabled again, even if fetch() rejected
+`}
+</CodeBlock>
+
+### Database Transactions
+
+A transaction should be rolled back unless it was explicitly committed. That rule fits `Symbol.asyncDispose` well.
+This wrapper works with any client that has an async `query()` method:
+
+<CodeBlock language="js">
+{`
+  class Transaction {
+    #client;
+    #done = false;
+
+    constructor(client) { this.#client = client; }
+
+    static async begin(client) {
+      await client.query("BEGIN");
+      return new Transaction(client);
+    }
+
+    query(sql, params) { return this.#client.query(sql, params); }
+
+    async commit() {
+      await this.#client.query("COMMIT");
+      this.#done = true;
+    }
+
+    async [Symbol.asyncDispose]() {
+      if (!this.#done) await this.#client.query("ROLLBACK");
+    }
+  }
+
+  async function transfer(client, from, to, amount) {
+    await using tx = await Transaction.begin(client);
+    await tx.query("UPDATE accounts SET balance = balance - $1 WHERE id = $2", [amount, from]);
+    await tx.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2", [amount, to]);
+    await tx.commit();
+  } // ROLLBACK runs if either UPDATE threw
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Built-in Disposables
+
+Some things are disposable without any help:
+
+- **Iterators.** `Iterator.prototype` has a `Symbol.dispose` method that calls the iterator's `return()`, and async
+  iterators have a matching `Symbol.asyncDispose`. So `using it = generator()` runs the generator's `finally` blocks
+  at the end of the block, even if you stopped part-way. The
+  [Iterator Helpers tutorial](/tutorial/iterator-helpers-lazy-pipelines) covers how iterators are closed in more
+  detail.
+- **Generators that use `using` themselves.** A `using` inside a generator body is disposed when the generator
+  finishes or is closed, for example by `break` in the `for...of` loop that's reading it.
+- **The stacks.** `DisposableStack` and `AsyncDisposableStack` are disposable, which is why
+  `using stack = new DisposableStack()` works.
+- **Node APIs.** In Node 26, these all have `Symbol.dispose` or `Symbol.asyncDispose`: `FileHandle` from
+  `fs/promises`, the `Timeout` objects from `setTimeout()` and `setInterval()`, `fs.Dir`, `ChildProcess`,
+  `net.Server` and `readline.Interface`. `fs/promises` also has `mkdtempDisposable()`, which creates a temporary
+  directory and deletes it on disposal.
+
+For browser APIs, write a small wrapper like the ones above.
+
+<RainbowDivider />
+
+## TypeScript and Transpiling
+
+TypeScript has supported `using` and `await using` since **version 5.2**. The types for `Disposable`,
+`AsyncDisposable`, `DisposableStack` and friends live in the `esnext.disposable` library, which is included in
+`"lib": ["esnext"]`:
+
+<CodeBlock language="json">
+{`
+  {
+    "compilerOptions": {
+      "target": "es2022",
+      "lib": ["es2022", "esnext.disposable", "dom"]
+    }
+  }
+`}
+</CodeBlock>
+
+With a target older than the feature, TypeScript rewrites `using` into ordinary code built on `try`/`catch`/`finally`.
+Babel and esbuild can transform it in the same way.
+
+Two things can't be transformed away, though:
+
+- **`using` is syntax.** A runtime that doesn't know it fails to parse the whole file, so it can't be polyfilled. It
+  has to be compiled out for older targets.
+- **The compiled code still needs `Symbol.dispose` and `Symbol.asyncDispose`.** Your objects define methods under
+  those symbols, so they have to exist. Load a polyfill such as `core-js`, which covers the symbols,
+  `DisposableStack`, `AsyncDisposableStack` and `SuppressedError`.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`using`, `await using`, `DisposableStack`, `AsyncDisposableStack` and `SuppressedError` are supported in Chrome and
+Edge 134, Firefox 141 and Node 24. Safari only has them in Technology Preview so far. `Symbol.dispose` appeared earlier,
+in Chrome 125, without the syntax.
+
+Feature-detect the API rather than the syntax. You can't test for `using` in the same file that uses it, because the
+file wouldn't parse in the first place:
+
+<CodeBlock language="js">
+{`
+  const hasResourceManagement = typeof DisposableStack === "function";
+`}
+</CodeBlock>
+
+That makes the options:
+
+- **Building with a compiler:** write `using` and let TypeScript, Babel or esbuild lower it, with a `core-js`
+  polyfill for the symbols and classes.
+- **No build step, wide support needed:** use `DisposableStack` from a polyfill with a `try...finally` around it, and
+  keep `Symbol.dispose` methods on your objects so they're ready when you can switch to `using`.
+- **Node-only code:** Node 24 and later support everything natively.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Returning a Promise Without Awaiting It
+
+`using` disposes when the block ends, not when the work started in it finishes. `return fetchWith(conn)` ends the
+function straight away and disposes `conn` while the request is still in flight. Write `return await fetchWith(conn)`
+inside a block that holds a resource.
+
+### 2. Using `using` for an Async Disposable
+
+`using` only looks for `Symbol.dispose`. A value that only has `Symbol.asyncDispose`, such as a Node `FileHandle`,
+throws a `TypeError` at the declaration. Use `await using` for it.
+
+### 3. Expecting the Resource in `catch`
+
+The resource belongs to the `try` block, so it's already disposed when `catch` and `finally` run. If error handling
+needs it, declare it in an outer block.
+
+### 4. Letting the Value Escape the Block
+
+Returning a resource, storing it on `this` or passing it to a callback that runs later doesn't stop it being disposed.
+To hand resources to someone else, use `DisposableStack` and `move()`.
+
+### 5. Destructuring in the Declaration
+
+`using { reader } = openStream()` is a `SyntaxError`. Declare the disposable object, then read properties from it on
+the next line.
+
+### 6. Disposers That Throw
+
+A `Symbol.dispose` method that can throw turns an ordinary error into a `SuppressedError`, and code that checks
+`error instanceof MyError` will no longer match. Keep clean-up code defensive, and unwrap with `error.suppressed` when
+you need the original.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- File handles, sockets, database connections and transactions in Node
+- Locks, semaphores and anything else other code waits on
+- Timers, intervals and listeners that should only live for one operation
+- Temporary changes to the DOM or to global state that must be put back
+- Test set-up and tear-down, such as temporary directories or mocked globals
+- Library objects that already have a `close()`, `release()` or `destroy()` method: add `Symbol.dispose` alongside it
+
+**Reach for something else** when a resource's lifetime doesn't match a block, such as a connection pool that lives as
+long as the app, or a listener tied to a component's lifetime in a framework. Those still need explicit clean-up at the
+right moment.
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`using` and `await using` attach clean-up to a block: when it ends, by `return`, `throw` or `break`, each declared
+resource is disposed in reverse order, and errors from disposal are kept alongside the original in a
+`SuppressedError`. Make your objects disposable by adding `[Symbol.dispose]()` or `[Symbol.asyncDispose]()`, use
+`DisposableStack` for everything that isn't, and remember that this is an ES2027 feature: native in Chromium, Firefox
+and Node today, and compiled down with a `core-js` polyfill everywhere else. For the bigger picture of how this
+compares with `try...finally`, `AbortController` and other languages, read
+[Resource Management in JavaScript: From try/finally to using](/post/javascript/resource-management-try-finally-to-using).

@@ -697,6 +697,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "explicit-resource-management-using",
+    title: "Explicit Resource Management with `using` and `await using`",
+    excerpt: "Release files, locks and listeners automatically at block end.",
+    description: "Clean up resources with JavaScript's using and await using: Symbol.dispose, disposal order, SuppressedError, DisposableStack, real examples, TypeScript and browser support.",
+    category: ["JavaScript"],
+    tags: ["javascript", "explicit-resource-management", "es2027", "error-handling", "async-await", "nodejs", "typescript", "transpilation"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/explicit-resource-management-using/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A lock, a file and a timer acquired in order by using declarations and released in reverse when the block ends, with a SuppressedError holding both a work error and a close error.",
+      caption: "Three resources released in reverse order at the end of a block, and a SuppressedError keeping both failures."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

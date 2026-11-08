@@ -1,0 +1,97 @@
+.playground-header code,
+.tip code,
+.code-label code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+.tip {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin-block-start: 0.875rem;
+}
+
+.resources {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.625rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resource {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  background: var(--pg-surface);
+  border: 0.0625rem solid var(--pg-border);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.resource-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.resource-state {
+  font-family: var(--pg-mono);
+  font-size: 0.78rem;
+  color: var(--pg-text-muted);
+}
+
+/* Held: the resource is open and must be given back. */
+.resource[data-state="held"] {
+  background: var(--pg-primary-soft);
+  border-color: var(--pg-primary);
+}
+
+.resource[data-state="held"] .resource-state {
+  color: var(--pg-text);
+}
+
+.resource[data-state="released"] {
+  border-color: rgba(52, 211, 153, 0.6);
+}
+
+.resource[data-state="released"] .resource-state {
+  color: #6ee7b7;
+}
+
+/* Failed: its dispose method threw, which is what produces the SuppressedError. */
+.resource[data-state="failed"] {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.6);
+}
+
+.resource[data-state="failed"] .resource-state {
+  color: #fca5a5;
+}
+
+.code-label {
+  margin-block: 0 0.5rem;
+  margin-inline: 0;
+  font-size: 0.85rem;
+  color: var(--pg-text-muted);
+}
+
+.code {
+  margin: 0;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  font-family: var(--pg-mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--pg-text);
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  overflow-x: auto;
+}

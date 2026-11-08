@@ -1254,5 +1254,9 @@ export const tagMeta: Record<string, TagMeta> = {
   "es2027": {
     title: "Modern JavaScript Features of ES2027",
     description: "Language features headed for ECMAScript 2027, such as Temporal and explicit resource management, with browser support and fallbacks.",
+  },
+  "explicit-resource-management": {
+    title: "Explicit Resource Management in JavaScript",
+    description: "Using `using`, `await using`, `Symbol.dispose` and `DisposableStack` to release files, locks, timers and listeners reliably."
   }
 };

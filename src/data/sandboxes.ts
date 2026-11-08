@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "explicit-resource-management-using",
+    title: "Acquire and Release with AsyncDisposableStack",
+    description: "Run a task that takes a lock, opens a file and starts a timer on an AsyncDisposableStack, watch them released in reverse order, then make the task throw part-way or make closing the file throw to see a SuppressedError, next to the equivalent await using code.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "temporal-api-dates-and-time-zones",
     title: "A Meeting Planner with Temporal",
     description: "Pick a meeting date, time and organiser's zone to see it in each attendee's zone with ZonedDateTime, next to what new Date() gets wrong, then load a DST change to compare adding one day, adding 24 hours and adding milliseconds to a Date.",
