@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "iterator-helpers-lazy-pipelines",
+    title: "Lazy Iterator Pipeline vs Eager Arrays",
+    description: "Run filter(), map() and take() lazily over an endless source and watch each value travel down the chain and the source close, then run the same steps as array methods and compare values read, callback calls and arrays created, or pull one value at a time with next().",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "array-fromasync-async-iterables",
     title: "Collecting a Paginated API with Array.fromAsync()",
     description: "Collect three pages from an async iterable into one array, make page 2 fail to see the earlier pages discarded, and compare one-at-a-time requests with Promise.all().",

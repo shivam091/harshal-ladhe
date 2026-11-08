@@ -602,6 +602,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-07", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "iterator-helpers-lazy-pipelines",
+    title: "Iterator Helpers: Lazy Pipelines over Any Iterator",
+    excerpt: "Map, filter and take over any iterator, lazily.",
+    description: "Use ES2025 iterator helpers (map, filter, take, drop, flatMap, reduce, Iterator.from) to build lazy pipelines over generators, Sets, Maps and infinite sequences.",
+    category: ["JavaScript"],
+    tags: ["javascript", "iterator-helpers", "lazy-evaluation", "generators", "es2025", "functional-programming", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/iterator-helpers-lazy-pipelines/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "An infinite sequence of numbers flowing one at a time through filter, map and take steps, with the source closed once take has enough values.",
+      caption: "One value at a time through filter, map and take, beside the eager array version that builds an array per step."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

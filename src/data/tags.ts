@@ -1139,4 +1139,12 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "The HTML Popover API",
     description: "Using the `popover` attribute and Popover API to build dismissible menus, tooltips, and toasts without extra JavaScript.",
   },
+  "lazy-evaluation": {
+    title: "Lazy Evaluation in JavaScript",
+    description: "Deferring work until a value is actually needed, with iterators, generators and iterator helpers, and when it saves time and memory compared with arrays."
+  },
+  "generators": {
+    title: "JavaScript Generators",
+    description: "Producing sequences on demand with `function*` and `yield`, including infinite sequences, cleanup in `finally` and the iterator protocol behind them."
+  }
 };

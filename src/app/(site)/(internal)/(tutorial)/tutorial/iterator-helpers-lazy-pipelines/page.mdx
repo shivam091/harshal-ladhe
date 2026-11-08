@@ -1,0 +1,535 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("iterator-helpers-lazy-pipelines");
+
+## Introduction
+
+Arrays have had `map()`, `filter()` and `reduce()` for years. Everything else that produces values one at a time,
+such as a `Set`, a `Map`, a generator or the result of `matchAll()`, didn't. To use those methods, you first copied
+the values into an array with `[...iterable]` or `Array.from()`, even when you only needed the first few.
+
+**Iterator helpers**, added in ES2025, put the same kind of methods on iterators themselves: `map()`, `filter()`,
+`take()`, `drop()`, `flatMap()`, `reduce()`, `toArray()`, `forEach()`, `some()`, `every()` and `find()`, plus a
+static `Iterator.from()`. The important difference from arrays is that they are **lazy**. A pipeline does no work
+until something asks it for a value, and then it does only the work needed to produce that one value. That makes it
+safe to run a pipeline over a sequence that never ends, and cheap to stop after the first few results.
+
+<RainbowDivider />
+
+## A Quick Refresher on Iterators
+
+An iterator is an object with a `next()` method. Each call returns `{ value, done }`, and `done: true` means there
+are no more values. An *iterable* is anything with a `[Symbol.iterator]()` method that returns an iterator, which is
+what `for...of` and the spread syntax look for.
+
+<CodeBlock language="js">
+{`
+  const iterator = ["a", "b"].values();
+
+  iterator.next(); // { value: "a", done: false }
+  iterator.next(); // { value: "b", done: false }
+  iterator.next(); // { value: undefined, done: true }
+`}
+</CodeBlock>
+
+The built-in iterators all inherit from `Iterator.prototype`, which is where the helpers live. That includes:
+
+- `array.values()`, `array.keys()` and `array.entries()`
+- `set.values()`, `map.keys()`, `map.values()` and `map.entries()`
+- generator objects, returned by calling a `function*`
+- `string.matchAll(regex)` and a string's own `[Symbol.iterator]()`
+
+An array itself is iterable, but it isn't an iterator, so `[1, 2, 3].take(2)` throws a `TypeError`. Call `.values()`
+first to get an iterator over it.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  const prices = new Map([
+    ["lamp", 40],
+    ["pen", 12],
+    ["desk", 250],
+    ["chair", 120]
+  ]);
+
+  const expensive = prices
+    .entries()
+    .filter(([, price]) => price > 100)
+    .map(([name]) => name)
+    .toArray();
+
+  console.log(expensive); // ["desk", "chair"]
+`}
+</CodeBlock>
+
+Nothing here creates an array until the last step. `filter()` and `map()` each return a new iterator wrapped around
+the one before it, and `toArray()` pulls every value through the chain and collects the results.
+
+The same works on a `Set`, on regex matches, or on anything else that gives you an iterator:
+
+<CodeBlock language="js">
+{`
+  const total = "a1b22c3"
+    .matchAll(/\\d+/g)
+    .map((match) => Number(match[0]))
+    .reduce((sum, n) => sum + n, 0);
+
+  console.log(total); // 26
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## The Methods
+
+The helpers fall into two groups. The **lazy** ones return a new iterator and run nothing yet. The **consuming** ones
+pull values straight away and return a plain result.
+
+| Method | Returns | Runs | What it does |
+| --- | --- | --- | --- |
+| `map(fn)` | Iterator | Lazily | Passes each value through `fn` |
+| `filter(fn)` | Iterator | Lazily | Keeps the values for which `fn` returns something truthy |
+| `take(n)` | Iterator | Lazily | Yields at most `n` values, then stops |
+| `drop(n)` | Iterator | Lazily | Skips the first `n` values, then yields the rest |
+| `flatMap(fn)` | Iterator | Lazily | `fn` returns an iterator or iterable, whose values are yielded one by one |
+| `reduce(fn, initial)` | Any value | At once | Combines every value into one |
+| `toArray()` | Array | At once | Collects every value into an array |
+| `forEach(fn)` | `undefined` | At once | Calls `fn` for every value |
+| `some(fn)` | Boolean | At once | `true` as soon as `fn` returns something truthy |
+| `every(fn)` | Boolean | At once | `false` as soon as `fn` returns something falsy |
+| `find(fn)` | Value or `undefined` | At once | The first value for which `fn` returns something truthy |
+| `Iterator.from(obj)` | Iterator | Lazily | Turns an iterable or a plain iterator object into one that has the helpers |
+
+Callbacks receive the value and a counter, starting at `0`, that counts values seen so far. There is no third
+"whole collection" argument as there is with arrays, because an iterator doesn't have one.
+
+<CodeBlock language="js">
+{`
+  ["a", "b"].values().forEach((value, index) => console.log(index, value));
+  // 0 "a"
+  // 1 "b"
+`}
+</CodeBlock>
+
+Arguments are checked as soon as you call a method, even a lazy one: `map(5)` throws a `TypeError` and `take(-1)`
+throws a `RangeError` right away, not when the first value is pulled.
+
+<RainbowDivider />
+
+## When Each Step Runs
+
+An array pipeline runs **one step at a time over the whole collection**. `filter()` goes through every element and
+builds a new array, then `map()` goes through that array and builds another. An iterator pipeline runs **one value at
+a time through every step**. Each value goes all the way down the chain before the next one is read.
+
+Logging from each callback makes the difference visible:
+
+<CodeBlock language="js">
+{`
+  function* naturals() {
+    let n = 1;
+    while (true) yield n++;
+  }
+
+  const result = naturals()
+    .filter((n) => { console.log("filter", n); return n % 2 === 0; })
+    .map((n) => { console.log("map", n); return n * n; })
+    .take(2)
+    .toArray();
+
+  // filter 1
+  // filter 2
+  // map 2
+  // filter 3
+  // filter 4
+  // map 4
+
+  console.log(result); // [4, 16]
+`}
+</CodeBlock>
+
+`map()` runs straight after `filter()` lets a value through, and the work ends as soon as `take(2)` has two results.
+The same steps on an array of the first six numbers run `filter()` six times, then `map()` three times, and then
+`slice(0, 2)` throws one of those results away.
+
+### Building a Pipeline Does Nothing
+
+Until something pulls on it, a pipeline is only a description of work. No callback runs when the chain is built:
+
+<CodeBlock language="js">
+{`
+  const squares = naturals().map((n) => {
+    console.log("map", n);
+    return n * n;
+  });
+
+  console.log("pipeline built"); // logged first: map hasn't run yet
+
+  squares.next(); // logs "map 1" and returns { value: 1, done: false }
+`}
+</CodeBlock>
+
+Values are pulled by `next()`, by `for...of`, by the spread syntax and `Array.from()`, and by the consuming helpers
+(`toArray()`, `reduce()`, `forEach()`, `some()`, `every()` and `find()`).
+
+<RainbowDivider />
+
+## Infinite Sequences
+
+Because nothing runs ahead of what's asked for, a pipeline can start from a sequence that never ends, as long as
+something limits how much of it you read. `take()` is the usual limit:
+
+<CodeBlock language="js">
+{`
+  function* fibonacci() {
+    let [a, b] = [0, 1];
+    while (true) {
+      yield a;
+      [a, b] = [b, a + b];
+    }
+  }
+
+  const firstEvenFibs = fibonacci()
+    .filter((n) => n % 2 === 0)
+    .take(5)
+    .toArray();
+
+  console.log(firstEvenFibs); // [0, 2, 8, 34, 144]
+`}
+</CodeBlock>
+
+`find()`, `some()` and `every()` also stop by themselves once they know the answer, so they are safe on an infinite
+sequence as long as an answer exists:
+
+<CodeBlock language="js">
+{`
+  const firstOver1000 = fibonacci().find((n) => n > 1000);
+  console.log(firstOver1000); // 1597
+`}
+</CodeBlock>
+
+`drop()` combines with `take()` to read a window from the middle, such as one page of results:
+
+<CodeBlock language="js">
+{`
+  const page = (iterator, pageNumber, pageSize) =>
+    iterator.drop((pageNumber - 1) * pageSize).take(pageSize).toArray();
+
+  page(naturals(), 3, 5); // [11, 12, 13, 14, 15]
+`}
+</CodeBlock>
+
+`drop(10)` still reads and discards ten values from the source: it skips them, it can't jump over them. On an array
+you would use `slice()` instead, which goes straight to the index.
+
+<RainbowDivider />
+
+## Stopping Early and Closing Iterators
+
+Some iterators hold on to something while they run: an open file, a database cursor, a lock, or a generator with a
+`finally` block that tidies up. An iterator signals "I'm finished with you" through its optional `return()` method,
+and generators run their `finally` block when it's called.
+
+The helpers call `return()` on the iterator they wrap whenever they stop before it's exhausted:
+
+- **`take(n)`** closes the source when it's asked for a value after the `n`th.
+- **`find()`, `some()` and `every()`** close it as soon as they have an answer.
+- **A callback that throws** closes it before the error propagates.
+- **Leaving a `for...of` loop early** with `break`, `return` or an error calls `return()` on the helper, and the
+  helper passes it on down the chain.
+
+<CodeBlock language="js">
+{`
+  function* readLines() {
+    console.log("open");
+    try {
+      let line = 1;
+      while (true) yield \`line \${line++}\`;
+    } finally {
+      console.log("close");
+    }
+  }
+
+  for (const line of readLines().take(2)) {
+    console.log(line);
+  }
+
+  // open
+  // line 1
+  // line 2
+  // close
+`}
+</CodeBlock>
+
+The source never produced a third line. When the loop asked for one, `take(2)` saw that it had already given out two
+values and called `return()` on the generator instead of reading further, which ran the `finally` block.
+
+That timing matters if you drive the iterator by hand. After two `next()` calls on `take(2)`, the source is still
+open. It's closed by the third `next()` call, or by calling `return()` on the `take(2)` iterator yourself. If you
+abandon a half-read iterator without either, its `finally` block never runs.
+
+<RainbowDivider />
+
+## Wrapping Your Own Iterators with `Iterator.from()`
+
+An iterator you write by hand, or one from a library, is usually a plain object with a `next()` method. It doesn't
+inherit from `Iterator.prototype`, so it has no helpers. `Iterator.from()` wraps it in one that does:
+
+<CodeBlock language="js">
+{`
+  function countdown(from) {
+    let current = from;
+    return {
+      next() {
+        return current > 0
+          ? { value: current--, done: false }
+          : { value: undefined, done: true };
+      }
+    };
+  }
+
+  Iterator.from(countdown(3)).map((n) => n * 10).toArray(); // [30, 20, 10]
+`}
+</CodeBlock>
+
+It accepts three kinds of input:
+
+- **An iterable**, such as a `Set` or a string: it calls `[Symbol.iterator]()` and wraps the result if needed.
+- **A plain iterator object** with a `next()` method, as above.
+- **An iterator that already inherits from `Iterator.prototype`**: it's returned unchanged, so
+  `Iterator.from(array.values())` costs nothing.
+
+The wrapper passes `return()` calls through to your object, so a hand-written iterator with a `return()` method gets
+closed by `take()` and friends just like a generator does.
+
+For an iterator you control, you can also extend the global `Iterator` class. Every instance then has the helpers
+without wrapping:
+
+<CodeBlock language="js">
+{`
+  class Countdown extends Iterator {
+    #current;
+
+    constructor(from) {
+      super();
+      this.#current = from;
+    }
+
+    next() {
+      return this.#current > 0
+        ? { value: this.#current--, done: false }
+        : { value: undefined, done: true };
+    }
+  }
+
+  new Countdown(3).filter((n) => n !== 2).toArray(); // [3, 1]
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## One-Shot Iterators
+
+An array can be read as many times as you like. An iterator can be read **once**. Every value it hands out is gone,
+and once it's done it stays done:
+
+<CodeBlock language="js">
+{`
+  const evens = [1, 2, 3, 4].values().filter((n) => n % 2 === 0);
+
+  console.log([...evens]); // [2, 4]
+  console.log([...evens]); // []: already used up
+`}
+</CodeBlock>
+
+No error tells you this happened, so the second read silently gets nothing. If you need the values more than once,
+either collect them with `toArray()` and reuse the array, or keep a function that builds a fresh pipeline each time:
+
+<CodeBlock language="js">
+{`
+  const numbers = [1, 2, 3, 4];
+  const evens = () => numbers.values().filter((n) => n % 2 === 0);
+
+  console.log(evens().toArray()); // [2, 4]
+  console.log(evens().toArray()); // [2, 4]
+`}
+</CodeBlock>
+
+The same applies when two parts of a program share one iterator: values that one of them pulls are no longer there
+for the other.
+
+<RainbowDivider />
+
+## Iterator Helpers vs Array Methods
+
+The method names match on purpose, but the two are not interchangeable.
+
+| | Array methods | Iterator helpers |
+| --- | --- | --- |
+| **Works on** | Arrays | Any iterator: `Set`, `Map`, generators, `matchAll()`, your own |
+| **Evaluation** | Each step runs over the whole array first | Each value runs through every step in turn |
+| **Intermediate results** | A new array per step | None until `toArray()` |
+| **Infinite sources** | Not possible | Fine with `take()`, `find()`, `some()` or `every()` |
+| **Reading it again** | As often as you like | Once only |
+| **Index access, `length`** | Yes | No |
+| **`sort()`, `reverse()`, `slice()`, `at()`** | Yes | No: collect with `toArray()` first |
+| **Callback arguments** | `(value, index, array)` | `(value, counter)` |
+
+For a small array that's already in memory, the array methods are just as good and often simpler. The case for
+iterator helpers is strongest when the data isn't an array to begin with, when it's large and you only need part of
+it, or when it has no end. The trade-offs, with numbers, are in
+[Iterators vs Arrays: When Lazy Evaluation Wins](/post/javascript/iterators-vs-arrays-lazy-evaluation).
+
+<RainbowDivider />
+
+## Try It Live
+
+The playground runs one pipeline, `filter()`, then `map()`, then `take()`, over the natural numbers, in two ways.
+**Run lazy** uses iterator helpers on an infinite source, and the log shows each value going down the chain one at a
+time, and the source being closed once `take()` has enough. **Run eager** runs the same steps as array methods over
+the first 30 numbers, so you can compare how many values each step touched and how many arrays were created.
+**Pull one value** calls `next()` once on a lazy pipeline so you can watch exactly what a single pull runs. The source
+is a hand-built iterator wrapped with `Iterator.from()`.
+
+<Sandbox slug="iterator-helpers-lazy-pipelines" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+Iterator helpers are part of ES2025 and supported in Chrome and Edge 122, Firefox 131, Safari 18.4 and Node 22. Every
+current browser has them, but Safari only added them in version 18.4, so check your targets if you support older
+Apple devices.
+
+Detect the feature rather than the browser:
+
+<CodeBlock language="js">
+{`
+  const hasIteratorHelpers =
+    typeof Iterator === "function" && typeof Iterator.prototype.take === "function";
+`}
+</CodeBlock>
+
+For older environments, a polyfill such as `core-js` adds the global `Iterator` and all of its helpers, so the rest of
+your code stays the same:
+
+<CodeBlock language="js">
+{`
+  import "core-js/actual/iterator";
+`}
+</CodeBlock>
+
+If you only need one or two operations, a generator function does the same job in a few lines, and works everywhere
+generators do:
+
+<CodeBlock language="js">
+{`
+  function* take(iterable, limit) {
+    if (limit <= 0) return;
+    let count = 0;
+    for (const value of iterable) {
+      yield value;
+      if (++count >= limit) return;
+    }
+  }
+
+  [...take(naturals(), 3)]; // [1, 2, 3]
+`}
+</CodeBlock>
+
+Returning from inside the `for...of` loop closes the source, just as the built-in `take()` does.
+
+<Info title="What came after ES2025">
+  ES2026 added `Iterator.concat()`, which joins several iterables into one lazy iterator (Chrome and Edge 146,
+  Firefox 147, Safari 26.4, Node 26). ES2027 adds `Iterator.zip()`, `chunks()`, `windows()`, `join()` and
+  `includes()`, which are still arriving in browsers. All of these are synchronous: there are no helpers on async
+  iterators in any edition yet, so for an async generator use `for await...of`, or collect it with
+  [`Array.fromAsync()`](/tutorial/array-fromasync-async-iterables).
+</Info>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Calling Helpers on an Array
+
+`[1, 2, 3].map()` is the array method, and `[1, 2, 3].take(2)` throws because arrays have no `take()`. Use
+`[1, 2, 3].values().take(2)` to get the iterator version.
+
+### 2. Reading an Iterator Twice
+
+The second `for...of`, spread or `toArray()` gets nothing, without an error. Collect the values once, or build a new
+pipeline each time.
+
+### 3. Forgetting to Limit an Infinite Source
+
+`naturals().map(fn).toArray()` never returns, and neither does `forEach()`, `reduce()` or `every()` on an endless
+sequence where the answer never turns up. Put a `take()` before any step that reads everything.
+
+### 4. Expecting `map()` to Run Straight Away
+
+A pipeline with side effects in `map()` does nothing until it's consumed. If nothing pulls on it, the callbacks never
+run. Use `forEach()` when the side effect is the point.
+
+### 5. Leaving a Hand-Driven Iterator Half Read
+
+If you call `next()` yourself and stop early, call `return()` on the iterator when you're done, or the source's
+cleanup code never runs. `for...of` and the consuming helpers handle this for you.
+
+### 6. Returning a String from `flatMap()`
+
+`flatMap()` treats an array or other iterable object as values to flatten, but it rejects a string with a
+`TypeError`, so a word isn't silently split into letters. Return `[...word]` if splitting into characters is what you
+want.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Filtering or transforming a `Set` or `Map` without copying it into an array first
+- Taking the first few matches from a large collection or a long `matchAll()` result
+- Generators that produce an unbounded sequence, such as IDs, retry delays or simulation steps
+- Library code that accepts "any iterable" and shouldn't force callers to build arrays
+- Pipelines over iterators that hold a resource, where closing early matters
+
+**Reach for an array instead** when you need to sort, index, measure the length, read the data more than once, or
+when the data is small and already an array.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Are iterator helpers faster than array methods?">
+  Not per value. Each step adds a `next()` call, and engines have spent years tuning array methods, so for a small
+  array the array version is often as fast or faster. Iterator helpers win by doing less work: they skip intermediate
+  arrays and stop as soon as they have enough. Measure your own case before rewriting code for speed.
+</Details>
+
+<Details summary="Do iterator helpers work with async generators?">
+  No. They are only on synchronous iterators. An async generator has none of these methods. Consume it with
+  `for await...of`, or collect it into an array with `Array.fromAsync()`.
+</Details>
+
+<Details summary="Why is there no sort() or length?">
+  Sorting needs every value before it can return the first one, and the length isn't known until the iterator is
+  exhausted. Both would mean reading the whole sequence, which is what `toArray()` is for. Collect first, then sort.
+</Details>
+
+<Details summary="Does take() close the source the moment it has enough values?">
+  It closes it the next time it's asked for a value. With `for...of`, `toArray()` and the other consuming helpers,
+  that request comes straight after the last value, so it looks immediate. If you call `next()` by hand, the source
+  stays open until you call `next()` once more or call `return()`.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Iterator helpers give every iterator the `map()`, `filter()`, `reduce()` family arrays already had, plus `take()` and
+`drop()`. They are lazy: building a pipeline runs nothing, and each value flows through every step before the next one
+is read, so a pipeline can start from an infinite sequence and stop as soon as it has what it needs, closing the
+source as it goes. Remember that an iterator can be read only once and has no length or index, and reach for an array
+when you need those.
