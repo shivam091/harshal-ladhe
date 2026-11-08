@@ -1,0 +1,393 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("whats-new-in-es2027");
+
+ECMAScript 2027 doesn't exist yet. The edition is expected to be finalised and published around **June 2027**, and
+until the spec is cut, more proposals can still join it. What does exist is a list of proposals that have already
+reached **stage 4** and are recorded by TC39 for publication in 2027, and it's an unusually strong list.
+
+<Info title="Status: as of November 2026">
+  Everything in this post reflects TC39's list of finished proposals and browser support as of November 2026. The
+  features below are confirmed for ES2027, but the list isn't closed: anything else that reaches stage 4 before the
+  edition is cut will be added.
+</Info>
+
+Two of the features here are the ones JavaScript developers have waited longest for. **Temporal** replaces `Date`
+with a modern date and time API, and **explicit resource management** adds `using` and `await using` for reliable
+cleanup. Alongside them come four more iterator helpers and a small primitive for multithreaded code.
+
+In this post, we'll cover:
+
+- Temporal: dates, times and time zones without the `Date` pitfalls
+- Explicit resource management: `using`, `await using`, `DisposableStack` and `SuppressedError`
+- Joint iteration: `Iterator.zip()` and `Iterator.zipKeyed()`
+- Iterator chunking: `.chunks()` and `.windows()`
+- Iterator `.join()` and `.includes()`
+- `Atomics.pause()`
+- A support table, how to follow what's coming next, and frequently asked questions
+
+<RainbowDivider />
+
+## Why Temporal and `using` Are ES2027, Not ES2026
+
+You'll find plenty of articles calling Temporal and `using` "ES2026 features". They aren't. Both reached stage 4
+during 2026, after the ES2026 edition had already been settled; Temporal, for example, got there at TC39's March 2026
+meeting. TC39's finished proposals list records both with an expected publication year of 2027.
+
+None of that stopped engines from shipping them. As the support table at the end shows, Chrome, Firefox and Node
+already have both, which is a big part of how they reached stage 4 in the first place. For what *did* make ES2026,
+see [What's New in ES2026](/post/javascript/whats-new-in-es2026).
+
+<RainbowDivider />
+
+## Temporal
+
+`Date` has been JavaScript's only built-in date type since 1995, and its problems are well known: months count from
+zero, objects are mutable, there's no way to represent "a date with no time" or "a time in a specific time zone", and
+parsing is inconsistent. Temporal is a new global namespace with a separate type for each of those ideas.
+
+<CodeBlock language="js">
+{`
+  // A calendar date with no time and no time zone
+  const due = Temporal.PlainDate.from("2026-01-31");
+  console.log(due.add({ months: 1 }).toString()); // "2026-02-28"
+
+  // An exact moment, in a named time zone
+  const meeting = Temporal.ZonedDateTime.from("2026-03-28T09:00[Europe/London]");
+
+  // Clocks go forward overnight, but the meeting stays at 09:00 local time
+  console.log(meeting.add({ days: 1 }).toString());
+  // "2026-03-29T09:00:00+01:00[Europe/London]"
+
+  console.log(meeting.withTimeZone("Asia/Kolkata").toString());
+  // "2026-03-28T14:30:00+05:30[Asia/Kolkata]"
+
+  // Differences between dates
+  console.log(Temporal.PlainDate.from("2026-11-08").until("2026-12-25").days); // 47
+`}
+</CodeBlock>
+
+Every Temporal object is immutable: methods like `add()` and `with()` return a new object. Months are numbered from
+1. Adding a month to 31 January clamps to the end of February instead of spilling into March. And because
+`ZonedDateTime` knows its time zone, arithmetic across a daylight-saving change does what a person would expect.
+
+The main types are `Temporal.Instant` (an exact moment), `Temporal.ZonedDateTime` (a moment in a time zone),
+`Temporal.PlainDate`, `PlainTime` and `PlainDateTime` (wall-clock values with no zone), `Temporal.Duration`, and
+`Temporal.Now` for the current time.
+
+**Support:** Chrome and Edge 144, Firefox 139, Node 26. Safari has it in Technology Preview only. For production code
+that has to run in Safari today, use a polyfill such as `temporal-polyfill` or `@js-temporal/polyfill`.
+
+For the reasoning behind the design, read [why Temporal replaces `Date`](/post/javascript/why-temporal-replaces-date).
+For a hands-on guide with a playground, see
+[The Temporal API: Dates, Times and Time Zones Without the `Date` Pitfalls](/tutorial/temporal-api-dates-and-time-zones).
+
+<RainbowDivider />
+
+## Explicit Resource Management: `using` and `await using`
+
+File handles, database connections, locks and subscriptions all need to be released, and `try`/`finally` is easy to
+forget and awkward to nest. Explicit resource management adds a declaration that ties cleanup to scope. Any object
+with a `[Symbol.dispose]()` method can be declared with `using`, and that method runs automatically when the block
+exits, whether it finishes normally, returns early or throws:
+
+<CodeBlock language="js">
+{`
+  class Resource {
+    constructor(name) {
+      this.name = name;
+      console.log(\`open \${name}\`);
+    }
+
+    [Symbol.dispose]() {
+      console.log(\`close \${this.name}\`);
+    }
+  }
+
+  {
+    using a = new Resource("a");
+    using b = new Resource("b");
+    console.log("work");
+  }
+
+  // open a
+  // open b
+  // work
+  // close b
+  // close a
+`}
+</CodeBlock>
+
+Resources are disposed in reverse order, so something opened later, which may depend on something opened earlier, is
+always closed first. `await using` does the same for asynchronous cleanup through `[Symbol.asyncDispose]()`:
+
+<CodeBlock language="js">
+{`
+  function openConnection(name) {
+    console.log(\`open \${name}\`);
+    return {
+      name,
+      async [Symbol.asyncDispose]() {
+        console.log(\`close \${name}\`);
+      }
+    };
+  }
+
+  async function run() {
+    await using db = openConnection("db");
+    console.log(\`query via \${db.name}\`);
+  }
+
+  await run();
+  // open db
+  // query via db
+  // close db
+`}
+</CodeBlock>
+
+The proposal also adds `DisposableStack` and `AsyncDisposableStack`, for collecting cleanup steps dynamically
+(including for APIs that don't implement `Symbol.dispose`), and `SuppressedError`. If the block throws *and* a
+disposer throws too, you get a `SuppressedError` whose `error` is the cleanup failure and whose `suppressed` is the
+original error, so neither is lost:
+
+<CodeBlock language="js">
+{`
+  try {
+    using resource = {
+      [Symbol.dispose]() {
+        throw new Error("cleanup failed");
+      }
+    };
+    throw new Error("work failed");
+  } catch (error) {
+    console.log(error.name); // "SuppressedError"
+    console.log(error.error.message); // "cleanup failed"
+    console.log(error.suppressed.message); // "work failed"
+  }
+`}
+</CodeBlock>
+
+**Support:** Chrome and Edge 134, Firefox 141, Node 24. Safari has it in Technology Preview only. TypeScript has
+compiled `using` since 5.2, which is the practical route for code that must run in Safari today.
+
+The full guide is
+[Explicit Resource Management with `using` and `await using`](/tutorial/explicit-resource-management-using), and there's
+a separate walkthrough of [moving existing cleanup code from `try`/`finally` to `using`](/post/javascript/resource-management-try-finally-to-using).
+
+<RainbowDivider />
+
+## Joint Iteration: `Iterator.zip()` and `Iterator.zipKeyed()`
+
+Walking two sequences in step usually means indexing into arrays. `Iterator.zip()` takes an iterable of iterables and
+yields an array per step, one value from each:
+
+<CodeBlock language="js">
+{`
+  const names = ["Ada", "Grace", "Linus"];
+  const scores = [3, 5, 4];
+
+  for (const [name, score] of Iterator.zip([names, scores])) {
+    console.log(name, score);
+  }
+
+  // Ada 3
+  // Grace 5
+  // Linus 4
+`}
+</CodeBlock>
+
+`Iterator.zipKeyed()` takes an object of iterables instead, and yields objects with the same keys, which reads better
+once there are more than two inputs:
+
+<CodeBlock language="js">
+{`
+  const rows = Iterator.zipKeyed({ name: names, score: scores });
+
+  for (const { name, score } of rows) {
+    console.log(\`\${name}: \${score}\`);
+  }
+
+  // Ada: 3
+  // Grace: 5
+  // Linus: 4
+`}
+</CodeBlock>
+
+Both accept an options object as their second argument. `mode` decides what happens when the inputs have different
+lengths:
+
+- `"shortest"` (the default) stops as soon as any input is done.
+- `"longest"` keeps going until every input is done, filling the gaps with `undefined`, or with values you supply
+  through the `padding` option.
+- `"strict"` expects every input to have the same length, and throws if one runs out before the others.
+
+**Support:** Chrome and Edge 153, Firefox 148. Safari has it in Technology Preview only, and Node doesn't have it yet.
+
+<RainbowDivider />
+
+## Iterator Chunking: `.chunks()` and `.windows()`
+
+Two new iterator methods split a sequence into groups. `chunks(n)` yields consecutive, non-overlapping arrays of `n`
+values, with a shorter final chunk if the values don't divide evenly. `windows(n)` yields overlapping "sliding
+windows", moving forward one value at a time:
+
+<CodeBlock language="js">
+{`
+  const numbers = [1, 2, 3, 4, 5];
+
+  console.log([...numbers.values().chunks(2)]);
+  // [ [ 1, 2 ], [ 3, 4 ], [ 5 ] ]
+
+  console.log([...numbers.values().windows(3)]);
+  // [ [ 1, 2, 3 ], [ 2, 3, 4 ], [ 3, 4, 5 ] ]
+`}
+</CodeBlock>
+
+Chunks are the natural fit for batching work, such as sending records to an API 100 at a time. Windows suit anything
+that compares neighbours: moving averages, detecting changes between consecutive readings, or pairing each item with
+the next one.
+
+**Support:** Firefox 154. Chrome doesn't have it yet, and Safari has it in Technology Preview only. This is the
+least-supported feature on the list, so plan on a polyfill if you want it now.
+
+<RainbowDivider />
+
+## Iterator `.join()` and `.includes()`
+
+Two array methods that iterators were missing. `join(separator)` concatenates the values into a string, without first
+collecting them into an array:
+
+<CodeBlock language="js">
+{`
+  const tags = new Set(["css", "javascript", "html"]);
+
+  console.log(tags.values().join(", ")); // "css, javascript, html"
+`}
+</CodeBlock>
+
+`includes(value)` checks whether an iterator produces a value, using the same SameValueZero comparison as
+`Array.prototype.includes()`, so it finds `NaN`:
+
+<CodeBlock language="js">
+{`
+  console.log(new Set([1, NaN]).values().includes(NaN)); // true
+`}
+</CodeBlock>
+
+Like every iterator method, `includes()` consumes the iterator as it goes: it stops at the first match, and the values
+it read along the way are gone. On an infinite iterator with no match, it never returns.
+
+**Support:** `join()` is in Chrome and Edge 153 and Firefox 154. `includes()` is in Chrome 154 and Firefox 154. Safari
+has both in Technology Preview only.
+
+The idea behind these helpers, and why they don't build intermediate arrays, is covered in
+[Iterator Helpers: Lazy Pipelines over Any Iterator](/tutorial/iterator-helpers-lazy-pipelines).
+
+<RainbowDivider />
+
+## `Atomics.pause()`
+
+The smallest addition is aimed at code that shares memory between workers through `SharedArrayBuffer`. A spin-wait
+loop that repeatedly checks a value burns CPU and can slow down the very thread it's waiting for. `Atomics.pause()`
+gives the CPU a hint that the code is spinning, much like the dedicated pause or yield instructions that CPUs provide
+for this:
+
+<CodeBlock language="js">
+{`
+  // flag is an Int32Array over a SharedArrayBuffer
+  while (Atomics.load(flag, 0) === 0) {
+    Atomics.pause();
+  }
+`}
+</CodeBlock>
+
+It doesn't block, sleep or yield to the event loop, so unlike `Atomics.wait()` it's allowed on the main thread. The
+typical pattern is to spin briefly with `Atomics.pause()` and fall back to `Atomics.wait()` if the wait goes on.
+Most application code will never call it directly, but libraries that implement locks will.
+
+**Support:** Chrome and Edge 133, Firefox 137, Safari 18.4, Node 24. It's the one ES2027 feature already in every
+current engine.
+
+<RainbowDivider />
+
+## ES2027 Support at a Glance
+
+| Feature | Chrome / Edge | Firefox | Safari | Node |
+| --- | --- | --- | --- | --- |
+| Temporal | 144 | 139 | Technology Preview | 26 |
+| `using`, `await using`, `DisposableStack`, `SuppressedError` | 134 | 141 | Technology Preview | 24 |
+| `Iterator.zip()`, `Iterator.zipKeyed()` | 153 | 148 | Technology Preview | Not yet |
+| `.chunks()`, `.windows()` | No | 154 | Technology Preview | Not yet |
+| `.join()` | 153 | 154 | Technology Preview | Not yet |
+| `.includes()` | 154 | 154 | Technology Preview | Not yet |
+| `Atomics.pause()` | 133 | 137 | 18.4 | 24 |
+
+Versions are the first stable release with support, as of November 2026. The obvious pattern is Safari: almost all of
+ES2027 is waiting in Safari Technology Preview. Until it reaches a stable release, feature-detect, or use the
+polyfills and TypeScript compilation mentioned above. The general approach is covered in
+[Writing Backwards-Compatible JavaScript](/post/javascript/backwards-compatible-javascript).
+
+<RainbowDivider />
+
+## What Could Still Join ES2027
+
+The list above is what's confirmed, not what's final. Any proposal that reaches stage 4 before the ES2027
+specification is cut can still be added. Proposals usually spend some time at stage 3 while engines implement and
+ship them, so the realistic candidates are the ones already at stage 3 with implementations underway.
+
+Rather than guess, check the sources TC39 maintains itself:
+
+- The **finished proposals** list in the `tc39/proposals` repository on GitHub records every stage 4 proposal with its
+  expected publication year.
+- The main **active proposals** list shows what's at stage 3 and stage 2.7.
+- The **TC39 meeting notes** in `tc39/notes` record each decision as it happens.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="When will ES2027 be published?">
+  Around June 2027, following the usual pattern: the specification is cut from the proposals at stage 4 early in the
+  year, then approved by Ecma. Until then, this post describes what has been confirmed so far, as of November 2026.
+</Details>
+
+<Details summary="Can I use Temporal in production now?">
+  Yes, if you can cover Safari. Chrome, Edge, Firefox and Node already ship it. For Safari, which has it only in
+  Technology Preview, load `temporal-polyfill` or `@js-temporal/polyfill` when `globalThis.Temporal` is missing, and
+  remove the polyfill once Safari ships it in a stable release.
+</Details>
+
+<Details summary="Can I use using without browser support?">
+  Yes, through TypeScript, which has compiled `using` and `await using` since version 5.2. Because `using` is
+  syntax, a runtime check can't save you in an unsupported engine: the file fails to parse. So either compile it, or
+  only use it in environments you control, such as Node 24 and later.
+</Details>
+
+<Details summary="Is Iterator.zip() the same as Lodash's zip()?">
+  Similar in spirit, but it works on any iterables, is lazy, and defaults to stopping at the shortest input. Lodash's
+  `zip()` takes arrays, builds the whole result eagerly, and pads to the longest input, which corresponds to
+  `mode: "longest"`.
+</Details>
+
+<Details summary="Why is ES2027 so iterator-heavy?">
+  ES2025 added the core iterator helpers, and ES2026 added `Iterator.concat()`. The ES2027 additions fill in the
+  remaining gaps people kept hitting when switching from arrays to iterators: walking sequences in step, batching,
+  joining into a string and checking membership.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+ES2027 is still being written, but its confirmed features already make it a significant edition:
+
+- **Temporal** finally gives JavaScript separate, immutable types for dates, times, instants and time zones
+- **`using` and `await using`** make cleanup automatic and correctly ordered
+- **`Iterator.zip()` and `Iterator.zipKeyed()`** walk several sequences in step
+- **`.chunks()` and `.windows()`** split sequences into batches and sliding windows
+- **`.join()` and `.includes()`** bring two familiar array methods to iterators
+- **`Atomics.pause()`** makes spin-waits friendlier to the CPU
+
+The biggest thing holding most of them back is a stable Safari release, which makes ES2027 one to keep an eye on as
+the year turns. If you'd like the earlier pieces of the picture, start with
+[What's New in ES2025](/post/javascript/whats-new-in-es2025) and work forward.

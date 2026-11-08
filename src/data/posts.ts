@@ -886,6 +886,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-es2027",
+    title: "What's New in ES2027 (So Far)",
+    excerpt: "Temporal, using and new iterator helpers, confirmed for ES2027.",
+    description: "The stage 4 features confirmed for ES2027 as of November 2026: Temporal, using and await using, Iterator.zip, chunks, windows, join, includes and Atomics.pause.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2027", "ecmascript", "modern-js", "iterator-helpers", "lazy-evaluation", "error-handling", "browser-support", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/whats-new-in-es2027/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for ES2027 so far, showing Temporal, using and await using, Iterator.zip, chunks and windows, join, includes and Atomics.pause as cards, with a note that the edition is still open.",
+      caption: "The proposals confirmed for ES2027 as of November 2026, with room left for more."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Writing about an edition that isn't finished is a little odd, so I've tried to be clear about what's confirmed and what isn't, and I'll revisit this once ES2027 is published. Temporal and using are the two I've been waiting on longest, and I hope the examples make it obvious why. ⏳",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 
