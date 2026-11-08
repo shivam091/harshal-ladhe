@@ -136,6 +136,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-07", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-aliases",
+    title: "Git Aliases Worth Adding to Your `~/.gitconfig`",
+    excerpt: "Tested Git aliases for history, undo, fixups, and search.",
+    description: "Tested Git aliases for your `~/.gitconfig`: compact logs, safe undo, one-step fixups, WIP parking, and safe force-pushes.",
+    category: ["Git"],
+    tags: ["git", "git-commands", "gitconfig", "rebase", "force-with-lease", "cli"],
+    link: {
+      label: "Read the full post: Advanced Git: Rebasing, Internals, and Real-World Workflows",
+      href: "/post/git/advanced-git-techniques-and-workflows"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/git-aliases/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Terminal-styled illustration of a ~/.gitconfig alias block with short Git commands expanding into their full versions.",
+      caption: "Aliases grouped by task, beside a graph log and a one-step fixup."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

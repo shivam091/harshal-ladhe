@@ -267,6 +267,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Git Commit Dates: Author vs. Committer",
     description: "How Git's author and committer dates differ, why rebases and amends move them apart, and how to inspect or restore them."
   },
+  "gitconfig": {
+    title: "Configuring Git with `~/.gitconfig`",
+    description: "Global Git settings, aliases, includes, and per-repo overrides that shape how Git behaves in every repository."
+  },
   "force-with-lease": {
     title: "Safe Force-Pushing with `--force-with-lease`",
     description: "Force-pushing rewritten history without overwriting a teammate's work, using `--force-with-lease` and `--force-if-includes`."
