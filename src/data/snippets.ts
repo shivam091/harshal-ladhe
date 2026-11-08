@@ -159,6 +159,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-animated-checkmark",
+    title: "Animated SVG Checkmark: Success Tick Draw-On",
+    excerpt: "Draw a success tick on with one SVG path and CSS.",
+    description: "Animate an SVG checkmark that draws itself on with pathLength and stroke-dashoffset, plus a circle-first variant and reduced-motion support.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "svg-animation", "css-animation", "stroke-dasharray", "stroke-dashoffset", "pathLength", "keyframes", "animation-delay", "microinteractions", "icons", "prefers-reduced-motion", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-animated-checkmark/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of a glowing checkmark being drawn inside a glowing circle.",
+      caption: "A glowing success tick drawing itself inside a circle."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
