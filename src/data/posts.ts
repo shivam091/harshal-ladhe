@@ -781,6 +781,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-es2025",
+    title: "What's New in ES2025: A Complete Guide",
+    excerpt: "Every ES2025 feature, with examples and browser support.",
+    description: "A complete guide to ES2025: iterator helpers, Set methods, Promise.try, RegExp.escape, regex modifiers, JSON modules, Float16Array and more, with browser support.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2025", "ecmascript", "modern-js", "iterator-helpers", "set-methods", "promises", "regex", "import-attributes", "float16array"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/whats-new-in-es2025/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover graphic for a guide to ES2025, showing the edition's features as cards: iterator helpers, Set methods, Promise.try, RegExp.escape, JSON modules and Float16Array.",
+      caption: "The ES2025 features at a glance, each with a short example and its browser support."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Checking every example in a real runtime, and every support number against the compatibility data, took longer than writing the prose, but it means you can copy any snippet here and trust the comment next to it. I hope the summary table saves you a few trips to MDN. ES2026 is next. 📦",
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication" }
+    ]
   }
 ];
 

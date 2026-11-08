@@ -1162,5 +1162,25 @@ export const tagMeta: Record<string, TagMeta> = {
   "deduplication": {
     title: "Removing Duplicates in JavaScript",
     description: "Deduplicating arrays and lists in JavaScript with `Set`, normalising values first, and comparing the results."
+  },
+  "ecmascript": {
+    title: "ECMAScript Editions and the TC39 Process",
+    description: "The yearly ECMAScript editions that define JavaScript, the TC39 proposal stages, and what each edition adds to the language."
+  },
+  "iterator-helpers": {
+    title: "JavaScript Iterator Helpers",
+    description: "Lazy `map`, `filter`, `take`, `drop` and other helpers on JavaScript iterators, added in ES2025, for working with generators and infinite sequences."
+  },
+  "regex": {
+    title: "Regular Expressions in JavaScript",
+    description: "Building, escaping and matching regular expressions in JavaScript, including `RegExp.escape()`, pattern modifiers and named capture groups."
+  },
+  "import-attributes": {
+    title: "Import Attributes and JSON Modules",
+    description: "The `with { type: \"json\" }` clause on JavaScript imports, and importing JSON files directly as ES modules."
+  },
+  "float16array": {
+    title: "Float16Array and Half-Precision Numbers",
+    description: "16-bit floating-point numbers in JavaScript with `Float16Array`, `Math.f16round()` and the `DataView` float16 methods, for graphics and machine learning data."
   }
 };

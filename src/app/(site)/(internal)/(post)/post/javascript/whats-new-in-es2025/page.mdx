@@ -1,0 +1,373 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("whats-new-in-es2025");
+
+## Introduction
+
+ECMAScript 2025, the sixteenth edition of the JavaScript standard, was published in June 2025. It's one of the larger
+editions of recent years: lazy helpers for iterators, set algebra on `Set`, a safe way to build regular expressions
+from user input, JSON imports, half-precision floats and a few smaller fixes.
+
+This guide walks through every feature that reached the standard in ES2025. Each section has a short example, the
+browser and Node.js versions that support it, and a link to a deeper tutorial or snippet where this site has one.
+
+Every feature here is already in current versions of Chrome, Edge, Firefox, Safari and Node.js, so most of it is safe
+to use today, with a fallback if you support older browsers.
+
+<RainbowDivider />
+
+## What You'll Learn
+
+- Iterator helpers: `map`, `filter`, `take` and friends on any iterator
+- The seven new `Set` methods
+- `Promise.try()` for wrapping functions that may or may not be async
+- `RegExp.escape()`, inline regex modifiers and duplicate named capture groups
+- Import attributes and JSON modules
+- `Float16Array`, `Math.f16round()` and the `DataView` float16 methods
+- A small fix for global variables created by `eval`
+- A support table for all of them, in one place
+
+<RainbowDivider />
+
+## How a Feature Gets into ES2025
+
+New JavaScript features go through the **TC39** process, which has stages from 0 to 4. A proposal reaches **stage 4**
+once it has a finished specification, tests, and at least two shipping implementations. Every year, the proposals that
+reached stage 4 before the cut-off go into that year's edition, which Ecma publishes in June.
+
+That's why browser support often comes *before* the edition: engines ship a feature first, and the standard records it.
+Several of the features below were in browsers in 2024, a year before ES2025 was published.
+
+<RainbowDivider />
+
+## Iterator Helpers
+
+Arrays have had `map`, `filter` and `reduce` for years, but iterators, such as generators, `Map.prototype.keys()` or
+`Set.prototype.values()`, had none of them. You had to spread them into an array first, which reads every value
+up front and breaks for infinite sequences.
+
+ES2025 adds a global `Iterator` and helper methods on `Iterator.prototype`: `map`, `filter`, `take`, `drop`,
+`flatMap`, `reduce`, `toArray`, `forEach`, `some`, `every` and `find`, plus `Iterator.from()` to wrap any iterable or
+iterator-like object. The helpers that return iterators are **lazy**: they do no work until you ask for a value.
+
+<CodeBlock language="js">
+{`
+  function* naturals() {
+    let n = 1;
+    while (true) yield n++;
+  }
+
+  naturals()
+    .filter((n) => n % 2 === 0)
+    .map((n) => n * n)
+    .take(3)
+    .toArray(); // [4, 16, 36]
+
+  const stock = new Map([["apples", 1], ["pears", 2], ["plums", 3]]);
+  stock.values().reduce((sum, count) => sum + count, 0); // 6
+`}
+</CodeBlock>
+
+`naturals()` never ends, but the pipeline stops after three matches because `take(3)` stops pulling values.
+
+**Support:** Chrome and Edge 122, Firefox 131, Safari 18.4, Node 22.
+
+Read more in [Iterator Helpers: Lazy Pipelines over Any Iterator](/tutorial/iterator-helpers-lazy-pipelines), the
+[Take the First N Matches from an Iterator](/snippet/iterator-take-first-n-matches) snippet, and
+[Iterators vs Arrays: Lazy Evaluation](/post/javascript/iterators-vs-arrays-lazy-evaluation) for when laziness pays off.
+
+<RainbowDivider />
+
+## New Set Methods
+
+`Set` finally does set algebra. Four methods return a new `Set` (`union`, `intersection`, `difference`,
+`symmetricDifference`) and three return a boolean (`isSubsetOf`, `isSupersetOf`, `isDisjointFrom`):
+
+<CodeBlock language="js">
+{`
+  const yourRoles = new Set(["editor", "reviewer"]);
+  const required = new Set(["editor", "admin"]);
+
+  yourRoles.union(required);        // Set(3) {"editor", "reviewer", "admin"}
+  yourRoles.intersection(required); // Set(1) {"editor"}
+  required.difference(yourRoles);   // Set(1) {"admin"}: what you're missing
+  yourRoles.isSupersetOf(required); // false
+`}
+</CodeBlock>
+
+The argument must be a `Set` or another set-like object (with `size`, `has()` and `keys()`), not an array. None of
+the methods change the original sets.
+
+**Support:** Chrome and Edge 122, Firefox 127, Safari 17, Node 22.
+
+Read more in [Native JavaScript Set Methods: union, intersection and difference](/tutorial/set-methods-union-intersection),
+and see the [Dedupe Two Lists, Then Compare Them](/snippet/set-dedupe-and-compare) snippet for a ready-made diff helper.
+
+<RainbowDivider />
+
+## `Promise.try()`
+
+Some functions return a value, some return a promise, and some throw before they return anything. If you want to treat
+all of them as a promise, `Promise.resolve(fn())` isn't enough: a synchronous `throw` escapes before
+`Promise.resolve` ever runs.
+
+`Promise.try(fn)` calls `fn` straight away and always gives you a promise. A returned value resolves it, a returned
+promise is followed, and a synchronous throw becomes a rejection:
+
+<CodeBlock language="js">
+{`
+  function parseSettings(text) {
+    return JSON.parse(text); // throws synchronously on bad input
+  }
+
+  Promise.try(parseSettings, "{ broken")
+    .then((settings) => console.log(settings))
+    .catch((error) => console.log(error.name)); // "SyntaxError"
+
+  Promise.try((a, b) => a + b, 2, 3).then(console.log); // 5
+`}
+</CodeBlock>
+
+Any extra arguments after the function are passed to it, as in the second example. Before `Promise.try`, the usual
+workarounds were `new Promise((resolve) => resolve(fn()))`, which works but reads poorly, or
+`Promise.resolve().then(fn)`, which delays `fn` to a later microtask. `Promise.try` runs `fn` synchronously, like the
+first, with a clear name.
+
+**Support:** Chrome and Edge 128, Firefox 134, Safari 18.2, Node 23.
+
+If you're new to how promises and microtasks fit together,
+[Mastering Asynchronous JavaScript](/post/javascript/mastering-async-javascript) covers the background.
+
+<RainbowDivider />
+
+## `RegExp.escape()`
+
+Building a regular expression from user input has always been risky: a search for `c++` or `$5.00` contains
+characters that mean something in a pattern. `RegExp.escape()` returns a string that matches its input literally:
+
+<CodeBlock language="js">
+{`
+  const term = "c++";
+  const pattern = new RegExp(\`\\\\b\${RegExp.escape(term)}\`, "i");
+
+  pattern.test("I write C++ daily"); // true
+
+  console.log(RegExp.escape("1.5 * (x)"));
+  // \\x31\\.5\\x20\\*\\x20\\(x\\)
+`}
+</CodeBlock>
+
+The output looks heavier than you might expect: a leading digit or letter, spaces and some punctuation are written
+as `\x` escapes. That's deliberate. It means the escaped text can't merge with whatever comes before it in the
+pattern, such as a `\1` backreference that would otherwise turn into `\11`.
+
+**Support:** Chrome and Edge 136, Firefox 134, Safari 18.2, Node 24.
+
+<RainbowDivider />
+
+## Regular Expression Pattern Modifiers
+
+Flags such as `i` used to apply to the whole pattern. **Pattern modifiers** switch the `i`, `m` and `s` flags on or
+off for part of a pattern, with the `(?flags:...)` group syntax:
+
+<CodeBlock language="js">
+{`
+  const greeting = /(?i:hello) world/;
+
+  greeting.test("HELLO world"); // true: "hello" ignores case
+  greeting.test("hello WORLD"); // false: "world" is still case-sensitive
+
+  /(?-i:ID)-\\d+/i.test("ID-42"); // true
+  /(?-i:ID)-\\d+/i.test("id-42"); // false: case-insensitive everywhere except "ID"
+`}
+</CodeBlock>
+
+**Support:** Chrome and Edge 125, Firefox 132, Safari 26, Node 23.
+
+<RainbowDivider />
+
+## Duplicate Named Capture Groups
+
+A named group could only be used once per pattern, even in alternatives that can never match together. ES2025 allows
+the same name in **different alternatives**, so one name can cover several formats:
+
+<CodeBlock language="js">
+{`
+  const date = /(?<year>\\d{4})-(?<month>\\d{2})|(?<month>\\d{2})\\/(?<year>\\d{4})/;
+
+  "2025-06".match(date).groups.year; // "2025"
+  "06/2025".match(date).groups.year; // "2025"
+`}
+</CodeBlock>
+
+Using the same name twice in the **same** alternative, such as `/(?<a>x)(?<a>y)/`, is still a `SyntaxError`.
+
+**Support:** Chrome and Edge 125, Firefox 129, Safari 17, Node 23.
+
+All three regex features are covered together in
+[Safer Dynamic Regex: `RegExp.escape()`, Modifiers and Duplicate Named Groups](/tutorial/regexp-escape-and-modifiers),
+and the [Escape User Input for a RegExp](/snippet/regexp-escape-user-input) snippet has a drop-in search highlighter.
+
+<RainbowDivider />
+
+## Import Attributes and JSON Modules
+
+**Import attributes** add a `with { ... }` clause to `import` statements, so you can tell the runtime what kind of
+module you expect. The first attribute the standard defines is `type: "json"`, and **JSON modules** use it to import
+a JSON file directly:
+
+<CodeBlock language="js">
+{`
+  // config.json contains: { "name": "demo", "debug": true }
+  import config from "./config.json" with { type: "json" };
+
+  console.log(config.name); // "demo"
+
+  // The same with a dynamic import
+  const { default: settings } = await import("./config.json", {
+    with: { type: "json" }
+  });
+  console.log(settings.debug); // true
+`}
+</CodeBlock>
+
+A few details are worth knowing:
+
+- **The attribute is required.** It's a security check: a server can't send JavaScript in place of the JSON you asked
+  for and have it run, because a module imported with `type: "json"` is only ever parsed as JSON.
+- **Only a default export.** The whole JSON value is the default export, so `import { name } from "./config.json"` is
+  an error. Destructure after importing instead.
+- **Use `with`, not `assert`.** An earlier version of the proposal used the keyword `assert`. Write `with`, which is
+  what the standard uses.
+- `export { default } from "./config.json" with { type: "json" };` works too, for re-exporting.
+
+**Support:** Chrome and Edge 123, Firefox 138, Safari 17.2, Node 20.10.
+
+<RainbowDivider />
+
+## `Float16Array`, `Math.f16round()` and `DataView` Float16 Methods
+
+JavaScript had 32-bit and 64-bit float typed arrays, but no 16-bit one. Half-precision floats are common in graphics
+(WebGPU, textures) and machine learning, where halving the memory matters more than precision. ES2025 adds
+`Float16Array`, `Math.f16round()` and `DataView.prototype.getFloat16()` / `setFloat16()`:
+
+<CodeBlock language="js">
+{`
+  const values = new Float16Array([1.1, 65504, 70000]);
+
+  values[0];                // 1.099609375: the nearest half-precision value
+  values[1];                // 65504: the largest finite float16
+  values[2];                // Infinity: out of range
+  values.BYTES_PER_ELEMENT; // 2
+
+  Math.f16round(1.1); // 1.099609375
+
+  const view = new DataView(new ArrayBuffer(2));
+  view.setFloat16(0, 0.1);
+  view.getFloat16(0); // 0.0999755859375
+`}
+</CodeBlock>
+
+A float16 has about three significant decimal digits, and its largest finite value is 65504, so it suits weights,
+colours and vertex data, not money or IDs.
+
+**Support:** Chrome and Edge 135, Firefox 129, Safari 18.2, Node 24.
+
+Read more in [Half-Precision Numbers with `Float16Array` and `Math.f16round()`](/tutorial/float16array-half-precision).
+
+<RainbowDivider />
+
+## Redeclarable Global `eval` Variables
+
+This one is a specification clean-up that most code will never notice. In sloppy (non-strict) mode, a direct `eval`
+at the top level can create a global variable with `var`. Before ES2025, that variable blocked a later script from
+declaring the same name with `let` or `const`. Now it doesn't, which matches how other deletable global properties
+already behaved:
+
+<CodeBlock language="js">
+{`
+  // Script 1 (sloppy mode)
+  eval("var count = 1");
+
+  // Script 2, loaded later
+  let count = 2; // allowed in ES2025; a SyntaxError before
+`}
+</CodeBlock>
+
+A plain `var count` in script 1, without `eval`, still makes `let count` in script 2 a `SyntaxError`. There's no new
+API here and nothing to feature-detect: if you write modules or strict-mode code, which can't create globals through
+`eval`, this change doesn't affect you.
+
+<RainbowDivider />
+
+## ES2025 at a Glance
+
+| Feature | What it adds | Chrome / Edge | Firefox | Safari | Node.js |
+| --- | --- | --- | --- | --- | --- |
+| Iterator helpers | `map`, `filter`, `take`, `toArray` and more on iterators | 122 | 131 | 18.4 | 22 |
+| Set methods | `union`, `intersection`, `difference` and four more | 122 | 127 | 17 | 22 |
+| `Promise.try()` | Run a function and always get a promise | 128 | 134 | 18.2 | 23 |
+| `RegExp.escape()` | Escape a string for use in a pattern | 136 | 134 | 18.2 | 24 |
+| Pattern modifiers | `(?i:...)` and `(?-i:...)` for part of a pattern | 125 | 132 | 26 | 23 |
+| Duplicate named groups | The same group name in different alternatives | 125 | 129 | 17 | 23 |
+| Import attributes and JSON modules | `import data from "./x.json" with { type: "json" }` | 123 | 138 | 17.2 | 20.10 |
+| Float16 | `Float16Array`, `Math.f16round()`, `DataView` methods | 135 | 129 | 18.2 | 24 |
+| Redeclarable global `eval` vars | `let` after an `eval`-created `var` | Spec fix | Spec fix | Spec fix | Spec fix |
+
+The newest minimums in the table are Chrome 136 (`RegExp.escape`), Firefox 138 (JSON modules) and Safari 26
+(pattern modifiers). If you still support older browsers,
+[Writing Backwards-Compatible JavaScript](/post/javascript/backwards-compatible-javascript) covers feature detection,
+polyfills and Baseline targets.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Can I use ES2025 features in production today?">
+  In most cases, yes. Every feature in this post is in the current stable versions of Chrome, Edge, Firefox and Safari,
+  and in current Node.js. Check the table against the oldest browsers you support. Iterator helpers, set methods,
+  `Promise.try` and `RegExp.escape` all have polyfills in core-js, so you can cover older browsers without changing
+  your code.
+</Details>
+
+<Details summary="Which ES2025 features can't be polyfilled?">
+  The syntax ones. Pattern modifiers, duplicate named capture groups and the `with` clause on imports change what the
+  parser accepts, so a script can't add them at runtime. A build tool can sometimes rewrite them, and a bundler can
+  inline JSON imports, but in the browser itself you need an engine that understands the syntax.
+</Details>
+
+<Details summary="Do iterator helpers replace array methods?">
+  No. Arrays keep their own `map` and `filter`, which return arrays. Iterator helpers are for data that isn't an array
+  yet, or that you don't want to load all at once: generators, streams of values, `Map` and `Set` iterators, or
+  infinite sequences.
+</Details>
+
+<Details summary="Is Promise.try the same as an async function?">
+  Close, but not quite. An `async` function also turns a synchronous throw into a rejection, but you have to write a new
+  function to get that. `Promise.try` does it for a function you already have, including one from a library, and passes
+  any extra arguments through.
+</Details>
+
+<Details summary="Where are Temporal and the using keyword?">
+  Not in ES2025, and not in ES2026 either, although they're often reported that way. Both reached stage 4 too late for
+  ES2026 and are part of ES2027.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+ES2025 fills gaps that JavaScript developers have worked around for years:
+
+- Iterators get the lazy `map`, `filter` and `take` that arrays always had
+- `Set` gets real set algebra
+- `Promise.try` gives sync-or-async functions one consistent shape
+- Regular expressions get safe escaping, scoped flags and reusable group names
+- JSON can be imported directly, and binary data gets a 16-bit float
+
+None of it needs a new way of thinking about the language. Each feature replaces a helper you've probably written
+yourself at least once.
+
+The next edition carries on in the same direction, with `Map` upsert, `Iterator.concat`, Base64 on `Uint8Array`,
+`Math.sumPrecise` and more. That's covered in my follow-up guide:
+[What's New in ES2026](/post/javascript/whats-new-in-es2026).
