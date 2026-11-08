@@ -1,0 +1,151 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-paper-grain-filter");
+
+## Introduction
+
+Flat vector shapes can look a little too clean. A fine **grain**, like the texture of paper or film, makes illustrations and backgrounds feel warmer and printed. You don't need a texture image for it: `feTurbulence` generates noise inside the filter, so the texture costs zero bytes to download and stays sharp at any size.
+
+This snippet turns that noise into an even grain, clips it to your shapes, and multiplies it over their colours.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 120" width="450" height="180" role="img" aria-label="A cream card with an orange circle and a blue bar, all with a fine paper grain">
+    <defs>
+      <filter id="grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" result="noise" />
+        <feColorMatrix in="noise" type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 0 0.25" result="greyNoise" />
+        <feComposite in="greyNoise" in2="SourceAlpha" operator="in" result="grainInShape" />
+        <feBlend in="SourceGraphic" in2="grainInShape" mode="multiply" />
+      </filter>
+    </defs>
+    <g filter="url(#grain)">
+      <rect x="10" y="10" width="280" height="100" rx="14" fill="#fef3c7" />
+      <circle cx="80" cy="60" r="30" fill="#f59e0b" />
+      <rect x="130" y="45" width="140" height="30" rx="6" fill="#0ea5e9" />
+    </g>
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `feTurbulence` takes no input. It **generates** Perlin noise across the filter region, in all four channels, including alpha.
+2. `type="fractalNoise"` gives soft, even noise. The default, `turbulence`, is harsher and vein-like, so spell it out.
+3. `baseFrequency="0.8"` sets the scale of the noise in cycles per user unit. High values (around `0.6` to `1`) give a fine grain. Low values (`0.01` to `0.05`) give large, cloudy shapes.
+4. `numOctaves="3"` layers three copies of the noise, each at twice the frequency and half the strength, for more fine detail.
+5. `feColorMatrix` averages R, G and B into one grey value, so the grain has no colour. Its last row, `0 0 0 0 0.25`, throws away the noise's own uneven alpha and sets a constant 25%, so the grain is equally strong everywhere.
+6. `feComposite operator="in"` clips the grain to `SourceAlpha`, the outline of the group's shapes. Without it, grain would cover the whole filter region, including the transparent corners of the card.
+7. `feBlend mode="multiply"` darkens the shapes by the grain. Multiply keeps each shape's colour and only adds texture.
+8. `x="0" y="0" width="100%" height="100%"` makes the filter region exactly the group's bounding box. Nothing is drawn outside the shapes, so the default 10% margin would only add pixels to compute.
+
+<RainbowDivider />
+
+## Variant: Grain on the Background Only
+
+Put the filter on the background shape alone and keep the content on top unfiltered. The text stays crisp while the panel behind it is textured:
+
+<SvgSnippet>
+{`
+  <svg viewBox="0 0 300 120" width="450" height="180" role="img" aria-label="A grainy indigo-to-pink panel with the word Grain in crisp white text">
+    <defs>
+      <linearGradient id="grain-2-fill" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#6366f1" />
+        <stop offset="1" stop-color="#ec4899" />
+      </linearGradient>
+      <filter id="grain-2" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="2" result="noise" />
+        <feColorMatrix in="noise" type="matrix" values="0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0.33 0.33 0.33 0 0  0 0 0 0 0.35" result="greyNoise" />
+        <feComposite in="greyNoise" in2="SourceAlpha" operator="in" result="grainInShape" />
+        <feBlend in="SourceGraphic" in2="grainInShape" mode="multiply" />
+      </filter>
+    </defs>
+    <rect x="10" y="10" width="280" height="100" rx="14" fill="url(#grain-2-fill)" filter="url(#grain-2)" />
+    <text x="150" y="72" font-size="36" font-weight="800" font-family="system-ui, sans-serif" text-anchor="middle" fill="#fff">Grain</text>
+  </svg>
+`}
+</SvgSnippet>
+
+- The grain's alpha is raised to `0.35` because a mid-tone gradient needs a stronger texture to show than a pale cream.
+- Two octaves are enough here. At this frequency, a third octave adds detail finer than a pixel at most sizes, which costs time but is hard to see.
+
+<RainbowDivider />
+
+## Example Usage
+
+For a grainy background on an HTML element, put the noise in a small SVG and use it as a `background-image`. The browser draws the image once and repeats it, which is much cheaper than running a live filter over a large area:
+
+<CodeBlock language="css">
+{`
+  .hero {
+    background-color: #6366f1;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0.33 0.33 0.33 0 0 0 0 0 0 1'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+      linear-gradient(135deg, #6366f1, #ec4899);
+    background-blend-mode: soft-light, normal;
+  }
+`}
+</CodeBlock>
+
+- `stitchTiles="stitch"` adjusts the noise slightly so its left edge matches its right and its top matches its bottom. Without it, you'd see the seams of the 200 × 200 tile as it repeats.
+- The grey noise is fully opaque here, and `soft-light` blends it with the gradient underneath: greys lighter than 50% lighten and darker ones darken. For a subtler grain, use `overlay` with a lower alpha, or lower the last matrix value.
+- `%` and `#` are written as `%25` and `%23` inside the `data:` URI.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Illustrations and hero art** with a printed, risograph, or paper look.
+- **Gradient backgrounds** that would otherwise show colour banding. Grain breaks up the visible steps.
+- **Cards and panels** that need a subtle tactile texture.
+- **Generated textures** like clouds, smoke, or marble, using a low `baseFrequency` instead of a high one.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **`baseFrequency` is in user units:** the grain scales with the SVG. The same filter on a small icon scaled up to fill the screen gives a coarse grain. Two values, such as `baseFrequency="0.8 0.2"`, stretch the noise along one axis for a brushed or fibrous look.
+- **`numOctaves` costs time:** each octave is another full noise calculation for every pixel. One to three octaves is plenty for grain. Beyond about four or five, the extra detail is too fine to see.
+- **`stitchTiles` only matters for tiles:** it makes the noise repeat seamlessly at the edges of the filter region. Use it when the result is tiled, as in a CSS background. On a single shape it makes no visible difference.
+- **Performance:** `feTurbulence` is one of the most expensive primitives, and its cost grows with the region's area and the number of octaves. Keep the region tight, avoid putting it on elements that animate or resize constantly, and for large areas use a background tile instead of a live filter.
+- **Colour space:** set `color-interpolation-filters="sRGB"`. Under the default `linearRGB`, the same noise looks noticeably lighter, so the grain looks washed out.
+- **Same noise everywhere:** the algorithm is fully specified, so the same attributes give the same noise in every browser. Change `seed` (default `0`) for a different pattern with the same character.
+- **Blend modes:** `multiply` and `screen` work everywhere. `feBlend` also accepts the other CSS blend modes, such as `soft-light` and `overlay`, in current browsers, but check older ones before relying on them.
+- **Unique ids:** inline SVGs on one page share one id space, so give each filter a specific id.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does my grain cover the whole rectangle around my shape?">
+  `feTurbulence` fills the entire filter region. Clip it to the shape with `feComposite operator="in"` and
+  `in2="SourceAlpha"` before blending it in.
+</Details>
+
+<Details summary="Why is the grain patchy, stronger in some places than others?">
+  The noise's alpha channel is noise too. Replace it with a constant using the last row of an `feColorMatrix`, such as
+  `0 0 0 0 0.25`, so every pixel gets the same opacity.
+</Details>
+
+<Details summary="How do I make the grain finer or coarser?">
+  Raise `baseFrequency` for a finer grain, and lower it for a coarser one. Because it's measured per user unit, you may
+  need to adjust it if your `viewBox` is much larger or smaller than the size the SVG is displayed at.
+</Details>
+
+<Details summary="Is a noise texture image better for performance?">
+  For large, static areas, usually yes: an image (or the SVG tile in a CSS background) is drawn once and reused, while a
+  live filter is recalculated whenever the element repaints at a new size. For a few small illustrations, the live filter
+  is fine and saves a download.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`feTurbulence type="fractalNoise"` with a high `baseFrequency` makes a fine grain from nothing. Turn it grey with a constant alpha in `feColorMatrix`, clip it with `feComposite operator="in"` against `SourceAlpha`, and `multiply` it over the artwork. Keep `numOctaves` low and the region tight, and for big backgrounds, use the noise as a tiled CSS background with `stitchTiles="stitch"`.

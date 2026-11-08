@@ -1359,4 +1359,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Image Effects on the Web",
     description: "Treating photos and graphics in the browser with filters and blending, from colour treatments to textures, without editing the source files."
   },
+  "feturbulence": {
+    title: "Generating Noise with SVG `feTurbulence`",
+    description: "Using `feTurbulence` and its `baseFrequency`, `numOctaves`, `seed`, and `stitchTiles` attributes to generate procedural noise for textures and distortion."
+  },
+  "noise": {
+    title: "Procedural Noise for Web Graphics",
+    description: "Generating grain, clouds, and other organic textures from noise in the browser instead of shipping texture images."
+  },
+  "textures": {
+    title: "Textures for Web Graphics",
+    description: "Adding surface detail such as grain, paper, and noise to shapes and backgrounds with SVG filters, patterns, and CSS."
+  },
 };
