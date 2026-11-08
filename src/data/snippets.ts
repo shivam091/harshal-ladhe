@@ -251,6 +251,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-wave-section-divider",
+    title: "SVG Wave Section Divider with currentColor",
+    excerpt: "Add a reusable SVG wave between page sections.",
+    description: "A reusable SVG wave divider: currentColor fill, preserveAspectRatio=\"none\" for full width, display: block, flipping, layered waves and seam fixes.",
+    link: {
+      label: "Read the full post: SVG Essentials: Mastering the Path Element",
+      href: "/post/svg/svg-essentials-mastering-the-path-element"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "path-data", "bezier-curves", "currentColor", "preserveAspectRatio", "viewbox", "section-divider", "custom-properties", "web-design", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-wave-section-divider/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Neon-styled illustration of two glowing layered waves dividing two coloured page sections.",
+      caption: "Layered glowing waves dividing two page sections."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

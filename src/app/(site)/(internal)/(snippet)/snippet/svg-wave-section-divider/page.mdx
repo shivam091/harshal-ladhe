@@ -1,0 +1,178 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-wave-section-divider");
+
+## Introduction
+
+A wave between two page sections softens the hard line where one background colour ends and the next begins. Images and `clip-path` can both do it, but an inline SVG is the most flexible: **one `<path>`, filled with `currentColor`**, so the same divider works between any two sections and changes colour with a single CSS property.
+
+The tricky parts aren't the wave itself. They're making it stretch to the full width, removing the small gap under inline SVGs, and hiding the hairline seam that can appear where the divider meets the next section. This snippet covers all three.
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg class="svg-wave" viewBox="0 0 1200 120" width="100%" height="80" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <style>
+      .svg-wave {
+        display: block;
+        inline-size: 100%;
+        block-size: 80px;
+        color: var(--wave-color, #6366f1);
+      }
+    </style>
+    <path fill="currentColor" d="M0 60 C150 110 350 10 600 60 S1050 10 1200 60 V120 H0 Z" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. The path starts on the left edge at `0, 60` and draws two cubic curves across the `1200`-unit width. `C150 110 350 10 600 60` dips down and rises back up to the middle. `S1050 10 1200 60` mirrors the last control point, so the second curve joins the first smoothly.
+2. `V120 H0 Z` drops to the bottom-right corner, runs along the bottom edge and closes the shape. The area **below** the wave is filled, so the SVG's bottom edge is a solid band of colour that meets the next section.
+3. `fill="currentColor"` paints the wave with the SVG's `color`. The `color` comes from `--wave-color`, with `#6366f1` as the fallback, so each divider can be recoloured with one custom property.
+4. `preserveAspectRatio="none"` lets the drawing stretch to fill whatever box CSS gives it. Normally an SVG keeps its `viewBox` proportions and adds empty space at the sides. With `none`, the `1200 × 120` drawing is squashed or stretched to exactly `100%` wide by `80px` tall.
+5. `display: block` removes the gap under the wave. An inline `<svg>` sits on the text baseline like a letter, and leaves room below it for descenders. As a block, it has no baseline and no gap.
+6. `aria-hidden="true"` hides it from screen readers, because the wave is decoration and says nothing about the content. `focusable="false"` stops very old browsers from making the SVG a tab stop.
+
+<RainbowDivider />
+
+## Variant: Two Layered Waves
+
+A second, semi-transparent wave behind the first adds depth. Give the two paths different heights and a different curve, and lower the `opacity` of the one at the back:
+
+<SvgSnippet>
+{`
+  <svg class="svg-wave-layered" viewBox="0 0 1200 120" width="100%" height="80" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <style>
+      .svg-wave-layered {
+        display: block;
+        inline-size: 100%;
+        block-size: 80px;
+        color: var(--wave-color, #14b8a6);
+      }
+    </style>
+    <path fill="currentColor" opacity="0.4" d="M0 50 C200 0 400 100 600 50 S1000 100 1200 50 V120 H0 Z" />
+    <path fill="currentColor" d="M0 80 C300 120 500 40 700 70 S1050 50 1200 70 V120 H0 Z" />
+  </svg>
+`}
+</SvgSnippet>
+
+- **Order matters:** the faint wave comes first, so the solid wave is painted on top of it.
+- **One colour:** both paths use `currentColor`, so the layered wave is still recoloured with one property. The back wave is a lighter tint because of its `opacity`.
+- **Different peaks:** the two curves don't line up, which is what makes it look like two layers rather than a thick outline.
+
+<RainbowDivider />
+
+## Example Usage
+
+Place the divider between two sections. Its wave is the colour of the section **below**, and its background is the colour of the section **above**, so it looks as if the lower section has a wavy top edge:
+
+<SvgSnippet>
+{`
+  <div class="wave-demo">
+    <style>
+      .wave-demo {
+        inline-size: 100%;
+        color: #fff;
+        font: 600 1rem/1.4 system-ui, sans-serif;
+        text-align: center;
+      }
+
+      .wave-demo-hero {
+        padding: 1.5rem 1rem;
+        background: #6366f1;
+      }
+
+      .wave-demo-body {
+        padding: 1.5rem 1rem;
+        background: #14b8a6;
+      }
+
+      .wave-demo-divider {
+        display: block;
+        inline-size: 100%;
+        block-size: 48px;
+        margin-block: -1px;
+        color: #14b8a6;
+        background: #6366f1;
+      }
+
+      .wave-demo-divider--flip {
+        scale: 1 -1;
+      }
+    </style>
+    <section class="wave-demo-hero">Hero section</section>
+    <svg class="wave-demo-divider" viewBox="0 0 1200 120" width="100%" height="48" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M0 60 C150 110 350 10 600 60 S1050 10 1200 60 V120 H0 Z" />
+    </svg>
+    <section class="wave-demo-body">Next section</section>
+    <svg class="wave-demo-divider wave-demo-divider--flip" viewBox="0 0 1200 120" width="100%" height="48" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <path fill="currentColor" d="M0 60 C150 110 350 10 600 60 S1050 10 1200 60 V120 H0 Z" />
+    </svg>
+    <section class="wave-demo-hero">Footer</section>
+  </div>
+`}
+</SvgSnippet>
+
+- **`margin-block: -1px`** overlaps the divider with its neighbours by one pixel on each side. When a section's height isn't a whole number of device pixels, browsers can leave a thin line of page background showing between two blocks. The overlap hides it, and because the overlapping colours match, the overlap itself is invisible.
+- **`scale: 1 -1`** flips the second divider upside down, so the wave hangs from the bottom of the teal section into the footer. It keeps the same colours: after the flip, the teal band touches the teal section above, and the indigo background meets the indigo footer below. On older browsers without the standalone `scale` property, use `transform: scaleY(-1)`.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Landing pages**, between a hero and the content below it.
+- **Footers** that rise into the page with a wave instead of a straight edge.
+- **Cards and banners** with a decorative wavy bottom edge.
+- **Themed sections**, where the wave colour comes from a custom property set per section or per theme.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Strokes stretch too:** `preserveAspectRatio="none"` stretches everything, including stroke widths, which end up thicker horizontally than vertically. If you add a stroke along the wave, also set `vector-effect="non-scaling-stroke"` on the path.
+- **Extreme widths:** on a very wide screen, a fixed `80px` height makes the wave very flat. Use `block-size: clamp(40px, 8vw, 120px)` to let it grow a little with the viewport.
+- **Seams:** if you still see a hairline after the `-1px` overlap, check that the divider's colours exactly match the sections' backgrounds, including any transparency.
+- **Dark mode:** set `--wave-color` (and the divider's `background`) from the same custom properties as your section backgrounds, and the divider follows the theme with no extra rules.
+- **Namespace the styles:** a `<style>` inside an inline SVG applies to the **whole page**. Keep the class names specific, or move the rules into your normal stylesheet.
+- **Accessibility:** keep the divider `aria-hidden="true"`. Screen readers have nothing useful to say about a wave, and the sections on either side should have their own headings.
+- **Browser support:** `preserveAspectRatio` and `vector-effect` work in all current browsers. The standalone `scale` property does too, but `transform: scaleY(-1)` covers older ones.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why is there a small gap under my wave?">
+  An `<svg>` is an inline element by default, so it sits on the text baseline and leaves space below for letters like
+  "g" and "y". Setting `display: block` on the SVG removes that space. `vertical-align: top` also works if the SVG has to
+  stay inline.
+</Details>
+
+<Details summary="Why doesn't the wave stretch to the full width?">
+  Without `preserveAspectRatio="none"`, the SVG keeps the proportions of its `viewBox` and fits the drawing inside the
+  box, leaving empty space at the sides or squashing the height. With `none`, the drawing is stretched to fill the box
+  exactly, so it always runs edge to edge.
+</Details>
+
+<Details summary="How do I put the wave at the top of a section instead?">
+  Flip it. `scale: 1 -1` (or `transform: scaleY(-1)`) turns the SVG upside down around its centre, so the filled band is
+  at the top and the wave hangs down. Use `scale: -1 1` to mirror it left to right instead, which is a quick way to make
+  two dividers on the same page look different.
+</Details>
+
+<Details summary="How do I make a different wave shape?">
+  Change the control points. In `C150 110 350 10 600 60`, the `110` and `10` set how deep the dip and how high the rise
+  are, so values closer to `60` give a flatter wave. Add more `S` segments for more waves, for example
+  `C100 110 200 10 300 60 S500 10 600 60 S800 10 900 60 S1100 10 1200 60` for four.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+A wave divider is one `<path>` filled with `currentColor`. `preserveAspectRatio="none"` stretches it to the full width, `display: block` removes the gap below it, `scale: 1 -1` flips it, and a `-1px` margin hides the hairline seam. Colour it with a custom property and keep it `aria-hidden`, and one divider works between any two sections.

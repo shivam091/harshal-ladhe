@@ -1147,4 +1147,16 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Drag and Drop on the Web",
     description: "Dragging elements with Pointer Events and styling drop zones and selected states, with keyboard alternatives for accessibility."
   },
+  "currentcolor": {
+    title: "Theming SVG with `currentColor`",
+    description: "Using the `currentColor` keyword so SVG fills and strokes follow the surrounding text colour, for icons and graphics that theme themselves."
+  },
+  "preserveaspectratio": {
+    title: "Fitting SVG with `preserveAspectRatio`",
+    description: "Controlling how an SVG's `viewBox` fits its box with `preserveAspectRatio`, from centred letterboxing to stretching with `none`."
+  },
+  "section-divider": {
+    title: "Decorative Section Dividers",
+    description: "Waves, curves and angled edges between page sections, built with SVG or CSS and kept seamless, responsive and themeable."
+  },
 };
