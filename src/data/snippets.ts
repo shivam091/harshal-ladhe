@@ -136,6 +136,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-07", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "iterator-take-first-n-matches",
+    title: "Lazy First N Matches with `Iterator.prototype.take()`",
+    excerpt: "Get the first N matches and stop reading.",
+    description: "Return the first N matches from any iterable with Iterator.from(), filter() and take(), stopping as soon as it has enough, even on infinite sequences.",
+    link: {
+      label: "Read the full tutorial: Iterator Helpers: Lazy Pipelines over Any Iterator",
+      href: "/tutorial/iterator-helpers-lazy-pipelines"
+    },
+    category: ["JavaScript"],
+    tags: ["javascript", "iterator-helpers", "lazy-evaluation", "generators", "es2025", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/iterator-take-first-n-matches/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A long list scanned from the top, with filter and take stopping after the third match while the rest of the list is left unread.",
+      caption: "filter() and take() stop at the third match instead of scanning the whole list."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 

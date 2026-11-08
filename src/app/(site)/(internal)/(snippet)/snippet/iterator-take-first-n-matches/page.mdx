@@ -1,0 +1,217 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("iterator-take-first-n-matches");
+
+## Introduction
+
+"Give me the first three errors" is usually written as `lines.filter(isError).slice(0, 3)`. It gives the right
+answer, but `filter()` checks **every** line and builds an array of every match before `slice()` keeps three of them.
+On a million lines where the first three errors are near the top, almost all of that work is thrown away.
+
+With ES2025 iterator helpers, the same request can stop as soon as it has enough. `filter()` and `take()` on an
+iterator are lazy, so the predicate runs only until the third match turns up, and nothing else is read.
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  function firstMatches(iterable, predicate, n) {
+    return Iterator.from(iterable).filter(predicate).take(n).toArray();
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `Iterator.from(iterable)` turns any iterable, such as an array, a `Set`, a `Map`'s values, a `NodeList` or a
+   generator, into an iterator that has the helper methods. If it's given an iterator that already has them, it
+   returns it unchanged.
+2. `.filter(predicate)` returns a new iterator. It doesn't run yet.
+3. `.take(n)` wraps that in another iterator that hands out at most `n` values.
+4. `.toArray()` is what starts the work. It asks `take()` for values one at a time, `take()` asks `filter()`, and
+   `filter()` reads from the source until the predicate passes. Each match travels straight through to the result
+   before the next value is read.
+5. Once `take()` has given out `n` values and is asked for another, it calls `return()` on the source instead of
+   reading further, and `toArray()` returns the array.
+
+The predicate runs on the values up to and including the `n`th match, and no further.
+
+<RainbowDivider />
+
+## Example Usage
+
+### The First Errors in a Log
+
+<CodeBlock language="js">
+{`
+  const log = [
+    "INFO start",
+    "ERROR disk full",
+    "INFO retry",
+    "ERROR timeout",
+    "ERROR disk full",
+    "INFO done"
+  ];
+
+  firstMatches(log, (line) => line.startsWith("ERROR"), 2);
+  // ["ERROR disk full", "ERROR timeout"]
+`}
+</CodeBlock>
+
+### Values from a `Map`
+
+<CodeBlock language="js">
+{`
+  const users = new Map([
+    [1, { name: "Ada", active: true }],
+    [2, { name: "Bo", active: false }],
+    [3, { name: "Cy", active: true }],
+    [4, { name: "Di", active: true }]
+  ]);
+
+  firstMatches(users.values(), (user) => user.active, 2).map((user) => user.name);
+  // ["Ada", "Cy"]
+`}
+</CodeBlock>
+
+### An Infinite Sequence
+
+Because nothing is read ahead, the source doesn't need an end. This is where `filter().slice()` can't help at all:
+
+<CodeBlock language="js">
+{`
+  function* integersFrom(start) {
+    let n = start;
+    while (true) yield n++;
+  }
+
+  function isPrime(n) {
+    for (let d = 2; d * d <= n; d++) {
+      if (n % d === 0) return false;
+    }
+    return n > 1;
+  }
+
+  firstMatches(integersFrom(2), isPrime, 5); // [2, 3, 5, 7, 11]
+`}
+</CodeBlock>
+
+### The First Invalid Form Fields
+
+A `NodeList` is iterable, so it can go straight in:
+
+<CodeBlock language="js">
+{`
+  const fields = document.querySelectorAll("input, select, textarea");
+  const firstInvalid = firstMatches(fields, (field) => !field.validity.valid, 3);
+
+  firstInvalid[0]?.focus();
+`}
+</CodeBlock>
+
+### Counting the Work Saved
+
+<CodeBlock language="js">
+{`
+  const numbers = Array.from({ length: 1_000_000 }, (_, i) => i);
+  let checks = 0;
+  const matches = (n) => {
+    checks++;
+    return n % 1000 === 999;
+  };
+
+  firstMatches(numbers, matches, 3);
+  console.log(checks); // 3000
+
+  checks = 0;
+  numbers.filter(matches).slice(0, 3);
+  console.log(checks); // 1000000
+`}
+</CodeBlock>
+
+Both return `[999, 1999, 2999]`. The lazy version stops at the third match, and the array version checks all
+million numbers and builds a 1,000-element array first.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Search-as-you-type previews** that show the first few matches from a large list.
+- **Validation summaries** that report the first few problems rather than every one.
+- **Log and data scanning**, where the first few hits are enough to act on.
+- **Generated sequences**, such as IDs, dates or numbers, where you want the first `n` that meet a condition.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Fewer than `n` is fine:** if the source runs out first, you get the matches there were, or `[]` if none.
+  `n = 0` also returns `[]`, without running the predicate at all.
+- **Invalid `n` throws:** `take()` throws a `RangeError` for a negative number or `NaN`, before anything is read.
+- **The predicate's second argument** is a counter of values seen so far, starting at `0`, not an array index into
+  a filtered list. There's no third "whole collection" argument as there is with `Array.prototype.filter()`.
+- **Regex matches are lazy too:** `text.matchAll(regex)` returns an iterator, so
+  `text.matchAll(/id=(\d+)/g).take(2).map((m) => Number(m[1])).toArray()` stops scanning after two matches.
+- **Generators are closed properly:** when `take()` stops early it calls `return()` on the source, so a generator's
+  `finally` block runs.
+- **Small arrays don't need this:** for a few hundred items that are already in an array, `filter().slice()` is just
+  as good. The lazy version pays off on large or unbounded sources and expensive predicates.
+- **Browser support:** iterator helpers work in Chrome and Edge 122, Firefox 131, Safari 18.4 and Node 22. For older
+  environments, use a polyfill such as `core-js`, or the plain loop below.
+
+<CodeBlock language="js">
+{`
+  function firstMatches(iterable, predicate, n) {
+    const matches = [];
+    if (n <= 0) return matches;
+
+    for (const value of iterable) {
+      if (predicate(value)) {
+        matches.push(value);
+        if (matches.length >= n) break; // break closes the source, as take() does
+      }
+    }
+
+    return matches;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why not just use Array.prototype.find()?">
+  `find()` stops at the first match, so it's the right tool when `n` is 1, and it works on iterators too:
+  `Iterator.from(source).find(predicate)`. For more than one match, `find()` would have to be called repeatedly, which
+  is what `filter().take(n)` does in one pass.
+</Details>
+
+<Details summary="Can I transform the matches as well?">
+  Yes. Add a `map()` after `take(n)`, before `toArray()`. Putting it after `take()` means it only runs on the values
+  you keep: `Iterator.from(items).filter(isMatch).take(3).map(format).toArray()`.
+</Details>
+
+<Details summary="Does this work with async iterables?">
+  No. Iterator helpers are synchronous only, so they don't exist on async generators or streams. For those, use a
+  `for await...of` loop that pushes matches into an array and breaks once it has `n`.
+</Details>
+
+<Details summary="Do I need Iterator.from() if I already have an iterator?">
+  Not if it's a built-in one, such as `array.values()`, `map.values()` or a generator object, since they already have
+  `filter()` and `take()`. `Iterator.from()` is there so the function also accepts arrays, `Set`s, `NodeList`s and
+  hand-written iterators, and it returns built-in iterators unchanged.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Iterator.from(source).filter(predicate).take(n).toArray()` returns the first `n` matches and stops reading the moment
+it has them. It works on any iterable, including ones that never end, and it closes the source when it's done. Keep
+`filter().slice()` for small arrays, and use this when the source is large, unbounded or expensive to check. The full
+tour of iterator helpers is in [Iterator Helpers: Lazy Pipelines over Any Iterator](/tutorial/iterator-helpers-lazy-pipelines).
