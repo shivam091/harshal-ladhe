@@ -274,6 +274,8 @@ For instance, an `animation-delay: -0.5s` applied to an animation with a `1s` du
 
 The primary utility of a negative delay is for synchronizing or pre-positioning elements without having to define a separate initial state.
 
+[SVG Three-Dot Loading Indicator with Staggered Delays](/snippet/svg-three-dot-loader) puts this to work in a looping loader: negative delays leave each dot mid-cycle on the very first frame, so the wave is already moving instead of every dot starting at full size.
+
 <Info title="Core Mechanism Note">
   The function of a negative delay is identical across transitions and keyframe animations: it sets the internal timer backward by the specified amount. For its application in simple, two-state transitions, see the **Negative Delays** section in my [An Interactive Guide to CSS Transitions](/post/animations/css-transitions-guide#negative-delays) post.
 </Info>
