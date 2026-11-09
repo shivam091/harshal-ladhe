@@ -173,6 +173,7 @@ To add a faint track behind the arc, put a second circle before it with the same
 - **Namespace the class:** a `<style>` inside an inline SVG applies to the **whole page**, not just that SVG. Use a specific class name, or move the rules into your normal stylesheet.
 - **No `pathLength`?** Use the real circumference instead: with `r="20"`, a quarter arc is `stroke-dasharray="31.4 94.2"`.
 - **Browser support:** the standalone `rotate` property works in every current browser (Chrome 104+, Firefox 72+, Safari 14.1+). For older browsers, use `transform: rotate(360deg)` in the keyframes instead.
+- **Waiting for a reply?** For chat and other "someone is responding" states, [SVG Three-Dot Loading Indicator with Staggered Delays](/snippet/svg-three-dot-loader) builds three pulsing dots with the same `currentColor` colouring and reduced-motion handling.
 - **Keep it cheap:** rotating the `<svg>` is a transform, which the compositor can handle. Animating `stroke-dasharray` repaints the stroke each frame, which is fine for one small icon but adds up if you show many at once.
 
 <RainbowDivider />

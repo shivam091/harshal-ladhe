@@ -268,6 +268,8 @@ Dot count, the delay between each one, the bounce duration, and the bounce heigh
   sync the moment the page loads.
 </Info>
 
+For a finished version of the three-dot case — negative delays, `transform-box: fill-box` so each dot scales around its own center, and a reduced-motion fallback — see [SVG Three-Dot Loading Indicator with Staggered Delays](/snippet/svg-three-dot-loader).
+
 ### Scaling to Any Number of Elements
 
 Three `:nth-child` rules is nothing, but that approach doesn't scale — twenty bars means twenty near-identical selectors. A single custom property sidesteps that entirely: set one property per element, and let `calc()` do the multiplication once.
