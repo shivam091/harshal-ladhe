@@ -419,6 +419,7 @@ export const tutorials: Tutorial[] = [
       caption: "Gradient rings animating smoothly through typed custom properties."
     },
     changelog: [
+      { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Circular Progress Ring with CSS Variables'" },
       { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
       { date: "2026-11-02", change: "Added cross-reference to tutorial 'Animating `height: auto` in CSS with `interpolate-size`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
