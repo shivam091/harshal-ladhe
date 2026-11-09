@@ -354,6 +354,7 @@ export const posts: Post[] = [
     signoff: "Getting the radar's sweep to pivot from the right point back in the basic shapes post turned out to be the easy part. This round added five more interactive panels, each wiring its own live code and controls to real `@keyframes` — and the trickiest bug wasn't in the animation at all, it was figuring out why an elliptical arc needs to end 0.1 units short of its own starting point just to keep the motion-path math from collapsing into nothing. Thanks for hovering the heart and sun, looping the radar, dragging the draw-on and stagger sliders, toggling the comet's curve-following on and off, and watching a circle round itself into a square with me — go animate something that used to just sit there. 🎯",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Marching Ants Border for Drop Zones and Selections'" },
       { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Three-Dot Loading Indicator with Staggered Delays'" },
       { date: "2026-11-07", change: "Added cross-reference to snippet 'CSS & SVG Loading Spinner from One Circle'" },
       { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
@@ -381,6 +382,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Getting ten interactive command demos, a full heart-shape decode, and the fill-rule, pathLength, and CSS path() sections to all click together took a fair share of iteration, and I hope it leaves you able to read — and write — a `d` string without flinching. Thanks for sticking with me through the whole alphabet of path commands — go draw something only you could have coded. ✏️",
     changelog: [
+      { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Marching Ants Border for Drop Zones and Selections'" },
       { date: "2026-11-07", change: "Added cross-reference to snippet 'CSS & SVG Loading Spinner from One Circle'" },
       { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
@@ -526,6 +528,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Three techniques that look alike on a white page turned out to behave very differently once I put them over a striped background — which is how the see-through-center rule for picking mask over background-clip ended up at the heart of this post. Rebuilding the playground's conic animation around an @property angle, after the background-position version just zoomed into one flat hue, and reworking the mixin so every argument can be named, took more iterations than the rest of the post combined. I hope the side-by-side comparison saves you from guessing which one to reach for. Thanks for bordering on obsessive with me. 🖼️",
     changelog: [
+      { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Marching Ants Border for Drop Zones and Selections'" },
       { date: "2026-10-17", change: "Added cross-reference to tutorial 'Squircles, Bevels and Scoops with `corner-shape`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
       { date: "2026-09-28", change: "Initial publication" }
