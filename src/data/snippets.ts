@@ -234,6 +234,29 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-09", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "svg-marching-ants-border",
+    title: "SVG Marching Ants Border for Drop Zones and Selections",
+    excerpt: "Animate a marching dashed SVG border around any box.",
+    description: "Build a marching ants border with an SVG rect and stroke-dashoffset: a seamless loop, a crisp overlay for any box size, and reduced-motion support.",
+    link: {
+      label: "Read the full post: Animating SVG: A Guide to CSS Transitions and Keyframes",
+      href: "/post/animations/svg-transitions-and-keyframes"
+    },
+    category: ["SVG"],
+    tags: ["svg", "css", "svg-animation", "css-animation", "stroke-dasharray", "stroke-dashoffset", "pathLength", "keyframes", "borders", "ui-components", "microinteractions", "prefers-reduced-motion", "accessibility"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/svg-marching-ants-border/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover showing a dashed gradient border with clockwise arrows above a diagram of one 14-unit dash-and-gap period.",
+      caption: "Dashes marching clockwise around a drop zone, looping every 14-unit period."
+    },
+    changelog: [
+      { date: "2026-11-09", change: "Initial publication." }
+    ]
   }
 ];
 
