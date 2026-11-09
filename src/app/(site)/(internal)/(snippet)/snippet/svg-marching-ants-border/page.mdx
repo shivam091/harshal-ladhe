@@ -1,0 +1,217 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("svg-marching-ants-border");
+
+## Introduction
+
+"Marching ants" is the moving dashed outline that image editors draw around a selection. On the web it's a clear way to say "this area is active": a drop zone with a file dragged over it, a selected card, or a region being cropped.
+
+CSS `border-style: dashed` can't move, and the browser decides its dash sizes. An SVG `<rect>` can do both: **`stroke-dasharray` sets the dashes, and animating `stroke-dashoffset` makes them march.**
+
+The first example is a fixed-size graphic that shows the technique. To put the border around an HTML element of any size, such as a real drop zone, use [the overlay variant](#variant-an-overlay-that-fits-any-box).
+
+<RainbowDivider />
+
+## The Code
+
+<SvgSnippet>
+{`
+  <svg class="svg-ants" viewBox="0 0 240 140" width="240" height="140" aria-hidden="true">
+    <style>
+      .svg-ants rect {
+        stroke-dasharray: 8 6;
+        animation: svg-ants-march 0.6s linear infinite;
+      }
+
+      @keyframes svg-ants-march {
+        to {
+          stroke-dashoffset: -14;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .svg-ants rect {
+          animation: none;
+        }
+      }
+    </style>
+    <rect x="2" y="2" width="236" height="136" rx="12" fill="none" stroke="#6366f1" stroke-width="2" pathLength="728" />
+  </svg>
+`}
+</SvgSnippet>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `stroke-dasharray: 8 6` cuts the outline into 8-unit dashes with 6-unit gaps. One dash plus one gap is a **period of 14**.
+2. The animation moves `stroke-dashoffset` from `0` to `-14`, exactly one period. At the end, every dash sits where the next one started, so the last frame matches the first and the `infinite` loop has no visible jump.
+3. A negative offset moves the pattern **forwards** along the outline. A `<rect>` outline runs clockwise, starting on the top edge just after the top-left corner's curve, so the ants march clockwise. Use `14` instead of `-14` to reverse them.
+4. `linear` timing keeps the speed constant. Any easing would make the ants speed up and slow down once per period.
+5. The outline of a `<rect>` has a start and an end at the same point, and the pattern rarely fits it exactly. The perimeter here is about `723` units, which is not a multiple of 14, so a short dash would sit next to a full one where the outline starts and ends, near the top-left corner. `pathLength="728"` (52 × 14) stretches the measurement slightly, so exactly 52 periods fit and the seam disappears.
+6. The rectangle is inset by `2` (`x="2"`, width `240 - 4`), so the 2-unit stroke isn't cut off at the edge of the SVG.
+
+<RainbowDivider />
+
+## Variant: An Overlay That Fits Any Box
+
+A fixed `viewBox` scales the stroke along with the SVG, so the dashes and line width change with the box. For a border on an HTML element of any size, leave out the `viewBox`. User units are then CSS pixels, and `width="100%"` and `height="100%"` make the rectangle follow the box exactly. Lay the SVG over the element as an absolutely positioned overlay:
+
+<SvgSnippet>
+{`
+  <div class="svg-ants-zone">
+    <style>
+      .svg-ants-zone {
+        position: relative;
+        display: grid;
+        place-items: center;
+        inline-size: min(100%, 320px);
+        block-size: 140px;
+        border-radius: 12px;
+      }
+
+      .svg-ants-zone .svg-ants-overlay {
+        position: absolute;
+        inset: 0;
+        inline-size: 100%;
+        block-size: 100%;
+        overflow: visible;
+        pointer-events: none;
+        color: #6366f1;
+      }
+
+      .svg-ants-overlay rect {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-dasharray: 8 6;
+      }
+
+      .svg-ants-zone:hover rect,
+      .svg-ants-zone.is-dragover rect {
+        animation: svg-ants-overlay-march 0.6s linear infinite;
+      }
+
+      @keyframes svg-ants-overlay-march {
+        to {
+          stroke-dashoffset: -14;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .svg-ants-zone:hover rect,
+        .svg-ants-zone.is-dragover rect {
+          animation: none;
+        }
+      }
+    </style>
+    <svg class="svg-ants-overlay" width="100%" height="100%" aria-hidden="true">
+      <rect width="100%" height="100%" rx="12" />
+    </svg>
+    <p>Drop files here</p>
+  </div>
+`}
+</SvgSnippet>
+
+- **No `viewBox`:** the 2px stroke and the 8px dashes stay the same size on any box, so the border is crisp at every width.
+- **`overflow: visible`:** the stroke is centred on the rectangle's edge, so half of it falls outside the SVG. Letting it overflow keeps the full line visible, centred on the box edge like `outline-offset: -1px`.
+- **`pointer-events: none`:** the overlay is positioned, so it's painted on top of the zone's content. It has no fill, so nothing is hidden, and `pointer-events: none` means it never catches clicks or drag events either.
+- **Static until active:** the border is dashed at rest and only marches on hover or while `.is-dragover` is set. Hover over the preview to see it.
+
+If you'd rather keep a `viewBox`, for example because the outline is a custom shape, `vector-effect="non-scaling-stroke"` on the shape stops the stroke width from scaling with the SVG. The overlay without a `viewBox` is simpler for plain rectangles.
+
+<RainbowDivider />
+
+## Example Usage
+
+Turn the marching on while a file is dragged over a drop zone. `dragenter` and `dragleave` also fire when the pointer moves over child elements, so a counter keeps the state from flickering. The `hasFiles()` check ignores other drags, such as selected text or a link from the same page:
+
+<CodeBlock language="js">
+{`
+  const zone = document.querySelector(".svg-ants-zone");
+  const hasFiles = (event) => event.dataTransfer.types.includes("Files");
+  let depth = 0;
+
+  zone.addEventListener("dragenter", (event) => {
+    if (!hasFiles(event)) return;
+    depth += 1;
+    zone.classList.add("is-dragover");
+  });
+
+  zone.addEventListener("dragleave", (event) => {
+    if (!hasFiles(event)) return;
+    depth -= 1;
+    if (depth === 0) zone.classList.remove("is-dragover");
+  });
+
+  // Needed so the browser allows a drop here
+  zone.addEventListener("dragover", (event) => {
+    if (hasFiles(event)) event.preventDefault();
+  });
+
+  zone.addEventListener("drop", (event) => {
+    event.preventDefault();
+    depth = 0;
+    zone.classList.remove("is-dragover");
+    handleFiles(event.dataTransfer.files); // your own upload function
+  });
+`}
+</CodeBlock>
+
+For a "selected" state, use the same overlay and switch the animation on with a selector such as `[aria-selected="true"] rect` or `.is-selected rect`.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **File drop zones**, marching while a file is dragged over them.
+- **Selected items** in a canvas editor, a gallery, or a kanban board.
+- **Crop and selection tools**, outlining the area that will be kept.
+- **Placeholder slots** that are waiting for content, such as an empty layout region in a page builder.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Animate by exactly one period:** the offset must move by the dash plus the gap (`8 + 6 = 14`), or a whole number of periods. Any other distance makes the dashes jump back at the end of each loop. If you change the pattern, change the keyframe too.
+- **Reduced motion stops the march:** a still dashed border still shows the state clearly, so the animation is simply removed. Don't rely on the movement alone to show that something is selected; the border itself, or a change of colour, should do that.
+- **The seam on resizable boxes:** without a `viewBox`, the perimeter changes with the box, so a fixed `pathLength` would stretch the dashes on large boxes and squash them on small ones. A short dash near the top-left corner is usually not noticeable. If it bothers you, set `pathLength` to a multiple of 14 and accept dashes that scale with the box.
+- **Keep a keyboard path:** dragging only works with a mouse, touch or pen, so put a real `<input type="file">`, or a button that opens one, inside the drop zone. Add `.svg-ants-zone:focus-within rect` to the animated selectors, and keyboard users see the same marching border when the input is focused.
+- **Match the radius:** keep the `rx` on the `<rect>` the same as the element's `border-radius`, so the dashed line follows the corners.
+- **Namespace classes and keyframes:** a `<style>` inside an inline SVG applies to the **whole page**. Use specific names like `.svg-ants` and `svg-ants-march`, or move the rules into your stylesheet.
+- **Keep it cheap:** animating `stroke-dashoffset` repaints the outline every frame. That's fine for one active drop zone, but turn the animation off for elements that aren't active instead of running it on dozens at once.
+- **Browser support:** dashed strokes, `stroke-dashoffset` animation, `pathLength` on `<rect>`, and percentage sizes on SVG shapes all work in all current browsers.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why do the ants jump at the end of every loop?">
+  The keyframe offset doesn't match the pattern's period. With `stroke-dasharray: 8 6`, the offset must end at `-14`
+  (or `14`). Check that `pathLength` isn't confusing the maths too: it scales the dashes and the offset by the same
+  amount, so one period is still `14` in the CSS.
+</Details>
+
+<Details summary="Why not just animate a CSS dashed border?">
+  `border-style: dashed` has no offset property to animate, and each browser picks its own dash and gap sizes. You can
+  fake moving dashes with repeating gradients on the background, but an SVG stroke gives you exact dash sizes, rounded
+  corners that the dashes follow, and a single property to animate.
+</Details>
+
+<Details summary="Why is half of my border cut off?">
+  SVG strokes are centred on the shape's edge, and an SVG clips anything outside its viewport by default. Either inset
+  the rectangle by half the stroke width, as the fixed-size version does, or set `overflow: visible` on the SVG, as the
+  overlay does.
+</Details>
+
+<Details summary="Can I make the dashes rounded?">
+  Yes. Add `stroke-linecap: round` and shorten the dashes to allow for the caps, which add half the stroke width to each
+  end. For example, `stroke-dasharray: 6 8` with a 2px stroke looks like 8px dashes with 6px gaps. The period is still
+  `14`, so the keyframe doesn't change.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Give a `<rect>` a dash pattern such as `8 6` and animate `stroke-dashoffset` by exactly one period, `-14`, with `linear` timing for a seamless loop. Leave out the `viewBox` and size the rectangle at `100%` to get a crisp border that fits any HTML element as an overlay, and remove the animation for reduced motion, leaving a static dashed border.
