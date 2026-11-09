@@ -354,6 +354,7 @@ export const posts: Post[] = [
     signoff: "Getting the radar's sweep to pivot from the right point back in the basic shapes post turned out to be the easy part. This round added five more interactive panels, each wiring its own live code and controls to real `@keyframes` — and the trickiest bug wasn't in the animation at all, it was figuring out why an elliptical arc needs to end 0.1 units short of its own starting point just to keep the motion-path math from collapsing into nothing. Thanks for hovering the heart and sun, looping the radar, dragging the draw-on and stagger sliders, toggling the comet's curve-following on and off, and watching a circle round itself into a square with me — go animate something that used to just sit there. 🎯",
     toc: { maxLevel: 3 },
     changelog: [
+      { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Circular Progress Ring with CSS Variables'" },
       { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Marching Ants Border for Drop Zones and Selections'" },
       { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Three-Dot Loading Indicator with Staggered Delays'" },
       { date: "2026-11-07", change: "Added cross-reference to snippet 'CSS & SVG Loading Spinner from One Circle'" },
@@ -615,6 +616,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one grew from a first `fillRect()` all the way to `OffscreenCanvas` workers, pixel manipulation, and a full cheat sheet, and the four diagrams carry the parts words kept fumbling — the y-axis running down, `arc()` angles turning clockwise, `rotate()` swinging around the origin until `translate()` moves it, and one canvas pixel smeared across a 2 × 2 block on a high-DPI screen. The playground took the most rounds: particles that collide by swapping velocity along the contact normal and answer mouse, touch, and pen alike, then a second mode that projects, depth-sorts, and flat-shades a cube, pyramid, and octahedron with nothing but maths on a plain 2D context. Thanks for drawing along with me — go paint something worth redrawing sixty times a second. 🎨",
     changelog: [
+      { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Circular Progress Ring with CSS Variables'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-07", change: "Initial publication" }
     ]

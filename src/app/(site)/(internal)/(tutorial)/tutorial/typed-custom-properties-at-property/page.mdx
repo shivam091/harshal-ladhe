@@ -171,6 +171,8 @@ An `<integer>` animates in whole steps, and `counter()` can print it:
 
 Generated content isn't reliably read by screen readers, so keep the final value in real text or an `aria-label`.
 
+[SVG Circular Progress Ring with CSS Variables](/snippet/svg-circular-progress-ring) applies the same idea to an SVG ring: a registered `--progress` drives the arc's `stroke-dasharray`, so the ring glides to each new value, with `aria-valuenow` carrying the number for screen readers.
+
 ### Separate Timing for Each Axis
 
 Two registered lengths split one `translate` into parts with their own timing — here a linear horizontal motion and
