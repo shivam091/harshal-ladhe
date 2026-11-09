@@ -211,6 +211,8 @@ The same `pathLength` trick works on a closed shape too: a single `<circle>` wit
 
 Animate `stroke-dashoffset` by exactly one dash-and-gap period instead of the full length, and a dashed outline marches around a shape in an endless loop — the "marching ants" border built in [SVG Marching Ants Border for Drop Zones and Selections](/snippet/svg-marching-ants-border).
 
+Or drive the dash length from a CSS custom property instead of a keyframe: with `pathLength="100"`, `stroke-dasharray: var(--progress) 100` turns the same circle into a progress ring, as built in [SVG Circular Progress Ring with CSS Variables](/snippet/svg-circular-progress-ring).
+
 <RainbowDivider />
 
 ## Revealing Shapes with `clip-path`
