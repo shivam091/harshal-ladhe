@@ -247,6 +247,8 @@ Common path methods include:
 `}
 </CodeBlock>
 
+For a progress ring in your page's UI, rather than inside a canvas scene, SVG is usually the better fit: it stays sharp at any size, can be styled with CSS, and can carry an accessible value. See [SVG Circular Progress Ring with CSS Variables](/snippet/svg-circular-progress-ring).
+
 For curves that aren't circular, use `quadraticCurveTo()` (one control point) or `bezierCurveTo()` (two control
 points), and `ellipse()` for ovals — all listed in the [cheat sheet](#canvas-api-cheat-sheet) below.
 

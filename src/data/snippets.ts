@@ -136,6 +136,7 @@ export const snippets: Snippet[] = [
       caption: "A single glowing arc on a faint track, spinning as a loader."
     },
     changelog: [
+      { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Circular Progress Ring with CSS Variables'" },
       { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Marching Ants Border for Drop Zones and Selections'" },
       { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Three-Dot Loading Indicator with Staggered Delays'" },
       { date: "2026-11-07", change: "Initial publication." }
