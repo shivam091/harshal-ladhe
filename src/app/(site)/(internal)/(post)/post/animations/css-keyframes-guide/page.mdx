@@ -801,12 +801,12 @@ Not every animation needs the same treatment. A one-off entrance animation (a ba
 
 ## Browser Support & Fallbacks
 
-The core `@keyframes` rule and all nine `animation-*` properties covered above have excellent, long-standing support — every current browser handles them identically. `animation-timeline` is the one exception: scroll-driven animations (`scroll()`, `view()`, and `animation-range`) are, as of this writing, supported only in Chromium-based browsers (Chrome, Edge, Opera) — Firefox and Safari currently ignore the timeline entirely.
+The core `@keyframes` rule and all nine `animation-*` properties covered above have excellent, long-standing support — every current browser handles them identically. `animation-timeline` is the one exception: scroll-driven animations (`scroll()`, `view()`, and `animation-range`) reached every engine only in October 2026, when Firefox 159 joined Chrome and Edge 115 and Safari 26, so visitors on older versions still won't have them. See the scroll-driven animations section of [What's New in CSS in 2026](/post/css/whats-new-in-css-2026#scroll-driven-animations) for the rest of that year's arrivals.
 
 | Feature | Supported since |
 | --- | --- |
 | `@keyframes` and the `animation-*` longhands (name, duration, timing-function, delay, iteration-count, direction, fill-mode, play-state) | All current browsers |
-| `animation-timeline` (`scroll()`, `view()`, `animation-range`) | Chrome/Edge 115+ only |
+| `animation-timeline` (`scroll()`, `view()`, `animation-range`) | Chrome/Edge 115, Safari 26, Firefox 159 (Baseline since October 2026) |
 
 An unsupported browser doesn't error — it just never starts the animation, leaving the element frozen at its `0%` keyframe. If that matters for your design, treat `animation-timeline` as a progressive enhancement: give the element a sensible static appearance by default, then opt into the scroll-driven version only where it's actually supported.
 

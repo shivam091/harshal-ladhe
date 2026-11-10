@@ -455,6 +455,8 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Between the core keyframes playground and a second sandbox built just to make `animation-timeline` and `animation-range` tangible — complete with a live range slider and its own feature-detection fallback for browsers that don't support scroll-driven animations yet — this one ended up needing two full interactive builds instead of one. Getting the `animation-range` diagram to actually line up entry/contain/cover/exit against a scrolling element took more iteration than the rest of the post combined. Thanks for tweaking every duration, delay, and range slider with me — go give your loops, spinners, and scroll reveals some real personality. 🎬",
     changelog: [
+      { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
+      { date: "2026-11-10", change: "Updated browser support for `animation-timeline`" },
       { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Three-Dot Loading Indicator with Staggered Delays'" },
       { date: "2026-11-07", change: "Added cross-reference to snippet 'CSS & SVG Loading Spinner from One Circle'" },
       { date: "2026-11-06", change: "Added cross-reference to post 'Mastering CSS `@starting-style`: The Complete Beginner's Guide'" },
@@ -665,6 +667,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around four diagrams and a three-tab sandbox: two containment panels that make the size-collapse pitfall impossible to miss, nested boxes where one arrow has to visibly skip past the nearer container, a single box showing cqmin and cqmax borrowing their values from cqi and cqb, and two identical cards that only a custom property tells apart. The named-container diagram took the most redrawing — an arrow that skips past a box can very easily look like one pointing at the wrong thing. The sandbox's middle tab is the one I'm proudest of: the same @container rule, the same 400px breakpoint, and a single radio button alone decides which box gets measured. Getting every tab's live CSS readout to match what the browser actually applies took more back-and-forth than I'd like to admit. I hope the next time a component looks wrong in a sidebar, you ask which box it's measuring before reaching for another media query. Thanks for containing yourself with me. 📦",
     changelog: [
+      { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-11-06", change: "Added cross-reference to post 'CSS `@starting-style` Entry Animations: Practical Patterns'" },
       { date: "2026-10-18", change: "Initial publication" }
     ]
@@ -687,6 +690,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around three diagrams — a one-class utility beating an ID selector through layer order alone, the same two rules swapping places the moment both turn !important, and an eight-rung ladder that puts @layer exactly where the cascade consults it — and a playground that rewrites a real <style> tag on every change, so four rules of rising specificity genuinely fight it out in your own browser. Getting its readout to name the criterion that actually decided each result — layer order, specificity, the !important reversal, or unlayered styles winning outright — took more edge-case testing than I'd like to admit. I hope the next time a utility class refuses to apply, you reach for a layer instead of another !important. Thanks for picking a side in the specificity war with me. 🗂️",
     changelog: [
+      { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-10-31", change: "Initial publication" }
     ]
   },
