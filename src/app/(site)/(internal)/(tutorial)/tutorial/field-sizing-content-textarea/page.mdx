@@ -144,7 +144,8 @@ make it larger by hand, keep `resize: vertical` and accept that a drag fixes its
 ## Browser Support and Fallbacks
 
 `field-sizing` became Baseline in June 2026, when Firefox 152 shipped it. It's supported in Chrome and Edge 123,
-Safari 26.2 and Firefox 152. Older browsers ignore the property, and the textarea keeps its usual fixed size and
+Safari 26.2 and Firefox 152, one of several features that reached every engine in 2026, as
+[What's New in CSS in 2026](/post/css/whats-new-in-css-2026#field-sizing) covers. Older browsers ignore the property, and the textarea keeps its usual fixed size and
 scrolls. That's exactly what the field did before, so adding it is safe.
 
 If auto-growth matters in older browsers too, keep the old script as a fallback and run it only where the property
