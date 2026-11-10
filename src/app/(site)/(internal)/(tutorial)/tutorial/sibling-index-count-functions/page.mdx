@@ -157,7 +157,7 @@ Because both functions return plain numbers, they work anywhere `calc()` does â€
 
 ## Always Pair It with a Fallback
 
-Support is still limited, so declare a plain value first and the `sibling-index()` version second:
+Support is recent, so declare a plain value first and the `sibling-index()` version second:
 
 <CodeBlock language="css">
 {`
@@ -222,9 +222,10 @@ reduce motion:
 
 ## Production Considerations & Edge Cases
 
-* **Check support before relying on it.** `sibling-index()` and `sibling-count()` shipped in Chrome and Edge 138.
-  Check current Firefox and Safari support on [Can I use](https://caniuse.com/?search=sibling-index) and treat
-  them as progressive enhancement until support is broad.
+* **Check support before relying on it.** `sibling-index()` and `sibling-count()` shipped in Chrome and Edge 138,
+  Safari 26.2 and Firefox 154, so every current browser has them; they're among the features that reached every
+  engine in 2026, covered in [What's New in CSS in 2026](/post/css/whats-new-in-css-2026#sibling-index-and-sibling-count). Support is recent,
+  though, so keep treating them as progressive enhancement for visitors on older versions.
 * **They count every element sibling, not just matching ones.** There's no `of selector` filter like
   `:nth-child(2 of .visible)`, and elements hidden with `display: none` still count. To get "index among the visible
   ones", remove hidden items from the DOM rather than just hiding them. Text nodes and comments are never counted.

@@ -234,6 +234,7 @@ export const snippets: Snippet[] = [
       caption: "Three dots shrinking left to right, labelled with delays of -0.32s, -0.16s and 0s."
     },
     changelog: [
+      { date: "2026-11-10", change: "Updated browser support note for `sibling-index()`" },
       { date: "2026-11-09", change: "Initial publication." }
     ]
   },

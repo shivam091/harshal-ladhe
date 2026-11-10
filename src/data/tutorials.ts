@@ -312,6 +312,8 @@ export const tutorials: Tutorial[] = [
       caption: "List items animating in one after another, timed by their position alone."
     },
     changelog: [
+      { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
+      { date: "2026-11-10", change: "Updated browser support for `sibling-index()` and `sibling-count()`" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
       { date: "2026-10-08", change: "Added cross-reference to post 'Mastering CSS z-index: Stacking Contexts, isolation, and Layering Bugs'" },
@@ -504,6 +506,7 @@ export const tutorials: Tutorial[] = [
       caption: "A textarea growing with its content beside a fixed-height one."
     },
     changelog: [
+      { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Initial publication." }
     ]
@@ -563,6 +566,7 @@ export const tutorials: Tutorial[] = [
       caption: "A speech bubble whose curved tail is drawn with CSS shape()."
     },
     changelog: [
+      { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-11-04", change: "Initial publication." }
     ]
   },
