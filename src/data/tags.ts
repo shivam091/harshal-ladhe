@@ -1150,5 +1150,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "progress-indicator": {
     title: "Building Progress Indicators",
     description: "Progress bars and rings that show how far a task has got, built with SVG and CSS, with accessible values for screen readers."
+  },
+  "css-2026": {
+    title: "Modern CSS Features of 2026",
+    description: "CSS features that became usable across browsers in 2026, from anchor positioning to scroll-driven animations and @scope."
+  },
+  "baseline": {
+    title: "Baseline Browser Support",
+    description: "Baseline's newly and widely available statuses for web platform features, and how to use them to choose which features are safe to ship."
+  },
+  "interop": {
+    title: "Interop and Cross-Browser Compatibility",
+    description: "The yearly Interop project, in which browser vendors align chosen web features across engines, and what its focus areas mean for authors."
   }
 };
