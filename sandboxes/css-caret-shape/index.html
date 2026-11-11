@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>caret-shape Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Changing the shape of the real caret</h1>
+        <p>
+          Pick a shape, then click into the fields. The caret is still the browser's own, so it follows the text, wraps
+          and moves with the arrow keys.
+        </p>
+      </header>
+
+      <p class="support" id="support" hidden>
+        This browser doesn't support <code>caret-shape</code>, so the fields show the normal caret.
+      </p>
+
+      <fieldset class="shapes">
+        <legend>caret-shape</legend>
+        <label><input type="radio" name="shape" value="auto" /> auto</label>
+        <label><input type="radio" name="shape" value="bar" /> bar</label>
+        <label><input type="radio" name="shape" value="block" checked /> block</label>
+        <label><input type="radio" name="shape" value="underscore" /> underscore</label>
+      </fieldset>
+
+      <label class="toggle">
+        <input type="checkbox" id="custom-blink" /> Custom blink (<code>caret-animation: manual</code>)
+      </label>
+
+      <div class="fields" id="fields">
+        <label class="terminal">
+          <span class="prompt" aria-hidden="true">~ $</span>
+          <span class="visually-hidden">Command</span>
+          <input type="text" value="npm run build" spellcheck="false" autocomplete="off" />
+        </label>
+
+        <textarea rows="4" spellcheck="false" aria-label="Notes">The caret also works in a textarea, across wrapped lines and in longer text.</textarea>
+      </div>
+
+      <p class="readout" id="readout">caret-shape: block;</p>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

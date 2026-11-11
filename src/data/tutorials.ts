@@ -702,6 +702,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-11", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-caret-shape",
+    title: "Block and Underscore Carets with CSS `caret-shape`",
+    excerpt: "Give text fields a terminal-style caret, no fake cursor needed.",
+    description: "Use CSS caret-shape to switch the text caret between bar, block and underscore, control its blinking with caret-animation, and keep custom carets accessible.",
+    category: ["CSS"],
+    tags: ["css", "caret-shape", "caret-animation", "forms", "typography", "accessibility", "modern-css", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-caret-shape/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A terminal-style text field with a green block caret, beside the same field with bar and underscore carets."
+    },
+    changelog: [
+      { date: "2026-11-11", change: "Initial publication." }
+    ]
   }
 ];
 

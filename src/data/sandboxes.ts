@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-caret-shape",
+    title: "Changing the Caret with caret-shape",
+    description: "A terminal-style input and a textarea whose native caret switches between auto, bar, block and underscore, with an optional custom blink using caret-animation.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-border-shape",
     title: "Shaped Borders with border-shape",
     description: "The same shape, border and shadow applied with clip-path and with border-shape side by side, plus a two-shape frame that fills between a rounded square and a circle.",

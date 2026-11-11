@@ -1,0 +1,194 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-caret-shape");
+
+## Introduction
+
+The caret is the blinking line that shows where text will go when you type. CSS has been able to change its colour with
+`caret-color` for years, but not its shape or how it blinks. So a code playground or a terminal-style interface that
+wanted the chunky block cursor of a real terminal had to hide the native caret and draw a fake one, positioned with
+JavaScript measurements that broke with every font, scroll and line wrap.
+
+**`caret-shape`** chooses the shape of the native caret: a thin bar, a block over the next character, or an underscore
+under it. Its companion, **`caret-animation`**, turns off the browser's blinking so you can animate the caret yourself.
+Together with `caret-color`, they cover what used to need a fake caret.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .terminal-input {
+    caret-shape: block;
+    caret-color: limegreen;
+  }
+`}
+</CodeBlock>
+
+In a supporting browser, the caret in `.terminal-input` is a green block that covers the character after it, like a
+terminal cursor. It still blinks, follows the text, wraps with it and moves with the arrow keys, because it's the real
+caret.
+
+<RainbowDivider />
+
+## The Four Shapes
+
+| Value | What it looks like |
+| --- | --- |
+| `auto` | The browser decides, usually following the platform's convention. This is the initial value. |
+| `bar` | A thin vertical line between two characters, the usual caret. |
+| `block` | A rectangle covering the next character, or after the last one at the end of the text. |
+| `underscore` | A thin horizontal line under the next character. |
+
+`block` and `underscore` sit on a character rather than between two, so they need a character to size themselves
+against. Where there isn't one with any width, such as next to a zero-width character, Chrome falls back to a bar.
+
+In vertical writing modes, the shapes rotate with the text: a bar becomes horizontal, and an underscore sits beside the
+character instead of below it.
+
+`caret-shape` is inherited, so setting it on a container applies it to every text field inside.
+
+<RainbowDivider />
+
+## Controlling the Blink with `caret-animation`
+
+`caret-animation` has two values. `auto`, the initial value, is the browser's normal blinking. `manual` turns the
+blinking off and leaves the caret steady, which also frees `caret-color` to be animated without the browser's blink
+fighting it:
+
+<CodeBlock language="css">
+{`
+  @keyframes caret-pulse {
+    50% {
+      caret-color: transparent;
+    }
+  }
+
+  .terminal-input {
+    caret-shape: block;
+    caret-color: limegreen;
+    caret-animation: manual;
+    animation: caret-pulse 1s steps(1) infinite;
+  }
+`}
+</CodeBlock>
+
+`steps(1)` makes the colour switch sharply between green and transparent, the hard blink of an old terminal, rather than
+fading. Use a smooth timing function instead for a gentle pulse.
+
+If you only want a steady caret, `caret-animation: manual` on its own does that.
+
+<RainbowDivider />
+
+## The `caret` Shorthand
+
+The specification also defines a `caret` shorthand for `caret-color`, `caret-animation` and `caret-shape`. Its values
+can come in any order, and any you leave out are reset to `auto`:
+
+<CodeBlock language="css">
+{`
+  caret: block manual limegreen;
+  caret: underscore;
+`}
+</CodeBlock>
+
+Because it resets every caret property, `caret: underscore` also resets `caret-color` to `auto`. The longhands are
+clearer, and they're the safer choice while support for the shorthand settles.
+
+<RainbowDivider />
+
+## Try It Live
+
+Pick a shape and click into the fields to see the native caret change. **Custom blink** switches to
+`caret-animation: manual` and animates `caret-color` with a stepped blink instead. If reduced motion is turned on in
+your system settings, the custom blink is replaced by a steady caret.
+
+<Sandbox slug="css-caret-shape" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Accessibility
+
+The caret is one of the most important things on screen for anyone typing, and some people rely heavily on how it looks
+and behaves:
+
+- **People with low vision** may have set a thicker caret or a custom caret colour in their system settings. A `block`
+  caret can be easier to find than a thin bar, but an unusual shape can also be confusing on a site that otherwise
+  behaves like any other.
+- **People sensitive to motion** may have turned caret blinking off in their system settings. A custom blink with
+  `caret-animation: manual` ignores that setting, so wrap it in `prefers-reduced-motion: no-preference`, and give
+  everyone else a steady caret.
+- **The character under a block caret** must stay readable. Choose a `caret-color` with enough contrast against both the
+  background and the text, and test it with real text.
+
+Keep custom carets for places where the shape means something, such as a terminal, a code editor or a game, rather than
+changing the caret across a whole site.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`caret-shape` is supported in Chrome and Edge 144, and `caret-animation` in Chrome and Edge 140. Neither is supported in
+Firefox or Safari yet.
+
+In browsers without them, the declarations are ignored and the normal caret appears, with any `caret-color` you've set.
+That's a complete, working fallback, so there's nothing extra to write. Just make sure the design doesn't depend on the
+block caret, for example by relying on it to show the current position in a fixed-width grid.
+
+If you animate `caret-color` for a custom blink, put the animation inside `@supports (caret-animation: manual)`. Without
+it, the animation runs on top of the browser's own blinking, and the two rhythms clash:
+
+<CodeBlock language="css">
+{`
+  @supports (caret-animation: manual) {
+    @media (prefers-reduced-motion: no-preference) {
+      .terminal-input {
+        caret-animation: manual;
+        animation: caret-pulse 1s steps(1) infinite;
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Expecting a Custom Caret Anywhere
+
+The caret properties only apply where there is a caret: text inputs, text areas and elements with `contenteditable`.
+They don't create a cursor on ordinary text.
+
+### 2. Animating `caret-color` Without `manual`
+
+With `caret-animation: auto`, the browser's blink and your animation both change the caret's visibility, so it flickers
+unevenly. Set `caret-animation: manual` whenever you animate the caret yourself.
+
+### 3. Resetting the Colour with the Shorthand
+
+`caret: block` resets `caret-color` to `auto`. If you've set a caret colour elsewhere, use `caret-shape: block` instead.
+
+### 4. Overriding the User's Preferences
+
+A custom blink ignores a system setting that turns blinking off. Respect `prefers-reduced-motion`, and don't change the
+caret where there's no reason to.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Terminal emulators, command palettes and REPLs that should look like a real terminal
+- Code playgrounds and editors with an overwrite or "insert" mode shown as a block caret
+- Games and puzzles where the player types into a grid of letters
+- Removing a JavaScript fake caret that was only there to change the caret's shape
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`caret-shape` chooses between a `bar`, a `block` over the next character and an `underscore` beneath it, for the
+browser's real caret. `caret-animation: manual` stops the built-in blinking so you can keep the caret steady or animate
+`caret-color` yourself. Both are Chromium-only so far, but the fallback is the normal caret, so they're safe to use, as
+long as you respect reduced-motion preferences and keep the caret easy to see.
