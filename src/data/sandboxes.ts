@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-border-shape",
+    title: "Shaped Borders with border-shape",
+    description: "The same shape, border and shadow applied with clip-path and with border-shape side by side, plus a two-shape frame that fills between a rounded square and a circle.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-animation-trigger",
     title: "Scroll-Triggered Reveals with animation-trigger",
     description: "A scrolling list of cards that each play a reveal animation when fully in view, with a menu to switch between play-once, play-forwards play-backwards and replay reset.",

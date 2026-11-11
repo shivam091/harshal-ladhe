@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>border-shape Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>clip-path cuts the border off; border-shape draws it</h1>
+        <p>
+          Same shape, same border, same shadow. Only the property that applies the shape is different.
+        </p>
+      </header>
+
+      <p class="support" id="support" hidden>
+        This browser doesn't support <code>border-shape</code>, so the right-hand box keeps its rounded rectangle.
+      </p>
+
+      <div class="controls">
+        <label class="control">
+          Shape
+          <select id="shape">
+            <option value="hexagon">Hexagon (polygon)</option>
+            <option value="bubble">Speech bubble (shape)</option>
+            <option value="tag">Tag (polygon)</option>
+            <option value="circle">Circle</option>
+          </select>
+        </label>
+
+        <label class="control">
+          Border width: <span id="width-label">4px</span>
+          <input type="range" id="width" min="1" max="12" value="4" />
+        </label>
+      </div>
+
+      <div class="stage" id="stage" data-shape="hexagon">
+        <figure>
+          <div class="box clipped">Shaped</div>
+          <figcaption><code>clip-path</code></figcaption>
+        </figure>
+        <figure>
+          <div class="box shaped">Shaped</div>
+          <figcaption><code>border-shape</code></figcaption>
+        </figure>
+      </div>
+
+      <p class="readout" id="readout"></p>
+
+      <h2 class="subheading">Two shapes: filling the area between</h2>
+      <div class="porthole"><span>Window</span></div>
+      <p class="readout">border-shape: inset(0 round 1.5rem) circle(38%);</p>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

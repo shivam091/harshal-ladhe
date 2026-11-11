@@ -1,0 +1,253 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-border-shape");
+
+## Introduction
+
+CSS boxes are rectangles. `border-radius` rounds the corners and `corner-shape` changes how they're rounded, but the box
+is still a rectangle with four sides. For anything else, such as a hexagonal badge, a speech bubble with a tail or a tag
+with a pointed end, the usual tool has been `clip-path`. It cuts the element to the shape you want, but it cuts away
+everything outside that shape, including the border, the shadow and the focus outline. A clipped speech bubble can't
+have an outline that follows its tail.
+
+**`border-shape`** draws the border itself along a shape. The border follows the outline, the background and content are
+clipped inside it, and the box shadow follows it too. Layout doesn't change: the element still takes up the same
+rectangle on the page.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .badge {
+    border: 4px solid gold;
+    background: navy;
+    box-shadow: 0 0.5rem 1rem rgb(0 0 0 / 0.4);
+    border-shape: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  }
+`}
+</CodeBlock>
+
+The badge is a hexagon with a 4px gold outline. Its navy background stops at the outline, and its shadow is hexagonal
+too. Everything you'd set on a rectangular box still applies, `border-shape` just changes the outline it's drawn along.
+
+It accepts the same shapes as `clip-path`: `inset()`, `rect()`, `xywh()`, `circle()`, `ellipse()`, `polygon()`, `path()`
+and `shape()`.
+
+<RainbowDivider />
+
+## Two Ways to Draw a Border
+
+`border-shape` takes one shape or two, and they're drawn differently.
+
+### One Shape: A Stroke
+
+With one shape, the border is drawn as a stroke along the shape's outline, centred on it, like an SVG `stroke`. The
+stroke's thickness is the border width:
+
+<CodeBlock language="css">
+{`
+  .bubble {
+    border: 3px solid hotpink;
+    border-shape: circle(50%);
+  }
+`}
+</CodeBlock>
+
+By default, a single shape is measured against `half-border-box`, a reference box that runs through the middle of the
+border. A stroke centred on that line covers exactly the width of the border, so a shape drawn to the edges of the
+reference box keeps its whole stroke inside the element.
+
+### Two Shapes: The Area Between
+
+With two shapes, the first is the outside edge and the second is the inside edge, and the border colour fills the area
+between them:
+
+<CodeBlock language="css">
+{`
+  .porthole {
+    border-color: slategray;
+    border-shape: inset(0 round 1.5rem) circle(40%);
+  }
+`}
+</CodeBlock>
+
+This is a rounded square with a circular window. The outer shape is measured against the `border-box` and the inner
+shape against the `padding-box` by default, and the background and content are clipped to the inner shape. Put an image
+inside and it shows through the circle, framed by the border colour.
+
+In this mode, `border-width` doesn't set a thickness, since the two shapes decide that. The inner shape should sit
+inside the outer one: if it's bigger, the result doesn't make sense.
+
+### Changing the Reference Box
+
+Either shape can be followed by a box keyword, such as `border-box`, `padding-box`, `content-box` or `half-border-box`,
+to change what its percentages and `round` values are measured against:
+
+<CodeBlock language="css">
+{`
+  border-shape: circle(50%) border-box ellipse(40% 30%) content-box;
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Shapes That Respond to Size and Variables
+
+For anything with curves, or anything driven by custom properties, use `shape()`. Its commands, such as `line to`,
+`curve to` and `arc to`, take percentages, `calc()` and `var()`, so a speech bubble's tail can be positioned with a
+custom property:
+
+<CodeBlock language="css">
+{`
+  .bubble {
+    --tail: 30%;
+
+    padding: 1rem 1.25rem 2rem;
+    border: 3px solid hsl(190 80% 55%);
+    background: hsl(213 22% 12%);
+    border-shape: shape(
+      from 0% 0%,
+      line to 100% 0%,
+      line to 100% 80%,
+      line to calc(var(--tail) + 8%) 80%,
+      line to var(--tail) 100%,
+      line to calc(var(--tail) - 4%) 80%,
+      line to 0% 80%,
+      close
+    );
+  }
+`}
+</CodeBlock>
+
+The outline runs around the tail, which `clip-path` alone can't do. The bottom 20% of the box is reserved for the tail
+with extra bottom padding, so the text stays inside the bubble. For more on the `shape()` commands, see
+[Path-Based `clip-path` with the `shape()` Function](/tutorial/shape-function-clip-path).
+
+<RainbowDivider />
+
+## Which Border Properties Apply
+
+A shaped border has one outline rather than four sides, so the per-side border properties work a little differently:
+
+- **`border-width`**: in stroke mode, sets the stroke thickness. If the sides differ, one width is used for the whole
+  shape.
+- **`border-color`**: one colour is used for the whole shape. If the sides differ, the browser takes the first side that
+  has a colour, in the order block-start, inline-start, block-end, inline-end, which is top, left, bottom, right in
+  English.
+- **`border-style`**: ignored. The border is always solid.
+- **`border-image`**: ignored.
+- **`border-radius`** and **`corner-shape`**: ignored while `border-shape` is set. Round the shape itself instead, for
+  example with `inset(0 round 1rem)`.
+
+Set the border with the shorthand, such as `border: 3px solid teal`, and these rules won't come up.
+
+<RainbowDivider />
+
+## What Follows the Shape
+
+- **Background and content** are clipped to the shape, or to the inner shape in fill mode.
+- **`box-shadow`** follows the shape, so a hexagon casts a hexagonal shadow.
+- **Pointer events** follow the shape: clicks outside it don't hit the element, as with `clip-path`.
+
+And what doesn't:
+
+- **Layout.** The element still takes up its rectangular box. Neighbours, text flow and sizing don't change. Shapes that
+  leave large empty corners may need extra margin or padding to look evenly spaced.
+
+<RainbowDivider />
+
+## Try It Live
+
+Both elements use the same shape from the menu and the same border and shadow. The one on the left is cut out with
+`clip-path`, which removes the border and the shadow outside the shape. The one on the right uses `border-shape`, which
+draws the border along the shape and casts a shadow that follows it. Drag the slider to change the border width.
+
+<Sandbox slug="css-border-shape" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## `border-shape` or `clip-path`?
+
+| | `clip-path` | `border-shape` |
+| --- | --- | --- |
+| **Border** | Cut off where it leaves the shape | Drawn along the shape |
+| **Box shadow** | Cut off | Follows the shape |
+| **Background and content** | Clipped to the shape | Clipped to the shape |
+| **Clicks outside the shape** | Don't hit the element | Don't hit the element |
+| **Support** | Every browser | Chrome and Edge 147 |
+
+If you want an outline, a shadow or both, `border-shape` is the right tool. If you only want to hide part of an element,
+such as to reveal an image in an unusual shape, `clip-path` does it and works everywhere.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`border-shape` is supported in Chrome and Edge 147. It isn't in Firefox or Safari yet, and the specification is a
+Working Draft, so details may change.
+
+A browser without it draws an ordinary rectangular border, which is usually a reasonable fallback: a hexagonal badge
+becomes a square one. Give the fallback some rounding with `border-radius`, which `border-shape` ignores when it's
+supported, so you can set both:
+
+<CodeBlock language="css">
+{`
+  .badge {
+    border: 4px solid gold;
+    border-radius: 0.75rem;
+    border-shape: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  }
+`}
+</CodeBlock>
+
+Where the shape is the whole point, such as a speech bubble's tail, use `@supports (border-shape: circle(50%))` to
+choose between `border-shape` and a `clip-path` version without the outline.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Expecting Layout to Change
+
+`border-shape` is purely visual. A hexagon still takes up a rectangle, so the space around it may look uneven. Adjust
+margins or gaps if it does.
+
+### 2. Content Outside the Shape
+
+Content is clipped to the shape, so text near the edges of a hexagon or under a bubble's tail gets cut off. Add padding
+to keep content inside the visible area.
+
+### 3. Mixed Border Colours or Styles
+
+A dashed or multi-coloured border becomes a single solid colour. Use one colour and the `solid` style to avoid
+surprises.
+
+### 4. An Inner Shape Bigger Than the Outer
+
+In fill mode, the second shape is the inside edge. If it extends past the first, the result is broken. Measure the inner
+shape against a smaller box, such as the default `padding-box`, or make it smaller.
+
+### 5. Focus Styles
+
+Check that focus is still clearly visible on shaped buttons and links, and give them a focus style that suits the shape,
+such as a change of border colour.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Badges, avatars and icons in hexagons, circles and other shapes, with a border and shadow
+- Speech bubbles and tooltips whose outline runs around the tail
+- Tags and step indicators with pointed ends
+- Frames and windows built with two shapes, such as a square card with a circular cut-out
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`border-shape` draws an element's border along any CSS shape. With one shape, the border is a stroke along the outline;
+with two, the border colour fills the area between them. The background, content, shadow and pointer events follow the
+shape, while layout keeps using the rectangle, which is what separates it from `clip-path`. It's in Chromium only, so
+pair it with a rectangular or rounded fallback.

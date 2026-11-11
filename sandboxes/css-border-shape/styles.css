@@ -1,0 +1,181 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 40rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+}
+
+code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.support {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  background: hsl(38, 60%, 14%);
+  color: hsl(38, 90%, 72%);
+}
+
+.support[hidden] {
+  display: none;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: hsl(210, 12%, 65%);
+}
+
+.control input[type="range"] {
+  inline-size: 100%;
+  accent-color: hsl(190, 80%, 55%);
+}
+
+.readout {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: hsl(190, 70%, 70%);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 1rem;
+}
+
+.control select {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.5rem;
+  color: hsl(210, 10%, 90%);
+  background: hsl(213, 22%, 11%);
+  border: 1px solid hsl(213, 12%, 30%);
+  border-radius: 0.375rem;
+}
+
+/* Each shape is a custom property, used by both boxes. */
+.stage {
+  --border-width: 4px;
+
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: hsl(213, 20%, 9%);
+}
+
+.stage[data-shape="hexagon"] {
+  --shape: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.stage[data-shape="bubble"] {
+  --shape: shape(
+    from 0% 0%,
+    line to 100% 0%,
+    line to 100% 78%,
+    line to 42% 78%,
+    line to 30% 100%,
+    line to 28% 78%,
+    line to 0% 78%,
+    close
+  );
+}
+
+.stage[data-shape="tag"] {
+  --shape: polygon(0% 0%, 75% 0%, 100% 50%, 75% 100%, 0% 100%);
+}
+
+.stage[data-shape="circle"] {
+  --shape: circle(50%);
+}
+
+figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+figcaption {
+  font-size: 0.75rem;
+}
+
+.box {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  max-inline-size: 11rem;
+  aspect-ratio: 1;
+  font-weight: 700;
+  color: hsl(0, 0%, 100%);
+  background: linear-gradient(135deg, hsl(250, 60%, 45%), hsl(200, 70%, 40%));
+  border: var(--border-width) solid hsl(45, 95%, 60%);
+  border-radius: 1rem;
+  box-shadow: 0.5rem 0.75rem 0 hsl(330, 80%, 55%);
+}
+
+.stage[data-shape="bubble"] .box {
+  padding-block-end: 20%;
+}
+
+/* clip-path: the shape cuts away the border and the shadow outside it. */
+.clipped {
+  clip-path: var(--shape);
+}
+
+/* border-shape: the border is drawn along the shape, and the shadow follows it. border-radius is ignored. */
+.shaped {
+  border-shape: var(--shape);
+}
+
+.subheading {
+  margin: 0.5rem 0 0;
+  font-size: 0.9375rem;
+}
+
+/* Two shapes: the border colour fills between the rounded square and the circle; the background shows through the circle. */
+.porthole {
+  display: grid;
+  place-items: center;
+  inline-size: 11rem;
+  aspect-ratio: 1;
+  font-weight: 700;
+  border: 1.25rem solid hsl(210, 15%, 45%);
+  border-radius: 1.5rem;
+  background: linear-gradient(160deg, hsl(195, 85%, 60%), hsl(220, 70%, 35%));
+  border-shape: inset(0 round 1.5rem) circle(38%);
+}

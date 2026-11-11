@@ -684,6 +684,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-11", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-border-shape",
+    title: "Non-Rectangular Borders with CSS `border-shape`",
+    excerpt: "Draw a real border, background and shadow along any shape.",
+    description: "Use CSS border-shape to draw borders along polygons, circles and shape() paths, fill between two shapes, keep shadows that follow the outline, and fall back where it isn't supported.",
+    category: ["CSS"],
+    tags: ["css", "border-shape", "borders", "shapes", "shape-function", "clip-path", "modern-css", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-border-shape/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A hexagon, a speech bubble and a pointed tag, each with a border and shadow that follow the shape, beside a clip-path version that cuts them off."
+    },
+    changelog: [
+      { date: "2026-11-11", change: "Initial publication." }
+    ]
   }
 ];
 
