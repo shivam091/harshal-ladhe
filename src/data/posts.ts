@@ -259,6 +259,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Every operator in this guide—from `+` to `??=`—got its own runnable example, and the precedence table alone went through more revisions than I'd like to admit before it was scannable at a glance. This is the most thorough reference on the site so far; thanks for working through all of it with me. Go write cleaner conditionals. ✨",
     changelog: [
+      { date: "2026-11-10", change: "Added cross-reference to post 'What's New in ES2026: Every Feature Explained'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2025-08-23", change: "Initial publication" }
     ]
