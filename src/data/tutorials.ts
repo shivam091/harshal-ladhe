@@ -400,6 +400,8 @@ export const tutorials: Tutorial[] = [
       caption: "HTML attributes turning into real CSS colours, lengths and numbers."
     },
     changelog: [
+      { date: "2026-11-11", change: "Updated browser support for typed `attr()`" },
+      { date: "2026-11-11", change: "Added cross-reference to post 'Interop 2026 and CSS Snapshot 2026: What They Mean for CSS'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-26", change: "Added cross-reference to tutorial 'Animate and Type-Check CSS Variables with `@property`'" },
       { date: "2026-10-25", change: "Initial publication." }
@@ -566,6 +568,7 @@ export const tutorials: Tutorial[] = [
       caption: "A speech bubble whose curved tail is drawn with CSS shape()."
     },
     changelog: [
+      { date: "2026-11-11", change: "Added cross-reference to post 'Interop 2026 and CSS Snapshot 2026: What They Mean for CSS'" },
       { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-11-04", change: "Initial publication." }
     ]
