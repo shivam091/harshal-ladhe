@@ -1293,7 +1293,9 @@ The table below lists the operators covered in this guide, ordered from highest 
 
 <Details summary="How do I check whether a value is an array?">
   Use `Array.isArray(value)`. `typeof` returns `"object"` for arrays, and `instanceof Array` fails for arrays created
-  in another realm, such as an iframe, because each realm has its own `Array` constructor.
+  in another realm, such as an iframe, because each realm has its own `Array` constructor. Errors have the same
+  problem, which ES2026's `Error.isError()` solves; see
+  [What's New in ES2026](/post/javascript/whats-new-in-es2026#erroriserror).
 </Details>
 
 <Details summary="Can I use arithmetic operators with BigInt?">
