@@ -1,0 +1,151 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 40rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+}
+
+code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.support {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  background: hsl(38, 60%, 14%);
+  color: hsl(38, 90%, 72%);
+}
+
+.support[hidden] {
+  display: none;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: hsl(210, 12%, 65%);
+}
+
+.control input[type="range"] {
+  inline-size: 100%;
+  accent-color: hsl(190, 80%, 55%);
+}
+
+.readout {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: hsl(190, 70%, 70%);
+}
+
+.control select {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 0.4rem 0.5rem;
+  color: hsl(210, 10%, 90%);
+  background: hsl(213, 22%, 11%);
+  border: 1px solid hsl(213, 12%, 30%);
+  border-radius: 0.375rem;
+}
+
+/* The list is its own scroll container, so view() measures each card's position inside it. */
+.list {
+  --actions: play-forwards play-backwards;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  block-size: 22rem;
+  margin: 0;
+  padding: 1rem;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid hsl(213, 12%, 22%);
+  border-radius: 0.75rem;
+  background: hsl(213, 20%, 8%);
+}
+
+.card {
+  flex-shrink: 0;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  background: hsl(213, 22%, 12%);
+  border-inline-start: 4px solid hsl(190, 80%, 55%);
+}
+
+.step {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: hsl(190, 70%, 65%);
+}
+
+.card h2 {
+  margin: 0.25rem 0 0.375rem;
+  font-size: 1.125rem;
+}
+
+.card p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: hsl(210, 12%, 65%);
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: -2rem 0;
+    scale: 0.96;
+  }
+}
+
+/*
+  Only in browsers with scroll-triggered animations, and only for people who haven't asked for reduced motion.
+  Everywhere else, the cards are simply visible.
+*/
+@supports (animation-trigger: --t play-once) {
+  @media (prefers-reduced-motion: no-preference) {
+    .card {
+      /* On when fully visible, off only once the card has left completely. */
+      timeline-trigger: --reveal view() contain / cover;
+
+      /* Each card's animation follows its own trigger, not the last card's. */
+      trigger-scope: --reveal;
+
+      animation: reveal 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+      /* After the shorthand, which would otherwise reset it to none. */
+      animation-trigger: --reveal var(--actions);
+    }
+  }
+}

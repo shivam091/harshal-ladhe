@@ -1,0 +1,330 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-animation-trigger");
+
+## Introduction
+
+"Fade this in when it scrolls into view" is one of the most common requests in front-end work, and CSS has never been
+able to do it on its own. Scroll-driven animations come close, but they tie an animation's progress to the scroll
+position: scroll halfway and the animation is halfway done, scroll back and it runs backwards. A reveal shouldn't do
+that. It should play once, at its own speed, when the element arrives.
+
+So the usual answer has been an `IntersectionObserver` that adds a class when the element comes into view.
+**Scroll-triggered animations** do the same thing in CSS. `timeline-trigger` defines a named trigger that switches on
+when an element enters part of the viewport, and `animation-trigger` tells an ordinary animation what to do when that
+trigger switches on and off.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      translate: 0 2rem;
+    }
+  }
+
+  .card {
+    timeline-trigger: --reveal view() contain;
+    trigger-scope: --reveal;
+
+    animation: reveal 600ms ease-out both;
+    animation-trigger: --reveal play-once;
+  }
+`}
+</CodeBlock>
+
+Each card plays `reveal` once, at its normal 600ms duration, when the card is fully in view. Scrolling doesn't scrub it,
+and scrolling back up doesn't undo it.
+
+There are three parts:
+
+- **`timeline-trigger`** creates a trigger called `--reveal`. Its source is `view()`, the element's own position in its
+  scroll container, and it activates within the `contain` range, when the card is entirely visible.
+- **`animation-trigger`** binds the animation to `--reveal` and says what to do when it activates: `play-once`.
+- **`trigger-scope`** keeps the name `--reveal` local to each card. More on why that matters
+  [below](#scoping-trigger-names).
+
+<RainbowDivider />
+
+## Triggers vs Scroll-Driven Animations
+
+Both features use the same timelines and the same range names, such as `entry`, `contain` and `cover`, which makes them
+easy to confuse:
+
+| | Scroll-driven (`animation-timeline`) | Scroll-triggered (`animation-trigger`) |
+| --- | --- | --- |
+| **What scroll controls** | The animation's progress, frame by frame | When the animation starts, stops or reverses |
+| **Duration** | Ignored: the scroll distance is the duration | Used as normal |
+| **Scrolling back** | Runs the animation backwards | Whatever exit action you choose |
+| **Good for** | Progress bars, parallax, effects tied to position | Reveals, entrance effects, one-off flourishes |
+
+If the effect should track the scrollbar, it's scroll-driven; see
+[`animation-timeline`](/post/animations/css-keyframes-guide#9-animation-timeline) in the keyframes guide. If it should
+play when something happens, it's scroll-triggered.
+
+<RainbowDivider />
+
+## Defining a Trigger with `timeline-trigger`
+
+<CodeBlock language="css">
+{`
+  timeline-trigger: <name> <source> <activation-range> [ / <active-range> ];
+`}
+</CodeBlock>
+
+The values must be written in that order:
+
+- **Name**: a dashed ident, such as `--reveal`, that animations refer to.
+- **Source**: a timeline, the same kind `animation-timeline` takes. Usually `view()` for the element's position in its
+  scroll container, or `scroll()` for the scroll position of the container itself.
+- **Activation range**: the part of the timeline where the trigger switches on. With `view()`, ranges are named: `entry`
+  while the element is scrolling in, `contain` while it's fully visible, `exit` while it's scrolling out, and `cover`
+  for the whole time any part of it is visible. Each can take an offset, such as `entry 50%`.
+- **Active range** (optional, after a `/`): the part of the timeline where the trigger stays on once it's been
+  activated. It defaults to the activation range.
+
+Each part also has its own longhand: `timeline-trigger-name`, `timeline-trigger-source`,
+`timeline-trigger-activation-range` and `timeline-trigger-active-range`.
+
+### Why There Are Two Ranges
+
+With one range, a trigger switches on as soon as the element enters the range and off as soon as it leaves. If the edge
+of the range is right where someone has stopped scrolling, small scroll movements switch it on and off repeatedly, and
+the animation stutters back and forth.
+
+A larger active range stops that. The trigger needs the element fully in view to switch on, but stays on until the
+element has completely left:
+
+<CodeBlock language="css">
+{`
+  .card {
+    timeline-trigger: --reveal view() contain / cover;
+  }
+`}
+</CodeBlock>
+
+The active range always includes the activation range, so the trigger can't switch off while it's still in the range
+that switches it on.
+
+<RainbowDivider />
+
+## Choosing Actions with `animation-trigger`
+
+<CodeBlock language="css">
+{`
+  animation-trigger: <name> <enter-action> [ <exit-action> ];
+`}
+</CodeBlock>
+
+The first action runs when the trigger activates, and the optional second one when it deactivates. The actions are:
+
+| Action | What it does |
+| --- | --- |
+| `play` | Plays the animation, restarting it if it had finished |
+| `play-once` | Plays the animation, but never again once it has finished |
+| `play-forwards` | Plays the animation forwards from where it is |
+| `play-backwards` | Plays the animation in reverse from where it is |
+| `pause` | Pauses the animation where it is |
+| `reset` | Returns the animation to its start and pauses it |
+| `replay` | Returns the animation to its start and plays it |
+| `none` | Does nothing |
+
+Most designs need one of a handful of combinations:
+
+<CodeBlock language="css">
+{`
+  /* Reveal once, then leave it alone */
+  animation-trigger: --reveal play-once;
+
+  /* Reveal on the way in, reverse on the way out */
+  animation-trigger: --reveal play-forwards play-backwards;
+
+  /* Restart from the beginning every time it comes into view */
+  animation-trigger: --reveal replay reset;
+
+  /* Pause when out of view, carry on from the same point when back */
+  animation-trigger: --reveal play pause;
+`}
+</CodeBlock>
+
+`play-forwards play-backwards` is a good choice for reveals that should also tidy up: if someone scrolls past quickly,
+the animation reverses from wherever it had got to, rather than jumping. `play pause` suits a long, looping animation
+that should only use resources while it's visible.
+
+### Put `animation-trigger` After `animation`
+
+The `animation` shorthand resets `animation-trigger` to `none`, just as it resets `animation-timeline`. If
+`animation-trigger` comes first, the shorthand wipes it out and the animation plays straight away on page load. Always
+write `animation-trigger` after `animation`.
+
+<RainbowDivider />
+
+## Scoping Trigger Names
+
+Trigger names are global by default. When several elements define a trigger with the same name, an animation that refers
+to that name uses the last one in the document. For a list of cards that each define `--reveal`, that means every card's
+animation follows the **last** card's trigger: nothing plays until the last card scrolls into view, and then they all
+play at once.
+
+`trigger-scope` fixes this, the same way `anchor-scope` does for anchor positioning. It limits the named trigger to the
+element and its descendants, so each card's animation finds its own card's trigger:
+
+<CodeBlock language="css">
+{`
+  .card {
+    timeline-trigger: --reveal view() contain / cover;
+    trigger-scope: --reveal;
+  }
+`}
+</CodeBlock>
+
+`trigger-scope: all` scopes every trigger name defined by the element or its descendants. You don't need it when there's
+only one element with a given trigger name, such as a single hero section.
+
+### Triggering One Element from Another
+
+The trigger and the animation don't have to be on the same element. A section can define the trigger, and its heading,
+text and image can each animate in response, with different keyframes and delays:
+
+<CodeBlock language="css">
+{`
+  .feature {
+    timeline-trigger: --feature view() entry 50% / cover;
+    trigger-scope: --feature;
+  }
+
+  .feature h2 {
+    animation: slide-in 500ms ease-out both;
+    animation-trigger: --feature play-once;
+  }
+
+  .feature img {
+    animation: fade-in 700ms 150ms ease-out both;
+    animation-trigger: --feature play-once;
+  }
+`}
+</CodeBlock>
+
+Because everything follows one trigger on the section, the pieces play together as soon as half the section has scrolled
+into view, even if the image is still below the fold.
+
+<RainbowDivider />
+
+## Try It Live
+
+Scroll the list. Each card defines its own `--reveal` trigger with `trigger-scope`, and plays its animation when it's
+fully in view. The menu switches all the cards between three combinations of actions, so you can scroll down and back up
+to see the difference. With `play-forwards play-backwards`, scroll quickly back and forth across a card to see it
+reverse from wherever it had got to.
+
+<Sandbox slug="css-animation-trigger" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Compared with `IntersectionObserver`
+
+The JavaScript version of a reveal watches each element and adds a class when it comes into view:
+
+<CodeBlock language="js">
+{`
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      }
+    }
+  }, { threshold: 1 });
+
+  document.querySelectorAll(".card").forEach((card) => observer.observe(card));
+`}
+</CodeBlock>
+
+It works in every browser, and it's still the right tool when something other than an animation should happen, such as
+loading data. For a plain animation, the CSS version needs no script, nothing to set up after content is added to the
+page, and no class to keep in sync with the animation. Reversing or pausing on exit, which takes extra bookkeeping with
+an observer, is just a second keyword. For more on observers, see
+[`IntersectionObserver`: The Viewport Watcher](/post/javascript/mastering-js-observers#intersectionobserver-the-viewport-watcher).
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+Scroll-triggered animations are in Chrome and Edge 146 and aren't supported in Firefox or Safari yet. The specification
+is still an Editor's Draft, so details may change.
+
+In a browser without them, `timeline-trigger` and `animation-trigger` are ignored and the animation runs once, as soon
+as the page loads, whether or not the element is in view. For content below the fold, that means the reveal has already
+finished by the time anyone sees it, which is harmless. To avoid running the animation at all in those browsers, put it
+inside `@supports`, and respect reduced-motion preferences at the same time:
+
+<CodeBlock language="css">
+{`
+  @supports (animation-trigger: --t play-once) {
+    @media (prefers-reduced-motion: no-preference) {
+      .card {
+        timeline-trigger: --reveal view() contain / cover;
+        trigger-scope: --reveal;
+
+        animation: reveal 600ms ease-out both;
+        animation-trigger: --reveal play-once;
+      }
+    }
+  }
+`}
+</CodeBlock>
+
+Where reveals matter in every browser, keep using an `IntersectionObserver` and add the CSS version as you would any
+other enhancement.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Writing `animation` After `animation-trigger`
+
+The shorthand resets the trigger to `none`, and the animation plays immediately on load. Put `animation-trigger` last.
+
+### 2. Forgetting `trigger-scope`
+
+With several elements defining the same trigger name, every animation follows the last one. If all your cards play at
+once, or not until the end of the list, add `trigger-scope`.
+
+### 3. Using a Range the Element Can Never Reach
+
+An element taller than its scroll container can never be fully visible, so a `contain` activation range never switches
+on and the animation never plays. Use `entry 50%` or `cover` for tall elements.
+
+### 4. Hiding Content Until It Animates
+
+With a `both` or `backwards` fill, keyframes that start at `opacity: 0` can hide the element before the trigger fires.
+If the trigger never fires, because of a range like the one above, the content stays hidden. Keep the hidden state
+inside the keyframes, not in the element's own styles, and test with the feature turned off.
+
+### 5. Ignoring Reduced Motion
+
+Movement as content appears can make some people feel unwell. Put scroll-triggered animations inside a
+`prefers-reduced-motion: no-preference` query, as in the fallback example.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Reveal and entrance animations for cards, images and sections as they scroll into view
+- Animations that should pause while off screen, such as a looping illustration, using `play pause`
+- Sections whose heading, text and images animate together from one trigger on the section
+- Any `IntersectionObserver` whose only job is to add a class that starts an animation, as an enhancement
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Scroll-triggered animations play an ordinary, time-based animation when an element reaches part of its scroll container.
+`timeline-trigger` names a trigger and the range that switches it on, with an optional larger range that keeps it on,
+and `animation-trigger` chooses what the animation does when the trigger switches on and off. Write `animation-trigger`
+after the `animation` shorthand, scope repeated trigger names with `trigger-scope`, and, while it's only in Chromium,
+treat it as an enhancement over content that's visible without it.

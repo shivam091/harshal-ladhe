@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>animation-trigger Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Scroll-triggered reveals, no JavaScript observer</h1>
+        <p>
+          Each card defines its own <code>--reveal</code> trigger with <code>timeline-trigger</code> and plays a
+          600ms animation when it's fully in view. Scroll the list, then scroll back up.
+        </p>
+      </header>
+
+      <p class="support" id="support" hidden>
+        This browser doesn't support scroll-triggered animations, so the cards are shown without animating.
+      </p>
+
+      <label class="control">
+        Actions
+        <select id="actions">
+          <option value="play-forwards play-backwards">play-forwards play-backwards</option>
+          <option value="play-once">play-once</option>
+          <option value="replay reset">replay reset</option>
+        </select>
+      </label>
+
+      <p class="readout" id="readout">animation-trigger: --reveal play-forwards play-backwards;</p>
+
+      <ol class="list" id="list">
+        <li class="card"><span class="step">01</span><h2>Plan the route</h2><p>Card 1 plays its own animation when it's fully in view.</p></li>
+        <li class="card"><span class="step">02</span><h2>Pack light</h2><p>Card 2 plays its own animation when it's fully in view.</p></li>
+        <li class="card"><span class="step">03</span><h2>Check the weather</h2><p>Card 3 plays its own animation when it's fully in view.</p></li>
+        <li class="card"><span class="step">04</span><h2>Leave early</h2><p>Card 4 plays its own animation when it's fully in view.</p></li>
+        <li class="card"><span class="step">05</span><h2>Take the long way</h2><p>Card 5 plays its own animation when it's fully in view.</p></li>
+        <li class="card"><span class="step">06</span><h2>Stop for lunch</h2><p>Card 6 plays its own animation when it's fully in view.</p></li>
+        <li class="card"><span class="step">07</span><h2>Watch the sunset</h2><p>Card 7 plays its own animation when it's fully in view.</p></li>
+        <li class="card"><span class="step">08</span><h2>Head home</h2><p>Card 8 plays its own animation when it's fully in view.</p></li>
+      </ol>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

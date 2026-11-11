@@ -666,6 +666,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-11", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-animation-trigger",
+    title: "Scroll-Triggered Animations with `animation-trigger`",
+    excerpt: "Play an animation when it scrolls into view, without JavaScript.",
+    description: "Use CSS timeline-trigger and animation-trigger to play, reverse, pause or replay animations as elements scroll into view, with trigger-scope, fallbacks and the pitfalls to avoid.",
+    category: ["CSS"],
+    tags: ["css", "animation-trigger", "scroll-animation", "css-animation", "view-timeline", "intersection-observer", "modern-css", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-animation-trigger/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cards in a scrolling list sliding into place one by one as each becomes fully visible, each driven by its own timeline trigger."
+    },
+    changelog: [
+      { date: "2026-11-11", change: "Initial publication." }
+    ]
   }
 ];
 
