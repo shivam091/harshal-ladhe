@@ -1186,5 +1186,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "interop": {
     title: "Interop and Cross-Browser Compatibility",
     description: "The yearly Interop project, in which browser vendors align chosen web features across engines, and what its focus areas mean for authors."
+  },
+  "interop-2026": {
+    title: "Interop 2026 Focus Areas and Progress",
+    description: "The Interop 2026 focus areas, from typed attr() and contrast-color() to scroll-driven animations, and how far each browser has come."
+  },
+  "css-snapshot-2026": {
+    title: "W3C CSS Snapshot 2026 Explained",
+    description: "The W3C CSS Snapshot 2026, how it groups CSS specifications by stability, and why it isn't a list of features you can use."
+  },
+  "web-standards": {
+    title: "Web Standards and Specifications",
+    description: "How web standards are written and agreed, from W3C specifications and their maturity levels to cross-browser efforts like Interop."
   }
 };
