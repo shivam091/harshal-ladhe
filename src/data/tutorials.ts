@@ -630,6 +630,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-09-02", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-progress-function",
+    title: "Mapping Ranges in CSS with `progress()`",
+    excerpt: "Turn any value into a 0-to-1 number and scale anything with it.",
+    description: "Use CSS progress() to find where a value sits between two others and map it onto any range: fluid type, container-aware components, colour mixing, fallbacks and pitfalls.",
+    category: ["CSS"],
+    tags: ["css", "progress-function", "css-functions", "fluid-typography", "container-units", "responsive-design", "modern-css", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-progress-function/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A card in a resizable container whose heading size, padding and accent colour change together, driven by one progress() value between 0 and 1."
+    },
+    changelog: [
+      { date: "2026-11-11", change: "Initial publication." }
+    ]
   }
 ];
 

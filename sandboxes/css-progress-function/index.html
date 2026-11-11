@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>progress() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>One progress() value, four properties</h1>
+        <p>
+          The card measures its container with <code>progress(100cqi, 14rem, 30rem)</code> and uses the result for
+          its heading size, padding, corner radius and accent colour.
+        </p>
+      </header>
+
+      <p class="support" id="support" hidden>
+        This browser doesn't support <code>progress()</code>, so the card keeps its fallback styles.
+      </p>
+
+      <label class="control">
+        Container width: <span id="width-label">22rem</span>
+        <input type="range" id="width" min="10" max="34" step="0.5" value="22" />
+      </label>
+
+      <p class="readout" id="readout">progress = 0.5</p>
+
+      <div class="stage" id="stage">
+        <article class="card" id="card">
+          <h2>Weekend in the hills</h2>
+          <p>Two days of easy trails, a cabin with a view and nothing on the calendar.</p>
+          <a href="#" class="card-link">See the route</a>
+        </article>
+      </div>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

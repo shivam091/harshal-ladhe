@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-progress-function",
+    title: "Mapping Ranges with progress()",
+    description: "A card whose heading size, padding, corner radius and accent colour are all driven by one progress() value measured from its container.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "import-attributes-json",
     title: "Importing JSON as a Module with Import Attributes",
     description: "config.json is imported directly with `with { type: \"json\" }` and rendered below — a real ES module import, not a fetch() call or bundler-specific magic.",

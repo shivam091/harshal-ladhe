@@ -1,0 +1,275 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-progress-function");
+
+## Introduction
+
+A lot of responsive CSS comes down to one question: how far is this value between two others? How far the viewport is
+between 320px and 1280px decides the heading size. How far a card's container is between narrow and wide decides its
+padding. Until recently, CSS couldn't answer that question directly, so we worked it out by hand, as a slope and an
+intercept inside `clamp()`.
+
+**`progress()`** answers it in one function. Give it a value and a range, and it returns a number from 0 to 1 that says
+where the value sits in that range. Multiply that number by anything you like, and you have a value that scales smoothly
+between two end points.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  h1 {
+    --p: progress(100vw, 320px, 1280px);
+    font-size: calc(1.5rem + 1.5rem * var(--p));
+  }
+`}
+</CodeBlock>
+
+`progress(100vw, 320px, 1280px)` is 0 when the viewport is 320px wide, 1 when it's 1280px wide, and 0.5 halfway between.
+The heading's size goes from 1.5rem to 3rem across that range, and stays at 1.5rem or 3rem outside it.
+
+The function takes three comma-separated values: the value you're measuring, the start of the range and the end of the
+range. It returns a plain number with no unit, so it's almost always used inside `calc()` or another math function.
+
+<RainbowDivider />
+
+## How the Result Is Calculated
+
+The result is `(value - start) / (end - start)`. With `progress(800px, 320px, 1280px)`, that's `480px / 960px`, which is
+0.5.
+
+By default, the result is **clamped** to the range 0 to 1. A value below the start returns 0, and a value above the end
+returns 1:
+
+<CodeBlock language="css">
+{`
+  scale: progress(5, 0, 10);    /* 0.5 */
+  scale: progress(15, 0, 10);   /* 1, not 1.5 */
+  scale: progress(-5, 0, 10);   /* 0, not -0.5 */
+`}
+</CodeBlock>
+
+The clamping is what makes `progress()` so convenient for fluid sizing: the value stops growing at the end of the range,
+so you don't need a `clamp()` around it to set the minimum and maximum.
+
+The specification also defines a `no-clamp` keyword, written before the value, for when you do want the result to keep
+going past 0 and 1: `progress(no-clamp 15, 0, 10)` is 1.5. It's newer than the rest of the function, so check it in the
+browsers you support before relying on it.
+
+<RainbowDivider />
+
+## What You Can Pass In
+
+The three arguments can be numbers, lengths or percentages, and each can be a math expression or a custom property. They
+can use **different units**, but they must all be the **same type**:
+
+<CodeBlock language="css">
+{`
+  progress(5, 0, 10)                  /* numbers */
+  progress(3em, 0px, 100px)           /* lengths, mixed units */
+  progress(100cqi, 20rem, 60rem)      /* container query units */
+  progress(var(--count), 1, 12)       /* custom properties */
+
+  progress(3em, 0, 100)               /* invalid: a length and two numbers */
+  progress(3s, 0px, 100px)            /* invalid: a time and two lengths */
+`}
+</CodeBlock>
+
+Mixed units are resolved when the value is computed. `progress(3em, 0px, 100px)` is 0.48 on an element whose font size
+is 16px, because 3em is 48px there.
+
+<RainbowDivider />
+
+## Mapping One Range onto Another
+
+The pattern you'll write most often turns a progress value into a value in a different range. Start at the first value,
+and add the distance to the second value multiplied by the progress:
+
+<CodeBlock language="css">
+{`
+  .card {
+    --p: progress(100cqi, 20rem, 48rem);
+
+    padding: calc(1rem + (2.5rem - 1rem) * var(--p));
+    gap: calc(0.5rem + (1.5rem - 0.5rem) * var(--p));
+    border-radius: calc(0.5rem + (1.25rem - 0.5rem) * var(--p));
+  }
+`}
+</CodeBlock>
+
+One progress value drives three properties, so they always change together. Measuring `100cqi`, the width of the card's
+container, rather than `100vw` means the card responds to the space it has, not to the size of the window. The card
+needs an ancestor with `container-type: inline-size` for container units to refer to.
+
+### Reusable Custom Properties
+
+If you map ranges in several places, give the start and end values names. The calculation then reads like the design
+rule it stands for:
+
+<CodeBlock language="css">
+{`
+  :root {
+    --fluid-min: 20rem;
+    --fluid-max: 80rem;
+    --fluid: progress(100vw, var(--fluid-min), var(--fluid-max));
+  }
+
+  h1 { font-size: calc(2rem + 1.5rem * var(--fluid)); }
+  h2 { font-size: calc(1.5rem + 0.75rem * var(--fluid)); }
+  .section { padding-block: calc(2rem + 4rem * var(--fluid)); }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Beyond Sizes
+
+Because the result is a plain number, it can drive any property that takes a number, or any value that can be built from
+one. Opacity, scale and colour mixing all work:
+
+<CodeBlock language="css">
+{`
+  .hero {
+    --p: progress(100cqi, 30rem, 70rem);
+
+    /* grow slightly as space allows */
+    scale: calc(0.9 + 0.1 * var(--p));
+
+    /* move the accent colour from teal to violet */
+    background: color-mix(in oklch, teal, rebeccapurple calc(var(--p) * 100%));
+  }
+`}
+</CodeBlock>
+
+It also works with numbers that have nothing to do with size. With `progress(var(--count), 1, 12)`, a badge can get
+bolder or a bar can fill as a count goes from 1 to 12, without any JavaScript turning the count into a percentage.
+
+<RainbowDivider />
+
+## Try It Live
+
+Drag the slider to change the width of the container. The card's heading size, padding, corner radius and accent colour
+are all driven by one `progress(100cqi, 14rem, 30rem)` value, shown in the readout. Below 14rem or past 30rem, the value
+stays at 0 or 1, and the card stops changing.
+
+<Sandbox slug="css-progress-function" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Compared with the `clamp()` Formula
+
+The usual way to write fluid type has been a `clamp()` with a viewport-based middle value:
+
+<CodeBlock language="css">
+{`
+  /* 1.5rem at 320px, 3rem at 1280px */
+  font-size: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+`}
+</CodeBlock>
+
+It works, but `1rem + 2.5vw` has to be worked out from the two sizes and two widths, and nothing in it says "320px" or
+"1280px". Change one of those widths and you have to work it out again. With `progress()`, the widths and the sizes are
+written down directly, and the browser does the arithmetic:
+
+<CodeBlock language="css">
+{`
+  font-size: calc(1.5rem + 1.5rem * progress(100vw, 320px, 1280px));
+`}
+</CodeBlock>
+
+The two produce the same sizes. The `clamp()` version works in older browsers, which matters for something as visible as
+body text. For the full `clamp()` approach, see
+[Fluid Typography and Spacing with `clamp()`](/tutorial/fluid-typography-and-spacing).
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`progress()` is supported in Chrome and Edge 138, Firefox 155 and Safari 26. It became Baseline newly available in
+September 2026, so current browsers all support it, but some visitors will still be on versions without it.
+
+The simplest fallback is a declaration without `progress()` before the one with it. A browser that doesn't understand
+`progress()` drops the second declaration as invalid and keeps the first:
+
+<CodeBlock language="css">
+{`
+  h1 {
+    font-size: clamp(1.5rem, 1rem + 2.5vw, 3rem);
+    font-size: calc(1.5rem + 1.5rem * progress(100vw, 320px, 1280px));
+  }
+`}
+</CodeBlock>
+
+This doesn't work when `progress()` is stored in a custom property, such as `--p` above. A custom property accepts
+almost any value, so the browser keeps `--p` and only finds out it's invalid when the property using it is computed. By
+then, the earlier declaration has already been thrown away, and the property behaves as if it were set to `unset`:
+inherited properties take the parent's value, and the rest their initial value. In that case, put the progress-based
+rules inside `@supports`:
+
+<CodeBlock language="css">
+{`
+  .card { padding: 1.5rem; }
+
+  @supports (width: calc(progress(1px, 0px, 2px) * 1px)) {
+    .card {
+      --p: progress(100cqi, 20rem, 48rem);
+      padding: calc(1rem + 1.5rem * var(--p));
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Using the Result as a Length
+
+`progress()` returns a number. `padding: progress(100vw, 320px, 1280px)` is invalid, because padding needs a length.
+Multiply the number by a length inside `calc()`.
+
+### 2. Mixing Types
+
+All three arguments must be the same type. `progress(100vw, 320, 1280)` is invalid because the range is written as
+numbers. Write `320px` and `1280px`.
+
+### 3. A Range of Zero
+
+If the start and the end are the same, the calculation divides by zero. This is easy to do by accident when both ends
+come from custom properties. Keep the two values different.
+
+### 4. Expecting Values Past the Range
+
+The result is clamped to 0 and 1, so a size never goes past the ends of the range. That's usually what you want. If you
+really do need extrapolation, use `no-clamp`, once you've checked it's supported where you need it.
+
+### 5. Measuring the Viewport for a Component
+
+`100vw` is the window, not the space a component has. A card in a sidebar sees the same `100vw` as a card in the main
+column. Use container query units such as `100cqi` for components.
+
+### 6. Where a Custom Property Is Measured
+
+An ordinary custom property stores the text `progress(100cqi, 20rem, 48rem)`, not its result. The function runs wherever
+`var(--p)` is used, so on a child element, `100cqi` and `em` units are measured from the child's point of view. To
+measure once and pass the number down, register the property with `@property` and `syntax: "<number>"`. It's then
+computed on the element that declares it, and children inherit the number.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Fluid type and spacing, where you want the end points written down rather than worked out
+- Components that should adapt to their container, with one progress value driving padding, gaps and radii together
+- Colour and opacity that change across a range, using `color-mix()` and plain numbers
+- Any value driven by a count or index in a custom property, such as a rating or a step in a sequence
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`progress()` returns where a value sits between two others, as a number from 0 to 1, clamped by default. Multiply it
+into `calc()` to map one range onto another, and drive several properties from one value so they always change together.
+It's Baseline newly available, so add a plain fallback declaration first, or use `@supports` when the progress value
+lives in a custom property.

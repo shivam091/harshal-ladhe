@@ -1,0 +1,135 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 36rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+}
+
+code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.support {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  background: hsl(38, 60%, 14%);
+  color: hsl(38, 90%, 72%);
+}
+
+.support[hidden] {
+  display: none;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: hsl(210, 12%, 65%);
+}
+
+.control input[type="range"] {
+  inline-size: 100%;
+  accent-color: hsl(190, 80%, 55%);
+}
+
+.readout {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: hsl(190, 70%, 70%);
+}
+
+/* The stage is the container the card measures; the slider sets its width. */
+.stage {
+  container-type: inline-size;
+  box-sizing: content-box;
+  max-inline-size: calc(100% - 1.5rem - 2px);
+  padding: 0.75rem;
+  border: 1px dashed hsl(213, 12%, 30%);
+  border-radius: 0.75rem;
+}
+
+/*
+  Registering --p as a <number> makes it compute on .card itself, so 100cqi is measured once, from the card's
+  container, and the readout can show the result.
+*/
+@property --p {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Fallback styles for browsers without progress(). */
+.card {
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: hsl(213, 22%, 11%);
+  border-top: 4px solid hsl(175, 60%, 45%);
+}
+
+.card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.card p {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 70%);
+}
+
+.card-link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(175, 60%, 60%);
+}
+
+@supports (width: calc(progress(1px, 0px, 2px) * 1px)) {
+  .card {
+    --p: progress(100cqi, 14rem, 30rem);
+
+    padding: calc(1rem + (2.5rem - 1rem) * var(--p));
+    border-radius: calc(0.5rem + (1.5rem - 0.5rem) * var(--p));
+    border-top-color: color-mix(in oklch, hsl(175, 60%, 45%), hsl(270, 70%, 65%) calc(var(--p) * 100%));
+  }
+
+  .card h2 {
+    font-size: calc(1.25rem + (2.25rem - 1.25rem) * var(--p));
+  }
+
+  .card-link {
+    color: color-mix(in oklch, hsl(175, 60%, 60%), hsl(270, 80%, 75%) calc(var(--p) * 100%));
+  }
+}
