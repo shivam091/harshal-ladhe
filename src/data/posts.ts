@@ -798,6 +798,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-10", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-es2026",
+    title: "What's New in ES2026: Every Feature Explained",
+    excerpt: "Every ES2026 feature, with examples and browser support.",
+    description: "Every ES2026 feature with examples: Map upsert, JSON.parse source text, Iterator.concat, Uint8Array Base64, Math.sumPrecise, Error.isError and Array.fromAsync.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2026", "ecmascript", "modern-js", "map-upsert", "iterator-helpers", "math-sumprecise", "error-iserror", "array-fromasync", "browser-support", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/whats-new-in-es2026/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover showing a code diff where old helper functions are replaced by seven new built-in JavaScript methods.",
+      caption: "Seven lines out, seven in: each hand-rolled helper, from mapGetOrSet to collectAsync, replaced by its ES2026 built-in."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "No new syntax this year, just seven helpers I'm glad to delete from my own utility files. The time went into checking rather than writing: running the examples, matching every version number against MDN's compatibility data, and confirming each feature against the published specification, which is also how I untangled the Temporal and using mix-up that keeps doing the rounds. I hope the support table saves you a few searches. 🧰",
+    changelog: [
+      { date: "2026-11-11", change: "Initial publication" }
+    ]
   }
 ];
 
