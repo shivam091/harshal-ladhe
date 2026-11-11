@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "json-parse-source-text-rawjson",
+    title: "Exact Big Numbers with context.source and JSON.rawJSON()",
+    description: "Editable JSON parsed three ways: a plain JSON.parse that rounds large integers, a reviver that reads context.source into BigInt, and a JSON.rawJSON() round trip that checks every number.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-caret-shape",
     title: "Changing the Caret with caret-shape",
     description: "A terminal-style input and a textarea whose native caret switches between auto, bar, block and underscore, with an optional custom blink using caret-animation.",

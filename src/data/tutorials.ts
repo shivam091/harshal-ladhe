@@ -720,6 +720,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-11", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "json-parse-source-text-rawjson",
+    title: "Exact Big Numbers in JSON with `context.source` and `JSON.rawJSON()`",
+    excerpt: "Parse and stringify large numbers in JSON without losing digits.",
+    description: "Use the JSON.parse reviver's context.source to read large integers as BigInt and keep exact decimals, and JSON.rawJSON() to write them back, with fallbacks and pitfalls.",
+    category: ["JavaScript"],
+    tags: ["javascript", "json", "json-rawjson", "bigint", "es2026", "precision", "esnext", "api-calls"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/json-parse-source-text-rawjson/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "A large integer ID rounded by a plain JSON.parse, beside the same ID kept exactly as a BigInt and written back out with JSON.rawJSON()."
+    },
+    changelog: [
+      { date: "2026-11-11", change: "Initial publication." }
+    ]
   }
 ];
 

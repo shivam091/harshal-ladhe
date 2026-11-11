@@ -1,0 +1,268 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("json-parse-source-text-rawjson");
+
+## Introduction
+
+JSON numbers have no size or precision limit, but JavaScript numbers do. Every number is a 64-bit float, which can only
+represent whole numbers exactly up to `Number.MAX_SAFE_INTEGER`, 9,007,199,254,740,991. Many APIs send larger IDs than
+that, because databases and ID generators commonly use 64-bit integers. When `JSON.parse()` reads one, it quietly rounds
+it to the nearest number it can represent, and nothing tells you:
+
+<CodeBlock language="js">
+{`
+  JSON.parse('{"id": 12345678901234567890}').id;
+  // 12345678901234567000
+`}
+</CodeBlock>
+
+The last digits are gone, and with them the ability to look the record up again. The same thing happens to decimals with
+more digits than a float holds, and formatting such as the trailing zero in `1.50` is lost too.
+
+Two additions to `JSON` fix both directions. In `JSON.parse()`, the reviver function now receives the **original source
+text** of each value, so you can turn it into a `BigInt` or keep it as a string before it's rounded. In
+`JSON.stringify()`, **`JSON.rawJSON()`** lets you write a number exactly as you specify it, including ones too big for a
+JavaScript number.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="js">
+{`
+  const json = '{"id": 12345678901234567890, "name": "Order"}';
+
+  const order = JSON.parse(json, (key, value, context) =>
+    key === "id" ? BigInt(context.source) : value
+  );
+
+  order.id; // 12345678901234567890n
+`}
+</CodeBlock>
+
+The reviver, the optional second argument to `JSON.parse()`, is called for every value in the document. It now receives
+a third argument, a `context` object, and for numbers, strings, booleans and `null`, `context.source` is the exact text
+that was parsed: `"12345678901234567890"`, with every digit. Passing it to `BigInt()` gives the exact value.
+
+<RainbowDivider />
+
+## What the Reviver Receives
+
+<CodeBlock language="js">
+{`
+  JSON.parse('{"price": 1.50, "tags": ["a"], "note": null}', (key, value, context) => {
+    console.log(key, value, context);
+    return value;
+  });
+
+  // "price"  1.5        { source: "1.50" }
+  // "0"      "a"        { source: '"a"' }
+  // "tags"   ["a"]      {}
+  // "note"   null       { source: "null" }
+  // ""       { ... }    {}
+`}
+</CodeBlock>
+
+A few details are worth knowing:
+
+- **`source` is the raw JSON text**, exactly as it appeared. For `1.50` it's `"1.50"`, not `"1.5"`. For a string, it
+  includes the quotes and any escape sequences.
+- **Objects and arrays get an empty `context`**, because there's no single piece of source text for them. Only primitive
+  values have a `source`.
+- **Values are visited children first.** Array items and object properties are revived before the object that contains
+  them, and the whole document comes last, with the key `""`.
+- **A changed value has no `source`.** If the reviver changes a value that hasn't been visited yet, for example by
+  writing to `this` from a sibling's call, that value is revived without a `source`, because its text no longer matches
+  it.
+- **Each call gets a new `context` object**, so there's nothing to clean up between calls.
+
+<RainbowDivider />
+
+## Choosing Which Numbers to Convert
+
+Converting by key name works when you know the shape of the data. When you don't, convert any number that isn't a safe
+integer but was written as one in the JSON:
+
+<CodeBlock language="js">
+{`
+  function reviveBigInts(key, value, context) {
+    if (
+      typeof value === "number" &&
+      !Number.isSafeInteger(value) &&
+      /^-?\\d+$/.test(context?.source ?? "")
+    ) {
+      return BigInt(context.source);
+    }
+    return value;
+  }
+
+  JSON.parse('{"id": 12345678901234567890, "price": 19.99, "count": 3}', reviveBigInts);
+  // { id: 12345678901234567890n, price: 19.99, count: 3 }
+`}
+</CodeBlock>
+
+Small integers stay as ordinary numbers, so the rest of your code doesn't have to deal with `BigInt` everywhere. Only
+the values that would have lost precision change type. The check on `source` makes sure a number written with a decimal
+point or an exponent, such as `1e400`, is never passed to `BigInt()`, which would throw.
+
+### Keeping Decimals Exact
+
+`BigInt` only holds whole numbers. For money and other exact decimals, keep the source text as a string and pass it to a
+decimal library, or to your own code that works in minor units:
+
+<CodeBlock language="js">
+{`
+  const invoice = JSON.parse(json, (key, value, context) =>
+    key === "amount" ? context.source : value
+  );
+
+  invoice.amount; // "1234567.8901234567", every digit kept
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Writing Exact Numbers with `JSON.rawJSON()`
+
+The other half of the problem is getting those values back out. `JSON.stringify()` throws a `TypeError` on a `BigInt`,
+and a decimal kept as a string would be written with quotes. `JSON.rawJSON(text)` creates a value that
+`JSON.stringify()` writes **exactly as given**, without quotes or conversion:
+
+<CodeBlock language="js">
+{`
+  const payload = {
+    id: JSON.rawJSON("12345678901234567890"),
+    amount: JSON.rawJSON("1234567.8901234567")
+  };
+
+  JSON.stringify(payload);
+  // '{"id":12345678901234567890,"amount":1234567.8901234567}'
+`}
+</CodeBlock>
+
+The value it returns is a small frozen object with a `null` prototype and a single property, `rawJSON`, holding the
+text. `JSON.isRawJSON(value)` tells you whether a value is one of these objects.
+
+### Serialising `BigInt` Values
+
+Combine it with a replacer, and every `BigInt` in a structure is written as a plain JSON number:
+
+<CodeBlock language="js">
+{`
+  function replaceBigInts(key, value) {
+    return typeof value === "bigint" ? JSON.rawJSON(value.toString()) : value;
+  }
+
+  const order = { id: 12345678901234567890n, total: 42 };
+
+  JSON.stringify(order, replaceBigInts);
+  // '{"id":12345678901234567890,"total":42}'
+`}
+</CodeBlock>
+
+With `reviveBigInts` from earlier, that's a full round trip: large integers come in as `BigInt` values and go back out
+as the same JSON numbers, with nothing rounded along the way.
+
+### What `JSON.rawJSON()` Accepts
+
+The text must be valid JSON for a **single primitive value**: a number, a string with its quotes, `true`, `false` or
+`null`. Anything else throws a `SyntaxError`:
+
+<CodeBlock language="js">
+{`
+  JSON.rawJSON("1e400");          // OK: valid JSON, written as-is
+  JSON.rawJSON('"hello"');        // OK: a JSON string, quotes included
+  JSON.rawJSON("{}");             // SyntaxError: objects aren't allowed
+  JSON.rawJSON("[1, 2]");         // SyntaxError: nor are arrays
+  JSON.rawJSON(" 42");            // SyntaxError: no surrounding whitespace
+  JSON.rawJSON("");               // SyntaxError: empty text isn't JSON
+`}
+</CodeBlock>
+
+This is what makes it safe. Raw JSON can't be used to insert extra properties or structures into the output, even if the
+text comes from user input.
+
+<RainbowDivider />
+
+## Try It Live
+
+Edit the JSON and press **Parse**. The first result is a plain `JSON.parse()`, with lost digits highlighted. The second
+uses `reviveBigInts` and shows each large integer as a `BigInt`. The third writes that result back out with
+`replaceBigInts` and checks that every number survived the round trip.
+
+<Sandbox slug="json-parse-source-text-rawjson" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+Source text access and `JSON.rawJSON()` are supported in Chrome and Edge 114, Firefox 135, Safari 18.4 and Node 21, and
+are part of ES2026. To check for them:
+
+<CodeBlock language="js">
+{`
+  const hasRawJSON = typeof JSON.rawJSON === "function";
+
+  let hasSourceText = false;
+  JSON.parse("1", (key, value, context) => {
+    hasSourceText = context?.source === "1";
+    return value;
+  });
+`}
+</CodeBlock>
+
+Older engines call the reviver with only two arguments, so `context` is `undefined`. That's why `reviveBigInts` reads
+`context?.source` rather than `context.source`. Without source text, large numbers are already rounded by the time the
+reviver sees them, and no reviver can get the digits back.
+
+Where you need to support those engines, the most robust fix is on the server: send large IDs as strings, such as
+`"id": "12345678901234567890"`, which every JSON parser reads exactly. Many APIs send both, for example `id` as a number
+and `id_str` as a string. If you can't change the server, a JSON parser written in JavaScript that understands big
+numbers can read the original text instead.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Destructuring `context`
+
+`(key, value, { source }) => ...` looks neat, but it throws a `TypeError` in an older engine, where the third argument
+is `undefined`. Use `context?.source` unless you're sure every runtime supports it.
+
+### 2. Mixing `BigInt` and Number
+
+`order.id + 1` throws a `TypeError` when `order.id` is a `BigInt`. Convert at the edges, or keep large IDs as strings if
+all you do is compare and display them.
+
+### 3. Stringifying Without a Replacer
+
+`JSON.stringify()` throws on any `BigInt` it meets. Once you start reviving `BigInt` values, use a replacer like
+`replaceBigInts` everywhere that data is serialised again.
+
+### 4. Expecting a `source` for Objects
+
+`context.source` only exists for primitive values. A reviver that reads it for every key gets `undefined` for objects
+and arrays.
+
+### 5. Passing Untrimmed Text to `JSON.rawJSON()`
+
+Text with leading or trailing whitespace throws. Trim values from forms or files first.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- API clients that receive 64-bit integer IDs, such as database keys or generated IDs, as JSON numbers
+- Financial and scientific data whose decimals have more digits than a float can hold
+- Tools that need to keep numbers formatted exactly as received, such as `1.50` or `1e3`
+- Writing `BigInt` values and exact decimals back to JSON without quoting them as strings
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`JSON.parse()` revivers now get a third argument, `context`, whose `source` holds the exact text of each primitive
+value, so large integers can become `BigInt` values and exact decimals can stay as strings before anything is rounded.
+`JSON.rawJSON()` goes the other way, letting `JSON.stringify()` write a primitive exactly as given, which makes `BigInt`
+round trips possible. Read `context?.source` defensively for older engines, and use a replacer whenever data containing
+`BigInt` values is serialised.

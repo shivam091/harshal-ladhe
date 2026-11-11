@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON Source Text Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Large numbers through JSON, without losing digits</h1>
+        <p>
+          A plain <code>JSON.parse()</code> rounds integers above <code>Number.MAX_SAFE_INTEGER</code>. The reviver's
+          <code>context.source</code> and <code>JSON.rawJSON()</code> keep every digit, in and out.
+        </p>
+      </header>
+
+      <p class="support" id="support" hidden>
+        This browser doesn't support <code>JSON.parse</code> source text access or <code>JSON.rawJSON()</code>, so
+        only the plain parse can run.
+      </p>
+
+      <label class="control" for="input">JSON</label>
+      <textarea id="input" rows="7" spellcheck="false">{
+  "orderId": 12345678901234567890,
+  "customerId": 9007199254740993,
+  "quantity": 3,
+  "price": 19.99,
+  "parentIds": [18014398509481985, 42]
+}</textarea>
+
+      <button type="button" id="parse">Parse</button>
+
+      <section class="result">
+        <h2>1. <code>JSON.parse(json)</code></h2>
+        <ul id="plain" class="values"></ul>
+      </section>
+
+      <section class="result">
+        <h2>2. <code>JSON.parse(json, reviveBigInts)</code></h2>
+        <ul id="revived" class="values"></ul>
+      </section>
+
+      <section class="result">
+        <h2>3. <code>JSON.stringify(result, replaceBigInts)</code></h2>
+        <pre id="output" class="output"></pre>
+        <p id="round-trip" class="status"></p>
+      </section>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
