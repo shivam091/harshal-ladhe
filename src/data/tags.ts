@@ -1151,6 +1151,30 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Building Progress Indicators",
     description: "Progress bars and rings that show how far a task has got, built with SVG and CSS, with accessible values for screen readers."
   },
+  "ecmascript": {
+    title: "ECMAScript Editions and the TC39 Process",
+    description: "The yearly ECMAScript editions that define JavaScript, the TC39 proposal stages, and what each edition adds to the language."
+  },
+  "iterator-helpers": {
+    title: "JavaScript Iterator Helpers",
+    description: "Lazy `map`, `filter`, `take`, `drop` and other helpers on JavaScript iterators, added in ES2025, for working with generators and infinite sequences."
+  },
+  "es2026": {
+    title: "Modern JavaScript Features of ES2026",
+    description: "Language features added in ECMAScript 2026, with browser support, edge cases and fallbacks for older runtimes."
+  },
+  "map-upsert": {
+    title: "Map and WeakMap `getOrInsert()` and `getOrInsertComputed()`",
+    description: "Reading or inserting `Map` and `WeakMap` entries in one call with ES2026's upsert methods, for counters, groups, nested maps and caches."
+  },
+  "error-iserror": {
+    title: "JavaScript `Error.isError()`",
+    description: "Detecting genuine error objects with ES2026's `Error.isError()`, across realms and without being fooled by lookalike objects."
+  },
+  "math-sumprecise": {
+    title: "JavaScript `Math.sumPrecise()`",
+    description: "Summing numbers with a single rounding step using ES2026's `Math.sumPrecise()`, and compensated summation as a fallback."
+  },
   "css-2026": {
     title: "Modern CSS Features of 2026",
     description: "CSS features that became usable across browsers in 2026, from anchor positioning to scroll-driven animations and @scope."
