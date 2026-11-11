@@ -456,6 +456,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Between the core keyframes playground and a second sandbox built just to make `animation-timeline` and `animation-range` tangible — complete with a live range slider and its own feature-detection fallback for browsers that don't support scroll-driven animations yet — this one ended up needing two full interactive builds instead of one. Getting the `animation-range` diagram to actually line up entry/contain/cover/exit against a scrolling element took more iteration than the rest of the post combined. Thanks for tweaking every duration, delay, and range slider with me — go give your loops, spinners, and scroll reveals some real personality. 🎬",
     changelog: [
+      { date: "2026-11-11", change: "Added cross-reference to post 'Interop 2026 and CSS Snapshot 2026: What They Mean for CSS'" },
       { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-11-10", change: "Updated browser support for `animation-timeline`" },
       { date: "2026-11-09", change: "Added cross-reference to snippet 'SVG Three-Dot Loading Indicator with Staggered Delays'" },
@@ -668,6 +669,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around four diagrams and a three-tab sandbox: two containment panels that make the size-collapse pitfall impossible to miss, nested boxes where one arrow has to visibly skip past the nearer container, a single box showing cqmin and cqmax borrowing their values from cqi and cqb, and two identical cards that only a custom property tells apart. The named-container diagram took the most redrawing — an arrow that skips past a box can very easily look like one pointing at the wrong thing. The sandbox's middle tab is the one I'm proudest of: the same @container rule, the same 400px breakpoint, and a single radio button alone decides which box gets measured. Getting every tab's live CSS readout to match what the browser actually applies took more back-and-forth than I'd like to admit. I hope the next time a component looks wrong in a sidebar, you ask which box it's measuring before reaching for another media query. Thanks for containing yourself with me. 📦",
     changelog: [
+      { date: "2026-11-11", change: "Added cross-reference to post 'Interop 2026 and CSS Snapshot 2026: What They Mean for CSS'" },
       { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-11-06", change: "Added cross-reference to post 'CSS `@starting-style` Entry Animations: Practical Patterns'" },
       { date: "2026-10-18", change: "Initial publication" }
@@ -797,6 +799,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Sorting a whole year of CSS into \"works everywhere\", \"two engines\" and \"Chromium only\" meant checking every feature against the compatibility data rather than the launch posts, and a few surprised me, Safari shipping masonry first among them. I hope it helps you decide what to reach for on your next project. 🎨",
     changelog: [
+      { date: "2026-11-11", change: "Added cross-reference to post 'Interop 2026 and CSS Snapshot 2026: What They Mean for CSS'" },
       { date: "2026-11-10", change: "Initial publication" }
     ]
   },
