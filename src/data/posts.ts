@@ -820,6 +820,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-11", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "interop-2026-and-css-snapshot-2026",
+    title: "Interop 2026 and CSS Snapshot 2026: What They Mean for CSS",
+    excerpt: "What Interop 2026 and CSS Snapshot 2026 really mean.",
+    description: "Interop 2026 and the W3C CSS Snapshot 2026 explained: the CSS focus areas, progress so far, Interop 2027, and how Baseline tells you what to ship.",
+    category: ["CSS"],
+    tags: ["css", "interop-2026", "css-snapshot-2026", "interop", "baseline", "browser-support", "web-standards", "modern-css", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/css/interop-2026-and-css-snapshot-2026/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover showing a three-circle diagram of Baseline, Interop and CSS Snapshot, with browser score rings, Snapshot stability tiers and the Interop 2027 timeline.",
+      caption: "Baseline, Interop and the CSS Snapshot answer three different questions. Below them: Interop scores as of September 2026, the Snapshot's four stability groups and the Interop 2027 timeline."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Every time a new Interop list or CSS Snapshot comes out, I see it shared as a list of things we can finally use, and I wanted one place that untangles the three sources that actually answer different questions. I hope the next time one of them lands in your feed, you know exactly which question it answers, and which tool to open for the rest. 🧭",
+    changelog: [
+      { date: "2026-11-11", change: "Initial publication" }
+    ]
   }
 ];
 
