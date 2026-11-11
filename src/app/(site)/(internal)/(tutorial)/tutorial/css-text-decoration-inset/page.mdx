@@ -1,0 +1,259 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-text-decoration-inset");
+
+## Introduction
+
+An underline always runs the full width of the text it decorates. That's right for links in a paragraph, but designs
+often want something else: a short, centred underline under a navigation item, an underline that grows from the middle
+on hover, or a strike-through that runs a little past the word it crosses out. Each of those has meant drawing a fake
+underline with a background gradient or a pseudo-element.
+
+**`text-decoration-inset`** moves the two ends of a real text decoration. Positive values pull the ends in, making the
+line shorter. Negative values push them out, making it longer. Because it's still a real decoration, it keeps everything
+else you've set on it: colour, thickness, offset, style and the gaps around descenders.
+
+<RainbowDivider />
+
+## Basic Usage
+
+<CodeBlock language="css">
+{`
+  .nav a {
+    text-decoration: underline 2px;
+    text-underline-offset: 0.3em;
+    text-decoration-inset: 0.5em;
+  }
+`}
+</CodeBlock>
+
+With one value, both ends move in by that amount: the underline starts 0.5em after the start of the text and stops 0.5em
+before the end. The initial value is `0`, which is the full-width decoration you get today.
+
+<RainbowDivider />
+
+## One Value or Two
+
+The property takes one or two lengths or percentages:
+
+<CodeBlock language="css">
+{`
+  text-decoration-inset: 0.25em;         /* both ends in by 0.25em */
+  text-decoration-inset: 0 40%;          /* start untouched, end in by 40% */
+  text-decoration-inset: -0.25em;        /* both ends out by 0.25em */
+  text-decoration-inset: -0.5em 0.5em;   /* shifted towards the start */
+`}
+</CodeBlock>
+
+With two values, the first is the inset at the **start** of the text and the second at the **end**. Start and end follow
+the writing direction, so in right-to-left text the start is on the right. Percentages are measured against the inline
+size of the decorated text, so `25%` means a quarter of the word's width.
+
+Giving one end a positive value and the other an equal negative value shifts the line without changing its length.
+
+<RainbowDivider />
+
+## Lines That Extend Past the Text
+
+Negative values are as useful as positive ones. A strike-through that runs slightly past the word reads as a deliberate
+edit rather than a font feature, and an underline that extends a little either side makes a heading look underscored by
+hand:
+
+<CodeBlock language="css">
+{`
+  .old-price {
+    text-decoration: line-through 2px;
+    text-decoration-inset: -0.2em;
+  }
+
+  .section-title {
+    text-decoration: underline wavy 1px;
+    text-underline-offset: 0.35em;
+    text-decoration-inset: -0.5em;
+  }
+`}
+</CodeBlock>
+
+The decoration is drawn outside the text, but it doesn't take up any space. It can overlap neighbouring content, so
+leave some room around it with padding or margin.
+
+<RainbowDivider />
+
+## Animating an Underline from the Centre
+
+`text-decoration-inset` animates, so the familiar "underline grows from the middle" hover effect becomes a transition on
+one property. An inset of `50%` from each end leaves no line at all, and `0` is the full width:
+
+<CodeBlock language="css">
+{`
+  .nav a {
+    text-decoration: underline 2px;
+    text-underline-offset: 0.3em;
+    text-decoration-inset: 50%;
+  }
+
+  .nav a:hover,
+  .nav a:focus-visible,
+  .nav a[aria-current="page"] {
+    text-decoration-inset: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .nav a {
+      transition: text-decoration-inset 200ms ease-out;
+    }
+  }
+`}
+</CodeBlock>
+
+Start at `0 100%` instead of `50%`, and the line draws in from the start of the text instead of from the middle.
+
+<RainbowDivider />
+
+## The `auto` Keyword
+
+`auto` lets the browser choose a small inset at each end. It's there for text where several neighbouring words are each
+underlined separately. In Chinese, for example, proper nouns are traditionally marked with an underline, and two names
+side by side should show two lines, not one long line. With the initial value of `0`, adjacent underlines touch and
+merge; with `auto`, a gap separates them:
+
+<CodeBlock language="css">
+{`
+  .proper-noun {
+    text-decoration: underline;
+    text-decoration-inset: auto;
+  }
+`}
+</CodeBlock>
+
+`auto` is for that kind of typography, not for design effects. For a specific length, use a length.
+
+<RainbowDivider />
+
+## Text That Wraps
+
+When decorated text wraps onto several lines, how the inset is applied depends on `box-decoration-break`. With the
+default, `slice`, the text is treated as one long box: the start inset applies at the start of the first line and the
+end inset at the end of the last line, and the lines in between are untouched. With `box-decoration-break: clone`, every
+line is decorated as its own box, so each line gets both insets.
+
+For short items such as navigation links, which don't wrap, the difference doesn't matter.
+
+<RainbowDivider />
+
+## Try It Live
+
+The navigation links use the centre-growing hover underline, and the current page keeps its underline. Below them, the
+sliders set the start and end insets on an underlined heading, including negative values, and the readout shows the
+declaration being applied.
+
+<Sandbox slug="css-text-decoration-inset" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Compared with the Old Techniques
+
+Fake underlines have usually been built in one of two ways:
+
+<CodeBlock language="css">
+{`
+  /* 1. A background gradient sized and positioned as a line */
+  .link {
+    background: linear-gradient(currentColor, currentColor) center bottom / 0% 2px no-repeat;
+    transition: background-size 200ms;
+  }
+  .link:hover { background-size: 100% 2px; }
+
+  /* 2. A pseudo-element scaled from the centre */
+  .link { position: relative; }
+  .link::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: -0.2em;
+    height: 2px;
+    background: currentColor;
+    scale: 0 1;
+    transition: scale 200ms;
+  }
+  .link:hover::after { scale: 1 1; }
+`}
+</CodeBlock>
+
+Both work in every browser, and you'll still want one of them where support matters. But neither is a text decoration.
+The line doesn't skip descenders, it doesn't pick up `text-decoration-thickness` or `text-underline-offset`, it can't be
+wavy or dotted, and the pseudo-element version is one line under the whole element, so it doesn't follow text that
+wraps. With `text-decoration-inset`, all of that keeps working, and there's no extra element or background layer to
+manage.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`text-decoration-inset` is supported in Firefox 146 and Chrome and Edge 157. Safari has it in Technology Preview only,
+so it isn't in a stable Safari yet.
+
+Browsers without it simply draw a full-width decoration, which is a perfectly good fallback for most uses. The
+centre-growing hover effect becomes an underline that's always visible, so if a design depends on the line being hidden
+until hover, put that part inside `@supports`:
+
+<CodeBlock language="css">
+{`
+  .nav a {
+    text-decoration: none;
+  }
+
+  @supports (text-decoration-inset: 50%) {
+    .nav a {
+      text-decoration: underline 2px;
+      text-decoration-inset: 50%;
+    }
+
+    .nav a:hover {
+      text-decoration-inset: 0;
+    }
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Expecting the Shorthand to Set It
+
+`text-decoration-inset` isn't part of the `text-decoration` shorthand. `text-decoration: underline 0.5em` sets the
+thickness, not an inset, and writing `text-decoration` later doesn't reset an inset set earlier.
+
+### 2. Animating from `auto`
+
+`auto` is chosen by the browser, so there's no length to animate from. Transition between lengths or percentages, such
+as `50%` and `0`.
+
+### 3. Insets Larger Than the Text
+
+On a short word, two `1em` insets can add up to more than the word's width. Use percentages for effects that need to
+work on words of any length, and keep the two together at or below `100%`.
+
+### 4. Forgetting Keyboard Users
+
+A hover-only underline gives keyboard users no sign of where focus is. Apply the same inset on `:focus-visible`, as in
+the examples above, and keep a visible focus outline as well.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Navigation and tab links with a short or centre-growing underline
+- Prices and edits shown with a strike-through that extends past the text
+- Headings with an underline that's deliberately longer or shorter than the words
+- Chinese and other text that marks neighbouring proper nouns with separate underlines, using `auto`
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`text-decoration-inset` moves the start and end of a real underline, overline or line-through: positive values shorten
+it, negative values extend it, and two values set each end separately. It animates, so a centre-growing underline is one
+transition, and because the line is still a text decoration, it keeps its thickness, offset, style and descender gaps.
+It's in Firefox and Chrome but not Safari yet, so treat it as an enhancement over a normal full-width underline.

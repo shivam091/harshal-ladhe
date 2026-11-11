@@ -648,6 +648,24 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-11", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-text-decoration-inset",
+    title: "Shorter, Longer and Animated Underlines with `text-decoration-inset`",
+    excerpt: "Move the ends of a real underline, no pseudo-elements needed.",
+    description: "Use CSS text-decoration-inset to shorten, extend or shift underlines and strike-throughs, animate an underline from the centre, and fall back cleanly where it isn't supported.",
+    category: ["CSS"],
+    tags: ["css", "text-decoration", "typography", "underline", "css-animation", "microinteractions", "modern-css", "progressive-enhancement"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-text-decoration-inset/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Navigation links whose underlines grow from the centre on hover, above a heading with a shortened underline and a price with an extended strike-through."
+    },
+    changelog: [
+      { date: "2026-11-11", change: "Initial publication." }
+    ]
   }
 ];
 

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>text-decoration-inset Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Moving the ends of a real underline</h1>
+        <p>
+          Every line here is a text decoration, not a background or a pseudo-element.
+          <code>text-decoration-inset</code> only moves where it starts and stops.
+        </p>
+      </header>
+
+      <p class="support" id="support" hidden>
+        This browser doesn't support <code>text-decoration-inset</code>, so the decorations run the full width of the
+        text.
+      </p>
+
+      <nav class="nav" aria-label="Demo">
+        <a href="#" aria-current="page">Home</a>
+        <a href="#">Articles</a>
+        <a href="#">Tutorials</a>
+        <a href="#">About</a>
+      </nav>
+
+      <section class="panel">
+        <p class="sample" id="sample">Typography</p>
+
+        <label class="control">
+          Start inset: <span id="start-label">0.5em</span>
+          <input type="range" id="start" min="-1" max="2" step="0.25" value="0.5" />
+        </label>
+
+        <label class="control">
+          End inset: <span id="end-label">0.5em</span>
+          <input type="range" id="end" min="-1" max="2" step="0.25" value="0.5" />
+        </label>
+
+        <label class="toggle">
+          <input type="checkbox" id="wavy" /> Wavy line
+        </label>
+
+        <p class="readout" id="readout">text-decoration-inset: 0.5em 0.5em;</p>
+      </section>
+
+      <p class="price">
+        <span class="old-price">$129</span>
+        <span class="new-price">$89</span>
+      </p>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

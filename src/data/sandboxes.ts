@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-text-decoration-inset",
+    title: "Moving Underline Ends with text-decoration-inset",
+    description: "Navigation links with centre-growing underlines, sliders for the start and end insets of a heading's underline, and a strike-through that extends past the text.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-progress-function",
     title: "Mapping Ranges with progress()",
     description: "A card whose heading size, padding, corner radius and accent colour are all driven by one progress() value measured from its container.",

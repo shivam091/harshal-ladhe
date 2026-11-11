@@ -1,0 +1,160 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: hsl(210, 15%, 6%);
+  color: hsl(210, 10%, 90%);
+}
+
+.playground {
+  max-width: 40rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.125rem;
+}
+
+.playground-header h1 {
+  font-size: 1.125rem;
+  margin: 0 0 0.375rem;
+}
+
+.playground-header p {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: hsl(210, 12%, 60%);
+}
+
+code {
+  font-family: ui-monospace, monospace;
+  color: hsl(210, 12%, 78%);
+}
+
+.support {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  background: hsl(38, 60%, 14%);
+  color: hsl(38, 90%, 72%);
+}
+
+.support[hidden] {
+  display: none;
+}
+
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: hsl(210, 12%, 65%);
+}
+
+.control input[type="range"] {
+  inline-size: 100%;
+  accent-color: hsl(190, 80%, 55%);
+}
+
+.readout {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+  color: hsl(190, 70%, 70%);
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: hsl(210, 12%, 65%);
+}
+
+/* Navigation: a real underline that grows from the centre. 50% from each end leaves no line at all. */
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  background: hsl(213, 22%, 9%);
+}
+
+.nav a {
+  color: hsl(210, 10%, 88%);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: underline 2px hsl(190, 80%, 55%);
+  text-underline-offset: 0.4em;
+  text-decoration-inset: 50%;
+}
+
+.nav a:hover,
+.nav a:focus-visible,
+.nav a[aria-current="page"] {
+  text-decoration-inset: 0;
+}
+
+.nav a:focus-visible {
+  outline: 2px solid hsl(190, 80%, 55%);
+  outline-offset: 0.35em;
+  border-radius: 0.125rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .nav a {
+    transition: text-decoration-inset 220ms ease-out;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  background: hsl(213, 22%, 9%);
+}
+
+/* The inset is set inline by index.js from the two sliders. */
+.sample {
+  margin: 0.25rem 0 0.5rem;
+  padding-inline: 1.5em;
+  text-align: center;
+  font-size: 2.25rem;
+  font-weight: 700;
+  text-decoration: underline 3px hsl(330, 80%, 65%);
+  text-underline-offset: 0.25em;
+}
+
+.sample.wavy {
+  text-decoration-style: wavy;
+  text-decoration-thickness: 2px;
+}
+
+/* A strike-through that runs a little past the old price. */
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.old-price {
+  font-size: 1.125rem;
+  color: hsl(210, 10%, 60%);
+  text-decoration: line-through 2px hsl(0, 75%, 62%);
+  text-decoration-inset: -0.25em;
+}
+
+.new-price {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
