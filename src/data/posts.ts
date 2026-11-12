@@ -456,6 +456,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Between the core keyframes playground and a second sandbox built just to make `animation-timeline` and `animation-range` tangible — complete with a live range slider and its own feature-detection fallback for browsers that don't support scroll-driven animations yet — this one ended up needing two full interactive builds instead of one. Getting the `animation-range` diagram to actually line up entry/contain/cover/exit against a scrolling element took more iteration than the rest of the post combined. Thanks for tweaking every duration, delay, and range slider with me — go give your loops, spinners, and scroll reveals some real personality. 🎬",
     changelog: [
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
       { date: "2026-11-11", change: "Added cross-reference to post 'Interop 2026 and CSS Snapshot 2026: What They Mean for CSS'" },
       { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-11-10", change: "Updated browser support for `animation-timeline`" },
@@ -799,6 +800,8 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Sorting a whole year of CSS into \"works everywhere\", \"two engines\" and \"Chromium only\" meant checking every feature against the compatibility data rather than the launch posts, and a few surprised me, Safari shipping masonry first among them. I hope it helps you decide what to reach for on your next project. 🎨",
     changelog: [
+      { date: "2026-11-12", change: "Updated browser support for `random()`" },
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
       { date: "2026-11-11", change: "Added cross-reference to post 'Interop 2026 and CSS Snapshot 2026: What They Mean for CSS'" },
       { date: "2026-11-10", change: "Initial publication" }
     ]
@@ -842,6 +845,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Every time a new Interop list or CSS Snapshot comes out, I see it shared as a list of things we can finally use, and I wanted one place that untangles the three sources that actually answer different questions. I hope the next time one of them lands in your feed, you know exactly which question it answers, and which tool to open for the rest. 🧭",
     changelog: [
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
       { date: "2026-11-11", change: "Initial publication" }
     ]
   },

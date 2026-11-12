@@ -441,8 +441,8 @@ subtle variety in a pattern:
 </CodeBlock>
 
 Each matching element gets its own value, and browsers without `random()` drop the second declaration and keep the
-first. It shipped in Safari 26.2 first and reached Chrome and Edge in 156. Firefox is adding it in 161, in beta at the
-time of writing.
+first. It shipped in Safari 26.2 first and reached Chrome and Edge in 156. Firefox has had it behind a flag
+(`layout.css.random.enabled`) since 158.
 
 <RainbowDivider />
 
@@ -535,4 +535,5 @@ Baseline, see [Interop 2026 and CSS Snapshot 2026: What They Mean for CSS](/post
 - **Safari** shipped `grid-lanes` and `random()` first
 
 The features stuck in one or two engines are the interesting ones to watch next, and Interop 2026's dashboard is the
-best place to see which of them are closest to working everywhere.
+best place to see which of them are closest to working everywhere. For which ones are most likely to get there in 2027,
+see [What's New in CSS in 2027: What to Expect](/post/css/whats-new-in-css-2027).
