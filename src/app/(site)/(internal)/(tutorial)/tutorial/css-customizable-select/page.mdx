@@ -268,8 +268,9 @@ is already there and already correct.
 
 ## Browser Support and Fallbacks
 
-Customisable select shipped in Chromium browsers (Chrome and Edge 135) in 2025. Firefox and Safari are working on it
-but haven't shipped it at the time of writing.
+Customisable select shipped in Chromium browsers (Chrome and Edge 135) in 2025 and in Safari 27 in 2026. Firefox has
+it behind a flag at the time of writing. With two engines shipped, it's one of the stronger candidates for working
+everywhere in 2027; see [What's New in CSS in 2027: What to Expect](/post/css/whats-new-in-css-2027#customisable-select).
 
 The fallback is built in. A browser that doesn't recognise `base-select` ignores the declaration and draws an
 ordinary select. Its parser drops the swatch `<span>`s and the extra `<button>`, and each option shows its text. The
