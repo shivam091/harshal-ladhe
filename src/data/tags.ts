@@ -1198,5 +1198,9 @@ export const tagMeta: Record<string, TagMeta> = {
   "web-standards": {
     title: "Web Standards and Specifications",
     description: "How web standards are written and agreed, from W3C specifications and their maturity levels to cross-browser efforts like Interop."
+  },
+  "css-2027": {
+    title: "CSS Features to Watch in 2027",
+    description: "CSS features most likely to become usable across browsers in 2027, based on current browser support and Interop commitments."
   }
 };
