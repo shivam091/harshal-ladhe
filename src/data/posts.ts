@@ -869,6 +869,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-12", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "whats-new-in-es2027",
+    title: "What's New in ES2027: Temporal, using and More",
+    excerpt: "Temporal, using and five more confirmed ES2027 features.",
+    description: "Every confirmed ES2027 feature as of November 2026: Temporal, using, Iterator.zip, chunks, windows, join, includes and Atomics.pause, with examples.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2027", "ecmascript", "modern-js", "temporal", "explicit-resource-management", "iterator-helpers", "error-handling", "browser-support", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/whats-new-in-es2027/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover showing the title What's New in ES2027: Temporal, using and More beside a glowing JavaScript logo cube, with cards for Temporal, using, Iterator.zip(), chunks() and windows(), join() and includes(), and Atomics.pause().",
+      caption: "Temporal, using and five more features confirmed for ES2027 as of November 2026, from dates and cleanup to iterators and Atomics."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "An unfinished edition is a moving target, so this one took more reading than writing: TC39's finished proposals list and meeting notes to pin down what's really in ES2027, and the compatibility data behind every number in the support table. Temporal and using are the two I've waited on longest, and I hope the examples show why. I also cross-checked the edition boundaries against the ES2026 post, which is how Map upsert ended up there instead. I'll update this post once ES2027 is published. ⏳",
+    changelog: [
+      { date: "2026-11-12", change: "Initial publication" }
+    ]
   }
 ];
 
