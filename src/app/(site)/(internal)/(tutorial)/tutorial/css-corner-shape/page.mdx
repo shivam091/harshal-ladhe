@@ -152,10 +152,11 @@ directional buttons — every one a single element with no SVG or `clip-path`.
 
 ## Browser Support and Fallbacks
 
-`corner-shape` shipped in Chromium browsers (Chrome and Edge 139) in 2025. Other browsers don't support it yet at the
-time of writing — and that's fine, because the fallback is automatic. A browser that doesn't understand
+`corner-shape` shipped in Chromium browsers (Chrome and Edge 139) in 2025. Safari has it in Technology Preview, and Firefox
+doesn't support it yet at the time of writing — and that's fine, because the fallback is automatic. A browser that doesn't understand
 `corner-shape` ignores it and draws the ordinary rounded corners from `border-radius`, so the design degrades to
-something perfectly usable.
+something perfectly usable. For its chances of reaching more browsers in 2027, see
+[What's New in CSS in 2027: What to Expect](/post/css/whats-new-in-css-2027#function-and-corner-shape).
 
 When a shape needs a different radius to look right, adjust it only where the shape will actually render:
 
