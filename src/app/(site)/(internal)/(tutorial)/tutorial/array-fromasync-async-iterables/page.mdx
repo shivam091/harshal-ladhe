@@ -266,7 +266,9 @@ separate records, such as one parsed object per line.
 `Array.fromAsync()` is Baseline and widely available. It's supported in Safari 16.4, Firefox 115, Chrome and Edge 121
 and Node 22, so every current browser and server runtime has it. It was formally added to the language in ES2026,
 alongside six other small built-ins covered in
-[What's New in ES2026](/post/javascript/whats-new-in-es2026#arrayfromasync).
+[What's New in ES2026](/post/javascript/whats-new-in-es2026#arrayfromasync). For the synchronous iterators that
+sit alongside it, ES2027 adds `Iterator.zip()`, `.chunks()`, `.windows()` and more; see
+[What's New in ES2027: Temporal, using and More](/post/javascript/whats-new-in-es2027#joint-iteration-iteratorzip-and-iteratorzipkeyed).
 
 For older targets, either load a polyfill (core-js includes one), or use a small helper built on the loop it
 replaces:
