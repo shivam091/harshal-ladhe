@@ -1202,5 +1202,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "css-2027": {
     title: "CSS Features to Watch in 2027",
     description: "CSS features most likely to become usable across browsers in 2027, based on current browser support and Interop commitments."
+  },
+  "es2027": {
+    title: "Modern JavaScript Features of ES2027",
+    description: "Language features headed for ECMAScript 2027, such as Temporal and explicit resource management, with browser support and fallbacks."
+  },
+  "temporal": {
+    title: "The Temporal API",
+    description: "JavaScript's Temporal API for immutable dates, times, durations and time zones, and how it replaces the `Date` object."
+  },
+  "explicit-resource-management": {
+    title: "Explicit Resource Management in JavaScript",
+    description: "Using `using`, `await using`, `Symbol.dispose` and `DisposableStack` to release files, locks, timers and listeners reliably."
   }
 };
