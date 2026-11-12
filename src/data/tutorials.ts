@@ -615,6 +615,7 @@ export const tutorials: Tutorial[] = [
       caption: "Three pages from an async generator collected into one array, beside the loop it replaces, its one-at-a-time timing and its all-or-nothing errors."
     },
     changelog: [
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in ES2027: Temporal, using and More'" },
       { date: "2026-11-11", change: "Added cross-reference to post 'What's New in ES2026: Every Feature Explained'" },
       { date: "2026-11-07", change: "Initial publication." }
     ]

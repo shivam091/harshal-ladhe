@@ -407,6 +407,8 @@ Every observer above cleans up the same way: create it, `observe()` a node, and 
 
 The same shape works for `ResizeObserver` and `MutationObserver` — swap the observer type and its callback, keep the `useEffect`/cleanup skeleton identical.
 
+If you juggle several cleanups at once, such as an observer, an event listener and a timer, ES2027's `DisposableStack` collects them and runs them in reverse order; see [What's New in ES2027: Temporal, using and More](/post/javascript/whats-new-in-es2027#disposablestack).
+
 ## Testing Observer-Based Code
 
 `IntersectionObserver`, `ResizeObserver`, and `MutationObserver` don't exist in Node — so a component that uses one will throw in Jest or Vitest unless you mock the constructor first. The pattern is the same for all three: replace the global with a stub that records what it was asked to observe, then trigger its callback manually.

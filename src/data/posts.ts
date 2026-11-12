@@ -409,6 +409,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Four observer APIs, a custom Pub/Sub implementation, and a sandbox that lets you mutate, scroll, and resize your way through all three DOM observers live — getting the IntersectionObserver strike-zone math right for the scrollspy pattern took more whiteboarding than I expected. Thanks for reading all the way to the FAQ section; go replace a scroll listener with something that only runs when it actually needs to. 👀",
     changelog: [
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in ES2027: Temporal, using and More'" },
       { date: "2026-11-04", change: "Added cross-reference to tutorial 'Native JavaScript Set Methods: union, intersection and difference'" },
       { date: "2026-11-02", change: "Added cross-reference to tutorial 'Pure CSS Carousels with `::scroll-marker` and `::scroll-button()`'" },
       { date: "2026-09-13", change: "Added cross-reference to tutorial 'Hinting Layer Promotion with will-change'" },
@@ -433,6 +434,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 4 },
     signoff: "Getting the microtask-vs-macrotask ordering to click as a diagram instead of just a list of rules took a few passes, and building a live Promise.all/allSettled/race/any playground next to the section that explains them felt like the right way to make combinator choice concrete instead of theoretical. Thanks for following the whole callbacks → promises → async/await arc with me; go find an unnecessary sequential await in your own code and fix it. ⏱️",
     changelog: [
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in ES2027: Temporal, using and More'" },
       { date: "2026-11-07", change: "Added cross-reference to tutorial 'Collecting Async Iterables into Arrays with `Array.fromAsync()`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-09-12", change: "Initial publication" }
@@ -824,6 +826,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "No new syntax this year, just seven helpers I'm glad to delete from my own utility files. The time went into checking rather than writing: running the examples, matching every version number against MDN's compatibility data, and confirming each feature against the published specification, which is also how I untangled the Temporal and using mix-up that keeps doing the rounds. I hope the support table saves you a few searches. 🧰",
     changelog: [
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in ES2027: Temporal, using and More'" },
       { date: "2026-11-11", change: "Initial publication" }
     ]
   },
