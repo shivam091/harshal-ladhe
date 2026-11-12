@@ -358,6 +358,8 @@ export const tutorials: Tutorial[] = [
       caption: "Squircle, bevel, scoop and notch corners shaped with corner-shape."
     },
     changelog: [
+      { date: "2026-11-12", change: "Updated browser support for `corner-shape`" },
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
       { date: "2026-11-04", change: "Added cross-reference to tutorial 'The CSS `shape()` Function: Responsive `clip-path` Shapes'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-17", change: "Initial publication." }
@@ -400,6 +402,7 @@ export const tutorials: Tutorial[] = [
       caption: "HTML attributes turning into real CSS colours, lengths and numbers."
     },
     changelog: [
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
       { date: "2026-11-11", change: "Updated browser support for typed `attr()`" },
       { date: "2026-11-11", change: "Added cross-reference to post 'Interop 2026 and CSS Snapshot 2026: What They Mean for CSS'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
@@ -447,6 +450,8 @@ export const tutorials: Tutorial[] = [
       caption: "A fully styled select dropdown with colour swatches, still keyboard accessible."
     },
     changelog: [
+      { date: "2026-11-12", change: "Updated browser support for `appearance: base-select`" },
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
       { date: "2026-11-06", change: "Added cross-reference to post 'Animate Dialogs & Popovers with CSS `@starting-style`'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-27", change: "Initial publication." }
@@ -488,6 +493,8 @@ export const tutorials: Tutorial[] = [
       caption: "Cards sharing one spacing scale defined with a CSS @function."
     },
     changelog: [
+      { date: "2026-11-12", change: "Updated browser support for `@function`" },
+      { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Initial publication." }
     ]
