@@ -826,6 +826,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "No new syntax this year, just seven helpers I'm glad to delete from my own utility files. The time went into checking rather than writing: running the examples, matching every version number against MDN's compatibility data, and confirming each feature against the published specification, which is also how I untangled the Temporal and using mix-up that keeps doing the rounds. I hope the support table saves you a few searches. 🧰",
     changelog: [
+      { date: "2026-11-14", change: "Added cross-reference to post 'Backwards-Compatible JavaScript: Polyfills and Baseline'" },
       { date: "2026-11-12", change: "Added cross-reference to post 'What's New in ES2027: Temporal, using and More'" },
       { date: "2026-11-11", change: "Initial publication" }
     ]
@@ -891,6 +892,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "An unfinished edition is a moving target, so this one took more reading than writing: TC39's finished proposals list and meeting notes to pin down what's really in ES2027, and the compatibility data behind every number in the support table. Temporal and using are the two I've waited on longest, and I hope the examples show why. I also cross-checked the edition boundaries against the ES2026 post, which is how Map upsert ended up there instead. I'll update this post once ES2027 is published. ⏳",
     changelog: [
+      { date: "2026-11-14", change: "Added cross-reference to post 'Backwards-Compatible JavaScript: Polyfills and Baseline'" },
       { date: "2026-11-12", change: "Initial publication" }
     ]
   },
