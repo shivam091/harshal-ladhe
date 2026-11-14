@@ -893,6 +893,27 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-12", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "backwards-compatible-javascript",
+    title: "Backwards-Compatible JavaScript: Polyfills and Baseline",
+    excerpt: "Use new JavaScript without breaking older browsers.",
+    description: "Write backwards-compatible JavaScript: feature detection, safe core-js polyfills, transpiling vs polyfilling, Baseline and browserslist queries.",
+    category: ["JavaScript"],
+    tags: ["javascript", "polyfills", "feature-detection", "browser-support", "progressive-enhancement", "baseline", "browserslist", "transpilation", "core-js", "es2027", "best-practices"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/backwards-compatible-javascript/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover for backwards-compatible JavaScript: modern code splits into a polyfill for missing APIs and a transpiler for missing syntax, so it still runs in older browsers, above a Baseline bar from limited to newly available to widely available.",
+      caption: "Missing APIs get a polyfill, missing syntax gets transpiled, and Baseline's three statuses tell you when a feature is safe to ship."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "This one took more reading than writing: Baseline's status definitions and the 30-month rule, the core-js and Babel docs, TypeScript's release notes on downlevelling `using`, and the polyfill.io incident reports, so the advice rests on how the tools behave today rather than on habit. Most compatibility bugs I've chased came down to mixing up a missing API with missing syntax, which is why the whole post is built around that one table. I hope it helps you pick the right tool first time, and maybe delete a polyfill or two you no longer need. 🧰",
+    changelog: [
+      { date: "2026-11-14", change: "Initial publication" }
+    ]
   }
 ];
 
