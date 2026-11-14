@@ -428,7 +428,7 @@ wait goes on:
 `}
 </CodeBlock>
 
-Most application code will never call it directly, but libraries that implement locks and queues will.
+Most application code will never call it directly, but libraries that implement locks and queues will. For a complete, tested lock that combines it with `Atomics.wait()`, see the snippet [JavaScript Spin-Wait Lock with `Atomics.pause()`](/snippet/atomics-pause-spin-wait).
 
 **Support:** Chrome and Edge 133, Firefox 137, Safari 18.4, Node 24. It's the one ES2027 feature already in every
 current engine.
