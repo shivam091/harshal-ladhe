@@ -1230,5 +1230,21 @@ export const tagMeta: Record<string, TagMeta> = {
   "core-js": {
     title: "core-js Polyfills",
     description: "Using the core-js library to polyfill modern JavaScript APIs, loading only the features your target browsers are missing."
+  },
+  "atomics": {
+    title: "JavaScript `Atomics`",
+    description: "Atomic operations on shared memory, such as `Atomics.compareExchange()`, `Atomics.wait()`, `Atomics.notify()` and `Atomics.pause()`, for coordinating threads safely."
+  },
+  "sharedarraybuffer": {
+    title: "`SharedArrayBuffer`",
+    description: "Memory shared between the main thread and workers, and the cross-origin isolation headers browsers require before enabling it."
+  },
+  "web-workers": {
+    title: "Web Workers and Worker Threads",
+    description: "Running JavaScript off the main thread with Web Workers in the browser and `worker_threads` in Node.js."
+  },
+  "concurrency": {
+    title: "Concurrency",
+    description: "Coordinating work that runs at the same time: locks, spin-waits, races and the patterns that keep shared state consistent."
   }
 };
