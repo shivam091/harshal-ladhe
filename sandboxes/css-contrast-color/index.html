@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>contrast-color() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Readable Text on Any Background with contrast-color()</h1>
+        <p>Pick a background colour. The text on it is set with <code>color: contrast-color(var(--bg))</code>, so the browser chooses white or black. The readout compares that choice with the WCAG 2 contrast ratio against each, worked out in JavaScript.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>contrast-color()</code>, so the text below uses a fixed white fallback. It's supported in Chrome and Edge 147, Firefox 146 and Safari 26 or later. The WCAG ratios in the readout still work.</p>
+
+      <fieldset class="control-group">
+        <legend>Background</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="bg-picker">Colour picker</label>
+            <input type="color" id="bg-picker" value="#6d28d9">
+          </div>
+          <div class="field">
+            <label for="bg-hex">Hex value</label>
+            <input type="text" id="bg-hex" value="#6d28d9" spellcheck="false" autocomplete="off" pattern="#[0-9a-fA-F]{6}">
+          </div>
+        </div>
+      </fieldset>
+
+      <section class="demo-area preview" id="preview" aria-label="Preview on the chosen background">
+        <p class="preview-title">The quick brown fox jumps over the lazy dog</p>
+        <p class="preview-small">Small body text is where a close call shows first.</p>
+        <div class="preview-row">
+          <span class="preview-button">Button</span>
+          <span class="preview-badge">Badge</span>
+          <span class="preview-tag">#tag</span>
+        </div>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>Swatches</legend>
+        <p class="hint">Each swatch sets its own text with <code>contrast-color()</code> and shows the WCAG 2 ratio of that text. Select one to load it above.</p>
+        <div class="swatches" id="swatches"></div>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
