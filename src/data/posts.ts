@@ -827,6 +827,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "No new syntax this year, just seven helpers I'm glad to delete from my own utility files. The time went into checking rather than writing: running the examples, matching every version number against MDN's compatibility data, and confirming each feature against the published specification, which is also how I untangled the Temporal and using mix-up that keeps doing the rounds. I hope the support table saves you a few searches. 🧰",
     changelog: [
+      { date: "2026-11-15", change: "Added cross-reference to snippet 'Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`'" },
       { date: "2026-11-14", change: "Added cross-reference to post 'Backwards-Compatible JavaScript: Polyfills and Baseline'" },
       { date: "2026-11-12", change: "Added cross-reference to post 'What's New in ES2027: Temporal, using and More'" },
       { date: "2026-11-11", change: "Initial publication" }
@@ -918,6 +919,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one took more reading than writing: Baseline's status definitions and the 30-month rule, the core-js and Babel docs, TypeScript's release notes on downlevelling `using`, and the polyfill.io incident reports, so the advice rests on how the tools behave today rather than on habit. Most compatibility bugs I've chased came down to mixing up a missing API with missing syntax, which is why the whole post is built around that one table. I hope it helps you pick the right tool first time, and maybe delete a polyfill or two you no longer need. 🧰",
     changelog: [
+      { date: "2026-11-15", change: "Added cross-reference to snippet 'Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`'" },
       { date: "2026-11-14", change: "Initial publication" }
     ]
   }
