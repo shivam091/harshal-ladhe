@@ -96,6 +96,7 @@ export const tutorials: Tutorial[] = [
       caption: "One colour declaration switching between light and dark themes automatically."
     },
     changelog: [
+      { date: "2026-11-15", change: "Added cross-reference to tutorial '`contrast-color()`: Automatic Readable Text on Any Background'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-10-08", change: "Added cross-reference to tutorial 'Theming Native Controls with `accent-color`'" },
       { date: "2026-09-08", change: "Initial publication." }
@@ -336,6 +337,7 @@ export const tutorials: Tutorial[] = [
       caption: "Native checkboxes, radios, sliders and progress bars recoloured with one property."
     },
     changelog: [
+      { date: "2026-11-15", change: "Added cross-reference to tutorial '`contrast-color()`: Automatic Readable Text on Any Background'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'Auto-Growing Textareas with CSS `field-sizing: content`'" },
       { date: "2026-10-27", change: "Added cross-reference to tutorial 'Styling a `<select>` Dropdown with CSS `appearance: base-select`'" },
