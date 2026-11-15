@@ -97,7 +97,8 @@ property, or [`light-dark()`](/tutorial/light-dark-color-scheme) for a separate 
 You only choose the accent. The browser chooses what sits on top of it: on a dark accent the checkmark is drawn
 light, and on a pale accent it's drawn dark, so the checked state stays readable whichever colour you pick. Chrome
 treats range sliders and progress bars the same way, drawing the unfilled part of the track light behind a dark
-accent and dark behind a pale one — so a pale accent can give you a dark track even on a light page.
+accent and dark behind a pale one — so a pale accent can give you a dark track even on a light page. For your own elements, CSS can make the same
+choice with [`contrast-color()`: Automatic Readable Text on Any Background](/tutorial/css-contrast-color).
 
 <Info title="Pair it with color-scheme on dark pages">
   The unchecked checkbox and the empty radio ring aren't part of the accent — they follow `color-scheme`. On a dark

@@ -224,7 +224,7 @@ extra arguments is invalid today. Stick to the single-argument form.
 ## Browser Support and Fallbacks
 
 `contrast-color()` is supported in Firefox 146, Safari 26 and Chrome and Edge 147. Chrome 147 completed the set in
-April 2026, which made it **Baseline newly available**, and it's one of the Interop 2026 focus areas.
+April 2026, which made it **Baseline newly available**, and it's one of the Interop 2026 focus areas. See [What's New in CSS in 2026: What You Can Use Now](/post/css/whats-new-in-css-2026#contrast-color) for the rest of that year's CSS features, and [Interop 2026 and CSS Snapshot 2026: What They Mean for CSS](/post/css/interop-2026-and-css-snapshot-2026) for what an Interop focus area means for using it.
 
 For older browsers, set a safe text colour first and switch to `contrast-color()` inside a feature query:
 
@@ -291,6 +291,10 @@ The spec only asks for 3:1 (AA large text). For small text on mid-tone backgroun
 - Tags, labels and avatars coloured by user choice or data, where nobody stores a matching text colour
 - Theme builders and colour pickers that preview text on any colour
 - Charts and legends where each series colour needs a readable label
+
+Native form controls already make a similar choice for their accent colour, as
+[Theming Native Controls with `accent-color`](/tutorial/accent-color-native-controls#contrast-is-handled-for-you)
+explains.
 
 **Reach for something else** when the design needs a specific text colour other than black or white, when the
 background is an image or gradient, or for fixed colours where a designer has already picked the text colour.
