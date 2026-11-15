@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-contrast-color",
+    title: "contrast-color() Text on Any Background",
+    description: "Pick any background colour and see the white or black text contrast-color() returns on a preview, button, badge and tag, with the WCAG 2 ratio against white and against black worked out in JavaScript, a flag when the browser's choice differs from WCAG 2, and a swatch grid of light, dark and mid-tone colours.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "array-fromasync-async-iterables",
     title: "Collecting a Paginated API with Array.fromAsync()",
     description: "Collect three pages from an async iterable into one array, make page 2 fail to see the earlier pages discarded, and compare one-at-a-time requests with Promise.all().",
