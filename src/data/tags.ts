@@ -1246,5 +1246,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "concurrency": {
     title: "Concurrency",
     description: "Coordinating work that runs at the same time: locks, spin-waits, races and the patterns that keep shared state consistent."
+  },
+  "contrast-color": {
+    title: "CSS contrast-color() Function",
+    description: "Choosing readable white or black text for any background colour with CSS `contrast-color()`, its limits and fallbacks."
+  },
+  "wcag": {
+    title: "WCAG Colour Contrast",
+    description: "Web Content Accessibility Guidelines contrast ratios, AA and AAA thresholds, and checking text colours against them."
   }
 };
