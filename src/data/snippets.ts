@@ -302,6 +302,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-14", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "uint8array-hex-encoding",
+    title: "Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`",
+    excerpt: "Convert bytes to hex and back without padStart loops.",
+    description: "Encode bytes as hex with ES2026's Uint8Array toHex(), decode with fromHex() and setFromHex(), with SHA-256 digests, colours, error cases and a padStart fallback.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2026", "typed-arrays", "binary-data", "hex-encoding", "web-crypto", "polyfills"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/uint8array-hex-encoding/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover titled Bytes to Hex and Back with Uint8Array.fromHex() and toHex(). Eight Uint8Array values, 72, 101, 108, 108, 111, 0, 255 and 10, sit above their two-digit hex pairs 48, 65, 6c, 6c, 6f, 00, ff and 0a, joined by a down arrow labelled toHex() and an up arrow labelled fromHex(), with the combined string 48656c6c6f00ff0a below.",
+      caption: "Eight bytes and their two-digit hex pairs, forming the string 48656c6c6f00ff0a, converted both ways."
+    },
+    changelog: [
+      { date: "2026-11-15", change: "Initial publication." }
+    ]
   }
 ];
 
