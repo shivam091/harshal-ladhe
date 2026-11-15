@@ -249,7 +249,8 @@ Invalid input isn't silently skipped: `Uint8Array.fromBase64("not base64!")` thr
 in `try`/`catch` when the string comes from outside your code.
 
 There are also `setFromBase64()` and `setFromHex()`, which decode into an existing array instead of allocating a new
-one, and return `{ read, written }` so you know how much input was consumed and how many bytes were filled.
+one, and return `{ read, written }` so you know how much input was consumed and how many bytes were filled. For hex in detail, with error cases, a SHA-256 example and a fallback for older runtimes, see
+[Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`](/snippet/uint8array-hex-encoding).
 
 **Support:** Chrome and Edge 140, Firefox 133, Safari 18.2, Node 25.
 
