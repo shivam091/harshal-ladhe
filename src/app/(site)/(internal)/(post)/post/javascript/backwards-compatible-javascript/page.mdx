@@ -198,7 +198,9 @@ non-enumerable, like a built-in, so it won't show up in `for...in` loops. And a 
 becomes a rejection, which is exactly the behaviour `Promise.try` promises.
 
 Hand-written polyfills are fine for something this small, but spec details add up quickly: argument validation,
-edge cases, property attributes. For anything bigger, use a maintained library.
+edge cases, property attributes. For anything bigger, use a maintained library. For a case small enough to hand-write, see
+[Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`](/snippet/uint8array-hex-encoding), which pairs the native
+methods with a `padStart()` fallback.
 
 ### core-js
 
