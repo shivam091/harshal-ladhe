@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Highlight API Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Find in Page with the Custom Highlight API</h1>
+        <p>Type in the search box and every match in the article is painted by <code>::highlight(search-results)</code>, with the current one picked out by <code>::highlight(search-current)</code>. No <code>&lt;mark&gt;</code> elements are added: the article's DOM never changes. Try <em>fresnel lens</em>, which crosses a <code>&lt;strong&gt;</code> boundary.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support the Custom Highlight API (<code>CSS.highlights</code>). It's supported in Chrome and Edge 105, Firefox 140 (with full <code>::highlight()</code> styling from Firefox 149) and Safari 17.2 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Search</legend>
+        <div class="search-row">
+          <label class="sr-only" for="query">Search the article</label>
+          <input type="search" id="query" value="light" autocomplete="off" spellcheck="false" placeholder="Search the article">
+          <button type="button" class="secondary-btn" id="prev-btn" aria-label="Previous match">&#8593; Prev</button>
+          <button type="button" class="secondary-btn" id="next-btn" aria-label="Next match">&#8595; Next</button>
+        </div>
+        <p class="match-count" id="match-count" role="status" aria-live="polite"></p>
+        <label class="checkbox-field">
+          <input type="checkbox" id="case-toggle">
+          Match case
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" id="edit-toggle">
+          Make the article editable (matches update as you type)
+        </label>
+      </fieldset>
+
+      <section class="demo-area" aria-label="Article to search">
+        <article class="article" id="article">
+          <h2>How a Lighthouse Throws Its Light</h2>
+          <p>Early lighthouses burned wood or coal in an open brazier, and most of the light escaped upwards into the sky, where no ship could use it.</p>
+          <p>In 1822 the French physicist <strong>Augustin Fresnel</strong> presented a lens that changed that. A <strong>Fresnel</strong> lens is built from concentric rings of glass prisms, each angled to bend stray light into one flat, horizontal beam.</p>
+          <p>Because the rings replace one thick block of glass, the lens is far lighter than a solid lens of the same power, and a single lamp behind it can be seen from more than <em>twenty nautical miles</em> away.</p>
+          <h2>Telling One Light from Another</h2>
+          <p>Every light along a coast has its own <a href="#article">characteristic</a>: a pattern of flashes, occultations and colours printed on nautical charts, so a navigator can identify a lighthouse by timing it.</p>
+          <ul>
+            <li>A <em>fixed</em> light shines continuously.</li>
+            <li>A <em>flashing</em> light is dark for longer than it is lit.</li>
+            <li>An <em>occulting</em> light is lit for longer than it is dark.</li>
+          </ul>
+          <p>Today most lighthouses are automated, and many Fresnel lenses have been replaced by LED beacons, but the old lenses still sit in museums where visitors can watch them throw light across the room.</p>
+        </article>
+      </section>
+
+      <output class="readout" id="readout">Type something to search.</output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

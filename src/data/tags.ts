@@ -1270,5 +1270,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "web-crypto": {
     title: "Web Crypto API",
     description: "Hashing, random values and encryption in the browser and Node.js with `crypto.subtle` and `crypto.getRandomValues()`."
+  },
+  "custom-highlight-api": {
+    title: "CSS Custom Highlight API",
+    description: "Painting text ranges with `Highlight`, `CSS.highlights` and the `::highlight()` pseudo-element, without changing the DOM."
+  },
+  "text-search": {
+    title: "Text Search and Find-in-Page",
+    description: "Finding text in the DOM, matching it safely and highlighting search results, from find-in-page to filter-as-you-type."
   }
 };

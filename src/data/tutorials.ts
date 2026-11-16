@@ -642,6 +642,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-15", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-custom-highlight-api",
+    title: "CSS Custom Highlight API: `::highlight()` for Search Results",
+    excerpt: "Highlight search matches with CSS without touching the DOM.",
+    description: "Highlight search results with the CSS Custom Highlight API: ::highlight(), CSS.highlights, StaticRange, priority, accessibility and a mark fallback.",
+    category: ["CSS"],
+    tags: ["css", "custom-highlight-api", "text-search", "pseudo-elements", "web-apis", "dom", "accessibility", "progressive-enhancement", "css-2026"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-custom-highlight-api/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover titled CSS Custom Highlight API: ::highlight() for Search Results, showing a code card with new Range(), new Highlight(range), CSS.highlights.set() and a ::highlight() rule, beside a search box for light at match 2 of 5 over a paragraph with every match highlighted yellow and the current match orange, and a panel reading 0 mark elements added.",
+      caption: "Search matches painted with ::highlight(), with 0 mark elements added to the DOM."
+    },
+    changelog: [
+      { date: "2026-11-16", change: "Initial publication." }
+    ]
   }
 ];
 
