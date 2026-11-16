@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-custom-highlight-api",
+    title: "Custom Highlight API Playground",
+    description: "Search an article and watch every match painted by ::highlight(search-results), with the current match on top via a higher-priority ::highlight(search-current). Step through matches, toggle case sensitivity, edit the text to see the StaticRanges rebuilt, and confirm that no <mark> element is ever added.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-contrast-color",
     title: "contrast-color() Text on Any Background",
     description: "Pick any background colour and see the white or black text contrast-color() returns on a preview, button, badge and tag, with the WCAG 2 ratio against white and against black worked out in JavaScript, a flag when the browser's choice differs from WCAG 2, and a swatch grid of light, dark and mid-tone colours.",
