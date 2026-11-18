@@ -11,6 +11,7 @@ import RemoveButton from "@/components/RemoveButton";
 import Select from "@/components/Select";
 import { PlayIcon, ClipboardIcon, CheckIcon, PlusIcon, RefreshIcon } from "@/components/Icon";
 import PreviewSlide from "@/components/LinearEasingPlayground/PreviewSlide";
+import StopNumberInput from "@/components/LinearEasingPlayground/StopNumberInput";
 import { LINEAR_EASING_PRESETS } from "@/constants/linear-easing-presets";
 import type { LinearEasingPlaygroundProps } from "@/components/LinearEasingPlayground/LinearEasingPlayground.types";
 import GraphFrame from "@/components/GraphFrame";
@@ -44,7 +45,6 @@ import {
   StopList,
   StopRow,
   StopLabel,
-  NumberField,
   PinLabel
 } from "@/components/LinearEasingPlayground/LinearEasingPlayground.styles";
 
@@ -378,12 +378,13 @@ export default function LinearEasingPlayground({ initialStops = DEFAULT_STOPS, s
 
                 <label>
                   <StopLabel>value</StopLabel>{" "}
-                  <NumberField
-                    type="number"
+                  <StopNumberInput
                     step={0.01}
+                    min={LINEAR_EASING_VALUE_MIN}
+                    max={LINEAR_EASING_VALUE_MAX}
                     value={stop.value}
-                    onChange={(event) => handleValueInputChange(index, Number(event.target.value))}
-                    aria-label={`Stop ${index + 1} value`}
+                    onValueChange={(value) => handleValueInputChange(index, value)}
+                    label={`Stop ${index + 1} value`}
                   />
                 </label>
 
@@ -398,15 +399,14 @@ export default function LinearEasingPlayground({ initialStops = DEFAULT_STOPS, s
                       aria-label={`Pin stop ${index + 1} to an exact percentage`}
                     />
                     pin at
-                    <NumberField
-                      type="number"
+                    <StopNumberInput
                       step={0.1}
-                      min={0}
-                      max={100}
+                      min={resolvedStops[index - 1].resolvedPosition}
+                      max={resolvedStops[index + 1].resolvedPosition}
                       disabled={stop.position === null}
                       value={stop.position ?? Number(resolved.resolvedPosition.toFixed(1))}
-                      onChange={(event) => handlePositionInputChange(index, Number(event.target.value))}
-                      aria-label={`Stop ${index + 1} position percent`}
+                      onValueChange={(position) => handlePositionInputChange(index, position)}
+                      label={`Stop ${index + 1} position percent`}
                     />
                     %
                   </PinLabel>

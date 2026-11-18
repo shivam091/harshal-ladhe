@@ -341,6 +341,40 @@ export const icons = {
       </>
     )
   },
+  // A clock face (circle + hour/minute hands) with a small looping-arrow badge at the lower right — the clock reads as "schedule," the loop as "recurring," together reading as a cron/repeating-timer glyph rather than a plain clock.
+  // Two angled slashes (regex literal delimiters) flanking a dot and a small asterisk burst — reads as "/.*/ ", the most recognizable regex shorthand there is.
+  undo: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <polyline points="9 14 4 9 9 4" />
+        <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+      </>
+    )
+  },
+  redo: {
+    viewBox: "0 0 24 24",
+    svgProps: {
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const
+    },
+    children: (
+      <>
+        <polyline points="15 14 20 9 15 4" />
+        <path d="M4 20v-7a4 4 0 0 1 4-4h12" />
+      </>
+    )
+  },
   close: {
     viewBox: "0 0 24 24",
     svgProps: {
