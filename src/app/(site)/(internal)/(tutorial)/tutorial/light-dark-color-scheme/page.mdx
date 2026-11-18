@@ -28,6 +28,8 @@ Theming a color for both light and dark mode has usually meant one of two things
 
 Two things have to be true for `light-dark()` to resolve at all: the `color-scheme` property has to include both `light` and `dark` somewhere in the cascade reaching that element (declaring intent to support both), and the *actual* active scheme is then decided by whatever normally decides `color-scheme` — the user's OS/browser preference by default, or an explicit `color-scheme: light` / `color-scheme: dark` override anywhere between that element and the root.
 
+`light-dark()` also accepts images, so one declaration can swap a background or a mask as well. See [Swap Images by Theme with `light-dark()`](/tutorial/light-dark-images).
+
 <RainbowDivider />
 
 ## Try It Live
