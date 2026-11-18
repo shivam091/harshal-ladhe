@@ -661,6 +661,17 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-16", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-alpha-function",
+    title: "`alpha()`: Change a Colour's Opacity Without Touching Its Hue",
+    excerpt: "Set any colour's opacity while keeping its hue.",
+    description: "The CSS alpha() function returns an existing colour with a new transparency, keeping its colour space. It covers syntax, calc(alpha * n), how it differs from color-mix() and rgb(from ...), overlays, focus rings, hover states, transitions and @supports fallbacks.",
+    category: ["CSS"],
+    tags: ["css", "alpha-function", "relative-colors", "color-mix", "css-custom-properties", "design-tokens", "opacity", "modern-css", "progressive-enhancement", "feature-detection", "css-2026"],
+    changelog: [
+      { date: "2026-11-18", change: "Initial publication." }
+    ]
   }
 ];
 

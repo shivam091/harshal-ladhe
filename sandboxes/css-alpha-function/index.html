@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>alpha() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Translucent Colours with alpha()</h1>
+        <p>Choose an origin colour and an alpha. The first swatch sets the alpha with <code>alpha(from var(--c) / var(--a))</code> and the second scales the origin's own alpha with <code>calc(alpha * n)</code>. The other two use the older <code>color-mix()</code> and <code>rgb(from ...)</code> routes, and the readout shows what each one resolved to.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>alpha()</code>, so the two <code>alpha()</code> swatches use a <code>color-mix()</code> fallback and look the same as the third. It's supported from Chrome and Edge 152, Firefox 155 and Safari 27.</p>
+
+      <fieldset class="control-group">
+        <legend>Colour and alpha</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label for="origin">Origin colour</label>
+            <select id="origin">
+              <option value="picker" selected>sRGB colour from the picker</option>
+              <option value="color(display-p3 0.1 0.9 0.4)">display-p3: color(display-p3 0.1 0.9 0.4)</option>
+              <option value="oklch(60% 0.25 315)">oklch(60% 0.25 315)</option>
+              <option value="oklch(60% 0.25 315 / 0.8)">oklch(60% 0.25 315 / 0.8), its own alpha</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="colour-picker">Colour picker</label>
+            <input type="color" id="colour-picker" value="#6d28d9">
+          </div>
+          <div class="field">
+            <label for="alpha-slider">Alpha: <output id="alpha-value">50%</output></label>
+            <input type="range" id="alpha-slider" min="0" max="100" value="50">
+          </div>
+        </div>
+      </fieldset>
+
+      <section class="demo-area stage" id="stage" aria-label="Swatches on a chequered backdrop">
+        <div class="sample sample-alpha"><span>alpha() set</span></div>
+        <div class="sample sample-scale"><span>alpha() scaled</span></div>
+        <div class="sample sample-mix"><span>color-mix()</span></div>
+        <div class="sample sample-rgb"><span>rgb(from)</span></div>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

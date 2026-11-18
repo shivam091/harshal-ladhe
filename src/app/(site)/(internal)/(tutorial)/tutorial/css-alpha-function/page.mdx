@@ -1,0 +1,370 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-alpha-function");
+
+## Introduction
+
+A scrim over a hero image, a focus ring that should be the brand colour at half strength, a hover tint, a soft shadow in
+the same hue as its card: all of them need an existing colour with a different opacity. For years that meant a second
+token for every transparency (`--brand` and `--brand-50`), `opacity` on the whole element (which fades the text too), or
+`color-mix()` with `transparent` as a workaround.
+
+**`alpha()`** does exactly that one job. Give it a colour and a new alpha value, and it returns the same colour with only
+the transparency changed:
+
+<CodeBlock language="css">
+{`
+  .overlay {
+    background-color: alpha(from var(--brand) / 50%);
+  }
+`}
+</CodeBlock>
+
+It's defined in CSS Color Level 5 as the relative-alpha function, and it became Baseline newly available in September 2026.
+
+<RainbowDivider />
+
+## What `alpha()` Returns
+
+A **relative colour** function starts from an existing colour, called the origin, and builds a new one from it. `alpha()`
+exposes just one channel: the origin colour's components pass through untouched, and only the alpha is replaced:
+
+<CodeBlock language="css">
+{`
+  alpha(from red / 50%)
+  alpha(from var(--brand) / 0.8)
+  alpha(from var(--brand) / calc(alpha * 0.5))
+`}
+</CodeBlock>
+
+The formal syntax, as MDN gives it, is:
+
+<CodeBlock language="text">
+{`
+  alpha( from <color> / [ <alpha-value> | none ] )
+
+  <alpha-value> = <number> | <percentage>
+`}
+</CodeBlock>
+
+- **`from <color>`** is the origin colour: a hex value, a named colour, `oklch()`, `light-dark()` or a custom property
+  holding any of them. The `from` keyword is required.
+- **The value after `/`** is the new alpha, as a number from `0` to `1`, a percentage from `0%` to `100%`, or a
+  `calc()` expression.
+- **Inside that `calc()`**, the keyword `alpha` stands for the origin colour's own alpha as a number, where `1` is 100%.
+- **The result keeps the origin's colour space.** An `oklch()` origin gives an `oklch()` result with the same lightness,
+  chroma and hue.
+
+<Info>
+  Some write-ups show the shorthand `alpha(var(--brand) / 50%)` without `from`. The MDN syntax requires `from`, so write
+  `alpha(from var(--brand) / 50%)` and you won't depend on a shorthand the reference doesn't list.
+</Info>
+
+<RainbowDivider />
+
+## Setting an Alpha or Scaling One
+
+There are two ways to use the alpha channel, and they answer different questions.
+
+### Set an Absolute Alpha
+
+A plain number or percentage replaces whatever alpha the origin had:
+
+<CodeBlock language="css">
+{`
+  :root {
+    --brand: oklch(55% 0.22 270);
+  }
+
+  .scrim {
+    background: alpha(from var(--brand) / 40%); /* 40%, whatever --brand's alpha was */
+  }
+`}
+</CodeBlock>
+
+### Scale the Existing Alpha
+
+Use the `alpha` keyword inside `calc()` when the result should depend on the origin:
+
+<CodeBlock language="css">
+{`
+  :root {
+    --glass: oklch(60% 0.25 315 / 0.8);
+  }
+
+  .panel {
+    background: alpha(from var(--glass) / calc(alpha * 0.5)); /* 0.8 becomes 0.4 */
+  }
+`}
+</CodeBlock>
+
+A themed token can then be made "half as strong" without anyone knowing how strong it started.
+
+<RainbowDivider />
+
+## `alpha()` vs `color-mix()` vs `rgb(from ...)`
+
+Two older techniques produce the same pixels in simple cases, so it's worth being clear about where they differ.
+
+<CodeBlock language="css">
+{`
+  .a { background: alpha(from var(--brand) / 50%); }
+  .b { background: color-mix(in srgb, var(--brand) 50%, transparent); }
+  .c { background: rgb(from var(--brand) r g b / 50%); }
+`}
+</CodeBlock>
+
+For an opaque `--brand`, all three give the same colour at 50% alpha. The differences show up elsewhere:
+
+- **`color-mix()` with `transparent` scales** the origin's alpha rather than setting it. A brand colour that is already
+  80% opaque mixed 50% with `transparent` ends up at 40%, not 50%. The percentage is a mixing weight, which reads less
+  clearly than an alpha. MDN lists the colour space (`in srgb`) as optional, defaulting to `oklab`. The examples here
+  name it so the mix happens in the same space as the `rgb(from ...)` line.
+- **`rgb(from ...)` works in sRGB.** The origin is expressed as red, green and blue channels, so a wide-gamut `oklch()`
+  or `display-p3` origin is described in sRGB terms and can lose range that `alpha()` keeps. It's also longer, because
+  you repeat `r g b`.
+- **`alpha()` keeps the colour space**, so a wide-gamut origin stays wide-gamut, and it says what it means in one short
+  function.
+
+`color-mix()` and `rgb(from ...)` remain the right tools when you also want to change the other channels. Use `alpha()`
+when only the transparency should change.
+
+<RainbowDivider />
+
+## With Custom Properties
+
+`alpha()` pays off most when the colour comes from a token. Define the colour once, and derive every translucent variant
+from it at the point of use:
+
+<CodeBlock language="css">
+{`
+  :root {
+    --brand: oklch(55% 0.22 270);
+  }
+
+  .card {
+    border: 1px solid alpha(from var(--brand) / 30%);
+    box-shadow: 0 0.5rem 1.5rem alpha(from var(--brand) / 25%);
+  }
+`}
+</CodeBlock>
+
+Change `--brand` and the border and shadow follow, with no `--brand-30` or `--brand-25` to keep in step.
+
+### Overlays and Scrims
+
+A scrim keeps text readable over an image. Because the alpha applies only to the background colour, the text on top
+stays fully opaque, which `opacity` can't do:
+
+<CodeBlock language="css">
+{`
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, alpha(from black / 70%), alpha(from black / 0%));
+  }
+`}
+</CodeBlock>
+
+Gradient stops accept any colour, so `alpha()` works inside them. Fading to `alpha(from black / 0%)` states outright
+that the fade is black, rather than leaving that to `transparent`.
+
+### Focus Rings
+
+<CodeBlock language="css">
+{`
+  :focus-visible {
+    outline: 0.125rem solid var(--brand);
+    box-shadow: 0 0 0 0.25rem alpha(from var(--brand) / 25%);
+  }
+`}
+</CodeBlock>
+
+The solid outline carries the focus indication, and the soft halo is the same hue at a quarter of the strength.
+
+### Hover and Active States
+
+<CodeBlock language="css">
+{`
+  .row {
+    --tint: 0%;
+    background: alpha(from var(--brand) / var(--tint));
+  }
+
+  .row:hover {
+    --tint: 12%;
+  }
+
+  .row:active {
+    --tint: 20%;
+  }
+`}
+</CodeBlock>
+
+Each state only changes the percentage, and the colour still comes from `--brand`.
+
+<RainbowDivider />
+
+## Animation and Transitions
+
+`alpha()` produces an ordinary colour, so properties that use it transition and animate like any other colour:
+
+<CodeBlock language="css">
+{`
+  .chip {
+    background-color: alpha(from var(--brand) / 10%);
+    transition: background-color 0.2s ease;
+  }
+
+  .chip:hover {
+    background-color: alpha(from var(--brand) / 30%);
+  }
+`}
+</CodeBlock>
+
+Two things to keep in mind:
+
+- **A custom property doesn't transition by default.** In the hover example above, `--tint` jumps between values, because
+  the browser treats it as unregistered text. To animate the percentage itself, register it with `@property` and a
+  `<percentage>` syntax, or transition the final `background-color` instead.
+- **Only the alpha differs** in a transition such as the chip above, so the in-between steps are the same colour at
+  intermediate transparencies. Test a transition between two very different origin colours in your target browsers
+  before relying on how the middle looks.
+
+<RainbowDivider />
+
+## Try It Live
+
+Choose an origin colour and drag the alpha slider. Four swatches sit on a chequered backdrop: `alpha()` setting the
+alpha, `alpha()` scaling it with `calc(alpha * n)`, `color-mix()` with `transparent`, and `rgb(from ...)`. The readout
+shows what each one resolved to, and whether your browser supports `alpha()` at all.
+
+- With the **sRGB picker**, an opaque origin gives the same colour in every swatch, because all four routes agree there.
+- With the **`oklch(... / 0.8)`** origin, which carries its own alpha, "set" lands on the slider value while "scaled"
+  and `color-mix()` land on 0.8 times it.
+- With the **`display-p3`** and **`oklch()`** origins, compare how each route writes the colour in the readout.
+
+<Sandbox slug="css-alpha-function" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`alpha()` is supported in Chrome and Edge 152, Firefox 155 and Safari 27. With all three engines shipping it, it
+reached **Baseline newly available** in September 2026.
+
+Older browsers drop the whole declaration when they don't recognise `alpha()`, so a fixed or `color-mix()` fallback goes
+first, with `alpha()` inside a feature query:
+
+<CodeBlock language="css">
+{`
+  .overlay {
+    background-color: rgb(79 70 229 / 0.5); /* fixed fallback */
+  }
+
+  @supports (color: alpha(from red / 50%)) {
+    .overlay {
+      background-color: alpha(from var(--brand) / 50%);
+    }
+  }
+`}
+</CodeBlock>
+
+If the colour comes from a token, use `color-mix()` as the fallback, since it's supported more widely:
+
+<CodeBlock language="css">
+{`
+  .overlay {
+    background-color: color-mix(in srgb, var(--brand) 50%, transparent);
+  }
+
+  @supports (color: alpha(from red / 50%)) {
+    .overlay {
+      background-color: alpha(from var(--brand) / 50%);
+    }
+  }
+`}
+</CodeBlock>
+
+The `@supports` block matters for the reason covered in the [`contrast-color()` tutorial](/tutorial/css-contrast-color#common-pitfalls):
+a declaration containing `var()` is accepted at parse time, so a repeated declaration isn't a safe fallback.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Leaving Out `from`
+
+`alpha(var(--brand) / 50%)` isn't the documented form. Use `alpha(from var(--brand) / 50%)`.
+
+### 2. Expecting `color-mix()` Maths
+
+The new value replaces the alpha, it doesn't multiply it. For "half of whatever it was", write `calc(alpha * 0.5)`.
+
+### 3. Using `opacity` When Only the Colour Should Fade
+
+`opacity` fades the element and everything inside it. If only the background should be translucent, use `alpha()` on the
+background colour.
+
+### 4. Forgetting the Fallback
+
+Without a `@supports` check, an unsupported browser drops the declaration and the element is left with no background at
+all, which can make text on it unreadable.
+
+### 5. Putting `alpha()` Behind Text Colours Without Checking Contrast
+
+A translucent background mixes with whatever is behind it, so the contrast you see depends on that. Check the colours
+in the situations where they actually appear.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Scrims, overlays and backdrops derived from a brand or surface token
+- Focus halos, borders and shadows that should share a hue with their element
+- Hover, selected and pressed tints
+- Translucent variants of a token without a second variable per opacity
+
+**Reach for something else** when you want to change lightness, chroma or hue as well, where
+`oklch(from ...)` or `color-mix()` fits better, or when the whole element, text included, should fade, where `opacity`
+is correct.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Is alpha() the same as rgb(from ...)?">
+  Not quite. `rgb(from var(--c) r g b / 50%)` converts the colour to sRGB before applying the alpha, so a wide-gamut
+  origin can lose some of its range. `alpha()` leaves the colour in its original space and changes only the alpha.
+</Details>
+
+<Details summary="Can I use none as the alpha?">
+  Yes. The formal syntax accepts `none` in place of a number or percentage, which marks the alpha as missing. Missing
+  components matter mostly for interpolation, and for a plain static background you'll rarely need it.
+</Details>
+
+<Details summary="Does it work inside gradients and shadows?">
+  Yes. It's a colour like any other, so it can appear anywhere a `<color>` is accepted: gradient stops, `box-shadow`,
+  `border-color`, `outline-color`, SVG `fill` and `stroke`.
+</Details>
+
+<Details summary="Can I store the result in a custom property?">
+  Yes, for example `--brand-half: alpha(from var(--brand) / 50%);`. An unregistered custom property holds the text as
+  written, and the colour is worked out where the property is used, so it follows whatever `--brand` is at that
+  element.
+</Details>
+
+<Details summary="Will the browser warn me if it isn't supported?">
+  No, the declaration is simply ignored. Use the `@supports (color: alpha(from red / 50%))` check from the fallback
+  section to supply an alternative.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`alpha(from <color> / <alpha>)` returns the same colour with a new transparency, in the same colour space, so scrims,
+focus halos and hover tints can all come from one token. Use `calc(alpha * n)` to scale an existing alpha. It's
+Baseline newly available since September 2026, with Chrome and Edge 152, Firefox 155 and Safari 27, and
+`color-mix(in srgb, <colour> N%, transparent)` inside a `@supports` fallback covers older browsers.

@@ -32,6 +32,13 @@ export const sandboxes: SandboxMeta[] = [
     entry: "/index.html"
   },
   {
+    slug: "css-alpha-function",
+    title: "alpha() Playground",
+    description: "Pick a colour and an alpha, then compare alpha() with color-mix() and rgb(from ...) on a chequered backdrop.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-custom-highlight-api",
     title: "Custom Highlight API Playground",
     description: "Search an article and watch every match painted by ::highlight(search-results), with the current match on top via a higher-priority ::highlight(search-current). Step through matches, toggle case sensitivity, edit the text to see the StaticRanges rebuilt, and confirm that no <mark> element is ever added.",

@@ -1286,5 +1286,17 @@ export const tagMeta: Record<string, TagMeta> = {
   "scoped-styles": {
     title: "Scoped and Encapsulated CSS",
     description: "Keeping component styles contained with `@scope`, cascade layers, Shadow DOM, CSS Modules and naming conventions, and when each one fits."
+  },
+  "alpha-function": {
+    title: "`alpha()` in CSS",
+    description: "The CSS Color 5 relative-alpha function that changes a colour's transparency and keeps everything else."
+  },
+  "relative-colors": {
+    title: "Relative Colours in CSS",
+    description: "Deriving new colours from an existing one with the `from` keyword in CSS colour functions."
+  },
+  "color-mix": {
+    title: "`color-mix()` in CSS",
+    description: "Blending two CSS colours in a chosen colour space, including mixing with transparent."
   }
 };
