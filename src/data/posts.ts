@@ -696,6 +696,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around three diagrams — a one-class utility beating an ID selector through layer order alone, the same two rules swapping places the moment both turn !important, and an eight-rung ladder that puts @layer exactly where the cascade consults it — and a playground that rewrites a real <style> tag on every change, so four rules of rising specificity genuinely fight it out in your own browser. Getting its readout to name the criterion that actually decided each result — layer order, specificity, the !important reversal, or unlayered styles winning outright — took more edge-case testing than I'd like to admit. I hope the next time a utility class refuses to apply, you reach for a layer instead of another !important. Thanks for picking a side in the specificity war with me. 🗂️",
     changelog: [
+      { date: "2026-11-18", change: "Added cross-reference to tutorial '`revert-rule`: Roll Back One CSS Rule, Not the Layer'" },
       { date: "2026-11-18", change: "Added cross-reference to post 'CSS `@scope`: Scoped Styles Without Naming Conventions'" },
       { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-10-31", change: "Initial publication" }

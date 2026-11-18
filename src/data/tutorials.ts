@@ -264,6 +264,7 @@ export const tutorials: Tutorial[] = [
       caption: "A priority badge changing colour from a single if() value."
     },
     changelog: [
+      { date: "2026-11-18", change: "Added cross-reference to tutorial '`revert-rule`: Roll Back One CSS Rule, Not the Layer'" },
       { date: "2026-11-02", change: "Added Frequently Asked Questions section" },
       { date: "2026-11-01", change: "Added cross-reference to tutorial 'CSS Custom Functions with `@function`: Reusable Logic Without Sass'" },
       { date: "2026-10-25", change: "Added cross-reference to tutorial 'HTML Attributes as Real CSS Values with Typed `attr()`'" },
