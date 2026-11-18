@@ -833,6 +833,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "No new syntax this year, just seven helpers I'm glad to delete from my own utility files. The time went into checking rather than writing: running the examples, matching every version number against MDN's compatibility data, and confirming each feature against the published specification, which is also how I untangled the Temporal and using mix-up that keeps doing the rounds. I hope the support table saves you a few searches. 🧰",
     changelog: [
+      { date: "2026-11-18", change: "Added cross-reference to snippet '`Iterator.concat()`: Chain Iterables into One Lazy Sequence'" },
       { date: "2026-11-15", change: "Added cross-reference to snippet 'Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`'" },
       { date: "2026-11-14", change: "Added cross-reference to post 'Backwards-Compatible JavaScript: Polyfills and Baseline'" },
       { date: "2026-11-12", change: "Added cross-reference to post 'What's New in ES2027: Temporal, using and More'" },
