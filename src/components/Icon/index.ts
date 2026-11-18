@@ -58,6 +58,7 @@ export const PilcrowIcon = createIcon("pilcrow");
 export const PlayIcon = createIcon("play");
 export const PlusIcon = createIcon("plus");
 export const RefreshIcon = createIcon("refresh");
+export const RegexIcon = createIcon("regex");
 export const RssIcon = createIcon("rss");
 export const SearchIcon = createIcon("search");
 export const SpeakerIcon = createIcon("speaker");

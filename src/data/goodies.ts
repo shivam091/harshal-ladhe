@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import type { IconBoopProps, IconName } from "@/icons/icons";
 import type { ChangelogEntry } from "@/components/Changelog/Changelog.types";
 import IconCron from "@/icons/IconCron";
+import IconRegex from "@/icons/IconRegex";
 
 // Every goodie is a card linking to a section, so each needs an icon, a blurb, and a route.
 export interface Goodie {
@@ -36,6 +37,14 @@ export const goodies: Goodie[] = [
     icon: "cron",
     iconComponent: IconCron,
     href: "/goodies/cron-expression-builder",
+    changelog: [{ date: "2026-10-05", change: "Initial publication." }]
+  },
+  {
+    name: "Regex Tester",
+    description: "Live regex tester — matches highlight directly in your test string, numbered/named capture groups surface as their own tags, a plain-English explain panel reads the pattern back, and it exports to JavaScript/Ruby/Python/Java.",
+    icon: "regex",
+    iconComponent: IconRegex,
+    href: "/goodies/regex-tester",
     changelog: [{ date: "2026-10-05", change: "Initial publication." }]
   }
 ];
