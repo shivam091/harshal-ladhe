@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-anchor-positioning-guide",
+    title: "Anchor Positioning Playground",
+    description: "Drag an anchor around a stage and watch a tooltip follow it using position-area. Switch position-try-fallbacks to see it flip near the edges.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-custom-highlight-api",
     title: "Custom Highlight API Playground",
     description: "Search an article and watch every match painted by ::highlight(search-results), with the current match on top via a higher-priority ::highlight(search-current). Step through matches, toggle case sensitivity, edit the text to see the StaticRanges rebuilt, and confirm that no <mark> element is ever added.",

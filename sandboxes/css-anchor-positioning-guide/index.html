@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anchor Positioning Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Anchor Positioning Playground</h1>
+        <p>Drag the anchor towards an edge of the stage, then change <code>position-area</code> and the fallbacks to see the tooltip follow.</p>
+      </header>
+
+      <p id="unsupported" class="notice" role="status" hidden>
+        Anchor positioning is not supported in this browser. Try a recent Chrome, Edge, Safari or Firefox to see the tooltip follow the anchor.
+      </p>
+
+      <section class="demo-area" aria-label="Anchor positioning preview">
+        <div id="stage" class="stage">
+          <button id="anchor" class="anchor" type="button" aria-describedby="tooltip">Drag me</button>
+          <div id="tooltip" class="tooltip" role="tooltip">Anchored tooltip</div>
+        </div>
+      </section>
+
+      <output id="readout" class="readout"></output>
+
+      <fieldset class="control-group">
+        <legend>Configuration</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="area-select">position-area</label>
+            <select id="area-select">
+              <option value="top" selected>top</option>
+              <option value="bottom">bottom</option>
+              <option value="left">left</option>
+              <option value="right">right</option>
+              <option value="top span-right">top span-right</option>
+              <option value="bottom span-right">bottom span-right</option>
+              <option value="top right">top right</option>
+              <option value="bottom left">bottom left</option>
+              <option value="inline-end">inline-end</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="fallback-select">position-try-fallbacks</label>
+            <select id="fallback-select">
+              <option value="none">none</option>
+              <option value="flip-block" selected>flip-block</option>
+              <option value="flip-inline">flip-inline</option>
+              <option value="flip-block flip-inline">flip-block flip-inline</option>
+            </select>
+          </div>
+        </div>
+        <p class="tip">Keyboard: focus the anchor and use the arrow keys to move it.</p>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

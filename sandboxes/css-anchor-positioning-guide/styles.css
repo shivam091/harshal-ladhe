@@ -1,0 +1,86 @@
+:root {
+  --pg-radius-sm: 0.5rem;
+}
+
+.notice {
+  margin: 0;
+  padding-block: 0.625rem;
+  padding-inline: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--pg-text);
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-border);
+  border-inline-start: 0.25rem solid var(--pg-primary);
+}
+
+/* Hidden attribute loses to display rules above otherwise, so state it explicitly. */
+.notice[hidden] {
+  display: none;
+}
+
+/* The stage is the tooltip's containing block, so fallbacks trigger when it would overflow this box. */
+.stage {
+  position: relative;
+  block-size: 15rem;
+  overflow: hidden;
+  background-color: var(--pg-surface);
+  background-image: radial-gradient(var(--pg-border) 0.0625rem, transparent 0.0625rem);
+  background-size: 1rem 1rem;
+  border: 0.0625rem solid var(--pg-border);
+}
+
+.anchor {
+  /* Absolute so the drag can set its position directly inside the stage. */
+  position: absolute;
+  inset-block-start: 6rem;
+  inset-inline-start: 40%;
+  anchor-name: --anchor;
+  padding-block: 0.625rem;
+  padding-inline: 1rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--pg-primary), var(--pg-primary-dark));
+  border: none;
+  box-shadow: var(--pg-shadow-sm);
+  cursor: grab;
+  /* Stops the browser claiming the touch gesture as a scroll instead of a drag. */
+  touch-action: none;
+  user-select: none;
+}
+
+.anchor:active {
+  cursor: grabbing;
+}
+
+.anchor:focus-visible {
+  outline: 0.125rem solid var(--pg-text);
+  outline-offset: 0.1875rem;
+}
+
+.tooltip {
+  position: absolute;
+  position-anchor: --anchor;
+  /* Keeps the tooltip on one line so it overflows its cell and triggers a fallback, rather than wrapping. */
+  white-space: nowrap;
+  padding-block: 0.5rem;
+  padding-inline: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--pg-text);
+  background: var(--pg-surface-muted);
+  border: 0.0625rem solid var(--pg-primary);
+  border-radius: var(--pg-radius-sm);
+  box-shadow: var(--pg-shadow-sm);
+  /* Lets drags pass through the tooltip when it overlaps the anchor's neighbourhood. */
+  pointer-events: none;
+}
+
+/* Without anchor support the tooltip would sit at the stage's origin, so hide it. */
+.tooltip[hidden] {
+  display: none;
+}
+
+.readout {
+  white-space: pre-wrap;
+}

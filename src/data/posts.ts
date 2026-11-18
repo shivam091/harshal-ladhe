@@ -925,6 +925,18 @@ export const posts: Post[] = [
       { date: "2026-11-15", change: "Added cross-reference to snippet 'Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`'" },
       { date: "2026-11-14", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-anchor-positioning-guide",
+    title: "CSS Anchor Positioning: Tooltips, Menus and Popovers Without JavaScript",
+    excerpt: "Position tooltips and menus using CSS alone.",
+    description: "A practical guide to CSS anchor positioning: anchor-name, position-anchor, position-area, anchor(), fallbacks with position-try, popovers and browser support.",
+    category: ["CSS"],
+    tags: ["css", "anchor-positioning", "popover", "tooltips", "top-layer", "css-2026", "modern-css", "progressive-enhancement", "browser-support"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-11-18", change: "Initial publication" }
+    ]
   }
 ];
 
