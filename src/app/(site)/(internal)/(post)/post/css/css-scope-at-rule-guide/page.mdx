@@ -1,0 +1,230 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("css-scope-at-rule-guide");
+
+CSS has always been global. A rule for `.title` styles every `.title` on the page, so teams invent defences: BEM names
+like `.card__title--large`, CSS Modules, build-time hashing, or long descendant selectors that raise specificity until
+something else breaks. **`@scope`** is CSS's own answer. It limits a block of rules to one part of the DOM, with an
+optional lower boundary, and adds a new tie-breaker to the cascade based on how close an element is to its scope.
+
+`@scope` shipped in Chrome 118 and Safari 17.4, and Firefox 146 completed support in all three engines in December
+2025. Safari's first implementation was partial: rules inside a scope didn't apply to `<input>` and `<textarea>`
+until Safari 26.4. It's young enough that plenty of codebases haven't tried it yet.
+
+In this post, we'll cover:
+
+- The basic syntax and the `:scope` selector
+- Donut scopes: stopping at a lower boundary
+- Scoping proximity, the cascade rule that makes nested themes work
+- Inline `@scope` inside a `<style>` element
+- How `@scope` differs from CSS nesting, cascade layers and BEM
+- Support, fallbacks and frequently asked questions
+
+<RainbowDivider />
+
+## The Basic Syntax
+
+`@scope` takes a **scope root**, the element the rules apply under, and a block of ordinary rules:
+
+<CodeBlock language="css">
+{`
+  @scope (.card) {
+    /* Only matches an h2 that is inside a .card */
+    h2 {
+      font-size: 1.25rem;
+    }
+
+    /* Matches the .card itself */
+    :scope {
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+    }
+  }
+`}
+</CodeBlock>
+
+Selectors inside the block are **relative to the scope root**, so `h2` here behaves like `.card h2` but without writing
+the prefix. `:scope` refers to the root itself, and so does `&` at the top level of the block, as in
+[CSS nesting](https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_nesting). Unlike an explicit `:scope`, a bare `&`
+adds no specificity. A page can contain many `.card`
+elements, and each one is its own scope root.
+
+One detail matters for specificity: the scope root in the prelude adds **nothing** to the specificity of the rules
+inside. `h2` inside `@scope (.card)` has the specificity of a plain `h2`, which is why `@scope` is such a good fit for
+keeping selectors flat. A rule that uses `:scope` explicitly counts as a pseudo-class, so it adds one class's worth.
+
+<RainbowDivider />
+
+## Donut Scopes: Stopping at a Boundary
+
+The second, optional part of the prelude is a **scope limit**, introduced by `to`. Styles apply from the root down to,
+but not including, the limit and everything inside it:
+
+<CodeBlock language="css">
+{`
+  /* Style the card's own links, but not links inside nested content */
+  @scope (.card) to (.card-content) {
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+  }
+`}
+</CodeBlock>
+
+The shape of that region, solid outside and hollow in the middle, is why this is called a **donut scope**. It's the
+answer to a classic problem: a component wraps arbitrary user content in a slot, and its styles shouldn't leak into
+whatever gets put there. Without `@scope` you'd write `.card a:not(.card-content a)` and lose a lot of
+readability; with it, the boundary is declared once.
+
+<Info title="How the scope limit is matched">
+  The limit is a selector, evaluated against each candidate element: if the element is, or sits inside, an element
+  matching the limit that is itself inside the scope root, the rule is skipped. That means limits can be class names, attributes or any
+  other selector, not just a single element.
+</Info>
+
+<RainbowDivider />
+
+## Scoping Proximity
+
+Roughly speaking, plain CSS decides between competing rules by origin and importance, then cascade layer, then
+specificity, and finally source order. `@scope` adds a step between specificity and source order called **scoping
+proximity**: when two rules from different
+scopes both match an element with equal specificity, the one whose scope root is **closer** in the DOM wins.
+
+<CodeBlock language="css">
+{`
+  @scope (.theme-light) {
+    a { color: navy; }
+  }
+
+  @scope (.theme-dark) {
+    a { color: lightskyblue; }
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="html">
+{`
+  <div class="theme-light">
+    <a href="#">Navy</a>
+    <div class="theme-dark">
+      <a href="#">Light blue, because .theme-dark is closer</a>
+    </div>
+  </div>
+`}
+</CodeBlock>
+
+Both rules have the same specificity, and the nested link matches both, because it sits inside `.theme-dark` and
+inside `.theme-light`. Without proximity, source order would decide, and swapping the two blocks would turn the nested
+link navy. With `@scope`, the nested link is light blue whichever way round they're written, because the nearest scope
+wins. Nested themes, a long-standing pain point, work without any `!important` or
+specificity tricks.
+
+Proximity only applies between rules that tie on specificity, and it ranks below it. A higher-specificity selector
+outside any scope still beats a lower one inside a closer scope.
+
+<RainbowDivider />
+
+## Inline `@scope` in a `<style>` Element
+
+When `@scope` has no prelude and sits inside a `<style>` element, it scopes to that element's **parent**:
+
+<CodeBlock language="html">
+{`
+  <section class="promo">
+    <style>
+      @scope {
+        h2 { color: crimson; }
+        p  { max-width: 60ch; }
+      }
+    </style>
+    <h2>Autumn sale</h2>
+    <p>Applies only inside this section.</p>
+  </section>
+`}
+</CodeBlock>
+
+This is handy for components that ship their own styles, such as a CMS block or a web component's light DOM, because the
+styles can't escape the markup they came with. The trade-off is that styles end up in the HTML, which suits
+server-rendered fragments better than a large application.
+
+<RainbowDivider />
+
+## `@scope` vs Nesting, Layers and BEM
+
+Four tools are often mentioned together, and they solve different problems:
+
+| Tool | What it controls |
+| --- | --- |
+| Nesting (`&`) | Authoring convenience: writing related selectors together. It doesn't limit where rules apply or add a cascade step |
+| `@scope` | **Where** rules apply: a root, an optional limit, and a proximity tie-breaker |
+| [Cascade layers](/post/css/css-cascade-layers) | **Which group of rules wins**, regardless of specificity |
+| BEM and CSS Modules | Name collisions, by convention or build tooling |
+
+They combine well. A common setup puts third-party and reset styles in early layers and component styles in a later
+one, with each component written inside its own `@scope`. Layers decide which source you trust most, and scope keeps
+each component's selectors short and contained. The [cascade layers post](/post/css/css-cascade-layers) has a short FAQ
+on choosing between `@layer` and `@scope`.
+
+<RainbowDivider />
+
+## Support and Fallbacks
+
+| Feature | Chrome / Edge | Firefox | Safari |
+| --- | --- | --- | --- |
+| `@scope` | 118 | 146 | 17.4 (26.4 for inputs and textareas) |
+
+Versions are the first stable release with support, as of November 2026. A browser that doesn't understand `@scope`
+drops the whole block, so older browsers get none of those rules. If you still need to support them, keep a
+conventional class-based version as the base and add the scoped one on top, or leave `@scope` for browsers where
+losing it only costs polish. For the wider picture, see
+[What's New in CSS in 2026: What You Can Use Now](/post/css/whats-new-in-css-2026).
+
+<RainbowDivider />
+
+## Try It Yourself
+
+Toggle the donut limit to see which links `@scope` styles, then swap the source order of two nested theme scopes and watch the nearest one keep winning.
+
+<Sandbox slug="css-scope-at-rule-guide" defaultLayout="vertical" />
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Does @scope add specificity?">
+  The scope root doesn't. Selectors inside the block keep their own specificity, and only an explicit `:scope` adds the
+  weight of a pseudo-class. That makes scoped rules easy to override from outside, which is usually what you want.
+</Details>
+
+<Details summary="Is @scope the same as Shadow DOM?">
+  No. Shadow DOM is a hard boundary: outside styles can't reach in, and inside styles can't leak out. `@scope` is a
+  soft boundary inside one ordinary document, so global styles still apply to scoped elements and can still be
+  overridden. Choose Shadow DOM for real encapsulation and `@scope` for tidy, contained styles.
+</Details>
+
+<Details summary="Can I use @scope with CSS nesting?">
+  Yes. Inside an `@scope` block you can nest rules with `&`. At the top level of the block, `&` means the scope root.
+  Inside a nested rule, `&` means that parent rule, exactly as it does in ordinary CSS nesting, so the two features
+  compose without surprises.
+</Details>
+
+<Details summary="What happens if a scope root contains another one?">
+  Each matching element is its own root, and a rule applies if the target is in any of them. When rules from
+  different roots tie on specificity, scoping proximity picks the nearer one, as in the nested themes example.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+`@scope` finally gives CSS a way to say where rules belong:
+
+- **`@scope (.root)`** limits selectors to a subtree without adding specificity
+- **`to (.limit)`** carves out a hole for slotted or nested content
+- **Scoping proximity** makes the nearest scope win, so nested themes just work
+- **An inline `@scope`** ties styles to the markup that carries them
+- **Layers and `@scope`** do different jobs and work best together
+
+With all three engines on board, it's a good time to start replacing a few long BEM names with plain element selectors.

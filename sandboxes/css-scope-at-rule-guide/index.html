@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CSS @scope Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>CSS <code>@scope</code> Playground</h1>
+        <p>Toggle the donut limit, then swap the source order of two scopes and see which rule the browser keeps.</p>
+      </header>
+
+      <p id="support-notice" class="notice" role="status" hidden>
+        This browser doesn't support <code>@scope</code> yet, so it drops the whole block and none of the links below will be styled.
+      </p>
+
+      <section aria-labelledby="donut-heading" class="section">
+        <h2 id="donut-heading" class="section-title">1. Donut scope</h2>
+
+        <div class="demo-area">
+          <article class="card">
+            <a href="#" class="card-link" data-label="card link">Read the card's own link</a>
+            <div class="card-content">
+              <p>Slotted content:</p>
+              <a href="#" data-label="slotted link">A link inside the slot</a>
+            </div>
+          </article>
+        </div>
+
+        <fieldset class="control-group">
+          <legend>Scope limit</legend>
+          <label class="checkbox-field" for="donut-toggle">
+            <input type="checkbox" id="donut-toggle" checked>
+            <span>Add <code>to (.card-content)</code></span>
+          </label>
+        </fieldset>
+        <p id="donut-note" class="tip"></p>
+      </section>
+
+      <section aria-labelledby="proximity-heading" class="section">
+        <h2 id="proximity-heading" class="section-title">2. Scoping proximity</h2>
+
+        <div class="demo-area">
+          <div class="theme-light">
+            <a href="#">Outer link (inside .theme-light only)</a>
+            <div class="theme-dark">
+              <a href="#">Nested link (inside both)</a>
+            </div>
+          </div>
+        </div>
+
+        <fieldset class="control-group">
+          <legend>Source order</legend>
+          <button type="button" id="order-btn" class="toggle-btn"></button>
+        </fieldset>
+        <p id="order-note" class="tip"></p>
+      </section>
+
+      <section aria-labelledby="css-heading" class="section">
+        <h2 id="css-heading" class="section-title">Applied CSS</h2>
+        <output id="css-output" class="readout" aria-live="polite"></output>
+      </section>
+
+      <style id="donut-style"></style>
+      <style id="proximity-style"></style>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

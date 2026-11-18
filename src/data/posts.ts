@@ -937,6 +937,18 @@ export const posts: Post[] = [
     changelog: [
       { date: "2026-11-18", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "css-scope-at-rule-guide",
+    title: "CSS `@scope`: Scoped Styles Without Naming Conventions",
+    excerpt: "Limit styles to a component with @scope.",
+    description: "Learn CSS @scope: scope roots, :scope, donut scopes with a lower limit, scoping proximity in the cascade, inline scoping, and how it compares with layers and BEM.",
+    category: ["CSS"],
+    tags: ["css", "at-scope", "scoped-styles", "specificity", "css-2026", "modern-css", "best-practices", "browser-support"],
+    toc: { maxLevel: 3 },
+    changelog: [
+      { date: "2026-11-18", change: "Initial publication" }
+    ]
   }
 ];
 

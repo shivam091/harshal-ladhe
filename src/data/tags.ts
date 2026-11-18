@@ -1278,5 +1278,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "text-search": {
     title: "Text Search and Find-in-Page",
     description: "Finding text in the DOM, matching it safely and highlighting search results, from find-in-page to filter-as-you-type."
+  },
+  "at-scope": {
+    title: "CSS `@scope`",
+    description: "Limiting rules to a subtree with `@scope`, donut scopes with a lower boundary, and the scoping-proximity step it adds to the cascade."
+  },
+  "scoped-styles": {
+    title: "Scoped and Encapsulated CSS",
+    description: "Keeping component styles contained with `@scope`, cascade layers, Shadow DOM, CSS Modules and naming conventions, and when each one fits."
   }
 };
