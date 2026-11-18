@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iterator.zip Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Walking Lists in Step</h1>
+        <p>Edit the lists (comma-separated), pick a <code>mode</code> and watch <code>Iterator.zip()</code> and <code>Iterator.zipKeyed()</code> line the values up.</p>
+        <p class="badge" id="badge" role="status"></p>
+      </header>
+
+      <div class="fields-grid">
+        <fieldset class="control-group">
+          <legend>Lists</legend>
+          <label class="field"><span>names</span><input type="text" id="list-names" value="Ada, Grace, Linus, Margaret" autocomplete="off"></label>
+          <label class="field"><span>scores</span><input type="text" id="list-scores" value="3, 5, 4" autocomplete="off"></label>
+          <label class="field-check"><input type="checkbox" id="use-third" checked><span>Add a third list</span></label>
+          <label class="field"><span>tags</span><input type="text" id="list-tags" value="admin, dev, ops" autocomplete="off"></label>
+        </fieldset>
+
+        <fieldset class="control-group">
+          <legend>Mode</legend>
+          <div class="segmented-control" role="radiogroup" aria-label="Zip mode" id="mode-picker"></div>
+          <label class="field" id="padding-field"><span>padding</span><input type="text" id="padding" value="?, 0, -" autocomplete="off"></label>
+          <p class="tip" id="tip"></p>
+        </fieldset>
+      </div>
+
+      <section class="demo-area">
+        <p class="result-label">Iterator.zip([...lists])</p>
+        <pre class="rows" id="zip-rows"></pre>
+        <p class="result-label">Iterator.zipKeyed({ ...lists })</p>
+        <pre class="rows" id="keyed-rows"></pre>
+        <p class="error-box" id="error" hidden></p>
+      </section>
+
+      <output class="readout" id="readout"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

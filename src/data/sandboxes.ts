@@ -53,6 +53,13 @@ export const sandboxes: SandboxMeta[] = [
     entry: "/index.html"
   },
   {
+    slug: "iterator-zip-zipkeyed",
+    title: "Iterator.zip Playground",
+    description: "Edit up to three lists, switch between the shortest, longest and strict modes, set padding, and watch Iterator.zip() and Iterator.zipKeyed() line values up. It includes a native/fallback badge and shows the strict-mode TypeError.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-custom-highlight-api",
     title: "Custom Highlight API Playground",
     description: "Search an article and watch every match painted by ::highlight(search-results), with the current match on top via a higher-priority ::highlight(search-current). Step through matches, toggle case sensitivity, edit the text to see the StaticRanges rebuilt, and confirm that no <mark> element is ever added.",

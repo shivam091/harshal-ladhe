@@ -694,6 +694,17 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-18", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "iterator-zip-zipkeyed",
+    title: "`Iterator.zip()` and `Iterator.zipKeyed()`: Walk Iterables in Step",
+    excerpt: "Zip several iterables together, whatever their lengths.",
+    description: "Learn JavaScript's Iterator.zip() and Iterator.zipKeyed(): the shortest, longest and strict modes, padding, closing behaviour, real-world uses, browser support and a fallback.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2027", "iterator-helpers", "polyfills", "lazy-evaluation", "joint-iteration"],
+    changelog: [
+      { date: "2026-11-18", change: "Initial publication." }
+    ]
   }
 ];
 

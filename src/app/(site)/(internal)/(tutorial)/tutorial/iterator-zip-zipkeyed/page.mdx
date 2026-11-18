@@ -1,0 +1,462 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("iterator-zip-zipkeyed");
+
+## Introduction
+
+You have a list of names and a list of scores, and you need them side by side. For years the answer was an index loop, `names[i]` and `scores[i]`, with a quiet assumption that both arrays are the same length and that you got the loop bound right. It works, but it only works for arrays, and it tells the reader nothing about what you're really doing: walking two sequences **in step**.
+
+**Joint iteration** says that directly. `Iterator.zip()` takes several iterables and gives back one iterator, and each step yields an array holding the next value from every input. `Iterator.zipKeyed()` does the same but with named inputs, yielding objects instead of arrays:
+
+<CodeBlock language="js">
+{`
+  const names = ["Ada", "Grace", "Linus"];
+  const scores = [3, 5, 4];
+
+  for (const [name, score] of Iterator.zip([names, scores])) {
+    console.log(name, score); // Ada 3, then Grace 5, then Linus 4
+  }
+
+  for (const row of Iterator.zipKeyed({ name: names, score: scores })) {
+    console.log(row); // { name: "Ada", score: 3 }, and so on
+  }
+`}
+</CodeBlock>
+
+The keyed rows are created with no prototype, so a console may label them `[Object: null prototype]`. The contents are the same.
+
+Both are confirmed for ES2027. This tutorial goes deeper than the short section in [What's New in ES2027](/post/javascript/whats-new-in-es2027#joint-iteration-iteratorzip-and-iteratorzipkeyed): what happens when the inputs differ in length, how padding works, what gets closed and when, and how to cover browsers that don't have it yet. To chain iterables one after another instead of side by side, see the [`Iterator.concat()` snippet](/snippet/iterator-concat-lazy-sequences).
+
+<RainbowDivider />
+
+## A Quick Refresher on Iterables
+
+<Info title="Already comfortable with iterables?">
+  Skip ahead to **Zipping Two or More Iterables**. This section only covers what `zip()` builds on.
+</Info>
+
+An **iterable** is anything you can loop over with `for...of`: arrays, strings, `Set`s, `Map`s and generator objects. An **iterator** is the object doing the walking, with a `next()` method that returns `{ value, done }`. Calling `.values()` on an array, or calling a generator function, gives you one.
+
+<CodeBlock language="js">
+{`
+  const iterator = ["a", "b"].values();
+
+  iterator.next(); // { value: "a", done: false }
+  iterator.next(); // { value: "b", done: false }
+  iterator.next(); // { value: undefined, done: true }
+`}
+</CodeBlock>
+
+A **generator** is a function declared with `function*` that returns an iterator, and each `yield` hands the next value to whoever is looping. You'll see a few below, mainly as endless inputs.
+
+Iterators are **lazy**: they produce a value only when asked. That matters here, because `zip()` is lazy too, and it can combine inputs that never end. If you'd like a longer look at the protocol, [Array.fromAsync() and Async Iterables](/tutorial/array-fromasync-async-iterables) walks through it for the asynchronous case.
+
+<RainbowDivider />
+
+## Zipping Two or More Iterables
+
+`Iterator.zip(iterables)` takes **one** argument: an iterable of iterables, such as an array of arrays. It's not a variadic function, so `Iterator.zip(a, b)` is a mistake. It returns an iterator, and each step yields a fresh array with one value per input, in the same order you listed them.
+
+<CodeBlock language="js">
+{`
+  const letters = ["a", "b", "c"];
+  const numbers = new Set([1, 2, 3]);
+  const flags = [true, false, true];
+
+  console.log([...Iterator.zip([letters, numbers, flags])]);
+  // [ ["a", 1, true], ["b", 2, false], ["c", 3, true] ]
+`}
+</CodeBlock>
+
+The inputs can be any mix of iterables, not just arrays, and the number of inputs isn't limited to two. If you pass an empty list of inputs, you get an iterator that has already finished.
+
+Because the result is an iterator, it works with the rest of the iterator toolkit. For the lazy `.map()`, `.filter()` and `.take()` helpers, see [What's New in ES2026](/post/javascript/whats-new-in-es2026#iterator-sequencing-iteratorconcat), which recaps them. Here, a pipeline over a zip is just a normal chain:
+
+<CodeBlock language="js">
+{`
+  const total = Iterator.zip([[2, 3, 4], [10, 20, 30]])
+    .map(([price, quantity]) => price * quantity)
+    .reduce((sum, line) => sum + line, 0);
+
+  // 2*10 + 3*20 + 4*30 = 200
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Unequal Lengths: `mode`
+
+Real data is rarely tidy. The second argument is an options object, and its `mode` decides what happens when one input runs out before the others:
+
+| `mode` | Stops when | If the lengths differ |
+| --- | --- | --- |
+| `"shortest"` (default) | The first input finishes | Extra values in longer inputs are ignored |
+| `"longest"` | Every input has finished | Gaps are filled with padding |
+| `"strict"` | Every input finishes together | A `TypeError` is thrown |
+
+<CodeBlock language="js">
+{`
+  const ids = [1, 2, 3];
+  const labels = ["one"];
+
+  [...Iterator.zip([ids, labels])];
+  // [ [1, "one"] ]: stops when labels runs out
+
+  [...Iterator.zip([ids, labels], { mode: "longest" })];
+  // [ [1, "one"], [2, undefined], [3, undefined] ]
+
+  [...Iterator.zip([ids, labels], { mode: "strict" })];
+  // TypeError, thrown when the inputs turn out to differ in length
+`}
+</CodeBlock>
+
+Use `"shortest"` when you genuinely want the overlap, `"longest"` when missing values are expected and you want to see them, and `"strict"` when equal length is a **rule**. Strict mode turns a silent data bug (two columns that drifted out of step) into a loud one, which is usually what you want for parallel data.
+
+<Info title="When the error appears">
+  `"strict"` can only know the lengths differ when one input finishes while another still has values, so the `TypeError` is thrown during iteration, not when you call `zip()`. Any steps before that point are yielded normally.
+</Info>
+
+<RainbowDivider />
+
+## Filling the Gaps: `padding`
+
+With `"longest"`, a missing value is `undefined` unless you supply `padding`. For `zip()`, `padding` is an **iterable with one value per input**, in input order:
+
+<CodeBlock language="js">
+{`
+  const letters = ["a", "b", "c", "d", "e"];
+  const numbers = [1, 2, 3];
+
+  for (const [letter, number] of Iterator.zip([letters, numbers], {
+    mode: "longest",
+    padding: ["[no letter]", 0]
+  })) {
+    console.log(letter, number);
+  }
+
+  // a 1
+  // b 2
+  // c 3
+  // d 0
+  // e 0
+`}
+</CodeBlock>
+
+A few details are worth knowing:
+
+- `padding` is only read in `"longest"` mode. In the other two modes it's ignored.
+- If it's shorter than the list of inputs, the remaining inputs pad with `undefined`.
+- It must be an iterable object (an array is the usual choice), not a bare `{ next() }` object, and its values are read **as soon as you call `zip()`**, not as the loop runs. Don't pass a lazy generator expecting it to be consumed later.
+- Invalid options throw a `TypeError`: a `mode` other than the three above, or a `padding` that isn't an object, in `"longest"` mode.
+
+<RainbowDivider />
+
+## Named Inputs: `Iterator.zipKeyed()`
+
+Positional arrays are fine for two inputs. By the fourth, `row[3]` is anyone's guess. `zipKeyed()` takes an **object** whose values are iterables, and yields an object per step with the same keys:
+
+<CodeBlock language="js">
+{`
+  const rows = Iterator.zipKeyed({
+    name: ["Ada", "Grace"],
+    role: ["engineer", "admiral"],
+    active: [true, false]
+  });
+
+  for (const { name, role, active } of rows) {
+    console.log(name, role, active);
+  }
+`}
+</CodeBlock>
+
+Destructuring by name means you can reorder, add or remove columns without renumbering anything. The options are the same, with one difference: `padding` is an **object** keyed like the inputs, and any key you leave out pads with `undefined`:
+
+<CodeBlock language="js">
+{`
+  const it = Iterator.zipKeyed(
+    { a: [1, 2, 3], b: [1] },
+    { mode: "longest", padding: { b: -1 } }
+  );
+
+  [...it];
+  // [ { a: 1, b: 1 }, { a: 2, b: -1 }, { a: 3, b: -1 } ]
+`}
+</CodeBlock>
+
+The yielded objects are fresh on every step, and according to the specification they're created with no prototype (`Object.create(null)`). So don't call `row.hasOwnProperty(...)` on them; use `Object.hasOwn(row, "name")` or just destructure.
+
+<RainbowDivider />
+
+## Try It Live
+
+Edit the lists, choose a mode, and compare the array form and the keyed form. Try these:
+
+- Leave the lists as they are and switch between **shortest**, **longest** and **strict**. Strict mode shows the steps it managed, then the `TypeError`.
+- Under **longest**, change the padding values and notice that each one belongs to the list in the same position.
+- Make the lists equal in length and switch to **strict** to see it pass without complaint.
+
+A badge at the top says whether the output came from the native method or from the small generator fallback described below.
+
+<Sandbox slug="iterator-zip-zipkeyed" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## What Gets Closed, and When
+
+Iterators can hold resources: an open file, a database cursor, a generator with a `finally` block. When `zip()` stops, it must tidy up the inputs it isn't going to read any further, by calling their `return()` method. This is the same closing that `for...of` does when you `break`.
+
+<CodeBlock language="js">
+{`
+  function* counter(name) {
+    try {
+      for (let i = 1; ; i++) yield i;
+    } finally {
+      console.log(name + " closed");
+    }
+  }
+
+  for (const [n, letter] of Iterator.zip([counter("numbers"), ["a", "b"]])) {
+    console.log(n, letter);
+  }
+
+  // 1 a
+  // 2 b
+  // numbers closed
+`}
+</CodeBlock>
+
+The infinite `counter` is a perfectly good input here: the shorter array decides when to stop, and the counter is then closed, so its `finally` block runs. The same happens if your loop exits early with `break` or `return`, or if `"strict"` mode throws: any input still open is closed.
+
+`"longest"` is the exception worth remembering. Because it waits for every input, it **never ends** when any input is infinite. Pair it with something that stops it, such as `.take(10)`, or use `"shortest"`.
+
+<RainbowDivider />
+
+## Real-World Patterns
+
+### Pairing Labels with Values
+
+<CodeBlock language="js">
+{`
+  const headers = ["id", "title", "views"];
+  const cells = [7, "Intro", 120];
+
+  const record = Object.fromEntries(Iterator.zip([headers, cells]));
+  // { id: 7, title: "Intro", views: 120 }
+`}
+</CodeBlock>
+
+Each yielded pair is already a `[key, value]` entry, so `Object.fromEntries()` accepts it directly. Add `{ mode: "strict" }` if a short row should be an error rather than a record with missing fields.
+
+### Comparing Two Lists Position by Position
+
+<CodeBlock language="js">
+{`
+  const expected = ["red", "green", "blue"];
+  const actual = ["red", "greem", "blue"];
+
+  const mismatches = Iterator.zip([expected, actual], { mode: "longest" })
+    .map(([want, got], index) => ({ index, want, got }))
+    .filter(({ want, got }) => want !== got)
+    .toArray();
+
+  // [ { index: 1, want: "green", got: "greem" } ]
+`}
+</CodeBlock>
+
+Using `"longest"` means a list that's too short or too long shows up as a mismatch against `undefined`, not as a silently ignored tail.
+
+### Turning Parallel Arrays into Objects
+
+Column-oriented data, such as chart series or a CSV read by column, becomes row objects in one step:
+
+<CodeBlock language="js">
+{`
+  const products = Iterator.zipKeyed({
+    name: ["Pen", "Ink"],
+    price: [1.5, 4],
+    stock: [40, 12]
+  }).toArray();
+
+  // [ { name: "Pen", price: 1.5, stock: 40 }, { name: "Ink", price: 4, stock: 12 } ]
+`}
+</CodeBlock>
+
+### Numbering Things Without an Index
+
+Zipping with a counter replaces a manual index variable. An endless input is fine with the default mode:
+
+<CodeBlock language="js">
+{`
+  function* from(start) {
+    for (let n = start; ; n++) yield n;
+  }
+
+  for (const [number, item] of Iterator.zip([from(1), ["milk", "eggs"]])) {
+    console.log(number + ". " + item); // 1. milk, then 2. eggs
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Versus Lodash `_.zip` and Index Loops
+
+**Lodash's `_.zip`** is the closest older tool. It takes arrays as separate arguments, returns a complete array of arrays at once, and always behaves like `"longest"`, padding with `undefined`:
+
+<CodeBlock language="js">
+{`
+  _.zip(["a", "b"], [1]);
+  // [ ["a", 1], ["b", undefined] ]
+
+  [...Iterator.zip([["a", "b"], [1]], { mode: "longest" })];
+  // the same result
+`}
+</CodeBlock>
+
+The differences are the useful part. `Iterator.zip()` is lazy and accepts any iterable (including infinite ones), it has `"shortest"` and `"strict"`, and it takes custom padding. Lodash has a separate `_.zipObject(keys, values)` for objects, while `zipKeyed()` handles any number of inputs.
+
+**Index loops** still have their place when you need the index itself or random access, but they assume arrays, and the length check is on you:
+
+<CodeBlock language="js">
+{`
+  // Manual: only arrays, and the bound is easy to get wrong
+  for (let i = 0; i < Math.min(names.length, scores.length); i++) {
+    use(names[i], scores[i]);
+  }
+
+  // Joint iteration: any iterables, and the intent is in the name
+  for (const [name, score] of Iterator.zip([names, scores])) {
+    use(name, score);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Arguments and Edge Cases
+
+### Strings Are Not Accepted as Inputs
+
+Primitives are rejected, so `Iterator.zip(["ab", "cd"])` throws rather than walking the characters. Wrap the string first with `Iterator.from("ab")` (or `[..."ab"]`):
+
+<CodeBlock language="js">
+{`
+  const pairs = Iterator.zip([Iterator.from("abc"), [1, 2, 3]]);
+  [...pairs]; // [ ["a", 1], ["b", 2], ["c", 3] ]
+`}
+</CodeBlock>
+
+Spreading a string splits it by code point, and a visible character can be several code points. For text that users see, segment it with `Intl.Segmenter` instead.
+
+### The Outer Argument Must Be an Iterable
+
+The outer argument must be an iterable object: an array is the usual choice, and a generator object also works. A bare `{ next() }` object, or a primitive such as a string, is rejected with a `TypeError`. `zipKeyed()` takes a plain object instead.
+
+### Inputs Are Read Once
+
+An iterator is consumed as it's walked. If you zip an iterator you've already partly used, it continues from where it was, and zipping the same iterator twice gives the second zip nothing.
+
+### Each Row Is New, but the Values Are Not Copies
+
+Each step's array is new, so keeping a row is safe. The values inside are the original values, not copies: zipping arrays of objects gives you the same objects.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+At the time of writing, joint iteration is in Chrome and Edge 153 and Firefox 148. Safari has it in Technology Preview, and neither Node.js nor Deno has it yet. The specification text is part of ES2027, but the Baseline label isn't there while Safari and Node are missing. Check [MDN](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/zip) before relying on it, because this changes quickly.
+
+Detect the feature, not the browser:
+
+<CodeBlock language="js">
+{`
+  const hasZip = typeof Iterator !== "undefined" && typeof Iterator.zip === "function";
+`}
+</CodeBlock>
+
+For the general approach to polyfills and Baseline, see [Backwards-Compatible JavaScript: Polyfills and Baseline](/post/javascript/backwards-compatible-javascript). Ready-made polyfills such as `core-js` and `es-iterator-helpers` exist for iterator features, but I haven't verified that either covers joint iteration, so check their documentation first.
+
+If you only need the default `"shortest"` behaviour, a generator is a few lines:
+
+<CodeBlock language="js">
+{`
+  function* zipShortest(iterables) {
+    const iterators = [...iterables].map((iterable) => iterable[Symbol.iterator]());
+
+    try {
+      while (iterators.length > 0) {
+        const results = iterators.map((iterator) => iterator.next());
+        if (results.some((result) => result.done)) return;
+        yield results.map((result) => result.value);
+      }
+    } finally {
+      // Closing every input mirrors the native behaviour and lets generators run their cleanup
+      iterators.forEach((iterator) => iterator.return?.());
+    }
+  }
+`}
+</CodeBlock>
+
+This is simpler than the specification in three ways: it advances every input before checking, where the native version stops at the first finished input; it also calls `return()` on inputs that have already finished; and it does the same for an input whose `next()` threw. Native closes only the inputs that are still open. The playground above uses a longer fallback covering all three modes and padding.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Passing the Inputs as Separate Arguments
+
+`Iterator.zip(a, b)` treats `b` as the options. Pass one array of inputs: `Iterator.zip([a, b])`.
+
+### 2. Expecting "longest" to Be the Default
+
+The default is `"shortest"`, so unequal inputs lose their tail without any warning. Choose a mode on purpose, and prefer `"strict"` when the data should match.
+
+### 3. Using "longest" with an Infinite Input
+
+It never finishes. Limit it with `.take()` or choose `"shortest"`.
+
+### 4. Zipping Strings Directly
+
+Strings are rejected. Use `Iterator.from("text")` or spread them into an array first.
+
+### 5. Forgetting the Result Is Single-Use
+
+The result is an iterator, so once you've looped over it, it's empty. Call `.toArray()` if you need the rows more than once.
+
+### 6. Assuming Everywhere Has It
+
+Node.js and Safari are behind. Detect the feature and load a polyfill, or use a fallback.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="What is the difference between Iterator.zip() and Iterator.zipKeyed()?">
+  `zip()` takes an iterable of iterables and yields arrays, matched by position. `zipKeyed()` takes an object of iterables and yields objects, matched by key. The modes and the closing behaviour are the same; only the shape of the input, the output and `padding` differ.
+</Details>
+
+<Details summary="What happens to the other inputs when one runs out?">
+  In the default `"shortest"` mode, the remaining inputs are closed by calling their `return()` method, so generators run their `finally` blocks. In `"strict"` mode, a mismatch throws a `TypeError` and still-open inputs are closed too. Only `"longest"` keeps every input open until each one has finished.
+</Details>
+
+<Details summary="Is Iterator.zip() lazy?">
+  Yes. It pulls one value from each input per step, only when you ask for the next row, which is why infinite inputs work with `"shortest"`. The exception is `padding`, which is read when you call `zip()`.
+</Details>
+
+<Details summary="Can I zip strings, Sets or Maps?">
+  Sets and Maps are iterables, so they work (a Map yields its `[key, value]` entries). Strings are rejected, so wrap them with `Iterator.from("text")` first.
+</Details>
+
+<Details summary="How do I unzip, going from rows back to columns?">
+  There isn't a built-in unzip. For arrays of arrays, `rows[0].map((_, i) => rows.map((row) => row[i]))` rebuilds the columns, and for keyed rows `Object.keys(rows[0])` with a `.map()` does the same job.
+</Details>
+
+<Details summary="Can I use it in production today?">
+  Only if you cover Safari and Node.js. Detect `Iterator.zip` and load a polyfill when it's missing (confirm that your chosen polyfill covers joint iteration first), or use a small generator for the behaviour you need. Remove the polyfill once your support targets all ship it.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Iterator.zip()` and `Iterator.zipKeyed()` walk several iterables in step, yielding arrays or named objects, lazily and with the right cleanup. Pick the `mode` on purpose (`"shortest"` is the default, `"strict"` catches mismatched data and `"longest"` keeps everything), supply `padding` per input, and detect the feature before depending on it, because Safari and Node.js are still catching up.

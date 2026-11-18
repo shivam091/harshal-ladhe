@@ -1310,5 +1310,9 @@ export const tagMeta: Record<string, TagMeta> = {
   "css-wide-keywords": {
     title: "CSS-Wide Keywords",
     description: "The CSS-wide keywords (`initial`, `inherit`, `unset`, `revert`, `revert-layer` and `revert-rule`) and where each rolls a property back to."
+  },
+  "joint-iteration": {
+    title: "Joint Iteration in JavaScript",
+    description: "Walking several iterables in step with `Iterator.zip()` and `Iterator.zipKeyed()`: modes, padding, closing behaviour and fallbacks."
   }
 };
