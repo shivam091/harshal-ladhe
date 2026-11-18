@@ -1299,6 +1299,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "`color-mix()` in CSS",
     description: "Blending two CSS colours in a chosen colour space, including mixing with transparent."
   },
+  "mask-image": {
+    title: "CSS `mask-image`",
+    description: "Using CSS `mask-image` to paint shapes, icons and gradients as alpha masks over any element."
+  },
   "revert-rule": {
     title: "CSS `revert-rule`",
     description: "The `revert-rule` CSS-wide keyword, which drops a single style rule's declaration so the cascade decides the value."

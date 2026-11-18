@@ -1,0 +1,408 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("light-dark-images");
+
+## Introduction
+
+[`light-dark()`](/tutorial/light-dark-color-scheme) has long picked between two colours. That covers text, borders and
+flat backgrounds, but a themed page usually has pictures as well: a dotted pattern for the light hero and a gradient
+for the dark one, a logo drawn in a different style at night, an icon swapped for its moon twin. For those you still
+needed a `@media (prefers-color-scheme: dark)` block, or a custom property set in two places, and neither of them
+followed a manual theme toggle unless you wired that up too.
+
+`light-dark()` now accepts **`<image>` values** as well, so one declaration covers both schemes:
+
+<CodeBlock language="css">
+{`
+  :root {
+    color-scheme: light dark;
+  }
+
+  .hero {
+    background-image: light-dark(url("sun.svg"), linear-gradient(135deg, #312e81, #1e1b4b));
+  }
+`}
+</CodeBlock>
+
+The function is defined in CSS Color Level 5. Support arrived in Chrome and Edge 150 and Firefox 150, and Safari 27
+completes the set, per [caniuse](https://caniuse.com/wf-light-dark-image) and web.dev's September 2026 round-up.
+
+<RainbowDivider />
+
+## Why Colours Alone Weren't Enough
+
+A colour can live in a custom property, so a single `light-dark()` token worked for it. An image couldn't take part,
+because the function only allowed two `<color>` arguments:
+
+<CodeBlock language="css">
+{`
+  /* Before: the image itself is repeated per scheme */
+  .hero {
+    background-image: url("light.svg");
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .hero {
+      background-image: url("dark.svg");
+    }
+  }
+
+  /* Manual toggle: a second copy, keyed on an attribute */
+  :root[data-theme="dark"] .hero {
+    background-image: url("dark.svg");
+  }
+`}
+</CodeBlock>
+
+That's three rules for one property, and the media query and the attribute selector have to be kept in step. Anything
+that is a colour, such as a mask painted in `currentColor`, was fine, but the pattern or the logo file wasn't.
+
+<RainbowDivider />
+
+## `light-dark()` Image Syntax
+
+The image form takes two images, the light one first:
+
+<CodeBlock language="css">
+{`
+  light-dark(url("light.png"), url("dark.png"))
+  light-dark(linear-gradient(white, #ddd), linear-gradient(#222, black))
+  light-dark(image-set(url("a.png") 1x, url("a@2x.png") 2x), none)
+`}
+</CodeBlock>
+
+Per the spec and MDN:
+
+- Each argument is an `<image>`, such as a `url()`, an `image-set()` or any gradient.
+- Each argument may also be the keyword **`none`**, which computes to a fully transparent image with no natural size.
+- It returns the first image when the element's used colour scheme is `light` (or no preference is set) and the second
+  when it is `dark`.
+- You can't mix kinds. `light-dark(red, url(a.png))` is invalid, because the arguments must be both colours or both
+  images.
+
+Use it wherever an `<image>` is accepted: `background-image`, `border-image-source`, `mask-image`, `list-style-image`
+and `content`.
+
+<Info>
+  `none` as an argument is the newest part of the feature, and its computed value was still being settled in 2026. For
+  an empty side, use a transparent gradient such as `linear-gradient(transparent, transparent)`.
+</Info>
+
+<RainbowDivider />
+
+## It Still Needs `color-scheme: light dark`
+
+Nothing changes about how the scheme is chosen. The element needs a `color-scheme` that includes both values, usually
+on `:root`, and the browser then resolves it from the user's setting or from an explicit override:
+
+<CodeBlock language="css">
+{`
+  :root {
+    color-scheme: light dark; /* without both keywords, light-dark() always returns the light value */
+  }
+`}
+</CodeBlock>
+
+That is the same rule as for colours, covered in the [colour tutorial](/tutorial/light-dark-color-scheme). If a hero
+stays on its light image in a dark browser, this declaration is the first thing to check.
+
+<RainbowDivider />
+
+## Theming a Hero Background
+
+A pattern for the light theme and a gradient for the dark one, with matching background colours underneath:
+
+<CodeBlock language="css">
+{`
+  .hero {
+    color: light-dark(#1e1b4b, #e0e7ff);
+    background-color: light-dark(#eef2ff, #1e1b4b);
+    background-image: light-dark(
+      url("/img/dots.svg"),
+      linear-gradient(135deg, #312e81, #1e1b4b)
+    );
+  }
+`}
+</CodeBlock>
+
+Keep the `background-color` themed too. It shows while an image loads, and it is what the text contrast is judged
+against if the image fails.
+
+### Gradients
+
+Gradients need no files, which makes them the cheapest way to try it. Each side can be a different kind:
+
+<CodeBlock language="css">
+{`
+  .banner {
+    background-image: light-dark(
+      radial-gradient(circle at top, #fef3c7, transparent 60%),
+      conic-gradient(from 180deg at 50% 0, #1e293b, #0f172a)
+    );
+  }
+`}
+</CodeBlock>
+
+### Using Custom Properties
+
+Putting the pair in a variable works as long as the variable holds the **whole** `light-dark()` call:
+
+<CodeBlock language="css">
+{`
+  :root {
+    --hero-image: light-dark(url("dots.svg"), linear-gradient(transparent, transparent));
+  }
+
+  .hero {
+    background-image: var(--hero-image);
+  }
+`}
+</CodeBlock>
+
+The variable is substituted as text, so it resolves against the scheme of the element that uses it, not of `:root`.
+That is what lets a section with its own `color-scheme` pick the right image.
+
+<RainbowDivider />
+
+## Logos and Icons
+
+For a logo that changes between schemes, set both files on `background-image` and keep the sizing in longhands:
+
+<CodeBlock language="css">
+{`
+  .logo {
+    inline-size: 8rem;
+    aspect-ratio: 4 / 1;
+    background-image: light-dark(url("logo-dark-text.svg"), url("logo-light-text.svg"));
+    background-position: center;
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+`}
+</CodeBlock>
+
+The `background` shorthand would also accept `light-dark(<image>, <image>)`, but a browser without support then drops
+the entire shorthand, position and size included. With longhands, only `background-image` is lost, so the fallback in
+the support section has just one declaration to replace.
+
+A background image is invisible to assistive technology, so give the element a name if it is the logo itself. On a
+link, the `aria-label` is enough, and adding `role="img"` would strip the link's role:
+
+<CodeBlock language="html">
+{`
+  <a class="logo" href="/" aria-label="Acme home"></a>
+`}
+</CodeBlock>
+
+For a non-interactive logo, use `role="img"` with the `aria-label` on a `<span>` or `<div>` instead.
+
+For a plain single-colour icon, you often don't need two files at all. Paint it with `mask-image` over
+`background-color: currentColor` and the text colour does the theming. Reach for the image form when the two schemes
+need different **shapes**, such as a sun and a moon.
+
+<RainbowDivider />
+
+## `mask-image`
+
+Masks take an `<image>` too, so the same trick swaps a shape:
+
+<CodeBlock language="css">
+{`
+  .theme-icon {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    background-color: currentColor;
+    mask-image: light-dark(url("sun.svg"), url("moon.svg"));
+    mask-position: center;
+    mask-size: contain;
+    mask-repeat: no-repeat;
+  }
+`}
+</CodeBlock>
+
+Only the shape's alpha channel matters, so the two files can be any colour. The sandbox below uses the same approach
+for its logo. Add `-webkit-mask-image` alongside `mask-image` if you still support older WebKit builds that need the
+prefix.
+
+<RainbowDivider />
+
+## With a Manual Theme Toggle
+
+`light-dark()` reads the element's used scheme, so a toggle only has to change `color-scheme`. Set it from a data
+attribute on the root and every themed image follows, with no extra image rules:
+
+<CodeBlock language="css">
+{`
+  :root {
+    color-scheme: light dark;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="javascript">
+{`
+  // "light", "dark", or remove the attribute to return to the system setting
+  document.documentElement.dataset.theme = "dark";
+`}
+</CodeBlock>
+
+The three-way choice in the sandbox works this way: Light and Dark pin the scheme, System restores
+`light dark`. The old approach needed `[data-theme="dark"]` selectors repeated for every image.
+
+<RainbowDivider />
+
+## Try It Live
+
+Switch between Light, Dark and System. The hero's pattern or gradient and the logo's sun or moon mask each come from
+one `light-dark()` declaration, and the readout shows which scheme was used and whether your browser painted it with
+`light-dark()` or with the media-query fallback. Every image is an inline data URI, so there are no network requests.
+
+<Sandbox slug="light-dark-images" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Accessibility and Performance
+
+### Accessibility
+
+- **Contrast moves with the image.** If text sits on the background, check it against *both* images, and keep a themed
+  `background-color` underneath as a safety net. A pattern that is subtle in light mode can become noisy in dark mode.
+- **Backgrounds carry no meaning.** Anything that conveys information needs a text equivalent. Use an
+  `aria-label` as above, or a real `<img>` if the picture is content.
+
+### Performance
+
+Neither the spec nor MDN says whether the browser requests both images or only the one in use, so don't assume the
+unused one is free. Open the Network panel, switch the
+scheme and check what your target browsers fetch. If you need a guarantee that only one file loads, the
+`@media (prefers-color-scheme: dark)` pattern remains the straightforward way to get it.
+
+Whatever the loading behaviour, the usual rules hold: small SVGs and gradients cost almost nothing, large photos
+deserve `image-set()` for resolutions, and a hero background that is the largest element on the page still counts
+towards LCP.
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`light-dark()` with image values is supported in Chrome 150, Edge 150, Firefox 150 and Safari 27, according to
+caniuse. The older colour-only form has been Baseline since May 2024, so a browser can understand `light-dark()` for
+colours and still reject it for images. Feature-detect the image form specifically:
+
+<CodeBlock language="css">
+{`
+  /* Baseline for everyone: light image, then dark via the media query */
+  .hero {
+    background-image: url("dots.svg");
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .hero {
+      background-image: linear-gradient(135deg, #312e81, #1e1b4b);
+    }
+  }
+
+  /* Browsers that understand image values take over, and honour a manual toggle too */
+  @supports (background-image: light-dark(linear-gradient(red, red), linear-gradient(blue, blue))) {
+    .hero {
+      background-image: light-dark(url("dots.svg"), linear-gradient(135deg, #312e81, #1e1b4b));
+    }
+  }
+`}
+</CodeBlock>
+
+The `@supports` query uses two gradients because they need no files and are plain `<image>` values, so the query is
+true exactly when the browser accepts images inside `light-dark()`. Avoid testing with `none`, the newest part of the
+feature, which could make the query false in a browser that handles `url()` pairs.
+
+Don't use a repeated declaration as the fallback. A `background-image` that contains `var()` is accepted at parse time
+and only found invalid when it is computed, so the earlier line is lost and the property becomes `none`. `@supports`
+avoids that.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Forgetting `color-scheme`
+
+Without `color-scheme: light dark` the light image is always used, whatever the system setting.
+
+### 2. Mixing a Colour and an Image
+
+`light-dark(white, url(a.png))` is invalid. Wrap a colour in a gradient, `linear-gradient(white, white)`, if one side
+is a flat colour.
+
+### 3. Putting it in the Wrong Property
+
+A `<color>` pair on `background-image`, or an image pair on `background-color`, is invalid too. Check the property
+accepts the kind of value you are passing.
+
+### 4. A Manual Toggle that Only Sets a Class
+
+If your toggle changes a class and no `color-scheme`, `light-dark()` never sees it. Have the class or attribute set
+`color-scheme` as shown above.
+
+### 5. Assuming Only One Image Loads
+
+See the performance notes: check the network before relying on it.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Hero and section backgrounds that change pattern, gradient or illustration with the theme
+- Logos, illustrations and decorative images with a light and a dark variant
+- Icons that differ in shape between schemes, drawn with `mask-image`
+- Sites with a three-way theme toggle that previously duplicated image rules per selector
+
+**Reach for something else** when the picture is content (use `<img>` with `<picture>` and a
+`prefers-color-scheme` source), when the two schemes need entirely different markup, or when you have to support
+browsers older than the versions above without a fallback.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Can I use it on an img element's src?">
+  No. `light-dark()` is a CSS function, so it only applies where CSS takes an `<image>`: backgrounds, masks, borders,
+  `list-style-image` and `content`. For an `<img>`, use `<picture>` with
+  `<source media="(prefers-color-scheme: dark)">`.
+</Details>
+
+<Details summary="Does it follow a toggle that sets color-scheme from JavaScript?">
+  Yes. It resolves against the used `color-scheme` of the element, so changing it on `:root` or any ancestor switches
+  the image, with no extra rules.
+</Details>
+
+<Details summary="Can the images be animated or transitioned?">
+  Changing scheme swaps the image. Don't count on a smooth cross-fade between two different image kinds, because this
+  page doesn't cover how browsers animate that. For a fade that works everywhere, layer both images and transition their `opacity`,
+  which costs you the single-declaration simplicity.
+</Details>
+
+<Details summary="Can I mix a url() and a gradient?">
+  Yes. Both are `<image>` values, so one side can be `url()` and the other a gradient, as in the hero above.
+</Details>
+
+<Details summary="Why does it always show the light image?">
+  Almost always because `color-scheme` doesn't include both `light` and `dark`, or because the browser is older than
+  the versions listed and dropped the declaration.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`light-dark(<image>, <image>)` swaps backgrounds, masks and other images between colour schemes in a single
+declaration, using the same `color-scheme: light dark` setup as the colour form. It follows a manual toggle that sets
+`color-scheme`, and works with `url()`, `image-set()` and gradients. Support is new, so put a media-query fallback
+first and the `light-dark()` version in `@supports`, check contrast against both images, and measure the network
+rather than assuming the unused image isn't fetched.

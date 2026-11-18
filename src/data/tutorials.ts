@@ -683,6 +683,17 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-18", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "light-dark-images",
+    title: "Swap Images by Theme with `light-dark()`",
+    excerpt: "Swap backgrounds, masks and icons per colour scheme.",
+    description: "Use image values such as url(), gradients and image-set() inside CSS light-dark() to swap backgrounds, logos and masks between light and dark colour schemes, with colour-scheme setup, a manual toggle, accessibility notes and an @supports fallback.",
+    category: ["CSS"],
+    tags: ["css", "light-dark", "color-scheme", "dark-mode", "theming", "modern-css", "gradients", "background", "browser-support", "progressive-enhancement", "feature-detection", "mask-image"],
+    changelog: [
+      { date: "2026-11-18", change: "Initial publication." }
+    ]
   }
 ];
 

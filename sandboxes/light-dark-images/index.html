@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>light-dark() Images Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Swapping Images with light-dark()</h1>
+        <p>The hero's background and the logo's mask are each one declaration, <code>light-dark(&lt;image&gt;, &lt;image&gt;)</code>. Choose a scheme and both swap together, with no media query.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>&lt;image&gt;</code> values in <code>light-dark()</code>, so the hero uses its <code>@media (prefers-color-scheme: dark)</code> fallback and follows your system setting only. Chrome, Edge and Firefox 150 and Safari 27 support it.</p>
+
+      <fieldset class="control-group">
+        <legend>Colour scheme</legend>
+        <div class="scheme-options" role="radiogroup" aria-label="Colour scheme">
+          <label><input type="radio" name="scheme" value="light"> Light</label>
+          <label><input type="radio" name="scheme" value="dark"> Dark</label>
+          <label><input type="radio" name="scheme" value="system" checked> System</label>
+        </div>
+      </fieldset>
+
+      <section class="stage" id="stage" data-scheme="system" aria-label="Preview">
+        <div class="hero">
+          <span class="logo" role="img" aria-label="Logo"></span>
+          <h2>Hello, both themes</h2>
+          <p>This background is a single <code>light-dark()</code> declaration.</p>
+        </div>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>
