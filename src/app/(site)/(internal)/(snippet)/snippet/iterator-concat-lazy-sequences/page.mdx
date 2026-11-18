@@ -1,0 +1,236 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("iterator-concat-lazy-sequences");
+
+## Introduction
+
+Joining two collections in JavaScript usually means copying them: `[...a, ...b]` builds a brand-new array holding every
+item, even if you only wanted the first few. Joining lazily meant writing a generator with `yield*` by hand.
+
+**`Iterator.concat()`** does the lazy version for you. Give it any number of iterables and it returns **one iterator**
+that walks them in order. Nothing is copied, and a source isn't opened until the one before it has run out. Because the
+result is a real `Iterator`, the ES2025 helpers (`.filter()`, `.map()`, `.take()` and friends) work on it straight away.
+
+The [ES2026 roundup](/post/javascript/whats-new-in-es2026) introduces it briefly. This snippet goes further into how it
+compares with the alternatives and where laziness pays off. To walk iterables side by side instead of one after another,
+see [`Iterator.zip()` and `Iterator.zipKeyed()`](/tutorial/iterator-zip-zipkeyed).
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="js">
+{`
+  const recent = [1, 2];
+  const archived = new Set([3, 4]);
+  const pinned = new Map([["k", 5]]).values();
+
+  // One iterator over three different kinds of source, nothing copied
+  const all = Iterator.concat(recent, archived, pinned);
+
+  [...all]; // [1, 2, 3, 4, 5]
+
+  // Helpers work directly on the result
+  Iterator.concat([1, 2, 3], [4, 5, 6])
+    .filter((n) => n % 2 === 0)
+    .toArray(); // [2, 4, 6]
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. **Arguments must be iterable objects.** Arrays, sets, maps, generators and built-in iterators (which are
+   themselves iterable) all work. A plain object with only a `next()` method does not: wrap it with `Iterator.from()`
+   first.
+2. **Arguments are checked immediately.** A string (a primitive, even though it's iterable), a number or a
+   non-iterable object throws a `TypeError` at the `Iterator.concat()` call, not later during iteration.
+3. **Sources are opened lazily.** Each source's `[Symbol.iterator]()` is only called when the previous source has been
+   exhausted and the iteration reaches it.
+4. **Early exit closes only what is open.** If the consumer stops (a `for...of` with `break`, or `.take()` finishing),
+   `return()` is called on the source currently being read. Sources further along were never opened, so they are never
+   touched. This matches how `yield*` behaves.
+
+<CodeBlock language="js">
+{`
+  Iterator.concat("ab");        // TypeError (strings are primitives)
+  Iterator.concat({ next() {} }); // TypeError (not iterable)
+
+  // Wrap, or spread, when you do want a string's characters
+  Iterator.concat([..."ab"], [1]).toArray(); // ["a", "b", 1]
+  Iterator.concat(Iterator.from({ next: () => ({ done: true }) })); // OK
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Example Usage
+
+### Concat versus the alternatives
+
+<CodeBlock language="js">
+{`
+  const a = [1, 2];
+  const b = [3, 4];
+
+  // Spread: an eager copy, every item in memory straight away
+  const copy = [...a, ...b];
+
+  // Generator: lazy, but you write and maintain it
+  function* chain() {
+    yield* a;
+    yield* b;
+  }
+
+  // Iterator.concat(): lazy, one line, and helper methods come built in
+  const lazy = Iterator.concat(a, b);
+
+  // flatMap: lazy too, and the right tool when the list of sources is itself a stream
+  const viaFlatMap = [a, b].values().flatMap((list) => list);
+`}
+</CodeBlock>
+
+Use `Iterator.concat()` when you know the sources up front. If the sources arrive from another iterator, possibly
+without end, `flatMap()` is the better fit: spreading an endless list into `Iterator.concat(...sources)` never finishes.
+
+### Sources that are never touched
+
+Short-circuiting is the payoff. Here the second source logs when it is opened, and it never is:
+
+<CodeBlock language="js">
+{`
+  function* source(name, values) {
+    console.log("opening " + name);
+    yield* values;
+  }
+
+  const firstTwo = Iterator.concat(source("cache", [1, 2, 3]), source("network", [4, 5, 6])).take(2);
+
+  console.log([...firstTwo]);
+  // opening cache
+  // [1, 2]
+  // "opening network" is never logged
+`}
+</CodeBlock>
+
+Generators don't run any of their body until first advanced, so "opening cache" appears only once iteration starts, and
+"network" never gets that far.
+
+### Paging lazily
+
+Each page is "fetched" only when the previous one has been consumed. These generators only pretend to fetch (they log a
+line and yield values), but real paged requests would behave the same way: taking seven items from two sources needs only
+as many fetches as it takes to find them.
+
+<CodeBlock language="js">
+{`
+  function* pages(label, pageCount, pageSize) {
+    for (let page = 0; page < pageCount; page++) {
+      console.log("fetching " + label + " page " + page);
+      for (let i = 0; i < pageSize; i++) yield label + "-" + (page * pageSize + i);
+    }
+  }
+
+  const firstSeven = Iterator.concat(pages("a", 3, 2), pages("b", 3, 2)).take(7).toArray();
+  // fetching a page 0
+  // fetching a page 1
+  // fetching a page 2
+  // fetching b page 0
+  // firstSeven: ["a-0", "a-1", "a-2", "a-3", "a-4", "a-5", "b-0"]
+  // b pages 1 and 2 are never fetched
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Fallback for Older Runtimes
+
+`Iterator.concat()` is supported in Chrome and Edge 146, Firefox 147, Safari 26.4, Node.js 26 and Deno 2.7.2 (see
+[MDN's compatibility data](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/concat)).
+For older engines, a generator reproduces the behaviour. It validates its arguments up front like the native version,
+then delegates with `yield*`, which also closes only the current source on early exit. For feature detection and loading
+polyfills safely, see
+[Backwards-Compatible JavaScript: Polyfills and Baseline](/post/javascript/backwards-compatible-javascript):
+
+<CodeBlock language="js">
+{`
+  function concatFallback(...iterables) {
+    // Validate eagerly, as the native method does, so mistakes surface at the call site
+    const sources = iterables.map((source) => {
+      if (Object(source) !== source || typeof source[Symbol.iterator] !== "function") {
+        throw new TypeError("Iterator.concat expects iterable objects");
+      }
+      return source;
+    });
+
+    return (function* () {
+      for (const source of sources) yield* source;
+    })();
+  }
+
+  const concat = typeof Iterator !== "undefined" && typeof Iterator.concat === "function"
+    ? Iterator.concat
+    : concatFallback;
+`}
+</CodeBlock>
+
+The generator it returns only has `.filter()`, `.take()` and the other helpers where the engine already supports
+iterator helpers (the post above shows how to detect them). Where it doesn't, loop with `for...of` or `Array.from()`
+instead.
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Layered data sources**, such as an in-memory cache followed by a database cursor, reading the slower one only if needed.
+- **Pagination**: treat several pages as a single stream and stop when you have enough.
+- **Merging Maps or Sets**: `new Map(Iterator.concat(map1, map2))` with no intermediate array.
+- **Prepending or appending a value** to a large or infinite sequence, such as a header row before a generator of rows.
+- **Search results from several indexes**, filtered and limited as one list.
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Validation is immediate, opening is not:** a bad argument throws at the call, but a source whose
+  `[Symbol.iterator]()` throws when opened only does so once iteration reaches it.
+- **The argument list must be finite and modest:** engines cap how many arguments a call can take. For an unbounded
+  number of sources, use `flatMap()`.
+- **Order is strict:** sources are never interleaved. For round-robin or merged-by-value output you need your own
+  generator.
+- **Sources are consumed once:** if you pass in an iterator (not a re-iterable like an array), items already taken
+  from it are gone.
+- **Convert only at the end:** keep chaining helpers and call `.toArray()` last, so the whole pipeline stays lazy.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Why does Iterator.concat('ab') throw?">
+  Every argument must be an object, and a string is a primitive even though it's iterable. Use `[..."ab"]`, or
+  `Iterator.from("ab")`, to supply its characters instead.
+</Details>
+
+<Details summary="Can I pass iterators, or only iterables?">
+  Iterables. Built-in iterators and generators qualify because they are iterable themselves. A hand-written object
+  with just `next()` is not iterable, so wrap it with `Iterator.from()` first.
+</Details>
+
+<Details summary="Is it different from [...a, ...b]?">
+  Yes. Spread builds a complete new array immediately. `Iterator.concat()` produces values one at a time, copies
+  nothing, and works with sources that are huge or infinite.
+</Details>
+
+<Details summary="What happens if I stop iterating early?">
+  The source being read at that moment has its `return()` called so it can clean up. Sources that haven't been reached
+  are never opened.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`Iterator.concat(a, b, c)` chains iterables into one lazy iterator: no copying, strings and non-iterables rejected at
+the call, sources opened only when reached, and only the current one closed on early exit. Pair it with `.filter()` and
+`.take()`, and keep a small `yield*` generator around for engines older than Chrome 146, Firefox 147 and Safari 26.4.

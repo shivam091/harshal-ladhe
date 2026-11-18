@@ -321,6 +321,17 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-15", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "iterator-concat-lazy-sequences",
+    title: "`Iterator.concat()`: Chain Iterables into One Lazy Sequence",
+    excerpt: "Chain iterables into one lazy, short-circuiting iterator.",
+    description: "Chain iterables lazily with ES2026's Iterator.concat(), compared with spread, yield* and flatMap, plus short-circuiting, paging, errors and a generator fallback.",
+    category: ["JavaScript"],
+    tags: ["javascript", "es2026", "iterator-helpers", "polyfills", "generators", "lazy-evaluation"],
+    changelog: [
+      { date: "2026-11-18", change: "Initial publication." }
+    ]
   }
 ];
 

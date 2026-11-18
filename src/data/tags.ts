@@ -1311,6 +1311,14 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "CSS-Wide Keywords",
     description: "The CSS-wide keywords (`initial`, `inherit`, `unset`, `revert`, `revert-layer` and `revert-rule`) and where each rolls a property back to."
   },
+  "generators": {
+    title: "JavaScript Generators",
+    description: "Writing lazy, pausable sequences with `function*` and `yield`, and delegating to other iterables with `yield*`."
+  },
+  "lazy-evaluation": {
+    title: "Lazy Evaluation in JavaScript",
+    description: "Producing values only when they are needed, using generators and iterator helpers to avoid copying or computing whole collections up front."
+  },
   "joint-iteration": {
     title: "Joint Iteration in JavaScript",
     description: "Walking several iterables in step with `Iterator.zip()` and `Iterator.zipKeyed()`: modes, padding, closing behaviour and fallbacks."
