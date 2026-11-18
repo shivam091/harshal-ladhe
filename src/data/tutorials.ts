@@ -641,6 +641,7 @@ export const tutorials: Tutorial[] = [
       caption: "Eight background colours, each with black or white text chosen by one contrast-color() rule."
     },
     changelog: [
+      { date: "2026-11-18", change: "Added cross-reference to tutorial '`alpha()`: Change a Colour's Opacity Without Touching Its Hue'" },
       { date: "2026-11-15", change: "Initial publication." }
     ]
   },
