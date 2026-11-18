@@ -1298,5 +1298,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "color-mix": {
     title: "`color-mix()` in CSS",
     description: "Blending two CSS colours in a chosen colour space, including mixing with transparent."
+  },
+  "revert-rule": {
+    title: "CSS `revert-rule`",
+    description: "The `revert-rule` CSS-wide keyword, which drops a single style rule's declaration so the cascade decides the value."
+  },
+  "css-wide-keywords": {
+    title: "CSS-Wide Keywords",
+    description: "The CSS-wide keywords (`initial`, `inherit`, `unset`, `revert`, `revert-layer` and `revert-rule`) and where each rolls a property back to."
   }
 };

@@ -39,6 +39,13 @@ export const sandboxes: SandboxMeta[] = [
     entry: "/index.html"
   },
   {
+    slug: "css-revert-rule",
+    title: "revert-rule Keyword Playground",
+    description: "Choose unset, initial, revert, revert-layer or revert-rule for the last rule in a layered cascade stack and read the computed font-weight back with getComputedStyle(), with all five keywords compared side by side.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-custom-highlight-api",
     title: "Custom Highlight API Playground",
     description: "Search an article and watch every match painted by ::highlight(search-results), with the current match on top via a higher-priority ::highlight(search-current). Step through matches, toggle case sensitivity, edit the text to see the StaticRanges rebuilt, and confirm that no <mark> element is ever added.",

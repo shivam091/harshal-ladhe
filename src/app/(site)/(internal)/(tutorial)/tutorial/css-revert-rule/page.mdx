@@ -1,0 +1,305 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-revert-rule");
+
+## Introduction
+
+CSS has long had ways to say "forget what I set here": `initial`, `inherit` and `unset`. It later gained two
+better-aimed versions: **`revert`**, which steps back out of your whole stylesheet, and **`revert-layer`**, which steps
+back out of one cascade layer. Neither can say "ignore only this declaration and let the next rule decide". That's
+the gap **`revert-rule`** fills.
+
+It's a CSS-wide keyword that rolls a property back to the value it would have had if the **current style rule weren't
+there at all**:
+
+<CodeBlock language="css">
+{`
+  p {
+    color: blue;
+    font-weight: bold;
+  }
+
+  p.special {
+    color: revert-rule; /* ignored: the p rule's blue applies */
+    border: 1px solid currentColor;
+  }
+`}
+</CodeBlock>
+
+Only the `color` declaration in `p.special` is dropped. Its `border` still applies, and so does every other rule
+that matches. It's defined in CSS Cascading and Inheritance Level 5, and it's supported in Chrome and Edge 148,
+Firefox 150 and Safari 27.
+
+<RainbowDivider />
+
+## Where Each Keyword Rolls Back To
+
+When several rules set the same property, the cascade picks a winner by **origin** (browser, user or your own styles),
+then by **layer** (`@layer`), then by specificity and source order. The keywords below each answer "what should this
+property be instead?" by stepping back through that order by a different amount:
+
+| Keyword | Rolls back to |
+| --- | --- |
+| `initial` | The property's initial value from the spec, ignoring the cascade and inheritance |
+| `unset` | The inherited value for an inherited property such as `color`, or the initial value for any other |
+| `revert` | The value from the previous **origin**: your stylesheets give way to the user's, then the browser's own |
+| `revert-layer` | The value from the previous **cascade layer** (or, with no earlier declaration in the origin, the previous origin) |
+| `revert-rule` | The value the cascade gives with **this one rule removed**: an earlier rule in the same layer, another layer, another origin, or the default |
+
+Put another way, they remove progressively less. `revert` removes all your declarations, `revert-layer` removes the
+current layer's, and `revert-rule` removes just the current rule's. The other rules in the same layer keep applying.
+
+<Info title="A different job from the others">
+  `initial` and `unset` don't look at your other rules at all: they give the initial value, or the parent's value for an
+  inherited property. The three `revert` keywords hand the decision back to the cascade, with a different amount of it
+  removed. That's why `revert-rule` can end up on a value your
+  stylesheet chose earlier, which `initial` and `unset` never do.
+</Info>
+
+<RainbowDivider />
+
+## How `revert-rule` Works
+
+The spec describes it as computing the value "as if the current style rule had not been present at all". The cascade
+then continues through the remaining declarations. Three examples show the shape of it.
+
+### Falling Back to an Earlier Rule
+
+This is the example from the top of the page. `p.special` is more specific than `p`, so it would win, but its
+`color` declaration rolls back and the `p` rule's blue shows through.
+
+### Ignoring a Style Attribute
+
+An inline `style` attribute is a style rule too, so it can drop itself:
+
+<CodeBlock language="html">
+{`
+  <p style="color: revert-rule">This text uses the stylesheet colour.</p>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  p {
+    color: green;
+  }
+`}
+</CodeBlock>
+
+The inline declaration is ignored and the `p` rule makes the text green. It's useful when a template or CMS writes
+the inline style and something downstream wants to switch it off for one property.
+
+### Chaining
+
+Several `revert-rule` declarations in a row are removed one after another:
+
+<CodeBlock language="css">
+{`
+  p { color: red; }
+  p.a { color: revert-rule; }
+  p.b { color: revert-rule; }
+`}
+</CodeBlock>
+
+For `<p class="a b">`, the cascade drops `p.b`, finds `p.a`, drops that too, and continues back to `p`, so the text
+is red.
+
+### It Works on Any Property
+
+Like every CSS-wide keyword, it can be used on any property, including the `all` shorthand.
+
+<RainbowDivider />
+
+## Practical Uses
+
+### Conditional Declarations with `if()`
+
+The spec's own example puts `revert-rule` in the `else` branch of [`if()`](/tutorial/css-if-conditional-values), so a
+rule contributes a value only under a condition and otherwise steps aside:
+
+<CodeBlock language="css">
+{`
+  .card {
+    border-radius: if(style(--mode: sharp): 0px; else: revert-rule);
+  }
+`}
+</CodeBlock>
+
+When `--mode` computes to `sharp`, the card gets square corners. In any other mode the declaration is ignored and the
+card keeps whatever radius an earlier rule gave it, such as a base component style or a reset. Without `revert-rule`
+you would have to repeat that earlier value in the `else` branch and keep the two in step.
+
+### One Rule Switching Itself Off
+
+A utility or theme rule can carry its own off switch, driven by a custom property that the page or a parent sets:
+
+<CodeBlock language="css">
+{`
+  .card {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: if(style(--compact: true): 0.5rem; else: revert-rule);
+  }
+`}
+</CodeBlock>
+
+The second rule only changes `padding` when `--compact` is `true`. When it isn't, the rule disappears for that
+property and the first rule's `1rem` applies. Both rules can live in different layers or files without either one
+needing to know the other's value.
+
+### Choosing Between `revert-rule` and `revert-layer`
+
+The two look alike, so the question to ask is how much should go:
+
+<CodeBlock language="css">
+{`
+  @layer base, components;
+
+  @layer base {
+    button { padding: 0.5rem 1rem; }
+  }
+
+  @layer components {
+    button { padding: 1rem 2rem; }
+
+    button.plain {
+      padding: revert-layer; /* 0.5rem 1rem: the components layer is skipped entirely */
+    }
+
+    button.tight {
+      padding: revert-rule; /* 1rem 2rem: only this rule is skipped */
+    }
+  }
+`}
+</CodeBlock>
+
+`revert-layer` throws away every `components` rule for `padding`, including the one a few lines up. `revert-rule`
+throws away only `button.tight`'s declaration. For more on layers, see
+[CSS Cascade Layers (`@layer`)](/post/css/css-cascade-layers).
+
+### Inside `@scope`
+
+A rule written inside [`@scope`](/post/css/css-scope-at-rule-guide) is still a style rule, and `revert-rule` is defined
+per style rule, so it should drop just that rule's declaration. The spec and MDN give no scoped example, so test it in
+your target browsers before relying on it.
+
+<RainbowDivider />
+
+## Try It Live
+
+The heading below sits on a stack of four rules: the browser's own bold, a `base` layer weight of 300, a `theme` layer
+weight of 500 and a final rule in the `theme` layer that uses the keyword you choose. The readout shows the computed
+`font-weight` read back with `getComputedStyle()`, and the list underneath runs all five keywords at once. Each lands
+on a different number, which makes it easy to see where it rolled back to.
+
+<Sandbox slug="css-revert-rule" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`revert-rule` is supported in Chrome and Edge 148, Firefox 150 and Safari 27, according to the web.dev
+[New to the web platform in September 2026](https://web.dev/blog/web-platform-09-2026) roundup and the Can I use
+data. With Safari 27 joining the others, MDN marks it **Baseline newly available** from September 2026.
+
+For older browsers, you can test for it with `@supports`:
+
+<CodeBlock language="css">
+{`
+  @supports (color: revert-rule) {
+    .card {
+      border-radius: if(style(--mode: sharp): 0px; else: revert-rule);
+    }
+  }
+`}
+</CodeBlock>
+
+A plain declaration needs no guard for the common case. A browser that doesn't know the keyword treats
+`color: revert-rule` as invalid and drops the declaration when the stylesheet is parsed, which is the same outcome
+`revert-rule` would have produced.
+
+That safety net doesn't extend to declarations that contain `if()` or `var()`. Those are accepted at parse time and
+only found invalid when the value is computed, at which point the property falls back to `unset` rather than to the
+earlier rule. A browser that understands `if()` but not `revert-rule` therefore needs the `@supports` guard, with a
+plain earlier declaration as the fallback.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Expecting It to Undo an Earlier Rule
+
+`revert-rule` removes the rule it's written in, and nothing more. In `.btn.plain { background: revert-rule }`, the
+`.btn` rule's background still applies. To skip the component's own styles for a variant, use `revert-layer` when they
+live in a layer, or `revert` to go all the way back to the browser's styles.
+
+### 2. Forgetting That It Defers to the Cascade
+
+The result isn't a fixed value. It depends on what other rules match, so adding a new rule can change what a
+`revert-rule` declaration resolves to. If you want one known answer, use `initial` or a literal value.
+
+### 3. Mistaking `revert` for a Reset to Zero
+
+`revert` and the other revert keywords can land on the browser's default, which is often not `initial`. A `<h4>` rolls
+back to bold, not `normal`. If the browser has no style for the property, `revert` behaves like `unset`.
+
+### 4. Using It in Animations
+
+Inside a CSS animation, `revert-rule` behaves like `revert-layer`, so it removes more than one rule there. Don't rely on
+single-rule behaviour in `@keyframes`.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Conditional rules built with `if()` or style queries that should step aside in the default case
+- Inline `style` attributes you need to switch off for one property from a stylesheet
+- Design-system rules where a variant should hand a property back to the base component styles
+- Overrides in the middle of a layer, where `revert-layer` would remove too much
+
+**Reach for something else** when you want to skip a whole layer (`revert-layer`), restore the browser's own styles
+(`revert`), or get a fixed default (`initial`).
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="How is revert-rule different from revert-layer?">
+  `revert-layer` ignores every declaration for that property in the current cascade layer and rolls back to an
+  earlier layer. `revert-rule` ignores only the current rule, so other rules in the same layer still apply. The
+  Try It Live section shows it with the same stack: `revert-layer` lands on the `base` layer's 300 and `revert-rule`
+  on the `theme` layer's 500.
+</Details>
+
+<Details summary="Can I use it with the all shorthand?">
+  Yes. MDN says the keyword can be applied to any property, including the `all` shorthand.
+</Details>
+
+<Details summary="Does it work on shorthands such as padding?">
+  Yes. It can be applied to any CSS property, and it is resolved per property. In `.card { padding: 1rem 2rem; }`
+  followed by `.card.tight { padding: revert-rule; }`, the `.card.tight` declaration is ignored and the card keeps
+  `1rem 2rem`.
+</Details>
+
+<Details summary="Which specification defines it?">
+  CSS Cascading and Inheritance Level 5, in the section on the `revert-rule` keyword. The spec's changelog and its
+  `all` property definition both mention it as well.
+</Details>
+
+<Details summary="What happens in a browser that doesn't support it?">
+  A plain `property: revert-rule` declaration is dropped as invalid, which gives the same result. Declarations that
+  wrap it in `if()` or `var()` become invalid when the value is computed and fall back to `unset`, so guard those with
+  `@supports (color: revert-rule)`.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`revert-rule` is the narrowest of the three revert keywords: it removes only the current rule's declaration and lets the
+cascade decide among the rest. Reach for it when a rule should apply its value conditionally, especially with `if()`,
+and step aside the rest of the time. Use `revert-layer` to skip a whole layer and `revert` to go back to the browser's
+own styles. It's Baseline newly available in Chrome and Edge 148, Firefox 150 and Safari 27, and the declaration is
+safe to leave unguarded unless it sits inside `if()` or `var()`.

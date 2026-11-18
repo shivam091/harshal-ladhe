@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>revert-rule Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Rolling Back with revert-rule</h1>
+        <p>The heading below has its <code>font-weight</code> set by the last rule in the cascade stack. Choose the keyword that rule uses and read the computed weight back with <code>getComputedStyle()</code>. Each keyword rolls back to a different place.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>revert-rule</code>, so it drops that declaration and the result below is only what the remaining rules give. It's supported in Chrome and Edge 148, Firefox 150 and Safari 27 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Keyword</legend>
+        <div class="fields-grid">
+          <div class="field field--full">
+            <label for="keyword">The last rule sets <code>font-weight</code> to</label>
+            <select id="keyword">
+              <option value="unset">unset</option>
+              <option value="initial">initial</option>
+              <option value="revert">revert</option>
+              <option value="revert-layer">revert-layer</option>
+              <option value="revert-rule" selected>revert-rule</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <section class="stage" aria-label="Cascade stack and result">
+        <ol class="stack" id="stack"></ol>
+        <h4 class="sample" id="sample" data-keyword="revert-rule">Sample heading</h4>
+      </section>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+
+      <fieldset class="control-group">
+        <legend>All five side by side</legend>
+        <p class="hint">Every row uses the same stack, differing only in the keyword on its last rule.</p>
+        <ul class="compare" id="compare"></ul>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

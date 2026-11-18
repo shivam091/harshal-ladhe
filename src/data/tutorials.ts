@@ -672,6 +672,17 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-18", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-revert-rule",
+    title: "`revert-rule`: Roll Back One CSS Rule, Not the Layer",
+    excerpt: "Roll back one CSS declaration, not a layer.",
+    description: "Learn the CSS revert-rule keyword and how it differs from initial, unset, revert and revert-layer, with a comparison table, conditional if() uses, layer examples, pitfalls and an @supports fallback.",
+    category: ["CSS"],
+    tags: ["css", "revert-rule", "css-wide-keywords", "cascade-layers", "at-scope", "if-function", "conditional-css", "specificity", "progressive-enhancement", "baseline"],
+    changelog: [
+      { date: "2026-11-18", change: "Initial publication." }
+    ]
   }
 ];
 
