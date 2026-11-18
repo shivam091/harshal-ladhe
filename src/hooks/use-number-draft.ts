@@ -12,8 +12,6 @@ export interface UseNumberDraftOptions {
   // Rejects fractional input for fields where only whole numbers are meaningful (a cron step, a day of the week).
   integer?: boolean;
   onValueChange: (value: number) => void;
-  // Runs after the blur clean-up, so an undo checkpoint captures the final, clamped value.
-  onCommit?: () => void;
 }
 
 // Props spread straight onto an <input type="number">.
@@ -31,11 +29,11 @@ export interface NumberDraftInputProps {
   "0" after deleting a "3" produced "30", which then clamped to the maximum. Only an in-range draft
   is passed up while typing; anything else waits for blur, which snaps it back into range.
 */
-export function useNumberDraft({ value, min, max, integer = false, onValueChange, onCommit }: UseNumberDraftOptions): NumberDraftInputProps {
+export function useNumberDraft({ value, min, max, integer = false, onValueChange }: UseNumberDraftOptions): NumberDraftInputProps {
   const [draft, setDraft] = useState(() => String(value));
   const [lastValue, setLastValue] = useState(value);
 
-  // Resync when the value changes from outside (a preset, undo/redo), but leave a draft such as "05" alone when it already equals the new value.
+  // Resync when the value changes from outside (a preset), but leave a draft such as "05" alone when it already equals the new value.
   if (value !== lastValue) {
     setLastValue(value);
     if (draft.trim() === "" || Number(draft) !== value) setDraft(String(value));
@@ -67,7 +65,6 @@ export function useNumberDraft({ value, min, max, integer = false, onValueChange
       if (next !== value) onValueChange(next);
       setDraft(String(next));
     }
-    onCommit?.();
   }
 
   return { value: draft, onChange: handleChange, onBlur: handleBlur, "aria-invalid": parseValid(draft) === null };

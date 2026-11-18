@@ -1,6 +1,7 @@
 import type { ComponentType } from "react";
 import type { IconBoopProps, IconName } from "@/icons/icons";
 import type { ChangelogEntry } from "@/components/Changelog/Changelog.types";
+import IconCron from "@/icons/IconCron";
 
 // Every goodie is a card linking to a section, so each needs an icon, a blurb, and a route.
 export interface Goodie {
@@ -29,6 +30,14 @@ export const goodies: Goodie[] = [
     icon: "bulb",
     href: "/tutorials"
   },
+  {
+    name: "Cron Expression Builder",
+    description: "Field-by-field cron builder — per-field mode widgets (or a raw Custom value) generate the 5-field string, invalid fields are flagged, a plain-English description reads it back, and a live next-5-runs preview with crontab/GitHub Actions/Kubernetes export.",
+    icon: "cron",
+    iconComponent: IconCron,
+    href: "/goodies/cron-expression-builder",
+    changelog: [{ date: "2026-10-05", change: "Initial publication." }]
+  }
 ];
 
 // Only the /goodies/<slug> entries have a detail page of their own; the rest link to other sections.
