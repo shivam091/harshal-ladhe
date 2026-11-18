@@ -14,6 +14,7 @@ import { getTutorialDates } from "@/lib/tutorials";
 import { getSortedPosts } from "@/lib/posts";
 import { getPostUrl } from "@/utils/post-url";
 import { getSortedSeries } from "@/data/series";
+import { getSortedGoodies } from "@/lib/goodies";
 
 // Required for `output: "export"` — tells Next.js this route is fully static.
 export const dynamic = "force-static";
@@ -178,6 +179,14 @@ const seriesPages: MetadataRoute.Sitemap = getSortedSeries().map(({ slug }) => {
   };
 });
 
+// Detail pages only, so the /goodies index isn't listed twice.
+const goodiePages: MetadataRoute.Sitemap = getSortedGoodies().map(({ slug, lastModifiedAt }) => ({
+  url: `${base}/goodies/${slug}`,
+  lastModified: lastModifiedAt ? new Date(lastModifiedAt) : new Date(),
+  changeFrequency: "monthly" as const,
+  priority: 0.7
+}));
+
 // lastModified tracks the newest post carrying the tag, so crawlers revisit archives when they change.
 const tagPages: MetadataRoute.Sitemap = getAllTags().map(({ slug, lastModifiedAt }) => ({
   url: `${base}/tag/${slug}`,
@@ -201,6 +210,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...tutorialPages,
     ...postPages,
     ...seriesPages,
+    ...goodiePages,
     ...tagPages,
     ...categoryPages
   ];

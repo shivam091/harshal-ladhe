@@ -1,17 +1,11 @@
 import type { JSX } from "react";
 import type {Metadata } from "next";
-import Link from "next/link";
-import { Icon } from "@/components/Icon";
 import VisuallyHidden from "@/components/VisuallyHidden";
 import { goodies } from "@/data/goodies";
+import GoodieCard from "@/app/(site)/(internal)/goodies/GoodieCard";
 import {
   GoodiesSection,
-  GoodiesList,
-  Goodie,
-  GoodieIcon,
-  GoodieDetails,
-  GoodieName,
-  GoodieDescription
+  GoodiesList
 } from "@/app/(site)/(internal)/goodies/goodies.styles";
 
 export const metadata: Metadata = {
@@ -52,18 +46,7 @@ export default function GoodiesPage(): JSX.Element {
 
         <GoodiesList>
           {goodies.map((goodie) => (
-            <Goodie key={goodie.name}>
-              <Link href={goodie.href} title={goodie.name}>
-                <GoodieIcon>
-                  <Icon name={goodie.icon} />
-                </GoodieIcon>
-
-                <GoodieDetails>
-                  <GoodieName>{goodie.name}</GoodieName>
-                  <GoodieDescription>{goodie.description}</GoodieDescription>
-                </GoodieDetails>
-              </Link>
-            </Goodie>
+            <GoodieCard key={goodie.name} goodie={goodie} />
           ))}
         </GoodiesList>
       </GoodiesSection>

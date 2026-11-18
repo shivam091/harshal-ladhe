@@ -9,8 +9,10 @@ import { PageTitle } from "@/components/PageHeading/PageHeading.styles";
   Content-detail path segments whose pages render their own <h1> inside the
   [slug] layout — returning null here prevents a duplicate heading. /tag/<slug>
    archive pages render their own "#tag" heading, so they belong here too.
+   /goodies/ detail pages render theirs from the goodies registry (see
+   (goodie)/layout.tsx) rather than the naive de-hyphenated pathname fallback below.
 */
-const SELF_TITLED_SEGMENTS: string[] = ["/snippet/", "/post/", "/series/", "/tag/", "/category/", "/tutorial/"];
+const SELF_TITLED_SEGMENTS: string[] = ["/snippet/", "/post/", "/series/", "/tag/", "/category/", "/tutorial/", "/goodies/"];
 
 /*
   Derived from the pathname so every page gets a heading without declaring one; self-titled
