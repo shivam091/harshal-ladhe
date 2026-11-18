@@ -133,7 +133,7 @@ decides where a rule applies.
 
 For a full guide, see [CSS `@scope`: Scoped Styles Without Naming Conventions](/post/css/css-scope-at-rule-guide).
 
-**Support:** Chrome and Edge 118, Firefox 146, Safari 26.4.
+**Support:** Chrome and Edge 118, Firefox 146 and Safari 17.4. Safari's first release only partly supported it, so rules inside a scope didn't apply to `<input>` and `<textarea>` until Safari 26.4.
 
 ### `contrast-color()`
 
@@ -477,7 +477,7 @@ Baseline, see [Interop 2026 and CSS Snapshot 2026: What They Mean for CSS](/post
 | --- | --- | --- | --- |
 | Anchor positioning | 125 | 147 | 26 |
 | Scroll-driven animations | 115 | 159 | 26 |
-| `@scope` | 118 | 146 | 26.4 |
+| `@scope` | 118 | 146 | 17.4 (26.4 for inputs and textareas) |
 | `contrast-color()` | 147 | 146 | 26 |
 | `shape()` | 135 | 148 | 18.4 |
 | `sibling-index()`, `sibling-count()` | 138 | 154 | 26.2 |

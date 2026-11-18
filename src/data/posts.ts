@@ -803,6 +803,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Sorting a whole year of CSS into \"works everywhere\", \"two engines\" and \"Chromium only\" meant checking every feature against the compatibility data rather than the launch posts, and a few surprised me, Safari shipping masonry first among them. I hope it helps you decide what to reach for on your next project. 🎨",
     changelog: [
+      { date: "2026-11-18", change: "Corrected `@scope` Safari support" },
       { date: "2026-11-18", change: "Added cross-reference to post 'CSS `@scope`: Scoped Styles Without Naming Conventions'" },
       { date: "2026-11-18", change: "Added cross-reference to post 'CSS Anchor Positioning: Tooltips, Menus and Popovers Without JavaScript'" },
       { date: "2026-11-16", change: "Added cross-reference to tutorial 'CSS Custom Highlight API: `::highlight()` for Search Results'" },
