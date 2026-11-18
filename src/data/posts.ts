@@ -696,6 +696,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one is built around three diagrams — a one-class utility beating an ID selector through layer order alone, the same two rules swapping places the moment both turn !important, and an eight-rung ladder that puts @layer exactly where the cascade consults it — and a playground that rewrites a real <style> tag on every change, so four rules of rising specificity genuinely fight it out in your own browser. Getting its readout to name the criterion that actually decided each result — layer order, specificity, the !important reversal, or unlayered styles winning outright — took more edge-case testing than I'd like to admit. I hope the next time a utility class refuses to apply, you reach for a layer instead of another !important. Thanks for picking a side in the specificity war with me. 🗂️",
     changelog: [
+      { date: "2026-11-18", change: "Added cross-reference to post 'CSS `@scope`: Scoped Styles Without Naming Conventions'" },
       { date: "2026-11-10", change: "Added cross-reference to post 'What's New in CSS in 2026: What You Can Use Now'" },
       { date: "2026-10-31", change: "Initial publication" }
     ]
@@ -802,6 +803,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Sorting a whole year of CSS into \"works everywhere\", \"two engines\" and \"Chromium only\" meant checking every feature against the compatibility data rather than the launch posts, and a few surprised me, Safari shipping masonry first among them. I hope it helps you decide what to reach for on your next project. 🎨",
     changelog: [
+      { date: "2026-11-18", change: "Added cross-reference to post 'CSS `@scope`: Scoped Styles Without Naming Conventions'" },
       { date: "2026-11-18", change: "Added cross-reference to post 'CSS Anchor Positioning: Tooltips, Menus and Popovers Without JavaScript'" },
       { date: "2026-11-16", change: "Added cross-reference to tutorial 'CSS Custom Highlight API: `::highlight()` for Search Results'" },
       { date: "2026-11-15", change: "Added cross-reference to tutorial '`contrast-color()`: Automatic Readable Text on Any Background'" },
