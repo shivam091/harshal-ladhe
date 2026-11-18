@@ -23,7 +23,8 @@ const MODES = {
 */
 function* fallbackZip(iterables, { mode = "shortest", padding } = {}) {
   const iterators = [...iterables].map((iterable) => iterable[Symbol.iterator]());
-  const pads = mode === "longest" ? [...(padding ?? [])] : [];
+  // Plain checks throughout this file instead of `??` and `?.`: Sandpack's bundler doesn't parse them.
+  const pads = mode === "longest" ? [...(padding || [])] : [];
   const done = iterators.map(() => false);
 
   try {
@@ -50,7 +51,7 @@ function* fallbackZip(iterables, { mode = "shortest", padding } = {}) {
     }
   } finally {
     // An open list may hold a resource (a generator's finally block, say), and native zip releases it when it stops.
-    iterators.forEach((iterator, i) => { if (!done[i]) iterator.return?.(); });
+    iterators.forEach((iterator, i) => { if (!done[i] && typeof iterator.return === "function") iterator.return(); });
   }
 }
 
@@ -121,7 +122,7 @@ function update() {
     ? keyed.rows.map((row) => `{ ${Object.entries(row).map(([key, value]) => `${key}: ${show(value)}`).join(", ")} }`).join("\n")
     : "(no steps)";
 
-  const error = arrays.error ?? keyed.error;
+  const error = arrays.error || keyed.error;
   $("error").hidden = !error;
   if (error) $("error").textContent = `${error.name}: ${error.message}`;
 
