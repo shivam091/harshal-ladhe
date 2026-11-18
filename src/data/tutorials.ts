@@ -452,6 +452,7 @@ export const tutorials: Tutorial[] = [
       caption: "A fully styled select dropdown with colour swatches, still keyboard accessible."
     },
     changelog: [
+      { date: "2026-11-18", change: "Added cross-reference to post 'CSS Anchor Positioning: Tooltips, Menus and Popovers Without JavaScript'" },
       { date: "2026-11-12", change: "Updated browser support for `appearance: base-select`" },
       { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
       { date: "2026-11-06", change: "Added cross-reference to post 'Animate Dialogs & Popovers with CSS `@starting-style`'" },
