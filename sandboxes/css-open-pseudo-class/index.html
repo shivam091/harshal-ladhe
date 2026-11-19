@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>:open Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>One Pseudo-Class for Everything That Opens</h1>
+        <p>An accordion, a dialog and a select, each styled with <code>:open</code>. The readout asks every element <code>element.matches(":open")</code> and lists the ones that match right now.</p>
+      </header>
+
+      <p class="tip" id="support-tip" hidden>Your browser doesn't support <code>:open</code>, so the open-state styles below won't apply and the readout falls back to the <code>[open]</code> attribute, which can't see the select. <code>:open</code> is supported in Chrome and Edge 133, Firefox 136 and Safari 26.5 or later.</p>
+
+      <fieldset class="control-group">
+        <legend>Exclusive accordion</legend>
+        <div class="accordion">
+          <details name="faq" id="details-shipping" open>
+            <summary>Shipping</summary>
+            <div class="details-body">Orders ship within two working days. <code>details:open &gt; summary::after</code> turns the arrow, and <code>::details-content</code> fades this text in.</div>
+          </details>
+          <details name="faq" id="details-returns">
+            <summary>Returns</summary>
+            <div class="details-body">Return anything within 30 days. The three disclosures share <code>name="faq"</code>, so opening one closes the others.</div>
+          </details>
+          <details name="faq" id="details-warranty">
+            <summary>Warranty</summary>
+            <div class="details-body">Two years on every product. Close this one and the readout lists no disclosure at all.</div>
+          </details>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Dialog</legend>
+        <div class="actions">
+          <button type="button" class="toggle-btn" id="open-modal">Open as modal</button>
+          <button type="button" class="secondary-btn" id="open-dialog">Open non-modal</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>Select</legend>
+        <div class="field">
+          <label for="size-select">T-shirt size</label>
+          <select id="size-select">
+            <option>Small</option>
+            <option selected>Medium</option>
+            <option>Large</option>
+            <option>Extra large</option>
+          </select>
+        </div>
+        <p class="hint" id="select-hint">Drop the list down: <code>select:open</code> changes the border while it's open.</p>
+      </fieldset>
+
+      <output class="readout" id="readout" aria-live="polite"></output>
+    </main>
+
+    <dialog id="demo-dialog" aria-labelledby="dialog-title">
+      <h2 id="dialog-title">Hello from a dialog</h2>
+      <p>This dialog fades and scales in through <code>dialog:open</code> and <code>@starting-style</code>.</p>
+      <output class="dialog-state" id="dialog-state"></output>
+      <form method="dialog">
+        <button type="submit" class="toggle-btn">Close</button>
+      </form>
+    </dialog>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

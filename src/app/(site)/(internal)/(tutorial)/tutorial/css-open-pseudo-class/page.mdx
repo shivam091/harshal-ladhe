@@ -1,0 +1,427 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("css-open-pseudo-class");
+
+## Introduction
+
+Several HTML elements open and close on their own: a `<details>` disclosure, a `<dialog>`, a `<select>` whose list
+drops down. Styling the open state has always been patchy. `<details>` and `<dialog>` reflect it in an `open`
+attribute, so `details[open]` works, but a `<select>` has no attribute that changes when its list opens, so there was
+no way to rotate its arrow or highlight it while it was open.
+
+**`:open`** is a pseudo-class for exactly that state. It matches an element that can be open or closed and is open
+right now, whatever kind of element it is:
+
+<CodeBlock language="css">
+{`
+  details:open > summary {
+    font-weight: 700;
+  }
+
+  dialog:open {
+    border-color: royalblue;
+  }
+
+  select:open {
+    outline: 2px solid royalblue;
+  }
+`}
+</CodeBlock>
+
+It's supported in Chrome and Edge 133, Firefox 136 and Safari 26.5.
+
+<RainbowDivider />
+
+## Which Elements Match
+
+Selectors Level 4 defines `:open` in general terms: an element that has open and closed states and is currently open,
+with what "open" means left to the host language. The HTML spec then lists the elements it applies to. `:open`
+matches:
+
+| Element | Matches when |
+| --- | --- |
+| `<details>` | It has the `open` attribute: the disclosure is expanded |
+| `<dialog>` | It has the `open` attribute: shown with `show()` or `showModal()` |
+| `<select>` | It's a drop-down box (not a list box with `multiple` or `size`) and its drop-down is open |
+| `<input>` | It supports a picker, and its picker is open |
+
+The last row depends on the browser. The HTML spec says an `<input>` must support a picker when its type is `file`,
+and that browsers typically show pickers for the date and time types, `color`, and inputs with a `list` of
+suggestions, but whether an input has a picker is ultimately up to the browser. The web-platform test for this part
+is marked optional, so treat `input:open` as an extra rather than something to depend on.
+
+Being open is a state, not a matter of visibility. A `<details open>` inside a `display: none` parent still matches
+`:open`, even though nothing is on screen.
+
+<RainbowDivider />
+
+## `:open` vs the `[open]` Attribute
+
+For `<details>` and `<dialog>`, `:open` and `[open]` match in the same situations, because those elements' open state
+*is* their attribute. Opening a disclosure adds `open`; closing a dialog removes it. The differences are elsewhere:
+
+- **It covers elements with no attribute.** A `<select>` and an `<input>` never get an `open` attribute, so
+  `select[open]` never matches. `select:open` does.
+- **It only matches elements that can open.** `[open]` matches any element with that attribute, including one where
+  it means nothing, such as `<div open>`. `:open` only matches elements that really have an open state.
+- **One selector for every kind.** `:open` styles the state the same way wherever it appears, which reads better than
+  mixing an attribute selector for some elements with no option at all for others.
+
+Both have the same specificity as a class, (0,1,0), so swapping one for the other doesn't change which rules win.
+
+<RainbowDivider />
+
+## `:open` vs `:popover-open` and `:modal`
+
+Three pseudo-classes describe things appearing on screen, and they don't overlap as much as their names suggest:
+
+| Pseudo-class | Matches |
+| --- | --- |
+| `:open` | An element in its own open state: `<details>`, `<dialog>`, a drop-down `<select>`, an `<input>` with a picker |
+| `:popover-open` | Any element with the `popover` attribute while that popover is showing |
+| `:modal` | A `<dialog>` opened with `showModal()`, or an element in fullscreen |
+
+A dialog opened with `showModal()` matches both `:open` and `:modal`. One opened with `show()` matches `:open` but not
+`:modal`, which makes `:modal` the selector for styles only a blocking dialog should get, such as its `::backdrop`.
+
+`:popover-open` is a separate state on purpose. The spec notes that an element can have its own open and closed
+states and, separately, be a popover. A `<dialog popover>` shown with `showPopover()` matches `:popover-open`, while
+`:open` follows the dialog's own `open` attribute.
+
+<RainbowDivider />
+
+## Styling Disclosure Markers and Arrows
+
+The triangle beside a `<summary>` is its `::marker`. To replace it with your own arrow that turns when the details
+opens, hide the default and draw one with a pseudo-element:
+
+<CodeBlock language="css">
+{`
+  summary {
+    display: flex;
+    justify-content: space-between;
+    list-style: none; /* hides the marker */
+    cursor: pointer;
+  }
+
+  /* Safari has long drawn the marker this way; keep it in its own rule */
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary::after {
+    content: "";
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-inline-end: 2px solid currentColor;
+    border-block-end: 2px solid currentColor;
+    rotate: 45deg;
+    transition: rotate 0.2s ease;
+  }
+
+  details:open > summary::after {
+    rotate: 225deg;
+  }
+`}
+</CodeBlock>
+
+`::-webkit-details-marker` gets its own rule because a browser that doesn't recognise a selector drops the whole rule
+it's in. Listed alongside `summary::marker`, it would take that selector down with it in any browser that doesn't
+know the prefixed pseudo-element.
+
+The `>` in `details:open > summary` matters when disclosures are nested. Without it, opening an outer `<details>` would
+turn the arrows of every `<summary>` inside it, open or not.
+
+To keep the default marker and simply restyle it, `::marker` takes a limited set of properties, including `color`
+and `content`:
+
+<CodeBlock language="css">
+{`
+  summary::marker {
+    color: royalblue;
+  }
+
+  details:open > summary::marker {
+    color: crimson;
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Animating `<details>` with `::details-content`
+
+A `<details>` element's content, everything except its `<summary>`, is wrapped in a `::details-content`
+pseudo-element (Chrome and Edge 131, Firefox 143, Safari 18.4). Combined with `:open`, it can be transitioned:
+
+<CodeBlock language="css">
+{`
+  details::details-content {
+    opacity: 0;
+    transition:
+      opacity 0.3s ease,
+      content-visibility 0.3s allow-discrete;
+  }
+
+  details:open::details-content {
+    opacity: 1;
+  }
+`}
+</CodeBlock>
+
+The browser hides the content of a closed `<details>` with `content-visibility: hidden`. That property can't be
+interpolated, so it needs `allow-discrete`: the content then stays visible for the length of the fade-out, and is only
+hidden once it ends. Opening needs no `@starting-style`, because the content is never `display: none`, so the
+transition has a value to start from.
+
+To animate the height as well, transition `block-size` from `0` to `auto`, which needs `interpolate-size`. That's only
+supported in Chromium browsers so far. Elsewhere the height snaps open and the fade still plays. See
+[Animating to `height: auto` with `interpolate-size`](/tutorial/interpolate-size-auto-animations) for the details:
+
+<CodeBlock language="css">
+{`
+  :root {
+    interpolate-size: allow-keywords;
+  }
+
+  details::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 0.3s ease,
+      content-visibility 0.3s allow-discrete;
+  }
+
+  details:open::details-content {
+    block-size: auto;
+  }
+`}
+</CodeBlock>
+
+### Exclusive Accordions
+
+Give a group of `<details>` the same `name` and only one can be open at a time: opening one closes the others.
+`:open` styles whichever is open, with no JavaScript:
+
+<CodeBlock language="html">
+{`
+  <details name="faq" open>
+    <summary>Shipping</summary>
+    <p>Orders ship within two working days.</p>
+  </details>
+  <details name="faq">
+    <summary>Returns</summary>
+    <p>Return anything within 30 days.</p>
+  </details>
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Opening and Closing a `<dialog>`
+
+A closed dialog is `display: none`, so animating it takes the same steps as any element that appears and disappears:
+transition `display` and `overlay` with `allow-discrete`, and give the opening state a starting point with
+`@starting-style`. `:open` is a clear way to write the open-state rules. For the full explanation, see
+[Animate Dialogs & Popovers with CSS `@starting-style`](/post/animations/css-starting-style-dialogs-and-discrete-animations):
+
+<CodeBlock language="css">
+{`
+  dialog {
+    opacity: 0;
+    scale: 0.95;
+    transition:
+      opacity 0.2s ease,
+      scale 0.2s ease,
+      display 0.2s allow-discrete,
+      overlay 0.2s allow-discrete;
+  }
+
+  dialog:open {
+    opacity: 1;
+    scale: 1;
+  }
+
+  @starting-style {
+    dialog:open {
+      opacity: 0;
+      scale: 0.95;
+    }
+  }
+
+  dialog:modal::backdrop {
+    background: rgb(0 0 0 / 0.5);
+  }
+`}
+</CodeBlock>
+
+Firefox and Safari don't support the `overlay` property, so in those browsers a modal dialog leaves the top layer as
+soon as it starts closing. The opening animation still runs.
+
+<RainbowDivider />
+
+## Rotating the `<select>` Picker Icon
+
+`select:open` works on any drop-down select, so even a classic select can show that it's open, for example with a
+border colour or outline. With a customisable select, where the select and its picker are opted in with
+`appearance: base-select`, `:open` also turns the arrow, which is the `::picker-icon` pseudo-element:
+
+<CodeBlock language="css">
+{`
+  select,
+  ::picker(select) {
+    appearance: base-select;
+  }
+
+  select::picker-icon {
+    transition: rotate 0.2s ease;
+  }
+
+  select:open::picker-icon {
+    rotate: 180deg;
+  }
+
+  select:open {
+    border-color: royalblue;
+  }
+`}
+</CodeBlock>
+
+`appearance: base-select` and `::picker-icon` are supported in Chromium browsers and Safari 27, and in Firefox only
+behind a flag. In other browsers the select keeps its usual look, and the `select:open` border colour still applies.
+[Styling a `<select>` Dropdown with CSS `appearance: base-select`](/tutorial/css-customizable-select) covers the
+rest of the customisable select.
+
+<RainbowDivider />
+
+## Try It Live
+
+The playground has an exclusive accordion of three `<details>`, a `<dialog>` and a `<select>`, all styled through
+`:open`: the accordion arrows turn and its content fades, the dialog fades and scales, and the select's border
+changes colour while its list is open (and its arrow turns, where `base-select` is supported). The readout checks
+each element with `element.matches(":open")` and lists the ones that match, so open a disclosure, open the dialog with
+**Open as modal** or **Open non-modal**, and drop down the select to watch the list change.
+
+<Sandbox slug="css-open-pseudo-class" defaultLayout="vertical" readOnly />
+
+<RainbowDivider />
+
+## Browser Support and Fallbacks
+
+`:open` is supported in Chrome and Edge 133, Firefox 136 and Safari 26.5. Safari 26.5 completed the set in May 2026,
+so it's **Baseline newly available**. Dialogs, popovers and `:open` are a combined Interop 2026 focus area.
+
+For `<details>` and `<dialog>`, the `[open]` attribute is a full fallback, because it matches in exactly the same
+cases. The easy mistake is listing both in one selector list:
+
+<CodeBlock language="css">
+{`
+  /* In a browser without :open, this whole rule is dropped */
+  details:open > summary,
+  details[open] > summary {
+    font-weight: 700;
+  }
+`}
+</CodeBlock>
+
+A selector the browser doesn't understand invalidates the entire list, `details[open]` included. Put them inside
+`:is()`, which skips the selectors it can't parse and keeps the rest:
+
+<CodeBlock language="css">
+{`
+  details:is(:open, [open]) > summary {
+    font-weight: 700;
+  }
+`}
+</CodeBlock>
+
+Or keep only `[open]` for these two elements until `:open` is old enough for your audience. There's no fallback for
+`select:open`: older browsers simply don't style the open state, which is how selects have always looked. To include
+styles only where `:open` is supported, use `@supports selector(:open) { ... }`.
+
+One more case needs care: hiding things by default and revealing them with `:open`, as the transition examples above
+do. A browser without `:open` applies the hidden base style and never the open one, leaving the dialog or the
+disclosure's content invisible. Writing the hidden state under `:not(:open)` turns that around, because the unknown
+selector drops the whole rule and the element simply appears without animating:
+
+<CodeBlock language="css">
+{`
+  dialog:not(:open) {
+    opacity: 0;
+    scale: 0.95;
+  }
+`}
+</CodeBlock>
+
+The playground uses this pattern for its dialog and its disclosures.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### 1. Expecting `select[open]` to Work
+
+A select never gets an `open` attribute. If a rule for an open select has never matched, that's probably why.
+
+### 2. Forgetting `>` with Nested Details
+
+`details:open summary` styles every summary inside an open disclosure, including those of closed disclosures nested
+in it. Use `details:open > summary`.
+
+### 3. Assuming `:open` Means `:modal`
+
+`dialog:open` matches modal and non-modal dialogs alike. Styles for blocking dialogs only, such as a `::backdrop`,
+belong under `dialog:modal`.
+
+### 4. Using `:open` for Popovers
+
+An element with the `popover` attribute opened with `showPopover()` matches `:popover-open`, not `:open` (unless it's
+also a `<dialog>` with its own `open` attribute). Style popovers with `:popover-open`.
+
+### 5. Combining It with `[open]` in One Selector List
+
+As shown in the fallback section, an unknown `:open` drops the whole list. Use `:is(:open, [open])` or separate rules.
+
+<RainbowDivider />
+
+## Where Should You Use This?
+
+- Accordions and FAQs built from `<details>`, for arrows, highlighted headings and fades
+- Dialog entry and exit animations, together with `@starting-style`
+- Drop-down selects that should show an open state, and arrow rotation in customisable selects
+- Shared component styles where one "is open" rule should cover several kinds of element
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Is there a :closed pseudo-class?">
+  Not yet. Selectors Level 4 notes that one might be added once the full set of elements supporting `:open` is
+  known. For now, use `:not(:open)`, as in `details:not(:open) > summary`.
+</Details>
+
+<Details summary="Can I use :open with :has()?">
+  Yes. `.faq:has(details:open)` styles a container while any disclosure inside it is open, and
+  `body:has(dialog:modal)` can stop the page behind a modal from scrolling.
+</Details>
+
+<Details summary="Does :open work in JavaScript?">
+  Yes, like any selector: `element.matches(":open")` returns `true` while it's open, and
+  `document.querySelectorAll(":open")` finds every open element. In a browser without support, both throw a
+  `SyntaxError`, so wrap them in `try`/`catch` if older browsers matter.
+</Details>
+
+<Details summary="Does :open match a details element while it's animating closed?">
+  No. The `open` attribute is removed as soon as the disclosure starts closing, so `:open` stops matching straight
+  away. The closing transition runs because the styles switch from the `:open` rule back to the base rule.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`:open` matches `<details>` and `<dialog>` when they have the `open` attribute, a drop-down `<select>` while its list
+is open, and an `<input>` while its picker is open, where the browser gives it one. For details and dialogs it's
+equivalent to `[open]`, which remains a safe fallback inside `:is()`; for selects it's the first way to style the open
+state at all. Keep `:popover-open` for popovers and `:modal` for blocking dialogs, and use `:open` with
+`::details-content`, `@starting-style` and `::picker-icon` for disclosures, dialogs and selects that open smoothly.

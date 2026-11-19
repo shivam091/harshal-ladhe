@@ -661,6 +661,25 @@ export const tutorials: Tutorial[] = [
     changelog: [
       { date: "2026-11-16", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-open-pseudo-class",
+    title: "The `:open` Pseudo-Class for `<details>`, `<dialog>` and `<select>`",
+    excerpt: "Style anything that opens, selects included, with one pseudo-class.",
+    description: "Style the open state of <details>, <dialog> and <select> with the CSS :open pseudo-class. Compare it with [open], :popover-open and :modal, with fallbacks.",
+    category: ["CSS"],
+    tags: ["css", "open-pseudo-class", "pseudo-classes", "details-element", "dialog", "customizable-select", "starting-style", "progressive-enhancement", "css-2027"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/css-open-pseudo-class/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "The CSS :open pseudo-class for details, dialog and select: three cards showing a Shipping disclosure, a Choose a plan drop-down and a Delete this draft dialog, each in its closed and open state.",
+      caption: "Disclosures, drop-downs and dialogs styled in their open state with one pseudo-class."
+    },
+    changelog: [
+      { date: "2026-11-08", change: "Initial publication." }
+    ]
   }
 ];
 
