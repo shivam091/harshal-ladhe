@@ -802,6 +802,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Sorting a whole year of CSS into \"works everywhere\", \"two engines\" and \"Chromium only\" meant checking every feature against the compatibility data rather than the launch posts, and a few surprised me, Safari shipping masonry first among them. I hope it helps you decide what to reach for on your next project. 🎨",
     changelog: [
+      { date: "2026-11-19", change: "Added cross-reference to tutorial 'The `:open` Pseudo-Class for `<details>`, `<dialog>` and `<select>`'" },
       { date: "2026-11-16", change: "Added cross-reference to tutorial 'CSS Custom Highlight API: `::highlight()` for Search Results'" },
       { date: "2026-11-15", change: "Added cross-reference to tutorial '`contrast-color()`: Automatic Readable Text on Any Background'" },
       { date: "2026-11-12", change: "Updated browser support for `random()`" },
@@ -852,6 +853,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Every time a new Interop list or CSS Snapshot comes out, I see it shared as a list of things we can finally use, and I wanted one place that untangles the three sources that actually answer different questions. I hope the next time one of them lands in your feed, you know exactly which question it answers, and which tool to open for the rest. 🧭",
     changelog: [
+      { date: "2026-11-19", change: "Added cross-reference to tutorial 'The `:open` Pseudo-Class for `<details>`, `<dialog>` and `<select>`'" },
       { date: "2026-11-16", change: "Added cross-reference to tutorial 'CSS Custom Highlight API: `::highlight()` for Search Results'" },
       { date: "2026-11-15", change: "Added cross-reference to tutorial '`contrast-color()`: Automatic Readable Text on Any Background'" },
       { date: "2026-11-12", change: "Added cross-reference to post 'What's New in CSS in 2027: What to Expect'" },
@@ -876,6 +878,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "Predictions are easy to get wrong, so this post took far more checking than writing: browser release notes, the Interop 2026 announcement, preview builds and MDN's compatibility data, so that every prediction rests on something already shipping or in testing rather than a vendor promise. I'll revisit the list as 2027 unfolds, and I hope the tracking links help you keep score too. 🔭",
     changelog: [
+      { date: "2026-11-19", change: "Added cross-reference to tutorial 'The `:open` Pseudo-Class for `<details>`, `<dialog>` and `<select>`'" },
       { date: "2026-11-16", change: "Added cross-reference to tutorial 'CSS Custom Highlight API: `::highlight()` for Search Results'" },
       { date: "2026-11-15", change: "Added cross-reference to tutorial '`contrast-color()`: Automatic Readable Text on Any Background'" },
       { date: "2026-11-12", change: "Initial publication" }
