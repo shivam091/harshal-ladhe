@@ -1278,5 +1278,37 @@ export const tagMeta: Record<string, TagMeta> = {
   "text-search": {
     title: "Text Search and Find-in-Page",
     description: "Finding text in the DOM, matching it safely and highlighting search results, from find-in-page to filter-as-you-type."
+  },
+  "content-security-policy": {
+    title: "Content Security Policy (CSP)",
+    description: "Using the `Content-Security-Policy` header to control which scripts may load and run, including `script-src`, `'unsafe-eval'` and report-only mode."
+  },
+  "xss": {
+    title: "Cross-Site Scripting (XSS)",
+    description: "How cross-site scripting bugs happen, from DOM sinks to `eval`, and the browser features and coding habits that prevent them."
+  },
+  "eval": {
+    title: "eval and Dynamic Code",
+    description: "Compiling strings into code at runtime with `eval()`, `new Function()` and string timers: the risks and the safer alternatives."
+  },
+  "tc39": {
+    title: "TC39 Proposals",
+    description: "Proposals moving through TC39, the committee that standardises JavaScript: what each stage means and what's coming to the language."
+  },
+  "css-scope": {
+    title: "CSS @scope",
+    description: "Using the @scope at-rule to limit where selectors match, with scoping roots, donut-scope limits and scope proximity in the cascade."
+  },
+  "open-pseudo-class": {
+    title: "The CSS :open Pseudo-Class",
+    description: "Styling the open state of `<details>`, `<dialog>`, `<select>` and picker inputs with `:open`, and how it differs from `[open]`."
+  },
+  "pseudo-classes": {
+    title: "CSS Pseudo-Classes",
+    description: "Selecting elements by state, such as open, checked, playing or focused, with CSS pseudo-classes and their fallbacks."
+  },
+  "details-element": {
+    title: "The HTML <details> Element",
+    description: "Native disclosure widgets and accordions with `<details>` and `<summary>`: markers, exclusive groups and `::details-content` animations."
   }
 };

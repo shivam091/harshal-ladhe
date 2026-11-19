@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "css-open-pseudo-class",
+    title: "Styling Details, Dialog and Select with :open",
+    description: "Open an exclusive <details> accordion, a modal or non-modal <dialog> and a <select>, all styled through :open with turning arrows, a ::details-content fade and a @starting-style dialog entrance, while a readout lists which elements currently match :open (and :modal) via element.matches().",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-custom-highlight-api",
     title: "Custom Highlight API Playground",
     description: "Search an article and watch every match painted by ::highlight(search-results), with the current match on top via a higher-priority ::highlight(search-current). Step through matches, toggle case sensitivity, edit the text to see the StaticRanges rebuilt, and confirm that no <mark> element is ever added.",
