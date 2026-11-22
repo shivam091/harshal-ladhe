@@ -12,6 +12,10 @@ export type ConsentState = "granted" | "denied";
 // gtag comes from an external script, so TypeScript has to be told it may exist on window.
 declare global {
   interface Window {
+    // Set by gtag.js itself once it has loaded and configured a measurement ID.
+    google_tag_manager?: Record<string, unknown>;
+    // Set by the head's capture listener when the gtag.js request is rejected.
+    __gaBlocked?: boolean;
     gtag?: {
       (command: "event", eventName: string, params?: GaParams): void;
       (command: "consent", action: "default" | "update", params: Record<string, ConsentState | number | string[]>): void;

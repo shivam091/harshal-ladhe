@@ -105,6 +105,10 @@ const IS_GA_ENABLED = process.env.VERCEL_ENV === "production";
   same content params as later ones.
 */
 const GA_SCRIPT = `
+  window.addEventListener("error", function (e) {
+    var t = e.target;
+    if (t && t.tagName === "SCRIPT" && /\\/(gtag\\/js|stats\\/s\\.js)/.test(t.src || "")) window.__gaBlocked = true;
+  }, true);
   window.dataLayer = window.dataLayer || [];
   function gtag () {
     dataLayer.push(arguments);
@@ -144,8 +148,9 @@ export default function RootLayout({
 
           {IS_GA_ENABLED && (
             <>
-              <Script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+              {/* Init first so its error listener is in place before gtag.js can fail. */}
               <Script id="ga-init" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: GA_SCRIPT }} />
+              <Script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
             </>
           )}
         </head>

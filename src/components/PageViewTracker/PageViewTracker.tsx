@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { readConsentStatus, resolveConsentStatus } from "@/lib/consent";
 import { postBeacon } from "@/lib/beacon";
+import { detectGaStatus } from "@/lib/ga-status";
 import type { ConsentStatus } from "@/lib/consent";
 
 type Utm = { source: string; medium: string; campaign: string; content: string; term: string; id: string };
@@ -56,7 +57,13 @@ export default function PageViewTracker(): null {
     function send(consent: ConsentStatus): void {
       if (sent) return;
       sent = true;
-      postBeacon("/api/views", { slug: pathname, consent, webdriver: navigator.webdriver === true, ...source });
+      const webdriver = navigator.webdriver === true;
+      postBeacon("/api/views", { slug: pathname, consent, webdriver, ...source });
+      // Second and separate, so the view itself never waits on a tag that may not load; a reader who leaves first is
+      // simply unknown.
+      detectGaStatus().then((ga) => {
+        if (ga) postBeacon("/api/views", { slug: pathname, ga, webdriver });
+      });
     }
 
     // The region answer is awaited so the first view of a visit is filed under the right status, but a reader who
