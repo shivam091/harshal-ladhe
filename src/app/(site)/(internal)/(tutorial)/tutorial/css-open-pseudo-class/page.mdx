@@ -402,7 +402,9 @@ As shown in the fallback section, an unknown `:open` drops the whole list. Use `
 
 <Details summary="Can I use :open with :has()?">
   Yes. `.faq:has(details:open)` styles a container while any disclosure inside it is open, and
-  `body:has(dialog:modal)` can stop the page behind a modal from scrolling.
+  `body:has(dialog:modal)` can stop the page behind a modal from scrolling. Audio and video get their own state
+  pseudo-classes, covered in
+  [`:playing` and `:paused`: Style Media by Playback State](/snippet/css-playing-paused-pseudo-classes).
 </Details>
 
 <Details summary="Does :open work in JavaScript?">

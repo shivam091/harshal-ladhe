@@ -679,6 +679,7 @@ export const tutorials: Tutorial[] = [
       caption: "Disclosures, drop-downs and dialogs styled in their open state with one pseudo-class."
     },
     changelog: [
+      { date: "2026-11-22", change: "Added cross-reference to snippet '`:playing` and `:paused`: Style Media by Playback State'" },
       { date: "2026-11-08", change: "Initial publication." }
     ]
   }
