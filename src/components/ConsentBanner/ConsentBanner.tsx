@@ -5,7 +5,9 @@ import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import Button from "@/components/Button";
-import { CONSENT_OPEN_EVENT, CONSENT_STORAGE_KEY, consentParams, type ConsentChoice } from "@/lib/consent";
+import type { ConsentChoice } from "@/lib/consent";
+import { CONSENT_OPEN_EVENT, CONSENT_STORAGE_KEY, consentParams, readConsentStatus, reportConsent } from "@/lib/consent";
+import { trackEvent } from "@/lib/analytics";
 import { Wrapper, Panel, Title, Message, Actions } from "@/components/ConsentBanner/ConsentBanner.styles";
 
 // Storage can throw (private mode, blocked cookies); without it the banner simply asks again next visit.
@@ -16,6 +18,20 @@ function readChoice(): ConsentChoice | null {
   } catch {
     return null;
   }
+}
+
+// Session-scoped so a reader who ignores the banner across many pages is one impression, not one per page.
+const SHOWN_KEY = "analytics-consent-shown";
+
+// Counts the banner once per browser session; storage failing just means it may be counted again.
+function reportShownOnce(): void {
+  try {
+    if (window.sessionStorage.getItem(SHOWN_KEY)) return;
+    window.sessionStorage.setItem(SHOWN_KEY, "1");
+  } catch {
+    // Unknown whether it was counted before, so counting again is the safer error.
+  }
+  reportConsent("shown", readConsentStatus());
 }
 
 /*
@@ -34,7 +50,10 @@ export default function ConsentBanner(): JSX.Element {
       fetch("/api/consent-region", { cache: "no-store", signal: controller.signal })
         .then((res) => (res.ok ? (res.json() as Promise<{ required?: boolean }>) : null))
         .then((data) => {
-          if (data?.required) setIsOpen(true);
+          if (data?.required) {
+            setIsOpen(true);
+            reportShownOnce();
+          }
         })
         .catch(() => {});
     }
@@ -48,12 +67,16 @@ export default function ConsentBanner(): JSX.Element {
   }, []);
 
   function choose(choice: ConsentChoice): void {
+    const previous = readConsentStatus();
     try {
       window.localStorage.setItem(CONSENT_STORAGE_KEY, choice);
     } catch {
       // The choice still applies for this visit even if it can't be remembered.
     }
     window.gtag?.("consent", "update", consentParams(choice));
+    // Reported after the update so GA receives it under the reader's new choice; a decline arrives as a cookieless ping.
+    trackEvent("consent_choice", { choice, previous_choice: previous });
+    reportConsent(choice, previous);
     setIsOpen(false);
   }
 

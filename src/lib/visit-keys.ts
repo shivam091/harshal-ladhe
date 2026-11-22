@@ -4,6 +4,9 @@ import { getClientIp } from "@/lib/client-ip";
 // Day buckets follow the IST calendar so stats line up with the dashboard's local days, not UTC.
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
 
+// Deliberately rough — enough to keep common crawlers and link previewers out of the human metrics.
+export const BOT_PATTERN = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|quora|pinterest|vkshare|whatsapp|telegram|preview|monitor|lighthouse|headless/i;
+
 // Header-derived keys land in a Mongo dot-path, where `.` and `$` would break or hijack the update.
 export function safeKey(value: string, max = 64): string {
   return value.replace(/[.$]/g, "_").slice(0, max) || "unknown";

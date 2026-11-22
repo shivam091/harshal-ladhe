@@ -3,6 +3,7 @@ import { getTutorialBySlug } from "@/data/tutorials";
 import { getSnippetBySlug } from "@/data/snippets";
 import { getSeriesBySlug } from "@/data/series";
 import { getPostCategorySlug } from "@/utils/post-url";
+import { readConsentStatus } from "@/lib/consent";
 
 export type GaParams = Record<string, string | number | boolean>;
 
@@ -24,7 +25,7 @@ declare global {
 */
 export function trackEvent(name: string, params: GaParams = {}): void {
   if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  window.gtag("event", name, params);
+  window.gtag("event", name, { consent_status: readConsentStatus(), ...params });
 }
 
 export type ContentGroup = "post" | "tutorial" | "snippet" | "series" | "listing" | "page";

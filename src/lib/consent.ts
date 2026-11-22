@@ -26,3 +26,37 @@ export function consentParams(choice: ConsentChoice): Record<string, ConsentChoi
     analytics_storage: choice
   };
 }
+
+// What the reader has answered so far; "unset" covers both never asked and not yet answered.
+export const CONSENT_STATUSES = ["granted", "denied", "unset"] as const;
+
+export type ConsentStatus = (typeof CONSENT_STATUSES)[number];
+
+// What the banner reports about itself to /api/consent; "shown" is an impression rather than an answer.
+export const CONSENT_EVENTS = ["shown", "granted", "denied"] as const;
+
+export type ConsentEvent = (typeof CONSENT_EVENTS)[number];
+
+// Storage can throw (private mode, blocked cookies), and then the answer is simply unknown.
+export function readConsentStatus(): ConsentStatus {
+  try {
+    const value = window.localStorage.getItem(CONSENT_STORAGE_KEY);
+    return value === "granted" || value === "denied" ? value : "unset";
+  } catch {
+    return "unset";
+  }
+}
+
+// Keepalive so the report survives the navigation a click on the banner's link may trigger; never throws.
+export function reportConsent(event: ConsentEvent, previous: ConsentStatus = "unset"): void {
+  const body = JSON.stringify({ event, previous });
+  try {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon("/api/consent", new Blob([body], { type: "application/json" }));
+    } else {
+      fetch("/api/consent", { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+    }
+  } catch {
+    // Counting the banner must never get in the way of answering it.
+  }
+}

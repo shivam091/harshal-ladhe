@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { getContentParams } from "@/lib/analytics";
+import { readConsentStatus } from "@/lib/consent";
 
 // Long enough for streamed metadata to land, short enough that a page whose title really doesn't change still counts.
 const TITLE_WAIT_MS = 1000;
@@ -36,6 +37,7 @@ export function usePageViews(): void {
       window.gtag?.("event", "page_view", {
         page_title: document.title,
         page_location: location.href,
+        consent_status: readConsentStatus(),
         ...getContentParams(pathname)
       });
     }

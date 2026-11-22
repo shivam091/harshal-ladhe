@@ -4,7 +4,9 @@ import type { Collection } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { getPageUrl } from "@/utils/page-url";
 import { getClientIp, hashVisitor } from "@/lib/client-ip";
-import { getCountry, getIstDay, safeKey } from "@/lib/visit-keys";
+import { BOT_PATTERN, getCountry, getIstDay, safeKey } from "@/lib/visit-keys";
+import type { ConsentStatus } from "@/lib/consent";
+import { CONSENT_STATUSES } from "@/lib/consent";
 
 // One document per slug so every counter can be bumped in a single atomic upsert.
 type PageView = {
@@ -35,6 +37,8 @@ type PageView = {
   devicesByDay: Record<string, Partial<Record<DeviceType, number>>>;
   // Same day keys again; referrer keys are sanitised because Mongo field names can't contain dots.
   referrersByDay: Record<string, Record<string, number>>;
+  // Same day keys; splits views by the reader's consent answer, so the gap to GA's views can be attributed to declines.
+  consentByDay?: Record<string, Partial<Record<ConsentStatus, number>>>;
   // Same day keys; one key per "source|medium|campaign" so a campaign's traffic can be read without the landing URL.
   campaignsByDay?: Record<string, Record<string, number>>;
   createdAt: Date;
@@ -65,9 +69,6 @@ const INDEX_NOT_FOUND = 27;
 
 // Only record slugs that look like real app paths — guards against junk payloads.
 const SLUG_PATTERN = /^\/[\w\-/]*$/;
-
-// Deliberately rough — enough to keep common crawlers and link previewers out of the human metrics.
-const BOT_PATTERN = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|embedly|quora|pinterest|vkshare|whatsapp|telegram|preview|monitor|lighthouse|headless/i;
 
 /*
   Dropped rather than left alone, because a TTL index already in a database
@@ -109,6 +110,7 @@ type ViewBeacon = {
   referrer?: unknown;
   internal?: unknown;
   utm?: unknown;
+  consent?: unknown;
 };
 
 // Each campaign part is capped so one long tag can't crowd the others out of the key.
@@ -245,13 +247,15 @@ export async function POST(req: NextRequest) {
     const campaign = getCampaignKey(beacon.utm);
     const country = await getCountry(req);
     const device = getDevice(ua);
+    const consent = CONSENT_STATUSES.find((state) => state === beacon.consent) ?? "unset";
     const isNew = await isNewUniqueVisitor(db, slug, day, hashVisitor(ip), country);
 
     const inc: Record<string, number> = {
       visitorCount: 1,
       [`countriesByDay.${day}.${country}`]: 1,
       [`devicesByDay.${day}.${device}`]: 1,
-      [`referrersByDay.${day}.${referrer}`]: 1
+      [`referrersByDay.${day}.${referrer}`]: 1,
+      [`consentByDay.${day}.${consent}`]: 1
     };
     if (campaign) inc[`campaignsByDay.${day}.${campaign}`] = 1;
     if (isNew) inc.uniqueVisitorCount = 1;

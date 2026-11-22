@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { readConsentStatus } from "@/lib/consent";
 
 type Utm = { source: string; medium: string; campaign: string; content: string; term: string; id: string };
 
@@ -48,7 +49,7 @@ export default function PageViewTracker(): null {
 
     const source = landing ?? { referrer: "", internal: true };
     landing = null;
-    const body = JSON.stringify({ slug: pathname, ...source });
+    const body = JSON.stringify({ slug: pathname, consent: readConsentStatus(), ...source });
 
     // Prefer sendBeacon so the request survives navigation/unload; fall back to fetch.
     if (typeof navigator !== "undefined" && navigator.sendBeacon) {
