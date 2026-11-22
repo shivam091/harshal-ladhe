@@ -161,7 +161,9 @@ check passes everywhere, which defeats its purpose.
 You'll also see `new Function("...")` used for syntax checks, because it parses a string as code. It works, but it has
 a catch: a **Content Security Policy** without `'unsafe-eval'` blocks `new Function` and `eval` entirely. The call
 throws whether or not the syntax is supported, so the check quietly reports `false` for everyone. Since a strict CSP is
-good practice, prefer the dynamic import approach.
+good practice, prefer the dynamic import approach. If you do need `eval` under a strict policy,
+[Trusted Types and `eval`: The Dynamic Code Brand Checks Proposal](/post/javascript/dynamic-code-brand-checks-trusted-types)
+shows how to let only policy-approved code through.
 
 <Info title="Do you need syntax detection at all?">
   Usually not. Syntax detection only helps if you ship two versions of the code and choose between them at runtime.

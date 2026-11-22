@@ -902,6 +902,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "An unfinished edition is a moving target, so this one took more reading than writing: TC39's finished proposals list and meeting notes to pin down what's really in ES2027, and the compatibility data behind every number in the support table. Temporal and using are the two I've waited on longest, and I hope the examples show why. I also cross-checked the edition boundaries against the ES2026 post, which is how Map upsert ended up there instead. I'll update this post once ES2027 is published. ⏳",
     changelog: [
+      { date: "2026-11-22", change: "Added cross-reference to post 'Trusted Types and `eval`: The Dynamic Code Brand Checks Proposal'" },
       { date: "2026-11-14", change: "Added cross-reference to snippet 'JavaScript Spin-Wait Lock with `Atomics.pause()`'" },
       { date: "2026-11-14", change: "Added cross-reference to post 'Backwards-Compatible JavaScript: Polyfills and Baseline'" },
       { date: "2026-11-12", change: "Initial publication" }
@@ -925,6 +926,7 @@ export const posts: Post[] = [
     toc: { maxLevel: 3 },
     signoff: "This one took more reading than writing: Baseline's status definitions and the 30-month rule, the core-js and Babel docs, TypeScript's release notes on downlevelling `using`, and the polyfill.io incident reports, so the advice rests on how the tools behave today rather than on habit. Most compatibility bugs I've chased came down to mixing up a missing API with missing syntax, which is why the whole post is built around that one table. I hope it helps you pick the right tool first time, and maybe delete a polyfill or two you no longer need. 🧰",
     changelog: [
+      { date: "2026-11-22", change: "Added cross-reference to post 'Trusted Types and `eval`: The Dynamic Code Brand Checks Proposal'" },
       { date: "2026-11-15", change: "Added cross-reference to snippet 'Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`'" },
       { date: "2026-11-14", change: "Initial publication" }
     ]

@@ -476,7 +476,9 @@ The list above is what's confirmed, not what's final. Any proposal that reaches 
 specification is cut can still be added. Proposals usually spend some time at stage 3 while engines implement and
 ship them, so the realistic candidates are the ones already at stage 3 with implementations underway. In November
 2026, stage 3 includes deferred module evaluation (`import defer`), source phase imports, import text and the error
-stack accessor, among others.
+stack accessor, among others. Not every stage 3 proposal is close, though: Dynamic Code Brand Checks, which lets
+`eval` accept Trusted Types objects, has no test262 tests because the objects it handles come from the browser (see
+[Trusted Types and `eval`: The Dynamic Code Brand Checks Proposal](/post/javascript/dynamic-code-brand-checks-trusted-types)).
 
 Rather than guess which will make it, check the sources TC39 maintains itself:
 
