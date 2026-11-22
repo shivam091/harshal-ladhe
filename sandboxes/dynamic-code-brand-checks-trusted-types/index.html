@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trusted Types and eval() Playground</title>
+  </head>
+  <body>
+    <main class="playground">
+      <header class="playground-header">
+        <h1>Walk Code Through the eval() Brand Check</h1>
+        <p>Choose a snippet, how it reaches <code>eval()</code> or <code>new Function()</code>, and which protections the page has. The readout then follows the same three steps a browser takes: the brand check, the default policy, then <code>script-src</code>. The browser checks at the bottom are real; the step-by-step gate is a model of the CSP hook, and only plain arithmetic is ever executed here.</p>
+      </header>
+
+      <fieldset class="control-group">
+        <legend>The call</legend>
+        <div class="fields-grid">
+          <div class="field">
+            <label for="code-select">Code</label>
+            <select id="code-select">
+              <option value="(2 + 3) * 4">(2 + 3) * 4</option>
+              <option value="10 / 4">10 / 4</option>
+              <option value="alert(document.cookie)">alert(document.cookie)</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="route-select">Route</label>
+            <select id="route-select">
+              <option value="eval">eval(body)</option>
+              <option value="function-body">new Function(body)</option>
+              <option value="function-param">new Function("n", body)</option>
+            </select>
+          </div>
+          <div class="field field--full">
+            <label for="kind-select">How the body arrives</label>
+            <select id="kind-select">
+              <option value="plain">A plain string</option>
+              <option value="trusted">A TrustedScript from the calc policy</option>
+              <option value="lookalike">A look-alike object with a toString()</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="control-group">
+        <legend>The page's protection</legend>
+        <label class="checkbox-field">
+          <input type="checkbox" id="enforce-toggle" checked>
+          Enforce Trusted Types <code>(require-trusted-types-for 'script')</code>
+        </label>
+        <label class="checkbox-field">
+          <input type="checkbox" id="default-toggle">
+          Install a default policy that approves arithmetic only
+        </label>
+      </fieldset>
+
+      <div class="actions">
+        <button type="button" class="toggle-btn" id="run-btn">Run the check</button>
+      </div>
+
+      <output class="readout" id="readout" aria-live="polite">Press "Run the check" to step through the decision.</output>
+
+      <fieldset class="control-group">
+        <legend>Your browser, for real</legend>
+        <output class="readout" id="support" aria-live="polite"></output>
+      </fieldset>
+    </main>
+
+    <script src="./index.js"></script>
+  </body>
+</html>

@@ -18,6 +18,13 @@ export interface SandboxMeta {
 */
 export const sandboxes: SandboxMeta[] = [
   {
+    slug: "dynamic-code-brand-checks-trusted-types",
+    title: "Trusted Types and eval() Brand Check Playground",
+    description: "Choose a snippet, how it reaches eval() or new Function() (plain string, TrustedScript or look-alike object) and which protections are on, then follow the brand check, default policy and script-src steps in a readout, with real checks of your browser's Trusted Types support.",
+    template: "vanilla",
+    entry: "/index.html"
+  },
+  {
     slug: "css-open-pseudo-class",
     title: "Styling Details, Dialog and Select with :open",
     description: "Open an exclusive <details> accordion, a modal or non-modal <dialog> and a <select>, all styled through :open with turning arrows, a ::details-content fade and a @starting-style dialog entrance, while a readout lists which elements currently match :open (and :modal) via element.matches().",
