@@ -321,6 +321,25 @@ export const snippets: Snippet[] = [
     changelog: [
       { date: "2026-11-15", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "css-playing-paused-pseudo-classes",
+    title: "`:playing` and `:paused`: Style Media by Playback State",
+    excerpt: "Style audio and video players from their playback state.",
+    description: "Style audio and video by playback state with CSS :playing, :paused, :buffering and :muted, plus :has() patterns and a JavaScript fallback.",
+    category: ["CSS"],
+    tags: ["css", "media-pseudo-classes", "pseudo-classes", "has-selector", "progressive-enhancement", "browser-support", "css-2027"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/snippets/css-playing-paused-pseudo-classes/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover for the :playing and :paused snippet: a code panel with .player:has(video:playing) and .player:has(video:paused) rules beside three stacked player layers labelled :playing, :paused, :seeking, :buffering, :stalled, :muted and :volume-locked.",
+      caption: "Seven media pseudo-classes styling a player by its state, with no classes."
+    },
+    changelog: [
+      { date: "2026-11-22", change: "Initial publication." }
+    ]
   }
 ];
 

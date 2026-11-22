@@ -1314,5 +1314,13 @@ export const tagMeta: Record<string, TagMeta> = {
   "details-element": {
     title: "The HTML <details> Element",
     description: "Native disclosure widgets and accordions with `<details>` and `<summary>`: markers, exclusive groups and `::details-content` animations."
+  },
+  "media-pseudo-classes": {
+    title: "All Content Tagged Media Pseudo-Classes",
+    description: "All content tagged with the CSS media pseudo-classes, such as :playing, :paused, :buffering and :muted, for styling audio and video by their state."
+  },
+  "has-selector": {
+    title: "All Content Tagged :has()",
+    description: "All content tagged with the CSS :has() relational pseudo-class, for styling an element based on what it contains."
   }
 };

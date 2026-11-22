@@ -1,0 +1,322 @@
+import { buildSnippetMetadata } from "@/utils/snippet-metadata";
+
+export const metadata = buildSnippetMetadata("css-playing-paused-pseudo-classes");
+
+## Introduction
+
+A custom video or audio player usually keeps a class in sync with the media element: listen for `play` and `pause`,
+toggle `.is-playing`, and style the play button, the overlay and the controls from that class. The
+**media pseudo-classes** from Selectors Level 4 let CSS read the state directly. `video:playing` and `video:paused`
+match the element itself, and with `:has()` any ancestor or sibling can react to them too.
+
+There are seven of them, covering playback, loading and sound. They're an Interop 2026 focus area and now work in
+every major browser, with Chrome and Edge the last to ship them in November 2026, so this snippet pairs them with a
+small JavaScript fallback for older versions. For where they sit among the other CSS features heading for
+baseline, see
+[What's New in CSS in 2027: What to Expect](/post/css/whats-new-in-css-2027#media-pseudo-classes) and
+[Interop 2026 and CSS Snapshot 2026: What They Mean for CSS](/post/css/interop-2026-and-css-snapshot-2026).
+
+<RainbowDivider />
+
+## The Code
+
+<CodeBlock language="html">
+{`
+  <div class="player">
+    <video src="clip.mp4" playsinline></video>
+    <button class="play-toggle" type="button" aria-label="Play">
+      <span class="icon-play" aria-hidden="true">▶</span>
+      <span class="icon-pause" aria-hidden="true">❚❚</span>
+    </button>
+  </div>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  /* One icon at a time: play while paused, pause while playing.
+     Two separate rules, so a browser that doesn't know one selector still applies the other. */
+  .player:has(video:paused) .icon-pause {
+    display: none;
+  }
+
+  .player:has(video:playing) .icon-play {
+    display: none;
+  }
+
+  .play-toggle {
+    opacity: 1;
+    transition: opacity 0.2s ease;
+  }
+
+  /* Playing: fade the button out until the pointer or keyboard focus comes back */
+  .player:has(video:playing) .play-toggle {
+    opacity: 0;
+  }
+
+  .player:has(video:playing):is(:hover, :focus-within) .play-toggle {
+    opacity: 1;
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="js">
+{`
+  // The button starts and stops playback; CSS swaps the icons, so no state classes are needed
+  const player = document.querySelector(".player");
+  const video = player.querySelector("video");
+  const toggle = player.querySelector(".play-toggle");
+
+  toggle.addEventListener("click", () => {
+    if (video.paused) {
+      video.play().catch(() => {}); // play() rejects if the browser blocks playback
+    } else {
+      video.pause();
+    }
+  });
+
+  // Pseudo-classes change appearance only, so the accessible name is kept in step here
+  const updateLabel = () => toggle.setAttribute("aria-label", video.paused ? "Play" : "Pause");
+
+  video.addEventListener("play", updateLabel);
+  video.addEventListener("pause", updateLabel);
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## How It Works
+
+1. `video:paused` matches whenever the element's `paused` property is `true`, including before it has ever played.
+   `video:playing` matches when `paused` is `false`. Exactly one of the two matches any media element at any time.
+2. `:has()` turns that state into something the whole player can see. `.player:has(video:playing)` matches the
+   wrapper while its video plays, so the button, the icons and anything else inside can be styled from it.
+3. The script calls `play()` and `pause()` and keeps the button's label accurate; it never sets a class. The browser
+   updates the pseudo-classes, so the icons stay right however playback changes: the button, a keyboard shortcut, the media keys, the end of the video, or another script.
+4. `:playing` still matches while playback is held up waiting for data. It describes what the user asked for, not
+   whether frames are moving, and `:buffering` and `:stalled` cover the waiting.
+
+The full set, as defined by Selectors Level 4 and the HTML standard:
+
+| Pseudo-class | Matches a media element when |
+| --- | --- |
+| `:playing` | `paused` is `false`, including while buffering or stalled |
+| `:paused` | `paused` is `true`, including before playback has started and after it has ended |
+| `:seeking` | `seeking` is `true`: the user or a script has jumped to a new position and it's loading |
+| `:buffering` | It's playing, but waiting for enough data to continue (`networkState` is `NETWORK_LOADING` and there's no data beyond the current frame) |
+| `:stalled` | It's buffering and no data has arrived for a while (the media element stall timeout) |
+| `:muted` | The `muted` property is `true` |
+| `:volume-locked` | The browser or the user controls the volume and the page can't change it |
+
+Whenever `:buffering` or `:stalled` matches, `:playing` matches as well. All seven have the same browser support,
+listed under Notes & Tips below.
+
+<RainbowDivider />
+
+## Example Usage
+
+### Show a Loading Spinner While Buffering
+
+<CodeBlock language="css">
+{`
+  .spinner {
+    display: none;
+  }
+
+  .player:has(video:buffering) .spinner {
+    display: block;
+  }
+
+  .player:has(video:stalled) .status::after {
+    content: "Still loading…";
+  }
+`}
+</CodeBlock>
+
+### A Muted Badge and a Hidden Volume Slider
+
+<CodeBlock language="css">
+{`
+  .muted-badge {
+    display: none;
+  }
+
+  .player:has(video:muted) .muted-badge {
+    display: inline-block;
+  }
+
+  /* A volume slider that can't do anything is better left out */
+  .player:has(video:volume-locked) .volume-slider {
+    display: none;
+  }
+`}
+</CodeBlock>
+
+### Highlight the Track That's Playing
+
+Each track in a playlist carries its own `<audio>` element, and the list item lights up while its track plays:
+
+<CodeBlock language="html">
+{`
+  <ol class="playlist">
+    <li class="track">
+      <span class="track-title">Harbour Lights</span>
+      <audio src="harbour-lights.mp3" controls preload="none"></audio>
+    </li>
+    <li class="track">
+      <span class="track-title">Night Ferry</span>
+      <audio src="night-ferry.mp3" controls preload="none"></audio>
+    </li>
+  </ol>
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .track {
+    padding: 0.75rem 1rem;
+    border-inline-start: 0.25rem solid transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .track:has(audio:playing) {
+    background-color: rgb(99 102 241 / 0.12);
+    border-inline-start-color: #6366f1;
+  }
+
+  .track:has(audio:playing) .track-title::after {
+    content: " (now playing)";
+    font-size: 0.85em;
+    color: #6366f1;
+  }
+
+  /* Dim the rest of the list while something plays */
+  .playlist:has(audio:playing) .track:not(:has(audio:playing)) {
+    opacity: 0.6;
+  }
+`}
+</CodeBlock>
+
+`:has()` here does what used to need a `play` listener on every track, a reference to the list item, and a second
+listener to remove the class again.
+
+### A Fallback for Browsers Without Them
+
+Older browsers (Chrome and Edge before 158, Firefox before 150) don't know these selectors. Toggle classes from media
+events only where the selectors aren't supported, and write the CSS so either source matches. `:is()` takes a *forgiving* selector list, so a browser that doesn't know
+`:playing` drops that part and keeps `.is-playing`:
+
+<CodeBlock language="js">
+{`
+  // Runs once, for the media already on the page; call it again for players added later
+  if (!CSS.supports("selector(:playing)")) {
+    for (const media of document.querySelectorAll("audio, video")) {
+      const sync = () => {
+        media.classList.toggle("is-playing", !media.paused);
+        media.classList.toggle("is-paused", media.paused);
+        media.classList.toggle("is-muted", media.muted);
+      };
+
+      // "play" and "pause" cover playback, including the end of a track; "emptied" covers a new src
+      for (const type of ["play", "pause", "emptied", "volumechange"]) {
+        media.addEventListener(type, sync);
+      }
+      sync();
+    }
+  }
+`}
+</CodeBlock>
+
+<CodeBlock language="css">
+{`
+  .player:has(video:is(:paused, .is-paused)) .icon-pause {
+    display: none;
+  }
+
+  .player:has(video:is(:playing, .is-playing)) .icon-play {
+    display: none;
+  }
+
+  .player:has(video:is(:playing, .is-playing)) .play-toggle {
+    opacity: 0;
+  }
+
+  .player:has(video:is(:muted, .is-muted)) .muted-badge {
+    display: inline-block;
+  }
+
+  .track:has(audio:is(:playing, .is-playing)) {
+    background-color: rgb(99 102 241 / 0.12);
+  }
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Use Cases
+
+- **Custom video players:** swapping play and pause icons, a large overlay button while paused, controls that fade
+  out during playback
+- **Playlists and podcast lists:** marking the episode or track that's playing
+- **Loading feedback:** spinners on `:buffering`, a message on `:stalled`, a dimmed frame while `:seeking`
+- **Sound state:** a muted badge on autoplaying previews, which browsers usually only allow when muted
+- **Page-level effects:** `body:has(video:playing)` to dim the rest of the page, or to pause a CSS animation so it
+  doesn't compete with the video
+
+<RainbowDivider />
+
+## Notes & Tips
+
+- **Browser support:** Safari 15.4, Firefox 150, and Chrome and Edge 158 (November 2026). Every major browser now
+  supports them, but visitors on older versions of Chrome, Edge or Firefox won't get them, so treat them as
+  progressive enhancement for now.
+- **Add a fallback for older browsers:** use the class-toggling script from
+  [the fallback example](#a-fallback-for-browsers-without-them) above while those versions are still in use.
+- **Don't put `:playing` in a plain selector list.** `video:playing, video.is-playing { ... }` throws the whole rule
+  away in a browser that doesn't recognise `:playing`, because an ordinary selector list is all or nothing. `:has()`
+  is unforgiving too, so `:has(video:playing, video.is-playing)` fails the same way. Wrap the alternatives in `:is()`.
+- **Detect support in CSS** with `@supports selector(:playing) { ... }` when a rule makes sense only with the native
+  pseudo-classes.
+- **Keep the accessible state in sync yourself.** The pseudo-classes change appearance only. A toggle button still
+  needs an accessible name that describes its action; update its `aria-label` ("Play" or "Pause") from the same
+  `play` and `pause` events, or use `aria-pressed` on a button labelled "Pause".
+- **`:paused` is the default state.** It matches on page load, before anything has played, and after a track ends.
+  If your "paused" styling should appear only once playback has started and stopped, you need JavaScript to tell the
+  two apart, for example by checking `currentTime > 0`.
+- **A sibling of `:open`.** `:open` does the same job for `<details>`, `<dialog>` and `<select>`; see
+  [The `:open` Pseudo-Class for `<details>`, `<dialog>` and `<select>`](/tutorial/css-open-pseudo-class).
+- **`:volume-locked`** matches where the page can't set the volume, such as on iOS, where only the hardware buttons
+  control it.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Do these pseudo-classes work on elements other than audio and video?">
+  The selectors are defined for anything that can be played or paused, but in HTML that means the media elements:
+  `<audio>` and `<video>`. On any other element they never match.
+</Details>
+
+<Details summary="Do I still need JavaScript for a custom player?">
+  Yes, to start and stop playback, seek and change the volume. What the pseudo-classes remove is the state-tracking
+  code: event listeners that only exist to keep classes in sync with the media element.
+</Details>
+
+<Details summary="Does :playing stop matching while the video is buffering?">
+  No. `:playing` reflects the `paused` property, which stays `false` while the browser waits for data. Use
+  `:buffering` or `:stalled` alongside it to show that playback is held up.
+</Details>
+
+<Details summary="Why do the icons stay correct when I use the keyboard media keys?">
+  Because the CSS reads the media element's own state. Whatever starts or stops playback, the browser updates
+  `paused` and the pseudo-classes with it, so there's no class to forget to update.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+`:playing`, `:paused`, `:seeking`, `:buffering`, `:stalled`, `:muted` and `:volume-locked` let CSS style audio and
+video by their real state, and `:has()` passes that state to the whole player or playlist. They work in every
+major browser as of November 2026. For visitors on older versions, pair them with a few lines of JavaScript that
+toggle matching classes, and combine the two with `:is()` so each browser uses whichever it understands.
