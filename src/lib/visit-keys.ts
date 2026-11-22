@@ -52,6 +52,9 @@ async function lookupCountry(ip: string): Promise<string | undefined> {
   }
 }
 
+// What getCountry answers when nothing could place the reader, so callers can tell "unknown" from a real country.
+export const UNKNOWN_COUNTRY = "UNKNOWN";
+
 // Edge geo headers come first because they cost nothing; ipinfo only fills the gaps.
 export async function getCountry(req: NextRequest): Promise<string> {
   const country =
