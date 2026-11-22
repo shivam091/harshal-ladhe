@@ -1,0 +1,17 @@
+.playground-header code,
+.checkbox-field code {
+  font-family: var(--pg-mono);
+  font-size: 0.85em;
+  color: var(--pg-text);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+/* Gives the readout inside a fieldset the same footprint as the standalone one, without a doubled border. */
+fieldset.control-group .readout {
+  border: none;
+}

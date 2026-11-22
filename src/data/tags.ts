@@ -1283,6 +1283,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Content Security Policy (CSP)",
     description: "Using the `Content-Security-Policy` header to control which scripts may load and run, including `script-src`, `'unsafe-eval'` and report-only mode."
   },
+  "trusted-types": {
+    title: "Trusted Types",
+    description: "The Trusted Types API and CSP directives that make DOM and script injection sinks accept only values created by a reviewed policy."
+  },
   "xss": {
     title: "Cross-Site Scripting (XSS)",
     description: "How cross-site scripting bugs happen, from DOM sinks to `eval`, and the browser features and coding habits that prevent them."

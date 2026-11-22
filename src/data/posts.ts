@@ -928,6 +928,27 @@ export const posts: Post[] = [
       { date: "2026-11-15", change: "Added cross-reference to snippet 'Bytes to Hex and Back with `Uint8Array.fromHex()` and `toHex()`'" },
       { date: "2026-11-14", change: "Initial publication" }
     ]
+  },
+  {
+    slug: "dynamic-code-brand-checks-trusted-types",
+    title: "Trusted Types and `eval`: The Dynamic Code Brand Checks Proposal",
+    excerpt: "Guard eval and new Function with Trusted Types",
+    description: "Why eval and new Function are risky, how Trusted Types and CSP contain them, and what the Stage 3 Dynamic Code Brand Checks proposal changes. Not in ES2027 yet.",
+    category: ["JavaScript"],
+    tags: ["javascript", "trusted-types", "content-security-policy", "xss", "eval", "tc39", "ecmascript", "secure-coding", "web-apis", "browser-support"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/javascript/dynamic-code-brand-checks-trusted-types/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover for Trusted Types and eval: a plain string, \"alert(document.cookie)\", is blocked with an EvalError at a shield labelled Brand check, while a TrustedScript from policy.createScript(\"(2 + 3) * 4\") passes through to eval(script), beside the checks every call goes through in order: brand check, default policy, script-src.",
+      caption: "Only a TrustedScript passes the brand check; plain strings fall back to the default policy, and everything still has to clear script-src."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Few posts on this site needed this much groundwork. Before writing a line I read the proposal's README and its draft spec, the CSP and Trusted Types specifications, and the compatibility data behind the support table, because \"Stage 3\" and \"works in browsers\" are easy to blur. The flowchart had to show the order of the checks at a glance, and the playground had to run real policies in your browser while staying honest about the part it only models. I hope it helps you find your own `eval` calls and try a report-only policy this week. 🔐",
+    changelog: [
+      { date: "2026-11-22", change: "Initial publication" }
+    ]
   }
 ];
 
