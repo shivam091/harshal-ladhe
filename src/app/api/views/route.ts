@@ -247,7 +247,7 @@ export async function POST(req: NextRequest) {
     const campaign = getCampaignKey(beacon.utm);
     const country = await getCountry(req);
     const device = getDevice(ua);
-    const consent = CONSENT_STATUSES.find((state) => state === beacon.consent) ?? "unset";
+    const consent = CONSENT_STATUSES.find((state) => state === beacon.consent) ?? "pending";
     const isNew = await isNewUniqueVisitor(db, slug, day, hashVisitor(ip), country);
 
     const inc: Record<string, number> = {

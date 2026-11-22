@@ -2,7 +2,9 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { readConsentStatus } from "@/lib/consent";
+import { readConsentStatus, resolveConsentStatus } from "@/lib/consent";
+import { postBeacon } from "@/lib/beacon";
+import type { ConsentStatus } from "@/lib/consent";
 
 type Utm = { source: string; medium: string; campaign: string; content: string; term: string; id: string };
 
@@ -49,19 +51,22 @@ export default function PageViewTracker(): null {
 
     const source = landing ?? { referrer: "", internal: true };
     landing = null;
-    const body = JSON.stringify({ slug: pathname, consent: readConsentStatus(), ...source });
 
-    // Prefer sendBeacon so the request survives navigation/unload; fall back to fetch.
-    if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-      navigator.sendBeacon("/api/views", new Blob([body], { type: "application/json" }));
-    } else {
-      fetch("/api/views", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-        keepalive: true
-      }).catch(() => {});
+    let sent = false;
+    function send(consent: ConsentStatus): void {
+      if (sent) return;
+      sent = true;
+      postBeacon("/api/views", { slug: pathname, consent, webdriver: navigator.webdriver === true, ...source });
     }
+
+    // The region answer is awaited so the first view of a visit is filed under the right status, but a reader who
+    // leaves first is still counted, with the best guess to hand.
+    resolveConsentStatus().then(send);
+    const flush = (): void => {
+      if (document.visibilityState === "hidden") send(readConsentStatus());
+    };
+    document.addEventListener("visibilitychange", flush);
+    return () => document.removeEventListener("visibilitychange", flush);
   }, [pathname]);
 
   return null;

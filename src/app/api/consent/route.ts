@@ -36,14 +36,14 @@ export async function POST(req: NextRequest) {
     const event = CONSENT_EVENTS.find((name) => name === beacon.event);
     if (!event) return new NextResponse(null, { status: 204 });
 
-    const previous = CONSENT_STATUSES.find((status) => status === beacon.previous) ?? "unset";
+    const previous = CONSENT_STATUSES.find((status) => status === beacon.previous) ?? "pending";
     const country = await getCountry(req);
     const now = new Date();
     const day = getIstDay(now);
 
     const inc: Record<string, number> = { [`countries.${country}.${event}`]: 1 };
     // Flipping an earlier answer is worth seeing apart from a first answer, as it points to a banner people regret.
-    if (event !== "shown" && previous !== "unset" && previous !== event) inc[`countries.${country}.changed`] = 1;
+    if (event !== "shown" && (previous === "granted" || previous === "denied") && previous !== event) inc[`countries.${country}.changed`] = 1;
 
     const db = await getDb();
     await db.collection<ConsentDay>(COLLECTION).updateOne(

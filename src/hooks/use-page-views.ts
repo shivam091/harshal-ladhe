@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { getContentParams } from "@/lib/analytics";
-import { readConsentStatus } from "@/lib/consent";
+import { resolveConsentStatus } from "@/lib/consent";
 
 // Long enough for streamed metadata to land, short enough that a page whose title really doesn't change still counts.
 const TITLE_WAIT_MS = 1000;
@@ -33,13 +33,10 @@ export function usePageViews(): void {
       // GA drops the fragment from page_location itself, so one page isn't split across its anchors in reports.
       const location = new URL(window.location.href);
       location.hash = "";
-      // gtag may be blocked or, outside production, never loaded — tracking must never break navigation.
-      window.gtag?.("event", "page_view", {
-        page_title: document.title,
-        page_location: location.href,
-        consent_status: readConsentStatus(),
-        ...getContentParams(pathname)
-      });
+      const params = { page_title: document.title, page_location: location.href, ...getContentParams(pathname) };
+      // Resolved first so the first page of a visit carries the reader's real status, not a guess made before the
+      // region answer arrived; gtag may be blocked or, outside production, never loaded, and tracking must never break navigation.
+      resolveConsentStatus().then((consentStatus) => window.gtag?.("event", "page_view", { ...params, consent_status: consentStatus }));
     }
 
     // The first page's title is already in the server HTML, so only gtag has to be waited for.

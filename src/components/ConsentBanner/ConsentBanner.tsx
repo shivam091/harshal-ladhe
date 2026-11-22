@@ -6,19 +6,9 @@ import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import Button from "@/components/Button";
 import type { ConsentChoice } from "@/lib/consent";
-import { CONSENT_OPEN_EVENT, CONSENT_STORAGE_KEY, consentParams, readConsentStatus, reportConsent } from "@/lib/consent";
+import { CONSENT_OPEN_EVENT, CONSENT_STORAGE_KEY, consentParams, fetchConsentRequired, readConsentStatus, reportConsent } from "@/lib/consent";
 import { trackEvent } from "@/lib/analytics";
 import { Wrapper, Panel, Title, Message, Actions } from "@/components/ConsentBanner/ConsentBanner.styles";
-
-// Storage can throw (private mode, blocked cookies); without it the banner simply asks again next visit.
-function readChoice(): ConsentChoice | null {
-  try {
-    const value = window.localStorage.getItem(CONSENT_STORAGE_KEY);
-    return value === "granted" || value === "denied" ? value : null;
-  } catch {
-    return null;
-  }
-}
 
 // Session-scoped so a reader who ignores the banner across many pages is one impression, not one per page.
 const SHOWN_KEY = "analytics-consent-shown";
@@ -44,24 +34,21 @@ export default function ConsentBanner(): JSX.Element {
   const messageId = useId();
 
   useEffect(() => {
-    const controller = new AbortController();
+    let cancelled = false;
 
-    if (!readChoice()) {
-      fetch("/api/consent-region", { cache: "no-store", signal: controller.signal })
-        .then((res) => (res.ok ? (res.json() as Promise<{ required?: boolean }>) : null))
-        .then((data) => {
-          if (data?.required) {
-            setIsOpen(true);
-            reportShownOnce();
-          }
-        })
-        .catch(() => {});
+    // A stored answer needs no question, so the region lookup is skipped for returning readers.
+    if (readConsentStatus() === "pending") {
+      fetchConsentRequired().then((required) => {
+        if (cancelled || !required) return;
+        setIsOpen(true);
+        reportShownOnce();
+      });
     }
 
     const open = (): void => setIsOpen(true);
     window.addEventListener(CONSENT_OPEN_EVENT, open);
     return () => {
-      controller.abort();
+      cancelled = true;
       window.removeEventListener(CONSENT_OPEN_EVENT, open);
     };
   }, []);
