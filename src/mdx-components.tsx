@@ -94,6 +94,7 @@ import ContainerContainmentDiagram from "@/components/mdx/ContainerContainmentDi
 import NamedContainerDiagram from "@/components/mdx/NamedContainerDiagram";
 import ContainerUnitsDiagram from "@/components/mdx/ContainerUnitsDiagram";
 import StyleQueryDiagram from "@/components/mdx/StyleQueryDiagram";
+import TrustedScriptGateDiagram from "@/components/mdx/TrustedScriptGateDiagram";
 import LayerSpecificityDiagram from "@/components/mdx/LayerSpecificityDiagram";
 import LayerImportantReversalDiagram from "@/components/mdx/LayerImportantReversalDiagram";
 import CascadeSortOrderDiagram from "@/components/mdx/CascadeSortOrderDiagram";
@@ -227,6 +228,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     NamedContainerDiagram,
     ContainerUnitsDiagram,
     StyleQueryDiagram,
+    TrustedScriptGateDiagram,
     LayerSpecificityDiagram,
     LayerImportantReversalDiagram,
     CascadeSortOrderDiagram,
