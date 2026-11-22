@@ -1,10 +1,10 @@
 import type { NextRequest} from "next/server";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import type { Collection } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { getPageUrl } from "@/utils/page-url";
 import { getClientIp, hashVisitor } from "@/lib/client-ip";
-import { BOT_PATTERN, getCountry, getIstDay, safeKey } from "@/lib/visit-keys";
+import { BOT_PATTERN, getCountry, getIstDay, isDatacentreIp, safeKey } from "@/lib/visit-keys";
 import type { ConsentStatus } from "@/lib/consent";
 import { CONSENT_STATUSES } from "@/lib/consent";
 
@@ -39,11 +39,23 @@ type PageView = {
   referrersByDay: Record<string, Record<string, number>>;
   // Same day keys; splits views by the reader's consent answer, so the gap to GA's views can be attributed to declines.
   consentByDay?: Record<string, Partial<Record<ConsentStatus, number>>>;
+  // Same day keys; whether gtag actually loaded for a view, so ad-blocked views can be told from consent-denied ones.
+  gaByDay?: Record<string, Partial<Record<GaStatus, number>>>;
+  // Same day keys; views that look automated, tallied so the gap to GA's bot-filtered views can be explained.
+  suspectByDay?: Record<string, Partial<Record<SuspectKind, number>>>;
   // Same day keys; one key per "source|medium|campaign" so a campaign's traffic can be read without the landing URL.
   campaignsByDay?: Record<string, Record<string, number>>;
   createdAt: Date;
   updatedAt: Date;
 };
+
+// Whether gtag.js reached the browser; a view that left before the check has neither, which reads as unknown.
+const GA_STATUSES = ["loaded", "blocked"] as const;
+
+type GaStatus = (typeof GA_STATUSES)[number];
+
+// Webdriver views are counted as bots outright; datacentre ones stay human views but are tallied as suspect.
+type SuspectKind = "webdriver" | "datacentre";
 
 // Mirrors the `devices` keys so an increment can never target an unknown field.
 type DeviceType = "tablet" | "mobile" | "desktop" | "tv" | "unknown";
@@ -111,6 +123,10 @@ type ViewBeacon = {
   internal?: unknown;
   utm?: unknown;
   consent?: unknown;
+  // Set by browsers under automation (Selenium, Playwright, Puppeteer), which real readers never are.
+  webdriver?: unknown;
+  // Present only on the second beacon, sent once the page knows whether gtag loaded.
+  ga?: unknown;
 };
 
 // Each campaign part is capped so one long tag can't crowd the others out of the key.
@@ -225,15 +241,28 @@ export async function POST(req: NextRequest) {
     const now = new Date();
     const day = getIstDay(now);
     const ua = req.headers.get("user-agent") ?? "";
-    const isBot = BOT_PATTERN.test(ua);
+    const isWebdriver = beacon.webdriver === true;
+    const isBot = BOT_PATTERN.test(ua) || isWebdriver;
     const db = await getDb();
+
+    // The tag-status beacon only adds to its own counter, so it can never count a view twice; bots are ignored.
+    const ga = GA_STATUSES.find((status) => status === beacon.ga);
+    if (ga) {
+      if (!isBot) {
+        await db.collection<PageView>(COLLECTION).updateOne(
+          { _id: slug } as never,
+          { $inc: { [`gaByDay.${day}.${ga}`]: 1 }, $set: { updatedAt: now } }
+        );
+      }
+      return new NextResponse(null, { status: 204 });
+    }
 
     // Bots are tallied separately and never pollute the human-facing metrics.
     if (isBot) {
       await db.collection<PageView>(COLLECTION).updateOne(
         { _id: slug } as never,
         {
-          $inc: { botCount: 1 },
+          $inc: { botCount: 1, ...(isWebdriver ? { [`suspectByDay.${day}.webdriver`]: 1 } : {}) },
           $set: { slug, url: getPageUrl(slug), updatedAt: now },
           $setOnInsert: { createdAt: now }
         },
@@ -269,6 +298,16 @@ export async function POST(req: NextRequest) {
       },
       { upsert: true }
     );
+
+    // After the response, because the network lookup can be slow and must never hold up the beacon.
+    after(async () => {
+      try {
+        if (!(await isDatacentreIp(ip))) return;
+        await db.collection<PageView>(COLLECTION).updateOne({ _id: slug } as never, { $inc: { [`suspectByDay.${day}.datacentre`]: 1 } });
+      } catch {
+        // A missed tally is harmless.
+      }
+    });
   } catch {
     // Swallow everything — tracking must never affect the visitor's experience.
   }
