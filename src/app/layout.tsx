@@ -12,6 +12,7 @@ import { SoundProvider } from "@/context/SoundContext";
 import AnalyticsProvider from "@/components/AnalyticsProvider";
 import NavigationProgress from "@/components/NavigationProgress";
 import ConsentBanner from "@/components/ConsentBanner";
+import { GA_PROXY_ENABLED, GA_PROXY_PATH } from "@/lib/ga-proxy";
 import { CONSENT_REGIONS, CONSENT_STORAGE_KEY, consentParams } from "@/lib/consent";
 import { themeRule } from "@/utils/color";
 import { LIGHT_COLORS_CSS } from "@/constants/themes/light";
@@ -100,6 +101,19 @@ const GA_ID = siteConfig.analytics.googleMeasurementId;
 const IS_GA_ENABLED = process.env.VERCEL_ENV === "production";
 
 /*
+  With the proxy on, hits go to this origin's own /stats path instead of Google's domains, which filter lists block;
+  transport_url is resolved in the browser so previews and production each use their own host.
+*/
+const GA_CONFIG = GA_PROXY_ENABLED
+  ? `{ send_page_view: false, first_party_collection: true, transport_url: window.location.origin + "${GA_PROXY_PATH}" }`
+  : "{ send_page_view: false }";
+
+// The same script, from this origin when proxied; the id travels in the query either way.
+const GA_SCRIPT_URL = GA_PROXY_ENABLED
+  ? `${GA_PROXY_PATH}/s.js?id=${GA_ID}`
+  : `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+
+/*
   Consent Mode v2: denied by default only where the law asks for opt-in, and a stored choice is applied before config
   so a returning reader's first hit already honours it. The first page view comes from usePageViews, so it carries the
   same content params as later ones.
@@ -127,7 +141,7 @@ const GA_SCRIPT = `
     }
   } catch (e) {}
   gtag("js", new Date());
-  gtag("config", "${GA_ID}", { send_page_view: false });
+  gtag("config", "${GA_ID}", ${GA_CONFIG});
 `;
 
 export default function RootLayout({
@@ -150,7 +164,7 @@ export default function RootLayout({
             <>
               {/* Init first so its error listener is in place before gtag.js can fail. */}
               <Script id="ga-init" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: GA_SCRIPT }} />
-              <Script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
+              <Script async src={GA_SCRIPT_URL} strategy="afterInteractive" />
             </>
           )}
         </head>
