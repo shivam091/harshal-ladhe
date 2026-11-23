@@ -4,7 +4,7 @@ export const metadata = buildPostMetadata("advanced-git-techniques-and-workflows
 
 ## Introduction
 
-This is **Part 2** of a two-part series. [Part 1](/post/git/git-basics-for-beginners) covered the everyday loop — staging, committing, branching, merging, undoing mistakes, and working with a remote. If any of those feel shaky, that post is the place to start; everything here builds directly on that mental model of working directory → staging area → repository, and branches as cheap, movable pointers.
+This is **Part 2** of a three-part series. [Part 1](/post/git/git-basics-for-beginners) covered the everyday loop — staging, committing, branching, merging, undoing mistakes, and working with a remote. If any of those feel shaky, that post is the place to start; everything here builds directly on that mental model of working directory → staging area → repository, and branches as cheap, movable pointers.
 
 This post covers the tools you reach for once a repo gets real: rewriting history safely before sharing it, applying individual commits with precision, finding the exact commit that broke something, and understanding what Git is actually doing under the hood — which turns "undo commands feel scary" into "I know exactly how to get this back."
 
@@ -527,4 +527,11 @@ Git's surface area is large, but nearly all of it comes back to the same handful
 - A commit is a tree + parent pointer(s) + metadata; a branch is a file containing a SHA — once that clicks, most "advanced" Git stops feeling like magic
 - Pick a workflow (GitHub Flow, Git Flow, trunk-based) that matches your release cadence, and stay consistent about it as a team
 
-Between this post and [Part 1](/post/git/git-basics-for-beginners), that's Git end to end — from your first `git init` to rewriting history with confidence. Keep both bookmarked as a reference, and when a command's exact flags slip your mind, `git help <command>` is always one step closer than a search engine.
+Between this post and [Part 1](/post/git/git-basics-for-beginners), you can go from your first `git init` to rewriting history with confidence. When a command's exact flags slip your mind, `git help <command>` is always one step closer than a search engine.
+
+🔗 **Up Next (Part 3):** [Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`](/post/git/searching-git-history) — where we'll cover:
+
+- Finding when code was added, removed or changed with `git log -S` and `-G`
+- Following one function through history with `git log -L`
+- Tracking down deleted and renamed files with `--diff-filter` and `--follow`
+- Searching any commit with `git grep`, and getting honest answers from `git blame`

@@ -110,8 +110,8 @@ export const series: Series[] = [
     slug: "git-from-basics-to-advanced",
     title: "Git: From Basics to Advanced",
     order: 2,
-    excerpt: "Everyday Git commands, plus advanced recovery workflows.",
-    description: "A 2-part Git series — start with the everyday staging/commit/branch/merge loop, then move on to rebasing, Git internals, and disaster-recovery workflows with reflog.",
+    excerpt: "Everyday Git commands, advanced workflows, and searching history.",
+    description: "A 3-part Git series — the everyday staging/commit/branch/merge loop, then rebasing, internals and reflog recovery, then searching history with log -S, grep and blame.",
     image: {
       path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/series/git-from-basics-to-advanced/cover.png",
       width: 1536,
@@ -123,9 +123,11 @@ export const series: Series[] = [
     parts: [
       "git-basics-for-beginners",
       "advanced-git-techniques-and-workflows",
+      "searching-git-history",
     ],
-    signoff: "From your first commit to rebasing with confidence — that's the whole arc this series was built to cover. Thanks for sticking with it through both parts. Go put it to use. 🌱",
+    signoff: "From your first commit to rebasing with confidence and answering any question about your history — that's the whole arc this series was built to cover. Thanks for sticking with it through all three parts. Go put it to use. 🌱",
     changelog: [
+      { date: "2026-11-23", change: "Added Part 3: 'Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`'" },
       { date: "2026-08-15", change: "Initial publication" }
     ]
   },

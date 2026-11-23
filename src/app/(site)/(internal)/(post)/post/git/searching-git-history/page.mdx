@@ -1,0 +1,818 @@
+import { buildPostMetadata } from "@/utils/post-metadata";
+
+export const metadata = buildPostMetadata("searching-git-history");
+
+## Introduction
+
+This is **Part 3** of the series. [Part 1](/post/git/git-basics-for-beginners) introduced `git log`, `git diff` and `git blame` as ways to read history. [Part 2](/post/git/advanced-git-techniques-and-workflows) showed how to rewrite that history safely, and how `git bisect` finds the commit that broke something by testing your code at each step.
+
+This post is about *questioning* history instead. Sooner or later, every project raises questions that a plain `git log` can't answer quickly:
+
+- When did this constant first appear, and when did its value change?
+- Who last touched this function, and what did it look like before?
+- Which commit deleted that file, and how do I get it back?
+- Is this string used anywhere — in this branch, or in last year's release tag?
+- Who *really* wrote this line, before the big reformat and the file split?
+
+Git can answer every one of those in a single command, without leaving the terminal. `git bisect` is still the tool for *behaviour* — "the tests passed last week, now they fail". The tools here are for *text* — "this line changed, and I want to know when, how and why". The two complement each other: a quick `git log -S` often narrows a bug down far enough that you never need to bisect at all.
+
+By the end, you'll be comfortable with:
+
+- The pickaxe: `git log -S` and `git log -G`, and the one difference between them that trips everyone up
+- Following a single function or line range through history with `git log -L`
+- Finding when a file was added, deleted or renamed with `--diff-filter`
+- Searching any commit, tag or branch with `git grep`
+- Getting honest answers from `git blame`, even after moves, copies and formatting commits
+
+<RainbowDivider />
+
+## The Example Repository
+
+Every output in this post comes from one small repository. It holds a small authentication module, written by three people, with a history that includes the things that make real history hard to search: a value change, a line that moved, a function split into its own file, a reformat, a deletion and a rename.
+
+<CodeBlock language="bash">
+{`
+  git log --oneline
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  b1b2089 Rename auth.js to tokens.js
+  bc03c37 Reformat with 4-space indentation
+  f77d8e7 Move login into its own module
+  f6794f5 Remove unused session module
+  5f6b82c Extend session lifetime to two hours
+  4494ee6 Hoist MAX_AGE to module scope
+  689f2d6 Add session expiry check
+  a5b868a Reject expired tokens
+  ad8066f Add login with token validation
+`}
+</CodeBlock>
+
+Your hashes will differ, but the shape of each answer will be the same in any repository.
+
+<RainbowDivider />
+
+## Which Tool Should I Reach For?
+
+Most history questions map neatly onto one command. Use this table to pick a starting point, then read the matching section for the details.
+
+| Question | Command |
+| --- | --- |
+| Which commits mention a word in their *message*? | `git log --grep=<word>` |
+| When was a string added to or removed from the *code*? | `git log -S <string>` |
+| Which commits touched any line matching a pattern? | `git log -G <regex>` |
+| How has this one function changed over time? | `git log -L :<function>:<file>` |
+| When was a file deleted (or added, or renamed)? | `git log --diff-filter=D -- <path>` |
+| Where does a string appear right now, or in an old release? | `git grep <pattern> [<commit>]` |
+| Who last changed each line of a file? | `git blame <file>` |
+| Who wrote a line before it was moved or reformatted? | `git blame -w -C <file>` |
+| Which commit broke this *behaviour*? | `git bisect` ([Part 2](/post/git/advanced-git-techniques-and-workflows#finding-the-commit-that-introduced-a-bug-git-bisect)) |
+
+<RainbowDivider />
+
+## Messages or Code? `--grep` vs. `-S`
+
+The most common search mistake is looking in the wrong place. `git log --grep` searches commit *messages*; it knows nothing about the code that changed.
+
+<CodeBlock language="bash">
+{`
+  git log --oneline --grep=expir -i      # -i makes the message search case-insensitive
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  689f2d6 Add session expiry check
+  a5b868a Reject expired tokens
+`}
+</CodeBlock>
+
+That's only as good as the messages people wrote. "Extend session lifetime to two hours" changed `MAX_AGE` from `3600` to `7200`, but its message never mentions either. To search what a commit actually *did*, search its diff — which is what the pickaxe is for.
+
+<RainbowDivider />
+
+## The Pickaxe: `git log -S`
+
+`git log -S <string>` lists the commits where the *number of occurrences* of that string changed in a file. Git's documentation calls it the "pickaxe", because it digs out the exact commits where a piece of code was introduced or removed.
+
+<CodeBlock language="bash">
+{`
+  git log --oneline -S MAX_AGE
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  f6794f5 Remove unused session module
+  689f2d6 Add session expiry check
+  a5b868a Reject expired tokens
+`}
+</CodeBlock>
+
+Read the list bottom-up: `MAX_AGE` first appeared in `a5b868a`, a second copy arrived in `session.js` with `689f2d6`, and `f6794f5` deleted that file, taking the copy with it. Each of those commits changed how many times `MAX_AGE` appears, so each one is listed.
+
+Add `-p` to see the diff that matched, and a pathspec to stay inside one area of the project:
+
+<CodeBlock language="bash">
+{`
+  git log -p -S MAX_AGE -- src/          # show each matching commit's diff, limited to src/
+  git log --all --oneline -S MAX_AGE     # search every branch and tag, not just HEAD's history
+`}
+</CodeBlock>
+
+### Regular Expressions: `--pickaxe-regex`
+
+By default, `-S` searches for a fixed string. Add `--pickaxe-regex` to treat it as an extended regular expression instead — handy for tracking several names at once:
+
+<CodeBlock language="bash">
+{`
+  git log --oneline -S 'validateToken|isExpired' --pickaxe-regex
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  f77d8e7 Move login into its own module
+  f6794f5 Remove unused session module
+  689f2d6 Add session expiry check
+  ad8066f Add login with token validation
+`}
+</CodeBlock>
+
+`f77d8e7` shows up because occurrences are counted *per file*. That commit moved `login()` out of `auth.js` and into a new `login.js`, so `auth.js` lost its calls to `validateToken()` and `login.js` gained them — even though the total across the project barely changed.
+
+### Seeing the Whole Commit: `--pickaxe-all`
+
+When you add `-p`, `--stat` or `--name-status` to a pickaxe search, Git only shows the files whose count changed. That can hide the rest of the change. `--pickaxe-all` shows every file in each matching commit:
+
+<CodeBlock language="bash">
+{`
+  git log --oneline --name-status -S 'module.exports = { validateToken }'
+  git log --oneline --name-status -S 'module.exports = { validateToken }' --pickaxe-all
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  f77d8e7 Move login into its own module
+  M	src/auth.js
+
+  f77d8e7 Move login into its own module
+  M	src/auth.js
+  A	src/login.js
+`}
+</CodeBlock>
+
+The first search makes it look as if `auth.js` simply stopped exporting `login()`. The second shows that `login.js` was created in the same commit, which is where the function went.
+
+<Info title="There's an alias for this">
+  `git find` in [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases) is `log --all --oneline -S`, so `git find MAX_AGE` searches every branch in one short command.
+</Info>
+
+<RainbowDivider />
+
+## Matching Changed Lines: `git log -G`
+
+`-S` has a blind spot that catches almost everyone. It only compares *counts*, so a commit that changes a line without adding or removing an occurrence is invisible to it. "Extend session lifetime to two hours" turned `MAX_AGE = 3600` into `MAX_AGE = 7200`. The count stayed at one, so `git log -S MAX_AGE` skipped it.
+
+`git log -G <regex>` asks a different question: *does any added or removed line in this commit's diff match?*
+
+<CodeBlock language="bash">
+{`
+  git log --oneline -G MAX_AGE
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  f6794f5 Remove unused session module
+  5f6b82c Extend session lifetime to two hours
+  4494ee6 Hoist MAX_AGE to module scope
+  689f2d6 Add session expiry check
+  a5b868a Reject expired tokens
+`}
+</CodeBlock>
+
+Two extra commits appear. `5f6b82c` changed the value, and `4494ee6` moved the declaration from inside `validateToken()` to the top of the file. Both rewrote a line containing `MAX_AGE` while leaving the count where it was.
+
+<GitPickaxeDiagram />
+
+| | `-S <string>` | `-G <regex>` |
+| --- | --- | --- |
+| Matches when | The number of occurrences in a file changes | An added or removed line matches |
+| Pattern | Fixed string (regex with `--pickaxe-regex`) | Always a regular expression |
+| Value changes and moved lines | Not listed | Listed |
+| Noise | Low — only introductions and removals | Higher — every edit to a matching line |
+| Best for | "When was this added or removed?" | "When did anything involving this change?" |
+
+Start with `-S` when you want the moment something was introduced or removed — it's the shorter, quieter list. Switch to `-G` when you suspect the code changed in place.
+
+<Warning title="-G only looks at changed lines">
+  `-G` matches added and removed lines, not the unchanged context lines that `-p` prints around them. A commit that edits the line *below* `MAX_AGE` won't match, even though `MAX_AGE` appears in its diff output.
+</Warning>
+
+<RainbowDivider />
+
+## Tracing a Function or Line Range: `git log -L`
+
+Sometimes the question isn't about a string but about one piece of code: *how did this function get to look like this?* `git log -L` follows a range of lines through history and prints only the part of each diff that touched it.
+
+<CodeBlock language="bash">
+{`
+  git log -L :validateToken:src/tokens.js --oneline
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  4494ee6 Hoist MAX_AGE to module scope
+
+  diff --git a/src/auth.js b/src/auth.js
+  --- a/src/auth.js
+  +++ b/src/auth.js
+  @@ -1,5 +3,4 @@
+   function validateToken(token) {
+  -  const MAX_AGE = 3600;
+     return token.length > 0 && token.age < MAX_AGE;
+   }
+
+  a5b868a Reject expired tokens
+
+  diff --git a/src/auth.js b/src/auth.js
+  --- a/src/auth.js
+  +++ b/src/auth.js
+  @@ -1,4 +1,5 @@
+   function validateToken(token) {
+  -  return token.length > 0;
+  +  const MAX_AGE = 3600;
+  +  return token.length > 0 && token.age < MAX_AGE;
+   }
+
+  ad8066f Add login with token validation
+
+  diff --git a/src/auth.js b/src/auth.js
+  --- a/src/auth.js
+  +++ b/src/auth.js
+  @@ -0,0 +1,4 @@
+  +function validateToken(token) {
+  +  return token.length > 0;
+  +}
+  +
+`}
+</CodeBlock>
+
+That's the complete life story of `validateToken()`, from creation to its current shape, with nothing from the rest of the file. Two things happened along the way that `-L` handled on its own. The hoist commit shifted the function down two lines (`-1,5 +3,4`), and the file was later renamed from `auth.js` to `tokens.js` — which is why the diffs show the old name. `-L` keeps tracking the same lines through both.
+
+There are three ways to describe the range:
+
+<CodeBlock language="bash">
+{`
+  git log -L :validateToken:src/tokens.js         # a function, found by name (the name is a regex)
+  git log -L 1,3:src/tokens.js                    # an explicit line range
+  git log -L '/^function login/,+6:src/login.js'  # from a regex match, plus the next 6 lines
+  git log -L 1,3:src/tokens.js -s --oneline       # -s drops the diffs: just the commits
+`}
+</CodeBlock>
+
+`-L` works on the file as it is in the commit you start from (usually `HEAD`), so line numbers refer to the current version. You can pass `-L` more than once to follow several ranges, but you can't combine it with an ordinary `-- <path>` pathspec — Git stops with `-L<range>:<file> cannot be used with pathspec`.
+
+### Teaching Git Where Functions Start
+
+`-L :<name>:<file>` relies on Git knowing where a function begins and ends. By default, Git treats any line starting with a letter, `_` or `$` as a possible function header. That works for top-level JavaScript or C functions, but not for indented methods. Here's a method in a small Python project:
+
+<CodeBlock language="bash">
+{`
+  git log -L :total:app/cart.py --oneline -s
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  fatal: -L parameter 'total' starting at line 1: no match
+`}
+</CodeBlock>
+
+`total()` is a method inside `class Cart`, so its `def` line is indented and the default rule never sees it. The fix is one line in `.gitattributes`, which tells Git to use its built-in Python rules:
+
+<CodeBlock language="bash">
+{`
+  # .gitattributes
+  *.py diff=python
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  7c2e75d Multiply cart total by quantity
+  28ffd63 Add shopping cart
+`}
+</CodeBlock>
+
+Git ships function rules for many languages, including `bash`, `cpp`, `csharp`, `css`, `golang`, `html`, `java`, `kotlin`, `markdown`, `php`, `python`, `ruby` and `rust`. Committing a `.gitattributes` file with the right `diff=` lines improves more than `-L`: it also sharpens the `@@` hunk headers in every `git diff`, and the function names that `git grep -p` reports.
+
+<RainbowDivider />
+
+## Filtering by Change Type: `--diff-filter`
+
+`--diff-filter` limits `git log` to commits where files were changed in a particular *way*. Each kind of change has a letter:
+
+| Letter | Meaning |
+| --- | --- |
+| `A` | Added |
+| `D` | Deleted |
+| `M` | Modified |
+| `R` | Renamed |
+| `C` | Copied |
+| `T` | Type changed (for example, a file became a symlink) |
+
+Combine letters to match any of them (`--diff-filter=AD`), or use lowercase to *exclude* a type (`--diff-filter=d` means "everything except deletions").
+
+The classic use is finding the commit that deleted a file:
+
+<CodeBlock language="bash">
+{`
+  git log --oneline --diff-filter=D -- src/session.js
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  f6794f5 Remove unused session module
+`}
+</CodeBlock>
+
+The deleting commit no longer has the file, so restore it from that commit's parent:
+
+<CodeBlock language="bash">
+{`
+  git restore --source=f6794f5^ -- src/session.js
+`}
+</CodeBlock>
+
+If you can't remember the exact path, use a pathspec pattern, and search every branch for the most recent match:
+
+<CodeBlock language="bash">
+{`
+  git log --all -1 --oneline --diff-filter=D -- '*session.js'
+`}
+</CodeBlock>
+
+The other letters answer similar questions. Add `--name-status` to see which files were involved:
+
+<CodeBlock language="bash">
+{`
+  git log --oneline --diff-filter=A --name-status    # when was each file created?
+  git log --oneline --diff-filter=R --name-status    # which files were renamed, and to what?
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  b1b2089 Rename auth.js to tokens.js
+  R100	src/auth.js	src/tokens.js
+`}
+</CodeBlock>
+
+`R100` means a 100% similarity rename — the content didn't change at all.
+
+### Following a File Through Renames
+
+Renames are also why a plain path-limited log can look suspiciously short:
+
+<CodeBlock language="bash">
+{`
+  git log --oneline -- src/tokens.js            # stops at the rename
+  git log --oneline --follow -- src/tokens.js   # keeps going under the old name
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  b1b2089 Rename auth.js to tokens.js
+
+  b1b2089 Rename auth.js to tokens.js
+  f77d8e7 Move login into its own module
+  4494ee6 Hoist MAX_AGE to module scope
+  a5b868a Reject expired tokens
+  ad8066f Add login with token validation
+`}
+</CodeBlock>
+
+`--follow` only works with a single file, and it combines with every other filter in this post. The usual narrowing options stack too:
+
+<CodeBlock language="bash">
+{`
+  git log --oneline --author=Grace --since=2026-03-20      # one person, after a date
+  git log --oneline -S MAX_AGE --since="3 months ago" -- src/
+  git log --oneline --follow -G MAX_AGE -- src/tokens.js
+`}
+</CodeBlock>
+
+<RainbowDivider />
+
+## Searching File Contents: `git grep`
+
+Everything so far searches *changes*. `git grep` searches *content* — the files as they are in your working tree, your staging area or any commit. It's like `grep -r`, but it only looks at files Git tracks, so `node_modules`, build output and anything else in `.gitignore` are skipped automatically. It's usually much faster as a result.
+
+<CodeBlock language="bash">
+{`
+  git grep -n MAX_AGE
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  src/tokens.js:1:const MAX_AGE = 3600;
+  src/tokens.js:4:  return token.length > 0 && token.age < MAX_AGE;
+`}
+</CodeBlock>
+
+`-n` adds line numbers. If you always want them, set `git config --global grep.lineNumber true`.
+
+### Where to Search
+
+<CodeBlock language="bash">
+{`
+  git grep MAX_AGE                  # tracked files in the working tree (the default)
+  git grep --cached MAX_AGE         # the staging area: what your next commit will contain
+  git grep --untracked MAX_AGE      # also include untracked files (still skipping ignored ones)
+  git grep MAX_AGE v1.2.0           # any commit, branch or tag, without checking it out
+  git grep MAX_AGE main -- src/     # combine a commit with a pathspec
+`}
+</CodeBlock>
+
+Searching a commit prefixes each result with that commit:
+
+<CodeBlock language="bash">
+{`
+  git grep -n MAX_AGE 689f2d6
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  689f2d6:src/auth.js:2:  const MAX_AGE = 3600;
+  689f2d6:src/auth.js:3:  return token.length > 0 && token.age < MAX_AGE;
+  689f2d6:src/session.js:1:const MAX_AGE = 3600;
+  689f2d6:src/session.js:4:  return session.age > MAX_AGE;
+`}
+</CodeBlock>
+
+Neither `src/auth.js` nor `src/session.js` exists any more, but `git grep` reads them straight from the commit's tree.
+
+### Showing the Surrounding Function
+
+<CodeBlock language="bash">
+{`
+  git grep -n -p throw        # -p / --show-function: print the enclosing function's header
+  git grep -n -W validateToken -- src/tokens.js   # -W / --function-context: print the whole function
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  src/login.js=3=function login(user, token) {
+  src/login.js:5:        throw new Error("Invalid token");
+`}
+</CodeBlock>
+
+Lines with `=` are the function header Git found; lines with `:` are the actual matches. Like `git log -L`, this uses the same function rules, so the `.gitattributes` setup above improves it too.
+
+### Combining Patterns
+
+Each pattern needs its own `-e`. Multiple patterns are joined with "or" by default; `--and` and `--not` build stricter searches.
+
+<CodeBlock language="bash">
+{`
+  git grep -n -e MAX_AGE --and -e token        # lines containing both
+  git grep -n -e MAX_AGE --and --not -e const  # MAX_AGE, but not its declaration
+  git grep -l --all-match -e MAX_AGE -e validateToken   # files containing both, on any line
+  git grep -c MAX_AGE                          # count matches per file
+  git grep -w -i token                         # whole words only, ignoring case
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  src/tokens.js:4:  return token.length > 0 && token.age < MAX_AGE;
+`}
+</CodeBlock>
+
+### Searching Every Commit
+
+You can pass `git grep` a whole list of commits, and it will search each one:
+
+<CodeBlock language="bash">
+{`
+  git grep -c MAX_AGE $(git rev-list --all)
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  b1b2089c5514ab0d432da8b30b21d5a7992fa14d:src/tokens.js:2
+  bc03c376cca289071ee39449dfe609bebd734e21:src/auth.js:2
+  f77d8e7697689c6172820a319a14ff708d7bcd3c:src/auth.js:2
+  f6794f580dd9fb6b0cbcfc42fde09a6b18c0982d:src/auth.js:2
+  5f6b82c40a240e8ae3c4ba6af69c5709f5522172:src/auth.js:2
+  5f6b82c40a240e8ae3c4ba6af69c5709f5522172:src/session.js:2
+  ...
+`}
+</CodeBlock>
+
+<Warning title="Searching all of history is usually the wrong tool">
+  This reports every match in *every* commit, so one unchanged line produces one result per commit it survived. On a large repository, `$(git rev-list --all)` can also exceed your shell's argument limit. To find when something appeared or disappeared, use `git log -S` instead. If you really do need a full content search, pipe the list in: `git rev-list --all | xargs git grep MAX_AGE`.
+</Warning>
+
+<RainbowDivider />
+
+## Who Wrote This Line? `git blame` Beyond the Basics
+
+[Part 1](/post/git/git-basics-for-beginners) covered the basics of `git blame`: one line per line of the file, each labelled with the commit that last changed it. "Last changed" is the catch. A reformat, a file split or a moved function each replace the real author with whoever did the tidying.
+
+Here's `src/login.js`. Ada wrote `login()` inside `auth.js`, Linus later moved it into its own file, and a formatter re-indented it:
+
+<CodeBlock language="bash">
+{`
+  git blame src/login.js
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  b1b2089c (Linus        2026-04-27 10:00:00 +0000  1) const { validateToken } = require("./tokens");
+  f77d8e76 (Linus        2026-04-13 10:00:00 +0000  2)
+  f77d8e76 (Linus        2026-04-13 10:00:00 +0000  3) function login(user, token) {
+  bc03c376 (Prettier Bot 2026-04-20 10:00:00 +0000  4)     if (!validateToken(token)) {
+  bc03c376 (Prettier Bot 2026-04-20 10:00:00 +0000  5)         throw new Error("Invalid token");
+  bc03c376 (Prettier Bot 2026-04-20 10:00:00 +0000  6)     }
+  bc03c376 (Prettier Bot 2026-04-20 10:00:00 +0000  7)     return { user, ok: true };
+  f77d8e76 (Linus        2026-04-13 10:00:00 +0000  8) }
+  f77d8e76 (Linus        2026-04-13 10:00:00 +0000  9)
+  f77d8e76 (Linus        2026-04-13 10:00:00 +0000 10) module.exports = { login };
+`}
+</CodeBlock>
+
+According to this, Linus wrote the function and a bot wrote its body. Neither is true: Ada wrote all of it, weeks earlier. Two options fix it, each looking further back than the last.
+
+### Ignoring Whitespace: `-w`
+
+`-w` ignores whitespace-only changes, so the re-indent no longer counts as authorship:
+
+<CodeBlock language="bash">
+{`
+  git blame -w -s src/login.js     # -s hides the author and date columns
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  b1b2089c  1) const { validateToken } = require("./tokens");
+  f77d8e76  2)
+  f77d8e76  3) function login(user, token) {
+  f77d8e76  4)     if (!validateToken(token)) {
+  f77d8e76  5)         throw new Error("Invalid token");
+  f77d8e76  6)     }
+  f77d8e76  7)     return { user, ok: true };
+  f77d8e76  8) }
+  f77d8e76  9)
+  f77d8e76 10) module.exports = { login };
+`}
+</CodeBlock>
+
+Better, but the function now stops at `f77d8e7`, the commit that *created* `login.js`. Blame doesn't yet know the code came from another file.
+
+### Following Moves and Copies: `-M` and `-C`
+
+`-M` detects lines moved or copied *within the same file*, such as a function moved further down. `-C` also looks in *other files*, and repeating it widens the search:
+
+| Option | Looks for moved or copied lines in |
+| --- | --- |
+| `-M` | The same file |
+| `-C` | Other files changed in the same commit |
+| `-C -C` | Also, any file that existed in the commit that created this file |
+| `-C -C -C` | Also, any file in any commit (slowest) |
+
+The move commit changed `auth.js` and created `login.js` together, so a single `-C` is enough here:
+
+<CodeBlock language="bash">
+{`
+  git blame -w -C -L 3,8 src/login.js
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  ^ad8066f src/auth.js (Ada 2026-03-02 10:00:00 +0000 3) function login(user, token) {
+  ^ad8066f src/auth.js (Ada 2026-03-02 10:00:00 +0000 4)     if (!validateToken(token)) {
+  ^ad8066f src/auth.js (Ada 2026-03-02 10:00:00 +0000 5)         throw new Error("Invalid token");
+  ^ad8066f src/auth.js (Ada 2026-03-02 10:00:00 +0000 6)     }
+  ^ad8066f src/auth.js (Ada 2026-03-02 10:00:00 +0000 7)     return { user, ok: true };
+  ^ad8066f src/auth.js (Ada 2026-03-02 10:00:00 +0000 8) }
+`}
+</CodeBlock>
+
+Now blame reaches the real history. When lines come from another file, Git adds a column with the file they came from — here, `src/auth.js`. The `^` marks a boundary commit that blame can't look past; in this case, the repository's very first commit.
+
+<GitBlameCopyDiagram />
+
+Two details are worth knowing. Git only follows a move when enough of it matches: by default, at least 20 alphanumeric characters for `-M` and 40 for `-C`. Pass a number to change the threshold, such as `-C20` — useful when the moved block is short. And `-C -C -C` checks every file in every commit, which can be very slow on a large repository, so start with one `-C` and add more only if you need them.
+
+`-L` limits blame to the lines you care about, which also keeps the deeper searches fast. It takes the same forms as `git log -L`:
+
+<CodeBlock language="bash">
+{`
+  git blame -L 3,8 src/login.js         # lines 3 to 8
+  git blame -L :login src/login.js      # one function
+`}
+</CodeBlock>
+
+### Skipping Formatting Commits: `--ignore-rev`
+
+`-w` only helps when a change is pure whitespace. Formatters also swap quotes, add trailing commas and rewrap long lines, and one large "Run Prettier" commit can take over the blame of an entire codebase. Since **Git 2.23**, you can tell blame to skip specific commits completely:
+
+<CodeBlock language="bash">
+{`
+  git blame --ignore-rev bc03c37 src/login.js
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  b1b2089c (Linus 2026-04-27 10:00:00 +0000  1) const { validateToken } = require("./tokens");
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000  2)
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000  3) function login(user, token) {
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000  4)     if (!validateToken(token)) {
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000  5)         throw new Error("Invalid token");
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000  6)     }
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000  7)     return { user, ok: true };
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000  8) }
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000  9)
+  f77d8e76 (Linus 2026-04-13 10:00:00 +0000 10) module.exports = { login };
+`}
+</CodeBlock>
+
+The bot is gone, and lines 4 to 7 are blamed on the commit before the reformat. Ignoring a commit works for *any* kind of change, not just whitespace, but it doesn't follow code between files — that's still `-C`'s job.
+
+Typing hashes every time doesn't scale. Instead, list them in a file at the root of the repository, conventionally named `.git-blame-ignore-revs`, with a comment above each one:
+
+<CodeBlock language="bash">
+{`
+  # .git-blame-ignore-revs
+  # Reformat with 4-space indentation
+  bc03c376cca289071ee39449dfe609bebd734e21
+`}
+</CodeBlock>
+
+Then point blame at it, either for one run or permanently for the repository:
+
+<CodeBlock language="bash">
+{`
+  git blame --ignore-revs-file .git-blame-ignore-revs src/login.js
+  git config blame.ignoreRevsFile .git-blame-ignore-revs      # every git blame in this repo
+`}
+</CodeBlock>
+
+Use full 40-character hashes in the file, and commit it alongside the code. A rebase gives commits new hashes, so only add a formatting commit to the file once it has landed on your main branch.
+
+<Success title="GitHub honours the same file">
+  When a `.git-blame-ignore-revs` file exists at the root of a repository, GitHub's blame view skips the commits it lists automatically. Committing the file fixes blame for everyone browsing the repository, not just for people who set the local config.
+</Success>
+
+Ignoring a commit is a best guess: Git has to decide which earlier line each changed line came from. Two settings show where it had to guess:
+
+<CodeBlock language="bash">
+{`
+  git config blame.markIgnoredLines true      # prefix lines blamed past an ignored commit with "?"
+  git config blame.markUnblamableLines true   # prefix lines only the ignored commit touched with "*"
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  f77d8e76  3) function login(user, token) {
+  ?f77d8e7  4)     if (!validateToken(token)) {
+  ?f77d8e7  5)         throw new Error("Invalid token");
+  ?f77d8e7  6)     }
+  ?f77d8e7  7)     return { user, ok: true };
+  f77d8e76  8) }
+`}
+</CodeBlock>
+
+The `?` is a reminder that those lines' attribution passed through the ignored reformat. That's worth a second look before you message someone about them.
+
+<RainbowDivider />
+
+## Command Cheat Sheet
+
+A quick-reference pass over this post's topics.
+
+| Task | Command |
+| --- | --- |
+| Search commit messages | `git log --grep=<text> -i` |
+| When was a string added or removed? | `git log -S <string>` |
+| …using a regex | `git log -S <regex> --pickaxe-regex` |
+| …showing every file in the commit | `git log -S <string> --pickaxe-all --name-status` |
+| Commits whose changed lines match | `git log -G <regex>` |
+| History of one function | `git log -L :<function>:<file>` |
+| History of a line range | `git log -L <start>,<end>:<file>` |
+| Commit that deleted a file | `git log --diff-filter=D -- <path>` |
+| Restore a deleted file | `git restore --source=<sha>^ -- <path>` |
+| History across a rename | `git log --follow -- <file>` |
+| Search tracked files | `git grep -n <pattern>` |
+| Search an old release | `git grep <pattern> <tag>` |
+| Show the enclosing function | `git grep -p <pattern>` |
+| Blame, ignoring whitespace | `git blame -w <file>` |
+| Blame through moves and copies | `git blame -w -C <file>` |
+| Blame, skipping formatting commits | `git config blame.ignoreRevsFile .git-blame-ignore-revs` |
+
+<RainbowDivider />
+
+## Best Practices
+
+**Start narrow and widen.** Begin with `-S` and a pathspec. Move to `-G`, `--all` or `-C -C -C` only when the narrow search comes back empty — the wider options are slower and noisier.
+
+**Commit a `.gitattributes` with `diff=` drivers.** One line per language improves `git log -L`, `git grep -p` and every diff hunk header for everyone on the team.
+
+**Keep formatting commits separate, then ignore them.** A reformat mixed into a feature commit can't be ignored without hiding real changes too. Land formatting on its own, then add its full hash to `.git-blame-ignore-revs`.
+
+**Write messages that `--grep` can find.** The pickaxe finds *what* changed; only the commit message explains *why*. Mentioning the ticket, the symptom or the setting you changed makes the next search a one-liner.
+
+**Find people as well as commits.** When blame and the pickaxe point to an area, `git who` from [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases) lists everyone who has committed to it — `git who -- src/login.js` — which is often a quicker path to an answer than reading every diff.
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+### "`git log -S` didn't find the commit I know changed it"
+
+The commit changed the string without changing how many times it appears — a new value, a moved line or a rewritten expression. Use `-G` instead:
+
+<CodeBlock language="bash">
+{`
+  git log --oneline -G MAX_AGE
+`}
+</CodeBlock>
+
+### "The history stops at a rename"
+
+A path-limited `git log` only follows the current name. Add `--follow` for a single file, or use `git log -L`, which follows renames on its own.
+
+### "`git log -L` says there's no match"
+
+Git couldn't find a function header for that name. Check the spelling (it's a regex, so special characters need escaping), and add a `diff=<language>` line to `.gitattributes` so Git recognises indented methods.
+
+### "Blame shows the formatter, not the author"
+
+Use `-w` for whitespace-only changes, and add other formatting commits to `.git-blame-ignore-revs`. If the code also moved between files, add `-C`.
+
+### "`git grep` doesn't find something I can see in my editor"
+
+`git grep` only searches tracked files by default. If the file is untracked, add `--untracked`; if it's also ignored by `.gitignore`, use `--untracked --no-exclude-standard`.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="What's the difference between git log -S and git log -G?">
+  `-S <string>` lists commits that change the *number* of occurrences of a string in a file, so it finds where code was introduced or removed. `-G <regex>` lists commits where any added or removed line matches the pattern, so it also finds value changes and moved lines that leave the count unchanged.
+</Details>
+
+<Details summary="Why is it called the pickaxe?">
+  It's the name Git's own documentation uses for the `-S` option, because it digs through history to find the exact commits where a piece of code was introduced or removed. `-G`, `--pickaxe-regex` and `--pickaxe-all` share the name.
+</Details>
+
+<Details summary="How do I find which commit deleted a file?">
+  Run `git log --diff-filter=D -- path/to/file`. If you don't know the exact path, use a pattern such as `git log --all -1 --diff-filter=D -- '*name.js'`. To restore the file, check it out from the parent of the deleting commit: `git restore --source=<sha>^ -- path/to/file`.
+</Details>
+
+<Details summary="Is git grep faster than grep -r?">
+  Usually, yes. It only reads files Git tracks, so it skips `node_modules`, build output and everything in `.gitignore`, and it searches several files in parallel. Unlike `grep -r`, it can also search any commit, branch or tag without checking it out.
+</Details>
+
+<Details summary="Does git blame -C slow things down?">
+  A single `-C` only checks files changed in the same commit, so it's usually fast. `-C -C -C` compares against every file in every commit, which can be very slow on a large repository. Limit it to a few lines with `-L` when you need the deeper search.
+</Details>
+
+<Details summary="Which Git version do I need for .git-blame-ignore-revs?">
+  `--ignore-rev`, `--ignore-revs-file`, `blame.ignoreRevsFile`, `blame.markIgnoredLines` and `blame.markUnblamableLines` all arrived in Git 2.23, released in 2019. Everything else in this post works in any recent Git.
+</Details>
+
+<RainbowDivider />
+
+## Conclusion
+
+Git keeps every version of every line, and the commands in this post are how you query it. Each answers one precise question: `-S` asks when something was added or removed, `-G` when a matching line changed, `-L` how one function evolved, `--diff-filter` when a file came or went, `git grep` where something is, and `git blame` who touched it last. The trick is matching the question to the right command.
+
+**Key Takeaways:**
+
+- `--grep` searches commit messages; `-S` and `-G` search the code that changed — don't confuse the two
+- `-S` counts occurrences, so it misses value changes and moved lines; `-G` matches changed lines and catches them
+- `git log -L :<function>:<file>` gives a function's complete history, and `.gitattributes` `diff=` drivers make it work for indented methods
+- `--diff-filter=D` finds the commit that deleted a file; restore it from that commit's parent
+- `git grep` searches tracked files in the working tree, the index or any commit — reach for `git log -S` rather than grepping every commit
+- `git blame -w -C` sees past reformatting and file splits, and a committed `.git-blame-ignore-revs` fixes blame for the whole team, on GitHub too
+
+With [Part 1](/post/git/git-basics-for-beginners) for the everyday loop, [Part 2](/post/git/advanced-git-techniques-and-workflows) for rewriting history and recovering from mistakes, and this post for questioning history, that's Git end to end — from your first `git init` to explaining exactly how a line of code got to where it is today.
