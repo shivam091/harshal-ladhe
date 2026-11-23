@@ -85,6 +85,8 @@ Either way, run `git aliases` afterwards — if the list prints, everything load
 - `git root` — the repository's top-level directory, e.g. `cd "$(git root)"`.
 - `git aliases` — list everything above, so you never have to open the config to remember.
 
+`git find` only lists commits that change how many times `<text>` appears, so it misses a changed value or a moved line. [Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`](/post/git/searching-git-history) covers the `-G` option that catches those, along with `git log -L`, `git grep` and getting honest answers from `git blame`.
+
 <RainbowDivider />
 
 ## Adding Them From the Command Line

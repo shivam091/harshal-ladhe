@@ -134,6 +134,8 @@ Binary-searches through history to find the exact commit that introduced a bug.
   If the bug is detectable by a script (a failing test, a non-zero exit code), skip the manual good/bad loop entirely: `git bisect run ./test-for-bug.sh` drives the whole search automatically.
 </Info>
 
+Bisect is the right tool when you can *test* for the bug. When you already know which line or string is involved, searching history is usually faster — [Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`](/post/git/searching-git-history) shows how to find the commit that changed it with `git log -S`, `git log -L` and `git blame`.
+
 <RainbowDivider />
 
 ## Rewriting History Safely
