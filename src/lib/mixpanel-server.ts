@@ -1,7 +1,12 @@
 import { createHmac, randomUUID } from "crypto";
 import type { NextRequest } from "next/server";
 
-const API_HOST = `https://${process.env.MIXPANEL_API_HOST || "api.mixpanel.com"}`;
+// A host written as a URL ("https://api-in.mixpanel.com/") is taken as its host, since both forms get pasted in.
+export function mixpanelHost(fallback: string): string {
+  return (process.env.MIXPANEL_API_HOST || fallback).trim().replace(/^https?:\/\//, "").replace(/\/+$/, "");
+}
+
+const API_HOST = `https://${mixpanelHost("api.mixpanel.com")}`;
 
 // Who an event belongs to, read before the response so it can be sent from after().
 export type MixpanelVisitor = {

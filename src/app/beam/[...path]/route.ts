@@ -1,12 +1,13 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getClientIp } from "@/lib/client-ip";
+import { mixpanelHost } from "@/lib/mixpanel-server";
 
 /*
   Mixpanel's own hosts are on every filter list, so the SDK talks to this origin and the hits are passed on from
   here. MIXPANEL_API_HOST switches to the EU or India residency host for a project kept there.
 */
-const UPSTREAM = `https://${process.env.MIXPANEL_API_HOST || "api-js.mixpanel.com"}`;
+const UPSTREAM = `https://${mixpanelHost("api-js.mixpanel.com")}`;
 
 // Only the endpoints the SDK uses, so the route can't be used as an open relay.
 const ROUTES = new Set(["track", "engage", "groups", "record", "flags"]);
