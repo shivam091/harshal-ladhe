@@ -11,7 +11,7 @@ export type MixpanelVisitor = {
 };
 
 function token(): string | undefined {
-  return process.env.NEXT_PUBLIC_MIXPANEL_TOKEN || undefined;
+  return process.env.MIXPANEL_TOKEN || undefined;
 }
 
 function live(): boolean {
