@@ -4,6 +4,7 @@ import { getSnippetBySlug } from "@/data/snippets";
 import { getSeriesBySlug } from "@/data/series";
 import { getPostCategorySlug } from "@/utils/post-url";
 import { readConsentStatus } from "@/lib/consent";
+import { mixpanelTrack } from "@/lib/mixpanel";
 
 export type GaParams = Record<string, string | number | boolean>;
 
@@ -24,12 +25,15 @@ declare global {
 }
 
 /*
-  gtag only exists in production (see the root layout) and may be blocked, so every event degrades to a no-op rather
-  than breaking the interaction that triggered it.
+  gtag and Mixpanel only exist in production (see the root layout) and either may be blocked, so every event degrades
+  to a no-op rather than breaking the interaction that triggered it. Both get every event, so the two can be compared.
 */
 export function trackEvent(name: string, params: GaParams = {}): void {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  window.gtag("event", name, { consent_status: readConsentStatus(), ...params });
+  if (typeof window === "undefined") return;
+  const status = readConsentStatus();
+  const withConsent = { consent_status: status, ...params };
+  window.gtag?.("event", name, withConsent);
+  mixpanelTrack(name, withConsent, { status });
 }
 
 export type ContentGroup = "post" | "tutorial" | "snippet" | "series" | "listing" | "page";

@@ -8,6 +8,7 @@ import Button from "@/components/Button";
 import type { ConsentChoice } from "@/lib/consent";
 import { CONSENT_OPEN_EVENT, CONSENT_STORAGE_KEY, consentParams, fetchConsentRequired, readConsentStatus, reportConsent } from "@/lib/consent";
 import { trackEvent } from "@/lib/analytics";
+import { syncMixpanelConsent } from "@/lib/mixpanel";
 import { Wrapper, Panel, Title, Message, Actions } from "@/components/ConsentBanner/ConsentBanner.styles";
 
 // Session-scoped so a reader who ignores the banner across many pages is one impression, not one per page.
@@ -61,7 +62,9 @@ export default function ConsentBanner(): JSX.Element {
       // The choice still applies for this visit even if it can't be remembered.
     }
     window.gtag?.("consent", "update", consentParams(choice));
-    // Reported after the update so GA receives it under the reader's new choice; a decline arrives as a cookieless ping.
+    syncMixpanelConsent(choice);
+    // Reported after the update so GA receives it under the reader's new choice; a decline arrives as a cookieless ping,
+    // and reaches Mixpanel not at all.
     trackEvent("consent_choice", { choice, previous_choice: previous });
     reportConsent(choice, previous);
     setIsOpen(false);
@@ -81,7 +84,7 @@ export default function ConsentBanner(): JSX.Element {
               <Panel aria-labelledby={titleId} aria-describedby={messageId}>
                 <Title id={titleId}>Analytics cookies</Title>
                 <Message id={messageId}>
-                  May I use Google Analytics cookies to see which pages get read? None are set unless you accept,
+                  May I use Google Analytics and Mixpanel cookies to see which pages get read and how? None are set unless you accept,
                   and you can change your mind any time from the <Link href="/privacy-policy">privacy policy</Link>.
                 </Message>
                 <Actions>

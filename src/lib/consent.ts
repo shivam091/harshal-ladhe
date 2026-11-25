@@ -9,7 +9,8 @@ export const CONSENT_REGIONS = [
   "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS", "LI", "NO", "GB", "CH"
 ];
 
-export const CONSENT_STORAGE_KEY = "analytics-consent";
+// Versioned so a change to what readers are asked (v2 added Mixpanel) asks everyone again; an answer under an old key no longer counts.
+export const CONSENT_STORAGE_KEY = "analytics-consent-v2";
 
 export type ConsentChoice = "granted" | "denied";
 

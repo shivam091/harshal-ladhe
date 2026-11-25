@@ -4,6 +4,8 @@ import { getDb } from "@/lib/mongodb";
 import { getCountry } from "@/lib/visit-keys";
 import { sendNewsletterWelcome } from "@/lib/mail/newsletter-mailer";
 import { gaVisitor, sendGaEvent } from "@/lib/ga-measurement";
+import { getClientIp } from "@/lib/client-ip";
+import { mixpanelReaderId, mixpanelVisitor, sendMixpanelEvent, setMixpanelProfile } from "@/lib/mixpanel-server";
 
 const COLLECTION = "newsletter_subscribers";
 
@@ -38,21 +40,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "You're already subscribed!" }, { status: 409 });
     }
 
-    const { insertedId } = await db.collection(COLLECTION).insertOne({
+    const subscriber = {
       email: trimmedEmail,
       country: await getCountry(req),
       subscribedAt: new Date(),
       source: typeof source === "string" && SOURCES.has(source) ? source : null,
       sourcePage: sanitiseSourcePage(sourcePage)
-    });
+    };
+    const { insertedId } = await db.collection(COLLECTION).insertOne(subscriber);
 
     // After the response, so the subscriber isn't kept waiting on Brevo.
     after(() => sendNewsletterWelcome(trimmedEmail, insertedId.toString()));
     // Sent from here, once the subscription is stored, so ad blockers can't hide it and a refused one isn't counted.
     const visitor = gaVisitor(req);
-    after(() => sendGaEvent(visitor, "newsletter_subscribe"));
+    const mixpanel = mixpanelVisitor(req, getClientIp(req));
+    // Only for a reader Mixpanel already tracks, so the browser can carry on under the same id.
+    const readerId = mixpanel ? mixpanelReaderId(trimmedEmail) : null;
+    after(() => Promise.all([
+      sendGaEvent(visitor, "newsletter_subscribe"),
+      sendMixpanelEvent(mixpanel, "newsletter_subscribe", {}, readerId),
+      setMixpanelProfile(mixpanel, readerId, {
+        subscribed: true,
+        subscribed_at: subscriber.subscribedAt.toISOString(),
+        newsletter_source: subscriber.source ?? "(unknown)",
+        source_page: subscriber.sourcePage ?? "(unknown)",
+        ...(subscriber.country ? { country: subscriber.country } : {})
+      })
+    ]));
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(readerId ? { success: true, readerId } : { success: true });
   } catch (err) {
     console.error("Newsletter route error:", err);
     return NextResponse.json({ error: "Internal server error." }, { status: 500 });

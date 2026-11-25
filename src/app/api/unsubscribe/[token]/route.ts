@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { NextResponse, after } from "next/server";
 import { gaVisitor, sendGaEvent } from "@/lib/ga-measurement";
+import { getClientIp } from "@/lib/client-ip";
+import { mixpanelReaderId, mixpanelVisitor, sendMixpanelEvent, setMixpanelProfile } from "@/lib/mixpanel-server";
 import { verifyUnsubscribeToken } from "@/lib/mail/unsubscribe";
 import { unsubscribe } from "@/lib/newsletter-subscribers";
 
@@ -21,7 +23,15 @@ export async function POST(req: NextRequest, { params }: Context) {
     const email = await unsubscribe(token, "one_click");
     if (email) {
       const visitor = gaVisitor(req);
-      after(() => sendGaEvent(visitor, "newsletter_unsubscribe"));
+      const mixpanel = mixpanelVisitor(req, getClientIp(req));
+      // Only from the reader's own browser: a mail provider's one-click request has no Mixpanel cookie, and a profile
+      // mustn't be made for a reader who never let Mixpanel track them.
+      const readerId = mixpanel ? mixpanelReaderId(email) : null;
+      after(() => Promise.all([
+        sendGaEvent(visitor, "newsletter_unsubscribe"),
+        sendMixpanelEvent(mixpanel, "newsletter_unsubscribe", {}, readerId),
+        setMixpanelProfile(mixpanel, readerId, { subscribed: false, unsubscribed_at: new Date().toISOString() })
+      ]));
     }
     return NextResponse.json({ success: true });
   } catch (err) {

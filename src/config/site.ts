@@ -41,7 +41,9 @@ export const siteConfig = {
 
   analytics: {
     // Measurement IDs are public by design, so committing it is safe.
-    googleMeasurementId: "G-R5EZ91PMYX"
+    googleMeasurementId: "G-R5EZ91PMYX",
+    // Share of Mixpanel visits recorded for session replay and heatmaps; lowered if the plan's monthly replay allowance runs out.
+    mixpanelReplayPercent: 100
   },
 
   readTime: {

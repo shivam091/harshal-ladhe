@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { useState, useEffect, useId } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import { usePathname } from "next/navigation";
 import type { NewsletterFormProps, Status } from "@/components/NewsletterForm/NewsletterForm.types";
 import { generateEmailFromName, generateFullName } from "@/helpers/fake-data";
@@ -18,12 +18,17 @@ import {
   SuccessMessage
 } from "@/components/NewsletterForm/NewsletterForm.styles";
 import Sparkles from "@/components/Sparkles";
+import { trackEvent } from "@/lib/analytics";
+import { mixpanelIdentify } from "@/lib/mixpanel";
 
 // Matches the fields' slowest FallAway stagger, so the message fades only once they begin returning.
 const SUCCESS_FADE_DELAY = 300;
 
 // FallAway's standard transition length, so the message unmounts exactly as its fade ends.
 const SUCCESS_FADE_DURATION = 400;
+
+// Most of the form on screen, so one scrolled past at the edge of the viewport isn't counted as seen.
+const SEEN_THRESHOLD = 0.6;
 
 // Fields fall away on success so the confirmation takes their place without a layout jump.
 export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Element {
@@ -34,6 +39,29 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
   const [emailPlaceholder, setEmailPlaceholder] = useState("you@example.com");
   const emailId = useId();
   const pathname = usePathname();
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  // Per page, so the seen → started → subscribed funnel counts each page view once per form.
+  const startedRef = useRef(false);
+
+  useEffect(() => {
+    startedRef.current = false;
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      trackEvent("newsletter_form_seen", { event_label: pathname, form_source: source });
+    }, { threshold: SEEN_THRESHOLD });
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, [pathname, source]);
+
+  function handleStart(): void {
+    if (startedRef.current) return;
+    startedRef.current = true;
+    trackEvent("newsletter_form_started", { event_label: pathname, form_source: source });
+  }
 
   // The form persists across client-side navigations, so re-roll the placeholder and clear any unsubmitted email on each one.
   useEffect(() => {
@@ -57,10 +85,10 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
         body: JSON.stringify({ email, source, sourcePage: pathname })
       });
 
-      if (!res.ok) {
-        const data = await res.json() as { error?: string };
-        throw new Error(data.error ?? "Subscription failed.");
-      }
+      const data = await res.json() as { error?: string; readerId?: string };
+      if (!res.ok) throw new Error(data.error ?? "Subscription failed.");
+      // Later visits then join the subscriber's profile; the server only sends an id for a reader Mixpanel tracks.
+      if (data.readerId) mixpanelIdentify(data.readerId);
 
       setStatus("success");
       setShowSuccessMessage(true);
@@ -92,7 +120,7 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
 
   return (
     <>
-      <OuterWrapper>
+      <OuterWrapper ref={wrapperRef}>
         <FormWrapper onSubmit={handleSubmit} aria-label="Newsletter subscription">
           <IntroText onClick={() => document.getElementById(emailId)?.focus()}>
             <FallAway when={isSuccess} distance={7.5} rotation={10} delay={300}>
@@ -116,7 +144,10 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
                 placeholder={emailPlaceholder}
                 autoComplete="email"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={e => {
+                  handleStart();
+                  setEmail(e.target.value);
+                }}
                 required
                 aria-required="true"
                 aria-hidden={isSuccess || undefined}

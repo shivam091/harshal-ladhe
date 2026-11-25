@@ -33,7 +33,8 @@ const REPORT_ONLY_CSP = [
   "font-src 'self' data:",
   `connect-src 'self'${isDev ? " ws:" : ""} https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com/recaptcha/`,
   "frame-src https://*.codesandbox.io https://*.csb.app https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/",
-  "worker-src 'self' blob:",
+  // data: for Mixpanel's replay compressor, which falls back to a data: worker where a blob: one is refused.
+  "worker-src 'self' blob: data:",
   "media-src 'self'",
   "manifest-src 'self'",
   // Sandpack's "Open in CodeSandbox" posts a form to codesandbox.io.

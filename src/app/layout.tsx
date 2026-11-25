@@ -100,6 +100,9 @@ const GA_ID = siteConfig.analytics.googleMeasurementId;
 // Preview and local traffic would pollute the real visitor numbers, so only Vercel production reports to GA.
 const IS_GA_ENABLED = process.env.VERCEL_ENV === "production";
 
+// Production only, as with GA; a project token is public by design, like a measurement ID.
+const MIXPANEL_TOKEN = (IS_GA_ENABLED && process.env.NEXT_PUBLIC_MIXPANEL_TOKEN) || null;
+
 /*
   With the proxy on, hits go to this origin's own /stats path instead of Google's domains, which filter lists block;
   transport_url is resolved in the browser so previews and production each use their own host.
@@ -181,7 +184,7 @@ export default function RootLayout({
           <MotionConfig reducedMotion="user">
             <ThemeProvider>
               <SoundProvider>
-                <AnalyticsProvider>
+                <AnalyticsProvider mixpanelToken={MIXPANEL_TOKEN}>
                   {/* Suspense required because usePathname() reads from the router context */}
                   <Suspense fallback={null}>
                     <NavigationProgress loader="rings" />
