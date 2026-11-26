@@ -15,14 +15,14 @@ export type GaVisitor = {
 
 /*
   The reader's own client ID from gtag's "_ga" cookie ("GA1.1.<random>.<first visit>"), so the event joins their
-  visit and funnels; a fresh one when gtag was blocked, which still counts the conversion.
+  visit and funnels. Null without the cookie: the reader declined analytics or blocked gtag, and a made-up ID would
+  both track someone who said no and add a user to GA who never viewed a page.
 */
-export function gaVisitor(req: { cookies: Pick<NextRequest["cookies"], "get"> }): GaVisitor {
-  const cookie = req.cookies.get("_ga")?.value ?? "";
-  const parts = cookie.split(".");
-  const clientId = parts.length >= 4 ? parts.slice(-2).join(".") : `${Math.floor(Math.random() * 2 ** 31)}.${Math.floor(Date.now() / 1000)}`;
+export function gaVisitor(req: { cookies: Pick<NextRequest["cookies"], "get"> }): GaVisitor | null {
+  const parts = (req.cookies.get("_ga")?.value ?? "").split(".");
+  if (parts.length < 4) return null;
 
-  return { clientId, sessionId: sessionIdFrom(req.cookies.get(SESSION_COOKIE)?.value) };
+  return { clientId: parts.slice(-2).join("."), sessionId: sessionIdFrom(req.cookies.get(SESSION_COOKIE)?.value) };
 }
 
 /*
@@ -43,7 +43,8 @@ function sessionIdFrom(cookie: string | undefined): string | undefined {
   Never throws, so a failed event can't fail the form that triggered it. Only from Vercel production, as with gtag,
   so preview and local submissions stay out of the real figures.
 */
-export async function sendGaEvent(visitor: GaVisitor, name: string, params: Record<string, string | number> = {}): Promise<void> {
+export async function sendGaEvent(visitor: GaVisitor | null, name: string, params: Record<string, string | number> = {}): Promise<void> {
+  if (!visitor) return;
   const secret = process.env.GA_API_SECRET;
   if (process.env.VERCEL_ENV !== "production" || !secret) {
     console.info(`[ga] [${name}] Skipped: ${secret ? "not production" : "GA_API_SECRET not set"}`);

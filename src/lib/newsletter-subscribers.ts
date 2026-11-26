@@ -45,20 +45,29 @@ export async function unsubscribe(token: string, method: UnsubscribeMethod): Pro
   if (target.status !== "subscribed") return null;
 
   const db = await getDb();
-  const subscriber = await db.collection<Subscriber>(COLLECTION).findOne({ _id: target.id });
+  const subscribers = db.collection<Subscriber>(COLLECTION);
+  /*
+    One atomic step, so when a mail provider's one-click POST and the reader's own click land together only one of
+    them unsubscribes; the other used to be recorded and counted in GA and Mixpanel a second time.
+  */
+  const subscriber = await subscribers.findOneAndDelete({ _id: target.id });
   if (!subscriber) return null;
 
-  // Recorded before the delete, so a failure here leaves the reader subscribed and able to retry rather than lost.
-  await db.collection(UNSUBSCRIBES_COLLECTION).insertOne({
-    email: subscriber.email,
-    country: subscriber.country ?? null,
-    subscribedAt: subscriber.subscribedAt ?? null,
-    unsubscribedAt: new Date(),
-    source: subscriber.source ?? null,
-    sourcePage: subscriber.sourcePage ?? null,
-    method
-  });
-  await db.collection<Subscriber>(COLLECTION).deleteOne({ _id: target.id });
+  try {
+    await db.collection(UNSUBSCRIBES_COLLECTION).insertOne({
+      email: subscriber.email,
+      country: subscriber.country ?? null,
+      subscribedAt: subscriber.subscribedAt ?? null,
+      unsubscribedAt: new Date(),
+      source: subscriber.source ?? null,
+      sourcePage: subscriber.sourcePage ?? null,
+      method
+    });
+  } catch (err) {
+    // Put back, so a failed record leaves the reader subscribed and able to retry rather than lost from both lists.
+    await subscribers.insertOne(subscriber);
+    throw err;
+  }
   console.info(`[newsletter] Unsubscribed ${target.email}`);
   return target.email;
 }
