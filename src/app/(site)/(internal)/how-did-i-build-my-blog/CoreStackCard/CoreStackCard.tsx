@@ -2,6 +2,7 @@
 
 import type { JSX } from "react";
 import { useBoop } from "@/hooks/use-boop";
+import { GA_LINK_CLASS } from "@/lib/ga-link";
 import {
   Card,
   CardHeader,
@@ -22,9 +23,7 @@ export default function CoreStackCard({ item }: { item: StackItem }): JSX.Elemen
         href={item.href}
         target="_blank"
         rel="noopener noreferrer"
-        data-analytics-event="core_stack_click"
-        data-analytics-label={item.name}
-        data-analytics-category="engagement"
+        className={GA_LINK_CLASS.coreStack}
         onPointerEnter={triggerBoop}
       >
         <CardHeader>

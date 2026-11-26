@@ -9,11 +9,12 @@ export default function SocialLinks(): JSX.Element {
     <>
       <List>
         {socialLinks.filter(link => link.href && link.type !== "atom").map((link) => {
-          const { label, href, icon, external, analytics } = link;
+          const { label, href, icon, external, analytics, gaLinkClass } = link;
           return (
             <li key={href}>
               <SocialLink
                 href={href}
+                className={gaLinkClass}
                 aria-label={external ? `${label} (opens in new tab)` : label}
                 {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 {...(analytics ? {

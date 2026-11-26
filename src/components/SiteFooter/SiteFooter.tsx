@@ -64,7 +64,7 @@ export default function Footer(): JSX.Element {
 
           <FooterSocialNav aria-label="Social links">
             {socialLinks.filter(link => link.href).map((link) => {
-              const { type, label, href, icon, external, analytics } = link;
+              const { type, label, href, icon, external, analytics, gaLinkClass } = link;
 
               if (type === "atom") {
                 return (
@@ -110,6 +110,7 @@ export default function Footer(): JSX.Element {
                 <FooterLink
                   key={href}
                   href={href}
+                  className={gaLinkClass}
                   aria-label={external ? `${label} (opens in new tab)` : label}
                   {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   {...(analytics ? {

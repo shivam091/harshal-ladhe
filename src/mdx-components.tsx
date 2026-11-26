@@ -2,6 +2,7 @@ import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
 import MDXImage from "@/components/MDXImage";
 import { siteConfig } from "@/config/site";
+import { GA_LINK_CLASS, isOutboundLink } from "@/lib/ga-link";
 import NewsletterCallout from "@/components/NewsletterCallout";
 import ConsentSettingsButton from "@/components/ConsentSettingsButton";
 import { PublishedAt, LastModifiedAt, ContentDates } from "@/components/ContentDates";
@@ -99,22 +100,27 @@ import LayerSpecificityDiagram from "@/components/mdx/LayerSpecificityDiagram";
 import LayerImportantReversalDiagram from "@/components/mdx/LayerImportantReversalDiagram";
 import CascadeSortOrderDiagram from "@/components/mdx/CascadeSortOrderDiagram";
 
-function MDXLink({ href = "", ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
+function MDXLink({ href = "", className, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const isInternal = href.startsWith("/") || href.startsWith("#");
-  if (isInternal) return <Link href={href} {...linkAnalytics(href)} {...props} />;
-  return <a href={href} target="_blank" rel="noopener noreferrer" {...linkAnalytics(href)} {...props} />;
+  if (isInternal) return <Link href={href} className={className} {...linkAnalytics(href)} {...props} />;
+  // The GA class first, since GA cuts link_classes at 100 characters.
+  const classes = isOutboundLink(href, SITE_HOST) ? [GA_LINK_CLASS.articleLink, className].filter(Boolean).join(" ") : className;
+  return <a href={href} target="_blank" rel="noopener noreferrer" className={classes} {...linkAnalytics(href)} {...props} />;
 }
 
 const SITE_HOST = new URL(siteConfig.url).hostname;
 
-// Worked out at render, so the shared click listener can send article_link_click without parsing URLs itself.
+/*
+  Worked out at render, so the shared click listener can send article_link_click without parsing URLs itself. None for
+  a link to another site, which GA's outbound click counts under the ga-article-link class.
+*/
 function linkAnalytics(href: string): Record<string, string> {
+  if (isOutboundLink(href, SITE_HOST)) return {};
+
   let domain = SITE_HOST;
-  let outbound = false;
   try {
     const url = new URL(href, siteConfig.url);
     domain = url.hostname || url.protocol.replace(/:$/, "");
-    outbound = domain !== SITE_HOST;
   } catch {
     // An unparseable href is left attributed to this site rather than dropped from the stats.
   }
@@ -124,7 +130,7 @@ function linkAnalytics(href: string): Record<string, string> {
     "data-analytics-label": href,
     "data-analytics-link-url": href,
     "data-analytics-link-domain": domain,
-    "data-analytics-outbound": String(outbound)
+    "data-analytics-outbound": String(domain !== SITE_HOST)
   };
 }
 

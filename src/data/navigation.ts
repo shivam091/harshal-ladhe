@@ -1,4 +1,5 @@
 import { siteConfig } from "@/config/site";
+import { GA_LINK_CLASS } from "@/lib/ga-link";
 import type { AnalyticsEvent, IconName } from "@/icons/icons";
 import type { ThemeOption } from "@/constants/color-scheme";
 
@@ -26,6 +27,8 @@ export type SocialLink = {
   href: string;
   external?: boolean;
   analytics?: AnalyticsEvent;
+  // In place of analytics for a profile on another site, which GA's own outbound click counts.
+  gaLinkClass?: string;
 };
 
 // Kept short so the primary nav fits the header without collapsing on mid-size screens.
@@ -68,7 +71,7 @@ export const socialLinks: SocialLink[] = [
     icon:      "github",
     href:      siteConfig.author.social.github,
     external:  true,
-    analytics: { event: "social_click", label: "GitHub",    category: "social" }
+    gaLinkClass: GA_LINK_CLASS.social
   },
   {
     type:      "linkedin",
@@ -76,7 +79,7 @@ export const socialLinks: SocialLink[] = [
     icon:      "linkedin",
     href:      siteConfig.author.social.linkedin,
     external:  true,
-    analytics: { event: "social_click", label: "LinkedIn",  category: "social" }
+    gaLinkClass: GA_LINK_CLASS.social
   },
   {
     type:      "instagram",
@@ -84,7 +87,7 @@ export const socialLinks: SocialLink[] = [
     icon:      "instagram",
     href:      siteConfig.author.social.instagram,
     external:  true,
-    analytics: { event: "social_click", label: "Instagram", category: "social" }
+    gaLinkClass: GA_LINK_CLASS.social
   },
   {
     type:      "email",
