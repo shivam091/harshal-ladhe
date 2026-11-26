@@ -42,11 +42,12 @@ export default function ArticleEndMarker(): JSX.Element {
 
       sent = true;
       observer.disconnect();
+      // To Mixpanel too, since its newsletter funnel has reading to the end as a step.
       trackEvent("article_read", {
         event_label: pathname,
         read_seconds: Math.round(readMs / 1000),
         content_group: getContentParams(pathname).content_group
-      });
+      }, { mixpanel: true });
     }
 
     function handleVisibilityChange(): void {

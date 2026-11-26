@@ -26,14 +26,15 @@ declare global {
 
 /*
   gtag and Mixpanel only exist in production (see the root layout) and either may be blocked, so every event degrades
-  to a no-op rather than breaking the interaction that triggered it. Both get every event, so the two can be compared.
+  to a no-op rather than breaking the interaction that triggered it. Mixpanel only gets the events its own reports are
+  built on, so it doesn't hold a second copy of what GA already counts, nor spend its event allowance on them.
 */
-export function trackEvent(name: string, params: GaParams = {}): void {
+export function trackEvent(name: string, params: GaParams = {}, options: { mixpanel?: boolean } = {}): void {
   if (typeof window === "undefined") return;
   const status = readConsentStatus();
   const withConsent = { consent_status: status, ...params };
   window.gtag?.("event", name, withConsent);
-  mixpanelTrack(name, withConsent, { status });
+  if (options.mixpanel) mixpanelTrack(name, withConsent, { status });
 }
 
 export type ContentGroup = "post" | "tutorial" | "snippet" | "series" | "listing" | "page";

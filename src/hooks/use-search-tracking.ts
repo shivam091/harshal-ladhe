@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { mixpanelTrack } from "@/lib/mixpanel";
 
 // Long enough that a term is sent once the reader stops typing, not at every keystroke on the way to it.
 const SETTLE_MS = 1500;
@@ -35,13 +34,11 @@ export function useSearchTracking(query: string, hitCount: number): void {
   }, []);
 }
 
-// gtag and Mixpanel may be blocked or not loaded yet; tracking must never break searching.
+// gtag may be blocked or not loaded yet; tracking must never break searching.
 function send(sent: Set<string>, pending: { term: string; hitCount: number } | null): void {
   if (!pending || sent.has(pending.term)) return;
 
   sent.add(pending.term);
   const name = pending.hitCount > 0 ? "view_search_results" : "search_no_results";
   window.gtag?.("event", name, { search_term: pending.term, results_count: String(pending.hitCount) });
-  // A number here, since Mixpanel can average and bucket it where GA needed a string dimension.
-  mixpanelTrack(name, { search_term: pending.term, results_count: pending.hitCount });
 }

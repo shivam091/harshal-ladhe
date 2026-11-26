@@ -14,30 +14,12 @@ const MAX_ERROR_LENGTH = 255;
 const MIN_COPY_LENGTH = 20;
 
 /*
-  Signals no component owns. Outbound clicks go to Mixpanel only, since GA's enhanced measurement already sends its
-  own; errors go to Mixpanel only, since GA has nowhere useful to show them.
+  Signals no component owns. Outbound clicks are left to GA's enhanced measurement; errors go to Mixpanel only, since
+  GA has nowhere useful to show them.
 */
 export function useReaderSignals(): void {
   useEffect(() => {
     let errorCount = 0;
-
-    function onClick(e: MouseEvent): void {
-      const link = (e.target as Element | null)?.closest?.("a[href]");
-      if (!(link instanceof HTMLAnchorElement)) return;
-      let url: URL;
-      try {
-        url = new URL(link.href);
-      } catch {
-        return;
-      }
-      if (!/^https?:$/.test(url.protocol) || url.origin === window.location.origin) return;
-      // A beacon, since the click is about to unload the page.
-      mixpanelTrack(
-        "outbound_click",
-        { link_url: url.href, link_domain: url.hostname, link_text: link.textContent?.trim().slice(0, 100) ?? "" },
-        { transport: "sendBeacon" }
-      );
-    }
 
     // The copy buttons write through the Clipboard API, which fires no copy event, so this only sees selected prose.
     function onCopy(): void {
@@ -77,13 +59,11 @@ export function useReaderSignals(): void {
       reportError("unhandled_rejection", reason instanceof Error ? reason.message : String(reason));
     }
 
-    document.addEventListener("click", onClick, { capture: true });
     document.addEventListener("copy", onCopy);
     window.addEventListener("beforeprint", onBeforePrint);
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onRejection);
     return () => {
-      document.removeEventListener("click", onClick, { capture: true });
       document.removeEventListener("copy", onCopy);
       window.removeEventListener("beforeprint", onBeforePrint);
       window.removeEventListener("error", onError);

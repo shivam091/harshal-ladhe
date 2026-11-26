@@ -44,8 +44,9 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
   const focusedRef = useRef(false);
   const startedRef = useRef(false);
 
+  // To Mixpanel too, since its newsletter funnel and form steps are built on these.
   function trackForm(name: string, params: Record<string, string> = {}): void {
-    trackEvent(name, { event_label: pathname, form_source: source, ...params });
+    trackEvent(name, { event_label: pathname, form_source: source, ...params }, { mixpanel: true });
   }
 
   useEffect(() => {
@@ -57,7 +58,7 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
     const observer = new IntersectionObserver(([entry]) => {
       if (!entry.isIntersecting) return;
       observer.disconnect();
-      trackEvent("newsletter_form_seen", { event_label: pathname, form_source: source });
+      trackEvent("newsletter_form_seen", { event_label: pathname, form_source: source }, { mixpanel: true });
     }, { threshold: SEEN_THRESHOLD });
     observer.observe(wrapper);
     return () => observer.disconnect();
