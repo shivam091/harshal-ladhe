@@ -40,10 +40,16 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
   const emailId = useId();
   const pathname = usePathname();
   const wrapperRef = useRef<HTMLDivElement>(null);
-  // Per page, so the seen → started → subscribed funnel counts each page view once per form.
+  // Per page, so the seen → focused → started → subscribed funnel counts each page view once per form.
+  const focusedRef = useRef(false);
   const startedRef = useRef(false);
 
+  function trackForm(name: string, params: Record<string, string> = {}): void {
+    trackEvent(name, { event_label: pathname, form_source: source, ...params });
+  }
+
   useEffect(() => {
+    focusedRef.current = false;
     startedRef.current = false;
     const wrapper = wrapperRef.current;
     if (!wrapper) return;
@@ -57,10 +63,17 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
     return () => observer.disconnect();
   }, [pathname, source]);
 
+  // Its own event, since autocapture sees clicks but not a field reached with the keyboard.
+  function handleFocus(): void {
+    if (focusedRef.current) return;
+    focusedRef.current = true;
+    trackForm("newsletter_form_focused");
+  }
+
   function handleStart(): void {
     if (startedRef.current) return;
     startedRef.current = true;
-    trackEvent("newsletter_form_started", { event_label: pathname, form_source: source });
+    trackForm("newsletter_form_started");
   }
 
   // The form persists across client-side navigations, so re-roll the placeholder and clear any unsubmitted email on each one.
@@ -77,6 +90,8 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
     e.preventDefault();
     setStatus("submitting");
     setErrorMsg("");
+    // Every attempt rather than once per page, so a retry after an error shows as one.
+    trackForm("newsletter_form_submitted");
 
     try {
       const res = await fetch("/api/newsletter", {
@@ -94,8 +109,11 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
       setShowSuccessMessage(true);
       setEmail("");
     } catch (err) {
+      const message = err instanceof Error ? err.message : "Something went wrong.";
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Something went wrong.");
+      setErrorMsg(message);
+      // The message the reader saw, never the address, so the report can tell a typo from an outage.
+      trackForm("newsletter_form_error", { error_message: message.slice(0, 100) });
     }
   }
 
@@ -144,6 +162,7 @@ export default function NewsletterForm({ source }: NewsletterFormProps): JSX.Ele
                 placeholder={emailPlaceholder}
                 autoComplete="email"
                 value={email}
+                onFocus={handleFocus}
                 onChange={e => {
                   handleStart();
                   setEmail(e.target.value);
