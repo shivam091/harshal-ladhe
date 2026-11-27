@@ -199,18 +199,19 @@ export const posts: Post[] = [
     excerpt: "Rebase confidently, understand internals, and recover from anywhere.",
     description: "An advanced Git guide covering interactive rebasing, cherry-picking, bisect, Git internals (objects, refs, the .git directory), submodules, worktrees, hooks, reflog-based recovery, and real branching workflows.",
     category: ["Git"],
-    tags: ["git", "rebase", "git-workflow", "git-internals", "reflog", "advanced"],
+    tags: ["git", "rebase", "git-workflow", "git-internals", "reflog", "merging", "gitconfig", "commit-signing", "advanced"],
     image: {
       path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/git/advanced-git-techniques-and-workflows/cover.png",
       width: 1536,
       height: 1024,
       type: "image/png",
-      alt: "Advanced Git: Rebasing, Internals, and Real-World Workflows — a dark neon Git-themed illustration featuring interactive rebasing and commit graphs, Git’s blob-tree-commit-tag object model, advanced Git commands, reflog-based recovery, and GitHub Flow, Git Flow, and trunk-based development workflows.",
-      caption: "Interactive rebasing, Git's object model, reflog recovery and team workflows."
+      alt: "Advanced Git: Rebasing, Internals, and Real-World Workflows — a dark neon Git-themed infographic with panels showing git range-diff comparing old and new commits after a rebase, merge -X ours and theirs resolving a MAX_ATTEMPTS conflict, SSH commit and tag signing with a verified signature, and an includeIf ~/.gitconfig switching identity between ~/code and ~/work, alongside topic tiles for rebasing, cherry-pick and bisect, internals, worktrees, hooks and reflog recovery, plus a terminal of powerful commands.",
+      caption: "Rebasing with range-diff, merge -X strategies, commit signing, includeIf and reflog recovery."
     },
     signoff: "This half is the one that turns Git from \"a tool I follow instructions for\" into something you can actually reason about — I hope the internals section in particular makes the rest of it click. Thanks for sticking with the series through to the end. 🚀",
     pinned: true,
     changelog: [
+      { date: "2026-11-27", change: "Added sections on `git range-diff`, `rebase --update-refs`, `rebase --exec`, merge strategy options, conditional includes and commit signing" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git sync`: Update Your Branch from `main` in One Command'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git prune-branches`: Delete Merged and Squash-Merged Branches'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet 'Git Aliases Worth Adding to Your `~/.gitconfig`'" },

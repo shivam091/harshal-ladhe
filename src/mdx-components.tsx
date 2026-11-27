@@ -45,6 +45,7 @@ import GridVisualOrderDiagram from "@/components/mdx/GridVisualOrderDiagram";
 import TransitionTimingDiagram from "@/components/mdx/TransitionTimingDiagram";
 import GitMergeDiagram from "@/components/mdx/GitMergeDiagram";
 import GitRebaseDiagram from "@/components/mdx/GitRebaseDiagram";
+import GitRangeDiffDiagram from "@/components/mdx/GitRangeDiffDiagram";
 import GitCoreModelDiagram from "@/components/mdx/GitCoreModelDiagram";
 import GitResetDiagram from "@/components/mdx/GitResetDiagram";
 import GitBisectDiagram from "@/components/mdx/GitBisectDiagram";
@@ -179,6 +180,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     TransitionTimingDiagram,
     GitMergeDiagram,
     GitRebaseDiagram,
+    GitRangeDiffDiagram,
     GitCoreModelDiagram,
     GitResetDiagram,
     GitBisectDiagram,

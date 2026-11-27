@@ -11,9 +11,10 @@ This post covers the tools you reach for once a repo gets real: rewriting histor
 By the end, you'll be comfortable with:
 
 - Rebasing — including interactive rebase, and when *not* to reach for it
+- Checking a rebase with `range-diff`, and rebasing stacked branches in one go
 - `cherry-pick` and `bisect` for surgical history operations
 - Git's internal object model — what a commit, branch, and tag actually *are*
-- Submodules, worktrees, hooks, and productivity config
+- Submodules, worktrees, hooks, commit signing, and productivity config
 - Recovering "lost" work with `git reflog`
 - Real branching workflows — Git Flow, GitHub Flow, trunk-based development
 
@@ -89,6 +90,114 @@ This opens an editor listing your commits, oldest first, each with an action:
 
 The `git fixup` alias in [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases) runs both steps in one command, with no editor to step through.
 
+### Checking What a Rebase Changed: `git range-diff`
+
+After an interactive rebase, `git log` shows you the result, but not how it differs from what you had before. Every commit has a new SHA, so an ordinary `git diff` between the old and new tips only tells you how the final trees differ. It can't tell you which commit you reworded, which one you dropped, or whether a conflict resolution quietly changed a line. `git range-diff` (Git 2.19+) compares two versions of the same series of commits, commit by commit.
+
+<CodeBlock language="bash">
+{`
+  git range-diff main @{1} HEAD                   # the branch before the rebase vs after it, both measured from main
+  git range-diff main feature@{1} feature         # the same, naming the branch instead of using the current one
+  git range-diff feature@{1}...feature            # three-dot shorthand, with no base to name
+  git range-diff origin/feature...feature         # what you're about to force-push vs what's on the remote
+`}
+</CodeBlock>
+
+`@{1}` is the current branch's previous position from its reflog. A finished rebase moves the branch once, so `@{1}` is exactly where it was before you started. If you've committed or reset since, look up the right entry with `git reflog` first.
+
+Say you rebased `feature/login` onto the latest `main`, dropped a debug-logging commit, tightened a constant in the rate-limiting commit, and added a new commit along the way:
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  1:  34ef006 = 1:  a702aa7 Add login form
+  2:  b0644cb = 2:  661ad0e Add validation
+  3:  7d4e010 < -:  ------- Add debug logging
+  4:  69e6448 ! 3:  851f620 Add rate limiting
+      @@ Commit message
+        ## rate-limit.js (new) ##
+       @@
+       +// Lock an account after too many failed logins.
+      -+const MAX_ATTEMPTS = 5;
+      ++const MAX_ATTEMPTS = 3;
+       +const WINDOW_MS = 15 * 60 * 1000;
+  -:  ------- > 4:  e60a6a5 Add remember-me option
+`}
+</CodeBlock>
+
+Each line pairs a commit from the old range (left) with its match in the new range (right). For a changed commit, the indented block is a *diff of the two diffs*: the outer `-`/`+` column is what changed between the versions, and the inner one is the patch itself.
+
+<GitRangeDiffDiagram />
+
+<Details summary="What each range-diff marker means">
+
+| Marker | Meaning |
+| --- | --- |
+| `=` | The commit's patch and message are identical in both versions; only its SHA changed |
+| `!` | The commit is in both versions but its patch or message changed, and the diff of diffs follows |
+| `<` | The commit is only in the old version, so it was dropped or squashed away |
+| `>` | The commit is only in the new version, so it was added or split out |
+
+</Details>
+
+<Info title="Base commits can show up as `>`">
+  The three-dot form compares everything reachable from one tip but not the other, so commits that arrived on `main` since you last rebased are listed as `>` too. Naming the base explicitly, as in `git range-diff main @{1} HEAD`, leaves them out. And if a heavily reworked commit appears as a separate `<` and `>` pair instead of one `!`, raise the matching threshold with `--creation-factor=80` (the default is 60).
+</Info>
+
+### Rebasing Stacked Branches: `--update-refs`
+
+Splitting a large change into a stack of dependent branches keeps each pull request reviewable: `feature/api` holds the API client, and `feature/ui` is built on top of it. The catch is that rebasing the top branch onto a newer `main` replays `feature/api`'s commits too, but leaves the `feature/api` branch pointing at the old ones. `--update-refs` (Git 2.38+) moves every branch that points into the rebased range along with it.
+
+<CodeBlock language="bash">
+{`
+  git switch feature/ui
+  git rebase --update-refs main                  # rebases feature/ui AND moves feature/api to its replayed commits
+  git push --force-with-lease origin feature/api feature/ui
+
+  git config --global rebase.updateRefs true     # make it the default for every rebase
+`}
+</CodeBlock>
+
+In an interactive rebase, each branch that will be moved gets its own `update-ref` line in the todo list. Delete a line to leave that branch where it is:
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  pick 1a2b3c4 Add API client
+  pick 5d6e7f8 Add retry logic
+  update-ref refs/heads/feature/api
+
+  pick 9a0b1c2 Add login screen
+  pick 3d4e5f6 Wire login screen to the API client
+`}
+</CodeBlock>
+
+Branches checked out in another worktree are never moved this way. Switch that worktree to a different branch first if you want it included.
+
+### Testing Every Commit: `git rebase --exec`
+
+`-x` (or `--exec`) runs a shell command after each commit is replayed, and stops the rebase as soon as one fails. It's the quickest way to make sure every commit in a branch builds and passes its tests on its own, not just the final one, which keeps the history usable for `git bisect` later.
+
+<CodeBlock language="bash">
+{`
+  git rebase -x "npm test" main                          # run the test suite after every replayed commit
+  git rebase -x "npm run lint" -x "npm test" HEAD~5      # several -x options run in order, after each commit
+  git rebase -i -x "npm test" main                       # adds an exec line under every pick in the todo list
+`}
+</CodeBlock>
+
+When a command fails, Git stops on that commit with your branch half-rebased:
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  Executing: npm test
+  warning: execution failed: npm test
+  You can fix the problem, and then run
+
+    git rebase --continue
+`}
+</CodeBlock>
+
+Fix the problem, `git commit --amend` it into the commit that broke, then `git rebase --continue`. Git doesn't run the failed command again on its own; pass `--reschedule-failed-exec` if you want it to re-run before moving on.
+
 <RainbowDivider />
 
 ## Cherry-Picking
@@ -106,6 +215,36 @@ Applies the changes from a specific commit onto your current branch — useful f
   git cherry-pick --abort              # bail out entirely
 `}
 </CodeBlock>
+
+<RainbowDivider />
+
+## Merge Strategy Options: `-X ours` and `-X theirs`
+
+When two branches edit the same lines, Git stops with a conflict. If you already know which side should win, `-X` passes an option to the merge strategy so it resolves those hunks for you. Everything that *doesn't* conflict is still merged normally.
+
+<CodeBlock language="bash">
+{`
+  git merge -X ours feature/config         # conflicting hunks resolve to the current branch's version
+  git merge -X theirs feature/config       # conflicting hunks resolve to feature/config's version
+  git merge -X ignore-all-space feature    # treat whitespace-only differences as no change at all
+  git merge -X ignore-space-change feature # ignore changes in the amount of whitespace
+  git merge -X renormalize feature         # normalise line endings on both sides before merging
+`}
+</CodeBlock>
+
+`cherry-pick`, `rebase` and `revert` accept the same `-X` options, so `git cherry-pick -X theirs abc1234` applies a fix and lets its version win any conflicting lines.
+
+Three similar-looking commands do quite different things, and mixing them up can silently throw work away:
+
+| Command | What it does |
+| --- | --- |
+| `git merge -X ours feature` | A real merge: takes every non-conflicting change from `feature`, and resolves only the *conflicting hunks* in favour of your branch |
+| `git merge -s ours feature` | A different *strategy*: records a merge commit but keeps your tree exactly as it is, discarding **all** of `feature`'s changes |
+| `git checkout --ours file.txt` | Used mid-conflict: replaces one *file* with your side's version, leaving the rest of the merge to you |
+
+<Warning title="`ours` and `theirs` swap during a rebase">
+  A rebase replays your commits onto the upstream branch, so while it runs, "ours" is the branch you're rebasing *onto* and "theirs" is your own work. `git rebase -X theirs main` keeps your changes in conflicting hunks; `-X ours` keeps `main`'s. The same swap applies to `git checkout --ours` and `--theirs` while a rebase is stopped on a conflict.
+</Warning>
 
 <RainbowDivider />
 
@@ -310,6 +449,60 @@ A minimal `pre-commit` hook (make it executable with `chmod +x`):
 
 <RainbowDivider />
 
+## Signing Commits and Tags
+
+Git takes `user.name` and `user.email` on trust, so anyone can make a commit that claims to be from you. A signature proves the commit or tag was made with a key you hold. Since Git 2.34 that key can be the SSH key you already use to push, so there's no separate GPG setup to maintain.
+
+<CodeBlock language="bash">
+{`
+  git config --global gpg.format ssh                              # sign with SSH instead of GPG
+  git config --global user.signingkey ~/.ssh/id_ed25519.pub       # the public half of the key to sign with
+  git config --global commit.gpgSign true                         # sign every commit by default
+  git config --global tag.gpgSign true                            # sign every annotated tag by default
+`}
+</CodeBlock>
+
+Despite the `gpg` in their names, these settings cover SSH signing too. Without the two defaults, sign individual commits and tags explicitly:
+
+<CodeBlock language="bash">
+{`
+  git commit -S -m "Add rate limiting"    # sign one commit
+  git tag -s v1.0.0 -m "Release 1.0.0"    # create a signed, annotated tag
+`}
+</CodeBlock>
+
+To check SSH signatures locally, Git needs an *allowed signers* file that maps email addresses to the keys trusted to sign for them:
+
+<CodeBlock language="bash">
+{`
+  echo "you@example.com $(cat ~/.ssh/id_ed25519.pub)" >> ~/.config/git/allowed_signers
+  git config --global gpg.ssh.allowedSignersFile ~/.config/git/allowed_signers
+
+  git log --show-signature -1       # show the latest commit with its signature status
+  git verify-commit HEAD            # exit status 0 only if the signature is good
+  git tag -v v1.0.0                 # verify a signed tag
+`}
+</CodeBlock>
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  commit 9c192a2b75d253f8e45854f49097b2b713f03bc5
+  Good "git" signature for you@example.com with ED25519 key SHA256:RsJoLzTqSsu/n69HYoHhQpf/lJeww0MsnCe6zk8zmXI
+  Author: Your Name <you@example.com>
+  Date:   Mon Nov 23 10:20:35 2026 +0530
+
+      Add rate limiting
+`}
+</CodeBlock>
+
+For GPG instead, leave `gpg.format` unset (it defaults to `openpgp`) and set `user.signingkey` to your key's ID from `gpg --list-secret-keys --keyid-format=long`. Every other command above works the same way.
+
+<Info title='Getting the "Verified" badge on GitHub'>
+  GitHub only marks a commit as **Verified** if it knows the public key that signed it. Under *Settings → SSH and GPG keys*, add the key again with the key type set to **Signing Key**. A key added only for authentication isn't used to verify signatures, even though it's the same key. The commit's email address must also be a verified email on your account.
+</Info>
+
+<RainbowDivider />
+
 ## Aliases & Productivity Config
 
 Aliases turn long, frequent commands into muscle memory.
@@ -339,6 +532,50 @@ These end up in `~/.gitconfig` and can also be edited directly:
 For a fuller, tested set — one-step fixups, WIP parking, safe force-pushes, and more — see [Git Aliases Worth Adding to Your `~/.gitconfig`](/snippet/git-aliases).
 
 When a workflow outgrows a one-line alias, write a script instead: any executable named `git-<name>` on your `PATH` runs as `git <name>`. [`git fix-dates`](/snippet/git-fix-dates) is one example — a Bash script that restores commit dates after a rebase and force-pushes with a lease. [`git prune-branches`](/snippet/git-prune-branches) is another — it deletes local branches that have already been merged, with a dry run, a confirmation prompt, and a restore command for each deletion. And [`git sync`](/snippet/git-sync) turns the stash–pull–rebase routine for keeping a feature branch current into a single command.
+
+### Separate Work and Personal Config with `includeIf`
+
+Work and personal projects often need different identities: a different email address, a different signing key, sometimes different defaults. Rather than setting them in every repository, `includeIf` loads an extra config file only when a condition matches. Put it *after* the settings it overrides, because the last value Git reads wins.
+
+<CodeBlock language="bash">
+{`
+  # ~/.gitconfig
+  [user]
+    name = Your Name
+    email = you@example.com
+
+  [includeIf "gitdir:~/work/"]
+    path = ~/.gitconfig-work
+`}
+</CodeBlock>
+
+<CodeBlock language="bash">
+{`
+  # ~/.gitconfig-work
+  [user]
+    email = you@company.example
+    signingkey = ~/.ssh/id_ed25519_work.pub
+`}
+</CodeBlock>
+
+Every repository under `~/work/` now commits as `you@company.example`, and everything else keeps your personal address. `git config --show-origin user.email` confirms which file a value came from:
+
+<CodeBlock language="bash" showCopyButton={false}>
+{`
+  file:/home/you/.gitconfig-work	you@company.example
+`}
+</CodeBlock>
+
+<Details summary="Other includeIf conditions">
+
+| Condition | Matches when |
+| --- | --- |
+| `gitdir:~/work/` | The repository's `.git` directory is anywhere under `~/work/`. The trailing slash matters: Git appends `**` to it, and without it only a `.git` directory at that exact path matches |
+| `gitdir/i:~/work/` | The same, but case-insensitive, which is useful on macOS and Windows |
+| `onbranch:release/` | The currently checked-out branch starts with `release/` (Git 2.23+) |
+| `hasconfig:remote.*.url:https://github.com/your-company/**` | Any remote points at that URL, wherever the repository lives on disk (Git 2.36+) |
+
+</Details>
 
 <RainbowDivider />
 
@@ -434,12 +671,18 @@ A quick-reference pass over this post's topics.
 | Rebase onto main | `git rebase main` |
 | Interactive rebase | `git rebase -i HEAD~n` |
 | Autosquash a fixup | `git commit --fixup=<sha>` + `git rebase -i --autosquash main` |
+| Compare a branch before and after a rebase | `git range-diff main @{1} HEAD` |
+| Rebase a stack of branches together | `git rebase --update-refs main` |
+| Test every commit during a rebase | `git rebase -x "npm test" main` |
 | Apply one commit elsewhere | `git cherry-pick <sha>` |
+| Let one side win conflicting hunks | `git merge -X ours <branch>` |
 | Find a bug's origin | `git bisect start` |
 | Remove a file from all history | `git filter-repo --path <file> --invert-paths` |
 | Add a submodule | `git submodule add <url> <path>` |
 | Work on two branches at once | `git worktree add <path> <branch>` |
 | Inspect any object | `git cat-file -p <sha>` |
+| Sign a commit / a tag | `git commit -S` / `git tag -s <tag>` |
+| Use a config file only in some folders | `[includeIf "gitdir:~/work/"]` |
 | Recover "lost" work | `git reflog` |
 | Shallow / partial clone | `git clone --depth 1` / `--filter=blob:none` |
 
@@ -502,6 +745,10 @@ Going forward, this is exactly the scenario `--force-with-lease` exists to preve
 
 <Details summary="What's the difference between git merge and git rebase?">
   Both integrate one branch's changes into another, but `merge` preserves history exactly as it happened (including a new merge commit), while `rebase` rewrites your branch's commits to look as if they were built on top of the latest target branch — producing a linear history at the cost of changing commit SHAs.
+</Details>
+
+<Details summary="Why do ours and theirs swap during a rebase?">
+  Because a rebase swaps the meaning of the two sides. It replays your commits onto the upstream branch, so "ours" is the branch you're rebasing onto and "theirs" is your own work. To keep your changes in conflicting hunks during `git rebase main`, use `-X theirs`; during `git merge main`, use `-X ours`.
 </Details>
 
 <Details summary="How do I completely undo a git reset --hard?">

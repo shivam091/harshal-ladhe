@@ -275,6 +275,10 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Configuring Git with `~/.gitconfig`",
     description: "Global Git settings, aliases, includes, and per-repo overrides that shape how Git behaves in every repository."
   },
+  "commit-signing": {
+    title: "Signing Git Commits and Tags",
+    description: "Signing commits and tags with SSH or GPG keys, verifying signatures locally, and getting GitHub's Verified badge."
+  },
   "force-with-lease": {
     title: "Safe Force-Pushing with `--force-with-lease`",
     description: "Force-pushing rewritten history without overwriting a teammate's work, using `--force-with-lease` and `--force-if-includes`."
