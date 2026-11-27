@@ -162,6 +162,7 @@ export const snippets: Snippet[] = [
       caption: "Aliases grouped by task, beside a graph log and a one-step fixup."
     },
     changelog: [
+      { date: "2026-11-23", change: "Added cross-reference to post 'Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git sync`: Update Your Branch from `main` in One Command'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git prune-branches`: Delete Merged and Squash-Merged Branches'" },
       { date: "2026-11-08", change: "Initial publication." }

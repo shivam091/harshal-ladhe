@@ -187,6 +187,7 @@ export const posts: Post[] = [
     signoff: "This one's meant to be the guide I wish I'd had when Git still felt like a wall of unfamiliar commands — I hope it makes that first `git merge` conflict feel like a puzzle instead of a crisis. Part 2 picks up right where this leaves off. 🌱",
     pinned: true,
     changelog: [
+      { date: "2026-11-23", change: "Added cross-reference to post 'Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git sync`: Update Your Branch from `main` in One Command'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git prune-branches`: Delete Merged and Squash-Merged Branches'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet 'Git Aliases Worth Adding to Your `~/.gitconfig`'" },

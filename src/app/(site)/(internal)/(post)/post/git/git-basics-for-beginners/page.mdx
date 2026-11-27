@@ -322,6 +322,8 @@ The history browser.
 `}
 </CodeBlock>
 
+`--grep` only searches commit messages. To find the commits that changed a piece of *code*, see `git log -S` and `-G` in [Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`](/post/git/searching-git-history).
+
 ### `git blame`
 
 Shows, line by line, which commit last touched each line of a file.
@@ -333,6 +335,8 @@ Shows, line by line, which commit last touched each line of a file.
   git blame -w src/index.js         # ignore whitespace-only changes
 `}
 </CodeBlock>
+
+When code has been moved between files or run through a formatter, plain `blame` credits whoever did the tidying. [Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`](/post/git/searching-git-history) shows how `-C` and `.git-blame-ignore-revs` get you back to the real author.
 
 <RainbowDivider />
 
