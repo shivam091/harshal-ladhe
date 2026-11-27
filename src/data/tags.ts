@@ -267,6 +267,22 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Custom Git Commands and Aliases",
     description: "Extending Git with your own subcommands — `git-<name>` scripts on your PATH and aliases that wrap multi-step workflows into one command."
   },
+  "git-history": {
+    title: "Searching and Reading Git History",
+    description: "Finding when, how and by whom code changed — searching diffs, tracing functions and files through history, and reading commits from any point in a project's past."
+  },
+  "git-log": {
+    title: "Mastering `git log`: Filters, Pickaxe and Line History",
+    description: "Getting precise answers from `git log` — the `-S` and `-G` pickaxe, `-L` line and function history, `--diff-filter`, `--follow` and the filters that narrow a search."
+  },
+  "git-blame": {
+    title: "Using `git blame` to Find Who Changed a Line",
+    description: "Reading `git blame` output and making it honest — ignoring whitespace, following moved and copied code with `-M` and `-C`, and skipping formatting commits with `.git-blame-ignore-revs`."
+  },
+  "git-grep": {
+    title: "Searching Code with `git grep`",
+    description: "Fast, Git-aware code search with `git grep` — searching the working tree, the index or any commit, showing function context, and combining patterns."
+  },
   "commit-dates": {
     title: "Git Commit Dates: Author vs. Committer",
     description: "How Git's author and committer dates differ, why rebases and amends move them apart, and how to inspect or restore them."

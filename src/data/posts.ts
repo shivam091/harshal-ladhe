@@ -208,7 +208,7 @@ export const posts: Post[] = [
       alt: "Advanced Git: Rebasing, Internals, and Real-World Workflows — a dark neon Git-themed infographic with panels showing git range-diff comparing old and new commits after a rebase, merge -X ours and theirs resolving a MAX_ATTEMPTS conflict, SSH commit and tag signing with a verified signature, and an includeIf ~/.gitconfig switching identity between ~/code and ~/work, alongside topic tiles for rebasing, cherry-pick and bisect, internals, worktrees, hooks and reflog recovery, plus a terminal of powerful commands.",
       caption: "Rebasing with range-diff, merge -X strategies, commit signing, includeIf and reflog recovery."
     },
-    signoff: "This half is the one that turns Git from \"a tool I follow instructions for\" into something you can actually reason about — I hope the internals section in particular makes the rest of it click. Thanks for sticking with the series through to the end. 🚀",
+    signoff: "This part is the one that turns Git from \"a tool I follow instructions for\" into something you can actually reason about — I hope the internals section in particular makes the rest of it click. Part 3 puts that model to work searching history, so you can find out exactly when, how and by whom any line changed. 🚀",
     pinned: true,
     changelog: [
       { date: "2026-11-27", change: "Added sections on `git range-diff`, `rebase --update-refs`, `rebase --exec`, merge strategy options, conditional includes and commit signing" },
@@ -953,6 +953,27 @@ export const posts: Post[] = [
     signoff: "Few posts on this site needed this much groundwork. Before writing a line I read the proposal's README and its draft spec, the CSP and Trusted Types specifications, and the compatibility data behind the support table, because \"Stage 3\" and \"works in browsers\" are easy to blur. The flowchart had to show the order of the checks at a glance, and the playground had to run real policies in your browser while staying honest about the part it only models. I hope it helps you find your own `eval` calls and try a report-only policy this week. 🔐",
     changelog: [
       { date: "2026-11-22", change: "Initial publication" }
+    ]
+  },
+  {
+    slug: "searching-git-history",
+    title: "Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`",
+    excerpt: "Find when, why and by whom code changed.",
+    description: "Find when code changed with git log -S and -G, trace a function with git log -L, search any commit with git grep, and blame past moves and reformats.",
+    category: ["Git"],
+    tags: ["git", "git-history", "git-log", "git-blame", "git-grep", "version-control", "cli", "advanced"],
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/posts/git/searching-git-history/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Searching Git History — find when, why and by whom code changed: a dark gradient Git-themed infographic with a commit timeline comparing git log -S MAX_AGE against -G, highlighting which commits each one matches, a git blame panel where a Prettier Bot reformat hides the real author until blame -w -C reveals Ada, tiles for log -S, log -L, git grep and blame -w -C, and a terminal of history-search commands.",
+      caption: "Comparing git log -S with -G, and seeing past a reformat with blame -w -C."
+    },
+    toc: { maxLevel: 3 },
+    signoff: "Every output in this post came from a real repository I built for it, with the four things that make history hard to read: a changed value, a moved function, a reformat and a rename. That way, what you see here is exactly what Git prints. The gap between `-S` and `-G` caught me out for years before it clicked, so I hope the diagram saves you the same confusion, and that the next time someone asks \"who changed this, and why?\", the answer is one command away. 🔍",
+    changelog: [
+      { date: "2026-11-27", change: "Initial publication" }
     ]
   }
 ];
