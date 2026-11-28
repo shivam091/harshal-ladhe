@@ -303,6 +303,18 @@ export const tagMeta: Record<string, TagMeta> = {
     title: "Rewriting Git History with `filter-branch`",
     description: "Using git filter-branch to rewrite commits in bulk — metadata filters, ref ranges, and when `git filter-repo` is the better tool."
   },
+  "git-patches": {
+    title: "Git Patches with `format-patch`, `am` and `apply`",
+    description: "Turning commits into patch files and back — `git format-patch`, `git am`, `git apply`, revised series and reviewing contributions sent by email."
+  },
+  "git-bundle": {
+    title: "Moving Repositories Offline with `git bundle`",
+    description: "Packing commits, branches and tags into a single file you can clone, fetch or pull from, including incremental bundles for air-gapped machines."
+  },
+  "git-archive": {
+    title: "Exporting Releases with `git archive`",
+    description: "Exporting a commit or tag as a zip or tarball without history, with prefixes, subdirectories and `export-ignore` and `export-subst` attributes."
+  },
   "bash": {
     title: "Bash Scripting",
     description: "Writing robust Bash scripts — strict mode, argument parsing, safe prompts, and small command-line tools for everyday workflows."

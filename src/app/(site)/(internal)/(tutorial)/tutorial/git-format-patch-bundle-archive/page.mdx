@@ -1,0 +1,395 @@
+import { buildTutorialMetadata } from "@/utils/tutorial-metadata";
+
+export const metadata = buildTutorialMetadata("git-format-patch-bundle-archive");
+
+## Introduction
+
+Most Git collaboration runs through a shared remote, but sometimes there isn't one you can use. The build machine is air-gapped. A maintainer takes contributions by email. A contributor without push access sends you a fix to review. A client wants the release as a zip file, not a repository.
+
+Git has a built-in answer for each of these, and none of them needs a server:
+
+- **`git format-patch` and `git am`** turn commits into plain-text patch files and back into commits, keeping the author, date and message.
+- **`git bundle`** packs commits, branches and tags into a single file you can clone or pull from, like a remote on a USB stick.
+- **`git archive`** exports a snapshot of the files at any commit, with no history and no `.git` directory.
+
+This tutorial assumes you can already commit, branch and pull. If those are new to you, start with [Git Basics: A Beginner's Guide to Version Control](/post/git/git-basics-for-beginners). A few sections also mention SHAs, refs and blobs, and [Git Internals: Objects, Refs, and the `.git` Directory](/post/git/advanced-git-techniques-and-workflows#git-internals-objects-refs-and-the-git-directory) explains what they are.
+
+<RainbowDivider />
+
+## Which One Do You Need?
+
+The three commands differ in what actually arrives on the other side:
+
+<GitShareFormatsDiagram />
+
+| | Patches | Bundle | Archive |
+| --- | --- | --- | --- |
+| **Carries history** | Only the commits you export | Yes, full or partial | No, one snapshot |
+| **Author, date, message** | Kept | Kept | Not included |
+| **Same commit SHAs** | No, commits are recreated | Yes | Not applicable |
+| **Branches and tags** | No | Yes | No |
+| **Readable without Git** | Yes, plain text | No | Yes, a zip or tarball |
+| **Received with** | `git am` | `git clone`, `git pull` | `unzip`, `tar -x` |
+| **Best for** | Reviewing and contributing changes | Moving a repository offline | Releases and deployments |
+
+<RainbowDivider />
+
+## Patches: `git format-patch` and `git am`
+
+### Creating Patches
+
+`git format-patch` writes each commit as its own email-formatted `.patch` file, numbered in order:
+
+<CodeBlock language="bash">
+{`
+  git format-patch origin/main..         # Every commit on this branch that isn't on origin/main
+  git format-patch -3                    # The last three commits
+  git format-patch -3 -o outgoing/       # Write them into a directory instead of the current one
+  git format-patch -1 --stdout > fix.patch   # One commit, as a single file
+`}
+</CodeBlock>
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git format-patch origin/main..
+  0001-Add-round-helper.patch
+  0002-Add-version-constant.patch
+  0003-Document-rounding.patch
+`}
+</CodeBlock>
+
+Each file is a complete email: the author and date in the headers, the commit message as the subject and body, a diffstat, then the diff itself.
+
+<CodeBlock language="diff" showCopyButton={false}>
+{`
+  From 1182f003c0c9ed89de00ff7e6f109242a2d9e232 Mon Sep 17 00:00:00 2001
+  From: Ada Lovelace <ada@example.com>
+  Date: Mon, 23 Nov 2026 10:19:51 +0530
+  Subject: [PATCH 1/3] Add round() helper
+
+  ---
+   math.js | 4 ++++
+   1 file changed, 4 insertions(+)
+
+  diff --git a/math.js b/math.js
+  index 7d65831..aad27ff 100644
+  --- a/math.js
+  +++ b/math.js
+  @@ -1,3 +1,7 @@
+   export function add(a, b) {
+     return a + b;
+   }
+  +
+  +export function round(n) {
+  +  return Math.round(n * 100) / 100;
+  +}
+  --
+  2.34.1
+`}
+</CodeBlock>
+
+Binary files are included too, so a patch series can carry an image or a font as well as code.
+
+### Applying Patches with `git am`
+
+`git am` ("apply mailbox") reads the patches in order and turns each one back into a commit:
+
+<CodeBlock language="bash">
+{`
+  git am 000*.patch              # Apply the series in order
+  git am --signoff 000*.patch    # Also add a Signed-off-by trailer with your name
+`}
+</CodeBlock>
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git am --signoff 000*.patch
+  Applying: Add round() helper
+  Applying: Add version constant
+  Applying: Document rounding
+`}
+</CodeBlock>
+
+The new commits keep the original author, author date and message, and you become the committer:
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git log --format='%h  %an (author)  %cn (committer)  %s'
+  740cad9  Ada Lovelace (author)  Grace Hopper (committer)  Document rounding
+  80ae219  Ada Lovelace (author)  Grace Hopper (committer)  Add version constant
+  ea86198  Ada Lovelace (author)  Grace Hopper (committer)  Add round() helper
+`}
+</CodeBlock>
+
+A commit's SHA is the hash that identifies it, worked out from everything the commit records. Because the committer and commit date are new, every commit gets a new SHA, even when it lands on the same parent it was written on. If you need the identical commits on the other side, use a bundle instead.
+
+### When a Patch Doesn't Apply
+
+If the receiving branch has moved on and a patch no longer fits, plain `git am` stops without changing any files, which leaves you nothing to resolve. Run it with `-3` instead. It uses the blob IDs recorded in the patch (the hashes of the file versions it was made against) to rebuild the original file, then does a three-way merge of that original, your version and the patch, so you get ordinary conflict markers:
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git am -3 0003-Document-rounding.patch
+  Applying: Document rounding
+  Using index info to reconstruct a base tree...
+  M	README.md
+  Falling back to patching base and 3-way merge...
+  Auto-merging README.md
+  CONFLICT (content): Merge conflict in README.md
+  error: Failed to merge in the changes.
+  hint: Use 'git am --show-current-patch=diff' to see the failed patch
+  Patch failed at 0001 Document rounding
+  When you have resolved this problem, run "git am --continue".
+  If you prefer to skip this patch, run "git am --skip" instead.
+  To restore the original branch and stop patching, run "git am --abort".
+`}
+</CodeBlock>
+
+<CodeBlock language="bash">
+{`
+  # Fix the conflict, then:
+  git add README.md
+  git am --continue     # Commit this patch and move on to the next one
+  git am --skip         # Or drop this patch and carry on with the rest
+  git am --abort        # Or give up and put the branch back as it was
+`}
+</CodeBlock>
+
+The three-way fallback only works if the receiving repository has the blobs the patch was made against, which it usually does when both sides share history.
+
+### `git apply` for Uncommitted Work
+
+`git apply` applies a diff to your working tree and stops there: no commit, no author, no message. That makes it the right tool for plain diffs that never were commits, such as work in progress you want to move to another machine:
+
+<CodeBlock language="bash">
+{`
+  git diff > wip.patch                # Unstaged changes to tracked files
+  git diff HEAD --binary > wip.patch  # Staged and unstaged, including binary files
+
+  # On the other machine:
+  git apply --stat wip.patch    # What the patch touches
+  git apply --check wip.patch   # Whether it would apply, without changing anything
+  git apply wip.patch           # Apply it to the working tree
+  git apply --index wip.patch   # Apply it and stage the result
+`}
+</CodeBlock>
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git apply --stat wip.patch
+   notes.txt    |    1 +
+   src/index.js |    2 +-
+   2 files changed, 2 insertions(+), 1 deletion(-)
+`}
+</CodeBlock>
+
+New, untracked files aren't part of `git diff`. Stage them first and use `git diff HEAD`, or mark them with `git add -N <file>` so they show up in a plain `git diff`.
+
+<Info title="git am or git apply?">
+  Use `git am` for anything made with `git format-patch`, because it turns each patch back into a commit with its author, date and message. Use `git apply` for a bare diff, or when you only want the changes in your working tree to test them before deciding whether to keep them.
+</Info>
+
+### Sending a Revised Series
+
+When a reviewer asks for changes, send the whole series again as version 2, with a cover letter that explains what changed:
+
+<CodeBlock language="bash">
+{`
+  git format-patch -v2 --cover-letter --base=origin/main \\
+    --range-diff=origin/main..review-v1 origin/main.. -o outgoing/
+`}
+</CodeBlock>
+
+- **`-v2`** prefixes every subject with `[PATCH v2 …]` and every file name with `v2-`, so the two rounds never get mixed up.
+- **`--cover-letter`** adds a `0000` patch with a summary and a diffstat of the whole series. Replace its `*** SUBJECT HERE ***` and `*** BLURB HERE ***` placeholders before sending it.
+- **`--base`** records the commit the series applies to, so the receiver knows exactly where to run `git am`.
+- **`--range-diff`** (Git 2.20+) adds a `git range-diff` of version 1 against version 2 to the cover letter. Here `review-v1` is a branch or tag left pointing at the first round:
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  Range-diff against v1:
+  1:  5211bfd = 1:  5211bfd Add round() helper
+  2:  bf60776 ! 2:  1b86a7d Add version constant
+      @@ Metadata
+       Author: Ada Lovelace <ada@example.com>
+
+        ## Commit message ##
+      -    Add version constant
+      +    Add version constant for releases
+`}
+</CodeBlock>
+
+To email the files directly instead of attaching them, `git send-email outgoing/*.patch` sends each patch as a correctly threaded message. On many Linux distributions it ships as a separate package (`git-email` on Debian and Ubuntu) and needs SMTP settings in `~/.gitconfig` before first use.
+
+<RainbowDivider />
+
+## Bundles: A Whole Repository in One File
+
+A bundle is a packfile (Git's compressed store of commits and file contents) plus a list of refs (the branch and tag names that point into it), written to a single file. Git can clone from it, fetch from it and pull from it exactly as if it were a remote, and every commit keeps its original SHA.
+
+### Creating a Bundle
+
+<CodeBlock language="bash">
+{`
+  git bundle create repo.bundle HEAD --branches --tags   # Every local branch and tag, plus HEAD
+  git bundle create repo.bundle --all                    # Every ref, including remote-tracking ones
+  git bundle create fix.bundle main~2..main              # Only the last two commits on main
+  git bundle create week.bundle --since=7.days main      # Only commits from the last week
+`}
+</CodeBlock>
+
+Include `HEAD` in a full bundle. Without it, `git clone` doesn't know which branch to check out, and leaves you with an empty working tree and a "remote HEAD refers to nonexistent ref" warning.
+
+### Checking a Bundle
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git bundle verify repo.bundle
+  repo.bundle is okay
+  The bundle contains these 3 refs:
+  f954a6b7adc858967be12b5f7753651235a1c645 refs/heads/main
+  f954a6b7adc858967be12b5f7753651235a1c645 refs/tags/v1.2.0
+  f954a6b7adc858967be12b5f7753651235a1c645 HEAD
+  The bundle records a complete history.
+`}
+</CodeBlock>
+
+`git bundle list-heads repo.bundle` prints just the refs. `verify` has to run inside a repository, because it checks that the repository has every commit the bundle depends on.
+
+### Using a Bundle
+
+<CodeBlock language="bash">
+{`
+  git clone repo.bundle app                  # A new repository, with the bundle as its origin
+  git pull repo.bundle main                  # Bring main's new commits into the current branch
+  git fetch repo.bundle main:incoming        # Copy main into a local branch named incoming
+  git remote add usb /media/usb/repo.bundle  # Or treat a fixed bundle path as a named remote
+  git fetch usb
+`}
+</CodeBlock>
+
+A bundle is read-only: you can fetch and pull from it, but you can't push to it. To send work back, create a new bundle on your side.
+
+### Incremental Bundles
+
+After the first full bundle, you only need to send the commits the other side doesn't have yet. Tag the point you last bundled from, and bundle everything since:
+
+<CodeBlock language="bash">
+{`
+  git bundle create update.bundle last-bundle..main
+  git tag -f last-bundle main     # Move the marker forward for next time
+`}
+</CodeBlock>
+
+An incremental bundle lists the commits it needs as prerequisites, and `verify` tells you straight away whether the receiving repository has them:
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git bundle verify update.bundle
+  update.bundle is okay
+  The bundle contains this ref:
+  4fbe7576ad7eb7e087b738fdb83a50dfc4d2c552 refs/heads/main
+  The bundle requires this ref:
+  a4595995b030911903cc0450f0c6f331e5f7ec4f
+
+  # In a repository that doesn't have that commit:
+  error: Repository lacks these prerequisite commits:
+  error: a4595995b030911903cc0450f0c6f331e5f7ec4f
+`}
+</CodeBlock>
+
+Git refuses to write an empty bundle, so `last-bundle..main` fails with "Refusing to create empty bundle." when there is nothing new to send.
+
+<Warning title="Pull from the new file, not the old origin">
+  A repository cloned from `repo.bundle` keeps that file as `origin`. If you fetch an `update.bundle` into `origin/main` and then run a plain `git pull`, Git fetches from the old `repo.bundle` again and moves `origin/main` back. Pull from the new file directly (`git pull update.bundle main`), or always save updates under the same path the remote points to.
+</Warning>
+
+<RainbowDivider />
+
+## Archives: Release Files Without History
+
+`git archive` exports the files at a commit, tag or tree as a zip file or tarball. It reads them straight from the repository, so uncommitted changes and untracked files are never included.
+
+<CodeBlock language="bash">
+{`
+  git archive -o app-1.2.0.zip --prefix=app-1.2.0/ v1.2.0   # A release zip, unpacking into app-1.2.0/
+  git archive -o app.tar.gz HEAD                            # Format taken from the file extension
+  git archive --format=tar HEAD | gzip > app.tar.gz         # The same thing, written to stdout
+  git archive -o src.tar.gz HEAD:src                        # Only src/, with its contents at the root
+  git archive -o src.tar.gz HEAD src                        # Only src/, keeping the src/ directory
+`}
+</CodeBlock>
+
+`-o` works out the format from the extension (`.zip`, `.tar`, `.tar.gz` or `.tgz`). Always use `--prefix` for anything you hand to someone else. Without it, the files unpack straight into whatever directory they're extracted in.
+
+### Controlling the Contents with `.gitattributes`
+
+Two attributes let the repository decide what goes into its own archives:
+
+<CodeBlock language="text">
+{`
+  # .gitattributes
+  tests/          export-ignore
+  .gitattributes  export-ignore
+  version.txt     export-subst
+`}
+</CodeBlock>
+
+- **`export-ignore`** leaves a file or directory out of the archive, for things like tests and CI configuration.
+- **`export-subst`** expands `$Format:…$` placeholders, using the same codes as `git log --format`, when the file is archived. Here `version.txt` contains `Commit: $Format:%h$ ($Format:%cs$)`:
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ git archive -o app.tar.gz HEAD && tar -xzf app.tar.gz -C release/
+  $ cat release/version.txt
+  Commit: f954a6b (2026-11-23)
+`}
+</CodeBlock>
+
+Git reads these attributes from the commit being archived, not from your working tree, so commit `.gitattributes` changes before archiving (or pass `--worktree-attributes`).
+
+An archive made from a commit or tag also records that commit's ID: in the zip file's comment, or in a tar header you can read back with `git get-tar-commit-id`. If you only have the tarball, that ID tells you exactly which commit it came from. `git get-tar-commit-id` only reads an uncompressed tar, so decompress a `.tar.gz` first:
+
+<CodeBlock language="text" showCopyButton={false}>
+{`
+  $ gunzip -c app.tar.gz | git get-tar-commit-id
+  f954a6b7adc858967be12b5f7753651235a1c645
+`}
+</CodeBlock>
+
+<Info title="git archive --remote and GitHub">
+  `git archive --remote=<url>` can export from a remote without cloning it, but only if the server allows it, and GitHub doesn't. For a GitHub repository, download the tag's archive from `https://github.com/<owner>/<repo>/archive/refs/tags/v1.2.0.tar.gz` instead.
+</Info>
+
+<RainbowDivider />
+
+## Common Pitfalls
+
+- **Patches recreate commits, bundles copy them.** If you later fetch the original branch, commits that arrived through `git am` appear twice under different SHAs. Use a bundle when both sides need the same history.
+- **Use `-3` with `git am` by default.** Without it, a patch that doesn't apply cleanly fails with no conflict markers to work with.
+- **Check before applying.** `git apply --check` and `git bundle verify` both report problems without changing anything.
+- **Prefer `HEAD --branches --tags` over `--all` for bundles.** `--all` also packs your remote-tracking refs, your stash and everything they point to, and `git clone` ignores those refs on the other side, so they only add weight.
+- **Name archives with a version.** `--prefix=app-1.2.0/` and a matching file name keep releases from overwriting each other when people unpack them.
+- **Patches are code.** A patch from outside your team deserves the same review as a pull request. Read it, and run `git apply --stat` to see exactly which files it touches before applying it.
+
+<RainbowDivider />
+
+## Frequently Asked Questions
+
+<Details summary="Can I review a contributor's patches without changing my branch?">
+  Yes. Create a throwaway branch at the commit they worked from, for example `git switch -c review/rounding origin/main`, and run `git am -3` there. You get real commits you can test, diff and discuss, and deleting the branch afterwards leaves your own work untouched.
+</Details>
+
+<Details summary="Why do commits applied with git am have different SHAs from the originals?">
+  A commit's SHA covers its committer and commit date as well as its contents and parents. `git am` keeps the author and author date but records you as the committer at the current time, so the result is always a new commit. A bundle transfers the original commit objects, so their SHAs don't change.
+</Details>
+
+<Details summary="Is a bundle the same as zipping the .git directory?">
+  No. A bundle contains only the objects and refs you ask for, it can be incremental, and Git verifies it before using it. A zipped `.git` directory also carries local configuration, hooks, the index and the reflog, and copying it while Git is writing to it can give you a corrupt repository.
+</Details>
+
+<RainbowDivider />
+
+## Key Takeaway
+
+Git doesn't need a server to move work around. Send commits for review with `git format-patch` and `git am`, move a whole repository offline with `git bundle`, and hand over a clean release with `git archive`. The deciding question is whether the other side needs your commits, your exact history, or just your files.

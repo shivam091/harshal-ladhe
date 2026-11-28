@@ -682,6 +682,29 @@ export const tutorials: Tutorial[] = [
       { date: "2026-11-22", change: "Added cross-reference to snippet '`:playing` and `:paused`: Style Media by Playback State'" },
       { date: "2026-11-08", change: "Initial publication." }
     ]
+  },
+  {
+    slug: "git-format-patch-bundle-archive",
+    title: "Share Git Commits Without a Remote: `format-patch`, `bundle` and `archive`",
+    excerpt: "Move Git work by email, USB stick or tarball.",
+    description: "Share Git work without a remote: email commits with format-patch and am, move repos offline with git bundle, and export release files with git archive.",
+    category: ["Git"],
+    tags: ["git", "version-control", "git-patches", "git-bundle", "git-archive", "cli"],
+    link: {
+      label: "Read the full post: Advanced Git: Rebasing, Internals, and Real-World Workflows",
+      href: "/post/git/advanced-git-techniques-and-workflows"
+    },
+    image: {
+      path: "https://upw9bo4art0pzkyp.public.blob.vercel-storage.com/goodies/tutorials/git-format-patch-bundle-archive/cover.png",
+      width: 1536,
+      height: 1024,
+      type: "image/png",
+      alt: "Cover titled Share Git Commits Without a Remote, with three cards: Patches (git format-patch to git am) showing a .patch file, Bundle (git bundle create to clone) showing the refs in repo.bundle, and Archive (git archive) showing an app-1.2.0 folder with no .git. Each card ticks what survives the trip: author, date and message, branches and tags, same commit SHAs, and readable without Git.",
+      caption: "Patches for review, a bundle for an offline repository, an archive for a release."
+    },
+    changelog: [
+      { date: "2026-11-28", change: "Initial publication." }
+    ]
   }
 ];
 

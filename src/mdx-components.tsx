@@ -53,6 +53,7 @@ import GitObjectGraphDiagram from "@/components/mdx/GitObjectGraphDiagram";
 import GitWorkflowDiagram from "@/components/mdx/GitWorkflowDiagram";
 import GitPickaxeDiagram from "@/components/mdx/GitPickaxeDiagram";
 import GitBlameCopyDiagram from "@/components/mdx/GitBlameCopyDiagram";
+import GitShareFormatsDiagram from "@/components/mdx/GitShareFormatsDiagram";
 import GradientAxisDiagram from "@/components/mdx/GradientAxisDiagram";
 import RadialGradientDiagram from "@/components/mdx/RadialGradientDiagram";
 import ConicGradientDiagram from "@/components/mdx/ConicGradientDiagram";
@@ -190,6 +191,7 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     GitWorkflowDiagram,
     GitPickaxeDiagram,
     GitBlameCopyDiagram,
+    GitShareFormatsDiagram,
     GradientAxisDiagram,
     RadialGradientDiagram,
     ConicGradientDiagram,
