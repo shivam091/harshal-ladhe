@@ -187,6 +187,7 @@ export const posts: Post[] = [
     signoff: "This one's meant to be the guide I wish I'd had when Git still felt like a wall of unfamiliar commands — I hope it makes that first `git merge` conflict feel like a puzzle instead of a crisis. Part 2 picks up right where this leaves off. 🌱",
     pinned: true,
     changelog: [
+      { date: "2026-11-28", change: "Added cross-reference to tutorial 'Share Git Commits Without a Remote: `format-patch`, `bundle` and `archive`'" },
       { date: "2026-11-23", change: "Added cross-reference to post 'Searching Git History: `git log -S`, `-L`, `git grep` and `git blame`'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git sync`: Update Your Branch from `main` in One Command'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git prune-branches`: Delete Merged and Squash-Merged Branches'" },
@@ -212,6 +213,7 @@ export const posts: Post[] = [
     signoff: "This part is the one that turns Git from \"a tool I follow instructions for\" into something you can actually reason about — I hope the internals section in particular makes the rest of it click. Part 3 puts that model to work searching history, so you can find out exactly when, how and by whom any line changed. 🚀",
     pinned: true,
     changelog: [
+      { date: "2026-11-28", change: "Added cross-reference to tutorial 'Share Git Commits Without a Remote: `format-patch`, `bundle` and `archive`'" },
       { date: "2026-11-27", change: "Added sections on `git range-diff`, `rebase --update-refs`, `rebase --exec`, merge strategy options, conditional includes and commit signing" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git sync`: Update Your Branch from `main` in One Command'" },
       { date: "2026-11-08", change: "Added cross-reference to snippet '`git prune-branches`: Delete Merged and Squash-Merged Branches'" },

@@ -645,6 +645,8 @@ The commands above compose into a handful of well-known branching strategies. No
 
 Squash and rebase merges have a side effect locally: they create new commits on `main`, so `git branch --merged` and `git branch -d` no longer recognise your feature branches as merged, and they pile up. [`git prune-branches`](/snippet/git-prune-branches) detects both kinds by comparing patches instead of commit hashes, and deletes them safely.
 
+All three workflows assume a shared remote. When there isn't one, such as on an air-gapped build machine, in a project that takes patches by email, or for a client who wants a release as a zip file, [Share Git Commits Without a Remote: `format-patch`, `bundle` and `archive`](/tutorial/git-format-patch-bundle-archive) shows how to move work without one.
+
 <RainbowDivider />
 
 ## Performance: Shallow, Sparse & Partial Clones
